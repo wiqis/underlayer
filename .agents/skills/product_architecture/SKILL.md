@@ -4,6 +4,8 @@ Load this skill when understanding or modifying the overall Underlayer system de
 
 > **Also load `engineering_patterns`** for error handling, logging, security, caching, testing, monitoring, and privacy patterns. This skill covers *what the system is*; `engineering_patterns` covers *how to build it correctly*.
 
+> **Also load `libs_reference`** for the complete catalog of available libraries and APIs. This skill covers *system design*; `libs_reference` covers *what's available to implement it*.
+
 ## System Overview
 
 Underlayer is a learning platform for deep technical subjects. It consists of:

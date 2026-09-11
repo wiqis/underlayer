@@ -4,6 +4,10 @@ Load this skill when writing code, generating course content, or debugging issue
 
 > **Also load `engineering_patterns`** for error handling, logging, security, caching, testing, monitoring, and privacy patterns. This skill covers *what's broken*; `engineering_patterns` covers *how to build correctly*.
 
+> **Also load `libs_reference`** for the complete catalog of available libraries and APIs. This skill covers *what NOT to do*; `libs_reference` covers *what IS available*.
+
+> **Also load `coding_conventions`** for style rules and naming conventions. This skill covers *pitfalls*; `coding_conventions` covers *how to write clean code*.
+
 ## Quick Reference: What NOT to Do
 
 | Never Do This | Why | Do This Instead |
