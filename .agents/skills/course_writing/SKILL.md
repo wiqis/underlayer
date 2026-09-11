@@ -56,6 +56,11 @@ The [concept] answers this by [one-sentence explanation].
 Without it, [what would go wrong].
 ```
 
+**Anti-patterns:**
+- Starting with a definition: "The ELF header is a structure..." (bad)
+- Starting with a fact: "The ELF header is 64 bytes..." (bad)
+- Starting with a question the learner cares about: "How does readelf -h work?" (good)
+
 ### Step 3: Write Each Unit Sequentially
 Don't skip units. Don't reorder them. The 8-unit structure is:
 1. WHY → 2. MODEL → 3. REALITY → 4. EXAMPLE → 5. INTERACT → 6. RETRIEVE → 7. APPLY → 8. CONNECT
@@ -381,12 +386,329 @@ Before submitting ANY .ch file, verify:
 
 ---
 
+## End-to-End .ch File Template
+
+This is a complete, working template for a concept page. Copy and adapt it.
+
+```chemical
+import page
+import html_cbi
+import css_cbi
+import js_cbi
+
+public func render_concept() : std::string {
+    var page = HtmlPage()
+    page.defaultUniversalSetup()
+    page.defaultPrepare()
+    page.appendTitle(std::string_view("Concept Title — Underlayer"))
+
+    #html {
+        <div class="lesson">
+            <h1>Concept Title</h1>
+
+            <!-- UNIT 1: WHY (always first) -->
+            <section class="unit why">
+                <h2>WHY</h2>
+                <p>When you <code>run some command</code>, how does it know [question]?</p>
+                <p>The [concept] answers this by [one-sentence explanation].</p>
+                <p>Without it, [what would go wrong].</p>
+            </section>
+
+            <!-- UNIT 2: MODEL (simplified, marked as simplified) -->
+            <section class="unit model">
+                <h2>MODEL</h2>
+                <p>For now, think of [concept] as [simple model].</p>
+                <div class="callout">
+                    <strong>This is simplified.</strong> [What it misses]. We'll fix that next.
+                </div>
+                <p>The [concept] tells the system:</p>
+                <ol>
+                    <li>[Point 1]</li>
+                    <li>[Point 2]</li>
+                    <li>[Point 3]</li>
+                </ol>
+            </section>
+
+            <!-- UNIT 3: REALITY (actual technical detail) -->
+            <section class="unit reality">
+                <h2>REALITY</h2>
+                <p>The specification says [exact quote with section reference].</p>
+                <p>In detail:</p>
+                <table>
+                    <thead>
+                        <tr><th>Field</th><th>Offset</th><th>Size</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>[field]</td><td>[offset]</td><td>[size]</td><td>[description]</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- UNIT 4: EXAMPLE (real, verified hex dump) -->
+            <section class="unit example">
+                <h2>EXAMPLE</h2>
+                <p>Here's a real [thing] (from <code>/bin/ls</code>):</p>
+                <div class="hex-dump">
+                    <pre>[verified hex dump from readelf/xxd]</pre>
+                </div>
+                <p>Walk-through:</p>
+                <ol>
+                    <li>[Step 1 explanation]</li>
+                    <li>[Step 2 explanation]</li>
+                </ol>
+            </section>
+
+            <!-- UNIT 5: INTERACT (hands-on) -->
+            <section class="unit interact">
+                <h2>INTERACT</h2>
+                <p>Run this on your system:</p>
+                <pre><code>$ [command]</code></pre>
+                <p>[What to look for]</p>
+            </section>
+
+            <!-- UNIT 6: RETRIEVE (free recall, no hints) -->
+            <section class="unit retrieve">
+                <h2>RETRIEVE</h2>
+                <p>Without looking back: [question]?</p>
+                <div class="reveal">
+                    <button onclick={this.parentElement.classList.toggle('revealed')}>Show Answer</button>
+                    <div class="answer">[answer]</div>
+                </div>
+            </section>
+
+            <!-- UNIT 7: APPLY (exercise) -->
+            <section class="unit apply">
+                <h2>APPLY</h2>
+                <p>[Exercise prompt]</p>
+                <div class="exercise">
+                    <!-- Exercise content here -->
+                </div>
+            </section>
+
+            <!-- UNIT 8: CONNECT (link to next concept) -->
+            <section class="unit connect">
+                <h2>CONNECT</h2>
+                <p>This connects to [related concept] because [reason].</p>
+                <p>Next: [next concept] → [what it teaches].</p>
+            </section>
+
+            <!-- EXERCISES (after all units) -->
+            <section class="exercises">
+                <h2>EXERCISES</h2>
+                <!-- Add 3-4 exercises here -->
+            </section>
+        </div>
+    }
+
+    #css {
+        .lesson { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        .unit { margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+        .unit:last-child { border-bottom: none; }
+        .callout { background: var(--bg-muted); padding: 1rem; border-radius: 8px; border-left: 3px solid var(--primary); margin: 1rem 0; }
+        .hex-dump { background: var(--bg-muted); padding: 1rem; border-radius: 8px; overflow-x: auto; }
+        .hex-dump pre { font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; margin: 0; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { padding: 0.5rem; border: 1px solid var(--border); text-align: left; }
+        th { background: var(--bg-muted); }
+        .reveal .answer { display: none; margin-top: 0.5rem; padding: 1rem; background: var(--bg-muted); border-radius: 8px; }
+        .reveal.revealed .answer { display: block; }
+        .reveal.revealed button { display: none; }
+        .options { display: flex; flex-direction: column; gap: 0.5rem; }
+        .option { padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; text-align: left; }
+        .option:hover { background: var(--bg-hover); }
+        .option.correct { border-color: #22c55e; background: #22c55e10; }
+        .option.incorrect { border-color: #ef4444; background: #ef444410; }
+        .feedback { margin-top: 1rem; padding: 1rem; border-radius: 8px; display: none; }
+    }
+
+    #js {
+        function checkAnswer(btn, correct) {
+            var options = btn.parentElement.querySelectorAll('.option');
+            options.forEach(function(opt) { opt.disabled = true; });
+            if(correct) {
+                btn.classList.add('correct');
+                showFeedback(btn.parentElement.nextElementSibling, 'Correct!', 'success');
+            } else {
+                btn.classList.add('incorrect');
+                showFeedback(btn.parentElement.nextElementSibling, 'Not quite. [Explanation].', 'error');
+            }
+        }
+
+        function showFeedback(el, msg, type) {
+            el.textContent = msg;
+            el.style.display = 'block';
+            el.style.background = type === 'success' ? '#22c55e10' : '#ef444410';
+            el.style.borderLeft = type === 'success' ? '3px solid #22c55e' : '3px solid #ef4444';
+        }
+    }
+
+    return page.toString()
+}
+```
+
+---
+
+## Advanced Patterns
+
+### Pattern: Multi-Section Exercise with Hint Cascade
+
+For exercises that guide learners through difficulty levels:
+
+```chemical
+<section class="exercise">
+    <h3>Identify the fields in this hex dump:</h3>
+    <div class="hex-dump">
+        <pre>00000000: 7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00</pre>
+    </div>
+
+    <div class="hints">
+        <button class="hint-btn" onclick={showHint(this, 0)}>Hint 1: The first 4 bytes are special</button>
+        <button class="hint-btn" onclick={showHint(this, 1)}>Hint 2: They spell something in ASCII</button>
+        <button class="hint-btn" onclick={showHint(this, 2)}>Hint 3: .ELF</button>
+    </div>
+</section>
+```
+
+### Pattern: Hex Dump with Clickable Bytes
+
+For exercises where learners identify fields by clicking:
+
+```chemical
+<div class="hex-interactive">
+    <span class="hex-byte" data-field="magic" onclick={selectByte(this)}>7f</span>
+    <span class="hex-byte" data-field="magic" onclick={selectByte(this)}>45</span>
+    <span class="hex-byte" data-field="magic" onclick={selectByte(this)}>4c</span>
+    <span class="hex-byte" data-field="magic" onclick={selectByte(this)}>46</span>
+    <span class="hex-byte" data-field="class" onclick={selectByte(this)}>02</span>
+    <span class="hex-byte" data-field="data" onclick={selectByte(this)}>01</span>
+</div>
+```
+
+### Pattern: Side-by-Side Comparison
+
+For showing before/after or correct/incorrect:
+
+```chemical
+<div class="comparison">
+    <div class="side correct">
+        <h4>Correct</h4>
+        <pre>7f 45 4c 46 02 01 01 00</pre>
+        <p>This is a valid ELF header start.</p>
+    </div>
+    <div class="side incorrect">
+        <h4>Corrupted</h4>
+        <pre>00 00 00 00 02 01 01 00</pre>
+        <p>readelf rejects this: "invalid magic number"</p>
+    </div>
+</div>
+```
+
+### Pattern: Progressive Reveal
+
+For building up complexity step by step:
+
+```chemical
+<div class="progressive-reveal">
+    <div class="step" id="step1">
+        <h4>Step 1: Just the magic number</h4>
+        <pre>7f 45 4c 46</pre>
+        <button onclick={revealNext('step2')}>Add class byte</button>
+    </div>
+    <div class="step hidden" id="step2">
+        <h4>Step 2: Add class</h4>
+        <pre>7f 45 4c 46 02</pre>
+        <button onclick={revealNext('step3')}>Add data encoding</button>
+    </div>
+    <div class="step hidden" id="step3">
+        <h4>Step 3: Add data encoding</h4>
+        <pre>7f 45 4c 46 02 01</pre>
+    </div>
+</div>
+```
+
+### Pattern: Terminal Exercise
+
+For exercises that simulate running commands:
+
+```chemical
+<div class="terminal">
+    <div class="terminal-header">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span class="title">bash</span>
+    </div>
+    <div class="terminal-body">
+        <div class="line">
+            <span class="prompt">$</span>
+            <span class="command" contenteditable="true" data-answer="readelf -h /bin/ls"></span>
+        </div>
+        <div class="output" id="terminal-output"></div>
+    </div>
+</div>
+```
+
+---
+
+## Error Recovery Patterns
+
+### When You Discover Invented Hex Bytes
+
+**Symptom:** You wrote hex bytes without verifying them.
+
+**Fix:**
+1. Stop writing immediately
+2. Run `readelf -h`, `xxd`, or `objdump` on a real file
+3. Copy the actual output
+4. Replace all invented bytes with verified bytes
+5. Mark the concept as `[NEEDS VERIFICATION]` until confirmed
+
+### When Chemical Code Won't Compile
+
+**Symptom:** The .ch file has syntax errors.
+
+**Checklist:**
+- [ ] Every `if` has an `else`
+- [ ] No `+` on strings (use `append_view`)
+- [ ] Float literals use `f` suffix (0.5f not 0.5)
+- [ ] No `arr[i]` (use `arr.get(i)`)
+- [ ] `#html` blocks are not split
+- [ ] `@{}` used for Chemical logic inside `#html`
+
+### When Exercise Has No Clear Answer
+
+**Symptom:** You can't explain why one answer is correct.
+
+**Fix:**
+1. Rewrite the question to be more specific
+2. Ensure exactly one answer is correct
+3. Write the explanation BEFORE the wrong answers
+4. If you can't explain it, the question is bad — rewrite it
+
+### When Feedback Is Just "Wrong"
+
+**Symptom:** Exercise feedback says "Not quite" without explaining why.
+
+**Fix:**
+1. For EACH wrong answer, explain what's wrong about it
+2. Connect the explanation to what the learner should have remembered
+3. Reference the specific unit where this was taught
+
+```chemical
+// BAD feedback
+showFeedback(el, 'Not quite.', 'error');
+
+// GOOD feedback
+showFeedback(el, 'Not quite. The magic number is always 7f 45 4c 46 (bytes 0-3). Bytes 4-5 indicate the class, not the magic. See the EXAMPLE unit above.', 'error');
+```
+
 ## Discovered Patterns
 
 > **Update this section as AIs write courses and discover what works.**
 
 ### Pattern: The "Run It Yourself" Approach
 **Discovered:** AIs that tell learners to run commands on real files produce better engagement than AIs that only show static output.
+**Works because:** Learners build muscle memory and confidence by doing, not just reading.
 
 **Example:**
 ```markdown
@@ -399,6 +721,7 @@ $ xxd -l 64 /bin/ls
 
 ### Pattern: The "What If It Breaks" Approach
 **Discovered:** Explaining failure modes is more memorable than explaining success paths.
+**Works because:** Learners remember errors better than correct behavior (negativity bias).
 
 **Example:**
 ```markdown
@@ -415,6 +738,7 @@ bash: ./broken-elf: cannot execute binary file: Exec format error
 
 ### Pattern: The "Build Up" Approach
 **Discovered:** Starting with a minimal version and adding fields one by one works better than showing the full struct.
+**Works because:** Reduces cognitive load — learner sees each piece before the whole.
 
 **Example:**
 ```markdown
@@ -430,6 +754,65 @@ Add the data encoding:
 7f 45 4c 46 02 01
 
 Keep going until you have all 64 bytes.
+```
+
+### Pattern: Feedback for Every Wrong Answer
+**Discovered:** Exercises with feedback only on the correct answer teach less than exercises with feedback on ALL options.
+**Works because:** Learners who chose wrong learn WHY they're wrong, not just that they're wrong.
+
+**Example:**
+```markdown
+**Correct!** The magic number is `7f 45 4c 46` — `.ELF` in ASCII.
+
+**If you chose A:** Those are just sequential bytes, not a recognized magic number.
+
+**If you chose C:** That's the Java class file magic (`0xCAFEBABE`), not ELF.
+
+**If you chose D:** That's `0xDEADBEEF`, a debug pattern, not a file magic number.
+```
+
+### Pattern: The "Before You Start" Checklist
+**Discovered:** AIs that check prerequisites before writing produce more consistent content.
+**Works because:** Prevents introducing concepts before their prerequisites are established.
+
+**Example (from a real generation session):**
+```markdown
+Before writing "Program Headers", I verified:
+- [x] "Bytes" concept exists and covers byte ordering
+- [x] "ELF Header" concept exists and teaches e_phoff
+- [x] "File Layout" concept exists and explains segments vs sections
+- [x] I know the prerequisite order: bytes → binary-representation → file-layout → elf-header → program-headers
+```
+
+### Pattern: The "Hex Dump Sandwich"
+**Discovered:** A hex dump followed by explanation followed by the SAME hex dump with annotations is more effective than either alone.
+**Works because:** First showing primes attention; second showing with annotations provides the payoff.
+
+**Example:**
+```markdown
+## RAW HEX
+
+00000000: 7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00
+
+## ANNOTATED
+
+00000000: 7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00
+           |___________| |__| |__| |_______________________|
+            magic number  class data        padding
+                           64-bit LE      (ignored)
+```
+
+### Pattern: The "Misconception Trap"
+**Discovered:** Explicitly stating "You might think X, but actually Y" is more effective than just stating Y.
+**Works because:** It catches the misconception before it solidifies.
+
+**Example:**
+```markdown
+## COMMON MISTAKE
+
+You might think the ELF header is just metadata you can skip.
+Actually, it's parsed FIRST — without it, the loader doesn't know
+how to read anything else in the file.
 ```
 
 ---

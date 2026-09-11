@@ -4,7 +4,23 @@ Load this skill when using AI to generate course content.
 
 > **Also load `course_writing`** for the practical, in-the-trenches guide to writing .ch files: common mistakes, Chemical syntax patterns, exercise patterns, and verification checklists. This skill covers *the 11-phase process*; `course_writing` covers *how to actually write each file*.
 
+> **Also load `technical_research`** for how to find and verify authoritative sources. This skill covers *the generation process*; `technical_research` covers *how to research each topic*.
+
 > **Also load `engineering_patterns`** for content validation patterns (manifest validation, concept file validation, exercise verification). This skill covers *how to generate*; `engineering_patterns` covers *how to validate what you generated*.
+
+## Quick Start: Generating a Single Concept
+
+If you already have research and just need to generate one concept's content, use this abbreviated flow:
+
+```
+1. Load research.md for the concept
+2. Load course_writing skill
+3. Write the .ch file following the 8-unit structure
+4. Verify hex bytes with readelf/xxd
+5. Run through the verification checklist in course_writing
+```
+
+For the full 11-phase process (new course or major revision), continue below.
 
 ## The Iterative Generation Cycle
 
@@ -47,6 +63,32 @@ Phase K: Revision
 
 Each phase produces artifacts. The next phase consumes them. No skipping.
 
+### Time Estimates (per concept)
+
+| Phase | Time | Can Skip? |
+|-------|------|-----------|
+| A: Research | 30-60 min | No — foundation for everything |
+| B: Knowledge Extraction | 15-30 min | No — identifies misconceptions |
+| C: Curriculum Design | 10-20 min | Only if concept order is already defined |
+| D: Learning Design | 20-40 min | No — determines teaching approach |
+| E: Content Generation | 60-120 min | No — the actual writing |
+| F: Technical Verification | 30-60 min | No — prevents wrong knowledge |
+| G: Pedagogical Critique | 15-30 min | No — prevents bad teaching |
+| H: Interaction Review | 10-20 min | If no interactive elements |
+| I: Consistency Review | 10-20 min | Only for single-concept additions |
+| J: Final Review | 15-30 min | No — last quality gate |
+| K: Revision | 30-60 min | Only if reviews found no issues |
+
+### Common Failure Modes
+
+| Failure | Symptom | Prevention |
+|---------|---------|------------|
+| Skipping research | Invented byte sequences, wrong offsets | Always read the spec first |
+| Skipping verification | Content looks good but teaches wrong facts | Always run Phase F |
+| One-pass generation | Technically correct but pedagogically flat | Follow all 11 phases |
+| No misconception targeting | Learners hit the same wall repeatedly | Always do Phase B |
+| Over-explaining | 500 words for a 100-word concept | Apply "Would I read this?" test |
+
 ## Phase A: Research
 
 ### Input
@@ -62,6 +104,40 @@ Each phase produces artifacts. The next phase consumes them. No skipping.
 
 ### Output
 - `research.md` — verified facts with sources
+
+#### research.md Template
+
+```markdown
+# Research: [Concept Name]
+
+## Specification Claims
+
+| # | Claim | Spec Section | Version Notes | Verified |
+|---|-------|-------------|---------------|----------|
+| 1 | [claim] | [section] | [any version specifics] | [yes/no] |
+
+## Secondary Sources
+
+| Source | Type | Key Points | Reliability |
+|--------|------|-----------|-------------|
+| [title] | book/article/blog | [what it covers] | high/medium/low |
+
+## Edge Cases
+
+| Case | Behavior | Source |
+|------|----------|--------|
+| [case] | [what happens] | [reference] |
+
+## Version-Specific Behavior
+
+| Feature | Version | Behavior |
+|---------|---------|----------|
+| [feature] | [version] | [how it differs] |
+
+## Unverified Claims
+
+- [ ] [claim that needs verification]
+```
 
 ## Phase B: Knowledge Extraction
 
@@ -85,6 +161,35 @@ Each phase produces artifacts. The next phase consumes them. No skipping.
 ### Output
 - `concepts.json` — concept list with dependencies and misconceptions
 
+#### concepts.json Template
+
+```json
+{
+  "concepts": [
+    {
+      "id": "elf-header",
+      "title": "The ELF Header",
+      "definition": "The first structure in an ELF file, at byte 0",
+      "purpose": "Tells the system how to process the entire file",
+      "who_produces": "Compiler/linker",
+      "who_consumes": "Loader, debugger, readelf",
+      "depends_on": ["bytes", "binary-representation"],
+      "if_invalid": "Loader rejects the file immediately",
+      "if_missing": "File cannot be processed at all",
+      "edge_cases": ["32-bit vs 64-bit size difference", "Big vs little endian"],
+      "misconceptions": [
+        {
+          "wrong": "The ELF header is just metadata you can skip",
+          "right": "It's parsed first and determines how to read everything else",
+          "exercise_target": "Ask what happens if e_phoff is wrong"
+        }
+      ],
+      "estimated_minutes": 15
+    }
+  ]
+}
+```
+
 ## Phase C: Curriculum Design
 
 ### Input
@@ -99,6 +204,36 @@ Each phase produces artifacts. The next phase consumes them. No skipping.
 
 ### Output
 - `curriculum.json` — ordered concept list with modules
+
+#### curriculum.json Template
+
+```json
+{
+  "modules": [
+    {
+      "id": "fundamentals",
+      "title": "Binary Fundamentals",
+      "order": 1,
+      "concepts": ["bytes", "binary-representation", "file-layout"],
+      "estimated_minutes": 45,
+      "prerequisite_modules": []
+    },
+    {
+      "id": "elf-header",
+      "title": "The ELF Header",
+      "order": 2,
+      "concepts": ["identification", "header-fields", "entry-point"],
+      "estimated_minutes": 45,
+      "prerequisite_modules": ["fundamentals"]
+    }
+  ],
+  "dependency_graph": {
+    "bytes": [],
+    "binary-representation": ["bytes"],
+    "elf-header": ["bytes", "binary-representation", "file-layout"]
+  }
+}
+```
 
 ## Phase D: Learning Design
 
@@ -116,6 +251,56 @@ For each concept, design:
 
 ### Output
 - `learning-design.json` — per-concept learning plans
+
+#### learning-design.json Template
+
+```json
+{
+  "concepts": [
+    {
+      "id": "elf-header",
+      "lesson_structure": {
+        "WHY": "How does readelf -h know where program headers are? The ELF header at byte 0 points to everything.",
+        "MODEL": "The header says: this is ELF, this is 64-bit, here's where program headers start.",
+        "REALITY": "64 bytes for ELF64, 52 for ELF32. Contains e_ident, e_type, e_machine, etc.",
+        "EXAMPLE": "Real hex dump of /bin/ls first 64 bytes",
+        "INTERACT": "Run xxd -l 64 /bin/ls, find offset 4",
+        "RETRIEVE": "What field points to program headers?",
+        "APPLY": "Corrupt e_phoff in a hex editor, run readelf",
+        "CONNECT": "Next: Program Headers (what e_phoff points to)"
+      },
+      "exercises": [
+        {
+          "type": "recall",
+          "question": "What is the ELF magic number?",
+          "answer": "7f 45 4c 46",
+          "misconception_targeted": null
+        },
+        {
+          "type": "recognize",
+          "question": "Which field indicates 32-bit vs 64-bit?",
+          "answer": "e_ident[EI_CLASS] at offset 4",
+          "misconception_targeted": "All ELF headers are the same size"
+        },
+        {
+          "type": "apply",
+          "question": "Given this hex dump, identify the class and endianness",
+          "answer": "Class at offset 4, endianness at offset 5",
+          "misconception_targeted": "ELF fields are in random positions"
+        },
+        {
+          "type": "debug",
+          "question": "readelf says 'invalid magic number' — what's wrong?",
+          "answer": "First 4 bytes are not 7f 45 4c 46",
+          "misconception_targeted": "Magic number is optional"
+        }
+      ],
+      "review_items": 6,
+      "visualization": "Interactive hex viewer highlighting ELF header fields"
+    }
+  ]
+}
+```
 
 ## Phase E: Content Generation
 
@@ -198,6 +383,36 @@ OUTPUT:
 ### Output
 - `verification.md` — list of verified/unverified/potential-error claims
 
+#### verification.md Template
+
+```markdown
+# Technical Verification: [Concept Name]
+
+## Verified Claims
+
+| # | Claim | Spec Section | How Verified |
+|---|-------|-------------|--------------|
+| 1 | ELF magic is 7f 45 4c 46 | gABI §1-2 | Read spec + readelf output |
+
+## Unverified Claims
+
+| # | Claim | Why Unverified | Action Needed |
+|---|-------|---------------|---------------|
+| 1 | [claim] | [reason] | [what to do] |
+
+## Potential Errors
+
+| # | Issue | Location | Severity | Fix |
+|---|-------|----------|----------|-----|
+| 1 | [issue] | [file:line] | critical/major/minor | [how to fix] |
+
+## Simplifications Noted
+
+| # | Simplification | Where | Replacement Model |
+|---|----------------|-------|-------------------|
+| 1 | [what's simplified] | [location] | [accurate version] |
+```
+
 ## Phase G: Pedagogical Critique
 
 ### Input
@@ -216,6 +431,28 @@ OUTPUT:
 ### Output
 - `pedagogy-review.md` — list of pedagogical issues and fixes
 
+#### pedagogy-review.md Template
+
+```markdown
+# Pedagogical Review: [Concept Name]
+
+## Issues Found
+
+| # | Issue | Location | Severity | Fix |
+|---|-------|----------|----------|-----|
+| 1 | No WHY before WHAT | Unit 1 | critical | Add problem statement before definition |
+| 2 | Passive reading section | Unit 3 | major | Convert to exercise |
+
+## Checklist Results
+
+- [x] Every concept explains WHY
+- [ ] Mental models precede technical details
+- [x] Simplifications are explicitly marked
+- [x] Active recall included
+- [ ] Exercises test understanding
+- [x] Feedback explains WHY
+```
+
 ## Phase H: Interaction Review
 
 ### Input
@@ -232,6 +469,26 @@ For each interactive element:
 ### Output
 - `interaction-review.md` — list of interaction quality issues
 
+#### interaction-review.md Template
+
+```markdown
+# Interaction Review: [Concept Name]
+
+## Interactive Elements
+
+| # | Element | Type | Purpose | Verdict |
+|---|---------|------|---------|---------|
+| 1 | Hex byte click | exercise | Test offset knowledge | Good — tests understanding |
+| 2 | Toggle hex dump | decoration | None | Remove — no learning value |
+
+## Questions
+
+| # | Element | Question | Answer |
+|---|---------|----------|--------|
+| 1 | [element] | Does this help understand something? | [yes/no + what] |
+| 2 | [element] | Is it better than non-interactive? | [yes/no + why] |
+```
+
 ## Phase I: Consistency Review
 
 ### Input
@@ -246,6 +503,30 @@ For each interactive element:
 
 ### Output
 - `consistency-review.md` — list of inconsistencies
+
+#### consistency-review.md Template
+
+```markdown
+# Consistency Review
+
+## Contradictions
+
+| # | Section A | Section B | Issue | Correct Version |
+|---|-----------|-----------|-------|-----------------|
+| 1 | bytes.ch:15 | elf-header.ch:23 | Different byte counts | [which is right] |
+
+## Inconsistent Terminology
+
+| # | Term Used | Where | Consistent Term |
+|---|-----------|-------|-----------------|
+| 1 | "header struct" | elf-header.ch:10 | "ELF header" |
+
+## Prerequisite Violations
+
+| # | Concept | Prerequisite Used | Where | Fix |
+|---|---------|-------------------|-------|-----|
+| 1 | [concept] | [prerequisite] | [location] | Move or add prerequisite section |
+```
 
 ## Phase J: Final Review
 
@@ -262,6 +543,42 @@ Assume the role of:
 ### Output
 - `final-review.md` — list of remaining issues
 
+#### final-review.md Template
+
+```markdown
+# Final Review: [Concept Name]
+
+## As Domain Expert
+
+| # | Issue | Severity | Fix |
+|---|-------|----------|-----|
+| 1 | [issue] | critical/major/minor | [fix] |
+
+## As Skeptical Teacher
+
+| # | Issue | Severity | Fix |
+|---|-------|----------|-----|
+| 1 | [issue] | critical/major/minor | [fix] |
+
+## As Beginner
+
+| # | Issue | Severity | Fix |
+|---|-------|----------|-----|
+| 1 | [issue] | critical/major/minor | [fix] |
+
+## As Test Author
+
+| # | Issue | Severity | Fix |
+|---|-------|----------|-----|
+| 1 | [issue] | critical/major/minor | [fix] |
+
+## Summary
+
+- Critical: [N] (must fix)
+- Major: [N] (should fix)
+- Minor: [N] (note for future)
+```
+
 ## Phase K: Revision
 
 ### Input
@@ -276,6 +593,28 @@ Assume the role of:
 ### Output
 - Revised `content/` directory
 - `revision-log.md` — what was changed and why
+
+#### revision-log.md Template
+
+```markdown
+# Revision Log: [Concept Name]
+
+## Changes Made
+
+| # | Issue Fixed | File | Line | Change | Verified |
+|---|-------------|------|------|--------|----------|
+| 1 | [issue from review] | [file] | [line] | [what changed] | [yes/no] |
+
+## Re-verification Results
+
+| # | Previous Issue | Status | Evidence |
+|---|---------------|--------|----------|
+| 1 | [issue] | Fixed / Still broken / New issue | [proof] |
+
+## Remaining Issues
+
+- [ ] [minor issue deferred to future revision]
+```
 
 ## Quality Gates
 
@@ -303,3 +642,46 @@ The AI must perform these roles during generation:
 | Adversary | Try to find things that are wrong |
 
 No single pass covers all roles. The iterative cycle ensures all roles are performed.
+
+## Integration with Other Skills
+
+### Skill Loading Order
+
+For a new course, load skills in this order:
+
+```
+1. product_architecture  → understand the system
+2. course_architecture   → understand file structure
+3. technical_research    → how to find sources
+4. course_generation     → THIS SKILL (the process)
+5. course_writing        → how to write .ch files
+6. learning_design       → pedagogical methodology
+7. implementation_gaps   → Chemical syntax pitfalls
+8. review_quality        → how to review output
+```
+
+### Phase-to-Skill Mapping
+
+| Phase | Primary Skill | Supporting Skills |
+|-------|--------------|-------------------|
+| A: Research | `technical_research` | — |
+| B: Knowledge Extraction | `course_generation` | `learning_design` |
+| C: Curriculum Design | `course_architecture` | `course_generation` |
+| D: Learning Design | `learning_design` | `course_generation` |
+| E: Content Generation | `course_writing` | `implementation_gaps`, `libs_reference` |
+| F: Technical Verification | `technical_research` | `engineering_patterns` |
+| G: Pedagogical Critique | `learning_design` | `review_quality` |
+| H: Interaction Review | `micro_interactions` | `review_quality` |
+| I: Consistency Review | `course_generation` | `course_architecture` |
+| J: Final Review | `review_quality` | All of the above |
+| K: Revision | `course_writing` | `implementation_gaps` |
+
+### What to Do When Stuck
+
+| Situation | Action |
+|-----------|--------|
+| Can't find authoritative source | Load `technical_research`, check source hierarchy |
+| Chemical code won't compile | Load `implementation_gaps` for syntax pitfalls |
+| Not sure if exercise is good | Load `review_quality`, run exercise review prompt |
+| Content feels flat/boring | Load `learning_design`, check for active recall |
+| Too much content | Apply "one concept per lesson" rule from `course_writing` |

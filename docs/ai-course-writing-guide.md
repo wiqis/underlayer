@@ -4,6 +4,22 @@ This is the practical guide for AI agents writing Chemical course files. Not the
 
 > **This is a living document.** Update the "Discovered Patterns" section as AIs write courses and learn what works.
 
+> **Also load the `course_writing` skill** for the complete reference: end-to-end .ch file template, advanced interactive patterns, and error recovery. This guide covers *the process and patterns*; the skill covers *the code*.
+
+## Quick Reference
+
+Before writing, check this list:
+
+| Rule | Wrong | Right |
+|------|-------|-------|
+| String concat | `"Hello" + " World"` | `string("Hello "); s.append_view(" World")` |
+| If/else | `if(x) { }` | `if(x) { } else { }` |
+| Float literal | `var x = 0.5` | `var x = 0.5f` |
+| Array access | `arr[0]` | `arr.get(0)` |
+| String length | `s.length()` | `s.size()` |
+| #html split | `<div>` in one block, `</div>` in another | Complete element in one block |
+| Chemical in HTML | `if(x) { <p>text</p> }` | `@{if(x) { #html { <p>text</p> } }}` |
+
 ---
 
 ## The Writing Process
@@ -451,15 +467,128 @@ var val = arr.get(0)
 
 > **Update this section as AIs write courses and discover what works.**
 
-*No patterns discovered yet. This section will grow as AIs write courses and learn from experience.*
+### Pattern: The "Concept Sandwich" Structure
+**Discovered:** Wrapping a concept between two concrete examples (example → explanation → annotated example) is more effective than explanation alone.
+**Works because:** First showing primes attention, explanation provides the model, annotated version confirms understanding.
 
-### Template for New Patterns
-```markdown
-### Pattern: [Name]
-**Discovered:** [When and how this was discovered]
-**Works because:** [Why this pattern is effective]
 **Example:**
-[Concrete example]
+```markdown
+## RAW HEX (show first)
+
+00000000: 7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00
+
+## EXPLANATION (then explain)
+
+The first 4 bytes are the magic number. Bytes 4-5 indicate class and encoding.
+
+## ANNOTATED (then show with labels)
+
+00000000: 7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00
+           |___________| |__| |__|
+            magic number  class data encoding
+```
+
+### Pattern: The "Error-First" Exercise
+**Discovered:** Showing the error message BEFORE the exercise gives context that makes the exercise meaningful.
+**Works because:** Learners understand WHY they need to know this, not just THAT they need to know it.
+
+**Example:**
+```markdown
+## EXERCISE
+
+When you run `readelf -h corrupted.elf`, you see:
+
+readelf: Error: Not an ELF file - invalid magic number
+
+What should the first 4 bytes be?
+
+<button class="option" onclick={checkAnswer(this, false)}>01 02 03 04</button>
+<button class="option" onclick={checkAnswer(this, true)}>7f 45 4c 46</button>
+<button class="option" onclick={checkAnswer(this, false)}>fe ed fa ce</button>
+```
+
+### Pattern: The "Progressive Hint" Exercise
+**Discovered:** Exercises with cascading hints teach better than exercises with no hints or immediate answers.
+**Works because:** Learners who struggle get guidance; learners who know it don't need hints.
+
+**Example:**
+```markdown
+<div class="hints">
+    <button class="hint-btn" onclick={showHint(this, 0)}>Hint 1: The first byte is non-printable</button>
+    <button class="hint-btn" onclick={showHint(this, 1)}>Hint 2: Bytes 1-3 spell "ELF" in ASCII</button>
+    <button class="hint-btn" onclick={showHint(this, 2)}>Hint 3: 0x7f is DEL (delete) in ASCII</button>
+</div>
+```
+
+### Pattern: The "Misconception Title"
+**Discovered:** Titled sections like "COMMON MISTAKE: ..." or "YOU MIGHT THINK: ..." grab attention better than inline corrections.
+**Works because:** It signals "this is important" before the learner reads the content.
+
+**Example:**
+```markdown
+## COMMON MISTAKE: "The ELF header is just metadata"
+
+You might think the ELF header is optional metadata you can skip.
+Actually, it's parsed FIRST — without it, the loader doesn't know
+how to read anything else in the file.
+```
+
+### Pattern: The "Verify Yourself" Challenge
+**Discovered:** After showing verified content, challenge learners to verify it themselves. This builds verification habits.
+**Works because:** Learners who verify content learn to distrust unverified claims.
+
+**Example:**
+```markdown
+## VERIFY YOURSELF
+
+I claims the ELF magic is `7f 45 4c 46`. Don't trust me — verify it:
+
+$ xxd -l 4 /bin/ls
+00000000: 7f45 4c46                    .ELF
+
+The first 4 bytes are indeed `7f 45 4c 46`.
+```
+
+### Pattern: The "What Changed?" Comparison
+**Discovered:** Showing the same data before and after a change (e.g., corruption) teaches more than showing just the correct version.
+**Works because:** Comparison highlights what matters by showing what breaks.
+
+**Example:**
+```markdown
+## BEFORE (valid)
+
+00000000: 7f 45 4c 46 02 01 01 00
+           ^^^^^^^^^^^^
+           Valid ELF magic
+
+## AFTER (corrupted)
+
+00000000: 00 00 00 00 02 01 01 00
+           ^^^^^^^^^^^^
+           Corrupted — readelf rejects this
+
+## What changed?
+
+Bytes 0-3: 7f 45 4c 46 → 00 00 00 00
+Result: "invalid magic number" error
+```
+
+### Pattern: The "Real-World Connection"
+**Discovered:** Connecting abstract concepts to real-world tools (readelf, objdump, strace) makes content stick.
+**Works because:** Learners see immediate practical value.
+
+**Example:**
+```markdown
+## WHY THIS MATTERS
+
+When you run `strace ./hello`, you see:
+
+execve("./hello", ["./hello"], 0x7ffd...) = 0
+open("./hello", O_RDONLY)              = 3
+read(3, "\177ELF\2\1\1\0\0\0...", 832) = 832
+
+That `"\177ELF"` in the read() call? That's the magic number
+being read from the file. The kernel checks it immediately.
 ```
 
 ---

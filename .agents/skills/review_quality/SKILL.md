@@ -6,6 +6,20 @@ Load this skill when reviewing, verifying, or critiquing generated course conten
 
 > **Also load `course_writing`** for common mistakes and patterns. This skill covers *how to critique*; `course_writing` covers *what to look for*.
 
+## Quick Start: Reviewing a Single Concept
+
+For a quick review of one concept file, run through this abbreviated checklist:
+
+```
+1. Every hex byte verified? (run readelf/xxd)
+2. Every if has an else?
+3. WHY unit comes first?
+4. Every exercise has exactly one correct answer?
+5. Feedback explains WHY for each option?
+```
+
+For the full 5-type review process, continue below.
+
 ## Review Types
 
 ### 1. Technical Review
@@ -197,6 +211,50 @@ Output:
 | Major | Pedagogically weak, likely to confuse learners | Should fix before publishing |
 | Minor | Stylistic, could be improved | Note for future revision |
 
+### Severity Calibration Guide
+
+**Critical** — The content actively teaches wrong knowledge:
+- Incorrect hex bytes, offsets, or struct layouts
+- Wrong answer marked as correct in an exercise
+- A claim that contradicts the specification
+- Missing prerequisite that causes learner confusion
+
+**Major** — The content works but teaches poorly:
+- No WHY before WHAT (jumps to definition)
+- Exercise that tests memorization, not understanding
+- Feedback that says "wrong" without explaining why
+- Over-explaining (500 words for a 100-word concept)
+- Missing connection to prerequisite concepts
+
+**Minor** — The content works but could be better:
+- Inconsistent terminology (but still understandable)
+- Slightly verbose explanations
+- Missing optional visualizations
+- CSS could be more polished
+
+### Concrete Examples
+
+**Critical:**
+```
+Content claims "ELF header is 52 bytes for ELF64"
+Reality: ELF64 header is 64 bytes, ELF32 is 52 bytes
+Fix: Change to "64 bytes for ELF64, 52 bytes for ELF32"
+```
+
+**Major:**
+```
+Content: "The ELF header is a structure that contains various fields..."
+Problem: No WHY, jumps straight to WHAT
+Fix: Add "When you run readelf -h, how does it know where program headers are?"
+```
+
+**Minor:**
+```
+Content uses "header struct" in one place and "ELF header" in another
+Problem: Inconsistent terminology (but both are understandable)
+Fix: Standardize to "ELF header" throughout
+```
+
 ## Issue Tracking
 
 Every issue found during review is tracked:
@@ -242,3 +300,69 @@ Track review quality:
 | Exercise correctness | 100% correct answers |
 | Pedagogical coverage | 100% concepts with WHY |
 | Consistency | 0 contradictions |
+
+## When to Stop Reviewing
+
+Stop reviewing when ALL of these are true:
+
+1. **No critical issues remain** — every technically wrong claim is fixed
+2. **No major issues remain** — every pedagogically weak section is improved
+3. **All exercises verified** — every answer is correct, every question is unambiguous
+4. **All hex bytes verified** — every byte sequence matches a real file or the spec
+5. **Two review passes completed** — first pass finds issues, second pass confirms fixes
+
+**Do NOT stop reviewing when:**
+- "It looks good enough" — subjective feeling is not a quality gate
+- "I'm tired" — take a break, then come back
+- "Minor issues can wait" — only if they're actually minor
+
+### Review Iteration Pattern
+
+```
+Round 1: Full review (all 5 types)
+  ↓
+Fix critical + major issues
+  ↓
+Round 2: Re-verify fixes + check for new issues introduced
+  ↓
+If Round 2 found new critical/major → Round 3
+If Round 2 clean → Done
+```
+
+**Maximum iterations:** 3. If Round 3 still finds critical issues, the content needs to be rewritten, not reviewed.
+
+## Integration with Other Skills
+
+### Review Type → Skill Mapping
+
+| Review Type | Primary Skill | Supporting Skills |
+|-------------|--------------|-------------------|
+| Technical | `technical_research` | `implementation_gaps` |
+| Pedagogical | `learning_design` | `course_generation` |
+| Consistency | `course_architecture` | `course_generation` |
+| Adversarial | `review_quality` (this skill) | All of the above |
+| Exercise | `course_writing` | `learning_design` |
+
+### What to Do After Review
+
+| Review Result | Action |
+|---------------|--------|
+| Critical issues found | Fix immediately, re-review |
+| Major issues found | Fix before publishing, re-review |
+| Minor issues found | Log in revision-log.md, fix later |
+| No issues found | Publish |
+| Unsure about a claim | Mark `[NEEDS VERIFICATION]`, research later |
+
+### Common Review Anti-Patterns
+
+**Anti-pattern: "Looks correct to me"**
+- Problem: No actual verification against sources
+- Fix: Run readelf/xxd, check the spec, test the exercise
+
+**Anti-pattern: "I'll just check the first few"**
+- Problem: Later content may have worse issues
+- Fix: Review ALL content, use the checklist for every concept
+
+**Anti-pattern: "The exercise seems fine"**
+- Problem: "Seems fine" is not "is correct"
+- Fix: Actually solve every exercise yourself, verify the answer

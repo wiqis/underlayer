@@ -2,6 +2,21 @@
 
 Comprehensive documentation for the `lang/compiled/underlayer` project. Load the relevant skill before working on a particular area.
 
+## Quick Start: I Need To...
+
+| I need to... | Load this skill | Then this |
+|--------------|----------------|-----------|
+| Write a .ch course file | `course_writing` | `implementation_gaps` |
+| Generate a full concept | `course_generation` | `course_writing` |
+| Review someone's content | `review_quality` | `course_writing` |
+| Verify a technical claim | `technical_research` | — |
+| Fix Chemical syntax errors | `implementation_gaps` | `course_writing` |
+| Design how a concept is taught | `learning_design` | `course_generation` |
+| Structure a course | `course_architecture` | `course_generation` |
+| Build an interactive exercise | `micro_interactions` | `course_writing` |
+| Set up deployment | `deployment` | `engineering_patterns` |
+| Understand the system | `product_architecture` | — |
+
 ## Available Skills
 
 | Skill | File | Description |
@@ -23,44 +38,43 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 
 ## Which Skill to Load
 
-| Task | Load |
-|------|------|
-| Understanding the overall system | `product_architecture` |
-| Designing how a concept is taught | `learning_design` |
-| Structuring course content | `course_architecture` |
-| Designing screens or user interactions | `user_flows` |
-| Writing routes or API endpoints | `user_flows` |
-| Implementing onboarding or dashboard | `user_flows` |
-| Researching a technical topic | `technical_research` |
-| Generating course content with AI | `course_generation` |
-| Reviewing generated content | `review_quality` |
-| Setting up deployment | `deployment` |
-| Building or using reusable components | `docs/reusable-components.md` |
-| Writing code or generating course content | `implementation_gaps` |
-| Debugging universal component issues | `implementation_gaps` |
-| Verifying ELF/binary content | `implementation_gaps` |
-| Fixing a bug in the platform | `product_architecture`, relevant module skill |
-| Adding a new exercise type | `learning_design`, `course_architecture` |
-| Verifying a technical claim | `technical_research`, `review_quality` |
-| Adding tooltips, toasts, or micro-animations | `micro_interactions` |
-| Designing keyboard shortcuts | `micro_interactions` |
-| Building empty states or loading skeletons | `micro_interactions` |
-| Implementing bookmarks, notes, or copy | `micro_interactions` |
-| Dark mode, accessibility, or responsive design | `micro_interactions` |
-| Error handling, logging, or security patterns | `engineering_patterns` |
-| Database migrations, caching, or connection pooling | `engineering_patterns` |
-| API contracts, rate limiting, or CORS | `engineering_patterns` |
-| Testing strategy or monitoring setup | `engineering_patterns` |
-| GDPR, privacy, or data retention | `engineering_patterns` |
-| Offline sync or graceful shutdown | `engineering_patterns` |
-| Performance budgets or content validation | `engineering_patterns` |
-| Writing Chemical course content (.ch files) | `course_writing` |
-| Writing exercises or quiz questions | `course_writing` |
-| Debugging Chemical syntax in course files | `course_writing`, `implementation_gaps` |
-| Finding available APIs or library usage | `libs_reference` |
-| Writing Chemical code with correct style | `coding_conventions` |
-| Setting up routes or server configuration | `libs_reference` (server section) |
-| Database operations with SQLite or Turso | `libs_reference` (sqlite3/Turso sections) |
+### AI Course Development (Core Workflow)
+
+| Task | Load | Why |
+|------|------|-----|
+| Generate a new course from scratch | `course_generation` | 11-phase iterative cycle |
+| Generate a single concept | `course_generation` + `course_writing` | Process + code patterns |
+| Write a .ch course file | `course_writing` | Chemical syntax, patterns, exercises |
+| Verify technical claims | `technical_research` | Source hierarchy, verification |
+| Review generated content | `review_quality` | 5 review types, severity levels |
+| Design pedagogical approach | `learning_design` | FSRS, retrieval, interleaving |
+| Structure course content | `course_architecture` | File format, dependencies |
+| Fix Chemical syntax errors | `implementation_gaps` | Known bugs, workarounds |
+
+### Platform Development
+
+| Task | Load | Why |
+|------|------|-----|
+| Understanding the overall system | `product_architecture` | System design, module structure |
+| Designing screens or user interactions | `user_flows` | Every screen, action, data flow |
+| Writing routes or API endpoints | `user_flows` | Route definitions, data flow |
+| Implementing onboarding or dashboard | `user_flows` | Screen-by-screen flow |
+| Adding tooltips, toasts, or micro-animations | `micro_interactions` | 35 tiny UI features |
+| Designing keyboard shortcuts | `micro_interactions` | Shortcut patterns |
+| Building empty states or loading skeletons | `micro_interactions` | Skeleton patterns |
+| Error handling, logging, or security | `engineering_patterns` | Blind spots checklist |
+| Database migrations or caching | `engineering_patterns` | Connection pooling, schema |
+| Testing strategy or monitoring | `engineering_patterns` | Test patterns, metrics |
+| Setting up routes or server config | `libs_reference` | Server API |
+| Database operations | `libs_reference` | SQLite3, Turso API |
+
+### Chemical Language
+
+| Task | Load | Why |
+|------|------|-----|
+| Writing Chemical code | `course_writing` | Syntax patterns, pitfalls |
+| Finding available APIs | `libs_reference` | Complete library catalog |
+| Writing with correct style | `coding_conventions` | Naming, patterns |
 
 ## Additional Documentation
 
@@ -99,4 +113,5 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 - **Database:** Dual-backend SQLite (local) + Turso HTTP (remote)
 - **Course format:** Chemical source files with #html/#css/#js/#md macros → pre-rendered HTML/CSS/JS
 - **Core features:** Spaced repetition (FSRS), interleaved practice, retrieval-first design, anxiety-friendly pacing
-- **Total documents:** 21 docs + 12 skills + 1 AGENTS.md + 1 README
+- **Total documents:** 25 docs + 14 skills + 1 AGENTS.md + 1 README
+- **AI course development:** 4 core skills (course_generation, course_writing, review_quality, technical_research) + 5 supporting docs

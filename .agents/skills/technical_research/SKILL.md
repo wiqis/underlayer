@@ -4,6 +4,19 @@ Load this skill when researching authoritative sources for course topics or veri
 
 > **Also load `engineering_patterns`** for content validation patterns (source verification, exercise verification, manifest validation). This skill covers *how to research*; `engineering_patterns` covers *how to validate what you found*.
 
+## Quick Start: Verifying One Claim
+
+If you just need to verify a single technical claim:
+
+```
+1. Is it in the spec? → Check the relevant section
+2. Can you test it? → Run readelf/xxd/objdump on a real file
+3. Still unsure? → Check authoritative source code (Linux kernel, binutils)
+4. Mark result: VERIFIED / UNVERIFIED / CONFLICTING
+```
+
+For the full research process, continue below.
+
 ## Source Hierarchy
 
 ### Primary Sources (Highest Authority)
@@ -34,6 +47,18 @@ Load this skill when researching authoritative sources for course topics or veri
 | Wikipedia | Any article | May be inaccurate for technical details |
 
 ## Research Process
+
+### Time-Boxing Guide
+
+| Research Task | Time Limit | What to Do If Time Runs Out |
+|---------------|------------|---------------------------|
+| Find the specification | 15 min | Use secondary source, mark `[NEEDS SPEC]` |
+| Read one spec section | 20 min | Read enough to verify current claims, mark rest `[UNVERIFIED]` |
+| Verify one claim | 10 min | Mark `[UNVERIFIED]`, move on |
+| Verify hex bytes | 5 min | Run readelf/xxd, copy real output |
+| Check conflicting sources | 15 min | Use spec as authority, note conflict |
+
+**Rule:** Never spend more than 30 minutes researching one concept. If you can't verify something in 30 minutes, mark it `[UNVERIFIED]` and move on.
 
 ### Step 1: Identify the Specification
 
@@ -126,6 +151,137 @@ If you can't find a primary source for a claim, it may be wrong or outdated. Ver
 ### 5. Inventing plausible-looking data
 
 Never invent byte sequences, offsets, or field names. Every example must be verifiable.
+
+## Handling Conflicting Sources
+
+When sources disagree, use this resolution process:
+
+### Conflict Resolution Priority
+
+| Priority | Source Type | Example |
+|----------|------------|---------|
+| 1 (highest) | Official specification | gABI spec, RFC |
+| 2 | Authoritative source code | Linux kernel, GNU binutils |
+| 3 | Reputable books | "Linkers and Loaders" |
+| 4 | High-quality articles | Eli Bendersky's blog |
+| 5 (lowest) | Forum posts, random blogs | Stack Overflow |
+
+### Resolution Process
+
+```
+1. Identify the conflict
+   Source A says X, Source B says Y
+
+2. Check source priority
+   Is Source A higher priority than Source B?
+   → If yes, trust Source A, note the conflict
+
+3. Both same priority?
+   → Check if one is more specific/recent
+   → Check if they're actually talking about the same thing
+
+4. Still unresolved?
+   → Mark as [CONFLICTING — NEEDS RESOLUTION]
+   → Note both positions in research.md
+   → Do NOT teach either version as fact
+
+5. Check implementation
+   → Run readelf/xxd to see what actually happens
+   → Implementation may resolve the spec ambiguity
+```
+
+### Example: Conflicting ELF Header Size
+
+```
+Conflict:
+- Some sources say "ELF header is 52 bytes"
+- Others say "ELF header is 64 bytes"
+
+Resolution:
+- gABI spec: ELF32 header = 52 bytes, ELF64 header = 64 bytes
+- Both are correct — they're different ELF classes
+- Course content: "The ELF header is 52 bytes for ELF32, 64 bytes for ELF64"
+```
+
+### Example: Conflicting Entry Point
+
+```
+Conflict:
+- Some sources say "entry point is main()"
+- Others say "entry point is _start"
+
+Resolution:
+- gABI spec: e_entry is the virtual address of the entry point
+- Linux: e_entry points to _start (in crt1.o), which calls __libc_start_main, which calls main
+- Both are correct at different levels of abstraction
+- Course content: "The entry point is _start (not main). _start calls __libc_start_main, which calls your main()."
+```
+
+## Verification Workflow Examples
+
+### Example 1: Verifying ELF Magic Bytes
+
+```
+Claim: "The ELF magic number is 7f 45 4c 46"
+
+Step 1: Check the specification
+  gABI spec §1-2: "e_ident[EI_MAG0] through e_ident[EI_MAG3]"
+  → "0x7f 'E' 'L' 'F'"
+  → VERIFIED
+
+Step 2: Check implementation
+  $ readelf -h /bin/ls | grep Magic
+  → "Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00"
+  → CONFIRMED
+
+Step 3: Record
+  Claim: VERIFIED
+  Sources: gABI §1-2, readelf output
+```
+
+### Example 2: Verifying ELF Header Size
+
+```
+Claim: "The ELF header is 64 bytes"
+
+Step 1: Check the specification
+  gABI spec: "The ELF header is 52 bytes for ELF32, 64 bytes for ELF64"
+  → PARTIALLY VERIFIED (needs class distinction)
+
+Step 2: Check implementation
+  $ readelf -h /bin/ls
+  → Class: ELF64
+  $ xxd -l 64 /bin/ls | tail -1
+  → Confirms 64 bytes visible
+
+Step 3: Revise claim
+  Original: "The ELF header is 64 bytes"
+  Revised: "The ELF header is 64 bytes for ELF64 (52 bytes for ELF32)"
+  → VERIFIED with correction
+```
+
+### Example 3: Verifying a Questionable Claim
+
+```
+Claim: "The entry point is always at the beginning of the .text section"
+
+Step 1: Check the specification
+  gABI spec: e_entry is the "virtual address of the entry point"
+  → Doesn't say it's in .text
+
+Step 2: Check implementation
+  $ readelf -l /bin/ls | grep -A1 LOAD
+  → Entry point may be in a different segment
+
+Step 3: Check source code
+  Linux fs/binfmt_elf.c: starts at e_entry
+  → e_entry can be anywhere, not necessarily .text start
+
+Step 4: Record
+  Claim: REFUTED
+  Correct: "The entry point (e_entry) can be anywhere in the executable"
+  → Mark as [NEEDS VERIFICATION] for specific examples
+```
 
 ## ELF Research Guide
 

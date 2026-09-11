@@ -2,6 +2,48 @@
 
 Step-by-step guide for AI to develop high-quality courses. Every course must follow this process exactly. No steps may be skipped.
 
+> **Also load the `course_generation` skill** for the 11-phase generation cycle with artifact templates. This handbook covers *the overall development process*; the skill covers *the generation details*.
+
+## Quick Decision Tree
+
+Use this to determine which phases to run:
+
+```
+New course from scratch?
+  → Run ALL phases (0-7)
+
+Adding a single concept to existing course?
+  → Skip Phase 0 (scoping)
+  → Run Phases 1-7 for the new concept only
+
+Fixing a bug in existing content?
+  → Skip Phases 0-3
+  → Run Phase 4 (generation) for the fix
+  → Run Phase 5 (verification) for the fix
+  → Run Phase 6 (adversarial) only if fix is major
+
+Reviewing existing content?
+  → Skip Phases 0-4
+  → Run Phase 5 (verification) fully
+  → Run Phase 6 (adversarial) fully
+```
+
+## Phase Overview with Time Estimates
+
+| Phase | Name | Time (full course) | Time (single concept) | Can Skip? |
+|-------|------|-------------------|----------------------|-----------|
+| 0 | Topic Scoping | 1-2 hours | No | Only if adding to existing course |
+| 1 | Knowledge Extraction | 2-4 hours | 30-60 min | No |
+| 2 | Curriculum Design | 2-3 hours | 10-20 min | Only if concept order is fixed |
+| 3 | Learning Design | 2-3 hours/concept | 20-40 min | No |
+| 4 | Content Generation | 4-8 hours/module | 60-120 min | No |
+| 5 | Verification | 4-6 hours/module | 30-60 min | No |
+| 6 | Adversarial Review | 2-4 hours/module | 15-30 min | No |
+| 7 | Publication | 1-2 hours | 15-30 min | No |
+
+**Total for a 10-concept course:** ~40-80 hours
+**Total for a single concept:** ~3-6 hours
+
 ---
 
 ## Phase 0: Topic Scoping (1-2 hours)
@@ -445,3 +487,31 @@ Track these metrics for each course:
 | Exercise count | 4-6 per concept |
 | Lesson time | 15-25 minutes per concept |
 | Adversarial issues | 0 critical, 0 major after review |
+
+---
+
+## Template Index
+
+All templates are in the `course_generation` skill. Here's a quick reference:
+
+| Template | Location | When to Use |
+|----------|----------|-------------|
+| `research.md` | `course_generation/SKILL.md` Phase A | Research phase output |
+| `concepts.json` | `course_generation/SKILL.md` Phase B | Knowledge extraction output |
+| `curriculum.json` | `course_generation/SKILL.md` Phase C | Curriculum design output |
+| `learning-design.json` | `course_generation/SKILL.md` Phase D | Learning design output |
+| `verification.md` | `course_generation/SKILL.md` Phase F | Technical verification output |
+| `pedagogy-review.md` | `course_generation/SKILL.md` Phase G | Pedagogical critique output |
+| `interaction-review.md` | `course_generation/SKILL.md` Phase H | Interaction review output |
+| `consistency-review.md` | `course_generation/SKILL.md` Phase I | Consistency review output |
+| `final-review.md` | `course_generation/SKILL.md` Phase J | Final review output |
+| `revision-log.md` | `course_generation/SKILL.md` Phase K | Revision log output |
+| `.ch file template` | `course_writing/SKILL.md` | Writing concept pages |
+| `manifest.json` | `course_architecture/SKILL.md` | Course manifest |
+
+### Template Usage Rules
+
+1. **Copy the template** — don't try to memorize the structure
+2. **Fill in all sections** — empty sections are incomplete work
+3. **Mark unknowns** — use `[UNVERIFIED]` or `[NEEDS RESEARCH]`
+4. **Version your artifacts** — track what changed between iterations

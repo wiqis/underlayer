@@ -488,7 +488,77 @@ $ readelf -h /bin/ls
 
 > **Add new examples as AIs write courses and discover patterns.**
 
-*No examples discovered yet. This section will grow as AIs write courses and learn from experience.*
+### Example 7: Teaching a Non-ELF Topic (Binary Data)
+
+**What Worked:** Showing the same binary concept with multiple real-world examples (images, audio, network packets) made it click for learners.
+
+**What Didn't Work:** Teaching binary data only through ELF examples.
+
+**Why:** Learners who don't care about ELF still need to understand binary data. Multiple contexts build deeper understanding.
+
+### Example 8: The "Build Up" Exercise
+
+**What Worked:** Starting with a trivial exercise and adding complexity in follow-up questions.
+
+**Example:**
+```markdown
+## EXERCISE 1 (Easy)
+
+What is the magic number? (7f 45 4c 46)
+
+## EXERCISE 2 (Medium)
+
+Given this hex dump, identify the class byte:
+7f 45 4c 46 02 01 01 00 ...
+Answer: byte 4 (02 = ELF64)
+
+## EXERCISE 3 (Hard)
+
+Given this hex dump, determine class AND endianness:
+7f 45 4c 46 02 01 01 00 ...
+Answer: class=ELF64 (byte 4), endianness=LE (byte 5)
+```
+
+### Example 9: The "Common Mistake" Section
+
+**What Worked:** A dedicated section titled "COMMON MISTAKE" that explicitly states the wrong belief and corrects it.
+
+**Example:**
+```markdown
+## COMMON MISTAKE
+
+**Wrong:** "The ELF header is at offset 0, so it must be small."
+
+**Right:** The ELF header size depends on the class:
+- ELF32: 52 bytes
+- ELF64: 64 bytes
+
+**Why it's wrong:** Being at offset 0 says nothing about size.
+The size is determined by the number of fields, which differs
+between 32-bit and 64-bit.
+```
+
+### Example 10: Chemical Syntax Anti-Pattern
+
+**What Worked:** Showing the exact Chemical syntax error and the fix side-by-side.
+
+**Example:**
+```markdown
+## CHEMICAL SYNTAX
+
+### WRONG
+```chemical
+var msg = "Hello" + " World"
+if(condition) { doSomething() }
+```
+
+### RIGHT
+```chemical
+var msg = string("Hello ")
+msg.append_view(" World")
+if(condition) { doSomething() } else {}
+```
+```
 
 ### Template for New Examples
 ```markdown
