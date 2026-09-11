@@ -1,16 +1,15 @@
 // ELF Course — Concept 1: Bytes and Binary
-// The first concept: what is a byte, how do bytes represent data.
-using std::string
+// Uses #html, #css, #js macros for all markup.
+// Emits a complete HTML page that works in both static and backend modes.
 
-import page
-import html_cbi
-import css_cbi
-import js_cbi
+using std::string
+using std::string_view
 
 public func render_bytes() : string {
     var page = HtmlPage()
-    page.defaultPrepare()
-    page.append_title(string_view("Bytes and Binary — Underlayer"))
+    page.default_prepare()
+    var title = std::string_view("Bytes and Binary — Underlayer")
+    page.append_title(&title)
 
     #html {
         <div class="lesson">
@@ -51,7 +50,7 @@ public func render_bytes() : string {
                 <div class="hex-dump">
                     <pre>7f 45 4c 46</pre>
                 </div>
-                <p>In decimal: 127, 69, 76, 70. In ASCII: . E L F. That's right — the first four bytes literally spell ".ELF".</p>
+                <p>In decimal: 127, 69, 76, 70. In ASCII: <code>. E L F</code>. That's right — the first four bytes literally spell "ELF".</p>
             </div>
 
             <div class="unit unit-interact">
@@ -83,10 +82,12 @@ public func render_bytes() : string {
                 <div class="hex-dump">
                     <pre>48 65 6c 6c</pre>
                 </div>
-                <button class="quiz-option" onclick="checkQuiz('quiz-2', this, false)">ELF</button>
-                <button class="quiz-option" onclick="checkQuiz('quiz-2', this, true)">Hell</button>
-                <button class="quiz-option" onclick="checkQuiz('quiz-2', this, false)">Help</button>
-                <div class="quiz-feedback" id="quiz-2-feedback"></div>
+                <div class="quiz" id="quiz-2">
+                    <button class="quiz-option" onclick="checkQuiz('quiz-2', this, false)">ELF</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-2', this, true)">Hell</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-2', this, false)">Help</button>
+                    <div class="quiz-feedback"></div>
+                </div>
             </div>
 
             <div class="unit unit-connect">

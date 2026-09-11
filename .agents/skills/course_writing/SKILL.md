@@ -145,6 +145,75 @@ courses/elf/output/
 
 **Key rule:** Every course page must be a complete, standalone HTML file. No external API calls required. All interactivity is client-side JS. Progress stored in localStorage when no backend.
 
+### Using Universal Components in Course Pages
+
+Course pages can use universal components for interactive widgets. Import the component, use it inside `#html`:
+
+```chemical
+// courses/elf/src/bytes.ch
+import components    // For Card, Button, Badge, etc.
+import "../content/components/ProgressBar"   // Custom course components
+
+public func render_bytes() : std::string {
+    var page = HtmlPage()
+    page.default_prepare()
+
+    #html {
+        <div class="lesson">
+            <h1>Bytes and Binary</h1>
+
+            <!-- Use built-in Card component -->
+            <Card>
+                <CardTitle>Key Insight</CardTitle>
+                <CardBody>
+                    <p>A byte is just a number from 0 to 255.</p>
+                </CardBody>
+            </Card>
+
+            <!-- Use custom ProgressBar component -->
+            <ProgressBar value={3} max={12} />
+
+            <!-- Plain HTML for static content -->
+            <div class="hex-dump">
+                <pre>7f 45 4c 46</pre>
+            </div>
+        </div>
+    }
+
+    #css { .lesson { max-width: 800px; } }
+    #js { function selectByte(el) { /* ... */ } }
+
+    return page.to_string()
+}
+```
+
+### When to Use Components in Courses
+
+| Situation | Approach |
+|-----------|----------|
+| Static lesson content | Plain `#html` — simpler, no hydration overhead |
+| Interactive quiz with state | `#universal Quiz` component — SSR + hydration |
+| Progress indicator | `#universal ProgressBar` — re-renders on state change |
+| Design system elements (buttons, cards) | Built-in `components` — consistent styling |
+| Hex viewer / code explorer | Custom `#universal HexViewer` — stateful interaction |
+
+### Component Import Pattern for Courses
+
+```chemical
+// courses/elf/chemical.mod
+module elf_course
+source "src"
+import std
+import cstd
+import page
+import html_cbi
+import css_cbi
+import js_cbi
+import components                              // Design system
+import "../../content/components/ProgressBar"  // Custom course components
+import "../../content/components/Quiz"         // Custom quiz component
+```
+
 ### The #html Block Pattern
 ```chemical
 #html {

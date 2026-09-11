@@ -209,3 +209,139 @@ public func main() : int {
     return 0
 }
 ```
+
+## Universal Components
+
+Universal components provide SSR + hydration. They work inside `#html { }` blocks and render on both server and client.
+
+> **⚠️ Current Status:** The `components` library (`lang/libs/components/`) has pre-existing parser errors in `Card.ch:161` and `Sheet.ch:215`. Importing `components` causes build failures. Use plain HTML for course content until these are fixed.
+
+### When to Use Universal Components
+
+| Use Case | Approach |
+|----------|----------|
+| Static course content (lessons, quizzes) | Plain `#html` + `#js` — simpler, no hydration needed |
+| Interactive widgets shared across pages | `#universal` component — SSR + hydration (when components lib is fixed) |
+| Stateful UI (toggles, tabs, dialogs) | `#universal` component with `useState` (when components lib is fixed) |
+| Design system components (Button, Card, Badge) | Plain HTML with CSS — avoid `import components` until parser errors fixed |
+
+### Universal Component Pattern
+
+```chemical
+// components/src/ProgressBar.ch
+
+func progress_styles(page : &mut HtmlPage) : *char {
+    return #css {
+        width: 100%;
+        height: 8px;
+        background: hsl(var(--muted));
+        border-radius: 9999px;
+        overflow: hidden;
+        .chx-progress-fill {
+            height: 100%;
+            background: hsl(var(--primary));
+            transition: width 0.3s ease;
+        }
+    }
+}
+
+public #universal ProgressBar(props) {
+    var value = props.value || 0
+    var max = props.max || 100
+    var pct = (value * 100) / max
+    var fillStyle = "width: " + underlayer_core::int_to_string(pct) + "%"
+    return <div class={${progress_styles(page)}}>
+        <div class="chx-progress-fill" style={fillStyle}></div>
+    </div>
+}
+```
+
+### Usage in Pages
+
+```chemical
+#html {
+    <div class="lesson">
+        <h1>Your Progress</h1>
+        <ProgressBar value={3} max={12} />
+    </div>
+}
+```
+
+### Key Rules
+
+1. **CSS goes in a `*_styles` function** that returns `#css { }` — this emits a hashed class name
+2. **Component is `public #universal ComponentName(props)`** — the `#universal` keyword triggers SSR + hydration
+3. **Props are accessed via `props.name`** — `props.children` for nested content
+4. **Use `data-*` attributes for state-driven CSS** — not inline `style` (which gets wiped by hydration)
+5. **Import `components` module** for design system primitives (Button, Card, Badge, etc.)
+
+### Stateful Components
+
+```chemical
+public #universal ConceptCard(props) {
+    var [expanded, setExpanded] = useState(false)
+    var arrowClass = expanded ? "arrow rotated" : "arrow"
+    var contentStyle = expanded ? "" : "display: none;"
+
+    return <div class="concept-card">
+        <div class="concept-header" onClick={() => setExpanded(!expanded)}>
+            <span>{props.title}</span>
+            <span class={arrowClass}>▸</span>
+        </div>
+        <div class="concept-content" style={contentStyle}>
+            {props.children}
+        </div>
+    </div>
+}
+```
+
+### CSS for Stateful Components
+
+```chemical
+#css {
+    .concept-card { border: 1px solid hsl(var(--border)); border-radius: 8px; }
+    .concept-header { display: flex; justify-content: space-between; padding: 1rem; cursor: pointer; }
+    .concept-content { padding: 0 1rem 1rem; }
+    .arrow { transition: transform 0.2s; }
+    .arrow.rotated { transform: rotate(90deg); }
+}
+```
+
+### Component File Organization
+
+```
+content/
+  components/
+    ProgressBar.ch        # Reusable progress indicator
+    HexViewer.ch          # Interactive hex dump viewer
+    Quiz.ch               # Quiz with options and feedback
+    ConceptCard.ch        # Expandable concept card
+    NavigationBar.ch      # Course navigation (prev/next)
+  src/
+    bytes.ch              # Uses components from content/components/
+    binary_representation.ch
+```
+
+### Module Imports for Universal Components
+
+```chemical
+// content/chemical.mod
+module underlayer_content
+source "src"
+import std
+import cstd
+import page
+import html_cbi
+import css_cbi
+import js_cbi
+import components         # Design system primitives
+import "../core"          # Underlayer utils
+```
+
+### Gotchas
+
+- **Hydration wraps children** in an extra `<div>` — style both direct children and one nesting level
+- **Inline `style` gets wiped** by hydration — use `data-*` attributes + CSS selectors for state
+- **`props.children` is `SsrText`** — a lightweight string view, not a full string
+- **Non-ASCII in JS blobs crashes** — keep all runtime JS ASCII-safe
+- **`createPortal` for overlays** — menus/dialogs that escape `overflow: hidden` ancestors

@@ -455,31 +455,34 @@ import universal_cbi
 ```
 
 ### Available Components
-| Component | Purpose |
-|-----------|---------|
-| `Button` | Clickable button (variants: default, outline, ghost, destructive) |
-| `Card` | Container with border |
-| `CardBody` | Card content area |
-| `CardTitle` | Card heading |
-| `CardDescription` | Card subtext |
-| `CardFooter` | Card actions |
-| `Input` | Text input |
-| `Field` | Label + input wrapper |
-| `Badge` | Status indicator (variants: default, secondary, destructive, outline) |
-| `Alert` | Message banner |
-| `Separator` | Visual divider |
-| `Typography` | Text with styling |
-| `Select` | Dropdown selector |
-| `Sheet` | Slide-out panel |
-| `Toast` | Notification popup |
-| `Slider` | Range input |
+| Component | Purpose | Key Props |
+|-----------|---------|-----------|
+| `Button` | Clickable button | `variant`, `size`, `onClick` |
+| `Card` | Container with border | `size`, `onClick` |
+| `CardBody` | Card content area | — |
+| `CardTitle` | Card heading | `level` (2,3,4) |
+| `CardDescription` | Card subtext | — |
+| `CardFooter` | Card actions | — |
+| `Input` | Text input | `placeholder`, `value`, `onChange` |
+| `Field` | Label + input wrapper | `label`, `error` |
+| `Badge` | Status indicator | `variant` (default, secondary, success, error, warning, info, outline-*) |
+| `Alert` | Message banner | `variant` |
+| `Separator` | Visual divider | — |
+| `Typography` | Text with styling | `variant` |
+| `Select` | Dropdown selector | `options`, `defaultValue`, `onValueChange`, `placeholder` |
+| `Sheet` | Slide-out panel | `open`, `onOpenChange` |
+| `Toast` | Notification popup | — |
+| `Slider` | Range input | `min`, `max`, `value` |
+| `Toggle` | Checkbox/switch/radio | `type`, `checked`, `onCheckedChange` |
+| `ToggleGroup` | Group of toggles | `type`, `value`, `onValueChange` |
+| `RadioGroup` | Radio button group | `value`, `onValueChange` |
+| `Collapsible` | Expandable section | `open` |
 
-### Usage Pattern
+### Usage Pattern (Static Pages)
 ```chemical
 public func render_page() : std::string {
     var page = HtmlPage()
-    page.defaultUniversalSetup()        // REQUIRED
-    page.defaultPrepare()
+    page.default_prepare()
 
     #html {
         <div class="dashboard">
@@ -496,14 +499,94 @@ public func render_page() : std::string {
         .dashboard { padding: 2rem; }
     }
 
-    return page.toString()
+    return page.to_string()
 }
 ```
 
+### Writing Custom Universal Components
+
+```chemical
+// content/components/ProgressBar.ch
+func progress_styles(page : &mut HtmlPage) : *char {
+    return #css {
+        width: 100%;
+        height: 8px;
+        background: hsl(var(--muted));
+        border-radius: 9999px;
+        overflow: hidden;
+        .chx-progress-fill {
+            height: 100%;
+            background: hsl(var(--primary));
+            transition: width 0.3s ease;
+        }
+    }
+}
+
+public #universal ProgressBar(props) {
+    var value = props.value || 0
+    var max = props.max || 100
+    var pct = (value * 100) / max
+    var fillStyle = "width: " + underlayer_core::int_to_string(pct) + "%"
+    return <div class={${progress_styles(page)}}>
+        <div class="chx-progress-fill" style={fillStyle}></div>
+    </div>
+}
+```
+
+### Stateful Components
+
+```chemical
+public #universal ConceptCard(props) {
+    var [expanded, setExpanded] = useState(false)
+    var arrowClass = expanded ? "arrow rotated" : "arrow"
+    var contentStyle = expanded ? "" : "display: none;"
+
+    return <div class="concept-card">
+        <div class="concept-header" onClick={() => setExpanded(!expanded)}>
+            <span>{props.title}</span>
+            <span class={arrowClass}>▸</span>
+        </div>
+        <div class="concept-content" style={contentStyle}>
+            {props.children}
+        </div>
+    </div>
+}
+```
+
+### Component CSS Pattern
+
+CSS goes in a `*_styles` function that returns `#css { }` — emits a hashed class name:
+
+```chemical
+func card_styles(page : &mut HtmlPage) : *char {
+    return #css {
+        display: flex;
+        flex-direction: column;
+        border-radius: var(--radius-lg);
+        border: 1px solid hsl(var(--border));
+        background: hsl(var(--card));
+        &:hover { border-color: hsl(var(--border)); }
+        &[data-variant="sm"] { padding: 0.75rem; }
+    }
+}
+```
+
+### Key Rules
+1. **`#universal` keyword** triggers SSR + hydration — component renders on server AND client
+2. **CSS in `*_styles` function** — returns `#css { }` for hashed class names
+3. **Props via `props.name`** — `props.children` for nested content
+4. **State via `useState(init)`** — returns `[value, setter]`
+5. **Use `data-*` attributes for state-driven CSS** — not inline `style` (wiped by hydration)
+6. **`defaultUniversalSetup()` required** before any component usage in the page
+
 ### Gotchas
 - `defaultUniversalSetup()` is REQUIRED before any component usage
-- Course-specific components must NOT depend on platform components
-- CSS class names are hashed — use semantic names
+- Hydration wraps children in an extra `<div>` — style both direct children and one nesting level
+- Inline `style` gets wiped by hydration — use `data-*` attributes + CSS selectors for state
+- `props.children` is `SsrText` — a lightweight string view, not a full string
+- Non-ASCII in JS blobs crashes — keep all runtime JS ASCII-safe
+- `createPortal` for overlays — menus/dialogs that escape `overflow: hidden` ancestors
+- CSS class names are hashed — use semantic names in source, hashed names in output
 
 ---
 
