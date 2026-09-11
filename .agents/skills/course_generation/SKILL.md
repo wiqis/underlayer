@@ -243,7 +243,7 @@ Each phase produces artifacts. The next phase consumes them. No skipping.
 
 ### Process
 For each concept, design:
-1. The 8-unit lesson structure (WHY → MODEL → REALITY → EXAMPLE → INTERACT → RETRIEVE → APPLY → CONNECT)
+1. The 8-unit lesson structure — see `docs/course-design.md` (Lesson Structure section): WHY → MODEL → REALITY → EXAMPLE → INTERACT → RETRIEVE → APPLY → CONNECT
 2. Exercise types and difficulty progression
 3. Review item generation patterns
 4. Visualization concepts

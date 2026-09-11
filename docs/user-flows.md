@@ -618,3 +618,12 @@ Let users control their experience.
 | `/api/review/submit` | POST | Submit review | `{item_id, rating}` | `{next_item}` |
 | `/api/dashboard` | GET | Dashboard data | — | `{progress, streak, reviews_due, knowledge_health}` |
 | `/api/settings` | GET/PUT | Preferences | `{preferences}` | `{preferences}` |
+
+### Authentication
+
+> **Auth is not implemented yet.** These endpoints are currently open (no session/token). When auth is added:
+> - Use `cookie` or `Authorization` header for session identification
+> - `/api/onboarding` returns `learner_id` — store in cookie, pass to subsequent requests
+> - `/api/courses`, `/api/sessions/*`, `/api/review/*`, `/api/dashboard`, `/api/settings` all require `learner_id`
+> - `/api/health` remains open (used by CI/smoke tests)
+> - See `docs/implementation-patterns.md` for rate limiting patterns (per-IP for unauthenticated, per-learner for authenticated)

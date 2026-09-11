@@ -68,7 +68,9 @@ Every API endpoint returns this structure:
 func load_course_with_fallback(course_id : string) : Result<Course, Error> {
     var course = load_course(course_id)
     if(course is Result.Err) {
-        log_error("Failed to load course: " + course_id, course.error)
+        var err_msg = std::string("Failed to load course: ")
+        err_msg.append_string(&course_id)
+        log_error(err_msg.to_view(), course.error)
         return Result.Err(Error("Course not available"))
     }
     return course
@@ -194,7 +196,9 @@ public struct Config {
         var log_level_str = get_env_string("LOG_LEVEL", "info")
         config.log_level = parse_log_level(log_level_str)
         if(config.log_level is null) {
-            return Result.Err(Error("Invalid LOG_LEVEL: " + log_level_str))
+            var err_msg = std::string("Invalid LOG_LEVEL: ")
+            err_msg.append_string(&log_level_str)
+            return Result.Err(Error(err_msg.to_view()))
         }
 
         return Result.Ok(config)
@@ -350,23 +354,42 @@ public struct ConnectionPool {
 ```
 
 ### Transaction Pattern
+Chemical does not support `defer`. Use `@delete` destructors or explicit cleanup in an `else` branch.
+
 ```chemical
 func update_learner_progress(learner_id : string, concept_id : string, score : float) : Result<(), Error> {
-    var conn = pool.acquire()?
-    defer { pool.release(conn) }
+    var conn_res = pool.acquire()
+    var Ok(conn) = conn_res else { return conn_res as Result<(), Error> }
 
-    conn.begin_transaction()?
+    var tx_res = conn.begin_transaction()
+    if(tx_res is Result.Err) {
+        pool.release(conn)
+        return tx_res as Result<(), Error>
+    }
 
     // Update concept state
-    conn.execute("UPDATE concept_states SET attempts = attempts + 1 WHERE learner_id = ? AND concept_id = ?", learner_id, concept_id)?
+    var r1 = conn.execute("UPDATE concept_states SET attempts = attempts + 1 WHERE learner_id = ? AND concept_id = ?", learner_id, concept_id)
+    if(r1 is Result.Err) {
+        conn.rollback()
+        pool.release(conn)
+        return r1 as Result<(), Error>
+    }
 
     // Update review schedule
-    conn.execute("UPDATE review_items SET next_review = ? WHERE learner_id = ? AND concept_id = ?", next_review_time, learner_id, concept_id)?
+    var r2 = conn.execute("UPDATE review_items SET next_review = ? WHERE learner_id = ? AND concept_id = ?", next_review_time, learner_id, concept_id)
+    if(r2 is Result.Err) {
+        conn.rollback()
+        pool.release(conn)
+        return r2 as Result<(), Error>
+    }
 
-    conn.commit()?
+    conn.commit()
+    pool.release(conn)
     return Result.Ok(())
 }
 ```
+
+> **Note:** Chemical has no `defer` or `try/catch`. Always release resources explicitly in both success and error paths. For structs with resources, use `@delete` destructors for RAII-style cleanup.
 
 ### Never Do This
 - ❌ Run DDL in request handlers — use migrations

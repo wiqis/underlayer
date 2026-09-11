@@ -4,6 +4,37 @@ Tiny UI features that make the learning platform feel polished and helpful. Ever
 
 ---
 
+## Chemical Implementation Note
+
+All examples in this document use raw HTML/CSS for readability. **In the actual codebase**, these are written inside Chemical `.ch` files using `#html`, `#css`, and `#js` macros:
+
+```chemical
+#html {
+    <span class="info-trigger" data-info="virt_addr_def">
+        Virtual Address Space
+        <span class="info-icon">i</span>
+    </span>
+}
+
+#css {
+    .info-trigger { border-bottom: 1px dotted var(--text-muted); cursor: help; }
+    .info-icon { display: inline-flex; width: 16px; height: 16px; }
+}
+
+#js {
+    // JS functions referenced by onclick handlers
+}
+```
+
+Key rules:
+- `onclick="fn(args)"` — use HTML string syntax, NOT JSX `{fn(args)}` syntax
+- `@{}` to escape to Chemical logic inside `#html` blocks, re-enter HTML with nested `#html { }`
+- Never split an HTML element across `#html` blocks
+- CSS variables from `docs/ui-ux-design.md` (e.g. `var(--primary)`, `var(--border)`)
+- See `docs/pedagogy-to-implementation.md` for component→macro mapping
+
+---
+
 ## Quick Reference
 
 | Category | Features | Count |

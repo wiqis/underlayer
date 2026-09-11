@@ -62,7 +62,7 @@ Without it, [what would go wrong].
 - Starting with a question the learner cares about: "How does readelf -h work?" (good)
 
 ### Step 3: Write Each Unit Sequentially
-Don't skip units. Don't reorder them. The 8-unit structure is:
+Don't skip units. Don't reorder them. The 8-unit structure is defined in `docs/course-design.md` (Lesson Structure section):
 1. WHY → 2. MODEL → 3. REALITY → 4. EXAMPLE → 5. INTERACT → 6. RETRIEVE → 7. APPLY → 8. CONNECT
 
 ### Step 4: Write Exercises AFTER All Units
@@ -161,15 +161,17 @@ import universal_cbi
     <div class="exercise">
         <h3>What is the ELF magic number?</h3>
         <div class="options">
-            <button class="option" onclick={checkAnswer(this, false)}>01 02 03 04</button>
-            <button class="option" onclick={checkAnswer(this, true)}>7f 45 4c 46</button>
-            <button class="option" onclick={checkAnswer(this, false)}>fe ed fa ce</button>
-            <button class="option" onclick={checkAnswer(this, false)}>de ad be ef</button>
+            <button class="option" onclick="checkAnswer(this, false)">01 02 03 04</button>
+            <button class="option" onclick="checkAnswer(this, true)">7f 45 4c 46</button>
+            <button class="option" onclick="checkAnswer(this, false)">fe ed fa ce</button>
+            <button class="option" onclick="checkAnswer(this, false)">de ad be ef</button>
         </div>
         <div class="feedback"></div>
     </div>
 }
 ```
+
+**Important:** Use `onclick="fn(args)"` (HTML attribute string), NOT `onclick={fn(args)}` (JSX syntax). Chemical's `#html` macro produces standard HTML attributes.
 
 ### Fill-in-the-Blank
 ```chemical
@@ -177,7 +179,7 @@ import universal_cbi
     <div class="exercise">
         <h3>Complete the command:</h3>
         <p>$ <span class="blank" contenteditable="true"></span> -h hello</p>
-        <button onclick={checkFill(this, 'readelf')}>Check</button>
+        <button onclick="checkFill(this, 'readelf')">Check</button>
     </div>
 }
 ```
@@ -188,11 +190,11 @@ import universal_cbi
     <div class="exercise">
         <h3>Click on the magic number bytes:</h3>
         <div class="hex-viewer">
-            <span class="hex-byte" onclick={selectByte(this, 0)}>7f</span>
-            <span class="hex-byte" onclick={selectByte(this, 1)}>45</span>
-            <span class="hex-byte" onclick={selectByte(this, 2)}>4c</span>
-            <span class="hex-byte" onclick={selectByte(this, 3)}>46</span>
-            <span class="hex-byte" onclick={selectByte(this, 4)}>02</span>
+            <span class="hex-byte" onclick="selectByte(this, 0)">7f</span>
+            <span class="hex-byte" onclick="selectByte(this, 1)">45</span>
+            <span class="hex-byte" onclick="selectByte(this, 2)">4c</span>
+            <span class="hex-byte" onclick="selectByte(this, 3)">46</span>
+            <span class="hex-byte" onclick="selectByte(this, 4)">02</span>
         </div>
     </div>
 }
@@ -471,7 +473,7 @@ public func render_concept() : std::string {
                 <h2>RETRIEVE</h2>
                 <p>Without looking back: [question]?</p>
                 <div class="reveal">
-                    <button onclick={this.parentElement.classList.toggle('revealed')}>Show Answer</button>
+                    <button onclick="this.parentElement.classList.toggle('revealed')">Show Answer</button>
                     <div class="answer">[answer]</div>
                 </div>
             </section>
@@ -562,9 +564,9 @@ For exercises that guide learners through difficulty levels:
     </div>
 
     <div class="hints">
-        <button class="hint-btn" onclick={showHint(this, 0)}>Hint 1: The first 4 bytes are special</button>
-        <button class="hint-btn" onclick={showHint(this, 1)}>Hint 2: They spell something in ASCII</button>
-        <button class="hint-btn" onclick={showHint(this, 2)}>Hint 3: .ELF</button>
+        <button class="hint-btn" onclick="showHint(this, 0)">Hint 1: The first 4 bytes are special</button>
+        <button class="hint-btn" onclick="showHint(this, 1)">Hint 2: They spell something in ASCII</button>
+        <button class="hint-btn" onclick="showHint(this, 2)">Hint 3: .ELF</button>
     </div>
 </section>
 ```
@@ -575,12 +577,12 @@ For exercises where learners identify fields by clicking:
 
 ```chemical
 <div class="hex-interactive">
-    <span class="hex-byte" data-field="magic" onclick={selectByte(this)}>7f</span>
-    <span class="hex-byte" data-field="magic" onclick={selectByte(this)}>45</span>
-    <span class="hex-byte" data-field="magic" onclick={selectByte(this)}>4c</span>
-    <span class="hex-byte" data-field="magic" onclick={selectByte(this)}>46</span>
-    <span class="hex-byte" data-field="class" onclick={selectByte(this)}>02</span>
-    <span class="hex-byte" data-field="data" onclick={selectByte(this)}>01</span>
+    <span class="hex-byte" data-field="magic" onclick="selectByte(this)">7f</span>
+    <span class="hex-byte" data-field="magic" onclick="selectByte(this)">45</span>
+    <span class="hex-byte" data-field="magic" onclick="selectByte(this)">4c</span>
+    <span class="hex-byte" data-field="magic" onclick="selectByte(this)">46</span>
+    <span class="hex-byte" data-field="class" onclick="selectByte(this)">02</span>
+    <span class="hex-byte" data-field="data" onclick="selectByte(this)">01</span>
 </div>
 ```
 
@@ -612,12 +614,12 @@ For building up complexity step by step:
     <div class="step" id="step1">
         <h4>Step 1: Just the magic number</h4>
         <pre>7f 45 4c 46</pre>
-        <button onclick={revealNext('step2')}>Add class byte</button>
+        <button onclick="revealNext('step2')">Add class byte</button>
     </div>
     <div class="step hidden" id="step2">
         <h4>Step 2: Add class</h4>
         <pre>7f 45 4c 46 02</pre>
-        <button onclick={revealNext('step3')}>Add data encoding</button>
+        <button onclick="revealNext('step3')">Add data encoding</button>
     </div>
     <div class="step hidden" id="step3">
         <h4>Step 3: Add data encoding</h4>

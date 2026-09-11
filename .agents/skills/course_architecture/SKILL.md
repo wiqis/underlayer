@@ -493,6 +493,8 @@ Exercises are embedded in concept .ch files as interactive HTML:
 
 ## ELF-Specific Teaching Components
 
+> **⚠ These components are NOT yet implemented.** They are design specifications only. See `implementation_gaps/SKILL.md` for the full list of missing components. Do not reference them in generated code until they exist. Use plain `#html` + `#css` + `#js` patterns instead.
+
 Courses teaching binary formats need specialized interactive components. These live in `courses/elf/src/components/`.
 
 ### InteractiveHexViewer
@@ -597,6 +599,8 @@ Courses should build reusable components that other courses can import.
 5. Every component must have a CSS style function + `#universal` component
 
 ### Components Reusable Across Binary Format Courses
+
+> **⚠ These components are design specs, not implemented.** Build them as needed using plain `#html` + `#css` + `#js` patterns until the universal component versions exist.
 
 | Component | Used In |
 |-----------|---------|

@@ -141,14 +141,16 @@ public struct AppConfig {
     var db_url : std::string
 
     @make
-    func make() {
+    func make() : AppConfig {
         return AppConfig {
-            port = 9000u
+            port = 9000u,
             db_url = std::string("./app.db")
         }
     }
 }
 ```
+
+**Critical:** A struct with `@make` but WITHOUT `@direct_init` **cannot** use `{}` syntax at all. Use `T.make()` instead. With both `@make` + `@direct_init`, both `T{}` and `T.make()` work.
 
 ### Struct with Destructor
 ```chemical
@@ -412,5 +414,5 @@ Before writing code, verify:
 - [ ] Test functions named `test_snake_case()`
 - [ ] Namespaces match module name
 - [ ] `@delete` for destructors with null check
-- [ ] `@constructor` for factory methods
+- [ ] `@make` for constructors (use `T.make()` not `T{}` without `@direct_init`)
 - [ ] `using std::string` at module level (not `using namespace`)

@@ -342,37 +342,4 @@ Every ELF-related claim must be verified against authoritative sources:
 
 Every hex dump, byte offset, struct layout, and field size in course content MUST be verified against `readelf` output or the gABI spec. No invented byte sequences.
 
-## Problems Discovered During Audit
 
-### Problem: Document Redundancy
-
-Multiple documents repeat the same information:
-- 8-unit structure appears in `course-design.md`, `learning_design/SKILL.md`, `course-development-handbook.md`
-- Five Exposures appears in `course-design.md` and `learning_design/SKILL.md`
-- Anxiety design rules appear in `course-design.md`, `adaptive-flow-ui.md`, `learning_design/SKILL.md`
-
-**Action**: Establish single source of truth. Other documents should reference, not repeat.
-
-### Problem: No Bridge Between Pedagogy and Implementation
-
-Teaching design documents are technology-agnostic. Implementation documents are Chemical-specific. No document translates "Quiz component from the catalog" into "here's the `#html` code."
-
-**Action**: Create `docs/pedagogy-to-implementation.md` that maps each teaching component to its Chemical rendering pattern.
-
-### Problem: FSRS Implementation May Not Match Paper
-
-The code in `implementation-details.md` uses a simplified FSRS formula. The actual FSRS-5 paper has a more complex model. Parameters may not produce correct scheduling.
-
-**Action**: Verify the FSRS implementation against the FSRS-5 paper before shipping. Consider using the reference implementation from https://github.com/open-spaced-repetition/fsrs4anki.
-
-### Problem: No End-to-End Test Specification
-
-None of the documents specify how to verify the entire system works end-to-end.
-
-**Action**: Create `docs/e2e-test-plan.md` with specific test scenarios.
-
-### Problem: AI Constraint Pipeline Has No Error Recovery
-
-The 8-step constraint pipeline says "No steps may be skipped" but doesn't specify what happens when a step fails.
-
-**Action**: Add error recovery procedures to `ai-course-writing-constraints.md`.

@@ -65,6 +65,8 @@ Module 4: Sections
 
 ### Lesson Structure
 
+> **Canonical source.** This is the authoritative definition of the 8-unit lesson structure. All other documents (skills, guides, handbooks) should reference this section, not repeat it.
+
 Each concept follows this structure:
 
 ```
