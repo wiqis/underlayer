@@ -101,6 +101,20 @@ core/                        (config, env, logging, utils)
 
 ## Data Flow
 
+### Onboarding Flow
+
+```
+Request: POST /api/onboarding
+  ↓
+web/ receives {goal, prior_knowledge, session_minutes, placement_score}
+  ↓
+repository/ creates LearnerState
+  ↓
+learning/ determines starting concept based on prior_knowledge
+  ↓
+Returns {learner_id, starting_concept}
+```
+
 ### Course Loading (Pre-rendered)
 
 ```
@@ -125,20 +139,106 @@ web/lessons reads courses/elf/output/elf-header.html (pre-rendered)
 Returns HTML file directly (no rendering on request)
 ```
 
-### Learning Session
+### Learning Session Flow
 
 ```
-Request: POST /api/learner/review
+Request: POST /api/sessions/start
   ↓
-web/ reads review results (item ID, rating)
+web/ receives {course_id, type, energy}
   ↓
-learning/FSRS computes next interval
+repository/ creates Session record
   ↓
-repository/ updates review item in database
+learning/ determines first item based on course progress
   ↓
-learning/ProgressTracker updates concept state
+Returns {session_id, first_item}
+
+Request: POST /api/sessions/:id/next
   ↓
-Returns next review item (or session complete)
+web/ receives {concept_id, result}
+  ↓
+learning/ FSRS computes next interval
+  ↓
+repository/ updates ConceptState
+  ↓
+learning/ CLSI computes session load
+  ↓
+Returns {next_item, progress, break_suggested}
+
+Request: POST /api/sessions/:id/complete
+  ↓
+web/ receives {energy_after}
+  ↓
+repository/ updates Session record
+  ↓
+learning/ computes session summary
+  ↓
+Returns {summary, next_reviews}
+```
+
+### Review Session Flow
+
+```
+Request: POST /api/review/start
+  ↓
+web/ receives {course_id}
+  ↓
+learning/ gets due items from FSRS scheduler
+  ↓
+Returns {session_id, items[], estimated_time}
+
+Request: POST /api/review/submit
+  ↓
+web/ receives {item_id, rating}
+  ↓
+learning/ FSRS updates difficulty, stability, retrievability
+  ↓
+repository/ updates ConceptState
+  ↓
+Returns {next_item, progress}
+```
+
+### Dashboard Flow
+
+```
+Request: GET /api/dashboard
+  ↓
+web/ reads learner_id from session
+  ↓
+repository/ gets LearnerState, ConceptStates, Sessions
+  ↓
+learning/ computes:
+  - current_concept (from LearnerState)
+  - course_progress (from ConceptStates)
+  - reviews_due (from FSRS scheduler)
+  - weekly_activity (from Sessions)
+  - knowledge_health (from ConceptStates)
+  ↓
+Returns {progress, streak, reviews_due, knowledge_health, upcoming}
+```
+
+### Adaptation Flow
+
+```
+Performance Data Collected (during sessions)
+  ↓
+CLSI Computed:
+  CLSI = (w1 * accuracy + w2 * (1 - error_rate) + w3 * (1 - retry_rate)) / (w1 + w2 + w3)
+  ↓
+┌─────────────────────────────────────────┐
+│ CLSI >= 0.60 → Optimal                  │
+│   → Continue standard path              │
+│   → Gradually increase difficulty       │
+├─────────────────────────────────────────┤
+│ CLSI 0.40 - 0.60 → Adequate            │
+│   → Continue, monitor                   │
+├─────────────────────────────────────────┤
+│ CLSI < 0.40 → Overloaded               │
+│   → Reduce difficulty                   │
+│   → Shorter sessions                    │
+│   → Check prerequisites                 │
+└─────────────────────────────────────────┘
+  ↓
+Next Session Adjusted
 ```
 
 ### Course Compilation (Build Time)

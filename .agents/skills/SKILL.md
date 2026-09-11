@@ -9,6 +9,7 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 | **Product Architecture** | `product_architecture/SKILL.md` | System design, module structure, data flow, technology decisions |
 | **Learning Design** | `learning_design/SKILL.md` | How concepts are taught, FSRS, retrieval practice, interleaving, anxiety-friendly design |
 | **Course Architecture** | `course_architecture/SKILL.md` | Course file structure, concept dependencies, lesson format, exercise types |
+| **User Flows** | `user_flows/SKILL.md` | Every screen, action, and data flow — onboarding, course browsing, learning sessions, review, dashboard, adaptation |
 | **Implementation Gaps** | `implementation_gaps/SKILL.md` | Known bugs, language limitations, component issues, missing infrastructure, verification patterns |
 | **Technical Research** | `technical_research/SKILL.md` | How to research authoritative sources, verify claims, handle specifications |
 | **Course Generation** | `course_generation/SKILL.md` | How AI generates course content, the iterative cycle, quality gates |
@@ -22,6 +23,9 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 | Understanding the overall system | `product_architecture` |
 | Designing how a concept is taught | `learning_design` |
 | Structuring course content | `course_architecture` |
+| Designing screens or user interactions | `user_flows` |
+| Writing routes or API endpoints | `user_flows` |
+| Implementing onboarding or dashboard | `user_flows` |
 | Researching a technical topic | `technical_research` |
 | Generating course content with AI | `course_generation` |
 | Reviewing generated content | `review_quality` |
@@ -39,6 +43,7 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 | Document | File | Description |
 |---|---|---|
 | **Implementation Details** | `docs/implementation-details.md` | Concrete code patterns: chemical.mod, module wiring, database, FSRS, web routes, course .ch files, universal components |
+| **User Flows** | `docs/user-flows.md` | Every screen, action, and data flow: onboarding, course browsing, learning sessions, review, dashboard, adaptation, settings |
 | **Reusable Components** | `docs/reusable-components.md` | Guide to building and using universal components: Button, Card, Input, Badge, Typography, course-specific components, theme |
 | **Course Development Handbook** | `docs/course-development-handbook.md` | Step-by-step guide for AI to develop courses (7 phases) |
 | **UI/UX Design System** | `docs/ui-ux-design.md` | Colors, typography, spacing, components, interactions, accessibility |
