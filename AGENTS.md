@@ -206,6 +206,7 @@ Load the relevant skill before working on a particular area:
 | `user_flows` | Designing screens, writing routes, implementing user interactions |
 | `micro_interactions` | Adding tooltips, toasts, keyboard shortcuts, bookmarks, notes, dark mode, skeletons |
 | `engineering_patterns` | Error handling, logging, security, caching, testing, monitoring, privacy — the "boring but critical" stuff |
+| `course_writing` | Practical guide for writing .ch course files: patterns, mistakes, Chemical syntax, exercises |
 | `implementation_gaps` | Writing code, generating content, debugging — documents all known bugs and limitations |
 | `technical_research` | Researching authoritative sources for course topics |
 | `course_generation` | Using AI to generate course content |
@@ -226,6 +227,8 @@ Load the relevant skill before working on a particular area:
 | `docs/ui-ux-design.md` | Before building any UI — colors, typography, components, accessibility |
 | `docs/micro-interactions.md` | Before adding any tiny UI feature — info buttons, shortcuts, toasts, bookmarks, notes, skeletons |
 | `docs/implementation-patterns.md` | Before writing any code — blind spots checklist: error handling, logging, security, caching, testing, monitoring, privacy |
+| `docs/ai-course-writing-guide.md` | Before writing any course content — 10 mistakes, 10 patterns, Chemical syntax, verification checklist |
+| `docs/ai-course-writing-examples.md` | When writing exercises or lessons — concrete good vs bad examples |
 | `docs/teaching-components-catalog.md` | Before building any component — complete catalog of teaching primitives |
 | `docs/rendering-pipeline.md` | Before building content rendering — how .ch files become interactive HTML |
 | `docs/developable-components.md` | Before AI generates components — what's AI-generatable vs human-engineered |

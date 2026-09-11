@@ -4,6 +4,8 @@ Load this skill when reviewing, verifying, or critiquing generated course conten
 
 > **Also load `engineering_patterns`** for content validation patterns (source verification, exercise verification, manifest validation). This skill covers *how to review*; `engineering_patterns` covers *what to validate*.
 
+> **Also load `course_writing`** for common mistakes and patterns. This skill covers *how to critique*; `course_writing` covers *what to look for*.
+
 ## Review Types
 
 ### 1. Technical Review

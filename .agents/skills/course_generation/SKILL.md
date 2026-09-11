@@ -2,6 +2,8 @@
 
 Load this skill when using AI to generate course content.
 
+> **Also load `course_writing`** for the practical, in-the-trenches guide to writing .ch files: common mistakes, Chemical syntax patterns, exercise patterns, and verification checklists. This skill covers *the 11-phase process*; `course_writing` covers *how to actually write each file*.
+
 > **Also load `engineering_patterns`** for content validation patterns (manifest validation, concept file validation, exercise verification). This skill covers *how to generate*; `engineering_patterns` covers *how to validate what you generated*.
 
 ## The Iterative Generation Cycle

@@ -4,6 +4,8 @@ Load this skill when designing how concepts are taught, tested, and retained.
 
 > **Also load `engineering_patterns`** for testing patterns (unit tests, integration tests, content validation). This skill covers *what to teach*; `engineering_patterns` covers *how to verify it works*.
 
+> **Also load `course_writing`** for the practical guide to writing .ch files: common mistakes, Chemical syntax, exercise patterns. This skill covers *pedagogical methodology*; `course_writing` covers *how to implement it in Chemical*.
+
 ## Core Principles
 
 ### 1. Learning Is Not Completion

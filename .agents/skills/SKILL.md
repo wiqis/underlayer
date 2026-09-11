@@ -17,6 +17,7 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 | **Deployment** | `deployment/SKILL.md` | Auto-deployment pipeline, Android app, course distribution, CI/CD |
 | **Micro-Interactions** | `micro_interactions/SKILL.md` | 35 tiny UI features: info buttons, keyboard shortcuts, toasts, bookmarks, notes, dark mode, skeleton loading, celebrations |
 | **Engineering Patterns** | `engineering_patterns/SKILL.md` | Error handling, logging, config, security, caching, testing, monitoring, privacy — the "boring but critical" stuff |
+| **Course Writing** | `course_writing/SKILL.md` | Practical guide for AI agents writing .ch course files: patterns, mistakes, Chemical syntax, exercises |
 
 ## Which Skill to Load
 
@@ -51,6 +52,9 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 | GDPR, privacy, or data retention | `engineering_patterns` |
 | Offline sync or graceful shutdown | `engineering_patterns` |
 | Performance budgets or content validation | `engineering_patterns` |
+| Writing Chemical course content (.ch files) | `course_writing` |
+| Writing exercises or quiz questions | `course_writing` |
+| Debugging Chemical syntax in course files | `course_writing`, `implementation_gaps` |
 
 ## Additional Documentation
 
@@ -63,6 +67,8 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 | **UI/UX Design System** | `docs/ui-ux-design.md` | Colors, typography, spacing, components, interactions, accessibility |
 | **Micro-Interactions** | `docs/micro-interactions.md` | 35 tiny UI features with CSS/JS patterns: info buttons, shortcuts, toasts, bookmarks, notes, skeletons, celebrations |
 | **Implementation Patterns** | `docs/implementation-patterns.md` | Blind spots checklist: error handling, logging, security, caching, testing, monitoring, privacy, offline sync, performance |
+| **AI Course Writing Guide** | `docs/ai-course-writing-guide.md` | Practical patterns for AI course writers: 10 mistakes, 10 patterns, Chemical syntax, verification checklist |
+| **AI Course Writing Examples** | `docs/ai-course-writing-examples.md` | Concrete good vs bad examples: explanations, exercises, Chemical .ch files, hex dumps |
 | **AI Course-Writing Constraints** | `docs/ai-course-writing-constraints.md` | 8 constraint methods: RAG, SCoT, CoVe, rubrics, self-consistency, confidence gating, adversarial, human gate |
 | **Teaching Components Catalog** | `docs/teaching-components-catalog.md` | Complete catalog of all teaching primitives (40+ components across 6 families) |
 | **Rendering Pipeline** | `docs/rendering-pipeline.md` | How .ch files become interactive HTML (pre-rendered pipeline) |
@@ -86,4 +92,4 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 - **Database:** Dual-backend SQLite (local) + Turso HTTP (remote)
 - **Course format:** Chemical source files with #html/#css/#js/#md macros → pre-rendered HTML/CSS/JS
 - **Core features:** Spaced repetition (FSRS), interleaved practice, retrieval-first design, anxiety-friendly pacing
-- **Total documents:** 18 docs + 9 skills + 1 AGENTS.md + 1 README
+- **Total documents:** 20 docs + 10 skills + 1 AGENTS.md + 1 README

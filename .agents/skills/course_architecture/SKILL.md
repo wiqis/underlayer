@@ -4,6 +4,8 @@ Load this skill when structuring course content, concept dependencies, or lesson
 
 > **Also load `engineering_patterns`** for content validation patterns (manifest validation, concept file validation, exercise verification). This skill covers *how courses are structured*; `engineering_patterns` covers *how to validate them*.
 
+> **Also load `course_writing`** for the practical guide to writing .ch files: common mistakes, Chemical syntax, exercise patterns. This skill covers *course file structure*; `course_writing` covers *how to write each file*.
+
 ## Course File Structure
 
 ```
