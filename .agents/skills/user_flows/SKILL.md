@@ -2,6 +2,8 @@
 
 Load this skill when designing screens, writing routes, or implementing user interactions. Documents every screen, action, and data flow.
 
+> **Also load `engineering_patterns`** for API contract details (request/response schemas, error codes, rate limiting, pagination). This skill covers *what the user sees*; `engineering_patterns` covers *how the API works*.
+
 ## Quick Reference: All Screens
 
 | Flow | Screen | Purpose |

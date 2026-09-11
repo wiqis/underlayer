@@ -2,6 +2,8 @@
 
 Load this skill when researching authoritative sources for course topics or verifying technical claims.
 
+> **Also load `engineering_patterns`** for content validation patterns (source verification, exercise verification, manifest validation). This skill covers *how to research*; `engineering_patterns` covers *how to validate what you found*.
+
 ## Source Hierarchy
 
 ### Primary Sources (Highest Authority)

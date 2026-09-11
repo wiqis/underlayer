@@ -15,6 +15,8 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 | **Course Generation** | `course_generation/SKILL.md` | How AI generates course content, the iterative cycle, quality gates |
 | **Review Quality** | `review_quality/SKILL.md` | How to review and verify generated content, adversarial review, consistency checks |
 | **Deployment** | `deployment/SKILL.md` | Auto-deployment pipeline, Android app, course distribution, CI/CD |
+| **Micro-Interactions** | `micro_interactions/SKILL.md` | 35 tiny UI features: info buttons, keyboard shortcuts, toasts, bookmarks, notes, dark mode, skeleton loading, celebrations |
+| **Engineering Patterns** | `engineering_patterns/SKILL.md` | Error handling, logging, config, security, caching, testing, monitoring, privacy — the "boring but critical" stuff |
 
 ## Which Skill to Load
 
@@ -37,6 +39,18 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 | Fixing a bug in the platform | `product_architecture`, relevant module skill |
 | Adding a new exercise type | `learning_design`, `course_architecture` |
 | Verifying a technical claim | `technical_research`, `review_quality` |
+| Adding tooltips, toasts, or micro-animations | `micro_interactions` |
+| Designing keyboard shortcuts | `micro_interactions` |
+| Building empty states or loading skeletons | `micro_interactions` |
+| Implementing bookmarks, notes, or copy | `micro_interactions` |
+| Dark mode, accessibility, or responsive design | `micro_interactions` |
+| Error handling, logging, or security patterns | `engineering_patterns` |
+| Database migrations, caching, or connection pooling | `engineering_patterns` |
+| API contracts, rate limiting, or CORS | `engineering_patterns` |
+| Testing strategy or monitoring setup | `engineering_patterns` |
+| GDPR, privacy, or data retention | `engineering_patterns` |
+| Offline sync or graceful shutdown | `engineering_patterns` |
+| Performance budgets or content validation | `engineering_patterns` |
 
 ## Additional Documentation
 
@@ -47,6 +61,8 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 | **Reusable Components** | `docs/reusable-components.md` | Guide to building and using universal components: Button, Card, Input, Badge, Typography, course-specific components, theme |
 | **Course Development Handbook** | `docs/course-development-handbook.md` | Step-by-step guide for AI to develop courses (7 phases) |
 | **UI/UX Design System** | `docs/ui-ux-design.md` | Colors, typography, spacing, components, interactions, accessibility |
+| **Micro-Interactions** | `docs/micro-interactions.md` | 35 tiny UI features with CSS/JS patterns: info buttons, shortcuts, toasts, bookmarks, notes, skeletons, celebrations |
+| **Implementation Patterns** | `docs/implementation-patterns.md` | Blind spots checklist: error handling, logging, security, caching, testing, monitoring, privacy, offline sync, performance |
 | **AI Course-Writing Constraints** | `docs/ai-course-writing-constraints.md` | 8 constraint methods: RAG, SCoT, CoVe, rubrics, self-consistency, confidence gating, adversarial, human gate |
 | **Teaching Components Catalog** | `docs/teaching-components-catalog.md` | Complete catalog of all teaching primitives (40+ components across 6 families) |
 | **Rendering Pipeline** | `docs/rendering-pipeline.md` | How .ch files become interactive HTML (pre-rendered pipeline) |
@@ -70,4 +86,4 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 - **Database:** Dual-backend SQLite (local) + Turso HTTP (remote)
 - **Course format:** Chemical source files with #html/#css/#js/#md macros → pre-rendered HTML/CSS/JS
 - **Core features:** Spaced repetition (FSRS), interleaved practice, retrieval-first design, anxiety-friendly pacing
-- **Total documents:** 17 docs + 7 skills + 1 AGENTS.md + 1 README
+- **Total documents:** 18 docs + 9 skills + 1 AGENTS.md + 1 README

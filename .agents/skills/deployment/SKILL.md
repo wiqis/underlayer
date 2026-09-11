@@ -2,6 +2,8 @@
 
 Load this skill when working on auto-deployment, Android app, or CI/CD pipeline.
 
+> **Also load `engineering_patterns`** for graceful shutdown, monitoring, health checks, and performance budgets. This skill covers *how to deploy*; `engineering_patterns` covers *how to run reliably*.
+
 ## Auto-Deployment Pipeline
 
 ```

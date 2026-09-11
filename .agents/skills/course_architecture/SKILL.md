@@ -2,6 +2,8 @@
 
 Load this skill when structuring course content, concept dependencies, or lesson formats.
 
+> **Also load `engineering_patterns`** for content validation patterns (manifest validation, concept file validation, exercise verification). This skill covers *how courses are structured*; `engineering_patterns` covers *how to validate them*.
+
 ## Course File Structure
 
 ```

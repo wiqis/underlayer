@@ -2,6 +2,8 @@
 
 Load this skill when designing how concepts are taught, tested, and retained.
 
+> **Also load `engineering_patterns`** for testing patterns (unit tests, integration tests, content validation). This skill covers *what to teach*; `engineering_patterns` covers *how to verify it works*.
+
 ## Core Principles
 
 ### 1. Learning Is Not Completion

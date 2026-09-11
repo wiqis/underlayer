@@ -2,6 +2,8 @@
 
 Load this skill when using AI to generate course content.
 
+> **Also load `engineering_patterns`** for content validation patterns (manifest validation, concept file validation, exercise verification). This skill covers *how to generate*; `engineering_patterns` covers *how to validate what you generated*.
+
 ## The Iterative Generation Cycle
 
 AI must never generate a course in one pass. The required cycle:

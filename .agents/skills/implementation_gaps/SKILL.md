@@ -2,6 +2,8 @@
 
 Load this skill when writing code, generating course content, or debugging issues. Documents all known bugs, language limitations, component issues, and missing infrastructure.
 
+> **Also load `engineering_patterns`** for error handling, logging, security, caching, testing, monitoring, and privacy patterns. This skill covers *what's broken*; `engineering_patterns` covers *how to build correctly*.
+
 ## Quick Reference: What NOT to Do
 
 | Never Do This | Why | Do This Instead |
