@@ -215,7 +215,8 @@ Every important concept is encountered at least five times:
 - Pause anywhere — progress saved
 - No streak display
 - Subtle progress: "3 concepts this week" not "Day 47!"
-- Fatigue detection: suggest break if accuracy drops
+- Fatigue detection: if accuracy drops >15% from rolling average over 5 exercises, suggest break
+- Capacity limit: session ends at 80% of chosen duration OR after 3 consecutive errors (whichever comes first)
 
 ### After Sessions
 
@@ -242,10 +243,11 @@ Every important concept is encountered at least five times:
 
 | Signal | Threshold | Action |
 |---|---|---|
-| Accuracy < 60% | On any concept | Flag as weak |
+| Accuracy < 60% | Over 5+ attempts on a single concept | Flag as weak |
 | Difficulty rating > 4 | Self-reported | Simplify exercises |
 | 3+ consecutive "Again" | On any review item | Check prerequisites |
 | No practice > 7 days | On any concept | Suggest review |
+| CLSI < 0.40 | For 2+ consecutive sessions | Reduce difficulty |
 
 ### Repair Flow
 

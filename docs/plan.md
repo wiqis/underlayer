@@ -466,4 +466,4 @@ As we build, we'll encounter Chemical features that don't exist yet. Document th
 | Postgres driver | No Postgres library exists | Use SQLite/Turso HTTP for now; build Postgres binding later if needed |
 | WebSocket | No WebSocket library for real-time updates | Use polling for now |
 
-These gaps will be documented in `docs/chemical-gaps.md` as we encounter them.
+See `docs/implementation-gaps.md` for the comprehensive list of all known gaps, bugs, and limitations.

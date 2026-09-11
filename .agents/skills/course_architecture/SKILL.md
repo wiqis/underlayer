@@ -486,3 +486,141 @@ Exercises are embedded in concept .ch files as interactive HTML:
 4. Course can be opened by any compatible player
 5. Course directory can be zipped and shared
 6. Output is static HTML/CSS/JS — can be served from any web server or CDN
+
+## ELF-Specific Teaching Components
+
+Courses teaching binary formats need specialized interactive components. These live in `courses/elf/src/components/`.
+
+### InteractiveHexViewer
+
+Click bytes to reveal field names, show decoded values. Used in every ELF concept.
+
+```chemical
+// courses/elf/src/components/HexViewer.ch
+public #universal HexViewer(props) {
+    var data = props.data || ""                              // hex string like "7f 45 4c 46"
+    var base_address = props.base_address || "0x00000000"
+    var fields = props.fields || ""                          // JSON array of {offset, size, name, color}
+    return <div {...props}
+        class={(props.className || props.class) || "" + " " + ${hex_viewer_styles(page)}}
+        data-base-address={base_address}
+        data-fields={fields}
+    >{props.children}</div>
+}
+```
+
+**Props**: `data` (hex string), `baseAddress`, `fields` (JSON: `[{offset, size, name, color, description}]`)
+**Behavior**: Click a byte → highlight its field, show decoded value in sidebar
+
+### ElfLayoutDiagram
+
+Clickable SVG showing ELF file structure with byte offsets.
+
+**Props**: `segments` (JSON: `[{type, offset, vaddr, size, name, color}]`)
+**Behavior**: Click a segment → show details (type, offset, size, permissions)
+
+### ByteFieldMapper
+
+Bidirectional highlighting between struct fields and hex bytes.
+
+**Props**: `hexBytes`, `structFields` (JSON: `[{name, offset, size, type, value}]`)
+**Behavior**: Click struct field → highlight bytes. Click bytes → show field.
+
+### MemoryMapAnimator
+
+Shows segments being loaded from file to virtual memory.
+
+**Props**: `fileLayout`, `memoryLayout`
+**Behavior**: Animated arrows showing file→memory mapping with virtual address labels
+
+### StructPaddingVisualizer
+
+Shows memory layout with padding bytes highlighted.
+
+**Props**: `fields` (JSON: `[{name, type, size, offset, alignment}]`)
+**Behavior**: Shows padding bytes in red, explains alignment rules
+
+## Verification Patterns for ELF Content
+
+Every ELF-related claim must be verified against authoritative sources.
+
+### Primary Sources
+
+| Topic | Source |
+|-------|--------|
+| ELF specification | System V gABI: https://refspecs.linuxfoundation.org/elf/elf.pdf |
+| ELF man page | Linux `elf(5)`: https://man7.org/linux/man-pages/man5/elf.5.html |
+| ELF loader | Linux kernel `fs/binfmt_elf.c` |
+| Reference parser | GNU binutils `readelf.c` |
+
+### Verification Tools
+
+| Tool | Purpose |
+|------|---------|
+| `readelf -a <file>` | Display all ELF headers — verify hex dumps, field sizes, offsets |
+| `xxd <file>` | Hex dump — verify byte sequences |
+| `objdump -d <file>` | Disassembly — verify code section content |
+| `objdump -r <file>` | Relocations — verify relocation entries |
+| `nm <file>` | Symbol table — verify symbol entries |
+| `ldd <file>` | Dynamic dependencies — verify dynamic section |
+
+### Verification Rule
+
+Every hex dump, byte offset, struct layout, and field size in course content MUST be verified against `readelf` output or the gABI spec. No invented byte sequences.
+
+### Verification Checklist
+
+Before publishing any ELF concept:
+
+- [ ] All hex bytes match `xxd` output for the referenced ELF file
+- [ ] All struct field offsets match the gABI specification
+- [ ] All enum values match `elf.h` definitions
+- [ ] All memory addresses match `readelf` output
+- [ ] Interactive exercises produce correct results when verified against `readelf`
+- [ ] Code examples compile and run correctly
+- [ ] All cross-references to other concepts are accurate
+
+## Reusable Course Components
+
+Courses should build reusable components that other courses can import.
+
+### Component Reusability Rules
+
+1. **Course-specific components** live in `courses/<name>/src/components/`
+2. **Platform-reusable components** live in `lang/libs/components/`
+3. Course components must NOT depend on platform components (keeps courses portable)
+4. Course components depend on: `page`, `html_cbi`, `css_cbi`, `universal_cbi`
+5. Every component must have a CSS style function + `#universal` component
+
+### Components Reusable Across Binary Format Courses
+
+| Component | Used In |
+|-----------|---------|
+| HexDump | ELF, PE, Mach-O, TLS, WAV, ZIP, PNG |
+| MemoryLayout | ELF loading, stack/heap, pointer arithmetic |
+| FileFormatDiagram | ELF, PE, Mach-O, PDF, MP4 |
+| ByteToFieldMapper | Any struct-to-bytes mapping |
+| EndianToggle | Any multi-endian format |
+
+### Component Documentation Standard
+
+Each component directory should contain:
+
+```
+components/
+    HexViewer/
+        HexViewer.ch      (component implementation)
+        README.md         (purpose, props, usage examples)
+```
+
+## Known Gotchas for Course Authors
+
+Load `implementation_gaps/SKILL.md` for the complete list. Key gotchas:
+
+1. **Never store reactive values in local variables** — the converter can't detect reactivity
+2. **Never toggle portaled menu with `style={...}`** — use `data-*` attributes + CSS
+3. **Never pass C++ structs with `vector<>` as props** — corrupt serialization
+4. **Never call functions directly as props** — hoist to local variable first
+5. **Always use `.get_ptr(i)` for vector iteration** — `.get(i)` returns copy, causes double-free
+6. **Always escape untrusted strings** — `#html` does not auto-escape
+7. **Always verify hex bytes against `readelf`** — no invented byte sequences

@@ -394,9 +394,75 @@ Every page that uses universal components MUST call `page.defaultUniversalSetup(
 
 ## Gotchas
 
-- **Universal components have known bugs.** Use carefully. Prefer simple HTML for course content.
+- **Universal components have known bugs.** Use carefully. Prefer simple HTML for course content. Load `implementation_gaps/SKILL.md` for the full list.
 - **Chemical is young.** Some features may not exist. Document gaps.
 - **Courses must be portable.** No platform-specific dependencies in course files.
 - **Auto-deploy on commit.** Code must be correct before merge.
 - **No SQLite in std libs.** Use the existing `lang/compiled/sqlite3/` package.
 - **Course pages are pre-rendered.** The server serves static files — it does not render on every request.
+
+## Missing Infrastructure
+
+### Binary Format Library (Needed for ELF Course)
+
+Endian helpers are duplicated across `archive/endian`, `audio/wav`, `image/png`. A shared `binfmt` library is needed:
+
+```chemical
+// Proposed: lang/libs/binfmt/
+public namespace binfmt {
+    func read_u8(data : *u8, offset : size_t) : u8
+    func read_u16_le(data : *u8, offset : size_t) : u16
+    func read_u16_be(data : *u8, offset : size_t) : u16
+    func read_u32_le(data : *u8, offset : size_t) : u32
+    func read_u32_be(data : *u8, offset : size_t) : u32
+    func read_u64_le(data : *u8, offset : size_t) : u64
+    func read_u64_be(data : *u8, offset : size_t) : u64
+    struct BitReader { ... }
+    func read_bits(reader : *mut BitReader, count : int) : u64
+    struct ByteSlice { var data : *u8; var len : size_t }
+}
+```
+
+### Interactive Teaching Components (Needed for Course Content)
+
+These components are defined in the teaching catalog but not implemented:
+
+| Component | Priority | Used For |
+|-----------|----------|---------|
+| InteractiveHexViewer | CRITICAL | ELF, PE, Mach-O, TLS, WAV |
+| ElfLayoutDiagram | CRITICAL | ELF structure visualization |
+| ByteFieldMapper | CRITICAL | Struct-to-bytes mapping |
+| MemoryMapAnimator | HIGH | Loading process visualization |
+| StructPaddingVisualizer | HIGH | C struct alignment teaching |
+| RelocationSimulator | HIGH | Link-time relocation |
+| EndiannessDemo | MEDIUM | LE/BE comparison |
+| BitfieldExplorer | MEDIUM | Flag field inspection |
+
+### Chemical Language Gaps
+
+| Gap | Impact | Workaround |
+|-----|--------|-----------|
+| No `try/catch` | No structured error handling | Use `Result<T,E>` everywhere |
+| No `defer` | No RAII cleanup | Use `@delete` destructors |
+| No string `+` operator | Verbose string building | Use `append_view()` or backtick templates |
+| No `vector[]` operator | Verbose array access | Use `.get(i)` / `.get_ptr(i)` |
+| `if` requires `else` | Boilerplate | Always add `else {}` |
+| No `format()` | No printf-style formatting | Use `cstd::sprintf` or backtick templates |
+| No `map()`/`filter()` on vectors | No functional transforms | Write manual loops |
+| `#html` no auto-escape | Security risk | Always use `page::escape_html()` |
+
+### Document Redundancy
+
+Multiple documents repeat the same information. Canonical sources:
+
+| Concept | Canonical Source |
+|---------|-----------------|
+| 8-unit structure | `course-design.md` |
+| Five Exposures | `course-design.md` |
+| Anxiety design | `adaptive-flow-ui.md` |
+| Exercise types | `teaching-components-catalog.md` |
+| FSRS algorithm | `implementation-details.md` |
+| Component catalog | `teaching-components-catalog.md` |
+| Known bugs/gaps | `implementation_gaps/SKILL.md` |
+
+Other documents should reference, not repeat.

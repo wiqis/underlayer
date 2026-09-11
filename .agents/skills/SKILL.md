@@ -9,6 +9,7 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 | **Product Architecture** | `product_architecture/SKILL.md` | System design, module structure, data flow, technology decisions |
 | **Learning Design** | `learning_design/SKILL.md` | How concepts are taught, FSRS, retrieval practice, interleaving, anxiety-friendly design |
 | **Course Architecture** | `course_architecture/SKILL.md` | Course file structure, concept dependencies, lesson format, exercise types |
+| **Implementation Gaps** | `implementation_gaps/SKILL.md` | Known bugs, language limitations, component issues, missing infrastructure, verification patterns |
 | **Technical Research** | `technical_research/SKILL.md` | How to research authoritative sources, verify claims, handle specifications |
 | **Course Generation** | `course_generation/SKILL.md` | How AI generates course content, the iterative cycle, quality gates |
 | **Review Quality** | `review_quality/SKILL.md` | How to review and verify generated content, adversarial review, consistency checks |
@@ -26,6 +27,9 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 | Reviewing generated content | `review_quality` |
 | Setting up deployment | `deployment` |
 | Building or using reusable components | `docs/reusable-components.md` |
+| Writing code or generating course content | `implementation_gaps` |
+| Debugging universal component issues | `implementation_gaps` |
+| Verifying ELF/binary content | `implementation_gaps` |
 | Fixing a bug in the platform | `product_architecture`, relevant module skill |
 | Adding a new exercise type | `learning_design`, `course_architecture` |
 | Verifying a technical claim | `technical_research`, `review_quality` |

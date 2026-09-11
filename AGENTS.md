@@ -203,6 +203,7 @@ Load the relevant skill before working on a particular area:
 | `product_architecture` | Understanding the overall system design |
 | `learning_design` | Designing how concepts are taught and tested |
 | `course_architecture` | Structuring course content and progressions |
+| `implementation_gaps` | Writing code, generating content, debugging — documents all known bugs and limitations |
 | `technical_research` | Researching authoritative sources for course topics |
 | `course_generation` | Using AI to generate course content |
 | `review_quality` | Reviewing and verifying generated content |
@@ -214,6 +215,7 @@ Load the relevant skill before working on a particular area:
 |---|---|
 | `docs/plan.md` | Before starting work — 6-phase roadmap, available libraries, database strategy |
 | `docs/implementation-details.md` | Before writing code — concrete code patterns, library usage, module wiring |
+| `docs/implementation-gaps.md` | Before writing code or generating content — known bugs, language limitations, verification patterns |
 | `docs/conceptual-model.md` | Before designing data models — Course, Concept, Exercise, LearnerState |
 | `docs/course-development-handbook.md` | Before generating any course content — step-by-step 7-phase process |
 | `docs/ai-course-writing-constraints.md` | Before any AI generation — 8 constraint methods, negative constraints |
@@ -228,13 +230,15 @@ Load the relevant skill before working on a particular area:
 | `docs/learner-profiling.md` | Before designing onboarding or adaptation — IRT, behavioral profiling, CLSI |
 | `docs/adaptive-flow-ui.md` | Before designing UI flows — screen-by-screen, anxiety/depression design |
 | `docs/correctness-verification.md` | Before verifying course content — 5-layer verification system |
+| `docs/reusable-components.md` | Before building or using universal components — complete guide with patterns |
 
 ## Gotchas
 
-- **Universal components have known bugs.** Use carefully. Prefer simple HTML for course content.
+- **Universal components have known bugs.** Load `implementation_gaps/SKILL.md` before using them. Prefer simple HTML for course content.
 - **Chemical is young.** Some features may not exist yet. Document gaps, work around them.
 - **Courses must be portable.** No platform-specific dependencies inside course content.
 - **AI generation is iterative.** Never accept first-pass content as final.
 - **Retrieval is not optional.** Every session must include review of previously learned material.
 - **No SQLite in std libs.** Use the existing `lang/compiled/sqlite3/` package or the dual-backend pattern from `lang/compiled/cars/database/`.
 - **Course pages are pre-rendered.** The compiler generates static HTML/CSS/JS files. The server serves these files — it does not render pages on every request.
+- **Always verify ELF content.** Every hex dump, byte offset, and struct layout must be verified against `readelf` output or the gABI spec. No invented byte sequences.
