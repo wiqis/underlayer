@@ -1,0 +1,86 @@
+// Underlayer — Server entrypoint
+// Phase 1: Minimal working platform serving static courses.
+
+public func main() : int {
+    // ---- Config & DB ----
+    var cfg = underlayer_core::load_config()
+    var port = cfg.port
+    var db_url = cfg.db_url.copy()
+    var db_token = cfg.db_token.copy()
+
+    printf("[underlayer] Starting Underlayer on port %s\n", underlayer_core::u32_to_string(port).data())
+
+    var db = underlayer_db::make_client(db_url.copy(), db_token.copy())
+
+    // ---- Init schema (skip for remote DB) ----
+    if(!underlayer_db::is_remote_url(&raw db_url)) {
+        underlayer_repository::init_schema(&raw db)
+    }
+
+    // ---- HTTP Server ----
+    var cfg_server = server.ServerConfig()
+    var addr = std::string(":")
+    var port_str = underlayer_core::u32_to_string(port)
+    addr.append_view(port_str.to_view())
+    cfg_server.addr = addr
+    var srv = server.Server(cfg_server)
+
+    // ---- Routes ----
+
+    // Health check
+    srv.router.add("GET", "/api/health", (||(req, res) => {
+        underlayer_web::handle_health(&req, &raw mut res)
+    }))
+
+    // Course listing
+    srv.router.add("GET", "/api/courses", (||(req, res) => {
+        underlayer_web::handle_list_courses(&req, &raw mut res)
+    }))
+
+    // Course detail
+    srv.router.add("GET", "/api/courses/:courseId", (||(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 2) {
+            var course_id = segments.get_ptr(1)
+            underlayer_web::handle_get_course(course_id, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var ct = std::string_view("application/json")
+            res.set_header_view(std::string_view("Content-Type"), &ct)
+            var body = std::string("{\"error\": \"missing course id\"}")
+            var bv = body.to_view()
+            res.write_view(&bv)
+        }
+    }))
+
+    // Lesson viewer (pre-rendered HTML)
+    srv.router.add("GET", "/api/courses/:courseId/lessons/:conceptId", (||(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 4) {
+            var course_id = segments.get_ptr(2)
+            var concept_id = segments.get_ptr(3)
+            underlayer_web::handle_lesson(course_id, concept_id, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var ct = std::string_view("application/json")
+            res.set_header_view(std::string_view("Content-Type"), &ct)
+            var body = std::string("{\"error\": \"missing course or concept id\"}")
+            var bv = body.to_view()
+            res.write_view(&bv)
+        }
+    }))
+
+    // Home page
+    srv.router.add("GET", "/", (||(req, res) => {
+        underlayer_web::handle_home(&req, &raw mut res)
+    }))
+
+    // ---- Start server ----
+    printf("[underlayer] Server running at http://localhost:%s\n", underlayer_core::u32_to_string(port).data())
+    srv.serve()
+
+    underlayer_db::close(&raw db)
+    return 0
+}
