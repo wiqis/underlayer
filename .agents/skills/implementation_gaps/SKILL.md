@@ -19,12 +19,68 @@ Load this skill when writing code, generating course content, or debugging issue
 | Call function directly as prop: `<Comp value={fn()} />` | 2c temp-local bug | Hoist: `var s = fn(); <Comp value={s} />` |
 | Use `+` for string concatenation | No operator overload | Use `append_view()` or backtick templates |
 | Use `arr[i]` for vector access | No index operator | Use `arr.get(i)` or `arr.get_ptr(i)` |
+| **Use string appends for HTML/CSS/JS** | **FORBIDDEN** | **Use `#html`, `#css`, `#js` macros. Fix macro bugs in CBI plugins.** |
 | Write `if(cond) { ... }` without else | Language requires else | Always add `else {}` |
 | Use `0.5` for float parameters | It's `double` | Use `0.5f` |
 | Split `#html` across blocks | Element must close in same block | Use `@{}` escape for dynamic content |
 | Put non-ASCII in `page.ch` JS strings | Crashes `std::string::find` | Keep ASCII only |
 | Use `#css` inside `#universal` bodies | Server-only, can't appear there | Use `#css` at module level |
 | Use `.get(i)` on vectors with destructible types | Returns copy, causes double-free | Use `.get_ptr(i)` |
+
+## Dual-Mode Architecture (Static + Backend)
+
+Courses MUST work in two modes. This is a core constraint.
+
+### Static Mode (GitHub Pages)
+- Courses compile to static HTML/CSS/JS files
+- Served via GitHub Pages — no server required
+- Settings stored in localStorage — progress, preferences, bookmarks
+- Offline-first — download HTML files, open in browser
+
+### Backend Mode (Full Server)
+- Same courses, plus user accounts, profiles, analytics
+- Server-side progress — spaced repetition, learning history
+- Adaptive flow — FSRS engine adjusts difficulty
+- Cross-device sync — progress follows the learner
+
+### Course Design Rule: Backend-Optional
+
+Every course MUST work without a backend:
+1. Course content is self-contained HTML — no API calls required
+2. All interactivity is client-side JS — works offline
+3. Progress detection is optional — localStorage if no backend
+4. Backend enhances, never gates — adds features but never blocks content
+
+### Emission Pattern
+
+```chemical
+// Each concept file emits a complete HTML page
+public func render_concept() : std::string {
+    var page = HtmlPage()
+    page.default_prepare()
+
+    #html {
+        <div class="lesson">
+            <h1>Concept Title</h1>
+            <!-- Full lesson content -->
+        </div>
+    }
+
+    #css { /* Scoped styles */ }
+    #js { /* Client-side interactivity */ }
+
+    return page.to_string()  // Complete HTML page
+}
+```
+
+### Common Mistakes
+
+| Mistake | Problem | Solution |
+|---------|---------|----------|
+| Course requires API calls to render | Can't work on GitHub Pages | All content in HTML, no API dependencies |
+| Progress only on server | Offline fails | localStorage fallback |
+| JS depends on backend endpoints | Static mode broken | Client-side only, no fetch() |
+| CSS uses server-rendered variables | Static mode broken | All styles in #css block |
 
 ## Universal Component Bugs (Critical)
 

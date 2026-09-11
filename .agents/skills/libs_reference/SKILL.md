@@ -175,10 +175,44 @@ public func render_page() : std::string {
 ```
 
 ### Gotchas
+- **NEVER use string appends for HTML/CSS/JS** — ALWAYS use `#html`, `#css`, `#js` macros
 - `defaultUniversalSetup()` is REQUIRED before any `#html` with components
 - `defaultPrepare()` sets up the HTML structure
 - CSS goes in `#css { }` blocks, not inline
 - JS goes in `#js { }` blocks
+
+### Dual-Mode Pattern
+
+The `page` library enables both static and backend serving:
+
+**Static Mode (GitHub Pages):**
+```chemical
+// Concept file emits complete HTML
+public func render_concept() : std::string {
+    var page = HtmlPage()
+    page.default_prepare()
+    #html { <div>...</div> }
+    #css { ... }
+    #js { ... }
+    return page.to_string()  // Complete HTML page
+}
+```
+
+**Backend Mode (Server):**
+```chemical
+// Route handler serves the same HTML
+public func handle_lesson(req : &http::Request, res : *mut http::ResponseWriter) {
+    var page = HtmlPage()
+    page.default_prepare()
+    #html { <div>...</div> }
+    #css { ... }
+    #js { ... }
+    var html = page.to_string()
+    res.write_view(html.to_view())
+}
+```
+
+Both modes produce identical HTML. The difference is delivery: file system vs HTTP response.
 
 ---
 

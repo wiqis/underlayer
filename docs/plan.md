@@ -4,6 +4,58 @@
 
 Current phase: **Phase 0 — Planning ✅** (no code written yet)
 
+## Dual-Mode Architecture (Static + Backend)
+
+Underlayer courses work in TWO modes. This is a core architectural constraint.
+
+### Mode 1: Static (GitHub Pages — No Backend)
+
+Courses compile to static HTML/CSS/JS files. Served via GitHub Pages.
+- **No server required.** Anyone can take the course from a URL.
+- **Settings stored in localStorage.** Progress, preferences, bookmarks — all client-side.
+- **Offline-first.** Download the HTML files, open in browser, works without internet.
+- **Emission:** Chemical source files → `#html`/`#css`/`#js` macros → HtmlPage → `.html` + `.css` + `.js` files → committed to repo → served by GitHub Pages.
+
+### Mode 2: Backend (Full Server — Account Management)
+
+The same courses, plus user accounts, profiles, analytics, and adaptive learning.
+- **User accounts.** Email/password, OAuth, profile management.
+- **Server-side progress.** Spaced repetition schedules, learning history, knowledge health.
+- **Adaptive flow.** FSRS engine adjusts difficulty based on performance.
+- **Cross-device sync.** Progress follows the learner across devices.
+- **API endpoints.** JSON APIs for course data, progress, reviews.
+
+### Course Design Rule: Backend-Optional
+
+Every course MUST work without a backend. This means:
+
+1. **Course content is self-contained HTML.** No API calls required to render lessons.
+2. **All interactivity is client-side JS.** Quizzes, hex viewers, code editors — all work offline.
+3. **Progress detection is optional.** If no backend, progress stays in localStorage.
+4. **Backend enhances, never gates.** Backend adds features (sync, analytics) but never blocks content.
+
+### Emission Pattern
+
+```chemical
+// Each concept file emits a complete HTML page
+public func render_bytes() : std::string {
+    var page = HtmlPage()
+    page.default_prepare()
+
+    #html {
+        <div class="lesson">
+            <h1>Bytes and Binary</h1>
+            <!-- Full lesson content -->
+        </div>
+    }
+
+    #css { /* Scoped styles */ }
+    #js { /* Client-side interactivity */ }
+
+    return page.to_string()  // Complete HTML page
+}
+```
+
 ## Available Libraries (Existing in Chemical Ecosystem)
 
 Before implementing, we reuse these existing libraries rather than building from scratch:

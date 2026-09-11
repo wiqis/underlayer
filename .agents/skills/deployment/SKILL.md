@@ -104,6 +104,44 @@ Course output is just HTML/CSS/JS files. They can be:
 - Hosted on GitHub Pages
 - Distributed as a zip file
 
+### Dual-Mode Deployment
+
+**Static Mode (GitHub Pages):**
+- Compile courses to HTML/CSS/JS files
+- Commit output/ directory to repo
+- GitHub Pages serves automatically
+- No backend required
+- Progress stored in localStorage
+
+**Backend Mode (Full Server):**
+- Same HTML/CSS/JS files served by backend
+- Plus API endpoints for user features
+- Server-side progress, analytics, adaptive learning
+- Cross-device sync
+
+**Deployment Pattern:**
+```bash
+# Build course pages
+cmake-build-debug/TCCCompiler courses/elf/chemical.mod \
+    -o courses/elf/build/elf-pages.exe --mode debug_quick
+./courses/elf/build/elf-pages.exe
+# → writes courses/elf/output/*.html + *.css + *.js
+
+# Commit output to repo
+git add courses/elf/output/
+git commit -m "Update ELF course pages"
+
+# Push to GitHub
+git push
+# → GitHub Pages serves automatically
+
+# Backend server (optional)
+cmake-build-debug/TCCCompiler underlayer/chemical.mod \
+    -o underlayer/build/underlayer.exe --mode debug_quick
+./underlayer/build/underlayer.exe
+# → serves same files + API endpoints
+```
+
 ## Android App
 
 ### Architecture

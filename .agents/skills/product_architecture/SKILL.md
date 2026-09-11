@@ -265,6 +265,30 @@ Course concept .ch files compile to static HTML/CSS/JS at build time. The web se
 - Offline support is trivial (download the output/ directory)
 - The `page` library's `HtmlPage.toString()` or `writeToDirectory()` generates the files
 
+### 1b. Dual-Mode Architecture (Static + Backend)
+
+Courses work in TWO modes. This is a core architectural constraint.
+
+**Mode 1: Static (GitHub Pages)**
+- Courses compile to static HTML/CSS/JS files
+- Served via GitHub Pages — no server required
+- Settings stored in localStorage — progress, preferences, bookmarks
+- Offline-first — download HTML files, open in browser
+- Emission: Chemical → `#html`/`#css`/`#js` → HtmlPage → `.html` + `.css` + `.js` → committed to repo
+
+**Mode 2: Backend (Full Server)**
+- Same courses, plus user accounts, profiles, analytics, adaptive learning
+- Server-side progress — spaced repetition, learning history, knowledge health
+- Adaptive flow — FSRS engine adjusts difficulty based on performance
+- Cross-device sync — progress follows the learner across devices
+
+**Course Design Rule: Backend-Optional**
+Every course MUST work without a backend:
+1. Course content is self-contained HTML — no API calls required
+2. All interactivity is client-side JS — works offline
+3. Progress detection is optional — localStorage if no backend
+4. Backend enhances, never gates — adds features but never blocks content
+
 ### 2. Database Is Dual-Backend
 
 The `DbClient` auto-selects based on connection URL:
@@ -554,6 +578,7 @@ These components are defined in the teaching catalog but not implemented:
 | No `format()` | No printf-style formatting | Use `cstd::sprintf` or backtick templates |
 | No `map()`/`filter()` on vectors | No functional transforms | Write manual loops |
 | `#html` no auto-escape | Security risk | Always use `page::escape_html()` |
+| **String appends for HTML/CSS/JS** | **FORBIDDEN** | **Use `#html`, `#css`, `#js` macros. Fix CBI plugin bugs.** |
 
 ### Document Redundancy
 

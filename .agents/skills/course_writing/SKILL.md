@@ -82,6 +82,69 @@ Run through this checklist before submitting:
 
 ## Chemical Syntax for Course Files
 
+### CRITICAL: NEVER use string appends for HTML/CSS/JS
+
+**This is non-negotiable. If you write `body.append_view("<div>")` or any string-based HTML, you are wrong.**
+
+- **HTML**: ALWAYS use `#html { }` macro
+- **CSS**: ALWAYS use `#css { }` macro  
+- **JS**: ALWAYS use `#js { }` macro
+
+If a macro fails to parse, fix the macro compiler plugin (`html_cbi`, `css_cbi`, `js_cbi`). NEVER fall back to string concatenation.
+
+### Course Emission Pattern
+
+Courses are compiled to static HTML/CSS/JS files. This enables:
+- **GitHub Pages serving** — no backend required
+- **Offline access** — download HTML files, open in browser
+- **Backend enhancement** — server adds user features on top
+
+Each concept file emits a complete HTML page:
+
+```chemical
+// courses/elf/src/bytes.ch
+public func render_bytes() : std::string {
+    var page = HtmlPage()
+    page.default_prepare()
+    page.append_title(std::string_view("Bytes and Binary - Underlayer"))
+
+    #html {
+        <div class="lesson">
+            <h1>Bytes and Binary</h1>
+            <p>Full lesson content here...</p>
+        </div>
+    }
+
+    #css { .lesson { max-width: 800px; } }
+    #js { function selectByte(el) { /* ... */ } }
+
+    return page.to_string()  // Complete HTML page
+}
+```
+
+The build entry calls all render functions and writes output:
+
+```chemical
+// courses/elf/src/main.ch
+public func main() : int {
+    var bytes_html = render_bytes()
+    write_output("output/bytes.html", &raw bytes_html)
+    return 0
+}
+```
+
+**Output structure:**
+```
+courses/elf/output/
+├── index.html        # Course landing page
+├── bytes.html        # Concept page
+├── bytes.css         # Scoped styles
+├── bytes.js          # Interactive behavior
+└── manifest.json     # Metadata for static serving
+```
+
+**Key rule:** Every course page must be a complete, standalone HTML file. No external API calls required. All interactivity is client-side JS. Progress stored in localStorage when no backend.
+
 ### The #html Block Pattern
 ```chemical
 #html {

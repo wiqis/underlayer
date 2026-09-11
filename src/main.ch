@@ -77,6 +77,11 @@ public func main() : int {
         underlayer_web::handle_home(&req, &raw mut res)
     }))
 
+    // Embedded lesson (Phase 1 fallback)
+    srv.router.add("GET", "/courses/elf/lessons/bytes", (||(req, res) => {
+        underlayer_web::handle_bytes_lesson(&req, &raw mut res)
+    }))
+
     // ---- Start server ----
     printf("[underlayer] Server running at http://localhost:%s\n", underlayer_core::u32_to_string(port).data())
     srv.serve()

@@ -10,6 +10,7 @@ Read this before touching any code or content. Also load the relevant skill from
 4. **No feature exists because other platforms have it.** Every feature must justify itself against Underlayer's educational purpose.
 5. **Depth over volume.** One excellent course beats 100 mediocre ones.
 6. **The platform serves the course.** If there's a choice between improving a course and adding a platform feature, the course wins.
+7. **NEVER use string appends for HTML/CSS/JS.** ALL HTML must use `#html { }` macro. ALL CSS must use `#css { }` macro. ALL JS must use `#js { }` macro. If the macro has a bug, fix the macro compiler plugin (`html_cbi`, `css_cbi`, `js_cbi`). NEVER work around macro bugs with string concatenation. This is non-negotiable.
 
 ## AI Constraint System
 
@@ -43,6 +44,7 @@ Every AI agent working on Underlayer must follow these constraints:
 4. **No SQL outside repository layer.** No raw HTML outside `#html` blocks.
 5. **Auto-deploy on commit.** Code must be correct before merge — no "fix it later."
 6. **Reuse existing libraries.** Don't rebuild SQLite, HTTP server, JSON, or page rendering from scratch. See `docs/plan.md` for available libraries.
+7. **MANDATORY: Use macros for all markup.** `#html { }` for HTML, `#css { }` for CSS, `#js { }` for JavaScript. String-based HTML construction (`body.append_view("<div>...")`) is FORBIDDEN. If a macro fails to parse, fix the CBI plugin — never fall back to strings.
 
 ## Architecture
 
@@ -64,6 +66,113 @@ core/                    (config, logging, string+time utils)
 ```
 
 A layer may only call layers below it. If you are tempted to run SQL inside `web/`, stop — add a repository function instead.
+
+## Dual-Mode Architecture (Static + Backend)
+
+Underlayer courses work in TWO modes. This is a core architectural constraint.
+
+### Mode 1: Static (GitHub Pages — No Backend)
+
+Courses are compiled to static HTML/CSS/JS files. Served via GitHub Pages.
+- **No server required.** Anyone can take the course from a URL.
+- **Settings stored in localStorage.** Progress, preferences, bookmarks — all client-side.
+- **Offline-first.** Download the HTML files, open in browser, works without internet.
+- **Emission:** Chemical source files → `#html`/`#css`/`#js` macros → HtmlPage → `.html` + `.css` + `.js` files → committed to repo → served by GitHub Pages.
+
+### Mode 2: Backend (Full Server — Account Management)
+
+The same courses, plus user accounts, profiles, analytics, and adaptive learning.
+- **User accounts.** Email/password, OAuth, profile management.
+- **Server-side progress.** Spaced repetition schedules, learning history, knowledge health.
+- **Adaptive flow.** FSRS engine adjusts difficulty based on performance.
+- **Cross-device sync.** Progress follows the learner across devices.
+- **API endpoints.** JSON APIs for course data, progress, reviews.
+
+### Course Design Rule: Backend-Optional
+
+Every course MUST work without a backend. This means:
+
+1. **Course content is self-contained HTML.** No API calls required to render lessons.
+2. **All interactivity is client-side JS.** Quizzes, hex viewers, code editors — all work offline.
+3. **Progress detection is optional.** If no backend, progress stays in localStorage.
+4. **Backend enhances, never gates.** Backend adds features (sync, analytics) but never blocks content.
+
+### How Courses Are Built
+
+```
+courses/elf/
+├── chemical.mod              # Module declaration
+├── manifest.json             # Metadata (id, title, modules, concepts)
+├── src/
+│   ├── main.ch               # Build entry — calls render functions
+│   ├── bytes.ch              # Concept: uses #html + #css + #js macros
+│   └── ...
+└── output/                   # Generated (committed to repo)
+    ├── index.html            # Course landing page
+    ├── bytes.html            # Concept page
+    ├── bytes.css             # Scoped styles
+    ├── bytes.js              # Interactive behavior
+    └── manifest.json         # Copy of metadata for static serving
+```
+
+### Build Commands
+
+```bash
+# Compile course to static HTML
+cmake-build-debug/TCCCompiler courses/elf/chemical.mod \
+    -o courses/elf/build/elf-pages.exe --mode debug_quick
+./courses/elf/build/elf-pages.exe
+# → writes courses/elf/output/*.html + *.css + *.js
+
+# The output/ directory is committed to repo
+# GitHub Pages serves it directly
+
+# The backend server ALSO serves these files
+# Plus provides API endpoints for user features
+```
+
+### Emission Pattern in Chemical
+
+```chemical
+// Each concept file emits a complete HTML page
+public func render_bytes() : std::string {
+    var page = HtmlPage()
+    page.default_prepare()
+
+    #html {
+        <div class="lesson">
+            <h1>Bytes and Binary</h1>
+            <!-- Full lesson content -->
+        </div>
+    }
+
+    #css { /* Scoped styles */ }
+    #js { /* Client-side interactivity */ }
+
+    return page.to_string()  // Complete HTML page
+}
+```
+
+### Static Mode Features (localStorage)
+
+| Feature | Storage |
+|---------|---------|
+| Progress tracking | `localStorage.progress` |
+| Bookmarks | `localStorage.bookmarks` |
+| Notes | `localStorage.notes` |
+| Review schedule | `localStorage.fsrs` |
+| Settings (theme, font) | `localStorage.settings` |
+
+### Backend Mode Features (Server)
+
+| Feature | Storage |
+|---------|---------|
+| All static features | localStorage (fallback) |
+| User account | `users` table |
+| Cross-device sync | `concept_states` table |
+| Learning analytics | `sessions` table |
+| Adaptive difficulty | `review_items` table |
+| Email reminders | Background worker |
 
 ### Existing Libraries Used
 
@@ -90,11 +199,15 @@ A layer may only call layers below it. If you are tempted to run SQL inside `web
 cmake-build-debug/TCCCompiler lang/compiled/underlayer/chemical.mod \
     -o lang/compiled/underlayer/build/underlayer.exe --mode debug_quick --no-cache -bm-modules
 
-# Run
+# Run (blocks terminal — use Start-Process or separate terminal)
 ./lang/compiled/underlayer/build/underlayer.exe
+
+# Run in background (PowerShell)
+Start-Process -FilePath "./lang/compiled/underlayer/build/underlayer.exe" -NoNewWindow
 
 # Verify (smoke test)
 curl localhost:9000/api/health
+curl localhost:9000/courses/elf/lessons/bytes
 ```
 
 ### Course Pages (Pre-rendered)

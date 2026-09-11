@@ -401,6 +401,7 @@ public namespace my_module {
 
 Before writing code, verify:
 
+- [ ] **NEVER use string appends for HTML/CSS/JS** — use `#html`, `#css`, `#js` macros
 - [ ] No `+` for strings (use `append_view()`)
 - [ ] Every `if` has an `else`
 - [ ] No `0.5` for float (use `0.5f`)

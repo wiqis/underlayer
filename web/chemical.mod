@@ -9,6 +9,7 @@ import json
 import page
 import html_cbi
 import css_cbi
+import js_cbi
 import "../core"
 import "../database"
 import "../models"

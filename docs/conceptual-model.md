@@ -463,8 +463,26 @@ Authoring → Compile → Static Files → Serve → Interact
 1. **Authoring** — Write `.ch` files using `#html`, `#css`, `#js`, `#md` macros
 2. **Compile** — TCCCompiler/LLVM compiles .ch files → `HtmlPage.toString()` or `writeToDirectory()`
 3. **Static Files** — Pre-rendered HTML + CSS + JS files written to `output/` directory
-4. **Serve** — HTTP server serves static files (or CDN, or file://)
+4. **Serve** — HTTP server serves static files (or CDN, or file://, or GitHub Pages)
 5. **Interact** — Browser executes JS, handles events, tracks progress
+
+### Dual-Mode Architecture
+
+Courses work in TWO modes:
+
+**Static Mode (GitHub Pages):**
+- Compiled HTML/CSS/JS files committed to repo
+- Served via GitHub Pages — no server required
+- Progress stored in localStorage
+- Offline-first — download files, open in browser
+
+**Backend Mode (Full Server):**
+- Same HTML/CSS/JS files served by backend
+- Plus user accounts, profiles, analytics
+- Server-side progress, spaced repetition, adaptive learning
+- Cross-device sync
+
+**Course Design Rule:** Every course MUST work without a backend. Content is self-contained HTML. All interactivity is client-side JS. Backend enhances, never gates.
 
 ### Content Format
 
