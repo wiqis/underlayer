@@ -9,47 +9,20 @@ courses/
   elf/
     chemical.mod                    (module declaration)
     manifest.json                   (metadata, version, concept list)
-    concepts/
-      fundamentals/
-        bytes.ch                    (concept: Bytes and Binary)
-        binary-representation.ch
-        file-layout.ch
-      elf-header/
-        identification.ch
-        header-fields.ch
-        entry-point.ch
-      program-headers/
-        header-table.ch
-        segment-types.ch
-        memory-mapping.ch
-      sections/
-        section-header.ch
-        common-sections.ch
-        section-vs-segment.ch
-      symbols/
-        symbol-table.ch
-        binding.ch
-        visibility.ch
-      relocations/
-        relocation-types.ch
-        dynamic-section.ch
-      dynamic-linking/
-        dynamic-section.ch
-        libraries.ch
-        ld-so.ch
-      loading/
-        loader.ch
-        memory-layout.ch
-        execution.ch
-    exercises/
-      identify-header.ch
-      parse-hex.ch
-      diagnose-malformed.ch
-      ...
-    visualizations/
+    src/
+      main.ch                       (build entry — calls render functions, writes output/)
+      bytes.ch                      (concept page: #html + #css + #js → HtmlPage)
+      binary-representation.ch
       file-layout.ch
-      hex-viewer.ch
-      segment-mapping.ch
+      elf-header.ch
+      program-headers.ch
+      sections.ch
+      symbols.ch
+      relocations.ch
+      dynamic-linking.ch
+    output/                         (generated — pre-rendered HTML/CSS/JS)
+      bytes.html + bytes.css + bytes.js
+      elf-header.html + elf-header.css + elf-header.js
       ...
     assets/
       samples/
@@ -59,9 +32,37 @@ courses/
       images/
         elf-layout.svg
         ...
-    reviews/
-      (generated — not manually created)
 ```
+
+## Course chemical.mod
+
+```chemical
+application elf_course
+
+source "src"
+
+import std
+import cstd
+import page
+import html_cbi
+import css_cbi
+import js_cbi
+import universal_cbi
+import components              // platform universal components (Button, Card, etc.)
+import "./components"          // course-specific components (optional)
+```
+
+### Import Rules
+
+| Import | When to Use |
+|--------|-------------|
+| `page` | Always — HtmlPage builder |
+| `html_cbi` | Always — `#html` macro for JSX-like HTML |
+| `css_cbi` | Always — `#css` macro for scoped styles |
+| `js_cbi` | When page has interactivity — `#js` macro |
+| `universal_cbi` | When using `#universal` component definitions |
+| `components` | When using platform components (Button, Card, Input, etc.) |
+| `"./components"` | When course defines its own components |
 
 ## Manifest Format
 
@@ -94,7 +95,8 @@ courses/
       "module": "fundamentals",
       "prerequisites": [],
       "estimated_minutes": 15,
-      "importance": "core"
+      "importance": "core",
+      "source_file": "bytes.ch"
     }
   ],
   "assets": [
@@ -134,141 +136,337 @@ Loader ──→ Memory Layout ──→ Execution
 
 ## Concept File Format
 
-Each concept is a Chemical source file:
+Each concept is a Chemical source file that generates an HTML page using CBI macros. Course content can use platform universal components (Button, Card, etc.) or define course-specific components.
+
+### Simple Concept (No Universal Components)
 
 ```chemical
-// concepts/elf-header/identification.ch
+// src/bytes.ch — Concept: Bytes and Binary
 
-package elf_header
+import page
+import html_cbi
+import css_cbi
+import js_cbi
 
-// Concept: ELF Identification (Magic Bytes)
-// Module: ELF Header
-// Prerequisites: bytes, binary-representation, file-layout
-// Estimated minutes: 15
-// Importance: core
+public func render() : std::string {
+    var page = HtmlPage()
+    page.defaultPrepare()
+    page.appendTitle(std::string_view("Bytes and Binary — Underlayer"))
 
-// Sources:
-// - gABI specification, "ELF Identification" section
-// - https://refspecs.linuxfoundation.org/elf/elf.pdf, p. 4-5
+    #html {
+        <div class="lesson" data-concept="bytes">
+            <header class="lesson-header">
+                <h1>Bytes and Binary</h1>
+                <div class="lesson-meta">15 min · Core concept</div>
+            </header>
 
-public struct LessonContent {
-    var units : vector<LearningUnit>
-    var sources : vector<Source>
-    var exercises : vector<Exercise>
-    var review_items : vector<ReviewItem>
+            <section class="unit unit-why">
+                <h2>Why This Matters</h2>
+                <p>Every piece of data in a computer — text, images, programs — is stored as bytes.</p>
+            </section>
 
-    @make
-    public func make() : LessonContent {
-        // ... content defined here
+            <section class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <div class="quiz" id="quiz-1">
+                    <p class="quiz-question">How many distinct values can a single byte represent?</p>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-1', this, false)">64</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-1', this, true)">256</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </section>
+        </div>
+    }
+
+    #css {
+        .lesson { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        .quiz-option { display: block; width: 100%; padding: 0.75rem; margin: 0.5rem 0; }
+    }
+
+    #js {
+        function checkQuiz(quizId, btn, correct) {
+            var quiz = document.getElementById(quizId);
+            var options = quiz.querySelectorAll('.quiz-option');
+            options.forEach(function(opt) { opt.disabled = true; });
+            if(correct) { btn.classList.add('correct'); }
+            else { btn.classList.add('wrong'); }
+        }
+    }
+
+    return page.toString()
+}
+```
+
+### Concept With Universal Components
+
+```chemical
+// src/elf-header.ch — Concept: ELF Header
+
+import page
+import html_cbi
+import css_cbi
+import js_cbi
+import components           // Button, Card, Badge, etc.
+
+public func render() : std::string {
+    var page = HtmlPage()
+    page.defaultUniversalSetup()     // REQUIRED for universal components
+    page.defaultPrepare()
+    page.appendTitle(std::string_view("ELF Header — Underlayer"))
+
+    #html {
+        <div class="lesson">
+            <header class="lesson-header">
+                <H1>ELF Header</H1>
+                <Badge variant="outline">Core concept</Badge>
+            </header>
+
+            <section class="unit">
+                <H2>Why This Matters</H2>
+                <Text>The ELF header is the first thing a loader reads. It tells the system
+                     how to interpret the rest of the file.</Text>
+            </section>
+
+            <section class="unit">
+                <H2>The ELF Magic Number</H2>
+                <Card>
+                    <CardBody>
+                        <div class="hex-dump">
+                            <code>7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00</code>
+                        </div>
+                    </CardBody>
+                </Card>
+            </section>
+
+            <section class="unit">
+                <H2>Interactive Exploration</H2>
+                <Button variant="default" onClick={showHeaderFields}>
+                    Show All Fields
+                </Button>
+                <Button variant="outline" onClick={resetExploration}>
+                    Reset
+                </Button>
+            </section>
+        </div>
+    }
+
+    #css {
+        .lesson { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        .hex-dump { background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 6px; font-family: monospace; }
+    }
+
+    #js {
+        function showHeaderFields() { /* ... */ }
+        function resetExploration() { /* ... */ }
+    }
+
+    return page.toString()
+}
+```
+
+### Course-Specific Components
+
+Courses can define their own universal components in a `components/` directory:
+
+```
+courses/elf/src/components/
+    HexViewer.ch        (interactive hex dump viewer)
+    ElfDiagram.ch       (clickable ELF layout diagram)
+    QuizFeedback.ch     (quiz result display with explanations)
+```
+
+Course-specific component example:
+
+```chemical
+// courses/elf/src/components/HexViewer.ch
+
+import page
+import html_cbi
+import css_cbi
+import universal_cbi
+
+func hex_viewer_styles(page : &mut HtmlPage) : *char {
+    return #css {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 1rem;
+        border-radius: 6px;
+        font-family: ui-monospace, monospace;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        .hex-byte {
+            display: inline-block;
+            width: 2ch;
+            margin-right: 0.5ch;
+            cursor: pointer;
+            border-radius: 2px;
+            &:hover { background: rgba(59, 130, 246, 0.3); }
+        }
     }
 }
+
+public #universal HexViewer(props) {
+    var data = props.data || ""
+    var base_address = props.base_address || "0x00000000"
+
+    return <div
+        {...props}
+        class={(props.className || props.class) || "" + " " + ${hex_viewer_styles(page)}}
+        data-base-address={base_address}
+    >{props.children}
+        <span class="hex-label" style="display:block;margin-top:0.5rem;font-size:0.8rem;color:#9ca3af">{base_address}</span>
+    </div>
+}
 ```
 
-## Learning Unit Format
+Using course-specific components in concept files:
 
 ```chemical
-public struct LearningUnit {
-    var type : UnitType        // explain, example, show, ask, do, visualize
-    var content : string       // The teaching content
-    var purpose : string       // Why this unit exists (for AI review)
-}
+// courses/elf/src/elf-header.ch
 
-public enum UnitType {
-    Explain
-    Example
-    Show
-    Ask
-    Do
-    Visualize
+import page
+import html_cbi
+import css_cbi
+import js_cbi
+import components
+import "./components/HexViewer"
+
+public func render() : std::string {
+    var page = HtmlPage()
+    page.defaultUniversalSetup()
+    page.defaultPrepare()
+
+    #html {
+        <div class="lesson">
+            <H1>ELF Header</H1>
+            <HexViewer data="7f 45 4c 46 02 01 01 00" base_address="0x00000000">
+            </HexViewer>
+        </div>
+    }
+
+    return page.toString()
 }
 ```
 
-## Exercise Format
+## Build Entry Point
+
+The `src/main.ch` file calls all render functions and writes output:
 
 ```chemical
-public struct Exercise {
-    var id : string
-    var type : ExerciseType    // multiple_choice, hex_inspect, debug, etc.
-    var difficulty : Difficulty // easy, medium, hard
-    var question : string
-    var options : vector<Option>   // for multiple choice
-    var answer : string
-    var explanation : string
-    var misconception : string     // what wrong answer this targets
-    var time_limit_seconds : int   // 0 = no limit
-}
+// src/main.ch — Course build entry point
 
-public enum ExerciseType {
-    MultipleChoice
-    MultipleAnswer
-    FillBlank
-    HexInspect
-    Ordering
-    Matching
-    Labeling
-    Predict
-    Debug
-    Classify
-    Construct
-    Explain
-}
+import std
+import fs
+import bytes
+import binary_representation
+import file_layout
+import elf_header
+import program_headers
+import sections
+import symbols
+import relocations
+import dynamic_linking
 
-public struct Option {
-    var id : string
-    var text : string
-    var correct : bool
-    var feedback : string      // shown when this option is selected
+public func main() : int {
+    fs::mkdir(std::string_view("output"))
+
+    var bytes_html = bytes::render()
+    fs::write_file(std::string_view("output/bytes.html"), bytes_html.to_view())
+
+    var binary_html = binary_representation::render()
+    fs::write_file(std::string_view("output/binary-representation.html"), binary_html.to_view())
+
+    var file_layout_html = file_layout::render()
+    fs::write_file(std::string_view("output/file-layout.html"), file_layout_html.to_view())
+
+    var elf_header_html = elf_header::render()
+    fs::write_file(std::string_view("output/elf-header.html"), elf_header_html.to_view())
+
+    // ... render all concepts ...
+
+    printf("Course pages generated in output/\n")
+    return 0
 }
 ```
 
-## Review Item Format
+### Build Entry Point With Theme
+
+If the course uses the platform theme (header, footer, shared styles), import the theme module:
 
 ```chemical
-public struct ReviewItem {
-    var id : string
-    var concept_id : string
-    var type : ReviewType      // recall, recognize, apply, explain
-    var front : string         // the question or prompt
-    var back : string          // the answer
-    var difficulty : float     // FSRS difficulty (1-10)
-    var stability : float      // FSRS stability (days)
-    var retrievability : float // current recall probability (0-1)
-    var next_review : date     // when this item is due
+// src/main.ch — Course build entry with theme
+
+import std
+import fs
+import theme              // shared layout: header, footer, global styles
+import bytes
+import elf_header
+
+public func main() : int {
+    fs::mkdir(std::string_view("output"))
+
+    // Each concept page gets the full theme layout
+    var bytes_html = render_with_theme(bytes::render())
+    fs::write_file(std::string_view("output/bytes.html"), bytes_html.to_view())
+
+    var elf_header_html = render_with_theme(elf_header::render())
+    fs::write_file(std::string_view("output/elf-header.html"), elf_header_html.to_view())
+
+    printf("Course pages generated in output/\n")
+    return 0
 }
 
-public enum ReviewType {
-    Recall       // "What is X?" (free recall)
-    Recognize    // "Which of these is X?" (multiple choice)
-    Apply        // "Use X to solve this"
-    Explain      // "Explain why X exists"
+func render_with_theme(content : std::string) : std::string {
+    var page = HtmlPage()
+    page.defaultUniversalSetup()
+    page.defaultPrepare()
+
+    theme::apply_theme(&raw page)
+    theme::render_header(&raw page, null)
+
+    // Inject the concept content into the page
+    page.append_raw(content.to_view())
+
+    theme::render_footer(&raw page)
+
+    return page.toString()
 }
 ```
 
-## Lesson Structure (8-Unit Pattern)
+## Learning Unit Types
 
-Every concept follows this structure:
+Every concept follows the 8-unit structure:
 
-```
-1. WHY       (1-2 min)  — Why does this exist?
-2. MODEL     (2-3 min)  — Simplified mental model
-3. REALITY   (3-5 min)  — Actual technical detail
-4. EXAMPLE   (2-3 min)  — Concrete, verifiable example
-5. INTERACT  (2-5 min)  — Interactive exercise or visualization
-6. RETRIEVE  (1-2 min)  — Active recall question
-7. APPLY     (2-5 min)  — Exercise using the knowledge
-8. CONNECT   (1 min)    — How this relates to other concepts
-```
+| Unit | Purpose | Implementation |
+|------|---------|---------------|
+| WHY | Why does this exist? | `#html { <section class="unit-why">... }` |
+| MODEL | Simplified mental model | `#html { <section class="unit-model">... }` |
+| REALITY | Actual technical detail | `#html { <section class="unit-reality">... }` |
+| EXAMPLE | Concrete, verifiable example | `#html { <section class="unit-example">... }` |
+| INTERACT | Interactive exercise | `#html { <section class="unit-interact">... }` + `#js { }` |
+| RETRIEVE | Active recall question | `#html { <section class="unit-retrieve">... }` + `#js { }` |
+| APPLY | Exercise using knowledge | `#html { <section class="unit-apply">... }` + `#js { }` |
+| CONNECT | How this relates to others | `#html { <section class="unit-connect">... }` |
+
+## Exercise Types
+
+Exercises are embedded in concept .ch files as interactive HTML:
+
+| Type | HTML Pattern | JS Logic |
+|------|-------------|----------|
+| Multiple choice | `<button onclick="checkQuiz(...)">` | Compare selected answer, show feedback |
+| Fill in blank | `<input type="text">` + `<button>` | Compare input against correct answer |
+| Hex inspection | `<div class="hex-dump">` with highlighted bytes | Click bytes to reveal field names |
+| Ordering | `<div class="drag-item">` elements | Drag-and-drop reordering, check against correct order |
+| Debug | Code block with error + explanation | Reveal error on click |
 
 ## Visualization Types
 
-| Type | Use Case | Data |
-|---|---|---|
-| `diagram` | File layout, memory map | Structured data (offsets, sizes) |
-| `hex_viewer` | Byte-level inspection | Raw bytes + field annotations |
-| `state_machine` | TLS handshake, linker states | States + transitions |
-| `timeline` | Loading process | Ordered events |
-| `tree` | Symbol table hierarchy | Nodes + children |
-| `code_viewer` | Source + assembly correspondence | Code lines + mappings |
+| Type | HTML Pattern | JS Logic |
+|------|-------------|----------|
+| Diagram | `<svg>` or `<div>` with positioned elements | Click elements to show details |
+| Hex viewer | `<table>` with byte cells + field highlights | Hover to highlight fields |
+| State machine | `<svg>` with states and transitions | Click transitions to step through |
+| Timeline | `<div>` with positioned events | Scroll through stages |
 
 ## Course Versioning
 
@@ -287,3 +485,4 @@ Every concept follows this structure:
 3. All assets are relative paths
 4. Course can be opened by any compatible player
 5. Course directory can be zipped and shared
+6. Output is static HTML/CSS/JS — can be served from any web server or CDN

@@ -13,15 +13,16 @@ CI: Run integration tests
   ↓
 CI: Build web platform
   ↓
+CI: Build course pages (compile .ch → HTML/CSS/JS)
+  ↓
 CD: Deploy web to hosting
+  ↓
+CD: Upload course output to CDN
   ↓
 (if app changes)
 CI: Build Android APK
   ↓
 CD: Upload APK to distribution
-  ↓
-(if courses change)
-CD: Update course CDN
 ```
 
 ### Design Principle
@@ -39,40 +40,67 @@ If any step fails:
 
 ### Stack
 
-- **Server:** Chemical `http::server::Server` (single binary)
-- **Database:** SQLite via Turso HTTP v2
+- **Server:** Chemical `server::Server` (single binary, thread pool)
+- **Database (local):** SQLite3 via `lang/compiled/sqlite3/`
+- **Database (remote):** Turso HTTP v2 via `lang/compiled/academic/libturso/`
 - **Hosting:** Fly.io (or similar — single binary deployment)
 
-### Deploy Steps
+### Build Commands
 
-1. Build the Chemical binary:
 ```bash
+# Build the platform binary
 cmake-build-debug/TCCCompiler lang/compiled/underlayer/chemical.mod \
-    -o build/underlayer.exe --mode debug_quick --no-cache -bm-modules
-```
+    -o lang/compiled/underlayer/build/underlayer.exe --mode debug_quick --no-cache -bm-modules
 
-2. Package for deployment:
-```bash
+# Build course pages (generates output/ directories)
+cmake-build-debug/TCCCompiler lang/compiled/underlayer/courses/elf/chemical.mod \
+    -o lang/compiled/underlayer/courses/elf/build/elf-pages.exe --mode debug_quick --no-cache -bm-modules
+
+# Generate HTML output
+./lang/compiled/underlayer/courses/elf/build/elf-pages.exe
+# → writes courses/elf/output/*.html + *.css + *.js
+
+# Package for deployment
 tar -czf underlayer.tar.gz build/underlayer.exe courses/
-```
 
-3. Deploy to Fly.io:
-```bash
+# Deploy to Fly.io
 fly deploy
 ```
 
 ### Environment Variables
 
-| Variable | Purpose |
-|---|---|
-| `UNDERLAYER_PORT` | Server port (default: 9000) |
-| `DATABASE_URL` | Turso HTTP URL |
-| `DATABASE_TOKEN` | Turso auth token |
-| `STORAGE_BUCKET` | Tigris S3 bucket |
-| `STORAGE_ENDPOINT` | Tigris S3 endpoint |
-| `STORAGE_KEY` | Tigris access key |
-| `STORAGE_SECRET` | Tigris secret key |
-| `COURSE_CDN_URL` | CDN URL for course downloads |
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `PORT` | Server port | `9000` |
+| `DATABASE_URL` | SQLite file path or Turso HTTP URL | `./underlayer.db` |
+| `DATABASE_TOKEN` | Turso auth token (empty for local) | (empty) |
+| `COURSES_DIR` | Course content directory | `./courses` |
+
+## Course Page Deployment
+
+Course pages are pre-rendered static files. They can be deployed independently:
+
+### Option 1: Served by Platform Binary
+
+The platform binary serves `courses/*/output/` directories as static files.
+
+### Option 2: CDN
+
+Upload `courses/*/output/` to Tigris S3 or any CDN:
+
+```bash
+# Upload course output to CDN
+aws s3 sync courses/elf/output/ s3://underlayer-courses/elf/ \
+    --endpoint-url https://fly.storage.tigris.dev
+```
+
+### Option 3: Standalone
+
+Course output is just HTML/CSS/JS files. They can be:
+- Opened directly in a browser (file://)
+- Served by any web server
+- Hosted on GitHub Pages
+- Distributed as a zip file
 
 ## Android App
 
@@ -83,7 +111,7 @@ Android UI (Kotlin)
   ↓ JNI
 Chemical Runtime (libunderlayer.so)
   ↓
-Course Player
+Course Player (reads pre-rendered HTML/CSS/JS in WebView)
   ↓
 FSRS Engine
   ↓
@@ -97,7 +125,7 @@ File System (downloaded courses)
 1. Cross-compile Chemical to Android:
 ```bash
 cmake-build-debug/TCCCompiler lang/compiled/underlayer/chemical.mod \
-    -o build/libunderlayer.so --target android -bm-modules
+    -o lang/compiled/underlayer/build/libunderlayer.so --target android -bm-modules
 ```
 
 2. Build Android APK:
@@ -124,7 +152,7 @@ jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
 
 1. App requests course list from server
 2. User taps "Download" on a course
-3. App downloads course zip from CDN
+3. App downloads course zip from CDN (output/ + assets/ + manifest.json)
 4. Zip extracted to `courses/<id>/`
 5. Manifest loaded
 6. Review items generated (if first download)
@@ -134,7 +162,7 @@ jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
 ### Offline-First Design
 
 The app works entirely offline after course download:
-- All content is local
+- All content is local (pre-rendered HTML/CSS/JS)
 - FSRS runs locally
 - Learner state stored in local SQLite
 - Sync when online (optional)
@@ -157,10 +185,15 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup Chemical
         run: # install Chemical toolchain
-      - name: Build
+      - name: Build Platform
         run: |
           cmake-build-debug/TCCCompiler lang/compiled/underlayer/chemical.mod \
               -o build/underlayer.exe --mode debug_quick --no-cache -bm-modules
+      - name: Build Course Pages
+        run: |
+          cmake-build-debug/TCCCompiler lang/compiled/underlayer/courses/elf/chemical.mod \
+              -o courses/elf/build/elf-pages.exe --mode debug_quick --no-cache -bm-modules
+          ./courses/elf/build/elf-pages.exe
       - name: Test
         run: |
           ./build/underlayer.exe &
@@ -197,21 +230,21 @@ jobs:
 
 ### Setup
 
-Course zips are hosted on Tigris S3 (or any S3-compatible CDN).
+Course output (HTML/CSS/JS) is hosted on Tigris S3 (or any S3-compatible CDN).
 
 ### Upload
 
 ```bash
-# Upload course zip
-aws s3 cp courses/elf-v1.zip s3://underlayer-courses/elf-v1.zip \
+# Upload course output
+aws s3 sync courses/elf/output/ s3://underlayer-courses/elf/ \
     --endpoint-url https://fly.storage.tigris.dev
 ```
 
 ### Update Flow
 
 1. Course version bumps (e.g., 1.0 → 1.1)
-2. New zip uploaded to CDN
-3. Old zip remains (for version pinning)
+2. New output uploaded to CDN
+3. Old output remains (for version pinning)
 4. App detects update on sync
 5. Downloads changed content (delta update)
 6. Merges with existing local copy
@@ -235,7 +268,7 @@ curl http://localhost:9000/api/health
 
 If deployment fails:
 1. Fly.io: `fly deploy --image <previous-image>`
-2. Course CDN: re-upload previous zip version
+2. Course CDN: re-upload previous output version
 3. Android: previous APK remains downloadable
 
 ## Chemical Gaps for Android
@@ -243,7 +276,7 @@ If deployment fails:
 | Gap | Description | Workaround |
 |---|---|---|
 | JNI bridge | Chemical → Android Java interop | Write Android UI in Kotlin, bridge to Chemical via JNI |
-| Android UI toolkit | No Chemical Android UI library | Use Kotlin for UI, Chemical for logic |
+| Android UI toolkit | No Chemical Android UI library | Use Kotlin for UI, Chemical for logic; course content is pre-rendered HTML in WebView |
 | APK signing | Chemical doesn't handle APK signing | Use standard Android toolchain for signing |
 | Delta updates | Download only changed content | Full re-download for now |
 

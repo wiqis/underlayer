@@ -55,83 +55,114 @@ How `.ch` course files become interactive HTML pages. The complete pipeline from
 
 ```
 courses/elf/
-├── chemical.mod              # Module declaration
+├── chemical.mod              # Module declaration (imports page, html_cbi, css_cbi, js_cbi)
 ├── manifest.json             # Course metadata + sequence
-├── concepts/                 # Individual concepts
-│   ├── bytes.ch
+├── src/                      # Concept source files
+│   ├── main.ch               # Build entry — calls render functions, writes output/
+│   ├── bytes.ch              # Concept page using #html + #css + #js
 │   ├── binary-representation.ch
-│   └── elf-header.ch
-├── exercises/                # Practice exercises
-│   ├── identify-fields.ch
-│   └── parse-hex.ch
-├── visualizations/           # Interactive diagrams
-│   ├── file-layout.ch
-│   └── memory-mapping.ch
-├── assets/                   # Static files
-│   ├── samples/             # Real ELF files
-│   └── images/
-└── review/                   # Review items
-    └── spaced-repetition.ch
+│   ├── elf-header.ch
+│   └── ...
+├── output/                   # Generated — pre-rendered HTML/CSS/JS
+│   ├── bytes.html + bytes.css + bytes.js
+│   ├── elf-header.html + elf-header.css + elf-header.js
+│   └── ...
+└── assets/                   # Static files
+    ├── samples/             # Real ELF files
+    └── images/
+```
+
+### Course chemical.mod
+
+```chemical
+application elf_course
+
+source "src"
+
+import std
+import cstd
+import page
+import html_cbi
+import css_cbi
+import js_cbi
 ```
 
 ### Concept File Format (.ch)
 
+Each concept is a Chemical source file that generates an HTML page:
+
 ```chemical
-@concept
-@difficulty 2
-@prerequisites ["bytes", "binary"]
-@authority "gABI v1.0, Section 4"
-public struct ELFHeader {
-    // Component definitions inline
-    @component("heading")
-    var title = "The ELF Header"
+// src/bytes.ch — Concept: Bytes and Binary
 
-    @component("paragraph")
-    var intro = """
-        Every ELF file starts with a header that describes
-        the file's structure and contents.
-    """
+import page
+import html_cbi
+import css_cbi
+import js_cbi
 
-    @component("hex-dump")
-    var identification = HexDump {
-        data: [0x7f, 0x45, 0x4c, 0x46, ...],
-        highlights: [
-            { offset: 0, length: 4, label: "Magic", color: "blue" },
-            { offset: 4, length: 1, label: "Class", color: "green" }
-        ]
+public func render() : std::string {
+    var page = HtmlPage()
+    page.defaultPrepare()
+    page.appendTitle(std::string_view("Bytes and Binary — Underlayer"))
+
+    #html {
+        <div class="lesson" data-concept="bytes">
+            <h1>Bytes and Binary</h1>
+            <p>Every piece of data in a computer is stored as bytes.</p>
+
+            <div class="hex-dump">
+                <code>7f 45 4c 46 02 01 01 00</code>
+            </div>
+
+            <div class="quiz" id="quiz-1">
+                <p>How many values can a byte represent?</p>
+                <button onclick="checkQuiz('quiz-1', this, false)">64</button>
+                <button onclick="checkQuiz('quiz-1', this, true)">256</button>
+                <button onclick="checkQuiz('quiz-1', this, false)">128</button>
+            </div>
+        </div>
     }
 
-    @component("definition")
-    var def_ei_class = Definition {
-        term: "EI_CLASS",
-        definition: "File class. Identifies the word size...",
-        source: "gABI v1.0, Section 4.1.1"
+    #css {
+        .lesson { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        .hex-dump { background: #1e1e1e; color: #d4d4d4; padding: 1rem; font-family: monospace; }
+        .quiz button { display: block; margin: 0.5rem 0; padding: 0.75rem; width: 100%; text-align: left; }
     }
 
-    @component("quiz")
-    var quiz_magic = Quiz {
-        question: "What are the first 4 bytes of an ELF file?",
-        options: [
-            { text: "0x7f ELF", correct: true },
-            { text: "MZ\\x90\\x00", correct: false },
-            { text: "CAFEBABE", correct: false }
-        ]
+    #js {
+        function checkQuiz(id, btn, correct) {
+            var quiz = document.getElementById(id);
+            var feedback = quiz.querySelector('.quiz-feedback');
+            if(correct) { btn.style.background = '#059669'; }
+            else { btn.style.background = '#dc2626'; }
+        }
     }
 
-    @component("code-block")
-    var code_example = CodeBlock {
-        language: "c",
-        code: """
-            struct Elf64_Ehdr {
-                unsigned char e_ident[EI_NIDENT];
-                uint16_t      e_type;
-                uint16_t      e_machine;
-                ...
-            };
-        """,
-        title: "ELF Header Structure",
-        highlights: [1, 2, 3]
-    }
+    return page.toString()
+}
+```
+
+### Build Entry Point (src/main.ch)
+
+```chemical
+import fs
+import bytes
+import binary_representation
+import elf_header
+
+public func main() : int {
+    fs::mkdir(std::string_view("output"))
+
+    var bytes_html = bytes::render()
+    fs::write_file(std::string_view("output/bytes.html"), bytes_html.to_view())
+
+    var binary_html = binary_representation::render()
+    fs::write_file(std::string_view("output/binary-representation.html"), binary_html.to_view())
+
+    var elf_html = elf_header::render()
+    fs::write_file(std::string_view("output/elf-header.html"), elf_html.to_view())
+
+    printf("Course pages generated in output/\n")
+    return 0
 }
 ```
 
@@ -147,7 +178,7 @@ public struct ELFHeader {
         {
             "id": "fundamentals",
             "name": "Fundamentals",
-            "concepts": ["bytes", "binary", "file-layout"],
+            "concepts": ["bytes", "binary-representation", "file-layout"],
             "prerequisites": []
         },
         {
@@ -155,6 +186,17 @@ public struct ELFHeader {
             "name": "ELF Headers",
             "concepts": ["elf-header", "program-headers", "sections"],
             "prerequisites": ["fundamentals"]
+        }
+    ],
+    "concepts": [
+        {
+            "id": "bytes",
+            "title": "Bytes and Binary",
+            "module": "fundamentals",
+            "prerequisites": [],
+            "estimated_minutes": 15,
+            "importance": "core",
+            "source_file": "bytes.ch"
         }
     ],
     "reviewPolicy": {
@@ -165,173 +207,143 @@ public struct ELFHeader {
 }
 ```
 
-## Stage 2: Parsing
+## Stage 2: Compile (Build Time)
 
 ### Input
-- `.ch` concept files
+- `.ch` concept files (using `#html`, `#css`, `#js`, `#md` macros)
 - `manifest.json`
 
 ### Output
-- `CourseAST` — typed tree of all content and components
+- Pre-rendered HTML + CSS + JS files in `output/` directory
 
 ### Process
 
 ```
-1. Parse manifest.json → ModuleSequence[]
-2. For each concept file:
-   a. Lex .ch file → Token[]
-   b. Parse tokens → CourseAST node
-   c. Validate: required fields, component types, prerequisites
-3. Build dependency graph from prerequisites
-4. Validate: no cycles, all prerequisites exist
+1. TCCCompiler compiles each .ch file
+2. CBI macros (#html, #css, #js, #md) transform into HtmlPage method calls
+3. Each concept's render() function produces a complete HTML page string
+4. main.ch writes each page to output/<concept-name>.html
+5. Output includes: HTML file + embedded CSS + embedded JS
 ```
 
-### Validation Rules
+### Validation (Compile-time)
 
 | Rule | Error |
 |---|---|
-| Concept must have `@concept` annotation | "Missing @concept annotation" |
-| Prerequisites must exist | "Prerequisite 'X' not found" |
-| No circular prerequisites | "Circular dependency detected" |
-| Components must have required fields | "Component X missing field Y" |
-| Authority must cite a source | "No authority specified" |
+| Missing render() function | Compiler error |
+| Invalid #html syntax | Compiler error |
+| Undefined variables in #js | Compiler error |
+| Import errors | Compiler error |
 
-## Stage 3: Transform (Offline)
+## Stage 3: Static Files (Build Time)
 
 ### Input
-- `CourseAST`
+- Compiled concept pages (from Stage 2)
 
 ### Output
-- `RenderedCourse` — resolved, ready for per-request personalization
+- Pre-rendered HTML + CSS + JS files in `output/` directory
 
 ### Process
 
 ```
-1. Resolve component references
-   - Inline components stay as-is
-   - External components (images, samples) get URLs
-
-2. Embed assets
-   - Images → base64 or CDN URLs
-   - Sample files → download URLs
-   - Code → syntax-highlighted HTML
-
-3. Build component tree
-   - Flat list of components → nested tree
-   - Headings create sections
-   - Components group into logical units
-
-4. Pre-compute
-   - Quiz answers (hashed for verification)
-   - Code execution outputs (cached)
-   - Visualization initial states
-
-5. Cache
-   - Store RenderedCourse in Redis/memory
-   - Invalidate on course version change
+1. Each concept produces: <concept>.html + <concept>.css + <concept>.js
+2. CSS is embedded in <style> tag in <head>
+3. JS is embedded in <script> tag at end of <body>
+4. All files are self-contained (no external dependencies)
+5. Files are ready to serve from any HTTP server or CDN
 ```
 
-## Stage 4: Transform (Per-Request)
+### File Structure
+
+```
+courses/elf/output/
+├── bytes.html          # Complete HTML page with embedded CSS + JS
+├── binary-representation.html
+├── file-layout.html
+├── elf-header.html
+├── program-headers.html
+├── sections.html
+├── symbols.html
+├── relocations.html
+└── dynamic-linking.html
+```
+
+## Stage 4: Personalization (Per-Request, Optional)
 
 ### Input
-- `RenderedCourse`
-- `LearnerState` (from database)
+- Pre-rendered HTML page (from Stage 3)
+- Learner state (from database)
 
 ### Output
-- `PersonalizedLesson` — adapted to learner
+- Personalized HTML page (adapted to learner)
 
 ### Process
 
 ```
 1. Load learner state
-   - Concept mastery (θ, stability, retrievability)
+   - Concept mastery (status, accuracy, streak)
    - Session history (time spent, accuracy)
-   - Emotional signals (energy level, fatigue)
+   - Energy level (self-reported)
 
 2. Apply adaptive path
-   - Skip mastered concepts
-   - Slow down for struggling concepts
-   - Insert review items for forgetting concepts
+   - Skip mastered concepts in navigation
+   - Highlight concepts due for review
+   - Insert reminder banners for forgotten concepts
 
-3. Personalize components
-   - Show/hide based on mastery
-   - Adjust difficulty based on θ
-   - Add/remove hints based on history
-
-4. Build session
-   - Welcome back message (no streak shaming)
-   - Energy check result → session type
-   - Component sequence for this session
+3. Personalize page
+   - Show/hide sections based on mastery
+   - Adjust difficulty indicators
+   - Add personalized review reminders
 ```
 
-## Stage 5: Render
+**Note:** For MVP, personalization is minimal. The pre-rendered page is served directly. Personalization is added via JS that reads learner state from the server.
+
+## Stage 5: Serve
 
 ### Input
-- `PersonalizedLesson`
+- Pre-rendered HTML + CSS + JS files (from Stage 3)
 
 ### Output
-- HTML + CSS + JS
+- HTTP response with complete HTML page
 
 ### Process
 
 ```
-1. Map components to HTML
-   - Each component type → HTML template
-   - Components → <div class="component component-{type}">
-
-2. Generate CSS
-   - Base styles (from design system)
-   - Component-specific styles
-   - Dark mode variants
-   - Responsive breakpoints
-
-3. Generate JS
-   - Component initialization
-   - Event handlers
-   - State management
-   - xAPI statement generation
-
-4. Assemble page
-   - Header (course info, progress)
-   - Content (components)
-   - Footer (navigation, session controls)
-
-5. Inject state
-   - Learner state → JS object
-   - Component states → JS object
-   - Session config → JS object
+1. Request arrives: GET /api/courses/elf/lessons/bytes
+2. Router matches to lesson handler
+3. Handler reads courses/elf/output/bytes.html (pre-rendered)
+4. Handler returns HTML file with Content-Type: text/html
+5. Browser receives complete HTML page
 ```
 
-### HTML Template
+### HTML Structure (Pre-rendered)
 
 ```html
-<div class="lesson" data-concept-id="{id}">
-    <header class="lesson-header">
-        <h1>{title}</h1>
-        <div class="progress">{progress}%</div>
-    </header>
-
-    <div class="lesson-content">
-        {#each component}
-        <div class="component component-{type}" data-component-id="{id}">
-            {rendered HTML}
-        </div>
-        {/each}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bytes and Binary — Underlayer</title>
+    <style>
+        /* Embedded CSS from #css { } block */
+        .lesson { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        ...
+    </style>
+</head>
+<body>
+    <!-- Embedded HTML from #html { } block -->
+    <div class="lesson" data-concept="bytes">
+        <h1>Bytes and Binary</h1>
+        ...
     </div>
 
-    <footer class="lesson-footer">
-        <button class="done-today">Done for Today</button>
-        <button class="continue">Continue</button>
-    </footer>
-</div>
-
-<script>
-    window.__underlayer = {
-        learnerState: {state},
-        componentStates: {states},
-        sessionConfig: {config}
-    };
-</script>
+    <script>
+        /* Embedded JS from #js { } block */
+        function checkQuiz(id, btn, correct) { ... }
+    </script>
+</body>
+</html>
 ```
 
 ## Stage 6: Interact
@@ -339,25 +351,21 @@ public struct ELFHeader {
 ### Browser Execution
 
 ```
-1. Initialize components
-   - Each component type → JS class
-   - Component class binds to DOM element
-   - Component loads its own state
-
-2. Handle events
-   - User clicks → component method
-   - Component validates → feedback
-   - Component generates xAPI statement
-
-3. Track progress
-   - Component completion → update learner state
-   - Session completion → update session history
-   - xAPI statement → send to LRS
-
-4. Adaptive updates
-   - After each interaction → update θ
-   - After session → update stability
-   - Before next session → compute retrievability
+1. Browser receives HTML page
+2. CSS is parsed and applied
+3. HTML is rendered
+4. JS is executed:
+   a. Quiz handlers are bound to buttons
+   b. Hex viewer highlights are activated
+   c. Interactive demos are initialized
+5. User interacts:
+   a. Clicks quiz option → checkQuiz() runs → feedback shown
+   b. Hovers hex byte → field name highlighted
+   c. Types in input → validation runs
+6. Progress is tracked:
+   a. Quiz results sent to server via fetch()
+   b. Session data recorded
+   c. Learner state updated
 ```
 
 ## Component Rendering Map

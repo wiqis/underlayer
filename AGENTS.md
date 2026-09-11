@@ -38,33 +38,52 @@ Every AI agent working on Underlayer must follow these constraints:
 ### Technical Constraints
 
 1. **Chemical language** for all implementation. This is how we find what's missing in Chemical.
-2. **Universal components used carefully.** Known bugs exist — use with awareness.
+2. **Universal components used carefully.** Known bugs exist — use with awareness. Prefer simple HTML for course content.
 3. **Multi-module architecture** with strict layering (see Architecture section).
 4. **No SQL outside repository layer.** No raw HTML outside `#html` blocks.
 5. **Auto-deploy on commit.** Code must be correct before merge — no "fix it later."
+6. **Reuse existing libraries.** Don't rebuild SQLite, HTTP server, JSON, or page rendering from scratch. See `docs/plan.md` for available libraries.
 
 ## Architecture
 
 ```
-src/main.ch              (wiring only)
+src/main.ch              (wiring only — route registration, context building)
    ↓
-web/                     (public pages, SSR)
+web/                     (public pages, API routes, static file serving)
    ↓
-content/                 (course content, lesson rendering)
+content/                 (course loading, lesson rendering)
    ↓
-learning/                (spaced repetition, retrieval, progress)
+learning/                (FSRS engine, spaced repetition, progress tracking)
    ↓
-repository/              (ALL data access lives here)
+repository/              (ALL SQL lives here — schema + CRUD)
    ↓
-models/                  (plain domain structs)
-database/                (SQLite via Turso HTTP)
+models/                  (plain domain structs — no business logic)
+database/                (dual-backend: SQLite local + Turso HTTP remote)
    ↓
-core/                    (config, logging, string utils)
+core/                    (config, logging, string+time utils)
 ```
 
-A layer may only call layers below it.
+A layer may only call layers below it. If you are tempted to run SQL inside `web/`, stop — add a repository function instead.
+
+### Existing Libraries Used
+
+| Module | Reuses | Location |
+|--------|--------|----------|
+| `database/` | SQLite3 bindings | `lang/compiled/sqlite3/` |
+| `database/` | Turso HTTP client | `lang/compiled/academic/libturso/` |
+| `web/` | HTTP server + routing | `lang/libs/server/` |
+| `web/` | HTTP client (for Turso) | `lang/libs/http/` |
+| `web/` | JSON parse/stringify | `lang/libs/json/` |
+| `content/` | HtmlPage builder | `lang/libs/page/` |
+| `content/` | #html macro | `lang/libs/html_cbi/` |
+| `content/` | #css macro | `lang/libs/css_cbi/` |
+| `content/` | #js macro | `lang/libs/js_cbi/` |
+| `content/` | #md macro | `lang/libs/md_cbi/` |
+| `content/` | UI components | `lang/libs/components/` |
 
 ## Build / Run / Verify
+
+### Platform (Web Server)
 
 ```bash
 # Build
@@ -78,6 +97,27 @@ cmake-build-debug/TCCCompiler lang/compiled/underlayer/chemical.mod \
 curl localhost:9000/api/health
 ```
 
+### Course Pages (Pre-rendered)
+
+```bash
+# Build course pages
+cmake-build-debug/TCCCompiler lang/compiled/underlayer/courses/elf/chemical.mod \
+    -o lang/compiled/underlayer/courses/elf/build/elf-pages.exe --mode debug_quick --no-cache -bm-modules
+
+# Generate HTML output
+./lang/compiled/underlayer/courses/elf/build/elf-pages.exe
+# → writes courses/elf/output/*.html + *.css + *.js
+```
+
+### Environment Variables
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `PORT` | Server port | `9000` |
+| `DATABASE_URL` | SQLite file path or Turso HTTP URL | `./underlayer.db` |
+| `DATABASE_TOKEN` | Turso auth token (empty for local) | (empty) |
+| `COURSES_DIR` | Course content directory | `./courses` |
+
 ## Course File Structure
 
 Each course is a self-contained directory:
@@ -85,37 +125,74 @@ Each course is a self-contained directory:
 ```
 courses/
   elf/
-    chemical.mod
-    manifest.json          (metadata, version, dependencies)
-    concepts/
-      elf-header.ch        (concept definition + lesson content)
+    chemical.mod              (module declaration — imports page, html_cbi, etc.)
+    manifest.json             (metadata, version, module sequence)
+    src/
+      main.ch                 (build entry — calls render functions, writes output/)
+      bytes.ch                (concept page: #html + #css + #js → HtmlPage)
+      binary-representation.ch
+      file-layout.ch
+      elf-header.ch
       program-headers.ch
       sections.ch
       symbols.ch
       relocations.ch
       dynamic-linking.ch
-    exercises/
-      identify-elf-header.ch
-      parse-hex-dump.ch
-      diagnose-malformed.ch
-    visualizations/
-      file-layout.ch
-      segment-mapping.ch
+    output/                   (generated — pre-rendered HTML/CSS/JS)
+      bytes.html + bytes.css + bytes.js
+      elf-header.html + elf-header.css + elf-header.js
+      ...
     assets/
-      samples/             (real ELF files for exercises)
+      samples/                (real ELF files for exercises)
       images/
+```
+
+### Course Concept File Pattern
+
+Each concept is a Chemical source file that generates an HTML page:
+
+```chemical
+import page
+import html_cbi
+import css_cbi
+import js_cbi
+
+public func render_concept() : std::string {
+    var page = HtmlPage()
+    page.defaultPrepare()
+    page.appendTitle(std::string_view("Concept Title — Underlayer"))
+
+    #html {
+        <div class="lesson">
+            <h1>Concept Title</h1>
+            <p>Explanation...</p>
+            <div class="quiz">...</div>
+        </div>
+    }
+
+    #css {
+        .lesson { max-width: 800px; margin: 0 auto; padding: 2rem; }
+    }
+
+    #js {
+        function checkAnswer(btn, correct) { ... }
+    }
+
+    return page.toString()
+}
 ```
 
 ## Where to Add Things
 
 | Task | Place |
 |---|---|
-| New course | `courses/<name>/` with `chemical.mod` + `manifest.json` |
-| New concept | `courses/<name>/concepts/<concept>.ch` |
+| New course | `courses/<name>/` with `chemical.mod` + `manifest.json` + `src/` |
+| New concept | `courses/<name>/src/<concept>.ch` (uses #html + #css + #js) |
 | New exercise type | `learning/src/exercise_types/` |
-| New visualization | `courses/<name>/visualizations/` or `content/src/visualizations/` |
+| New visualization | Inside concept .ch files (using #html + #js) |
 | New platform feature | Relevant module (`web/`, `learning/`, `repository/`) |
-| Schema change | `repository/src/schema.ch` + matching model struct |
+| Schema change | `database/src/schema.ch` + matching model struct |
+| New API endpoint | `web/src/main.ch` (add route) |
 
 ## Skills
 
@@ -135,26 +212,29 @@ Load the relevant skill before working on a particular area:
 
 | Document | When to Read |
 |---|---|
+| `docs/plan.md` | Before starting work — 6-phase roadmap, available libraries, database strategy |
+| `docs/implementation-details.md` | Before writing code — concrete code patterns, library usage, module wiring |
+| `docs/conceptual-model.md` | Before designing data models — Course, Concept, Exercise, LearnerState |
 | `docs/course-development-handbook.md` | Before generating any course content — step-by-step 7-phase process |
 | `docs/ai-course-writing-constraints.md` | Before any AI generation — 8 constraint methods, negative constraints |
 | `docs/ui-ux-design.md` | Before building any UI — colors, typography, components, accessibility |
-| `docs/conceptual-model.md` | Before designing data models — Course, Concept, Exercise, LearnerState |
 | `docs/teaching-components-catalog.md` | Before building any component — complete catalog of teaching primitives |
-| `docs/rendering-pipeline.md` | Before building content rendering — how .ch files become HTML |
+| `docs/rendering-pipeline.md` | Before building content rendering — how .ch files become interactive HTML |
 | `docs/developable-components.md` | Before AI generates components — what's AI-generatable vs human-engineered |
 | `docs/course-design.md` | Before designing lessons — 8-unit structure, 5 exposures, anxiety design |
 | `docs/features.md` | Before implementing features — 10 core + 6 advanced feature specs |
 | `docs/competitors.md` | Before making design decisions — what others do, what we do better |
 | `docs/deployment.md` | Before setting up CI/CD — auto-deploy pipeline, Android app |
-| `docs/plan.md` | Before starting work — 6-phase implementation roadmap |
 | `docs/learner-profiling.md` | Before designing onboarding or adaptation — IRT, behavioral profiling, CLSI |
 | `docs/adaptive-flow-ui.md` | Before designing UI flows — screen-by-screen, anxiety/depression design |
 | `docs/correctness-verification.md` | Before verifying course content — 5-layer verification system |
 
 ## Gotchas
 
-- **Universal components have known bugs.** Use carefully. Prefer simple HTML where possible.
+- **Universal components have known bugs.** Use carefully. Prefer simple HTML for course content.
 - **Chemical is young.** Some features may not exist yet. Document gaps, work around them.
 - **Courses must be portable.** No platform-specific dependencies inside course content.
 - **AI generation is iterative.** Never accept first-pass content as final.
 - **Retrieval is not optional.** Every session must include review of previously learned material.
+- **No SQLite in std libs.** Use the existing `lang/compiled/sqlite3/` package or the dual-backend pattern from `lang/compiled/cars/database/`.
+- **Course pages are pre-rendered.** The compiler generates static HTML/CSS/JS files. The server serves these files — it does not render pages on every request.

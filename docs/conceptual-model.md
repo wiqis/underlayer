@@ -303,73 +303,150 @@ The platform reads this directory. The course does not depend on the platform.
 
 ## Component System
 
-Lessons are built from reusable, self-contained components. Each component is a teaching primitive that can be composed into any lesson.
+Lessons are built from two layers: **universal components** (reusable, stateful UI elements) and **HTML patterns** (inline content inside `#html` blocks).
 
-### Component Types
+### Universal Components
 
-Six families of components:
+Universal components are defined with the `#universal` macro. They generate SSR HTML + client-side hydration JS. Platform components live in `lang/libs/components/` and are shared between the platform and courses.
 
-| Family | Purpose | Examples |
-|---|---|---|
-| **Content** | Information delivery | Paragraph, Definition, Callout, Table, Image |
-| **Code** | Technical content | CodeBlock, HexDump, MemoryLayout, Terminal |
-| **Interactive** | Learner engagement | Quiz, FillInBlank, DragDrop, Ordering, Slider |
-| **Assessment** | Evaluation | MultipleChoice, DebuggingExercise, CodeChallenge |
-| **Reference** | Lookup | Glossary, CheatSheet, APIReference, SpecReference |
-| **Visualization** | Visual learning | Flowchart, MemoryDiagram, AnimatedDemo |
+| Component | Source | Purpose |
+|-----------|--------|---------|
+| `Button` | `components/Button.ch` | Actions, form submits (variants: default, outline, ghost, destructive) |
+| `Card`, `CardBody`, `CardTitle`, `CardMeta` | `components/Card.ch` | Content containers |
+| `Input`, `TextArea`, `NativeSelect` | `components/Input.ch` | Form inputs |
+| `Field`, `FieldLabel` | `components/Input.ch` | Form field wrappers |
+| `Badge` | `components/Badge.ch` | Tags, status indicators |
+| `H1`–`H6`, `Text`, `Link`, `Heading` | `components/Typography.ch` | Text display |
+| `Separator` | `components/Separator.ch` | Horizontal dividers |
+| `Alert` | `components/Alert.ch` | Notifications |
+| `Checkbox`, `Radio`, `Switch` | `components/Toggle.ch` | Boolean inputs |
+| `Select` | `components/Select.ch` | Dropdown with state |
 
-### Component Properties
+Using universal components in pages:
 
-Every component has:
+```chemical
+import page
+import html_cbi
+import css_cbi
+import components
 
-| Property | Type | Purpose |
-|---|---|---|
-| `id` | string | Unique identifier |
-| `type` | string | Component type name |
-| `difficulty` | 1-5 | Cognitive load level |
-| `timeEstimate` | number | Seconds to complete |
-| `prerequisites` | string[] | Required knowledge |
-| `learningObjective` | string | What this teaches |
-| `verificationStatus` | enum | verified/unverified/disputed |
-| `source` | string? | Authoritative reference |
+public func render_page() : std::string {
+    var page = HtmlPage()
+    page.defaultUniversalSetup()     // REQUIRED for universal components
+    page.defaultPrepare()
 
-### Component Composition
+    #html {
+        <div class="container">
+            <H1>Welcome</H1>
+            <Button variant="default">Get Started</Button>
+            <Card>
+                <CardBody>
+                    <CardTitle>Course Title</CardTitle>
+                    <Badge variant="secondary">Beginner</Badge>
+                </CardBody>
+            </Card>
+        </div>
+    }
 
-Components compose into lessons:
-
+    return page.toString()
+}
 ```
-Lesson
-├── Paragraph (intro)
-├── Definition (term)
-├── CodeBlock (example)
-├── HexDump (visual)
-├── Quiz (check)
-├── KeyTakeaway (summary)
-└── FillInBlank (practice)
+
+### HTML Patterns (Inline Content)
+
+Inside `#html` blocks, use standard HTML for content that doesn't need reusability:
+
+| Pattern | HTML | Example |
+|---------|------|---------|
+| **Paragraph** | `<p>` | `<p>Every ELF file starts with a header...</p>` |
+| **Heading** | `<h1>`-`<h6>` | `<h1>The ELF Header</h1>` |
+| **Code Block** | `<pre><code>` | `<pre><code>struct Elf64_Ehdr { ... };</code></pre>` |
+| **Hex Dump** | `<div class="hex-dump">` | `<div class="hex-dump"><code>7f 45 4c 46</code></div>` |
+| **Quiz** | `<div class="quiz">` + `<button onclick>` | Quiz with multiple-choice buttons |
+| **Fill-in-Blank** | `<input>` + `<button>` | Text input with validation |
+| **Definition** | `<dl><dt><dd>` | Term + definition list |
+| **Callout** | `<div class="callout callout-{type}">` | Note, tip, warning, danger |
+| **Table** | `<table>` | Structured data display |
+| **Image** | `<img>` | Diagrams, screenshots |
+| **Interactive Demo** | `<div>` + `#js { }` | Custom JS for interactivity |
+
+### Component Families
+
+| Family | Purpose | Implementation |
+|--------|---------|---------------|
+| **Universal** | Reusable UI elements | `#universal ComponentName(props)` + `#css` style function |
+| **Content** | Information delivery | `#html { <p>, <h1>-<h6>, <dl>, <table>, <img> }` |
+| **Code** | Technical content | `#html { <pre><code>, <div class="hex-dump"> }` |
+| **Interactive** | Learner engagement | `#html { <button onclick>, <input> }` + `#js { }` |
+| **Assessment** | Evaluation | `#html { <div class="quiz"> }` + `#js { }` |
+| **Reference** | Lookup | `#html { <dl>, <table> }` |
+| **Visualization** | Visual learning | `#html { <svg>, <div class="diagram"> }` + `#js { }` |
+
+### Course-Specific Components
+
+Courses can define their own universal components in `src/components/`:
+
+```chemical
+// courses/elf/src/components/HexViewer.ch
+import page
+import html_cbi
+import css_cbi
+import universal_cbi
+
+func hex_viewer_styles(page : &mut HtmlPage) : *char {
+    return #css {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 1rem;
+        border-radius: 6px;
+        font-family: ui-monospace, monospace;
+    }
+}
+
+public #universal HexViewer(props) {
+    return <div
+        {...props}
+        class={(props.className || props.class) || "" + " " + ${hex_viewer_styles(page)}}
+    >{props.children}</div>
+}
 ```
 
-Components don't reference each other — they're self-contained. This makes them reusable across courses.
+Course-specific components depend on `page`, `html_cbi`, `css_cbi`, `universal_cbi` — NOT on platform components. This keeps courses portable.
+
+### CSS Design System
+
+All styles are defined in `#css { }` blocks using CSS custom properties:
+
+```css
+:root {
+    --bg-color: #ffffff;
+    --surface: #f8f9fa;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --primary: #2563eb;
+    --success: #059669;
+    --error: #dc2626;
+    --border: #e5e7eb;
+    --font-sans: system-ui, -apple-system, sans-serif;
+    --font-mono: ui-monospace, monospace;
+}
+```
+
+The `#css` macro automatically hashes class names to prevent collisions. Use `${styles(page)}` in `#html` blocks to embed hashed class names.
+
+See `docs/ui-ux-design.md` for the complete design system.
 
 ### AI-Developable Components
 
-Components AI can generate given context:
+AI can generate any HTML/CSS/JS content:
 
 | Component | AI Needs | Human Must Verify |
-|---|---|---|
-| `CodeBlock` | Language, code | Code works |
-| `Quiz` | Question, answer | Options plausible |
-| `HexDump` | Binary data | Byte offsets correct |
-| `Flowchart` | Process steps | Logic matches spec |
-| `Glossary` | Terms, definitions | Definitions accurate |
-
-Components requiring human engineering:
-
-| Component | Why |
-|---|---|
-| `CodeEditor` | Complex state, syntax highlighting |
-| `CodeExecution` | Sandboxed execution |
-| `Simulation` | Physics/logic engine |
-| `InteractiveDemo` | Custom interaction logic |
+|-----------|----------|-------------------|
+| Code Block | Language, code | Code works |
+| Quiz | Question, answer | Options plausible |
+| Hex Dump | Binary data | Byte offsets correct |
+| Flowchart | Process steps | Logic matches spec |
+| Glossary | Terms, definitions | Definitions accurate |
 
 See `docs/teaching-components-catalog.md` for the complete component catalog.
 
@@ -377,37 +454,54 @@ See `docs/teaching-components-catalog.md` for the complete component catalog.
 
 How `.ch` concept files become interactive HTML pages.
 
-### Pipeline Stages
+### Pipeline Stages (Pre-rendered)
 
 ```
-Authoring → Parsing → Transform (Offline) → Transform (Per-Request) → Render → Interact
+Authoring → Compile → Static Files → Serve → Interact
 ```
 
-1. **Authoring** — Write `.ch` files with component annotations
-2. **Parsing** — `.ch` → CourseAST (typed nodes)
-3. **Transform (Offline)** — CourseAST → RenderedCourse (cached)
-4. **Transform (Per-Request)** — RenderedCourse → PersonalizedLesson (adapted to learner)
-5. **Render** — PersonalizedLesson → HTML + CSS + JS
-6. **Interact** — Browser executes JS, tracks progress
+1. **Authoring** — Write `.ch` files using `#html`, `#css`, `#js`, `#md` macros
+2. **Compile** — TCCCompiler/LLVM compiles .ch files → `HtmlPage.toString()` or `writeToDirectory()`
+3. **Static Files** — Pre-rendered HTML + CSS + JS files written to `output/` directory
+4. **Serve** — HTTP server serves static files (or CDN, or file://)
+5. **Interact** — Browser executes JS, handles events, tracks progress
 
 ### Content Format
 
-Chemical `.ch` files with annotations:
+Chemical `.ch` files using CBI macros:
 
 ```chemical
-@concept
-@difficulty 2
-@prerequisites ["bytes"]
-@source "gABI v1.0, Section 4"
-public struct ELFHeader {
-    @component("paragraph")
-    var intro = "Every ELF file starts with a header..."
+import page
+import html_cbi
+import css_cbi
+import js_cbi
 
-    @component("hex-dump")
-    var identification = HexDump { ... }
+public func render() : std::string {
+    var page = HtmlPage()
+    page.defaultPrepare()
+    page.appendTitle(std::string_view("ELF Header — Underlayer"))
 
-    @component("quiz")
-    var quiz = Quiz { ... }
+    #html {
+        <div class="lesson">
+            <h1>The ELF Header</h1>
+            <p>Every ELF file starts with a header...</p>
+            <div class="quiz" id="quiz-1">
+                <p>What are the first 4 bytes?</p>
+                <button onclick="checkQuiz('quiz-1', this, true)">0x7f ELF</button>
+                <button onclick="checkQuiz('quiz-1', this, false)">MZ\x90\x00</button>
+            </div>
+        </div>
+    }
+
+    #css {
+        .lesson { max-width: 800px; margin: 0 auto; }
+    }
+
+    #js {
+        function checkQuiz(id, btn, correct) { ... }
+    }
+
+    return page.toString()
 }
 ```
 
@@ -415,9 +509,8 @@ public struct ELFHeader {
 
 | Layer | What | Duration |
 |---|---|---|
-| CDN | Static assets | 1 year |
-| Redis | RenderedCourse | 1 hour |
-| Memory | PersonalizedLesson | 5 min |
+| CDN | Pre-rendered HTML/CSS/JS | 1 year (invalidated on version bump) |
+| Browser | Static assets | Until cache cleared |
 | Database | LearnerState | Permanent |
 
 See `docs/rendering-pipeline.md` for the complete pipeline specification.
