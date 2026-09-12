@@ -214,8 +214,9 @@ import js_cbi
 
 public func render_page() : std::string {
     var page = HtmlPage()
-    page.default_prepare()
-    page.inject_default_components_theme()
+    page.defaultUniversalSetup()     // hydration runtime for #universal components
+    page.defaultPrepare()            // charset + viewport
+    page.injectDefaultComponentsTheme()  // shadcn theme CSS tokens
 
     #html {
         <Container size="lg">
@@ -227,7 +228,7 @@ public func render_page() : std::string {
         </Container>
     }
 
-    return page.to_string()
+    return page.toString()
 }
 ```
 
@@ -474,7 +475,12 @@ Load the relevant skill before working on a particular area:
 
 ## Gotchas
 
-- **Universal components require theme injection.** Always call `page.inject_default_components_theme()` before using components. Components will not render correctly without it.
+- **Universal components require three setup calls.** Every page using components MUST call:
+  1. `page.defaultUniversalSetup()` — hydration runtime JS (from `lang/libs/page`)
+  2. `page.defaultPrepare()` — charset + viewport meta (from `lang/libs/page`)
+  3. `page.injectDefaultComponentsTheme()` — shadcn theme CSS tokens (from `lang/libs/components`)
+  
+  Without all three, components won't hydrate or render correctly.
 - **No `if` without `else`.** Chemical requires an else block for every if statement. Use `if(cond) { ... } @else { }` even for empty else blocks.
 - **State only with `state` keyword.** Using `var` for reactive state won't create signals. Use `state` for anything that needs to update the UI.
 - **Loops use `while`, not `for`.** Chemical doesn't have C-style for loops. Use `while(i < n) { ... i = i + 1 }`.

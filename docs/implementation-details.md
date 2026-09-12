@@ -18,6 +18,7 @@ import page
 import html_cbi
 import css_cbi
 import js_cbi
+import universal_cbi
 import components
 import fs
 import net
@@ -26,6 +27,73 @@ import uuid
 
 // Database — reuse existing SQLite3 library
 import sqlite
+```
+
+## Page Library Setup for Universal Components
+
+Every page that uses universal components MUST call these functions in order:
+
+```chemical
+import page
+import components
+
+public func render_page() : std::string {
+    var page = HtmlPage()
+
+    // 1. Initialize universal hydration runtime (JS for client-side interactivity)
+    page.defaultUniversalSetup()
+
+    // 2. Add charset + viewport meta tags
+    page.defaultPrepare()
+
+    // 3. Inject shadcn-style theme CSS (design tokens: colors, spacing, fonts)
+    page.injectDefaultComponentsTheme()
+
+    #html {
+        // ... your content using components ...
+    }
+
+    return page.toString()
+}
+```
+
+### Function Reference
+
+| Function | Source | Purpose |
+|----------|--------|---------|
+| `page.defaultUniversalSetup()` | `lang/libs/page` | Injects hydration runtime JS + CSS for `#universal` components. **Must be called first.** |
+| `page.defaultPrepare()` | `lang/libs/page` | Adds `<meta charset="utf-8">` and viewport meta tag. |
+| `page.injectDefaultComponentsTheme()` | `lang/libs/components` | Injects shadcn zinc theme CSS custom properties (`:root` + `.dark` class). Required for Card, Button, Badge, Alert, etc. to render correctly. |
+
+### Why All Three Are Needed
+
+1. **`defaultUniversalSetup()`** — Without this, `#universal` components render HTML on the server but have NO client-side hydration. Click handlers, state updates, and re-renders won't work.
+
+2. **`defaultPrepare()`** — Without this, the page may render in quirks mode, causing layout issues.
+
+3. **`injectDefaultComponentsTheme()`** — Without this, components like `<Button>`, `<Card>`, `<Badge>` render with no styling (invisible or broken layout). The theme defines CSS custom properties like `--primary`, `--border`, `--radius` that components reference via `hsl(var(--...))`.
+
+### Common Mistakes
+
+```chemical
+// WRONG: Missing defaultUniversalSetup — components won't hydrate
+var page = HtmlPage()
+page.defaultPrepare()
+page.injectDefaultComponentsTheme()
+#html { <Button onClick={...}>Click</Button> }  // renders but onClick does nothing
+
+// WRONG: Missing injectDefaultComponentsTheme — components have no styles
+var page = HtmlPage()
+page.defaultUniversalSetup()
+page.defaultPrepare()
+#html { <Button>Click</Button> }  // renders as unstyled HTML button
+
+// CORRECT:
+var page = HtmlPage()
+page.defaultUniversalSetup()
+page.defaultPrepare()
+page.injectDefaultComponentsTheme()
+#html { <Button onClick={...}>Click</Button> }  // styled + interactive
 ```
 
 ## Module 1: core/
@@ -532,6 +600,8 @@ import page
 import html_cbi
 import css_cbi
 import js_cbi
+import universal_cbi
+import components
 ```
 
 ### courses/elf/src/main.ch
@@ -567,10 +637,13 @@ import page
 import html_cbi
 import css_cbi
 import js_cbi
+import components
 
 public func render() : std::string {
     var page = HtmlPage()
-    page.defaultPrepare()
+    page.defaultUniversalSetup()     // hydration runtime for #universal components
+    page.defaultPrepare()            // charset + viewport
+    page.injectDefaultComponentsTheme()  // shadcn theme CSS tokens
     page.appendTitle(std::string_view("Bytes and Binary — Underlayer"))
 
     #html {

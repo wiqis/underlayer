@@ -216,8 +216,9 @@ import components
 
 public func render_home() : std::string {
     var page = HtmlPage()
-    page.defaultUniversalSetup()     // REQUIRED for universal components
-    page.defaultPrepare()
+    page.defaultUniversalSetup()     // REQUIRED: hydration runtime for #universal components
+    page.defaultPrepare()            // charset + viewport
+    page.injectDefaultComponentsTheme()  // REQUIRED: shadcn theme CSS tokens
 
     #html {
         <div class="container">
@@ -269,8 +270,9 @@ import components
 
 public func render() : std::string {
     var page = HtmlPage()
-    page.defaultUniversalSetup()
-    page.defaultPrepare()
+    page.defaultUniversalSetup()     // hydration runtime
+    page.defaultPrepare()            // charset + viewport
+    page.injectDefaultComponentsTheme()  // shadcn theme tokens
     page.appendTitle(std::string_view("Bytes and Binary — Underlayer"))
 
     #html {

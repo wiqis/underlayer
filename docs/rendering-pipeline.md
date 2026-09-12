@@ -85,6 +85,8 @@ import page
 import html_cbi
 import css_cbi
 import js_cbi
+import universal_cbi
+import components
 ```
 
 ### Concept File Format (.ch)
@@ -98,10 +100,13 @@ import page
 import html_cbi
 import css_cbi
 import js_cbi
+import components
 
 public func render() : std::string {
     var page = HtmlPage()
-    page.defaultPrepare()
+    page.defaultUniversalSetup()     // hydration runtime for #universal components
+    page.defaultPrepare()            // charset + viewport
+    page.injectDefaultComponentsTheme()  // shadcn theme CSS tokens
     page.appendTitle(std::string_view("Bytes and Binary — Underlayer"))
 
     #html {

@@ -36,10 +36,11 @@ Always inject the theme before using components:
 ```chemical
 public func render_page() : std::string {
     var page = HtmlPage()
-    page.default_prepare()
-    page.inject_default_components_theme()
+    page.defaultUniversalSetup()     // hydration runtime for #universal components
+    page.defaultPrepare()            // charset + viewport
+    page.injectDefaultComponentsTheme()  // shadcn theme CSS tokens
     // ... use components ...
-    return page.to_string()
+    return page.toString()
 }
 ```
 
@@ -50,8 +51,9 @@ import components
 
 public func render_concept() : std::string {
     var page = HtmlPage()
-    page.default_prepare()
-    page.inject_default_components_theme()
+    page.defaultUniversalSetup()     // hydration runtime
+    page.defaultPrepare()            // charset + viewport
+    page.injectDefaultComponentsTheme()  // shadcn theme tokens
 
     #html {
         <Container size="default">

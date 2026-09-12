@@ -26,8 +26,9 @@ import js_cbi
 
 public func render_concept() : std::string {
     var page = HtmlPage()
-    page.default_prepare()
-    page.inject_default_components_theme()
+    page.defaultUniversalSetup()     // hydration runtime for #universal components
+    page.defaultPrepare()            // charset + viewport
+    page.injectDefaultComponentsTheme()  // shadcn theme CSS tokens
 
     #html {
         <Container size="lg">
@@ -45,7 +46,7 @@ public func render_concept() : std::string {
         // Client-side interactivity
     }
 
-    return page.to_string()
+    return page.toString()
 }
 ```
 
