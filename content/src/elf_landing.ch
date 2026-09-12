@@ -31,9 +31,9 @@ public func render_elf_landing() : string {
                     <h2>Module 1: Fundamentals</h2>
                     <p>Bytes, binary representation, and file layout.</p>
                     <ul class="concept-list">
-                        <li><a href="bytes.html">Bytes and Binary</a></li>
-                        <li><a href="binary-representation.html">Binary Representation</a></li>
-                        <li><a href="file-layout.html">File Layout</a></li>
+                        <li><a href="/courses/elf/lessons/bytes">Bytes and Binary</a></li>
+                        <li><a href="/courses/elf/lessons/binary-representation">Binary Representation</a></li>
+                        <li><a href="/courses/elf/lessons/file-layout">File Layout</a></li>
                     </ul>
                 </div>
 
@@ -41,9 +41,9 @@ public func render_elf_landing() : string {
                     <h2>Module 2: ELF Header</h2>
                     <p>The ELF identification and header structure.</p>
                     <ul class="concept-list">
-                        <li><a href="elf-identification.html">ELF Identification</a></li>
-                        <li><a href="elf-header-fields.html">ELF Header Fields</a></li>
-                        <li><a href="entry-point.html">Entry Point</a></li>
+                        <li><a href="/courses/elf/lessons/elf-identification">ELF Identification</a></li>
+                        <li><a href="/courses/elf/lessons/elf-header-fields">ELF Header Fields</a></li>
+                        <li><a href="/courses/elf/lessons/entry-point">Entry Point</a></li>
                     </ul>
                 </div>
 
@@ -51,9 +51,9 @@ public func render_elf_landing() : string {
                     <h2>Module 3: Program Headers</h2>
                     <p>How the loader maps segments into memory.</p>
                     <ul class="concept-list">
-                        <li><a href="program-header-table.html">Program Header Table</a></li>
-                        <li><a href="segment-types.html">Segment Types</a></li>
-                        <li><a href="memory-mapping.html">Memory Mapping</a></li>
+                        <li><a href="/courses/elf/lessons/program-header-table">Program Header Table</a></li>
+                        <li><a href="/courses/elf/lessons/segment-types">Segment Types</a></li>
+                        <li><a href="/courses/elf/lessons/memory-mapping">Memory Mapping</a></li>
                     </ul>
                 </div>
 
@@ -61,9 +61,9 @@ public func render_elf_landing() : string {
                     <h2>Module 4: Sections</h2>
                     <p>The sections that make up an ELF file.</p>
                     <ul class="concept-list">
-                        <li><a href="section-header-table.html">Section Header Table</a></li>
-                        <li><a href="common-sections.html">Common Sections</a></li>
-                        <li><a href="section-vs-segment.html">Section vs Segment</a></li>
+                        <li><a href="/courses/elf/lessons/section-header-table">Section Header Table</a></li>
+                        <li><a href="/courses/elf/lessons/common-sections">Common Sections</a></li>
+                        <li><a href="/courses/elf/lessons/section-vs-segment">Section vs Segment</a></li>
                     </ul>
                 </div>
             </div>

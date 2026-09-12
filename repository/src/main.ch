@@ -1,6 +1,8 @@
 // underlayer_repository — ALL SQL lives here.
 // Schema initialization + CRUD for Phase 1.
 // All string params use &string (references).
+// NOTE: Filesystem reads (fs::read_entire_file) cause TCC linker errors
+// due to Result type destructors. Course data is hardcoded for now.
 using std::string
 using std::string_view
 using std::vector
@@ -34,6 +36,7 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw idx4)
     }
 
+    // Helper: parse i64 from string_view
     private func parse_i64(v : std::string_view) : i64 {
         var result : i64 = 0
         var negative = false
@@ -48,13 +51,15 @@ public namespace underlayer_repository {
         return result
     }
 
+    // Load a course — hardcoded data (filesystem loading deferred to LLVM backend)
     public func load_course(courses_dir : &string, course_id : &string) : Course {
         var course = Course::make()
-        var elf_check = std::string("elf")
+        var elf_check = string("elf")
         if(course_id.equals(&elf_check)) {
             course.id = course_id.copy()
             course.title = string("Executable and Linkable Format")
             course.version = 1
+
             var mod1 = Module::make()
             mod1.id = string("fundamentals")
             mod1.title = string("Fundamentals")
@@ -63,6 +68,7 @@ public namespace underlayer_repository {
             mod1.concepts.push(string("binary-representation"))
             mod1.concepts.push(string("file-layout"))
             course.modules.push(mod1)
+
             var mod2 = Module::make()
             mod2.id = string("elf-header")
             mod2.title = string("ELF Header")
@@ -71,6 +77,7 @@ public namespace underlayer_repository {
             mod2.concepts.push(string("elf-header-fields"))
             mod2.concepts.push(string("entry-point"))
             course.modules.push(mod2)
+
             var mod3 = Module::make()
             mod3.id = string("program-headers")
             mod3.title = string("Program Headers")
@@ -79,6 +86,7 @@ public namespace underlayer_repository {
             mod3.concepts.push(string("segment-types"))
             mod3.concepts.push(string("memory-mapping"))
             course.modules.push(mod3)
+
             var mod4 = Module::make()
             mod4.id = string("sections")
             mod4.title = string("Sections")
@@ -87,52 +95,101 @@ public namespace underlayer_repository {
             mod4.concepts.push(string("common-sections"))
             mod4.concepts.push(string("section-vs-segment"))
             course.modules.push(mod4)
+
             var c1 = ConceptRef::make()
             c1.id = string("bytes")
             c1.title = string("Bytes and Binary")
             c1.module_id = string("fundamentals")
             c1.description = string("Understanding bytes.")
             course.concepts.push(c1)
+
             var c2 = ConceptRef::make()
             c2.id = string("binary-representation")
             c2.title = string("Binary Representation")
             c2.module_id = string("fundamentals")
             c2.description = string("How bytes encode numbers.")
             course.concepts.push(c2)
+
+            var c3 = ConceptRef::make()
+            c3.id = string("file-layout")
+            c3.title = string("File Layout")
+            c3.module_id = string("fundamentals")
+            c3.description = string("How an ELF file is organized.")
+            course.concepts.push(c3)
+
+            var c4 = ConceptRef::make()
+            c4.id = string("elf-identification")
+            c4.title = string("ELF Identification")
+            c4.module_id = string("elf-header")
+            c4.description = string("The e_ident array.")
+            course.concepts.push(c4)
+
+            var c5 = ConceptRef::make()
+            c5.id = string("elf-header-fields")
+            c5.title = string("ELF Header Fields")
+            c5.module_id = string("elf-header")
+            c5.description = string("Every field in the ELF header.")
+            course.concepts.push(c5)
+
+            var c6 = ConceptRef::make()
+            c6.id = string("entry-point")
+            c6.title = string("Entry Point")
+            c6.module_id = string("elf-header")
+            c6.description = string("Where execution begins.")
+            course.concepts.push(c6)
+
+            var c7 = ConceptRef::make()
+            c7.id = string("program-header-table")
+            c7.title = string("Program Header Table")
+            c7.module_id = string("program-headers")
+            c7.description = string("How segments are loaded.")
+            course.concepts.push(c7)
+
+            var c8 = ConceptRef::make()
+            c8.id = string("segment-types")
+            c8.title = string("Segment Types")
+            c8.module_id = string("program-headers")
+            c8.description = string("PT_LOAD, PT_DYNAMIC, PT_INTERP.")
+            course.concepts.push(c8)
+
+            var c9 = ConceptRef::make()
+            c9.id = string("memory-mapping")
+            c9.title = string("Memory Mapping")
+            c9.module_id = string("program-headers")
+            c9.description = string("File offsets to virtual addresses.")
+            course.concepts.push(c9)
+
+            var c10 = ConceptRef::make()
+            c10.id = string("section-header-table")
+            c10.title = string("Section Header Table")
+            c10.module_id = string("sections")
+            c10.description = string("The section descriptor table.")
+            course.concepts.push(c10)
+
+            var c11 = ConceptRef::make()
+            c11.id = string("common-sections")
+            c11.title = string("Common Sections")
+            c11.module_id = string("sections")
+            c11.description = string(".text, .data, .bss, .rodata.")
+            course.concepts.push(c11)
+
+            var c12 = ConceptRef::make()
+            c12.id = string("section-vs-segment")
+            c12.title = string("Section vs Segment")
+            c12.module_id = string("sections")
+            c12.description = string("Why they are different.")
+            course.concepts.push(c12)
         }
         return course
     }
 
+    // List all courses
     public func list_courses(courses_dir : &string) : vector<Course> {
         var courses = vector<Course>()
-        var elf_manifest = courses_dir.copy()
-        elf_manifest.append_view("/elf/manifest.json")
-        if(fs::exists(elf_manifest.data())) {
-            var elf_id = string("elf")
-            var course = load_course(courses_dir, &elf_id)
-            courses.push(course)
-        }
+        var elf_id = string("elf")
+        var course = load_course(courses_dir, &elf_id)
+        courses.push(course)
         return courses
-    }
-
-    public func load_concept_page(courses_dir : &string, course_id : &string, concept_id : &string) : string {
-        var path = courses_dir.copy()
-        path.append('/')
-        path.append_string(course_id)
-        path.append_view("/output/")
-        path.append_string(concept_id)
-        path.append_view(".html")
-        var result = fs::read_entire_file(path.data())
-        if(result is std::Result.Err) { return string() }
-        var Ok(bytes) = result else unreachable
-        if(bytes.size() == 0) { return string() }
-        var out = string()
-        var i : size_t = 0
-        while(i < bytes.size()) {
-            out.append(*bytes.get_ptr(i) as char)
-            i = i + 1
-        }
-        return out
     }
 
     public func create_learner(db : *DbClient, learner_id : &string, name : &string, email : &string) {
