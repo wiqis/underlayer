@@ -5,9 +5,9 @@ using std::string_view
 
 public func render_common_sections() : string {
     var page = HtmlPage()
-    page.default_prepare()
+    page.defaultPrepare()
     var title = std::string_view("Common Sections — Underlayer")
-    page.append_title(&title)
+    page.appendTitle(&title)
 
     #html {
         <div class="lesson">
@@ -120,5 +120,5 @@ public func render_common_sections() : string {
             else { btn.classList.add('wrong'); feedback.textContent = 'Not quite.'; feedback.style.color = '#dc2626'; }
         }
     }
-    return page.to_string()
+    return page.toString()
 }

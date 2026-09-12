@@ -5,9 +5,9 @@ using std::string_view
 
 public func render_segment_types() : string {
     var page = HtmlPage()
-    page.default_prepare()
+    page.defaultPrepare()
     var title = std::string_view("Segment Types — Underlayer")
-    page.append_title(&title)
+    page.appendTitle(&title)
 
     #html {
         <div class="lesson">
@@ -126,5 +126,5 @@ public func render_segment_types() : string {
         }
     }
 
-    return page.to_string()
+    return page.toString()
 }

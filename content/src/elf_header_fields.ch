@@ -5,9 +5,9 @@ using std::string_view
 
 public func render_elf_header_fields() : string {
     var page = HtmlPage()
-    page.default_prepare()
+    page.defaultPrepare()
     var title = std::string_view("ELF Header Fields — Underlayer")
-    page.append_title(&title)
+    page.appendTitle(&title)
 
     #html {
         <div class="lesson">
@@ -83,7 +83,7 @@ public func render_elf_header_fields() : string {
 
             <div class="unit unit-interact">
                 <h2>Try It</h2>
-                <p>Use <code>readelf -h</code> on different binaries to compare headers. Try <code>/bin/ls</code>, <code>/usr/bin/python3</code>, or any compiled program.</p>
+                <p>Use <code>readelf -h</code> on different binaries to compare headers. Try the <code>ls</code>, <code>python3</code>, or any compiled program in bin directories.</p>
             </div>
 
             <div class="unit unit-retrieve">
@@ -158,5 +158,5 @@ public func render_elf_header_fields() : string {
         }
     }
 
-    return page.to_string()
+    return page.toString()
 }

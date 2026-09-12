@@ -5,9 +5,9 @@ using std::string_view
 
 public func render_memory_mapping() : string {
     var page = HtmlPage()
-    page.default_prepare()
+    page.defaultPrepare()
     var title = std::string_view("Memory Mapping — Underlayer")
-    page.append_title(&title)
+    page.appendTitle(&title)
 
     #html {
         <div class="lesson">
@@ -97,5 +97,5 @@ Offset  Section               VirtAddr  Section
             else { btn.classList.add('wrong'); feedback.textContent = 'Not quite.'; feedback.style.color = '#dc2626'; }
         }
     }
-    return page.to_string()
+    return page.toString()
 }

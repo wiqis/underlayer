@@ -5,9 +5,9 @@ using std::string_view
 
 public func render_entry_point() : string {
     var page = HtmlPage()
-    page.default_prepare()
+    page.defaultPrepare()
     var title = std::string_view("Entry Point — Underlayer")
-    page.append_title(&title)
+    page.appendTitle(&title)
 
     #html {
         <div class="lesson">
@@ -103,5 +103,5 @@ $ objdump -d /bin/ls | head -20  # See the disassembly at the entry point</code>
         }
     }
 
-    return page.to_string()
+    return page.toString()
 }

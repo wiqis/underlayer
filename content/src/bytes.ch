@@ -7,9 +7,9 @@ using std::string_view
 
 public func render_bytes() : string {
     var page = HtmlPage()
-    page.default_prepare()
+    page.defaultPrepare()
     var title = std::string_view("Bytes and Binary — Underlayer")
-    page.append_title(&title)
+    page.appendTitle(&title)
 
     #html {
         <div class="lesson">
@@ -156,5 +156,5 @@ public func render_bytes() : string {
         }
     }
 
-    return page.to_string()
+    return page.toString()
 }

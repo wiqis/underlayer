@@ -5,9 +5,9 @@ using std::string_view
 
 public func render_file_layout() : string {
     var page = HtmlPage()
-    page.default_prepare()
+    page.defaultPrepare()
     var title = std::string_view("File Layout — Underlayer")
-    page.append_title(&title)
+    page.appendTitle(&title)
 
     #html {
         <div class="lesson">
@@ -48,7 +48,7 @@ public func render_file_layout() : string {
 
             <div class="unit unit-example">
                 <h2>A Real Example</h2>
-                <p>Here's the layout of a real 64-bit ELF executable (<code>/bin/ls</code>):</p>
+                <p>Here's the layout of a real 64-bit ELF executable (<code>bin/ls</code>):</p>
                 <div class="hex-dump">
                     <pre>Offset    Size     What
 0x000000  0x40     ELF Header (64 bytes for 64-bit)
@@ -151,5 +151,5 @@ $ readelf -l /bin/ls | head -10
         }
     }
 
-    return page.to_string()
+    return page.toString()
 }

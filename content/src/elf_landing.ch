@@ -7,9 +7,9 @@ using std::string_view
 
 public func render_elf_landing() : string {
     var page = HtmlPage()
-    page.default_prepare()
+    page.defaultPrepare()
     var title = std::string_view("Executable and Linkable Format — Underlayer")
-    page.append_title(&title)
+    page.appendTitle(&title)
 
     #html {
         <div class="course-landing">
@@ -85,5 +85,5 @@ public func render_elf_landing() : string {
         .concept-list a:hover { text-decoration: underline; }
     }
 
-    return page.to_string()
+    return page.toString()
 }

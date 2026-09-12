@@ -5,9 +5,9 @@ using std::string_view
 
 public func render_program_header_table() : string {
     var page = HtmlPage()
-    page.default_prepare()
+    page.defaultPrepare()
     var title = std::string_view("Program Header Table — Underlayer")
-    page.append_title(&title)
+    page.appendTitle(&title)
 
     #html {
         <div class="lesson">
@@ -124,5 +124,5 @@ public func render_program_header_table() : string {
         }
     }
 
-    return page.to_string()
+    return page.toString()
 }

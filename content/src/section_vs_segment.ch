@@ -5,9 +5,9 @@ using std::string_view
 
 public func render_section_vs_segment() : string {
     var page = HtmlPage()
-    page.default_prepare()
+    page.defaultPrepare()
     var title = std::string_view("Section vs Segment — Underlayer")
-    page.append_title(&title)
+    page.appendTitle(&title)
 
     #html {
         <div class="lesson">
@@ -116,5 +116,5 @@ Sections:
             else { btn.classList.add('wrong'); feedback.textContent = 'Not quite.'; feedback.style.color = '#dc2626'; }
         }
     }
-    return page.to_string()
+    return page.toString()
 }

@@ -5,9 +5,9 @@ using std::string_view
 
 public func render_section_header_table() : string {
     var page = HtmlPage()
-    page.default_prepare()
+    page.defaultPrepare()
     var title = std::string_view("Section Header Table — Underlayer")
-    page.append_title(&title)
+    page.appendTitle(&title)
 
     #html {
         <div class="lesson">
@@ -113,5 +113,5 @@ Section Headers:
             else { btn.classList.add('wrong'); feedback.textContent = 'Not quite.'; feedback.style.color = '#dc2626'; }
         }
     }
-    return page.to_string()
+    return page.toString()
 }
