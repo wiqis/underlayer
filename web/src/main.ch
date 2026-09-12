@@ -278,24 +278,83 @@ public namespace underlayer_web {
     }
 
     // ---- Review Session ----
-    public func handle_review_start(db : *DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
-        // Create a demo FSRS state and compute next review
-        var params = init_fsrs_params()
-        var state = ReviewState::make()
-        state.reps = 0
-        state.lapses = 0
-        state.difficulty = 5.0
-        state.stability = 1.0
+    public func handle_review_start(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+        // Get learner_id and course_id from query params
+        var learner_id = string("demo")
+        var course_id = string("elf")
 
-        // Simulate a "Good" rating
-        var new_state = fsrs_update_state(&params, &state, RATING_GOOD)
+        // Fetch due review items from repository
+        var due_items = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, 10)
 
-        var body = std::string("{\"status\":\"ok\",\"fsrs\":{\"difficulty\":5.0,\"stability\":1.0,\"next_interval\":1}}")
+        // Build JSON response with items
+        var body = std::string("{\"items\":[")
+        var i : size_t = 0
+        while(i < due_items.size()) {
+            if(i > 0) { body.append_view(",") }
+            var item = due_items.get_ptr(i)
+            body.append_view("{\"id\":\"")
+            body.append_string(&item.id)
+            body.append_view("\",\"concept\":\"")
+            body.append_string(&item.concept_id)
+            body.append_view("\",\"type\":\"")
+            body.append_string(&item.item_type)
+            body.append_view("\",\"front\":\"")
+            body.append_string(&item.front)
+            body.append_view("\",\"back\":\"")
+            body.append_string(&item.back)
+            body.append_view("\"}")
+            i = i + 1
+        }
+        body.append_view("],\"total\":")
+        var total_str = underlayer_core::int_to_string(due_items.size() as i64)
+        body.append_string(&total_str)
+        body.append_view("}")
         send_json_str(res, &raw body)
     }
 
-    public func handle_review_submit(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_review_submit(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        // For now, acknowledge — full rating recording will use FSRS
         var body = std::string("{\"status\":\"ok\"}")
+        send_json_str(res, &raw body)
+    }
+
+    // ---- Learner Progress ----
+    public func handle_progress(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+        var learner_id = string("demo")
+        var course_id = string("elf")
+
+        // Get all concept states for this learner
+        var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
+
+        // Build progress JSON
+        var body = std::string("{\"learner_id\":\"")
+        body.append_string(&learner_id)
+        body.append_view("\",\"course_id\":\"")
+        body.append_string(&course_id)
+        body.append_view("\",\"concepts\":[")
+
+        var i : size_t = 0
+        while(i < states.size()) {
+            if(i > 0) { body.append_view(",") }
+            var s = states.get_ptr(i)
+            body.append_view("{\"concept_id\":\"")
+            body.append_string(&s.concept_id)
+            body.append_view("\",\"status\":\"")
+            body.append_string(&s.status)
+            body.append_view("\",\"attempts\":")
+            var attempts_str = underlayer_core::int_to_string(s.attempts as i64)
+            body.append_string(&attempts_str)
+            body.append_view(",\"correct\":")
+            var correct_str = underlayer_core::int_to_string(s.correct as i64)
+            body.append_string(&correct_str)
+            body.append_view(",\"streak\":")
+            var streak_str = underlayer_core::int_to_string(s.streak as i64)
+            body.append_string(&streak_str)
+            body.append_view("}")
+            i = i + 1
+        }
+
+        body.append_view("]}")
         send_json_str(res, &raw body)
     }
 

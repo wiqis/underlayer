@@ -77,6 +77,20 @@ public func main() : int {
         }
     }))
 
+    // ---- Review API ----
+    srv.router.add("GET", "/api/review/start", (|&db, &courses_dir|(req, res) => {
+        underlayer_web::handle_review_start(db, courses_dir, &req, &raw mut res)
+    }))
+
+    srv.router.add("POST", "/api/review/submit", (|&db|(req, res) => {
+        underlayer_web::handle_review_submit(db, &req, &raw mut res)
+    }))
+
+    // ---- Progress API ----
+    srv.router.add("GET", "/api/progress", (|&db, &courses_dir|(req, res) => {
+        underlayer_web::handle_progress(db, courses_dir, &req, &raw mut res)
+    }))
+
     // Course landing page
     srv.router.add("GET", "/courses/:courseId", (|&courses_dir|(req, res) => {
         var path = req.path.to_view()
