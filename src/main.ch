@@ -25,25 +25,28 @@ public func main() : int {
     cfg_server.addr = addr
     var srv = server.Server(cfg_server)
 
+    // Shared courses_dir for route handlers
+    var courses_dir = cfg.courses_dir.copy()
+
     // ---- Routes ----
 
     // Health check
-    srv.router.add("GET", "/api/health", (||(req, res) => {
+    srv.router.add("GET", "/api/health", (req, res) => {
         underlayer_web::handle_health(&req, &raw mut res)
-    }))
+    })
 
     // Course listing
-    srv.router.add("GET", "/api/courses", (||(req, res) => {
-        underlayer_web::handle_list_courses(&req, &raw mut res)
+    srv.router.add("GET", "/api/courses", (|&courses_dir|(req, res) => {
+        underlayer_web::handle_list_courses(courses_dir, &req, &raw mut res)
     }))
 
     // Course detail
-    srv.router.add("GET", "/api/courses/:courseId", (||(req, res) => {
+    srv.router.add("GET", "/api/courses/:courseId", (|&courses_dir|(req, res) => {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 2) {
             var course_id = segments.get_ptr(1)
-            underlayer_web::handle_get_course(course_id, &req, &raw mut res)
+            underlayer_web::handle_get_course(courses_dir, course_id, &req, &raw mut res)
         } else {
             res.status = 400u
             var ct = std::string_view("application/json")
@@ -54,14 +57,14 @@ public func main() : int {
         }
     }))
 
-    // Lesson viewer (pre-rendered HTML)
-    srv.router.add("GET", "/api/courses/:courseId/lessons/:conceptId", (||(req, res) => {
+    // Lesson viewer via API
+    srv.router.add("GET", "/api/courses/:courseId/lessons/:conceptId", (|&courses_dir|(req, res) => {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
             var course_id = segments.get_ptr(2)
             var concept_id = segments.get_ptr(3)
-            underlayer_web::handle_lesson(course_id, concept_id, &req, &raw mut res)
+            underlayer_web::handle_lesson(courses_dir, course_id, concept_id, &req, &raw mut res)
         } else {
             res.status = 400u
             var ct = std::string_view("application/json")
@@ -72,18 +75,44 @@ public func main() : int {
         }
     }))
 
-    // Home page
-    srv.router.add("GET", "/", (||(req, res) => {
-        underlayer_web::handle_home(&req, &raw mut res)
+    // Course landing page
+    srv.router.add("GET", "/courses/:courseId", (|&courses_dir|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 2) {
+            var course_id = segments.get_ptr(1)
+            underlayer_web::handle_course_landing(courses_dir, course_id, &req, &raw mut res)
+        } else {
+            underlayer_web::handle_home(&req, &raw mut res)
+        }
     }))
 
-    // Embedded lesson (Phase 1 fallback)
-    srv.router.add("GET", "/courses/elf/lessons/bytes", (||(req, res) => {
-        underlayer_web::handle_bytes_lesson(&req, &raw mut res)
+    // Lesson viewer via URL path
+    srv.router.add("GET", "/courses/:courseId/lessons/:conceptId", (|&courses_dir|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 4) {
+            var course_id = segments.get_ptr(2)
+            var concept_id = segments.get_ptr(3)
+            underlayer_web::handle_lesson(courses_dir, course_id, concept_id, &req, &raw mut res)
+        } else {
+            res.status = 404u
+            var ct = std::string_view("text/plain")
+            res.set_header_view(std::string_view("Content-Type"), &ct)
+            var body = std::string("Not found")
+            var bv = body.to_view()
+            res.write_view(&bv)
+        }
     }))
+
+    // Home page
+    srv.router.add("GET", "/", (req, res) => {
+        underlayer_web::handle_home(&req, &raw mut res)
+    })
 
     // ---- Start server ----
     printf("[underlayer] Server running at http://localhost:%s\n", underlayer_core::u32_to_string(port).data())
+    printf("[underlayer] Courses dir: %s\n", cfg.courses_dir.data())
     srv.serve()
 
     underlayer_db::close(&raw db)

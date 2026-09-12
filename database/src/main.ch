@@ -121,25 +121,55 @@ public namespace underlayer_db {
     }
 
     public func query_sql(db : *DbClient, sql : *string) : QueryResult {
-        if(db.is_sqlite) {
-            var result = QueryResult {
-                columns = vector<string>(),
-                rows = vector<QueryRow>(),
-                rows_affected = 0
-            }
-            // Use sqlite3_exec for simple queries instead of prepare/step
-            // This avoids the Result pattern matching issue with Statement
-            var err_msg : *char = null
-            var callback_data = QueryCallbackData { result = &raw result }
-            // For now, just return empty result - we'll implement proper query handling later
-            return result
-        }
-        // Turso HTTP path (Phase 2)
         var result = QueryResult {
             columns = vector<string>(),
             rows = vector<QueryRow>(),
             rows_affected = 0
         }
+        if(db.is_sqlite) {
+            var stmt_res = db.sqlite_conn.prepare(sql.to_view())
+            if(stmt_res is Result.Err) {
+                return result
+            }
+            var Ok(stmt) = stmt_res else unreachable
+            // Get column names from first step
+            var col_count = stmt.column_count()
+            var ci : int = 0
+            while(ci < col_count) {
+                var col_name = stmt.column_name(ci)
+                var col_str = string()
+                var ch_idx : size_t = 0
+                while(ch_idx < col_name.size()) {
+                    col_str.append(col_name.get(ch_idx))
+                    ch_idx = ch_idx + 1
+                }
+                result.columns.push(col_str)
+                ci = ci + 1
+            }
+            // Iterate rows
+            while(true) {
+                var step_res = stmt.step()
+                if(step_res is Result.Err) { break }
+                var Ok(has_row) = step_res else unreachable
+                if(!has_row) { break }
+                var row = QueryRow { vals = vector<string>() }
+                var ri : int = 0
+                while(ri < col_count) {
+                    var text = stmt.column_text(ri)
+                    var val_str = string()
+                    var vi : size_t = 0
+                    while(vi < text.size()) {
+                        val_str.append(text.get(vi))
+                        vi = vi + 1
+                    }
+                    row.vals.push(val_str)
+                    ri = ri + 1
+                }
+                result.rows.push(row)
+            }
+            return result
+        }
+        // Turso HTTP path (Phase 2)
         return result
     }
 

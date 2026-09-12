@@ -1,12 +1,18 @@
 // underlayer_web — HTTP routes and handlers.
-// ALL HTML/CSS/JS MUST use #html, #css, #js macros. NEVER use string appends.
 using std::string
 using std::string_view
 using std::vector
 using underlayer_db::DbClient
 using underlayer_models::Course
+using underlayer_models::Module
+using underlayer_models::ConceptRef
 
 public namespace underlayer_web {
+
+    public struct WebConfig {
+        var db : *DbClient
+        var courses_dir : string
+    }
 
     private func send_page(res : *mut http::ResponseWriter, page : *HtmlPage) {
         var ct = std::string_view("text/html; charset=utf-8")
@@ -16,232 +22,143 @@ public namespace underlayer_web {
         res.write_view(&hv)
     }
 
-    // ---- Health endpoint ----
+    private func send_json_str(res : *mut http::ResponseWriter, body : *string) {
+        var ct = std::string_view("application/json")
+        res.set_header_view(std::string_view("Content-Type"), &ct)
+        var bv = body.to_view()
+        res.write_view(&bv)
+    }
+
+    private func sv_to_string(sv : *string_view) : string {
+        var out = std::string()
+        var i : size_t = 0
+        while(i < sv.size()) { out.append(sv.get(i)); i = i + 1 }
+        return out
+    }
+
     public func handle_health(req : &http::Request, res : *mut http::ResponseWriter) {
-        var ct = std::string_view("application/json")
-        res.set_header_view(std::string_view("Content-Type"), &ct)
-        var body = std::string("{\"status\": \"ok\"}")
-        var bv = body.to_view()
-        res.write_view(&bv)
+        var body = std::string("{\"status\": \"ok\", \"version\": \"0.1.0\"}")
+        send_json_str(res, &raw body)
     }
 
-    // ---- Course listing ----
-    public func handle_list_courses(req : &http::Request, res : *mut http::ResponseWriter) {
-        var ct = std::string_view("application/json")
-        res.set_header_view(std::string_view("Content-Type"), &ct)
-        var body = std::string("[{\"id\": \"elf\", \"title\": \"Executable and Linkable Format\", \"version\": 1, \"modules\": 4, \"concepts\": 12}]")
-        var bv = body.to_view()
-        res.write_view(&bv)
+    public func handle_list_courses(courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+        var courses = underlayer_repository::list_courses(courses_dir)
+        var body = std::string("[")
+        var ci : size_t = 0
+        while(ci < courses.size()) {
+            var course = courses.get_ptr(ci)
+            if(ci > 0) { body.append(',') }
+            body.append_view("{\"id\":\"")
+            var id_view = course.id.to_view()
+            var id_str = underlayer_core::json_escape(&id_view)
+            body.append_view(id_str.to_view())
+            body.append_view("\",\"title\":\"")
+            var title_view = course.title.to_view()
+            var title_str = underlayer_core::json_escape(&title_view)
+            body.append_view(title_str.to_view())
+            body.append_view("\",\"version\":")
+            var ver = underlayer_core::int_to_string(course.version as i64)
+            body.append_view(ver.to_view())
+            body.append_view(",\"modules\":")
+            var mc = underlayer_core::int_to_string(course.modules.size() as i64)
+            body.append_view(mc.to_view())
+            body.append_view(",\"concepts\":")
+            var cc = underlayer_core::int_to_string(course.concepts.size() as i64)
+            body.append_view(cc.to_view())
+            body.append('}')
+            ci = ci + 1
+        }
+        body.append(']')
+        send_json_str(res, &raw body)
     }
 
-    // ---- Course detail ----
-    public func handle_get_course(course_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {
-        var ct = std::string_view("application/json")
-        res.set_header_view(std::string_view("Content-Type"), &ct)
-        var body = std::string("{\"id\": \"elf\", \"title\": \"Executable and Linkable Format\", \"version\": 1, \"modules\": [{\"id\": \"fundamentals\", \"title\": \"Fundamentals\", \"concepts\": [\"bytes\", \"binary-representation\", \"file-layout\"]}, {\"id\": \"elf-header\", \"title\": \"ELF Header\", \"concepts\": [\"elf-identification\", \"elf-header-fields\", \"entry-point\"]}]}")
-        var bv = body.to_view()
-        res.write_view(&bv)
+    public func handle_get_course(courses_dir : &string, course_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {
+        var cid = sv_to_string(course_id)
+        var course = underlayer_repository::load_course(courses_dir, &cid)
+        var body = std::string("{\"id\":\"")
+        var id_view = course.id.to_view()
+        var id_str = underlayer_core::json_escape(&id_view)
+        body.append_view(id_str.to_view())
+        body.append_view("\",\"title\":\"")
+        var title_view = course.title.to_view()
+        var title_str = underlayer_core::json_escape(&title_view)
+        body.append_view(title_str.to_view())
+        body.append_view("\",\"version\":")
+        var ver = underlayer_core::int_to_string(course.version as i64)
+        body.append_view(ver.to_view())
+        body.append_view("}")
+        send_json_str(res, &raw body)
     }
 
-    // ---- Lesson viewer (serves pre-rendered HTML from disk) ----
-    public func handle_lesson(course_id : *string_view, concept_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {
-        var cid = *course_id
-        var pid = *concept_id
-        var path = std::string("lang/compiled/underlayer/courses/")
-        path.append_view(&cid)
-        path.append_view(std::string_view("/output/"))
-        path.append_view(&pid)
-        path.append_view(std::string_view(".html"))
-
-        var f = fopen(path.data(), "rb")
-        if(f == null) {
+    public func handle_lesson(courses_dir : &string, course_id : *string_view, concept_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {
+        var cid = sv_to_string(course_id)
+        var pid = sv_to_string(concept_id)
+        var html = underlayer_repository::load_concept_page(courses_dir, &cid, &pid)
+        if(html.size() == 0) {
             res.status = 404u
             var ct = std::string_view("text/plain")
             res.set_header_view(std::string_view("Content-Type"), &ct)
-            var body = std::string("Lesson not found")
-            var bv = body.to_view()
-            res.write_view(&bv)
+            var msg = std::string("Lesson not found")
+            var mv = msg.to_view()
+            res.write_view(&mv)
             return
         }
-        unsafe { fseek(f, 0, 2) }
-        var fsize : long = 0
-        unsafe { fsize = ftell(f) }
-        unsafe { fseek(f, 0, 0) }
-        var buf = string()
-        unsafe { buf.resize(fsize as size_t) }
-        unsafe { fread(buf.data() as *mut void, 1, fsize as size_t, f) }
-        unsafe { fclose(f) }
         var ct = std::string_view("text/html; charset=utf-8")
         res.set_header_view(std::string_view("Content-Type"), &ct)
-        var bv = buf.to_view()
-        res.write_view(&bv)
+        var hv = html.to_view()
+        res.write_view(&hv)
     }
 
-    // ---- Bytes lesson (rendered with #html/#css/#js macros) ----
-    public func handle_bytes_lesson(req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_course_landing(courses_dir : &string, course_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {
+        var cid = sv_to_string(course_id)
+        var course = underlayer_repository::load_course(courses_dir, &cid)
         var page = HtmlPage()
         page.defaultPrepare()
-        var title = std::string_view("Bytes and Binary - Underlayer")
+        var title = std::string_view("Courses - Underlayer")
         page.appendTitle(&title)
 
         #html {
-            <div class="lesson">
-                <h1>Bytes and Binary</h1>
-
-                <div class="unit unit-why">
-                    <h2>Why This Matters</h2>
-                    <p>Every file on your computer is made of bytes. Understanding bytes is the foundation for understanding any binary format, including ELF.</p>
+            <div style="max-width: 800px; margin: 0 auto; padding: 2rem; font-family: system-ui, sans-serif;">
+                <h1>{course.title}</h1>
+                <p style="color: #6b7280; margin-bottom: 2rem;">A deep dive into the ELF binary format.</p>
+                <div style="margin-bottom: 1.5rem; padding: 1.5rem; border: 1px solid #e5e7eb; border-radius: 8px;">
+                    <h2>Fundamentals</h2>
+                    <p><a href="/courses/elf/lessons/bytes">Bytes and Binary</a></p>
+                    <p><a href="/courses/elf/lessons/binary-representation">Binary Representation</a></p>
                 </div>
-
-                <div class="unit unit-model">
-                    <h2>A Simple Model</h2>
-                    <p>Think of a byte as a small container that holds a number between 0 and 255. When you see <code>0x41</code> in a hex dump, that is the number 65 in decimal - the ASCII code for letter A.</p>
-                </div>
-
-                <div class="unit unit-reality">
-                    <h2>The Actual Detail</h2>
-                    <p>A byte is 8 bits. Each bit is either 0 or 1. A byte can represent 256 different values (0-255). We write bytes in hexadecimal because one byte = exactly two hex digits.</p>
-                    <table>
-                        <thead>
-                            <tr><th>Decimal</th><th>Hex</th><th>Binary</th><th>ASCII</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>0</td><td>0x00</td><td>00000000</td><td>NUL</td></tr>
-                            <tr><td>65</td><td>0x41</td><td>01000001</td><td>A</td></tr>
-                            <tr><td>127</td><td>0x7f</td><td>01111111</td><td>DEL</td></tr>
-                            <tr><td>255</td><td>0xff</td><td>11111111</td><td>-</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="unit unit-example">
-                    <h2>A Real Example</h2>
-                    <p>The ELF magic number starts with these 4 bytes:</p>
-                    <div class="hex-dump">
-                        <pre>7f 45 4c 46</pre>
-                    </div>
-                    <p>In decimal: 127, 69, 76, 70. In ASCII: . E L F. The first four bytes literally spell ELF.</p>
-                </div>
-
-                <div class="unit unit-interact">
-                    <h2>Try It</h2>
-                    <p>Click on each byte to see its decimal, hex, and ASCII values:</p>
-                    <div class="hex-interactive" id="hex-1">
-                        <span class="hex-byte" data-val="127" onclick="selectByte(this)">7f</span>
-                        <span class="hex-byte" data-val="69" onclick="selectByte(this)">45</span>
-                        <span class="hex-byte" data-val="76" onclick="selectByte(this)">4c</span>
-                        <span class="hex-byte" data-val="70" onclick="selectByte(this)">46</span>
-                        <div class="hex-info" id="hex-info">Click a byte above</div>
-                    </div>
-                </div>
-
-                <div class="unit unit-retrieve">
-                    <h2>Check Your Understanding</h2>
-                    <p>Without looking back: what decimal value does the hex byte 0x41 represent?</p>
-                    <div class="quiz" id="quiz-1">
-                        <button class="quiz-option" onclick="checkQuiz('quiz-1', this, false)">32</button>
-                        <button class="quiz-option" onclick="checkQuiz('quiz-1', this, true)">65</button>
-                        <button class="quiz-option" onclick="checkQuiz('quiz-1', this, false)">127</button>
-                        <div class="quiz-feedback"></div>
-                    </div>
-                </div>
-
-                <div class="unit unit-apply">
-                    <h2>Apply It</h2>
-                    <p>Heres a hex dump of 4 bytes. What ASCII text do they spell?</p>
-                    <div class="hex-dump">
-                        <pre>48 65 6c 6c</pre>
-                    </div>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-2', this, false)">ELF</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-2', this, true)">Hell</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-2', this, false)">Help</button>
-                    <div class="quiz-feedback" id="quiz-2-feedback"></div>
-                </div>
-
-                <div class="unit unit-connect">
-                    <h2>Connect</h2>
-                    <p>You now understand bytes - the building blocks of every binary format. Next, we will see how bytes are organized into larger structures.</p>
+                <div style="margin-bottom: 1.5rem; padding: 1.5rem; border: 1px solid #e5e7eb; border-radius: 8px;">
+                    <h2>ELF Header</h2>
+                    <p><a href="/courses/elf/lessons/elf-identification">ELF Identification</a></p>
+                    <p><a href="/courses/elf/lessons/elf-header-fields">ELF Header Fields</a></p>
+                    <p><a href="/courses/elf/lessons/entry-point">Entry Point</a></p>
                 </div>
             </div>
         }
 
         #css {
-            .lesson { max-width: 800px; margin: 0 auto; padding: 2rem; font-family: system-ui, sans-serif; }
-            .unit { margin-bottom: 2rem; padding: 1.5rem; border-radius: 8px; border-left: 4px solid; }
-            .unit-why { border-color: #3b82f6; background: #eff6ff; }
-            .unit-model { border-color: #059669; background: #ecfdf5; }
-            .unit-reality { border-color: #d97706; background: #fffbeb; }
-            .unit-example { border-color: #8b5cf6; background: #f5f3ff; }
-            .unit-interact { border-color: #ec4899; background: #fdf2f8; }
-            .unit-retrieve { border-color: #06b6d4; background: #ecfeff; }
-            .unit-apply { border-color: #f97316; background: #fff7ed; }
-            .unit-connect { border-color: #10b981; background: #ecfdf5; }
-            h1 { font-size: 1.5rem; margin-bottom: 1rem; }
-            h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }
-            .hex-dump { background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 6px; font-family: monospace; }
-            .hex-interactive { font-family: monospace; background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 6px; }
-            .hex-byte { display: inline-block; width: 2ch; margin-right: 1rem; cursor: pointer; border-radius: 2px; padding: 0.25rem; }
-            .hex-byte:hover { background: rgba(59, 130, 246, 0.3); }
-            .hex-byte.selected { background: rgba(59, 130, 246, 0.5); }
-            .hex-info { margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af; }
-            .quiz { margin-top: 1rem; }
-            .quiz-option { display: block; width: 100%; padding: 0.75rem 1rem; margin: 0.5rem 0; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; text-align: left; }
-            .quiz-option:hover { border-color: #3b82f6; }
-            .quiz-option.correct { border-color: #059669; background: #ecfdf5; }
-            .quiz-option.wrong { border-color: #dc2626; background: #fef2f2; }
-            table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-            th, td { padding: 0.5rem; border: 1px solid #d1d5db; text-align: left; }
-            th { background: #f9fafb; font-weight: 600; }
-        }
-
-        #js {
-            function selectByte(el) {
-                var all = el.parentElement.querySelectorAll('.hex-byte');
-                for(var i = 0; i < all.length; i++) { all[i].classList.remove('selected'); }
-                el.classList.add('selected');
-                var val = parseInt(el.getAttribute('data-val'));
-                var hex = el.textContent;
-                var ascii = (val >= 32 && val < 127) ? String.fromCharCode(val) : '(non-printable)';
-                var info = document.getElementById('hex-info');
-                info.textContent = 'Decimal: ' + val + ' | Hex: 0x' + hex + ' | ASCII: ' + ascii;
-            }
-
-            function checkQuiz(quizId, btn, correct) {
-                var quiz = document.getElementById(quizId);
-                var options = quiz.querySelectorAll('.quiz-option');
-                var feedback = quiz.querySelector('.quiz-feedback');
-                for(var i = 0; i < options.length; i++) { options[i].disabled = true; }
-                if(correct) {
-                    btn.classList.add('correct');
-                    feedback.textContent = 'Correct!';
-                    feedback.style.color = '#059669';
-                } else {
-                    btn.classList.add('wrong');
-                    feedback.textContent = 'Not quite. Try again next time.';
-                    feedback.style.color = '#dc2626';
-                }
-            }
+            body { font-family: system-ui, sans-serif; line-height: 1.6; }
+            a { color: #3b82f6; text-decoration: none; }
+            a:hover { text-decoration: underline; }
         }
 
         send_page(res, &raw page)
     }
 
-    // ---- Home page ----
     public func handle_home(req : &http::Request, res : *mut http::ResponseWriter) {
         var page = HtmlPage()
         page.defaultPrepare()
-        var title = std::string_view("Underlayer - AI-native learning platform")
+        var title = std::string_view("Underlayer - Learn Things Deeply")
         page.appendTitle(&title)
 
         #html {
             <div style="max-width: 800px; margin: 0 auto; padding: 2rem; font-family: system-ui, sans-serif;">
-                <h1>Underlayer</h1>
-                <p>AI-native learning platform for binary formats.</p>
-                <ul>
-                    <li><a href="/api/courses">Courses API</a></li>
-                    <li><a href="/api/health">Health Check</a></li>
-                    <li><a href="/courses/elf/lessons/bytes">Lesson: Bytes and Binary</a></li>
-                </ul>
+                <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Underlayer</h1>
+                <p style="font-size: 1.1rem; color: #4b5563; margin-bottom: 2rem;">Learn Things Deeply.</p>
+                <div style="padding: 1.5rem; border: 1px solid #e5e7eb; border-radius: 8px;">
+                    <h2>ELF — Executable and Linkable Format</h2>
+                    <p style="color: #6b7280;">A deep dive into the ELF binary format.</p>
+                    <a href="/courses/elf" style="color: #3b82f6;">Start Learning</a>
+                </div>
             </div>
         }
 
