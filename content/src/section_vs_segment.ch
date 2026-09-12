@@ -1,6 +1,9 @@
 // ELF Course — Concept 12: Section vs Segment
 // Why sections and segments are different things, and how they relate.
+public namespace underlayer_content {
+
 using std::string
+
 using std::string_view
 
 public func render_section_vs_segment() : string {
@@ -117,4 +120,5 @@ Sections:
         }
     }
     return page.toString()
+}
 }

@@ -1,6 +1,9 @@
 // ELF Course — Concept 5: ELF Header Fields
 // Every field in the ELF header and what it tells the system.
+public namespace underlayer_content {
+
 using std::string
+
 using std::string_view
 
 public func render_elf_header_fields() : string {
@@ -159,4 +162,5 @@ public func render_elf_header_fields() : string {
     }
 
     return page.toString()
+}
 }

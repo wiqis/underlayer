@@ -1,6 +1,9 @@
 // ELF Course — Concept 4: ELF Identification
 // The e_ident array — magic number, class, data encoding, OS/ABI.
+public namespace underlayer_content {
+
 using std::string
+
 using std::string_view
 
 public func render_elf_identification() : string {
@@ -147,4 +150,5 @@ public func render_elf_identification() : string {
     }
 
     return page.toString()
+}
 }

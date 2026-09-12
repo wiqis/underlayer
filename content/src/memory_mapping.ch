@@ -1,6 +1,9 @@
 // ELF Course — Concept 9: Memory Mapping
 // How the loader maps file offsets to virtual addresses.
+public namespace underlayer_content {
+
 using std::string
+
 using std::string_view
 
 public func render_memory_mapping() : string {
@@ -98,4 +101,5 @@ Offset  Section               VirtAddr  Section
         }
     }
     return page.toString()
+}
 }

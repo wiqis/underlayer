@@ -2,7 +2,10 @@
 // Uses #html, #css, #js macros for all markup.
 // Emits a complete HTML page that works in both static and backend modes.
 
+public namespace underlayer_content {
+
 using std::string
+
 using std::string_view
 
 public func render_bytes() : string {
@@ -157,4 +160,5 @@ public func render_bytes() : string {
     }
 
     return page.toString()
+}
 }

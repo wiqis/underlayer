@@ -52,18 +52,18 @@ public namespace underlayer_web {
         var commonsec_id = std::string("common-sections")
         var secvsseg_id = std::string("section-vs-segment")
 
-        if(cid.equals(&bytes_id)) { return underlayer_content::bytes::render_bytes() }
-        if(cid.equals(&binrep_id)) { return underlayer_content::binary_representation::render_binary_representation() }
-        if(cid.equals(&filelayout_id)) { return underlayer_content::file_layout::render_file_layout() }
-        if(cid.equals(&elfident_id)) { return underlayer_content::elf_identification::render_elf_identification() }
-        if(cid.equals(&elfheader_id)) { return underlayer_content::elf_header_fields::render_elf_header_fields() }
-        if(cid.equals(&entrypoint_id)) { return underlayer_content::entry_point::render_entry_point() }
-        if(cid.equals(&progheader_id)) { return underlayer_content::program_header_table::render_program_header_table() }
-        if(cid.equals(&segtype_id)) { return underlayer_content::segment_types::render_segment_types() }
-        if(cid.equals(&memmap_id)) { return underlayer_content::memory_mapping::render_memory_mapping() }
-        if(cid.equals(&sectheader_id)) { return underlayer_content::section_header_table::render_section_header_table() }
-        if(cid.equals(&commonsec_id)) { return underlayer_content::common_sections::render_common_sections() }
-        if(cid.equals(&secvsseg_id)) { return underlayer_content::section_vs_segment::render_section_vs_segment() }
+        if(cid.equals(&bytes_id)) { return underlayer_content::render_bytes() }
+        if(cid.equals(&binrep_id)) { return underlayer_content::render_binary_representation() }
+        if(cid.equals(&filelayout_id)) { return underlayer_content::render_file_layout() }
+        if(cid.equals(&elfident_id)) { return underlayer_content::render_elf_identification() }
+        if(cid.equals(&elfheader_id)) { return underlayer_content::render_elf_header_fields() }
+        if(cid.equals(&entrypoint_id)) { return underlayer_content::render_entry_point() }
+        if(cid.equals(&progheader_id)) { return underlayer_content::render_program_header_table() }
+        if(cid.equals(&segtype_id)) { return underlayer_content::render_segment_types() }
+        if(cid.equals(&memmap_id)) { return underlayer_content::render_memory_mapping() }
+        if(cid.equals(&sectheader_id)) { return underlayer_content::render_section_header_table() }
+        if(cid.equals(&commonsec_id)) { return underlayer_content::render_common_sections() }
+        if(cid.equals(&secvsseg_id)) { return underlayer_content::render_section_vs_segment() }
         return string()
     }
 
@@ -80,10 +80,12 @@ public namespace underlayer_web {
             var course = courses.get_ptr(ci)
             if(ci > 0) { body.append(',') }
             body.append_view("{\"id\":\"")
-            var id_str = underlayer_core::json_escape(&raw course.id)
+            var id_sv = course.id.to_view()
+            var id_str = underlayer_core::json_escape(&id_sv)
             body.append_view(id_str.to_view())
             body.append_view("\",\"title\":\"")
-            var title_str = underlayer_core::json_escape(&raw course.title)
+            var title_sv = course.title.to_view()
+            var title_str = underlayer_core::json_escape(&title_sv)
             body.append_view(title_str.to_view())
             body.append_view("\",\"version\":")
             var ver = underlayer_core::int_to_string(course.version as i64)
@@ -105,10 +107,12 @@ public namespace underlayer_web {
         var cid = sv_to_string(course_id)
         var course = underlayer_repository::load_course(courses_dir, &cid)
         var body = std::string("{\"id\":\"")
-        var id_str = underlayer_core::json_escape(&raw course.id)
+        var id_sv2 = course.id.to_view()
+        var id_str = underlayer_core::json_escape(&id_sv2)
         body.append_view(id_str.to_view())
         body.append_view("\",\"title\":\"")
-        var title_str = underlayer_core::json_escape(&raw course.title)
+        var title_sv2 = course.title.to_view()
+        var title_str = underlayer_core::json_escape(&title_sv2)
         body.append_view(title_str.to_view())
         body.append_view("\",\"version\":")
         var ver = underlayer_core::int_to_string(course.version as i64)
@@ -119,7 +123,7 @@ public namespace underlayer_web {
 
     public func handle_lesson(courses_dir : &string, course_id : *string_view, concept_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {
         var pid = sv_to_string(concept_id)
-        var html = render_concept(&pid)
+        var html = render_concept(&raw pid)
         if(html.size() == 0) {
             res.status = 404u
             var ct = std::string_view("text/plain")
@@ -136,7 +140,7 @@ public namespace underlayer_web {
     }
 
     public func handle_course_landing(courses_dir : &string, course_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {
-        var html = underlayer_content::elf_landing::render_elf_landing()
+        var html = underlayer_content::render_elf_landing()
         if(html.size() == 0) {
             res.status = 404u
             var ct = std::string_view("text/plain")

@@ -1,6 +1,9 @@
 // ELF Course — Concept 3: File Layout
 // How an ELF file is organized from start to finish.
+public namespace underlayer_content {
+
 using std::string
+
 using std::string_view
 
 public func render_file_layout() : string {
@@ -152,4 +155,5 @@ $ readelf -l /bin/ls | head -10
     }
 
     return page.toString()
+}
 }

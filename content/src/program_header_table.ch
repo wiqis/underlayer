@@ -1,6 +1,9 @@
 // ELF Course — Concept 7: Program Header Table
 // The table that describes how segments are loaded into memory.
+public namespace underlayer_content {
+
 using std::string
+
 using std::string_view
 
 public func render_program_header_table() : string {
@@ -125,4 +128,5 @@ public func render_program_header_table() : string {
     }
 
     return page.toString()
+}
 }

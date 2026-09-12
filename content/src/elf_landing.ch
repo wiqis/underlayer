@@ -2,7 +2,10 @@
 // Shows the course structure and links to each concept.
 // Uses #html, #css, #js macros for all markup.
 
+public namespace underlayer_content {
+
 using std::string
+
 using std::string_view
 
 public func render_elf_landing() : string {
@@ -86,4 +89,5 @@ public func render_elf_landing() : string {
     }
 
     return page.toString()
+}
 }

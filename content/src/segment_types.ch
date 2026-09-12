@@ -1,6 +1,9 @@
 // ELF Course — Concept 8: Segment Types
 // PT_LOAD, PT_DYNAMIC, PT_INTERP — what each segment type does.
+public namespace underlayer_content {
+
 using std::string
+
 using std::string_view
 
 public func render_segment_types() : string {
@@ -127,4 +130,5 @@ public func render_segment_types() : string {
     }
 
     return page.toString()
+}
 }

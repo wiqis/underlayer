@@ -1,6 +1,9 @@
 // ELF Course — Concept 6: Entry Point
 // How e_entry tells the loader where execution begins.
+public namespace underlayer_content {
+
 using std::string
+
 using std::string_view
 
 public func render_entry_point() : string {
@@ -104,4 +107,5 @@ $ objdump -d /bin/ls | head -20  # See the disassembly at the entry point</code>
     }
 
     return page.toString()
+}
 }

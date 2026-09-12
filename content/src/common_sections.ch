@@ -1,6 +1,9 @@
 // ELF Course — Concept 11: Common Sections
 // .text, .data, .bss, .rodata, .symtab, .strtab — what each section contains.
+public namespace underlayer_content {
+
 using std::string
+
 using std::string_view
 
 public func render_common_sections() : string {
@@ -121,4 +124,5 @@ public func render_common_sections() : string {
         }
     }
     return page.toString()
+}
 }

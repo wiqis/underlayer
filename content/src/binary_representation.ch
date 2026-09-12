@@ -2,7 +2,10 @@
 // How bytes encode numbers, characters, and data structures.
 // Uses #html, #css, #js macros for all markup.
 
+public namespace underlayer_content {
+
 using std::string
+
 using std::string_view
 
 public func render_binary_representation() : string {
@@ -127,4 +130,5 @@ public func render_binary_representation() : string {
     }
 
     return page.toString()
+}
 }

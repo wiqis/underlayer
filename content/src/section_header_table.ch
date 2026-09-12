@@ -1,6 +1,9 @@
 // ELF Course — Concept 10: Section Header Table
 // The table that describes each section in the ELF file.
+public namespace underlayer_content {
+
 using std::string
+
 using std::string_view
 
 public func render_section_header_table() : string {
@@ -114,4 +117,5 @@ Section Headers:
         }
     }
     return page.toString()
+}
 }
