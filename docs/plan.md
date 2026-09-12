@@ -8,7 +8,7 @@ Current phase: **Phase 2 — Learning Engine ✅**
 - Phase 1: Foundation ✅
 - Phase 2: Learning Engine ✅ (FSRS, weakness detection, interleaved review queue)
 - Phase 3: Course Content (partial — 12 concepts done)
-- Phase 4: Android App (not started)
+- Phase 4: Platform Polish (not started)
 
 ## Dual-Mode Architecture (Static + Backend)
 
@@ -420,63 +420,33 @@ cmake-build-debug/TCCCompiler lang/compiled/underlayer/courses/elf/chemical.mod 
 
 **Deliverable:** Complete ELF course with 50+ concepts, 200+ exercises, 5 visualizations.
 
-### Phase 4: Android App (Week 9-12)
-
-**Goal:** Offline-first Android app for course learning.
-
-#### 4.1 Chemical Runtime for Android
-- [ ] Cross-compile Chemical to Android (JNI bridge)
-- [ ] Implement local SQLite for learner state
-- [ ] Implement file system access for course storage
-
-#### 4.2 Course Player
-- [ ] Implement course download and extraction
-- [ ] Implement lesson rendering (pre-rendered HTML → WebView)
-- [ ] Implement exercise engine (exercise → interactive UI)
-- [ ] Implement visualization rendering
-
-#### 4.3 Offline Learning
-- [ ] Implement local FSRS engine
-- [ ] Implement offline review sessions
-- [ ] Implement progress sync when online
-
-#### 4.4 Polish
-- [ ] Implement energy check-in UI
-- [ ] Implement session length preferences
-- [ ] Implement fatigue detection
-- [ ] Implement "welcome back" messaging (no streak shaming)
-
-**Deliverable:** Android app that downloads ELF course and provides offline learning.
-
-### Phase 5: Platform Polish (Week 13-16)
+### Phase 4: Platform Polish (Week 9-12)
 
 **Goal:** Production-ready platform with all features.
 
-#### 5.1 Web Platform
+#### 4.1 Web Platform
 - [ ] Course management admin (create, edit, version courses)
 - [ ] Learner dashboard (progress, next reviews, knowledge health)
 - [ ] Course download page
 - [ ] Account management
 
-#### 5.2 Learning Features
+#### 4.2 Learning Features
 - [ ] Weakness detection and repair recommendations
 - [ ] Knowledge graph visualization
 - [ ] Energy dashboard (session history, accuracy trends)
 - [ ] Course update notifications
 
-#### 5.3 Quality
+#### 4.3 Quality
 - [ ] Integration tests for all API endpoints
 - [ ] Course content verification tests
 - [ ] FSRS algorithm tests
-- [ ] Android app tests
 
-#### 5.4 Auto-Deployment
+#### 4.4 Auto-Deployment
 - [ ] CI pipeline (build, test, deploy)
 - [ ] Course CDN setup
-- [ ] Android APK distribution
 - [ ] Rollback mechanism
 
-**Deliverable:** Production platform with auto-deploy, offline Android app, complete ELF course.
+**Deliverable:** Production platform with auto-deploy, complete ELF course.
 
 ## Future Phases (Post-MVP)
 
@@ -502,7 +472,6 @@ As we build, we'll encounter Chemical features that don't exist yet. Document th
 
 | Gap | Description | Workaround |
 |---|---|---|
-| JNI bridge | Chemical → Android Java interop | TBD — may need to write Android UI in Kotlin, bridge to Chemical |
 | Delta updates | Download only changed course content | Full re-download for now |
 | File watching | Hot reload during development | Manual restart |
 | Postgres driver | No Postgres library exists | Use SQLite/Turso HTTP for now; build Postgres binding later if needed |
