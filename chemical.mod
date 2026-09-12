@@ -19,6 +19,7 @@ import components
 import fs
 import net
 import encoding
+import uuid
 
 link "m" if linux
 
@@ -27,4 +28,5 @@ import "./core"
 import "./database"
 import "./models"
 import "./repository"
+import "./learning"
 import "./web"

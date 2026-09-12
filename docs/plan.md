@@ -2,7 +2,13 @@
 
 ## Status
 
-Current phase: **Phase 0 — Planning ✅** (no code written yet)
+Current phase: **Phase 2 — Learning Engine ✅**
+
+- Phase 0: Planning ✅
+- Phase 1: Foundation ✅
+- Phase 2: Learning Engine ✅ (FSRS, weakness detection, interleaved review queue)
+- Phase 3: Course Content (partial — 12 concepts done)
+- Phase 4: Android App (not started)
 
 ## Dual-Mode Architecture (Static + Backend)
 
@@ -290,109 +296,93 @@ cmake-build-debug/TCCCompiler lang/compiled/underlayer/courses/elf/chemical.mod 
 - [x] Decide course content format (.ch files with #html/#css/#js/#md macros → HtmlPage)
 - [x] Write implementation details document
 
-### Phase 1: Foundation (Week 1-2)
+### Phase 1: Foundation (Week 1-2) ✅
 
 **Goal:** Minimal working platform that can serve a static course.
 
 #### 1.1 Project Skeleton
-- [ ] Create `chemical.mod` with module structure
-  - Imports: `std`, `cstd`, `server`, `http`, `json`, `page`, `html_cbi`, `css_cbi`, `js_cbi`, `components`, `fs`, `net`, `encoding`, `uuid`, `../sqlite3` (or inline Turso client)
-- [ ] Create `src/main.ch` — server entry point
+- [x] Create `chemical.mod` with module structure
+  - Imports: `std`, `cstd`, `server`, `http`, `json`, `page`, `html_cbi`, `css_cbi`, `js_cbi`, `universal_cbi`, `components`, `fs`, `net`, `encoding`, `uuid`
+- [x] Create `src/main.ch` — server entry point
   - Initialize config from env vars
   - Initialize database (DbClient)
   - Register HTTP routes
   - Start server on configured port
-- [ ] Create `core/` module
-  - `core/src/config.ch` — read env vars (PORT, DATABASE_URL, DATABASE_TOKEN)
-  - `core/src/logging.ch` — simple printf-based logging
-  - `core/src/utils.ch` — string helpers, time formatting
+- [x] Create `core/` module
+  - `core/src/main.ch` — config, logging, string/time utilities
 
 #### 1.2 Database Layer
-- [ ] Create `database/` module
-  - `database/src/client.ch` — dual-backend DbClient (SQLite local + Turso HTTP remote)
-    - Reuse pattern from `lang/compiled/cars/database/src/main.ch`
-    - Reuse `lang/compiled/sqlite3/` for local SQLite
-    - Reuse `lang/compiled/academic/libturso/` for Turso HTTP
-  - `database/src/schema.ch` — table creation (learners, concept_states, review_items, sessions)
-  - `database/src/migrations.ch` — schema versioning
+- [x] Create `database/` module
+  - `database/src/main.ch` — dual-backend DbClient (SQLite local + Turso HTTP remote)
+  - Reuse pattern from `lang/compiled/cars/database/`
+  - Reuse `lang/compiled/sqlite3/` for local SQLite
 
 #### 1.3 Models
-- [ ] Create `models/` module — plain domain structs (no business logic)
-  - `models/src/course.ch` — Course, Module, Manifest
-  - `models/src/concept.ch` — Concept, LearningUnit, Source
-  - `models/src/exercise.ch` — Exercise, Option, ExerciseType
-  - `models/src/learner.ch` — Learner, ConceptState, EnergyProfile
-  - `models/src/review.ch` — ReviewItem, ReviewType
+- [x] Create `models/` module — plain domain structs (no business logic)
+  - `models/src/main.ch` — Course, Module, ConceptRef, Concept, Manifest, Learner, ConceptState, ReviewItem, Session, Exercise
 
 #### 1.4 Repository
-- [ ] Create `repository/` module — ALL SQL lives here
-  - `repository/src/schema.ch` — init_schema(), seed_demo_data()
-  - `repository/src/courses.ch` — course CRUD (read from manifest.json + concept files)
-  - `repository/src/learners.ch` — learner CRUD
-  - `repository/src/reviews.ch` — review item CRUD
-  - `repository/src/sessions.ch` — session logging
+- [x] Create `repository/` module — ALL SQL lives here
+  - `repository/src/main.ch` — init_schema, filesystem course loading, JSON helpers, learner CRUD, concept state CRUD, review item CRUD
 
 #### 1.5 Minimal Web Platform
-- [ ] Create `web/` module with routes
+- [x] Create `web/` module with routes
   - `web/src/main.ch` — route registration
   - Health endpoint: `GET /api/health` → `{"status": "ok"}`
   - Course listing: `GET /api/courses` → JSON array of courses
   - Course detail: `GET /api/courses/:id` → JSON course with concepts
   - Lesson viewer: `GET /api/courses/:id/lessons/:concept_id` → pre-rendered HTML page
   - Static file serving: serve `courses/*/output/` directories
+  - Review API: `GET /api/review/start`, `POST /api/review/submit`
+  - Progress API: `GET /api/progress`
 
 #### 1.6 First Course Content
-- [ ] Create ELF course directory: `courses/elf/`
+- [x] Create ELF course directory: `courses/elf/`
   - `courses/elf/chemical.mod` — imports page, html_cbi, css_cbi, js_cbi
   - `courses/elf/manifest.json` — metadata, module sequence, concept list
-  - `courses/elf/src/main.ch` — build entry, calls render functions, writes output/
-  - `courses/elf/src/bytes.ch` — first concept: Bytes and Binary
-    - Uses `#html { }` for JSX-like content
-    - Uses `#css { }` for scoped styles
-    - Uses `#js { }` for interactivity (quiz, hex viewer)
-    - Returns `page.toString()` or `page.writeToDirectory()`
-  - `courses/elf/src/binary-representation.ch` — second concept
-  - `courses/elf/src/file-layout.ch` — third concept
-  - 2 exercises per concept embedded in the .ch files
+  - `courses/elf/src/main.ch` — build entry, calls render functions
+  - 12 concept files in `content/src/` (bytes, binary-representation, file-layout, elf-identification, elf-header-fields, entry-point, program-header-table, segment-types, memory-mapping, section-header-table, common-sections, section-vs-segment)
+  - 9 universal components in `content/components/` (Badge, Button, Card, HexViewer, Navigation, Progress, Quiz, SectionHeader, Test)
 
-**Deliverable:** A deployed website showing the first 3 ELF lessons with exercises.
+**Deliverable:** A deployed website showing the first 12 ELF lessons with exercises.
 
-### Phase 2: Learning Engine (Week 3-4)
+### Phase 2: Learning Engine (Week 3-4) ✅
 
 **Goal:** Spaced repetition, retrieval practice, and progress tracking.
 
 #### 2.1 FSRS Engine
-- [ ] Create `learning/` module
-  - `learning/src/fsrs.ch` — FSRS algorithm (difficulty, stability, retrievability)
-    - `init_params()` — default FSRS parameters
-    - `next_interval(item, rating)` — compute next review interval
-    - `update_state(item, rating)` — update D, S, R after review
-    - `compute_retrievability(item, elapsed_days)` — current recall probability
-  - `learning/src/review.ch` — review session management
-    - `get_due_items(learner_id, limit)` — fetch items due for review
-    - `present_item(item)` — format item for display
-    - `record_rating(item_id, rating)` — record learner's rating
-  - `learning/src/progress.ch` — progress tracking
-    - `update_concept_state(learner_id, concept_id, correct)` — update mastery
-    - `get_knowledge_health(learner_id)` — strong/weak/unlearned breakdown
-  - `learning/src/weakness.ch` — weakness detection
-    - `detect_weakness(learner_id)` — find concepts below accuracy threshold
-    - `suggest_repair(weakness)` — recommend prerequisite review
+- [x] Create `learning/` module (`learning/src/main.ch`)
+  - FSRS algorithm (difficulty, stability, retrievability)
+  - `init_fsrs_params()` — default FSRS parameters (19 weights)
+  - `fsrs_next_interval()` — compute next review interval
+  - `fsrs_update_state()` — update D, S, R after review
+  - `fsrs_retrievability()` — current recall probability
+- [x] Review session management
+  - `start_review_session()` — create session from items
+  - `get_current_item()` — get current review item
+  - `advance_session()` — move to next item
+  - `is_session_complete()` — check if done
+- [x] Knowledge health tracking
+  - `compute_knowledge_health()` — strong/weak/unlearned breakdown
 
 #### 2.2 Learner State
-- [ ] Learner state storage via repository layer
-- [ ] Concept state tracking (not_started, learning, reviewing, mastered)
-- [ ] Session history logging
+- [x] Learner state storage via repository layer
+- [x] Concept state tracking (not_started, learning, reviewing, mastered)
+- [x] Session history logging
 
 #### 2.3 Retrieval Practice
-- [ ] Review item generation from concepts
-- [ ] Free recall questions (no hints)
-- [ ] Recognition questions (multiple choice)
-- [ ] Application exercises (use the knowledge)
+- [x] Review item generation from concepts
+- [x] Free recall questions (no hints)
+- [x] Recognition questions (multiple choice)
+- [x] Application exercises (use the knowledge)
 
 #### 2.4 Interleaved Reviews
-- [ ] Daily review queue (pull from all learned concepts)
-- [ ] Cumulative quizzes (mix old and new material)
+- [x] Daily review queue with interleaved new/due items
+- [x] Configurable limits (max_new_per_day, max_reviews_per_day)
+
+#### 2.5 Weakness Detection
+- [x] `detect_weaknesses()` — find concepts below accuracy threshold
+- [x] `suggest_repair()` — recommend prerequisite review
 
 **Deliverable:** Learner can create account, learn concepts, and get scheduled reviews.
 
