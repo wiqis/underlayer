@@ -11,6 +11,9 @@ Read this before touching any code or content. Also load the relevant skill from
 5. **Depth over volume.** One excellent course beats 100 mediocre ones.
 6. **The platform serves the course.** If there's a choice between improving a course and adding a platform feature, the course wins.
 7. **NEVER use string appends for HTML/CSS/JS.** ALL HTML must use `#html { }` macro. ALL CSS must use `#css { }` macro. ALL JS must use `#js { }` macro. If the macro has a bug, fix the macro compiler plugin (`html_cbi`, `css_cbi`, `js_cbi`). NEVER work around macro bugs with string concatenation. This is non-negotiable.
+8. **Checklist is law.** `docs/features-complete.md` is the master feature checklist (1883 items). Every feature you implement MUST be checked off (`- [ ]` to `- [x]`). If you add new sub-features during implementation, add them as new `- [ ]` items. The checklist is the single source of truth for platform completeness.
+9. **The executable must always work.** After EVERY feature implementation, the server must build, start, and serve the ELF course without errors. Build: `cmake-build-debug/TCCCompiler lang/compiled/underlayer/chemical.mod -o lang/compiled/underlayer/build/underlayer.exe --mode debug_quick --no-cache -bm-modules`. Verify: `curl localhost:9000/api/health` returns 200, `curl localhost:9000/courses/elf/lessons/bytes` returns valid HTML. If anything breaks, fix it before moving on.
+10. **One feature at a time.** Do NOT implement multiple features in a single change. Each feature should be atomic, independently verifiable, and independently deployable.
 
 ## AI Constraint System
 
@@ -426,6 +429,7 @@ Load the relevant skill before working on a particular area:
 
 | Skill | Use When |
 |---|---|
+| `features_checklist` | **MANDATORY before any work.** Master feature checklist (1883 items). Check off features after implementation. Verify executable works after every change. |
 | `product_architecture` | Understanding the overall system design |
 | `learning_design` | Designing how concepts are taught and tested |
 | `course_architecture` | Structuring course content and progressions |
@@ -447,6 +451,7 @@ Load the relevant skill before working on a particular area:
 
 | Document | When to Read |
 |---|---|
+| `docs/features-complete.md` | **MANDATORY.** Master feature checklist (1883 items). Check off after implementation. Verify executable works after every change. |
 | `docs/plan.md` | Before starting work — 6-phase roadmap, available libraries, database strategy |
 | `docs/implementation-details.md` | Before writing code — concrete code patterns, library usage, module wiring |
 | `docs/implementation-gaps.md` | Before writing code or generating content — known bugs, language limitations, verification patterns |
