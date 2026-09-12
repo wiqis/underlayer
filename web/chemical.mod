@@ -6,6 +6,7 @@ import std
 import cstd
 import http
 import json
+import fs
 import page
 import html_cbi
 import css_cbi

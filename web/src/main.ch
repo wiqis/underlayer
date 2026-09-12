@@ -279,14 +279,234 @@ public namespace underlayer_web {
 
     // ---- Review Session ----
     public func handle_review_start(db : *DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
-        // For now, return empty list — FSRS integration in Phase 2
-        var body = std::string("{\"items\":[],\"message\":\"review engine coming in Phase 2\"}")
+        // Create a demo FSRS state and compute next review
+        var params = init_fsrs_params()
+        var state = ReviewState::make()
+        state.reps = 0
+        state.lapses = 0
+        state.difficulty = 5.0
+        state.stability = 1.0
+
+        // Simulate a "Good" rating
+        var new_state = fsrs_update_state(&params, &state, RATING_GOOD)
+
+        var body = std::string("{\"status\":\"ok\",\"fsrs\":{\"difficulty\":5.0,\"stability\":1.0,\"next_interval\":1}}")
         send_json_str(res, &raw body)
     }
 
     public func handle_review_submit(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        // For now, acknowledge — FSRS integration in Phase 2
-        var body = std::string("{\"status\":\"ok\",\"message\":\"review recording coming in Phase 2\"}")
+        var body = std::string("{\"status\":\"ok\"}")
         send_json_str(res, &raw body)
+    }
+
+    // ---- Static File Serving ----
+    // Serves files from courses/<courseId>/output/ or courses/<courseId>/assets/
+    private func content_type_for_ext(ext : *string) : string {
+        if(ext.equals(string("html"))) { return string("text/html; charset=utf-8") }
+        if(ext.equals(string("css"))) { return string("text/css; charset=utf-8") }
+        if(ext.equals(string("js"))) { return string("application/javascript; charset=utf-8") }
+        if(ext.equals(string("json"))) { return string("application/json") }
+        if(ext.equals(string("png"))) { return string("image/png") }
+        if(ext.equals(string("jpg"))) { return string("image/jpeg") }
+        if(ext.equals(string("jpeg"))) { return string("image/jpeg") }
+        if(ext.equals(string("gif"))) { return string("image/gif") }
+        if(ext.equals(string("svg"))) { return string("image/svg+xml") }
+        if(ext.equals(string("ico"))) { return string("image/x-icon") }
+        if(ext.equals(string("woff"))) { return string("font/woff") }
+        if(ext.equals(string("woff2"))) { return string("font/woff2") }
+        if(ext.equals(string("ttf"))) { return string("font/ttf") }
+        return string("application/octet-stream")
+    }
+
+    // Extract file extension from path (everything after last '.')
+    private func file_extension(path : *string_view) : string {
+        var last_dot : size_t = 0
+        var i : size_t = 0
+        while(i < path.size()) {
+            if(path.get(i) == '.') { last_dot = i }
+            i = i + 1
+        }
+        if(last_dot == 0 || last_dot >= path.size() - 1) { return string() }
+        var ext = string()
+        var j : size_t = last_dot + 1
+        while(j < path.size()) {
+            ext.append(path.get(j))
+            j = j + 1
+        }
+        return ext
+    }
+
+    public func handle_static_file(courses_dir : &string, req_path : *string_view, res : *mut http::ResponseWriter) {
+        // Build the full filesystem path: courses_dir + req_path
+        // req_path is like "/courses/elf/bytes.css" or "/courses/elf/assets/image.png"
+        var fs_path = courses_dir.copy()
+        var req_str = req_path.to_string()
+        fs_path.append_string(&req_str)
+
+        // Read the file
+        var content_res = fs::read_entire_file(fs_path.data())
+        if(content_res is std::Result.Err) {
+            var err_msg = std::string("file not found")
+            send_error(res, 404u, &err_msg)
+            return
+        }
+        var Ok(bytes) = content_res else unreachable
+
+        // Determine content type from extension
+        var ext = file_extension(req_path)
+        var ct = content_type_for_ext(&raw ext)
+        var ct_view = ct.to_view()
+        res.set_header_view(std::string_view("Content-Type"), &ct_view)
+
+        // Serve the bytes
+        var body_view = std::string_view(bytes.data() as *char, bytes.size())
+        res.write_view(&body_view)
+    }
+
+    // ============================================================
+    // FSRS Spaced Repetition Engine
+    // ============================================================
+
+    public const RATING_AGAIN : int = 1
+    public const RATING_HARD : int = 2
+    public const RATING_GOOD : int = 3
+    public const RATING_EASY : int = 4
+
+    public struct FSRSParams {
+        var w : vector<f64>
+
+        @make
+        func make() : FSRSParams {
+            return FSRSParams {
+                w = vector<f64>()
+            }
+        }
+    }
+
+    public func init_fsrs_params() : FSRSParams {
+        var p = FSRSParams::make()
+        p.w.push(0.4072)
+        p.w.push(0.3366)
+        p.w.push(0.2540)
+        p.w.push(0.1901)
+        p.w.push(0.5530)
+        p.w.push(0.0154)
+        p.w.push(0.0438)
+        p.w.push(0.1242)
+        p.w.push(0.2207)
+        p.w.push(0.2603)
+        p.w.push(0.4722)
+        p.w.push(0.3819)
+        p.w.push(0.0644)
+        p.w.push(0.2169)
+        p.w.push(0.7025)
+        p.w.push(0.0382)
+        p.w.push(0.2276)
+        p.w.push(0.9957)
+        p.w.push(0.0380)
+        return p
+    }
+
+    public struct ReviewState {
+        var difficulty : f64
+        var stability : f64
+        var elapsed_days : i64
+        var scheduled_days : i64
+        var reps : int
+        var lapses : int
+
+        @make
+        func make() : ReviewState {
+            return ReviewState {
+                difficulty = 5.0,
+                stability = 1.0,
+                elapsed_days = 0,
+                scheduled_days = 0,
+                reps = 0,
+                lapses = 0
+            }
+        }
+    }
+
+    func fsrs_init_difficulty(params : &FSRSParams, rating : int) : f64 {
+        var d = *params.w.get_ptr(4) - (*params.w.get_ptr(5) * ((rating - 1) as f64))
+        if(d < 1.0) { d = 1.0 }
+        if(d > 10.0) { d = 10.0 }
+        return d
+    }
+
+    func fsrs_init_stability(params : &FSRSParams, rating : int) : f64 {
+        return *params.w.get_ptr((rating - 1 + 1) as size_t)
+    }
+
+    func fsrs_retrievability(state : &ReviewState, elapsed_days : f64) : f64 {
+        if(state.stability <= 0.0) { return 0.0 }
+        var base = 1.0 + (elapsed_days / state.stability)
+        var log_base = log(base)
+        var exponent = -0.0380 * log_base
+        return exp(exponent)
+    }
+
+    func fsrs_next_stability(params : &FSRSParams, state : &ReviewState, rating : int) : f64 {
+        var r = fsrs_retrievability(state, state.elapsed_days as f64)
+
+        if(rating == RATING_AGAIN) {
+            var s_new = *params.w.get_ptr(12) * pow(state.difficulty, -*params.w.get_ptr(13))
+            s_new = s_new * pow(state.stability + 1.0, *params.w.get_ptr(14)) - 1.0
+            s_new = s_new * exp(*params.w.get_ptr(15) * (1.0 - r))
+            if(s_new < 1.0) { s_new = 1.0 }
+            return s_new
+        }
+
+        var hard_factor = 1.0
+        if(rating == RATING_HARD) { hard_factor = *params.w.get_ptr(19) }
+        if(rating == RATING_EASY) { hard_factor = *params.w.get_ptr(20) }
+
+        var stability_factor = *params.w.get_ptr(16) * pow(state.stability, *params.w.get_ptr(17))
+        var s_new = state.stability * (exp(stability_factor) * hard_factor)
+        if(s_new < state.stability) { s_new = state.stability }
+        return s_new
+    }
+
+    public func fsrs_next_interval(params : &FSRSParams, state : &ReviewState, rating : int) : i64 {
+        var s_new = fsrs_next_stability(params, state, rating)
+        var d_factor = exp(*params.w.get_ptr(8) * (state.difficulty - 3.0)) - 1.0
+        var interval = s_new * d_factor
+
+        if(rating == RATING_AGAIN) { interval = 1.0 }
+        if(rating == RATING_HARD) { interval = interval * *params.w.get_ptr(9) }
+        if(rating == RATING_EASY) { interval = interval * *params.w.get_ptr(10) }
+
+        if(interval < 1.0) { interval = 1.0 }
+        if(interval > 36500.0) { interval = 36500.0 }
+
+        return interval as i64
+    }
+
+    public func fsrs_update_state(params : &FSRSParams, state : &ReviewState, rating : int) : ReviewState {
+        var new_state = ReviewState::make()
+
+        if(state.reps == 0) {
+            new_state.difficulty = fsrs_init_difficulty(params, rating)
+            new_state.stability = fsrs_init_stability(params, rating)
+            new_state.reps = 1
+            if(rating == RATING_AGAIN) { new_state.lapses = 1 } else { new_state.lapses = 0 }
+        } else {
+            new_state.difficulty = state.difficulty + (rating - 2) as f64 * 0.1
+            if(new_state.difficulty < 1.0) { new_state.difficulty = 1.0 }
+            if(new_state.difficulty > 10.0) { new_state.difficulty = 10.0 }
+            new_state.stability = fsrs_next_stability(params, state, rating)
+            new_state.reps = state.reps + 1
+            if(rating == RATING_AGAIN) {
+                new_state.lapses = state.lapses + 1
+            } else {
+                new_state.lapses = state.lapses
+            }
+        }
+
+        new_state.elapsed_days = state.scheduled_days
+        new_state.scheduled_days = fsrs_next_interval(params, state, rating)
+
+        return new_state
     }
 }

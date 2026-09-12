@@ -77,6 +77,17 @@ Section Headers:
                 </div>
             </div>
 
+            <div class="unit unit-apply">
+                <h2>Apply It</h2>
+                <p>A section has sh_offset=0x1000 and sh_size=0x200. How many bytes of the ELF file does it occupy?</p>
+                <div class="quiz" id="quiz-sht-2">
+                    <button class="quiz-option" onclick="checkQuiz('quiz-sht-2', this, true)">0x200 (512 bytes)</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-sht-2', this, false)">0x1000 (4096 bytes)</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-sht-2', this, false)">0x1200</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
+
             <div class="unit unit-connect">
                 <h2>Connect</h2>
                 <p>Section headers describe individual sections. The next concept covers the most common sections you'll encounter.</p>
@@ -92,6 +103,7 @@ Section Headers:
         .unit-reality { border-color: #d97706; background: #fffbeb; }
         .unit-example { border-color: #8b5cf6; background: #f5f3ff; }
         .unit-retrieve { border-color: #06b6d4; background: #ecfeff; }
+        .unit-apply { border-color: #f97316; background: #fff7ed; }
         .unit-connect { border-color: #10b981; background: #ecfdf5; }
         h1 { font-size: 1.5rem; margin-bottom: 1rem; }
         h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }

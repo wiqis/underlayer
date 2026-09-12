@@ -82,6 +82,17 @@ public func render_segment_types() : string {
                 </div>
             </div>
 
+            <div class="unit unit-apply">
+                <h2>Apply It</h2>
+                <p>If a program has 3 PT_LOAD segments, how many memory regions does the kernel map?</p>
+                <div class="quiz" id="quiz-st-2">
+                    <button class="quiz-option" onclick="checkQuiz('quiz-st-2', this, false)">1 — they're all mapped together</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-st-2', this, true)">3 — each PT_LOAD becomes a separate mmap region</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-st-2', this, false)">It depends on the page size</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
+
             <div class="unit unit-connect">
                 <h2>Connect</h2>
                 <p>Segments tell the loader what to load. But how does the loader map file offsets to virtual addresses? That's memory mapping (next concept).</p>
@@ -97,6 +108,7 @@ public func render_segment_types() : string {
         .unit-reality { border-color: #d97706; background: #fffbeb; }
         .unit-example { border-color: #8b5cf6; background: #f5f3ff; }
         .unit-retrieve { border-color: #06b6d4; background: #ecfeff; }
+        .unit-apply { border-color: #f97316; background: #fff7ed; }
         .unit-connect { border-color: #10b981; background: #ecfdf5; }
         h1 { font-size: 1.5rem; margin-bottom: 1rem; }
         h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }

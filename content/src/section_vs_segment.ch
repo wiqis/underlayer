@@ -79,6 +79,17 @@ Sections:
                 <p><em>Sections like .symtab, .strtab, and .debug_* are not loaded into memory — they have no corresponding segment.</em></p>
             </div>
 
+            <div class="unit unit-apply">
+                <h2>Apply It</h2>
+                <p>You want to strip debug symbols from a binary. Which tool modifies section headers without touching segments?</p>
+                <div class="quiz" id="quiz-svs-2">
+                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-2', this, true)">strip — removes .symtab and .strtab sections</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-2', this, false)">ld — relinks the segments</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-2', this, false)">objcopy — copies and modifies segments</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
+
             <div class="unit unit-connect">
                 <h2>Connect</h2>
                 <p>Congratulations! You've completed the ELF course fundamentals. You now understand bytes, binary representation, file layout, the ELF header, program headers, sections, and the relationship between them.</p>
@@ -95,6 +106,7 @@ Sections:
         .unit-reality { border-color: #d97706; background: #fffbeb; }
         .unit-example { border-color: #8b5cf6; background: #f5f3ff; }
         .unit-retrieve { border-color: #06b6d4; background: #ecfeff; }
+        .unit-apply { border-color: #f97316; background: #fff7ed; }
         .unit-connect { border-color: #10b981; background: #ecfdf5; }
         h1 { font-size: 1.5rem; margin-bottom: 1rem; }
         h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }

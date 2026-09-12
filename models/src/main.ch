@@ -211,4 +211,81 @@ public namespace underlayer_models {
             }
         }
     }
+
+    // ---- ExerciseType (how the learner interacts) ----
+    public struct ExerciseType {
+        var id : string
+        var label : string
+        var description : string
+
+        @make
+        func make() : ExerciseType {
+            return ExerciseType {
+                id = string(),
+                label = string(),
+                description = string()
+            }
+        }
+    }
+
+    // Standard exercise types
+    public func exercise_type_recall() : ExerciseType {
+        var t = ExerciseType::make()
+        t.id = string("recall")
+        t.label = string("Free Recall")
+        t.description = string("Answer from memory without hints.")
+        return t
+    }
+
+    public func exercise_type_recognize() : ExerciseType {
+        var t = ExerciseType::make()
+        t.id = string("recognize")
+        t.label = string("Recognition")
+        t.description = string("Choose the correct answer from options.")
+        return t
+    }
+
+    public func exercise_type_apply() : ExerciseType {
+        var t = ExerciseType::make()
+        t.id = string("apply")
+        t.label = string("Apply")
+        t.description = string("Use the knowledge to solve a problem.")
+        return t
+    }
+
+    public func exercise_type_explain() : ExerciseType {
+        var t = ExerciseType::make()
+        t.id = string("explain")
+        t.label = string("Explain")
+        t.description = string("Explain a concept in your own words.")
+        return t
+    }
+
+    // ---- Exercise (a single question/task) ----
+    public struct Exercise {
+        var id : string
+        var concept_id : string
+        var exercise_type : ExerciseType
+        var question : string
+        var answer : string
+        var options : vector<string>    // for recognize type: the choices
+        var correct_index : int         // index into options for recognize type
+        var explanation : string        // shown after answering
+        var difficulty : float          // 0.0 (easy) to 1.0 (hard)
+
+        @make
+        func make() : Exercise {
+            return Exercise {
+                id = string(),
+                concept_id = string(),
+                exercise_type = ExerciseType::make(),
+                question = string(),
+                answer = string(),
+                options = vector<string>(),
+                correct_index = 0,
+                explanation = string(),
+                difficulty = 0.5f
+            }
+        }
+    }
 }

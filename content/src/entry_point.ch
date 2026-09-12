@@ -61,6 +61,17 @@ $ objdump -d /bin/ls | head -20  # See the disassembly at the entry point</code>
                 </div>
             </div>
 
+            <div class="unit unit-apply">
+                <h2>Apply It</h2>
+                <p>If you change the entry point to an address inside .text but not at _start, what will happen when the kernel jumps to it?</p>
+                <div class="quiz" id="quiz-ep-2">
+                    <button class="quiz-option" onclick="checkQuiz('quiz-ep-2', this, false)">It will crash immediately</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-ep-2', this, true)">It may run but skip initialization (ctors, libc setup)</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-ep-2', this, false)">The kernel will refuse to execute it</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
+
             <div class="unit unit-connect">
                 <h2>Connect</h2>
                 <p>The ELF header tells us where execution begins. But how does the loader know which parts of the file to map into memory? That's what program headers (next module) describe.</p>
@@ -77,6 +88,7 @@ $ objdump -d /bin/ls | head -20  # See the disassembly at the entry point</code>
         .unit-example { border-color: #8b5cf6; background: #f5f3ff; }
         .unit-interact { border-color: #ec4899; background: #fdf2f8; }
         .unit-retrieve { border-color: #06b6d4; background: #ecfeff; }
+        .unit-apply { border-color: #f97316; background: #fff7ed; }
         .unit-connect { border-color: #10b981; background: #ecfdf5; }
         h1 { font-size: 1.5rem; margin-bottom: 1rem; }
         h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }

@@ -107,6 +107,30 @@ public func main() : int {
         }
     }))
 
+    // Static file serving for course output (HTML, CSS, JS, images)
+    srv.router.add("GET", "/courses/*", (|&courses_dir|(req, res) => {
+        var path = req.path.to_view()
+        // Only serve files, not directory paths (must have an extension)
+        var has_ext = false
+        var i : size_t = 0
+        while(i < path.size()) {
+            if(path.get(i) == '.') { has_ext = true }
+            i = i + 1
+        }
+        if(has_ext) {
+            underlayer_web::handle_static_file(courses_dir, &raw path, &raw mut res)
+        } else {
+            // Try course landing page
+            var segments = underlayer_core::path_segments(&path)
+            if(segments.size() >= 2) {
+                var course_id = segments.get_ptr(1)
+                underlayer_web::handle_course_landing(courses_dir, course_id, &req, &raw mut res)
+            } else {
+                underlayer_web::handle_home(&req, &raw mut res)
+            }
+        }
+    }))
+
     // Home page
     srv.router.add("GET", "/", (req, res) => {
         underlayer_web::handle_home(&req, &raw mut res)

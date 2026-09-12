@@ -54,7 +54,7 @@ Offset  Section               VirtAddr  Section
 
             <div class="unit unit-retrieve">
                 <h2>Check Your Understanding</h2>
-                <p>If a PT_LOAD segment has p_offset=0x1000, p_vaddr=0x2000, and p_filesz=0x500, what virtual address does file offset 0x1200 map to?</p>
+                <p>A segment has p_offset=0x1000, p_vaddr=0x2000. File offset 0x1200 maps to what virtual address?</p>
                 <div class="quiz" id="quiz-mm-1">
                     <button class="quiz-option" onclick="checkQuiz('quiz-mm-1', this, false)">0x1200</button>
                     <button class="quiz-option" onclick="checkQuiz('quiz-mm-1', this, true)">0x2200</button>
@@ -62,6 +62,17 @@ Offset  Section               VirtAddr  Section
                     <div class="quiz-feedback"></div>
                 </div>
                 <p><em>0x2200 = 0x1200 - 0x1000 + 0x2000</em></p>
+            </div>
+
+            <div class="unit unit-apply">
+                <h2>Apply It</h2>
+                <p>Two PT_LOAD segments overlap in virtual address space. What happens?</p>
+                <div class="quiz" id="quiz-mm-2">
+                    <button class="quiz-option" onclick="checkQuiz('quiz-mm-2', this, false)">The kernel rejects the binary</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-mm-2', this, false)">The second segment overwrites the first</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-mm-2', this, true)">It's allowed — the linker ensures non-overlapping alignments</button>
+                    <div class="quiz-feedback"></div>
+                </div>
             </div>
 
             <div class="unit unit-connect">
@@ -79,6 +90,7 @@ Offset  Section               VirtAddr  Section
         .unit-reality { border-color: #d97706; background: #fffbeb; }
         .unit-example { border-color: #8b5cf6; background: #f5f3ff; }
         .unit-retrieve { border-color: #06b6d4; background: #ecfeff; }
+        .unit-apply { border-color: #f97316; background: #fff7ed; }
         .unit-connect { border-color: #10b981; background: #ecfdf5; }
         h1 { font-size: 1.5rem; margin-bottom: 1rem; }
         h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }

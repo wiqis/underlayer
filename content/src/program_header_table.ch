@@ -80,6 +80,17 @@ public func render_program_header_table() : string {
                 </div>
             </div>
 
+            <div class="unit unit-apply">
+                <h2>Apply It</h2>
+                <p>If p_vaddr is 0x4000 and p_offset is 0x0, what's the file offset of the first byte in the segment?</p>
+                <div class="quiz" id="quiz-pht-2">
+                    <button class="quiz-option" onclick="checkQuiz('quiz-pht-2', this, true)">0x0 — the byte is at offset 0</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-pht-2', this, false)">0x4000 — same as the virtual address</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-pht-2', this, false)">It depends on the alignment</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
+
             <div class="unit unit-connect">
                 <h2>Connect</h2>
                 <p>Program headers define segments. But segments and sections are different things — segments are for the loader, sections are for tools. The next concepts explore this distinction.</p>
@@ -95,6 +106,7 @@ public func render_program_header_table() : string {
         .unit-reality { border-color: #d97706; background: #fffbeb; }
         .unit-example { border-color: #8b5cf6; background: #f5f3ff; }
         .unit-retrieve { border-color: #06b6d4; background: #ecfeff; }
+        .unit-apply { border-color: #f97316; background: #fff7ed; }
         .unit-connect { border-color: #10b981; background: #ecfdf5; }
         h1 { font-size: 1.5rem; margin-bottom: 1rem; }
         h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }
