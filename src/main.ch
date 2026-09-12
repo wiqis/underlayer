@@ -46,8 +46,8 @@ public func main() : int {
     srv.router.add("GET", "/api/courses/:courseId", (|&courses_dir|(req, res) => {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
-        if(segments.size() >= 2) {
-            var course_id = segments.get_ptr(1)
+        if(segments.size() >= 3) {
+            var course_id = segments.get_ptr(2)
             underlayer_web::handle_get_course(courses_dir, course_id, &req, &raw mut res)
         } else {
             res.status = 400u
@@ -64,7 +64,7 @@ public func main() : int {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
-            var course_id = segments.get_ptr(2)
+            var course_id = segments.get_ptr(1)
             var concept_id = segments.get_ptr(3)
             underlayer_web::handle_lesson(courses_dir, course_id, concept_id, &req, &raw mut res)
         } else {
@@ -94,7 +94,7 @@ public func main() : int {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
-            var course_id = segments.get_ptr(2)
+            var course_id = segments.get_ptr(1)
             var concept_id = segments.get_ptr(3)
             underlayer_web::handle_lesson(courses_dir, course_id, concept_id, &req, &raw mut res)
         } else {

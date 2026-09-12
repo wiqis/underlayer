@@ -1,106 +1,42 @@
 {
-  "id": "elf",
-  "title": "Executable and Linkable Format",
-  "version": 1,
-  "description": "A deep dive into the ELF binary format — headers, sections, segments, symbols, relocations, and dynamic linking.",
-  "modules": [
-    {
-      "id": "fundamentals",
-      "title": "Fundamentals",
-      "order": 1,
-      "concepts": ["bytes", "binary-representation", "file-layout"]
-    },
-    {
-      "id": "elf-header",
-      "title": "ELF Header",
-      "order": 2,
-      "concepts": ["elf-identification", "elf-header-fields", "entry-point"]
-    },
-    {
-      "id": "program-headers",
-      "title": "Program Headers",
-      "order": 3,
-      "concepts": ["program-header-table", "segment-types", "memory-mapping"]
-    },
-    {
-      "id": "sections",
-      "title": "Sections",
-      "order": 4,
-      "concepts": ["section-header-table", "common-sections", "section-vs-segment"]
-    }
-  ],
-  "concepts": [
-    {
-      "id": "bytes",
-      "title": "Bytes and Binary",
-      "module_id": "fundamentals",
-      "description": "Understanding bytes — the building blocks of every binary format."
-    },
-    {
-      "id": "binary-representation",
-      "title": "Binary Representation",
-      "module_id": "fundamentals",
-      "description": "How bytes encode numbers, characters, and data structures."
-    },
-    {
-      "id": "file-layout",
-      "title": "File Layout",
-      "module_id": "fundamentals",
-      "description": "How an ELF file is organized from start to finish."
-    },
-    {
-      "id": "elf-identification",
-      "title": "ELF Identification",
-      "module_id": "elf-header",
-      "description": "The e_ident array — magic number, class, data encoding, OS/ABI."
-    },
-    {
-      "id": "elf-header-fields",
-      "title": "ELF Header Fields",
-      "module_id": "elf-header",
-      "description": "Every field in the ELF header and what it tells the system."
-    },
-    {
-      "id": "entry-point",
-      "title": "Entry Point",
-      "module_id": "elf-header",
-      "description": "How e_entry tells the loader where execution begins."
-    },
-    {
-      "id": "program-header-table",
-      "title": "Program Header Table",
-      "module_id": "program-headers",
-      "description": "The table that describes how segments are loaded into memory."
-    },
-    {
-      "id": "segment-types",
-      "title": "Segment Types",
-      "module_id": "program-headers",
-      "description": "PT_LOAD, PT_DYNAMIC, PT_INTERP — what each segment type does."
-    },
-    {
-      "id": "memory-mapping",
-      "title": "Memory Mapping",
-      "module_id": "program-headers",
-      "description": "How the loader maps file offsets to virtual addresses."
-    },
-    {
-      "id": "section-header-table",
-      "title": "Section Header Table",
-      "module_id": "sections",
-      "description": "The table that describes each section in the ELF file."
-    },
-    {
-      "id": "common-sections",
-      "title": "Common Sections",
-      "module_id": "sections",
-      "description": ".text, .data, .bss, .rodata, .symtab, .strtab — what each section contains."
-    },
-    {
-      "id": "section-vs-segment",
-      "title": "Section vs Segment",
-      "module_id": "sections",
-      "description": "Why sections and segments are different things, and how they relate."
-    }
-  ]
+    "id": "elf",
+    "title": "Executable and Linkable Format",
+    "version": 1,
+    "description": "A deep dive into the ELF binary format — headers, sections, segments, symbols, relocations, and dynamic linking.",
+    "modules": [
+        {
+            "id": "fundamentals",
+            "title": "Fundamentals",
+            "concepts": ["bytes", "binary-representation", "file-layout"]
+        },
+        {
+            "id": "elf-header",
+            "title": "ELF Header",
+            "concepts": ["elf-identification", "elf-header-fields", "entry-point"]
+        },
+        {
+            "id": "program-headers",
+            "title": "Program Headers",
+            "concepts": ["program-header-table", "segment-types", "memory-mapping"]
+        },
+        {
+            "id": "sections",
+            "title": "Sections",
+            "concepts": ["section-header-table", "common-sections", "section-vs-segment"]
+        }
+    ],
+    "concepts": [
+        {"id": "bytes", "title": "Bytes and Binary", "module_id": "fundamentals", "description": "Understanding bytes."},
+        {"id": "binary-representation", "title": "Binary Representation", "module_id": "fundamentals", "description": "How bytes encode numbers."},
+        {"id": "file-layout", "title": "File Layout", "module_id": "fundamentals", "description": "How an ELF file is organized."},
+        {"id": "elf-identification", "title": "ELF Identification", "module_id": "elf-header", "description": "The e_ident array."},
+        {"id": "elf-header-fields", "title": "ELF Header Fields", "module_id": "elf-header", "description": "Every field in the ELF header."},
+        {"id": "entry-point", "title": "Entry Point", "module_id": "elf-header", "description": "Where execution begins."},
+        {"id": "program-header-table", "title": "Program Header Table", "module_id": "program-headers", "description": "How segments are loaded."},
+        {"id": "segment-types", "title": "Segment Types", "module_id": "program-headers", "description": "PT_LOAD, PT_DYNAMIC, PT_INTERP."},
+        {"id": "memory-mapping", "title": "Memory Mapping", "module_id": "program-headers", "description": "File offsets to virtual addresses."},
+        {"id": "section-header-table", "title": "Section Header Table", "module_id": "sections", "description": "The section descriptor table."},
+        {"id": "common-sections", "title": "Common Sections", "module_id": "sections", "description": ".text, .data, .bss, .rodata."},
+        {"id": "section-vs-segment", "title": "Section vs Segment", "module_id": "sections", "description": "Why they are different."}
+    ]
 }

@@ -1,8 +1,6 @@
 // underlayer_repository — ALL SQL lives here.
 // Schema initialization + CRUD for Phase 1.
-// All string params use &string (references).
-// NOTE: Filesystem reads (fs::read_entire_file) cause TCC linker errors
-// due to Result type destructors. Course data is hardcoded for now.
+// Course loading reads manifest.json from disk.
 using std::string
 using std::string_view
 using std::vector
@@ -14,6 +12,7 @@ using underlayer_models::ConceptRef
 using underlayer_models::Manifest
 using underlayer_models::Learner
 using underlayer_models::ConceptState
+using underlayer_models::ReviewItem
 
 public namespace underlayer_repository {
 
@@ -51,8 +50,167 @@ public namespace underlayer_repository {
         return result
     }
 
-    // Load a course — hardcoded data (filesystem loading deferred to LLVM backend)
+    // Helper: parse int from string_view
+    private func parse_int(v : std::string_view) : int {
+        return parse_i64(v) as int
+    }
+
+    // Helper: extract string from JsonValue
+    private func json_str(val : *JsonValue) : string {
+        if(val == null) { return string() }
+        if(val is JsonValue.String) {
+            var String(s) = *val else unreachable
+            return s.copy()
+        }
+        return string()
+    }
+
+    // Helper: extract i64 from JsonValue.Number
+    private func json_i64(val : *JsonValue) : i64 {
+        if(val == null) { return 0 }
+        if(val is JsonValue.Number) {
+            var Number(s) = *val else unreachable
+            return parse_i64(s.to_view())
+        }
+        return 0
+    }
+
+    // Helper: extract int from JsonValue.Number
+    private func json_int(val : *JsonValue) : int {
+        return json_i64(val) as int
+    }
+
+    // Helper: get field from JsonValue.Object
+    private func json_get(obj : *JsonValue, key : *char) : *mut JsonValue {
+        if(obj == null) { return null }
+        if(!(obj is JsonValue.Object)) { return null }
+        var Object(map) = *obj else unreachable
+        var k = string::make_no_len(key)
+        return map.get_ptr(&k)
+    }
+
+    // Helper: get string field from JsonValue.Object
+    private func json_get_str(obj : *JsonValue, key : *char) : string {
+        var field = json_get(obj, key)
+        return json_str(field)
+    }
+
+    // Helper: get int field from JsonValue.Object
+    private func json_get_int(obj : *JsonValue, key : *char) : int {
+        var field = json_get(obj, key)
+        return json_int(field)
+    }
+
+    // ---- Course Loading ----
+
+    // Load a course from disk (reads manifest.json), falls back to hardcoded data
     public func load_course(courses_dir : &string, course_id : &string) : Course {
+        // Try loading from disk first
+        var disk_course = load_course_from_disk(courses_dir, course_id)
+        if(disk_course.id.size() > 0) {
+            return disk_course
+        }
+        // Fallback to hardcoded data
+        return load_course_hardcoded(course_id)
+    }
+
+    // Load a course from manifest.json on disk
+    private func load_course_from_disk(courses_dir : &string, course_id : &string) : Course {
+        var course = Course::make()
+
+        // Build path: courses_dir/course_id/manifest.json
+        var path = courses_dir.copy()
+        path.append_view(string_view("/"))
+        path.append_string(course_id)
+        path.append_view(string_view("/manifest.json"))
+
+        // Read the file
+        var content_res = fs::read_entire_file(path.data())
+        if(content_res is std::Result.Err) {
+            return course
+        }
+        var Ok(bytes) = content_res else unreachable
+
+        // Convert bytes to string
+        var text = string()
+        var i : size_t = 0
+        while(i < bytes.size()) {
+            text.append(bytes.get(i) as char)
+            i = i + 1
+        }
+
+        // Parse JSON
+        var json_res = json::parse(text.to_view())
+        if(json_res is std::Result.Err) {
+            return course
+        }
+        var Ok(root) = json_res else unreachable
+
+        // Extract fields
+        course.id = json_get_str(&raw root, "id")
+        course.title = json_get_str(&raw root, "title")
+        course.version = json_get_int(&raw root, "version")
+        if(course.version == 0) { course.version = 1 }
+
+        // Parse modules array
+        var modules_val = json_get(&raw root, "modules")
+        if(modules_val != null && modules_val is JsonValue.Array) {
+            var Array(modules_arr) = *modules_val else unreachable
+            var mi : size_t = 0
+            while(mi < modules_arr.size()) {
+                var mod_val = modules_arr.get_ptr(mi)
+                var mod = Module::make()
+                mod.id = json_get_str(mod_val, "id")
+                mod.title = json_get_str(mod_val, "title")
+                mod.order = mi as int + 1
+
+                // Parse concepts array inside module
+                var concepts_val = json_get(mod_val, "concepts")
+                if(concepts_val != null && concepts_val is JsonValue.Array) {
+                    var Array(concepts_arr) = *concepts_val else unreachable
+                    var ci : size_t = 0
+                    while(ci < concepts_arr.size()) {
+                        var cval = concepts_arr.get_ptr(ci)
+                        if(cval is JsonValue.String) {
+                            var String(cid) = *cval else unreachable
+                            mod.concepts.push(cid.copy())
+                        }
+                        ci = ci + 1
+                    }
+                }
+                course.modules.push(mod)
+                mi = mi + 1
+            }
+        }
+
+        // Parse concepts array
+        var concepts_val = json_get(&raw root, "concepts")
+        if(concepts_val != null && concepts_val is JsonValue.Array) {
+            var Array(concepts_arr) = *concepts_val else unreachable
+            var ci : size_t = 0
+            while(ci < concepts_arr.size()) {
+                var cval = concepts_arr.get_ptr(ci)
+                var cref = ConceptRef::make()
+                if(cval is JsonValue.Object) {
+                    cref.id = json_get_str(cval, "id")
+                    cref.title = json_get_str(cval, "title")
+                    cref.module_id = json_get_str(cval, "module_id")
+                    cref.description = json_get_str(cval, "description")
+                } else if(cval is JsonValue.String) {
+                    // Simple string reference — use as concept id
+                    var String(cid) = *cval else unreachable
+                    cref.id = cid.copy()
+                }
+                course.concepts.push(cref)
+                ci = ci + 1
+            }
+        }
+
+        return course
+    }
+
+    // Hardcoded course data (fallback when manifest.json is missing)
+    private func load_course_hardcoded(course_id : &string) : Course {
         var course = Course::make()
         var elf_check = string("elf")
         if(course_id.equals(&elf_check)) {
@@ -183,14 +341,26 @@ public namespace underlayer_repository {
         return course
     }
 
-    // List all courses
+    // List all courses — scans courses_dir for subdirectories with manifest.json
     public func list_courses(courses_dir : &string) : vector<Course> {
         var courses = vector<Course>()
-        var elf_id = string("elf")
-        var course = load_course(courses_dir, &elf_id)
-        courses.push(course)
+        // Known course IDs (directory scanning not available without fs::read_dir)
+        var known = vector<string>()
+        known.push(string("elf"))
+        var i : size_t = 0
+        while(i < known.size()) {
+            var cid_ptr = known.get_ptr(i)
+            var cid_val = cid_ptr.copy()
+            var course = load_course(courses_dir, &cid_val)
+            if(course.id.size() > 0) {
+                courses.push(course)
+            }
+            i = i + 1
+        }
         return courses
     }
+
+    // ---- Learner CRUD ----
 
     public func create_learner(db : *DbClient, learner_id : &string, name : &string, email : &string) {
         var sql = string("INSERT OR IGNORE INTO learners (id, name, email, created_at) VALUES ('")
@@ -223,6 +393,8 @@ public namespace underlayer_repository {
         }
         return learner
     }
+
+    // ---- Concept State CRUD ----
 
     public func get_concept_state(db : *DbClient, learner_id : &string, concept_id : &string, course_id : &string) : ConceptState {
         var state = ConceptState::make()
@@ -310,5 +482,144 @@ public namespace underlayer_repository {
             ri = ri + 1
         }
         return states
+    }
+
+    // ---- Review Item CRUD ----
+
+    // Get review items due for a learner (next_review <= now)
+    public func get_due_review_items(db : *DbClient, learner_id : &string, course_id : &string, limit : int) : vector<ReviewItem> {
+        var items = vector<ReviewItem>()
+        var now = underlayer_core::current_timestamp()
+        var sql = string("SELECT id, concept_id, type, front, back, difficulty, stability, retrievability, next_review, reps, lapses FROM review_items WHERE learner_id = '")
+        sql.append_string(learner_id)
+        sql.append_view("' AND course_id = '")
+        sql.append_string(course_id)
+        sql.append_view("' AND next_review <= ")
+        var now_str = underlayer_core::int_to_string(now)
+        sql.append_view(now_str.to_view())
+        sql.append_view(" ORDER BY next_review ASC LIMIT ")
+        var lim_str = underlayer_core::int_to_string(limit as i64)
+        sql.append_view(lim_str.to_view())
+        var result = underlayer_db::query_sql(db, &raw sql)
+        var ri : size_t = 0
+        while(ri < result.rows.size()) {
+            var row = result.rows.get_ptr(ri)
+            if(row.vals.size() >= 11) {
+                var item = ReviewItem::make()
+                item.id = row.vals.get_ptr(0).copy()
+                item.learner_id = learner_id.copy()
+                item.concept_id = row.vals.get_ptr(1).copy()
+                item.course_id = course_id.copy()
+                item.item_type = row.vals.get_ptr(2).copy()
+                item.front = row.vals.get_ptr(3).copy()
+                item.back = row.vals.get_ptr(4).copy()
+                item.difficulty = parse_i64(row.vals.get_ptr(5).to_view()) as f64
+                item.stability = parse_i64(row.vals.get_ptr(6).to_view()) as f64
+                item.retrievability = parse_i64(row.vals.get_ptr(7).to_view()) as f64
+                item.next_review = parse_i64(row.vals.get_ptr(8).to_view())
+                item.reps = parse_i64(row.vals.get_ptr(9).to_view()) as int
+                item.lapses = parse_i64(row.vals.get_ptr(10).to_view()) as int
+                items.push(item)
+            }
+            ri = ri + 1
+        }
+        return items
+    }
+
+    // Update a review item after a rating
+    public func update_review_item(db : *DbClient, item : *ReviewItem) {
+        var sql = string("UPDATE review_items SET difficulty = ")
+        var diff_str = underlayer_core::int_to_string(item.difficulty as i64)
+        sql.append_view(diff_str.to_view())
+        sql.append_view(", stability = ")
+        var stab_str = underlayer_core::int_to_string(item.stability as i64)
+        sql.append_view(stab_str.to_view())
+        sql.append_view(", retrievability = ")
+        var ret_str = underlayer_core::int_to_string(item.retrievability as i64)
+        sql.append_view(ret_str.to_view())
+        sql.append_view(", next_review = ")
+        var nr_str = underlayer_core::int_to_string(item.next_review)
+        sql.append_view(nr_str.to_view())
+        sql.append_view(", last_review = ")
+        var lr_str = underlayer_core::int_to_string(item.last_review)
+        sql.append_view(lr_str.to_view())
+        sql.append_view(", reps = ")
+        var reps_str = underlayer_core::int_to_string(item.reps as i64)
+        sql.append_view(reps_str.to_view())
+        sql.append_view(", lapses = ")
+        var lapses_str = underlayer_core::int_to_string(item.lapses as i64)
+        sql.append_view(lapses_str.to_view())
+        sql.append_view(" WHERE id = '")
+        sql.append_string(&item.id)
+        sql.append_view("'")
+        underlayer_db::exec_sql(db, &raw sql)
+    }
+
+    // Insert a new review item
+    public func insert_review_item(db : *DbClient, item : *ReviewItem) {
+        var sql = string("INSERT OR IGNORE INTO review_items (id, learner_id, concept_id, course_id, type, front, back, difficulty, stability, retrievability, next_review, last_review, reps, lapses) VALUES ('")
+        sql.append_string(&item.id)
+        sql.append_view("', '")
+        sql.append_string(&item.learner_id)
+        sql.append_view("', '")
+        sql.append_string(&item.concept_id)
+        sql.append_view("', '")
+        sql.append_string(&item.course_id)
+        sql.append_view("', '")
+        sql.append_string(&item.item_type)
+        sql.append_view("', '")
+        var front_esc = underlayer_core::json_escape(&item.front.to_view())
+        sql.append_view(front_esc.to_view())
+        sql.append_view("', '")
+        var back_esc = underlayer_core::json_escape(&item.back.to_view())
+        sql.append_view(back_esc.to_view())
+        sql.append_view("', ")
+        var diff_str = underlayer_core::int_to_string(item.difficulty as i64)
+        sql.append_view(diff_str.to_view())
+        sql.append_view(", ")
+        var stab_str = underlayer_core::int_to_string(item.stability as i64)
+        sql.append_view(stab_str.to_view())
+        sql.append_view(", ")
+        var ret_str = underlayer_core::int_to_string(item.retrievability as i64)
+        sql.append_view(ret_str.to_view())
+        sql.append_view(", ")
+        var nr_str = underlayer_core::int_to_string(item.next_review)
+        sql.append_view(nr_str.to_view())
+        sql.append_view(", ")
+        var lr_str = underlayer_core::int_to_string(item.last_review)
+        sql.append_view(lr_str.to_view())
+        sql.append_view(", ")
+        var reps_str = underlayer_core::int_to_string(item.reps as i64)
+        sql.append_view(reps_str.to_view())
+        sql.append_view(", ")
+        var lapses_str = underlayer_core::int_to_string(item.lapses as i64)
+        sql.append_view(lapses_str.to_view())
+        sql.append_view(")")
+        underlayer_db::exec_sql(db, &raw sql)
+    }
+
+    // ---- Session CRUD ----
+
+    public func insert_session(db : *DbClient, session : *underlayer_models::Session) {
+        var sql = string("INSERT OR IGNORE INTO sessions (id, learner_id, start_time, end_time, type, exercises_attempted, exercises_correct) VALUES ('")
+        sql.append_string(&session.id)
+        sql.append_view("', '")
+        sql.append_string(&session.learner_id)
+        sql.append_view("', ")
+        var st_str = underlayer_core::int_to_string(session.start_time)
+        sql.append_view(st_str.to_view())
+        sql.append_view(", ")
+        var et_str = underlayer_core::int_to_string(session.end_time)
+        sql.append_view(et_str.to_view())
+        sql.append_view(", '")
+        sql.append_string(&session.session_type)
+        sql.append_view("', ")
+        var ea_str = underlayer_core::int_to_string(session.exercises_attempted as i64)
+        sql.append_view(ea_str.to_view())
+        sql.append_view(", ")
+        var ec_str = underlayer_core::int_to_string(session.exercises_correct as i64)
+        sql.append_view(ec_str.to_view())
+        sql.append_view(")")
+        underlayer_db::exec_sql(db, &raw sql)
     }
 }
