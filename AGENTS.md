@@ -51,11 +51,9 @@ Every AI agent working on Underlayer must follow these constraints:
 ```
 src/main.ch              (wiring only — route registration, context building)
    ↓
-web/                     (public pages, API routes, static file serving)
+web/                     (public pages, API routes, static file serving, FSRS engine)
    ↓
 content/                 (course loading, lesson rendering)
-   ↓
-learning/                (FSRS engine, spaced repetition, progress tracking)
    ↓
 repository/              (ALL SQL lives here — schema + CRUD)
    ↓
@@ -189,6 +187,120 @@ public func render_bytes() : std::string {
 | `content/` | #js macro | `lang/libs/js_cbi/` |
 | `content/` | #md macro | `lang/libs/md_cbi/` |
 | `content/` | UI components | `lang/libs/components/` |
+
+## Universal Components
+
+Underlayer uses the `#universal` macro for interactive components with SSR + hydration.
+
+### When to Use Universal Components
+
+| Use Universal | Use Plain HTML |
+|---------------|----------------|
+| Interactive widgets (quizzes, hex viewers, code editors) | Static lesson content |
+| Components with `state` (form inputs, toggles, accordions) | Simple text paragraphs |
+| Components reused across multiple concepts | One-off visual elements |
+| Components needing client-side interactivity | Server-rendered static layouts |
+
+### Theme Setup (Required)
+
+Always inject the theme before using components:
+
+```chemical
+import components
+import page
+import html_cbi
+import css_cbi
+import js_cbi
+
+public func render_page() : std::string {
+    var page = HtmlPage()
+    page.default_prepare()
+    page.inject_default_components_theme()
+
+    #html {
+        <Container size="lg">
+            <Card>
+                <CardBody>
+                    <!-- component content -->
+                </CardBody>
+            </Card>
+        </Container>
+    }
+
+    return page.to_string()
+}
+```
+
+### Component Patterns
+
+**Quiz with feedback:**
+```chemical
+#universal QuizWidget(props) {
+    state selected = -1
+    state answered = false
+    var correct = props.correct_index
+
+    #html {
+        <Stack direction="column" gap="sm">
+            @{var i = 0
+            while(i < props.options.size()) {
+                var idx = i
+                var variant = "outline"
+                if(answered && idx == selected) {
+                    if(idx == correct) { variant = "success" }
+                    else { variant = "destructive" }
+                }
+                if(answered && idx == correct) { variant = "success" }
+                #html {
+                    <Button variant={variant} disabled={answered} onClick={...}>
+                        {props.options.get(idx)}
+                    </Button>
+                }
+                i = i + 1
+            }}
+            @{if(answered) {
+                #html {
+                    <Alert variant={selected == correct ? "success" : "error"}>
+                        <AlertBody>{props.explanation}</AlertBody>
+                    </Alert>
+                }
+            }}
+        </Stack>
+    }
+}
+```
+
+**Progress tracking:**
+```chemical
+#universal ProgressTracker(props) {
+    var mastered = props.mastered
+    var total = props.total
+    var pct = if(total > 0) { (mastered * 100) / total } else { 0 }
+
+    #html {
+        <Card>
+            <CardBody>
+                <Stack direction="row" justify="space-between">
+                    <Text>Progress</Text>
+                    <Caption>{mastered}/{total}</Caption>
+                </Stack>
+                <Progress value={pct} max={100} variant="success" />
+            </CardBody>
+        </Card>
+    }
+}
+```
+
+### Component Gotchas
+
+1. **No `if` without `else`**: Chemical requires else for every if block
+2. **State only with `state` keyword**: `var` doesn't create reactive signals
+3. **Loops use `while` not `for`**: `while(i < n) { ... i = i + 1 }`
+4. **No inline if expressions**: Extract to variable: `var x = if(c) { a } else { b }`
+5. **Vector access**: Use `.get_ptr(i)` not `.get(i)` for mutable access
+6. **String comparison**: Use `.equals()` not `==`
+7. **Pointer types**: `&string` vs `*string` — check function signatures
+8. **Theme required**: Always call `page.inject_default_components_theme()` first
 
 ## Build / Run / Verify
 
@@ -327,6 +439,8 @@ Load the relevant skill before working on a particular area:
 | `course_generation` | Using AI to generate course content |
 | `review_quality` | Reviewing and verifying generated content |
 | `deployment` | Android app, auto-deployment, CI/CD |
+| `components` | Using shadcn-style UI components (Card, Button, Alert, Badge, Progress, etc.) |
+| `universal_components` | Building interactive universal components with SSR + hydration |
 
 ## Key Documents
 
@@ -360,7 +474,14 @@ Load the relevant skill before working on a particular area:
 
 ## Gotchas
 
-- **Universal components have known bugs.** Load `implementation_gaps/SKILL.md` before using them. Prefer simple HTML for course content.
+- **Universal components require theme injection.** Always call `page.inject_default_components_theme()` before using components. Components will not render correctly without it.
+- **No `if` without `else`.** Chemical requires an else block for every if statement. Use `if(cond) { ... } @else { }` even for empty else blocks.
+- **State only with `state` keyword.** Using `var` for reactive state won't create signals. Use `state` for anything that needs to update the UI.
+- **Loops use `while`, not `for`.** Chemical doesn't have C-style for loops. Use `while(i < n) { ... i = i + 1 }`.
+- **No inline if expressions.** Extract to variable: `var x = if(c) { a } else { b }`.
+- **Vector access**: Use `.get_ptr(i)` not `.get(i)` for mutable access. `.get()` returns a copy.
+- **String comparison**: Use `.equals()` not `==` for string equality.
+- **Pointer types**: `&string` ≠ `*string`. Check function signatures carefully.
 - **Chemical is young.** Some features may not exist yet. Document gaps, work around them.
 - **Courses must be portable.** No platform-specific dependencies inside course content.
 - **AI generation is iterative.** Never accept first-pass content as final.
