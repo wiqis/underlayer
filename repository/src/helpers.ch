@@ -22,6 +22,33 @@ public namespace underlayer_repository {
         return parse_i64(v) as int
     }
 
+    // Parse a float from string (e.g. "0.4072" -> 0.4072)
+    public func parse_f64(v : std::string_view) : f64 {
+        var result : f64 = 0.0
+        var negative = false
+        var i : size_t = 0
+        if(v.size() > 0 && v.get(0) == '-') { negative = true; i = 1 }
+        // Integer part
+        while(i < v.size()) {
+            var c = v.get(i)
+            if(c >= '0' && c <= '9') { result = result * 10.0 + ((c as i64 - 48) as f64) }
+            else if(c == '.') { i = i + 1; break }
+            i = i + 1
+        }
+        // Fractional part
+        var frac_mult : f64 = 0.1
+        while(i < v.size()) {
+            var c = v.get(i)
+            if(c >= '0' && c <= '9') {
+                result = result + ((c as i64 - 48) as f64) * frac_mult
+                frac_mult = frac_mult * 0.1
+            }
+            i = i + 1
+        }
+        if(negative) { result = -result }
+        return result
+    }
+
     public func json_str(val : *JsonValue) : string {
         if(val == null) { return string() }
         if(val is JsonValue.String) {

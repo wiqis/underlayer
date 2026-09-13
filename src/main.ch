@@ -146,6 +146,9 @@ public func main() : int {
     srv.router.add("GET", "/api/fsrs/export", (|&db|(req, res) => {
         underlayer_web::handle_fsrs_export(db, &req, &raw mut res)
     }))
+    srv.router.add("POST", "/api/fsrs/import", (|&db|(req, res) => {
+        underlayer_web::handle_fsrs_import(db, &raw mut req, &raw mut res)
+    }))
 
     // ---- Session History (1.2.21, 1.2.22) ----
     srv.router.add("GET", "/api/sessions", (|&db|(req, res) => {

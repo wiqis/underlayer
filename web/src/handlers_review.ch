@@ -199,7 +199,14 @@ public namespace underlayer_web {
         body.append_string(&total_str)
         body.append_view(",\"started_at\":")
         body.append_string(&session_id)
-        body.append_view("}")
+        // 1.2.15: Estimated time remaining (~30s per item)
+        var est_secs : i64 = (due_items.size() as i64) * 30
+        body.append_view(",\"est_seconds_remaining\":")
+        var est_out = underlayer_core::int_to_string(est_secs)
+        body.append_string(&est_out)
+        body.append_view(",\"mode\":\"")
+        body.append_string(&mode)
+        body.append_view("\"}")
         send_json_str(res, &raw body)
     }
 
@@ -262,6 +269,14 @@ public namespace underlayer_web {
 
         underlayer_repository::upsert_concept_state(&raw db, &raw state)
 
+        // 1.2.16: Compute session accuracy from state
+        var session_accuracy : f64 = 0.0
+        if(state.attempts > 0) {
+            session_accuracy = (state.correct as f64) / (state.attempts as f64)
+        }
+        // 1.2.17: Current streak from state
+        var current_streak = state.streak
+
         // Record session item if session_id provided (1.2.6, 1.2.7)
         if(sid_v.size() > 0) {
             var session_id = sv_to_string(&raw sid_v)
@@ -303,6 +318,14 @@ public namespace underlayer_web {
         resp.append_string(&lapses_out)
         resp.append_view(",\"interval_days\":")
         resp.append_string(&interval_out)
+        // 1.2.16: Session accuracy (real-time)
+        var acc_out = underlayer_learning::f64_to_string(session_accuracy)
+        resp.append_view(",\"session_accuracy\":")
+        resp.append_string(&acc_out)
+        // 1.2.17: Current streak
+        resp.append_view(",\"current_streak\":")
+        var cs_out = underlayer_core::int_to_string(current_streak as i64)
+        resp.append_string(&cs_out)
         resp.append_view("}")
         send_json_str(res, &raw resp)
     }
