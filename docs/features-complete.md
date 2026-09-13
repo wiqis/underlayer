@@ -718,21 +718,21 @@
 - [x] P1 7.2.1 Card component (course card, concept card)
 - [x] P1 7.2.2 Button component (primary, secondary, outline, ghost)
 - [x] P1 7.2.3 Badge component (status, difficulty, category)
-- [ ] P2 7.2.4 Progress component (bar, circular, steps)
-- [ ] P2 7.2.5 Alert component (info, success, warning, error)
-- [ ] P2 7.2.6 Modal/dialog component
-- [ ] P2 7.2.7 Tooltip component
-- [ ] P2 7.2.8 Toast/notification component
-- [ ] P2 7.2.9 Dropdown/select component
-- [ ] P2 7.2.10 Tab component
-- [ ] P2 7.2.11 Accordion/collapsible component
-- [ ] P2 7.2.12 Table component (sortable, filterable)
-- [ ] P2 7.2.13 Form components (input, textarea, checkbox, radio)
-- [ ] P2 7.2.14 Navigation components (sidebar, navbar, breadcrumb)
-- [ ] P2 7.2.15 Layout components (container, grid, stack)
-- [ ] P2 7.2.16 Skeleton component (loading placeholder)
-- [ ] P2 7.2.17 Avatar component (user, course, module)
-- [ ] P2 7.2.18 Separator/divider component
+- [x] P2 7.2.4 Progress component (bar, circular, steps)
+- [x] P2 7.2.5 Alert component (info, success, warning, error)
+- [x] P2 7.2.6 Modal/dialog component
+- [x] P2 7.2.7 Tooltip component
+- [x] P2 7.2.8 Toast/notification component
+- [x] P2 7.2.9 Dropdown/select component
+- [x] P2 7.2.10 Tab component
+- [x] P2 7.2.11 Accordion/collapsible component
+- [x] P2 7.2.12 Table component (sortable, filterable)
+- [x] P2 7.2.13 Form components (input, textarea, checkbox, radio)
+- [x] P2 7.2.14 Navigation components (sidebar, navbar, breadcrumb)
+- [x] P2 7.2.15 Layout components (container, grid, stack)
+- [x] P2 7.2.16 Skeleton component (loading placeholder)
+- [x] P2 7.2.17 Avatar component (user, course, module)
+- [x] P2 7.2.18 Separator/divider component
 - [ ] P2 7.2.19 Scroll area component
 - [ ] P2 7.2.20 Resizable panel component
 

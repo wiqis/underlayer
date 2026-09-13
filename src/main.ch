@@ -37,6 +37,11 @@ public func main() : int {
         underlayer_web::handle_health(&req, &raw mut res)
     })
 
+    // Dashboard page (7.2.4, 7.2.5, 1.5.20)
+    srv.router.add("GET", "/dashboard", (|&db, &courses_dir|(req, res) => {
+        underlayer_web::handle_dashboard(db, courses_dir, &req, &raw mut res)
+    }))
+
     // Course listing
     srv.router.add("GET", "/api/courses", (|&courses_dir|(req, res) => {
         underlayer_web::handle_list_courses(courses_dir, &req, &raw mut res)
