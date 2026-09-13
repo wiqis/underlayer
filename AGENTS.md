@@ -14,6 +14,11 @@ Read this before touching any code or content. Also load the relevant skill from
 8. **Checklist is law.** `docs/features-complete.md` is the master feature checklist (1883 items). Every feature you implement MUST be checked off (`- [ ]` to `- [x]`). If you add new sub-features during implementation, add them as new `- [ ]` items. The checklist is the single source of truth for platform completeness.
 9. **The executable must always work.** After EVERY feature implementation, the server must build, start, and serve the ELF course without errors. Build: `cmake-build-debug/TCCCompiler lang/compiled/underlayer/chemical.mod -o lang/compiled/underlayer/build/underlayer.exe --mode debug_quick --no-cache -bm-modules`. Verify: `curl localhost:9000/api/health` returns 200, `curl localhost:9000/courses/elf/lessons/bytes` returns valid HTML. If anything breaks, fix it before moving on.
 10. **One feature at a time.** Do NOT implement multiple features in a single change. Each feature should be atomic, independently verifiable, and independently deployable.
+11. **Priority is law.** `docs/features-complete.md` tags every feature with P0/P1/P2/P3. **Always work on the lowest available priority number.** P0 first, then P1, then P2, then P3. Never implement a P3 feature when P0 or P1 features remain unchecked. The priority legend:
+    - **P0 (Critical)**: Must have for MVP. Core learning loop, basic API, essential UI.
+    - **P1 (Important)**: Should have for launch. Session management, progress tracking, course rendering.
+    - **P2 (Nice to have)**: Enhances experience. Analytics, recommendations, advanced FSRS.
+    - **P3 (Future)**: Long-term vision. AI/ML, enterprise, social features.
 
 ## AI Constraint System
 
@@ -485,7 +490,7 @@ Load the relevant skill before working on a particular area:
 
 | Skill | Use When |
 |---|---|
-| `features_checklist` | **MANDATORY before any work.** Master feature checklist (1883 items). Check off features after implementation. Verify executable works after every change. |
+| `features_checklist` | **MANDATORY before any work.** Master feature checklist (1884 items) with priority tags (P0-P3). **Always work on lowest P number first.** Check off after implementation. |
 | `product_architecture` | Understanding the overall system design |
 | `learning_design` | Designing how concepts are taught and tested |
 | `course_architecture` | Structuring course content and progressions |
@@ -494,7 +499,7 @@ Load the relevant skill before working on a particular area:
 | `engineering_patterns` | Error handling, logging, security, caching, testing, monitoring, privacy — the "boring but critical" stuff |
 | `course_writing` | Practical guide for writing .ch course files: patterns, mistakes, Chemical syntax, exercises |
 | `libs_reference` | Complete catalog of available libraries: std, page, server, http, json, fs, encoding, components, sqlite3, Turso |
-| `coding_conventions` | Style rules, naming conventions, and patterns extracted from the actual codebase |
+| `coding_conventions` | Style rules, naming conventions, priority system, and patterns from the codebase |
 | `implementation_gaps` | Writing code, generating content, debugging — documents all known bugs and limitations |
 | `technical_research` | Researching authoritative sources for course topics |
 | `course_generation` | Using AI to generate course content |
@@ -507,7 +512,7 @@ Load the relevant skill before working on a particular area:
 
 | Document | When to Read |
 |---|---|
-| `docs/features-complete.md` | **MANDATORY.** Master feature checklist (1883 items). Check off after implementation. Verify executable works after every change. |
+| `docs/features-complete.md` | **MANDATORY.** Master feature checklist (1884 items). Every feature has a priority tag (P0/P1/P2/P3). **Always work on lowest P number first.** Check off after implementation. |
 | `docs/plan.md` | Before starting work — 6-phase roadmap, available libraries, database strategy |
 | `docs/implementation-details.md` | Before writing code — concrete code patterns, library usage, module wiring |
 | `docs/implementation-gaps.md` | Before writing code or generating content — known bugs, language limitations, verification patterns |

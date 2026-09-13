@@ -4,6 +4,24 @@ Style rules and naming conventions extracted from the actual codebase. Load `cod
 
 ---
 
+## Feature Priority System (MANDATORY)
+
+Every feature in `docs/features-complete.md` has a priority tag. **Always work on the lowest available priority number.**
+
+| Tag | Priority | What It Means | When to Work On |
+|-----|----------|---------------|-----------------|
+| **P0** | Critical | Must have for MVP | NOW — nothing else matters |
+| **P1** | Important | Should have for launch | After all P0 checked |
+| **P2** | Nice to have | Enhances experience | After all P1 checked |
+| **P3** | Future | Long-term vision | After all P2 checked |
+
+**Rules:**
+1. Never implement a P3 feature when P0 or P1 features remain unchecked.
+2. When multiple features share the same priority, implement in numerical order.
+3. After implementing a feature, check it off (`- [ ]` to `- [x]`) and verify the server builds + runs.
+
+---
+
 ## Multi-File Modules (CRITICAL)
 
 **The Chemical compiler compiles faster when code is split across many small files.** Large single files cause slow compilation.
