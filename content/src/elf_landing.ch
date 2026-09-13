@@ -20,8 +20,8 @@ public func render_elf_landing() : string {
                 <h1>Executable and Linkable Format</h1>
                 <p class="course-description">A deep dive into the ELF binary format — headers, sections, segments, symbols, relocations, and dynamic linking.</p>
                 <div class="course-meta">
-                    <span class="meta-item">4 modules</span>
-                    <span class="meta-item">12 concepts</span>
+                    <span class="meta-item">8 modules</span>
+                    <span class="meta-item">24 concepts</span>
                     <span class="meta-item">Beginner-friendly</span>
                 </div>
             </div>
@@ -64,6 +64,46 @@ public func render_elf_landing() : string {
                         <li><a href="/courses/elf/lessons/section-header-table">Section Header Table</a></li>
                         <li><a href="/courses/elf/lessons/common-sections">Common Sections</a></li>
                         <li><a href="/courses/elf/lessons/section-vs-segment">Section vs Segment</a></li>
+                    </ul>
+                </div>
+
+                <div class="module">
+                    <h2>Module 5: Symbols</h2>
+                    <p>How ELF names and exports functions and variables.</p>
+                    <ul class="concept-list">
+                        <li><a href="/courses/elf/lessons/symbol-table">Symbol Table</a></li>
+                        <li><a href="/courses/elf/lessons/binding">Symbol Binding</a></li>
+                        <li><a href="/courses/elf/lessons/visibility">Symbol Visibility</a></li>
+                    </ul>
+                </div>
+
+                <div class="module">
+                    <h2>Module 6: Relocations</h2>
+                    <p>How the linker patches addresses when combining objects.</p>
+                    <ul class="concept-list">
+                        <li><a href="/courses/elf/lessons/relocation-entries">Relocation Entries</a></li>
+                        <li><a href="/courses/elf/lessons/relocation-types">Relocation Types</a></li>
+                        <li><a href="/courses/elf/lessons/dynamic-relocations">Dynamic Relocations</a></li>
+                    </ul>
+                </div>
+
+                <div class="module">
+                    <h2>Module 7: Dynamic Linking</h2>
+                    <p>How shared libraries are found, loaded, and connected at runtime.</p>
+                    <ul class="concept-list">
+                        <li><a href="/courses/elf/lessons/dynamic-section">Dynamic Section</a></li>
+                        <li><a href="/courses/elf/lessons/shared-libraries">Shared Libraries</a></li>
+                        <li><a href="/courses/elf/lessons/ld-so">The Dynamic Linker</a></li>
+                    </ul>
+                </div>
+
+                <div class="module">
+                    <h2>Module 8: Loading & Execution</h2>
+                    <p>How the OS loads and runs your program.</p>
+                    <ul class="concept-list">
+                        <li><a href="/courses/elf/lessons/loader">The Kernel Loader</a></li>
+                        <li><a href="/courses/elf/lessons/memory-layout">Process Memory Layout</a></li>
+                        <li><a href="/courses/elf/lessons/execution">The Startup Sequence</a></li>
                     </ul>
                 </div>
             </div>

@@ -23,6 +23,26 @@
             "id": "sections",
             "title": "Sections",
             "concepts": ["section-header-table", "common-sections", "section-vs-segment"]
+        },
+        {
+            "id": "symbols",
+            "title": "Symbols",
+            "concepts": ["symbol-table", "binding", "visibility"]
+        },
+        {
+            "id": "relocations",
+            "title": "Relocations",
+            "concepts": ["relocation-entries", "relocation-types", "dynamic-relocations"]
+        },
+        {
+            "id": "dynamic-linking",
+            "title": "Dynamic Linking",
+            "concepts": ["dynamic-section", "shared-libraries", "ld-so"]
+        },
+        {
+            "id": "loading",
+            "title": "Loading & Execution",
+            "concepts": ["loader", "memory-layout", "execution"]
         }
     ],
     "concepts": [
@@ -37,6 +57,18 @@
         {"id": "memory-mapping", "title": "Memory Mapping", "module_id": "program-headers", "description": "File offsets to virtual addresses."},
         {"id": "section-header-table", "title": "Section Header Table", "module_id": "sections", "description": "The section descriptor table."},
         {"id": "common-sections", "title": "Common Sections", "module_id": "sections", "description": ".text, .data, .bss, .rodata."},
-        {"id": "section-vs-segment", "title": "Section vs Segment", "module_id": "sections", "description": "Why they are different."}
+        {"id": "section-vs-segment", "title": "Section vs Segment", "module_id": "sections", "description": "Why they are different."},
+        {"id": "symbol-table", "title": "Symbol Table", "module_id": "symbols", "description": "The .symtab and .dynsym tables."},
+        {"id": "binding", "title": "Symbol Binding", "module_id": "symbols", "description": "Local, global, and weak binding."},
+        {"id": "visibility", "title": "Symbol Visibility", "module_id": "symbols", "description": "Controlling dynamic linking exports."},
+        {"id": "relocation-entries", "title": "Relocation Entries", "module_id": "relocations", "description": "How the linker records patches."},
+        {"id": "relocation-types", "title": "Relocation Types", "module_id": "relocations", "description": "R_X86_64_64, PC32, PLT32."},
+        {"id": "dynamic-relocations", "title": "Dynamic Relocations", "module_id": "relocations", "description": "Load-time patches by ld.so."},
+        {"id": "dynamic-section", "title": "Dynamic Section", "module_id": "dynamic-linking", "description": "The .dynamic section control structure."},
+        {"id": "shared-libraries", "title": "Shared Libraries", "module_id": "dynamic-linking", "description": "How .so files work."},
+        {"id": "ld-so", "title": "The Dynamic Linker", "module_id": "dynamic-linking", "description": "ld.so and the resolution algorithm."},
+        {"id": "loader", "title": "The Kernel Loader", "module_id": "loading", "description": "How the kernel maps ELF segments."},
+        {"id": "memory-layout", "title": "Process Memory Layout", "module_id": "loading", "description": "Where text, data, heap, and stack live."},
+        {"id": "execution", "title": "The Startup Sequence", "module_id": "loading", "description": "From _start to main()."}
     ]
 }

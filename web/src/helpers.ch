@@ -52,6 +52,18 @@ public namespace underlayer_web {
         var sectheader_id = std::string("section-header-table")
         var commonsec_id = std::string("common-sections")
         var secvsseg_id = std::string("section-vs-segment")
+        var symtable_id = std::string("symbol-table")
+        var binding_id = std::string("binding")
+        var visibility_id = std::string("visibility")
+        var relocentries_id = std::string("relocation-entries")
+        var rectypes_id = std::string("relocation-types")
+        var dynreloc_id = std::string("dynamic-relocations")
+        var dynsect_id = std::string("dynamic-section")
+        var sharedlib_id = std::string("shared-libraries")
+        var ldso_id = std::string("ld-so")
+        var loader_id = std::string("loader")
+        var memlayout_id = std::string("memory-layout")
+        var exec_id = std::string("execution")
 
         if(cid.equals(&bytes_id)) { return underlayer_content::render_bytes() }
         if(cid.equals(&binrep_id)) { return underlayer_content::render_binary_representation() }
@@ -65,6 +77,18 @@ public namespace underlayer_web {
         if(cid.equals(&sectheader_id)) { return underlayer_content::render_section_header_table() }
         if(cid.equals(&commonsec_id)) { return underlayer_content::render_common_sections() }
         if(cid.equals(&secvsseg_id)) { return underlayer_content::render_section_vs_segment() }
+        if(cid.equals(&symtable_id)) { return underlayer_content::render_symbol_table() }
+        if(cid.equals(&binding_id)) { return underlayer_content::render_binding() }
+        if(cid.equals(&visibility_id)) { return underlayer_content::render_visibility() }
+        if(cid.equals(&relocentries_id)) { return underlayer_content::render_relocation_entries() }
+        if(cid.equals(&rectypes_id)) { return underlayer_content::render_relocation_types() }
+        if(cid.equals(&dynreloc_id)) { return underlayer_content::render_dynamic_relocations() }
+        if(cid.equals(&dynsect_id)) { return underlayer_content::render_dynamic_section() }
+        if(cid.equals(&sharedlib_id)) { return underlayer_content::render_shared_libraries() }
+        if(cid.equals(&ldso_id)) { return underlayer_content::render_ld_so() }
+        if(cid.equals(&loader_id)) { return underlayer_content::render_loader() }
+        if(cid.equals(&memlayout_id)) { return underlayer_content::render_memory_layout() }
+        if(cid.equals(&exec_id)) { return underlayer_content::render_execution() }
         return string()
     }
 
