@@ -4,6 +4,50 @@ Style rules and naming conventions extracted from the actual codebase. Load `cod
 
 ---
 
+## Multi-File Modules (CRITICAL)
+
+**The Chemical compiler compiles faster when code is split across many small files.** Large single files cause slow compilation.
+
+### Rules
+
+1. **No file over 250 lines.** Split if exceeded.
+2. **One concern per file.** One handler group, one CRUD entity, one algorithm.
+3. **Shared private helpers → public in `helpers.ch`.** When splitting, private helpers used across files must become `public`.
+4. **`main.ch` is just the root.** Contains only constants or a comment listing files.
+5. **File naming:** `snake_case.ch` describing content (e.g., `handlers_review.ch`).
+
+### Example: Splitting a 600-line `main.ch`
+
+```
+web/src/
+  main.ch                    — Module root (struct only)
+  helpers.ch                 — Shared utilities (public)
+  json_helpers.ch            — JSON parsing helpers
+  handlers_home.ch           — Health + home page
+  handlers_courses.ch        — Course listing + detail
+  handlers_lessons.ch        — Lesson viewer
+  handlers_review.ch         — Review session endpoints
+  handlers_progress.ch       — Progress endpoints
+  handlers_learners.ch       — Learner CRUD
+  static.ch                  — Static file serving
+```
+
+### Pattern for Each File
+
+```chemical
+// underlayer_web — Description of this file's concern.
+using std::string
+using std::string_view
+
+public namespace underlayer_web {
+
+    public func some_handler(...) { ... }
+
+}
+```
+
+---
+
 ## Naming
 
 | Element | Convention | Example |

@@ -20,7 +20,7 @@ public namespace underlayer_web {
         res.write_view(&bv)
     }
 
-    public func send_error(res : *mut http::ResponseWriter, status : uint, msg : *string) {
+    public func send_error(res : *mut http::ResponseWriter, status : uint, msg : &string) {
         res.status = status
         var ct = std::string_view("application/json")
         res.set_header_view(std::string_view("Content-Type"), &ct)

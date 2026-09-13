@@ -1,8 +1,13 @@
-// underlayer_web — Home page handler.
+// underlayer_web — Health and home page handlers.
 using std::string
 using std::string_view
 
 public namespace underlayer_web {
+
+    public func handle_health(req : &http::Request, res : *mut http::ResponseWriter) {
+        var body = std::string("{\"status\": \"ok\", \"version\": \"0.1.0\"}")
+        send_json_str(res, &raw body)
+    }
 
     public func handle_home(req : &http::Request, res : *mut http::ResponseWriter) {
         var page = HtmlPage()

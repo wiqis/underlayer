@@ -1,6 +1,5 @@
 // underlayer_web — JSON parsing helpers.
 using std::string
-using underlayer_models::JsonValue
 
 public namespace underlayer_web {
 

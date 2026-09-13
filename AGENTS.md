@@ -68,6 +68,62 @@ core/                    (config, logging, string+time utils)
 
 A layer may only call layers below it. If you are tempted to run SQL inside `web/`, stop — add a repository function instead.
 
+## Multi-File Module Convention
+
+**The Chemical compiler compiles faster when code is split across many small files.** Large single files cause slow compilation. Every module MUST use multiple files.
+
+### Rules
+
+1. **No file over 250 lines.** If a file exceeds 250 lines, split it.
+2. **One concern per file.** Each file handles one logical unit (e.g., one handler group, one CRUD entity, one algorithm).
+3. **Shared private helpers become public.** When splitting, private helpers used across files must become `public` in a `helpers.ch` file.
+4. **`main.ch` is just the root.** It contains either nothing (just a comment listing files) or minimal shared constants.
+5. **File naming:** `snake_case.ch` describing the content (e.g., `handlers_review.ch`, `concept_states.ch`, `fsrs.ch`).
+
+### Current File Layout
+
+```
+web/src/
+  main.ch                    — Module root (WebConfig struct only)
+  helpers.ch                 — send_page, send_json_str, send_error, sv_to_string, render_concept
+  json_helpers.ch            — json_get, json_str, json_get_str, json_int, json_get_int
+  handlers_home.ch           — handle_health, handle_home
+  handlers_courses.ch        — handle_list_courses, handle_get_course
+  handlers_lessons.ch        — handle_lesson, handle_course_landing
+  handlers_review.ch         — handle_review_start, submit, end, due
+  handlers_progress.ch       — handle_progress, handle_course_progress
+  handlers_learners.ch       — handle_create_learner, handle_get_learner
+  static.ch                  — content_type_for_ext, file_extension, handle_static_file
+
+repository/src/
+  main.ch                    — Module root (comment only)
+  helpers.ch                 — parse_i64, parse_int, JSON helpers (public)
+  schema.ch                  — init_schema
+  courses.ch                 — load_course, load_course_from_disk, list_courses
+  learners.ch                — create_learner, get_learner
+  concept_states.ch          — get_concept_state, upsert_concept_state, get_all_concept_states
+  review_items.ch            — get_due_review_items, update_review_item, insert_review_item
+  sessions.ch                — create_session, insert_session, finish_session
+
+learning/src/
+  main.ch                    — Module root (rating constants only)
+  fsrs.ch                    — FSRSParams, ReviewState, fsrs_update_state, fsrs_next_interval
+  session.ch                 — ReviewSession, start_review_session, get_current_item
+  weakness.ch                — WeaknessReport, detect_weaknesses, suggest_repair
+  queue.ch                   — ReviewQueue, build_review_queue, get_next_review_items
+  health.ch                  — KnowledgeHealth, compute_knowledge_health
+  utils.ch                   — f64_to_string
+```
+
+### How to Split a File
+
+1. Identify logical groups (e.g., by handler type, by entity, by algorithm).
+2. Create a new file for each group with the same `public namespace underlayer_xxx { }` wrapper.
+3. Move functions to the new file. Change `private` to `public` if needed by other files.
+4. Keep `using` imports at the top of each file for the types it references.
+5. Update `main.ch` to be just a comment listing the files.
+6. Build and verify.
+
 ## Dual-Mode Architecture (Static + Backend)
 
 Underlayer courses work in TWO modes. This is a core architectural constraint.
