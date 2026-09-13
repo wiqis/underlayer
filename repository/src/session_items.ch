@@ -126,4 +126,27 @@ public namespace underlayer_repository {
         return sessions
     }
 
+    // 1.1.24: Get all review history for a learner (for parameter optimization)
+    public func get_all_review_history(db : *DbClient, learner_id : &string) : vector<SessionItem> {
+        var items = vector<SessionItem>()
+        var sql = string("SELECT si.concept_id, si.rating, si.time_spent_ms, si.reviewed_at FROM session_items si JOIN sessions s ON si.session_id = s.id WHERE s.learner_id = '")
+        sql.append_string(learner_id)
+        sql.append_view("' ORDER BY si.reviewed_at ASC")
+        var result = underlayer_db::query_sql(db, &raw sql)
+        var ri : size_t = 0
+        while(ri < result.rows.size()) {
+            var row = result.rows.get_ptr(ri)
+            if(row.vals.size() >= 4) {
+                var item = SessionItem::make()
+                item.concept_id = row.vals.get_ptr(0).copy()
+                item.rating = parse_i64(row.vals.get_ptr(1).to_view()) as int
+                item.time_spent_ms = parse_i64(row.vals.get_ptr(2).to_view())
+                item.reviewed_at = parse_i64(row.vals.get_ptr(3).to_view())
+                items.push(item)
+            }
+            ri = ri + 1
+        }
+        return items
+    }
+
 }

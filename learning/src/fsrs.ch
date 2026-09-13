@@ -1,4 +1,5 @@
 // underlayer_learning — FSRS algorithm core.
+using std::string
 using std::vector
 
 public namespace underlayer_learning {
@@ -216,6 +217,154 @@ public namespace underlayer_learning {
         new_state.elapsed_days = state.scheduled_days
 
         return new_state
+    }
+
+    // 1.1.24: Compute prediction error (MSE) for a set of params against review history
+    // Returns mean squared error (no sqrt needed for comparison)
+    public func compute_prediction_error(params : &FSRSParams, history_ratings : &vector<int>, history_intervals : &vector<i64>) : f64 {
+        if(history_ratings.size() == 0) { return 0.0 }
+        var total_sq_error : f64 = 0.0
+        var state = ReviewState::make()
+        var i : size_t = 0
+        while(i < history_ratings.size()) {
+            var rating = history_ratings.get(i)
+            var elapsed : f64 = 0.0
+            if(i > 0) {
+                elapsed = history_intervals.get(i - 1) as f64
+            }
+            var predicted_r = fsrs_retrievability(&state, elapsed)
+            var actual : f64 = 0.0
+            if(rating >= 3) { actual = 1.0 }
+            var error = predicted_r - actual
+            total_sq_error = total_sq_error + error * error
+            state = fsrs_update_state(params, &state, rating)
+            i = i + 1
+        }
+        var n = history_ratings.size() as f64
+        return total_sq_error / n
+    }
+
+    // 1.1.24: Simple parameter optimization using coordinate descent
+    // Adjusts each w parameter slightly and keeps improvements
+    public func optimize_fsrs_params(params : &FSRSParams, history_ratings : &vector<int>, history_intervals : &vector<i64>) : FSRSParams {
+        var best = FSRSParams::make()
+        var pi : size_t = 0
+        while(pi < params.w.size()) {
+            best.w.push(params.w.get(pi))
+            pi = pi + 1
+        }
+        best.target_retention = params.target_retention
+        var best_rmse = compute_prediction_error(&best, history_ratings, history_intervals)
+        // Try adjusting each parameter by small deltas
+        var di : size_t = 0
+        while(di < best.w.size()) {
+            var delta : f64 = 0.01
+            var d : int = 0
+            while(d < 2) {
+                var trial = FSRSParams::make()
+                var ti : size_t = 0
+                while(ti < best.w.size()) {
+                    if(ti == di) {
+                        if(d == 0) { trial.w.push(best.w.get(ti) + delta) }
+                        else { trial.w.push(best.w.get(ti) - delta) }
+                    } else {
+                        trial.w.push(best.w.get(ti))
+                    }
+                    ti = ti + 1
+                }
+                trial.target_retention = best.target_retention
+                var trial_rmse = compute_prediction_error(&trial, history_ratings, history_intervals)
+                if(trial_rmse < best_rmse) {
+                    best = trial
+                    best_rmse = trial_rmse
+                }
+                d = d + 1
+            }
+            di = di + 1
+        }
+        return best
+    }
+
+    // 1.1.25: Reset FSRS parameters to defaults
+    public func reset_fsrs_params() : FSRSParams {
+        return init_fsrs_params()
+    }
+
+    // 1.1.27: Export FSRS parameters as JSON string
+    public func export_fsrs_params(params : &FSRSParams) : string {
+        var json = string("{\"w\":[")
+        var i : size_t = 0
+        while(i < params.w.size()) {
+            if(i > 0) { json.append(',') }
+            var val = params.w.get(i)
+            var int_part = val as i64
+            var frac = val - (int_part as f64)
+            var frac_int = (frac * 10000.0) as i64
+            var int_str = underlayer_core::int_to_string(int_part)
+            var frac_str = underlayer_core::int_to_string(frac_int)
+            json.append_view(int_str.to_view())
+            json.append('.')
+            if(frac_int < 1000) { json.append('0') }
+            if(frac_int < 100) { json.append('0') }
+            if(frac_int < 10) { json.append('0') }
+            json.append_view(frac_str.to_view())
+            i = i + 1
+        }
+        json.append_view("],\"target_retention\":")
+        var tr_int = params.target_retention as i64
+        var tr_frac_int = ((params.target_retention - (tr_int as f64)) * 10000.0) as i64
+        var tr_int_str = underlayer_core::int_to_string(tr_int)
+        var tr_frac_str = underlayer_core::int_to_string(tr_frac_int)
+        json.append_view(tr_int_str.to_view())
+        json.append('.')
+        if(tr_frac_int < 1000) { json.append('0') }
+        if(tr_frac_int < 100) { json.append('0') }
+        if(tr_frac_int < 10) { json.append('0') }
+        json.append_view(tr_frac_str.to_view())
+        json.append_view("}")
+        return json
+    }
+
+    // 1.1.28: Log parameter changes (returns a log entry string)
+    public func log_param_change(old_params : &FSRSParams, new_params : &FSRSParams, reason : &string) : string {
+        var log = string("{\"reason\":\"")
+        log.append_string(reason)
+        log.append_view("\",\"old_rmse\":null,\"new_rmse\":null,\"changed_params\":[")
+        var i : size_t = 0
+        var first = true
+        while(i < old_params.w.size()) {
+            var old_val = old_params.w.get(i)
+            var new_val = new_params.w.get(i)
+            var diff = old_val - new_val
+            if(diff < 0) { diff = -diff }
+            if(diff > 0.0001) {
+                if(!first) { log.append(',') }
+                first = false
+                var idx_str = underlayer_core::int_to_string(i as i64)
+                log.append_view("{\"index\":")
+                log.append_view(idx_str.to_view())
+                log.append_view(",\"old\":")
+                var ov_int = old_val as i64
+                var ov_frac = ((old_val - (ov_int as f64)) * 10000.0) as i64
+                var ov_int_str = underlayer_core::int_to_string(ov_int)
+                var ov_frac_str = underlayer_core::int_to_string(ov_frac)
+                log.append_view(ov_int_str.to_view())
+                log.append('.')
+                log.append_view(ov_frac_str.to_view())
+                log.append_view(",\"new\":")
+                var nv_int = new_val as i64
+                var nv_frac = ((new_val - (nv_int as f64)) * 10000.0) as i64
+                var nv_int_str = underlayer_core::int_to_string(nv_int)
+                var nv_frac_str = underlayer_core::int_to_string(nv_frac)
+                log.append_view(nv_int_str.to_view())
+                log.append('.')
+                log.append_view(nv_frac_str.to_view())
+                log.append('}')
+            }
+            i = i + 1
+        }
+        log.append_view("]}")
+        return log
     }
 
 }

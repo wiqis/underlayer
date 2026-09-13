@@ -95,6 +95,11 @@ public func main() : int {
         underlayer_web::handle_review_due(db, courses_dir, &req, &raw mut res)
     }))
 
+    // ---- Session Recommendations (1.2.25) ----
+    srv.router.add("GET", "/api/review/recommendations", (|&db|(req, res) => {
+        underlayer_web::handle_session_recommendations(db, &req, &raw mut res)
+    }))
+
     // ---- Progress API ----
     srv.router.add("GET", "/api/progress", (|&db, &courses_dir|(req, res) => {
         underlayer_web::handle_progress(db, courses_dir, &req, &raw mut res)
@@ -129,6 +134,17 @@ public func main() : int {
             var bv = body.to_view()
             res.write_view(&bv)
         }
+    }))
+
+    // ---- FSRS Settings (1.1.24-1.1.28) ----
+    srv.router.add("POST", "/api/fsrs/optimize", (|&db|(req, res) => {
+        underlayer_web::handle_fsrs_optimize(db, &req, &raw mut res)
+    }))
+    srv.router.add("POST", "/api/fsrs/reset", (|&db|(req, res) => {
+        underlayer_web::handle_fsrs_reset(db, &req, &raw mut res)
+    }))
+    srv.router.add("GET", "/api/fsrs/export", (|&db|(req, res) => {
+        underlayer_web::handle_fsrs_export(db, &req, &raw mut res)
     }))
 
     // ---- Session History (1.2.21, 1.2.22) ----

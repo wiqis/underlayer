@@ -33,6 +33,64 @@ public namespace underlayer_web {
         if(mode.equals(string("cram"))) {
             due_items = underlayer_repository::get_all_review_items(&raw db, &learner_id, &course_id, 50)
         }
+        // 1.2.28: Lightning mode — only new items (never reviewed)
+        if(mode.equals(string("lightning"))) {
+            var filtered = std::vector<underlayer_models::ReviewItem>()
+            var fi : size_t = 0
+            while(fi < due_items.size()) {
+                var item = due_items.get_ptr(fi)
+                if(item.reps == 0) {
+                    var copy = underlayer_models::ReviewItem::make()
+                    copy.id = item.id.copy()
+                    copy.learner_id = item.learner_id.copy()
+                    copy.concept_id = item.concept_id.copy()
+                    copy.course_id = item.course_id.copy()
+                    copy.item_type = item.item_type.copy()
+                    copy.front = item.front.copy()
+                    copy.back = item.back.copy()
+                    copy.difficulty = item.difficulty
+                    copy.stability = item.stability
+                    copy.retrievability = item.retrievability
+                    copy.next_review = item.next_review
+                    copy.last_review = item.last_review
+                    copy.reps = item.reps
+                    copy.lapses = item.lapses
+                    copy.ease_factor = item.ease_factor
+                    filtered.push(copy)
+                }
+                fi = fi + 1
+            }
+            due_items = filtered
+        }
+        // 1.2.29: Review mode — only due items (already reviewed, no new)
+        if(mode.equals(string("review"))) {
+            var filtered = std::vector<underlayer_models::ReviewItem>()
+            var fi : size_t = 0
+            while(fi < due_items.size()) {
+                var item = due_items.get_ptr(fi)
+                if(item.reps > 0) {
+                    var copy = underlayer_models::ReviewItem::make()
+                    copy.id = item.id.copy()
+                    copy.learner_id = item.learner_id.copy()
+                    copy.concept_id = item.concept_id.copy()
+                    copy.course_id = item.course_id.copy()
+                    copy.item_type = item.item_type.copy()
+                    copy.front = item.front.copy()
+                    copy.back = item.back.copy()
+                    copy.difficulty = item.difficulty
+                    copy.stability = item.stability
+                    copy.retrievability = item.retrievability
+                    copy.next_review = item.next_review
+                    copy.last_review = item.last_review
+                    copy.reps = item.reps
+                    copy.lapses = item.lapses
+                    copy.ease_factor = item.ease_factor
+                    filtered.push(copy)
+                }
+                fi = fi + 1
+            }
+            due_items = filtered
+        }
         // 5.1.4: Targeted review — filter to specific concept
         if(mode.equals(string("targeted")) && concept_v.size() > 0) {
             var target_concept = sv_to_string(&raw concept_v)
@@ -230,6 +288,21 @@ public namespace underlayer_web {
         resp.append_view(",\"ease_factor\":")
         var ef_out = underlayer_learning::f64_to_string(new_rs.ease_factor)
         resp.append_string(&ef_out)
+        // 1.1.29: Why-this-interval explanation
+        resp.append_view(",\"stability\":")
+        var stab_out = underlayer_learning::f64_to_string(new_rs.stability)
+        resp.append_string(&stab_out)
+        resp.append_view(",\"difficulty\":")
+        var diff_out = underlayer_learning::f64_to_string(new_rs.difficulty)
+        resp.append_string(&diff_out)
+        resp.append_view(",\"reps\":")
+        var reps_out = underlayer_core::int_to_string(new_rs.reps as i64)
+        resp.append_string(&reps_out)
+        resp.append_view(",\"lapses\":")
+        var lapses_out = underlayer_core::int_to_string(new_rs.lapses as i64)
+        resp.append_string(&lapses_out)
+        resp.append_view(",\"interval_days\":")
+        resp.append_string(&interval_out)
         resp.append_view("}")
         send_json_str(res, &raw resp)
     }
@@ -460,6 +533,65 @@ public namespace underlayer_web {
         resp.append_string(&concept_id)
         resp.append_view("\"}")
         send_json_str(res, &raw resp)
+    }
+
+    // 1.2.25: Session recommendations — suggest session type based on due items
+    public func handle_session_recommendations(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        var learner_id = string("demo")
+        var course_id = string("elf")
+        var due_items = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, 50)
+        var new_count : int = 0
+        var review_count : int = 0
+        var i : size_t = 0
+        while(i < due_items.size()) {
+            var item = due_items.get_ptr(i)
+            if(item.reps == 0) { new_count = new_count + 1 }
+            else { review_count = review_count + 1 }
+            i = i + 1
+        }
+        var body = std::string("{\"due_count\":")
+        var dc_str = underlayer_core::int_to_string(due_items.size() as i64)
+        body.append_view(dc_str.to_view())
+        body.append_view(",\"new_count\":")
+        var nc_str = underlayer_core::int_to_string(new_count as i64)
+        body.append_view(nc_str.to_view())
+        body.append_view(",\"review_count\":")
+        var rc_str = underlayer_core::int_to_string(review_count as i64)
+        body.append_view(rc_str.to_view())
+        body.append_view(",\"recommendations\":[")
+        // Recommend based on due items
+        var first = true
+        if(new_count > 0) {
+            body.append_view("{\"type\":\"new\",\"label\":\"Learn New Concepts\",\"count\":")
+            body.append_view(nc_str.to_view())
+            body.append_view(",\"estimated_minutes\":")
+            var est_new = underlayer_core::int_to_string((new_count * 2) as i64)
+            body.append_view(est_new.to_view())
+            body.append_view("}")
+            first = false
+        }
+        if(review_count > 0) {
+            if(!first) { body.append_view(",") }
+            body.append_view("{\"type\":\"due\",\"label\":\"Review Due Items\",\"count\":")
+            body.append_view(rc_str.to_view())
+            body.append_view(",\"estimated_minutes\":")
+            var est_rev = underlayer_core::int_to_string((review_count * 1) as i64)
+            body.append_view(est_rev.to_view())
+            body.append_view("}")
+            first = false
+        }
+        if(new_count > 0 && review_count > 0) {
+            if(!first) { body.append_view(",") }
+            body.append_view("{\"type\":\"mixed\",\"label\":\"Mixed Session\",\"count\":")
+            var mixed_str = underlayer_core::int_to_string(due_items.size() as i64)
+            body.append_view(mixed_str.to_view())
+            body.append_view(",\"estimated_minutes\":")
+            var est_mixed = underlayer_core::int_to_string(((new_count * 2 + review_count * 1) / 2) as i64)
+            body.append_view(est_mixed.to_view())
+            body.append_view("}")
+        }
+        body.append_view("]}")
+        send_json_str(res, &raw body)
     }
 
 }

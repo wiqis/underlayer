@@ -73,12 +73,12 @@
 - [x] P1 1.1.21 Support "Hard" on Review card reduces interval by 20%
 - [x] P1 1.1.22 Support "Easy" on Review card increases interval by 1.3x
 - [x] P1 1.1.23 Compute next interval: interval = stability * (target_retention^(1/c) - 1)
-- [ ] P2 1.1.24 Support parameter optimization from review history (minimize RMSE)
-- [ ] P2 1.1.25 Allow learner to reset all FSRS parameters to defaults
+- [x] P2 1.1.24 Support parameter optimization from review history (minimize RMSE)
+- [x] P2 1.1.25 Allow learner to reset all FSRS parameters to defaults
 - [ ] P2 1.1.26 Allow learner to import FSRS parameters from Anki
-- [ ] P2 1.1.27 Allow learner to export FSRS parameters
-- [ ] P2 1.1.28 Log all parameter changes for debugging
-- [ ] P2 1.1.29 Provide "why this interval?" tooltip showing FSRS calculation
+- [x] P2 1.1.27 Allow learner to export FSRS parameters
+- [x] P2 1.1.28 Log all parameter changes for debugging
+- [x] P2 1.1.29 Provide "why this interval?" tooltip showing FSRS calculation
 
 ### 1.2 Review Session Management
 
@@ -106,11 +106,11 @@
 - [x] P2 1.2.22 Session history: allow review of past sessions
 - [ ] P2 1.2.23 Session history: show accuracy trend over time
 - [ ] P2 1.2.24 Session history: show speed trend over time
-- [ ] P2 1.2.25 Session recommendations: suggest session type based on due items
+- [x] P2 1.2.25 Session recommendations: suggest session type based on due items
 - [ ] P2 1.2.26 Session recommendations: suggest session length based on energy
 - [ ] P2 1.2.27 Session recommendations: suggest time of day based on past performance
-- [ ] P2 1.2.28 Support "lightning mode" -- only new items, no reviews
-- [ ] P2 1.2.29 Support "review mode" -- only due items, no new
+- [x] P2 1.2.28 Support "lightning mode" -- only new items, no reviews
+- [x] P2 1.2.29 Support "review mode" -- only due items, no new
 - [x] P0 1.2.30 Support "mixed mode" -- interleave new and due
 
 ### 1.3 Interleaved Practice
@@ -136,8 +136,8 @@
 - [x] P0 1.4.1 Track per-concept accuracy (rolling 30-day window)
 - [x] P0 1.4.2 Track per-concept difficulty rating (FSRS D value)
 - [x] P0 1.4.3 Track per-concept review count
-- [ ] P2 1.4.4 Track per-concept last review date
-- [ ] P2 1.4.5 Track per-concept streak (consecutive correct)
+- [x] P2 1.4.4 Track per-concept last review date
+- [x] P2 1.4.5 Track per-concept streak (consecutive correct)
 - [x] P0 1.4.6 Flag concept as weak when accuracy < 60%
 - [ ] P2 1.4.7 Flag concept as struggling when accuracy 60-75%
 - [ ] P2 1.4.8 Flag concept as solid when accuracy > 75%
@@ -179,7 +179,7 @@
 - [ ] P2 1.5.17 Knowledge health goals (set target score)
 - [ ] P2 1.5.18 Knowledge health milestones (50%, 75%, 90% mastered)
 - [ ] P2 1.5.19 Knowledge health export (JSON, CSV)
-- [ ] P2 1.5.20 Knowledge health API endpoint
+- [x] P2 1.5.20 Knowledge health API endpoint
 
 ### 1.6 Adaptive Pacing
 
@@ -228,9 +228,9 @@
 
 ### 2.1 Course Structure
 
-- [ ] P2 2.1.1 Course manifest (manifest.json) with id, title, version, description
-- [ ] P2 2.1.2 Module organization (group concepts into modules)
-- [ ] P2 2.1.3 Concept sequencing (ordered list within module)
+- [x] P2 2.1.1 Course manifest (manifest.json) with id, title, version, description
+- [x] P2 2.1.2 Module organization (group concepts into modules)
+- [x] P2 2.1.3 Concept sequencing (ordered list within module)
 - [ ] P2 2.1.4 Prerequisite declaration (concept A requires B, C)
 - [ ] P2 2.1.5 Estimated time per concept (minutes)
 - [ ] P2 2.1.6 Difficulty level per concept (beginner, intermediate, advanced)
