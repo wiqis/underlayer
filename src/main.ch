@@ -118,6 +118,16 @@ public func main() : int {
         underlayer_web::handle_delete_goal(db, &req, &raw mut res)
     }))
 
+    // ---- Weakness Dashboard (1.4.21) ----
+    srv.router.add("GET", "/api/weaknesses", (|&db|(req, res) => {
+        underlayer_web::handle_weakness_dashboard(db, &req, &raw mut res)
+    }))
+
+    // ---- Weakness Export (1.4.23) ----
+    srv.router.add("GET", "/api/weaknesses/export", (|&db|(req, res) => {
+        underlayer_web::handle_weakness_export(db, &req, &raw mut res)
+    }))
+
     // ---- Navigation API (7.1.2, 7.1.3, 7.1.5) ----
     srv.router.add("GET", "/api/navigation/:courseId/:conceptId", (|&courses_dir|(req, res) => {
         var path = req.path.to_view()

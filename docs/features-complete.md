@@ -122,10 +122,10 @@
 - [x] P2 1.3.5 Allow configurable interleaving strength (low, medium, high)
 - [x] P2 1.3.6 Adaptive interleaving: increase when accuracy is high
 - [x] P2 1.3.7 Adaptive interleaving: decrease when accuracy is low
-- [ ] P2 1.3.8 Track interleaving effectiveness (accuracy vs blocked practice)
-- [ ] P2 1.3.9 Interleave prerequisite concepts with target concepts
-- [ ] P2 1.3.10 Interleave related concepts (same module, different topics)
-- [ ] P2 1.3.11 Interleave unrelated concepts (cross-module, random)
+- [x] P2 1.3.8 Track interleaving effectiveness (accuracy vs blocked practice)
+- [x] P2 1.3.9 Interleave prerequisite concepts with target concepts
+- [x] P2 1.3.10 Interleave related concepts (same module, different topics)
+- [x] P2 1.3.11 Interleave unrelated concepts (cross-module, random)
 - [x] P1 1.3.12 Configurable daily new item limit per module
 - [x] P1 1.3.13 Configurable daily review limit per module
 - [x] P2 1.3.14 Configurable total daily item limit
@@ -141,19 +141,19 @@
 - [x] P0 1.4.6 Flag concept as weak when accuracy < 60%
 - [x] P2 1.4.7 Flag concept as struggling when accuracy 60-75%
 - [x] P2 1.4.8 Flag concept as solid when accuracy > 75%
-- [ ] P2 1.4.9 Check prerequisite graph: if prerequisite is weak, flag dependency
-- [ ] P2 1.4.10 Show weakness chain: A depends on B depends on C (C is weak)
+- [x] P2 1.4.9 Check prerequisite graph: if prerequisite is weak, flag dependency
+- [x] P2 1.4.10 Show weakness chain: A depends on B depends on C (C is weak)
 - [x] P0 1.4.11 Generate repair suggestion: "Review prerequisite X before Y"
 - [x] P2 1.4.12 Generate repair suggestion: "Practice more exercises on Z"
 - [x] P2 1.4.13 Generate repair suggestion: "This concept has no reviews, try one"
 - [x] P2 1.4.14 Track weakness trend: improving, stable, worsening
-- [ ] P2 1.4.15 Cluster related weak concepts (e.g., "all pointer concepts are weak")
-- [ ] P2 1.4.16 Predict weakness before failure (accuracy trending down)
+- [x] P2 1.4.15 Cluster related weak concepts (e.g., "all pointer concepts are weak")
+- [x] P2 1.4.16 Predict weakness before failure (accuracy trending down)
 - [x] P2 1.4.17 Compute weakness severity score (0-100)
-- [ ] P2 1.4.18 Schedule weakness repair sessions automatically
-- [ ] P2 1.4.19 Track weakness resolution (concept moved from weak to solid)
-- [ ] P2 1.4.20 Show weakness history (when it became weak, when it resolved)
-- [ ] P2 1.4.21 Weakness dashboard: all weak concepts with severity and trend
+- [x] P2 1.4.18 Schedule weakness repair sessions automatically
+- [x] P2 1.4.19 Track weakness resolution (concept moved from weak to solid)
+- [x] P2 1.4.20 Show weakness history (when it became weak, when it resolved)
+- [x] P2 1.4.21 Weakness dashboard: all weak concepts with severity and trend
 - [ ] P2 1.4.22 Weakness comparison: anonymous (how do others find this concept?)
 - [ ] P2 1.4.23 Weakness export: download weakness report
 - [ ] P2 1.4.24 Weakness alerts: notify when new concept becomes weak
@@ -168,17 +168,17 @@
 - [x] P2 1.5.6 Learning = reviewed at least once, not yet mastered
 - [x] P2 1.5.7 Reviewing = mastered but due for review
 - [x] P2 1.5.8 Unlearned = never reviewed
-- [ ] P2 1.5.9 Compute knowledge retention projection (30, 60, 90 days)
-- [ ] P2 1.5.10 Model knowledge decay using forgetting curves
-- [ ] P2 1.5.11 Identify knowledge gaps (prerequisites not met)
-- [ ] P2 1.5.12 Identify knowledge overlap (redundant concepts)
+- [x] P2 1.5.9 Compute knowledge retention projection (30, 60, 90 days)
+- [x] P2 1.5.10 Model knowledge decay using forgetting curves
+- [x] P2 1.5.11 Identify knowledge gaps (prerequisites not met)
+- [x] P2 1.5.12 Identify knowledge overlap (redundant concepts)
 - [x] P2 1.5.13 Compute knowledge depth score (how well concepts are understood)
 - [x] P2 1.5.14 Compute knowledge breadth score (how many concepts are covered)
-- [ ] P2 1.5.15 Track knowledge health trends over time
-- [ ] P2 1.5.16 Knowledge health comparison (anonymous)
+- [x] P2 1.5.15 Track knowledge health trends over time
+- [x] P2 1.5.16 Knowledge health comparison (anonymous)
 - [x] P2 1.5.17 Knowledge health goals (set target score)
 - [x] P2 1.5.18 Knowledge health milestones (50%, 75%, 90% mastered)
-- [ ] P2 1.5.19 Knowledge health export (JSON, CSV)
+- [x] P2 1.5.19 Knowledge health export (JSON, CSV)
 - [x] P2 1.5.20 Knowledge health API endpoint
 
 ### 1.6 Adaptive Pacing

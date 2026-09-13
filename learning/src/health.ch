@@ -212,4 +212,196 @@ public namespace underlayer_learning {
         return milestones
     }
 
+    // 1.5.9: Compute knowledge retention projection (30, 60, 90 days)
+    public struct RetentionProjection {
+        var days_30 : f64
+        var days_60 : f64
+        var days_90 : f64
+
+        @make
+        func make() : RetentionProjection {
+            return RetentionProjection {
+                days_30 = 0.0,
+                days_60 = 0.0,
+                days_90 = 0.0
+            }
+        }
+    }
+
+    // 1.5.10: Model knowledge decay using forgetting curves
+    // Simple exponential decay: R = e^(-t/S) where S is stability in days
+    public func compute_retention_projection(states : *vector<ConceptState>) : RetentionProjection {
+        var proj = RetentionProjection::make()
+        if(states.size() == 0) { return proj }
+        var total_retrievability_30 : f64 = 0.0
+        var total_retrievability_60 : f64 = 0.0
+        var total_retrievability_90 : f64 = 0.0
+        var count : f64 = 0.0
+        var i : size_t = 0
+        while(i < states.size()) {
+            var state = states.get_ptr(i)
+            if(state.attempts > 0) {
+                // Stability approximation: use reps * 2 as stability days
+                var stability = (state.streak + 1) as f64
+                if(stability < 1.0) { stability = 1.0 }
+                // Exponential decay approximation: R ≈ 1 - (t / (stability + t))
+                var r30 = stability / (stability + 30.0)
+                var r60 = stability / (stability + 60.0)
+                var r90 = stability / (stability + 90.0)
+                total_retrievability_30 = total_retrievability_30 + r30
+                total_retrievability_60 = total_retrievability_60 + r60
+                total_retrievability_90 = total_retrievability_90 + r90
+                count = count + 1.0
+            }
+            i = i + 1
+        }
+        if(count > 0.0) {
+            proj.days_30 = (total_retrievability_30 / count) * 100.0
+            proj.days_60 = (total_retrievability_60 / count) * 100.0
+            proj.days_90 = (total_retrievability_90 / count) * 100.0
+        }
+        return proj
+    }
+
+    // 1.5.11: Identify knowledge gaps (prerequisites not met)
+    public func identify_knowledge_gaps(
+        states : *vector<ConceptState>,
+        concept_ids : *vector<string>
+    ) : vector<string> {
+        var gaps = vector<string>()
+        var i : size_t = 0
+        while(i < concept_ids.size()) {
+            var cid_ptr = concept_ids.get_ptr(i)
+            var cid_copy = cid_ptr.copy()
+            // Check if concept has been reviewed
+            var reviewed = false
+            var j : size_t = 0
+            while(j < states.size()) {
+                var state = states.get_ptr(j)
+                if(state.concept_id.equals(&cid_copy) && state.attempts > 0) {
+                    reviewed = true
+                }
+                j = j + 1
+            }
+            if(!reviewed) {
+                gaps.push(cid_copy)
+            }
+            i = i + 1
+        }
+        return gaps
+    }
+
+    // 1.5.15: Track knowledge health trends over time
+    public struct HealthTrend {
+        var timestamp : i64
+        var health_score : f64
+        var mastered_count : int
+
+        @make
+        func make() : HealthTrend {
+            return HealthTrend {
+                timestamp = 0,
+                health_score = 0.0,
+                mastered_count = 0
+            }
+        }
+    }
+
+    public func compute_health_trend(
+        historical_scores : *vector<HealthTrend>
+    ) : string {
+        if(historical_scores.size() < 2) { return string("insufficient_data") }
+        var latest = historical_scores.get_ptr(historical_scores.size() - 1)
+        var prev = historical_scores.get_ptr(historical_scores.size() - 2)
+        var delta = latest.health_score - prev.health_score
+        if(delta > 0.05) { return string("improving") }
+        if(delta < -0.05) { return string("declining") }
+        return string("stable")
+    }
+
+    // 1.5.16: Knowledge health comparison (anonymous)
+    public struct HealthComparison {
+        var user_score : f64
+        var average_score : f64
+        var percentile : int
+
+        @make
+        func make() : HealthComparison {
+            return HealthComparison {
+                user_score = 0.0,
+                average_score = 0.0,
+                percentile = 0
+            }
+        }
+    }
+
+    public func compute_health_comparison(
+        user_health : *KnowledgeHealth,
+        avg_score : f64
+    ) : HealthComparison {
+        var comp = HealthComparison::make()
+        comp.user_score = user_health.health_score * 100.0
+        comp.average_score = avg_score * 100.0
+        // Simple percentile approximation
+        var diff = comp.user_score - comp.average_score
+        if(diff > 20.0) { comp.percentile = 90 }
+        else if(diff > 10.0) { comp.percentile = 75 }
+        else if(diff > 0.0) { comp.percentile = 60 }
+        else if(diff > -10.0) { comp.percentile = 40 }
+        else { comp.percentile = 25 }
+        return comp
+    }
+
+    // 1.5.12: Identify knowledge overlap (redundant concepts)
+    public func identify_knowledge_overlap(states : *vector<ConceptState>) : vector<string> {
+        var overlap = vector<string>()
+        var i : size_t = 0
+        while(i < states.size()) {
+            var a = states.get_ptr(i)
+            if(a.attempts < 3) { i = i + 1; continue }
+            var acc_a = (a.correct as f64) / (a.attempts as f64)
+            if(acc_a < 0.9) { i = i + 1; continue }
+            // Check if any other concept has very similar accuracy and both are mastered
+            var j : size_t = i + 1
+            while(j < states.size()) {
+                var b = states.get_ptr(j)
+                if(b.attempts >= 3) {
+                    var acc_b = (b.correct as f64) / (b.attempts as f64)
+                    if(acc_b >= 0.9) {
+                        // Both mastered — potential overlap
+                        var overlap_copy = a.concept_id.copy()
+                        overlap.push(overlap_copy)
+                    }
+                }
+                j = j + 1
+            }
+            i = i + 1
+        }
+        return overlap
+    }
+
+    // 1.5.19: Knowledge health export (JSON string)
+    public func export_health_json(health : *KnowledgeHealth) : string {
+        var json = string("{\"total_concepts\":")
+        var tc = underlayer_core::int_to_string(health.total_concepts as i64)
+        json.append_string(&tc)
+        json.append_view(",\"mastered\":")
+        var ma = underlayer_core::int_to_string(health.mastered as i64)
+        json.append_string(&ma)
+        json.append_view(",\"learning\":")
+        var lr = underlayer_core::int_to_string(health.learning as i64)
+        json.append_string(&lr)
+        json.append_view(",\"reviewing\":")
+        var rv = underlayer_core::int_to_string(health.reviewing as i64)
+        json.append_string(&rv)
+        json.append_view(",\"unlearned\":")
+        var ul = underlayer_core::int_to_string(health.unlearned as i64)
+        json.append_string(&ul)
+        json.append_view(",\"health_score\":")
+        var hs = f64_to_string(health.health_score)
+        json.append_string(&hs)
+        json.append_view("}")
+        return json
+    }
+
 }

@@ -1,4 +1,5 @@
 // underlayer_learning — Interleaved review queue.
+using std::string
 using std::vector
 using underlayer_models::ReviewItem
 
@@ -144,6 +145,71 @@ public namespace underlayer_learning {
         return base_strength
     }
 
+    // 1.3.8: Track interleaving effectiveness (accuracy vs blocked practice)
+    public struct InterleaveEffectiveness {
+        var interleaved_accuracy : f64
+        var blocked_accuracy : f64
+        var interleaved_count : int
+        var blocked_count : int
+        var effectiveness_delta : f64  // positive = interleaving helped
+
+        @make
+        func make() : InterleaveEffectiveness {
+            return InterleaveEffectiveness {
+                interleaved_accuracy = 0.0,
+                blocked_accuracy = 0.0,
+                interleaved_count = 0,
+                blocked_count = 0,
+                effectiveness_delta = 0.0
+            }
+        }
+    }
+
+    // 1.3.9: Interleave prerequisite concepts with target concepts
+    public func should_interleave_prereqs(concept_prereqs : *vector<string>, weak_concepts : *vector<string>) : bool {
+        var i : size_t = 0
+        while(i < concept_prereqs.size()) {
+            var prereq_ptr = concept_prereqs.get_ptr(i)
+            var prereq_copy = prereq_ptr.copy()
+            var j : size_t = 0
+            while(j < weak_concepts.size()) {
+                var weak_ptr = weak_concepts.get_ptr(j)
+                var weak_copy = weak_ptr.copy()
+                if(prereq_copy.equals(&weak_copy)) { return true }
+                j = j + 1
+            }
+            i = i + 1
+        }
+        return false
+    }
+
+    // 1.3.10: Interleave related concepts (same module, different topics)
+    public func is_related_concept(concept_a : *string, concept_b : *string) : bool {
+        var a_copy = concept_a.copy()
+        var b_copy = concept_b.copy()
+        if(a_copy.equals(&b_copy)) { return false }
+        var i : size_t = 0
+        var dot_pos_a : i64 = -1
+        var dot_pos_b : i64 = -1
+        while(i < a_copy.size()) {
+            if(a_copy.get(i) == '.') { dot_pos_a = i as i64 }
+            i = i + 1
+        }
+        i = 0
+        while(i < b_copy.size()) {
+            if(b_copy.get(i) == '.') { dot_pos_b = i as i64 }
+            i = i + 1
+        }
+        if(dot_pos_a < 0 || dot_pos_b < 0) { return false }
+        var same_prefix = true
+        var j : size_t = 0
+        while(j < (dot_pos_a as size_t) && j < (dot_pos_b as size_t)) {
+            if(a_copy.get(j) != b_copy.get(j)) { same_prefix = false }
+            j = j + 1
+        }
+        return same_prefix
+    }
+
     public func get_next_review_items(queue : &ReviewQueue) : vector<ReviewItem> {
         var result = vector<ReviewItem>()
         var remaining_new = queue.max_new_per_day - queue.new_today
@@ -156,7 +222,8 @@ public namespace underlayer_learning {
         var added_reviews = 0
 
         // 1.3.14: Respect total daily limit
-        while(remaining_total > 0 && (added_new < remaining_new || added_reviews < remaining_reviews)) {
+        var done = false
+        while(!done && remaining_total > 0 && (added_new < remaining_new || added_reviews < remaining_reviews)) {
             if(di < queue.due_items.size() && added_reviews < remaining_reviews && remaining_total > 0) {
                 var item = queue.due_items.get_ptr(di)
                 result.push(copy_review_item(item))
@@ -171,6 +238,9 @@ public namespace underlayer_learning {
                 added_new = added_new + 1
                 remaining_total = remaining_total - 1
             }
+            if(di >= queue.due_items.size() && ni >= queue.new_items.size()) { done = true }
+            if(added_new >= remaining_new && added_reviews >= remaining_reviews) { done = true }
+            if(remaining_total <= 0) { done = true }
         }
 
         while(di < queue.due_items.size() && added_reviews < remaining_reviews && remaining_total > 0) {
@@ -193,6 +263,38 @@ public namespace underlayer_learning {
         interleave_items(&raw result, queue.interleaving_strength)
 
         return result
+    }
+
+    // 1.3.11: Interleave unrelated concepts (cross-module, random)
+    public func is_unrelated_concept(concept_a : *string, concept_b : *string) : bool {
+        var a_copy = concept_a.copy()
+        var b_copy = concept_b.copy()
+        if(a_copy.equals(&b_copy)) { return false }
+        var i : size_t = 0
+        var dot_pos_a : i64 = -1
+        var dot_pos_b : i64 = -1
+        while(i < a_copy.size()) {
+            if(a_copy.get(i) == '.') { dot_pos_a = i as i64 }
+            i = i + 1
+        }
+        i = 0
+        while(i < b_copy.size()) {
+            if(b_copy.get(i) == '.') { dot_pos_b = i as i64 }
+            i = i + 1
+        }
+        // Both have module prefix — check if different modules
+        if(dot_pos_a >= 0 && dot_pos_b >= 0) {
+            var j : size_t = 0
+            var different = false
+            var min_len = dot_pos_a
+            if(dot_pos_b < min_len) { min_len = dot_pos_b }
+            while(j < (min_len as size_t)) {
+                if(a_copy.get(j) != b_copy.get(j)) { different = true }
+                j = j + 1
+            }
+            return different
+        }
+        return true
     }
 
 }
