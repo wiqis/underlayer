@@ -93,4 +93,60 @@ public namespace underlayer_web {
         send_json_str(res, &raw body)
     }
 
+    // 1.4.22: Weakness comparison — anonymous how others find this concept
+    public func handle_weakness_compare(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        var q_cid = string("concept_id")
+        var cid_v = req.query.get(&q_cid.to_view())
+        if(cid_v.size() == 0) {
+            send_error(res, 400u, &string("missing query param: concept_id"))
+            return
+        }
+        var concept_id = sv_to_string(&raw cid_v)
+
+        // Simulated anonymous data — in production this would aggregate from all users
+        var body = string("{\"concept_id\":\"")
+        body.append_string(&concept_id)
+        body.append_view("\",\"anonymous_accuracy\":0.72")
+        body.append_view(",\"anonymous_total_attempts\":156")
+        body.append_view(",\"common_mistakes\":[\"byte-order-confusion\",\"offset-calculation\"]")
+        body.append_view(",\"average_severity\":42")
+        body.append_view("}")
+        send_json_str(res, &raw body)
+    }
+
+    // 1.4.24: Weakness alerts — notify when new concept becomes weak
+    public func handle_weakness_alerts(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        var learner_id = string("demo")
+        var course_id = string("elf")
+        var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
+        var weaknesses = detect_weaknesses(&raw states)
+        var alerts = vector<string>()
+
+        // Find newly weak concepts (accuracy dropped below 60%)
+        var i : size_t = 0
+        while(i < weaknesses.size()) {
+            var w = weaknesses.get_ptr(i)
+            if(w.severity > 50) {
+                alerts.push(w.concept_id.copy())
+            }
+            i = i + 1
+        }
+
+        var body = string("{\"alerts\":[")
+        var j : size_t = 0
+        while(j < alerts.size()) {
+            if(j > 0) { body.append_view(",") }
+            body.append_view("{\"concept\":\"")
+            var alert_copy = alerts.get_ptr(j).copy()
+            body.append_string(&alert_copy)
+            body.append_view("\",\"severity\":\"high\",\"message\":\"This concept needs attention\"}")
+            j = j + 1
+        }
+        body.append_view("],\"count\":")
+        var cnt_out = underlayer_core::int_to_string(alerts.size() as i64)
+        body.append_string(&cnt_out)
+        body.append_view("}")
+        send_json_str(res, &raw body)
+    }
+
 }

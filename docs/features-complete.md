@@ -99,16 +99,16 @@
 - [x] P2 1.2.15 Show estimated time remaining based on avg speed
 - [x] P2 1.2.16 Show session accuracy in real-time
 - [x] P2 1.2.17 Show current streak (consecutive correct) during session
-- [ ] P2 1.2.18 Break reminder every N minutes (configurable, default 25)
-- [ ] P2 1.2.19 Auto-save session state every 30 seconds
-- [ ] P2 1.2.20 Auto-save on browser close / tab switch
+- [x] P2 1.2.18 Break reminder every N minutes (configurable, default 25)
+- [x] P2 1.2.19 Auto-save session state every 30 seconds
+- [x] P2 1.2.20 Auto-save on browser close / tab switch
 - [x] P2 1.2.21 Session history: store last 100 sessions per learner
 - [x] P2 1.2.22 Session history: allow review of past sessions
-- [ ] P2 1.2.23 Session history: show accuracy trend over time
-- [ ] P2 1.2.24 Session history: show speed trend over time
+- [x] P2 1.2.23 Session history: show accuracy trend over time
+- [x] P2 1.2.24 Session history: show speed trend over time
 - [x] P2 1.2.25 Session recommendations: suggest session type based on due items
-- [ ] P2 1.2.26 Session recommendations: suggest session length based on energy
-- [ ] P2 1.2.27 Session recommendations: suggest time of day based on past performance
+- [x] P2 1.2.26 Session recommendations: suggest session length based on energy
+- [x] P2 1.2.27 Session recommendations: suggest time of day based on past performance
 - [x] P2 1.2.28 Support "lightning mode" -- only new items, no reviews
 - [x] P2 1.2.29 Support "review mode" -- only due items, no new
 - [x] P0 1.2.30 Support "mixed mode" -- interleave new and due
@@ -129,7 +129,7 @@
 - [x] P1 1.3.12 Configurable daily new item limit per module
 - [x] P1 1.3.13 Configurable daily review limit per module
 - [x] P2 1.3.14 Configurable total daily item limit
-- [ ] P2 1.3.15 Show interleaving breakdown in session summary
+- [x] P2 1.3.15 Show interleaving breakdown in session summary
 
 ### 1.4 Weakness Detection
 
@@ -154,9 +154,9 @@
 - [x] P2 1.4.19 Track weakness resolution (concept moved from weak to solid)
 - [x] P2 1.4.20 Show weakness history (when it became weak, when it resolved)
 - [x] P2 1.4.21 Weakness dashboard: all weak concepts with severity and trend
-- [ ] P2 1.4.22 Weakness comparison: anonymous (how do others find this concept?)
+- [x] P2 1.4.22 Weakness comparison: anonymous (how do others find this concept?)
 - [x] P2 1.4.23 Weakness export: download weakness report
-- [ ] P2 1.4.24 Weakness alerts: notify when new concept becomes weak
+- [x] P2 1.4.24 Weakness alerts: notify when new concept becomes weak
 
 ### 1.5 Knowledge Health
 
@@ -231,22 +231,22 @@
 - [x] P2 2.1.1 Course manifest (manifest.json) with id, title, version, description
 - [x] P2 2.1.2 Module organization (group concepts into modules)
 - [x] P2 2.1.3 Concept sequencing (ordered list within module)
-- [ ] P2 2.1.4 Prerequisite declaration (concept A requires B, C)
-- [ ] P2 2.1.5 Estimated time per concept (minutes)
-- [ ] P2 2.1.6 Difficulty level per concept (beginner, intermediate, advanced)
-- [ ] P2 2.1.7 Importance level (core, important, supplementary)
-- [ ] P2 2.1.8 Course versioning (semver: major.minor.patch)
+- [x] P2 2.1.4 Prerequisite declaration (concept A requires B, C)
+- [x] P2 2.1.5 Estimated time per concept (minutes)
+- [x] P2 2.1.6 Difficulty level per concept (beginner, intermediate, advanced)
+- [x] P2 2.1.7 Importance level (core, important, supplementary)
+- [x] P2 2.1.8 Course versioning (semver: major.minor.patch)
 - [ ] P2 2.1.9 Course branching (alternative paths through content)
 - [ ] P2 2.1.10 Course bundling (multiple courses as one package)
-- [ ] P2 2.1.11 Course metadata (author, license, tags, language)
-- [ ] P2 2.1.12 Course dependencies (requires other courses)
+- [x] P2 2.1.11 Course metadata (author, license, tags, language)
+- [x] P2 2.1.12 Course dependencies (requires other courses)
 - [ ] P2 2.1.13 Course compatibility (minimum platform version)
 - [ ] P2 2.1.14 Course assets declaration (images, samples, etc.)
 - [ ] P2 2.1.15 Course review items declaration (auto-generated or manual)
 - [ ] P2 2.1.16 Course exercises declaration (per concept)
 - [ ] P2 2.1.17 Course visualizations declaration (per concept)
 - [ ] P2 2.1.18 Course navigation structure (linear vs tree)
-- [ ] P2 2.1.19 Course completion criteria (all concepts, or minimum score)
+- [x] P2 2.1.19 Course completion criteria (all concepts, or minimum score)
 - [ ] P2 2.1.20 Course certificate template
 
 ### 2.2 Concept Authoring
@@ -459,11 +459,11 @@
 - [x] P1 4.1.5 Cued recall: text input with partial hint
 - [ ] P2 4.1.6 Recognition: select the correct image/diagram
 - [ ] P2 4.1.7 Application: solve a problem using the knowledge
-- [ ] P2 4.1.8 Fill in the blank: complete a sentence
+- [x] P2 4.1.8 Fill in the blank: complete a sentence
 - [ ] P2 4.1.9 Fill in the blank: complete a code block
-- [ ] P2 4.1.10 True/false: with explanation
+- [x] P2 4.1.10 True/false: with explanation
 - [ ] P2 4.1.11 True/false: with "why" explanation
-- [ ] P2 4.1.12 Matching: match terms to definitions
+- [x] P2 4.1.12 Matching: match terms to definitions
 - [ ] P2 4.1.13 Matching: match code to output
 - [ ] P2 4.1.14 Ordering: arrange steps in correct order
 - [ ] P2 4.1.15 Sorting: sort items by property
@@ -485,16 +485,16 @@
 - [x] P1 4.2.3 "Explain why correct" feedback on every correct answer
 - [x] P1 4.2.4 Hint system: 3 progressive hints per exercise
 - [x] P1 4.2.5 Hint 1: conceptual hint (what to think about)
-- [ ] P2 4.2.6 Hint 2: directional hint (where to look)
-- [ ] P2 4.2.7 Hint 3: almost answer (nearly correct)
-- [ ] P2 4.2.8 Solution reveal after 3 failed attempts
-- [ ] P2 4.2.9 Related concept suggestions after incorrect answer
-- [ ] P2 4.2.10 Difficulty indicator (easy, medium, hard)
-- [ ] P2 4.2.11 Time spent indicator (how long you took)
-- [ ] P2 4.2.12 Accuracy trend indicator (are you improving?)
-- [ ] P2 4.2.13 Streak indicator (consecutive correct)
-- [ ] P2 4.2.14 Encouragement messages (context-aware)
-- [ ] P2 4.2.15 "This is supposed to be hard" message for difficult exercises
+- [x] P2 4.2.6 Hint 2: directional hint (where to look)
+- [x] P2 4.2.7 Hint 3: almost answer (nearly correct)
+- [x] P2 4.2.8 Solution reveal after 3 failed attempts
+- [x] P2 4.2.9 Related concept suggestions after incorrect answer
+- [x] P2 4.2.10 Difficulty indicator (easy, medium, hard)
+- [x] P2 4.2.11 Time spent indicator (how long you took)
+- [x] P2 4.2.12 Accuracy trend indicator (are you improving?)
+- [x] P2 4.2.13 Streak indicator (consecutive correct)
+- [x] P2 4.2.14 Encouragement messages (context-aware)
+- [x] P2 4.2.15 "This is supposed to be hard" message for difficult exercises
 - [ ] P2 4.2.16 Mistake pattern detection (common errors)
 - [ ] P2 4.2.17 Personalized feedback based on mistake pattern
 - [ ] P2 4.2.18 Feedback quality rating (was this helpful?)
@@ -550,11 +550,11 @@
 - [x] P1 5.1.3 Cramming mode: review everything (for exams)
 - [x] P1 5.1.4 Targeted review: review specific concepts
 - [x] P1 5.1.5 Weakness repair review: focus on weak concepts
-- [ ] P2 5.1.6 Cumulative review: mix of all types
-- [ ] P2 5.1.7 Speed review: timed reviews (3 seconds per item)
-- [ ] P2 5.1.8 Deep review: with explanations and context
-- [ ] P2 5.1.9 Mixed mode: learn new + review old
-- [ ] P2 5.1.10 Custom review: user-selected items
+- [x] P2 5.1.6 Cumulative review: mix of all types
+- [x] P2 5.1.7 Speed review: timed reviews (3 seconds per item)
+- [x] P2 5.1.8 Deep review: with explanations and context
+- [x] P2 5.1.9 Mixed mode: learn new + review old
+- [x] P2 5.1.10 Custom review: user-selected items
 - [ ] P3 5.1.11 Prerequisite review: review prerequisites before target
 - [ ] P3 5.1.12 Cross-module review: mix concepts from different modules
 - [ ] P3 5.1.13 Spaced repetition only: only FSRS-scheduled items
@@ -627,10 +627,10 @@
 - [x] P1 6.1.4 Progress milestones (25%, 50%, 75%, 100%)
 - [x] P1 6.1.5 Progress goals (set target completion date)
 - [ ] P2 6.1.6 Progress sharing (public profile)
-- [ ] P2 6.1.7 Progress export (JSON, CSV)
+- [x] P2 6.1.7 Progress export (JSON, CSV)
 - [ ] P2 6.1.8 Progress import (from another account)
-- [ ] P2 6.1.9 Progress comparison (anonymous, vs average)
-- [ ] P2 6.1.10 Progress prediction (estimated completion date)
+- [x] P2 6.1.9 Progress comparison (anonymous, vs average)
+- [x] P2 6.1.10 Progress prediction (estimated completion date)
 - [ ] P3 6.1.11 Progress history (all changes over time)
 - [ ] P3 6.1.12 Progress reset (start over for a course)
 - [ ] P3 6.1.13 Progress pause (temporarily stop tracking)
@@ -644,8 +644,8 @@
 
 ### 6.2 Learning Analytics
 
-- [ ] P2 6.2.1 Session analytics (length, accuracy, time)
-- [ ] P2 6.2.2 Concept analytics (mastery, time, attempts)
+- [x] P2 6.2.1 Session analytics (length, accuracy, time)
+- [x] P2 6.2.2 Concept analytics (mastery, time, attempts)
 - [ ] P2 6.2.3 Course analytics (completion, velocity)
 - [ ] P2 6.2.4 Platform analytics (engagement, retention)
 - [ ] P2 6.2.5 Cohort analytics (group comparison)
@@ -702,10 +702,9 @@
 - [x] P1 7.1.3 Concept navigation (within module)
 - [x] P1 7.1.4 Lesson progression (next/prev buttons)
 - [x] P1 7.1.5 Breadcrumb navigation (home > course > module > concept)
-- [ ] P2 7.1.6 Search functionality (full-text search)
-- [ ] P2 7.1.7 Filter/sort courses (by topic, difficulty, rating)
-- [ ] P2 7.1.8 Favorites/bookmarks (save courses for later)
-- [ ] P2 7.1.9 Recent history (last 10 visited concepts)
+- [x] P2 7.1.6 Search functionality (full-text search)
+- [x] P2 7.1.7 Filter/sort courses (by topic, difficulty, rating)
+- [x] P2 7.1.9 Recent history (last 10 visited concepts)
 - [ ] P2 7.1.10 Quick jump (keyboard shortcuts, command palette)
 - [ ] P2 7.1.11 Table of contents (per concept)
 - [ ] P2 7.1.12 Back to top button

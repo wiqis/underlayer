@@ -128,6 +128,33 @@ public namespace underlayer_web {
         } else {
             body.append_view("null")
         }
+        // 6.1.9: Progress comparison (anonymous, vs average)
+        body.append_view(",\"comparison\":{\"vs_average\":")
+        var avg_score : f64 = 0.3  // Assume average is 30%
+        var comparison = underlayer_learning::compute_health_comparison(&raw health, avg_score)
+        body.append_view("{\"user_score\":")
+        var user_out = underlayer_learning::f64_to_string(comparison.user_score)
+        body.append_string(&user_out)
+        body.append_view(",\"average_score\":")
+        var avg_out = underlayer_learning::f64_to_string(comparison.average_score)
+        body.append_string(&avg_out)
+        body.append_view(",\"percentile\":")
+        var pct_out = underlayer_core::int_to_string(comparison.percentile as i64)
+        body.append_string(&pct_out)
+        body.append_view("}}")
+        // 6.1.10: Progress prediction (estimated completion date)
+        body.append_view(",\"prediction\":")
+        if(health.mastered > 0 && health.total_concepts > health.mastered) {
+            // Simple prediction: if mastered N concepts in last week, predict remaining
+            var remaining = health.total_concepts - health.mastered
+            var est_days = remaining * 7  // Rough estimate: 1 concept per day
+            body.append_view("{\"estimated_days\":")
+            var est_out = underlayer_core::int_to_string(est_days as i64)
+            body.append_string(&est_out)
+            body.append_view(",\"confidence\":\"low\"}")
+        } else {
+            body.append_view("null")
+        }
         body.append_view(",\"concepts\":[")
 
         var i : size_t = 0
@@ -178,6 +205,159 @@ public namespace underlayer_web {
         underlayer_repository::delete_learning_goal(&raw db, &learner_id, &course_id)
         var ok_body = string("{\"ok\":true}")
         send_json_str(res, &raw ok_body)
+    }
+
+    // 6.1.7: Progress export (JSON)
+    public func handle_progress_export(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        var learner_id = string("demo")
+        var course_id = string("elf")
+        var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
+        var sessions = underlayer_repository::get_learner_sessions(&raw db, &learner_id, 100)
+        var health = underlayer_learning::compute_knowledge_health(&raw states)
+
+        var body = string("{\"learner_id\":\"")
+        body.append_string(&learner_id)
+        body.append_view("\",\"course_id\":\"")
+        body.append_string(&course_id)
+        body.append_view("\",\"exported_at\":")
+        var now = underlayer_core::current_timestamp()
+        var now_out = underlayer_core::int_to_string(now)
+        body.append_string(&now_out)
+        body.append_view(",\"health_score\":")
+        var hs_out = underlayer_learning::f64_to_string(health.health_score)
+        body.append_string(&hs_out)
+        body.append_view(",\"mastered\":")
+        var m_out = underlayer_core::int_to_string(health.mastered as i64)
+        body.append_string(&m_out)
+        body.append_view(",\"total_concepts\":")
+        var tc_out = underlayer_core::int_to_string(health.total_concepts as i64)
+        body.append_string(&tc_out)
+        body.append_view(",\"total_sessions\":")
+        var ts_out = underlayer_core::int_to_string(sessions.size() as i64)
+        body.append_string(&ts_out)
+        body.append_view(",\"states\":[")
+        var i : size_t = 0
+        while(i < states.size()) {
+            if(i > 0) { body.append_view(",") }
+            var s = states.get_ptr(i)
+            body.append_view("{\"concept_id\":\"")
+            body.append_string(&s.concept_id)
+            body.append_view("\",\"status\":\"")
+            body.append_string(&s.status)
+            body.append_view("\",\"attempts\":")
+            var a_out = underlayer_core::int_to_string(s.attempts as i64)
+            body.append_string(&a_out)
+            body.append_view(",\"correct\":")
+            var c_out = underlayer_core::int_to_string(s.correct as i64)
+            body.append_string(&c_out)
+            body.append_view(",\"streak\":")
+            var st_out = underlayer_core::int_to_string(s.streak as i64)
+            body.append_string(&st_out)
+            body.append_view("}")
+            i = i + 1
+        }
+        body.append_view("]}")
+        send_json_str(res, &raw body)
+    }
+
+    // 6.2.1: Session analytics (length, accuracy, time)
+    public func handle_session_analytics(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        var learner_id = string("demo")
+        var course_id = string("elf")
+        var sessions = underlayer_repository::get_learner_sessions(&raw db, &learner_id, 50)
+        var total_items : int = 0
+        var total_correct : int = 0
+        var total_duration_ms : i64 = 0
+
+        var i : size_t = 0
+        while(i < sessions.size()) {
+            var s = sessions.get_ptr(i)
+            total_duration_ms = total_duration_ms + ((s.end_time - s.start_time) * 1000)
+            total_correct = total_correct + s.exercises_correct
+            total_items = total_items + s.exercises_attempted
+            i = i + 1
+        }
+
+        var body = string("{\"total_sessions\":")
+        var ts_out = underlayer_core::int_to_string(sessions.size() as i64)
+        body.append_string(&ts_out)
+        body.append_view(",\"total_items\":")
+        var ti_out = underlayer_core::int_to_string(total_items as i64)
+        body.append_string(&ti_out)
+        body.append_view(",\"total_correct\":")
+        var tc_out = underlayer_core::int_to_string(total_correct as i64)
+        body.append_string(&tc_out)
+        body.append_view(",\"accuracy\":")
+        if(total_items > 0) {
+            var acc = (total_correct as f64) / (total_items as f64)
+            var acc_out = underlayer_learning::f64_to_string(acc)
+            body.append_string(&acc_out)
+        } else {
+            body.append_view("0.0")
+        }
+        body.append_view(",\"total_duration_seconds\":")
+        var dur_out = underlayer_core::int_to_string(total_duration_ms / 1000)
+        body.append_string(&dur_out)
+        body.append_view("}")
+        send_json_str(res, &raw body)
+    }
+
+    // 6.2.2: Concept analytics (mastery, time, attempts)
+    public func handle_concept_analytics(db : &DbClient, concept_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {
+        var learner_id = string("demo")
+        var cid = sv_to_string(concept_id)
+        var course_id = string("elf")
+        var state = underlayer_repository::get_concept_state(&raw db, &learner_id, &course_id, &cid)
+        var sessions = underlayer_repository::get_learner_sessions(&raw db, &learner_id, 50)
+
+        var total_time_ms : i64 = 0
+        var attempts : int = 0
+        var correct : int = 0
+
+        var i : size_t = 0
+        while(i < sessions.size()) {
+            var s = sessions.get_ptr(i)
+            var items = underlayer_repository::get_session_items(&raw db, &s.id)
+            var j : size_t = 0
+            while(j < items.size()) {
+                var item = items.get_ptr(j)
+                var item_copy = item.concept_id.copy()
+                if(item_copy.equals(&cid)) {
+                    total_time_ms = total_time_ms + item.time_spent_ms
+                    attempts = attempts + 1
+                    if(item.rating >= 3) { correct = correct + 1 }
+                }
+                j = j + 1
+            }
+            i = i + 1
+        }
+
+        var body = string("{\"concept_id\":\"")
+        body.append_string(&cid)
+        body.append_view("\",\"status\":\"")
+        body.append_string(&state.status)
+        body.append_view("\",\"attempts\":")
+        var att_out = underlayer_core::int_to_string(attempts as i64)
+        body.append_string(&att_out)
+        body.append_view(",\"correct\":")
+        var cor_out = underlayer_core::int_to_string(correct as i64)
+        body.append_string(&cor_out)
+        body.append_view(",\"accuracy\":")
+        if(attempts > 0) {
+            var acc = (correct as f64) / (attempts as f64)
+            var acc_out = underlayer_learning::f64_to_string(acc)
+            body.append_string(&acc_out)
+        } else {
+            body.append_view("0.0")
+        }
+        body.append_view(",\"total_time_ms\":")
+        var time_out = underlayer_core::int_to_string(total_time_ms)
+        body.append_string(&time_out)
+        body.append_view(",\"streak\":")
+        var streak_out = underlayer_core::int_to_string(state.streak as i64)
+        body.append_string(&streak_out)
+        body.append_view("}")
+        send_json_str(res, &raw body)
     }
 
 }

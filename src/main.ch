@@ -47,6 +47,11 @@ public func main() : int {
         underlayer_web::handle_list_courses(courses_dir, &req, &raw mut res)
     }))
 
+    // Filter Courses (7.1.7)
+    srv.router.add("GET", "/api/courses/all", (|&courses_dir|(req, res) => {
+        underlayer_web::handle_filter_courses(courses_dir, &req, &raw mut res)
+    }))
+
     // Course detail
     srv.router.add("GET", "/api/courses/:courseId", (|&courses_dir|(req, res) => {
         var path = req.path.to_view()
@@ -105,9 +110,57 @@ public func main() : int {
         underlayer_web::handle_session_recommendations(db, &req, &raw mut res)
     }))
 
+    // ---- Time-of-Day Recommendation (1.2.27) ----
+    srv.router.add("GET", "/api/review/time-recommendation", (|&db|(req, res) => {
+        underlayer_web::handle_session_time_recommendation(db, &req, &raw mut res)
+    }))
+
+    // ---- Search (7.1.6) ----
+    srv.router.add("GET", "/api/search", (|&courses_dir|(req, res) => {
+        underlayer_web::handle_search(courses_dir, &req, &raw mut res)
+    }))
+
+    // ---- Filter Courses (7.1.7) ----
+    srv.router.add("GET", "/api/courses/all", (|&courses_dir|(req, res) => {
+        underlayer_web::handle_filter_courses(courses_dir, &req, &raw mut res)
+    }))
+
+    // ---- Recent History (7.1.9) ----
+    srv.router.add("GET", "/api/recent", (|&db|(req, res) => {
+        underlayer_web::handle_recent_history(db, &req, &raw mut res)
+    }))
+
     // ---- Progress API ----
     srv.router.add("GET", "/api/progress", (|&db, &courses_dir|(req, res) => {
         underlayer_web::handle_progress(db, courses_dir, &req, &raw mut res)
+    }))
+
+    // ---- Progress Export (6.1.7) ----
+    srv.router.add("GET", "/api/progress/export", (|&db|(req, res) => {
+        underlayer_web::handle_progress_export(db, &req, &raw mut res)
+    }))
+
+    // ---- Session Analytics (6.2.1) ----
+    srv.router.add("GET", "/api/analytics/sessions", (|&db|(req, res) => {
+        underlayer_web::handle_session_analytics(db, &req, &raw mut res)
+    }))
+
+    // ---- Concept Analytics (6.2.2) ----
+    srv.router.add("GET", "/api/analytics/concept/:conceptId", (|&db, &courses_dir|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 4) {
+            var concept_id = segments.get_ptr(3)
+            var course_id = string("elf")
+            underlayer_web::handle_concept_analytics(db, concept_id, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var ct = std::string_view("application/json")
+            res.set_header_view(std::string_view("Content-Type"), &ct)
+            var body = std::string("{\"error\": \"missing concept id\"}")
+            var bv = body.to_view()
+            res.write_view(&bv)
+        }
     }))
 
     // ---- Course Progress API ----
@@ -131,6 +184,16 @@ public func main() : int {
     // ---- Weakness Export (1.4.23) ----
     srv.router.add("GET", "/api/weaknesses/export", (|&db|(req, res) => {
         underlayer_web::handle_weakness_export(db, &req, &raw mut res)
+    }))
+
+    // ---- Weakness Compare (1.4.22) ----
+    srv.router.add("GET", "/api/weaknesses/compare", (|&db|(req, res) => {
+        underlayer_web::handle_weakness_compare(db, &req, &raw mut res)
+    }))
+
+    // ---- Weakness Alerts (1.4.24) ----
+    srv.router.add("GET", "/api/weaknesses/alerts", (|&db|(req, res) => {
+        underlayer_web::handle_weakness_alerts(db, &req, &raw mut res)
     }))
 
     // ---- Navigation API (7.1.2, 7.1.3, 7.1.5) ----

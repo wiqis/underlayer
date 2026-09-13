@@ -10,6 +10,15 @@ public namespace underlayer_models {
         var id : string
         var title : string
         var version : int
+        var description : string
+        var author : string
+        var license : string
+        var language : string
+        var difficulty : string     // beginner, intermediate, advanced
+        var importance : string     // core, important, supplementary
+        var dependencies : vector<string>  // 2.1.12: requires other courses
+        var completion_criteria : string    // 2.1.19: all_concepts or min_score
+        var min_score : f64                // 2.1.19: minimum score for completion
         var modules : vector<Module>
         var concepts : vector<ConceptRef>
 
@@ -19,6 +28,15 @@ public namespace underlayer_models {
                 id = string(),
                 title = string(),
                 version = 1,
+                description = string(),
+                author = string(),
+                license = string(),
+                language = string("en"),
+                difficulty = string("intermediate"),
+                importance = string("core"),
+                dependencies = vector<string>(),
+                completion_criteria = string("all_concepts"),
+                min_score = 0.0,
                 modules = vector<Module>(),
                 concepts = vector<ConceptRef>()
             }
@@ -48,6 +66,10 @@ public namespace underlayer_models {
         var module_id : string
         var title : string
         var description : string
+        var estimated_minutes : int
+        var difficulty : string     // beginner, intermediate, advanced
+        var importance : string     // core, important, supplementary
+        var prerequisites : vector<string>
 
         @make
         func make() : ConceptRef {
@@ -55,7 +77,11 @@ public namespace underlayer_models {
                 id = string(),
                 module_id = string(),
                 title = string(),
-                description = string()
+                description = string(),
+                estimated_minutes = 10,
+                difficulty = string("intermediate"),
+                importance = string("core"),
+                prerequisites = vector<string>()
             }
         }
     }
@@ -89,6 +115,12 @@ public namespace underlayer_models {
         var version : int
         var description : string
         var prerequisites : vector<string>
+        var difficulty : string     // beginner, intermediate, advanced
+        var importance : string     // core, important, supplementary
+        var estimated_minutes : int
+        var author : string
+        var license : string
+        var language : string
 
         @make
         func make() : Manifest {
@@ -97,7 +129,13 @@ public namespace underlayer_models {
                 title = string(),
                 version = 1,
                 description = string(),
-                prerequisites = vector<string>()
+                prerequisites = vector<string>(),
+                difficulty = string("intermediate"),
+                importance = string("core"),
+                estimated_minutes = 0,
+                author = string(),
+                license = string(),
+                language = string("en")
             }
         }
     }
@@ -268,6 +306,33 @@ public namespace underlayer_models {
         t.id = string("multi_recognize")
         t.label = string("Multi-Select")
         t.description = string("Select all correct answers from options.")
+        return t
+    }
+
+    // 4.1.8: Fill in the blank
+    public func exercise_type_fill_blank() : ExerciseType {
+        var t = ExerciseType::make()
+        t.id = string("fill_blank")
+        t.label = string("Fill in the Blank")
+        t.description = string("Complete a sentence or code block by filling in the missing part.")
+        return t
+    }
+
+    // 4.1.10: True/False
+    public func exercise_type_true_false() : ExerciseType {
+        var t = ExerciseType::make()
+        t.id = string("true_false")
+        t.label = string("True or False")
+        t.description = string("Determine whether a statement is true or false.")
+        return t
+    }
+
+    // 4.1.12: Matching
+    public func exercise_type_matching() : ExerciseType {
+        var t = ExerciseType::make()
+        t.id = string("matching")
+        t.label = string("Matching")
+        t.description = string("Match terms to their definitions or code to output.")
         return t
     }
 

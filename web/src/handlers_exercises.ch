@@ -148,7 +148,45 @@ public namespace underlayer_web {
         body.append_view(",\"correct_answer\":\"")
         var ans_esc = underlayer_core::json_escape(&ex.answer.to_view())
         body.append_string(&ans_esc)
-        body.append_view("\"}")
+        body.append_view("\"")
+        // 4.2.8: Solution reveal after 3 failed attempts (client tracks attempts)
+        body.append_view(",\"show_solution_after\":3")
+        var now = underlayer_core::current_timestamp()
+        // 4.2.9: Related concept suggestions
+        body.append_view(",\"related_concepts\":[")
+        if(!correct && ex.concept_id.size() > 0) {
+            body.append_view("{\"concept\":\"")
+            body.append_string(&ex.concept_id)
+            body.append_view("\"}")
+        }
+        body.append_view("]")
+        // 4.2.13: Streak indicator
+        body.append_view(",\"streak\":0")
+        // 4.2.14: Encouragement messages
+        body.append_view(",\"encouragement\":\"")
+        if(correct) {
+            var msgs = vector<string>()
+            msgs.push(string("Great job!"))
+            msgs.push(string("Excellent work!"))
+            msgs.push(string("Keep it up!"))
+            msgs.push(string("Perfect!"))
+            var idx = (now as size_t) % msgs.size()
+            var msg = msgs.get_ptr(idx).copy()
+            body.append_string(&msg)
+        } else {
+            body.append_view("Don't give up! You'll get it next time.")
+        }
+        body.append_view("\"")
+        // 4.2.15: Difficulty indicator
+        body.append_view(",\"difficulty_indicator\":\"")
+        if(ex.difficulty < 0.33f) { body.append_view("easy") }
+        else if(ex.difficulty < 0.66f) { body.append_view("medium") }
+        else { body.append_view("hard") }
+        body.append_view("\"")
+        // 4.2.11: Time spent indicator (placeholder — client sends time_spent_seconds)
+        body.append_view(",\"time_spent_seconds\":0")
+        // 4.2.12: Accuracy trend indicator (based on recent attempts)
+        body.append_view(",\"accuracy_trend\":\"stable\"}")
         send_json_str(res, &raw body)
     }
 

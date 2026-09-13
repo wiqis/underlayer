@@ -29,7 +29,15 @@ public namespace underlayer_web {
             body.append_view(",\"concepts\":")
             var cc = underlayer_core::int_to_string(course.concepts.size() as i64)
             body.append_view(cc.to_view())
-            body.append('}')
+            body.append_view(",\"difficulty\":\"")
+            body.append_string(&course.difficulty)
+            body.append_view("\",\"importance\":\"")
+            body.append_string(&course.importance)
+            body.append_view("\",\"description\":\"")
+            var desc_sv2 = course.description.to_view()
+            var desc_str2 = underlayer_core::json_escape(&desc_sv2)
+            body.append_view(desc_str2.to_view())
+            body.append_view("\"}")
             ci = ci + 1
         }
         body.append(']')
@@ -55,7 +63,33 @@ public namespace underlayer_web {
         body.append_view("\",\"version\":")
         var ver = underlayer_core::int_to_string(course.version as i64)
         body.append_view(ver.to_view())
-        body.append_view(",\"modules\":[")
+        body.append_view(",\"description\":\"")
+        var desc_sv = course.description.to_view()
+        var desc_str = underlayer_core::json_escape(&desc_sv)
+        body.append_view(desc_str.to_view())
+        body.append_view("\",\"author\":\"")
+        body.append_string(&course.author)
+        body.append_view("\",\"license\":\"")
+        body.append_string(&course.license)
+        body.append_view("\",\"language\":\"")
+        body.append_string(&course.language)
+        body.append_view("\",\"difficulty\":\"")
+        body.append_string(&course.difficulty)
+        body.append_view("\",\"importance\":\"")
+        body.append_string(&course.importance)
+        body.append_view("\",\"completion_criteria\":\"")
+        body.append_string(&course.completion_criteria)
+        body.append_view("\",\"dependencies\":[")
+        var di : size_t = 0
+        while(di < course.dependencies.size()) {
+            if(di > 0) { body.append_view(",") }
+            body.append_view("\"")
+            var dep = course.dependencies.get_ptr(di).copy()
+            body.append_string(&dep)
+            body.append_view("\"")
+            di = di + 1
+        }
+        body.append_view("],\"modules\":[")
         var mi : size_t = 0
         while(mi < course.modules.size()) {
             var mod = course.modules.get_ptr(mi)
@@ -90,10 +124,17 @@ public namespace underlayer_web {
             var ctitle_sv = cref.title.to_view()
             var ctitle_str = underlayer_core::json_escape(&ctitle_sv)
             body.append_view(ctitle_str.to_view())
-            body.append_view("\",\"module_id\":\"")
+            body.append_view(",\"module_id\":\"")
             var cmid_sv = cref.module_id.to_view()
             var cmid_str = underlayer_core::json_escape(&cmid_sv)
             body.append_view(cmid_str.to_view())
+            body.append_view("\",\"estimated_minutes\":")
+            var est_min = underlayer_core::int_to_string(cref.estimated_minutes as i64)
+            body.append_view(est_min.to_view())
+            body.append_view(",\"difficulty\":\"")
+            body.append_string(&cref.difficulty)
+            body.append_view("\",\"importance\":\"")
+            body.append_string(&cref.importance)
             body.append_view("\"}")
             ci = ci + 1
         }

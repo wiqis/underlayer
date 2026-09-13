@@ -42,6 +42,32 @@ public namespace underlayer_repository {
         course.title = json_get_str(&raw root, "title")
         course.version = json_get_int(&raw root, "version")
         if(course.version == 0) { course.version = 1 }
+        course.description = json_get_str(&raw root, "description")
+        course.author = json_get_str(&raw root, "author")
+        course.license = json_get_str(&raw root, "license")
+        course.language = json_get_str(&raw root, "language")
+        if(course.language.size() == 0) { course.language = string("en") }
+        course.difficulty = json_get_str(&raw root, "difficulty")
+        if(course.difficulty.size() == 0) { course.difficulty = string("intermediate") }
+        course.importance = json_get_str(&raw root, "importance")
+        if(course.importance.size() == 0) { course.importance = string("core") }
+        course.completion_criteria = json_get_str(&raw root, "completion_criteria")
+        if(course.completion_criteria.size() == 0) { course.completion_criteria = string("all_concepts") }
+        course.min_score = json_get_int(&raw root, "min_score") as f64
+        // 2.1.12: Parse dependencies
+        var deps_val = json_get(&raw root, "dependencies")
+        if(deps_val != null && deps_val is JsonValue.Array) {
+            var Array(deps_arr) = *deps_val else unreachable
+            var di : size_t = 0
+            while(di < deps_arr.size()) {
+                var dval = deps_arr.get_ptr(di)
+                if(dval is JsonValue.String) {
+                    var String(dep_id) = *dval else unreachable
+                    course.dependencies.push(dep_id.copy())
+                }
+                di = di + 1
+            }
+        }
         var modules_val = json_get(&raw root, "modules")
         if(modules_val != null && modules_val is JsonValue.Array) {
             var Array(modules_arr) = *modules_val else unreachable
@@ -81,6 +107,12 @@ public namespace underlayer_repository {
                     cref.title = json_get_str(cval, "title")
                     cref.module_id = json_get_str(cval, "module_id")
                     cref.description = json_get_str(cval, "description")
+                    cref.estimated_minutes = json_get_int(cval, "estimated_minutes")
+                    if(cref.estimated_minutes == 0) { cref.estimated_minutes = 10 }
+                    cref.difficulty = json_get_str(cval, "difficulty")
+                    if(cref.difficulty.size() == 0) { cref.difficulty = string("intermediate") }
+                    cref.importance = json_get_str(cval, "importance")
+                    if(cref.importance.size() == 0) { cref.importance = string("core") }
                 } else if(cval is JsonValue.String) {
                     var String(cid) = *cval else unreachable
                     cref.id = cid.copy()

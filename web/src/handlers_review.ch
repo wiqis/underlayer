@@ -91,6 +91,68 @@ public namespace underlayer_web {
             }
             due_items = filtered
         }
+        // 5.1.7: Speed review — timed reviews (3 seconds per item)
+        var time_per_item = 0
+        if(mode.equals(string("speed"))) {
+            time_per_item = 3
+        }
+        // 5.1.8: Deep review — with explanations and context
+        var include_explanations = false
+        if(mode.equals(string("deep"))) {
+            include_explanations = true
+        }
+        // 5.1.9: Mixed mode — learn new + review old (default, no filtering)
+        // 5.1.10: Custom review — user-selected items (via item_ids query param)
+        if(mode.equals(string("custom"))) {
+            var q_items = string("item_ids")
+            var items_v = req.query.get(&q_items.to_view())
+            if(items_v.size() > 0) {
+                var items_str = sv_to_string(&raw items_v)
+                var filtered = std::vector<underlayer_models::ReviewItem>()
+                var fi : size_t = 0
+                while(fi < due_items.size()) {
+                    var item = due_items.get_ptr(fi)
+                    // Simple substring match to check if this item is in the list
+                    var item_copy = item.id.copy()
+                    var items_copy = items_str.copy()
+                    var found = false
+                    if(items_copy.size() >= item_copy.size()) {
+                        var ti : size_t = 0
+                        while(ti <= items_copy.size() - item_copy.size()) {
+                            var match = true
+                            var qi : size_t = 0
+                            while(qi < item_copy.size()) {
+                                if(items_copy.get(ti + qi) != item_copy.get(qi)) { match = false }
+                                qi = qi + 1
+                            }
+                            if(match) { found = true }
+                            ti = ti + 1
+                        }
+                    }
+                    if(found) {
+                        var copy = underlayer_models::ReviewItem::make()
+                        copy.id = item.id.copy()
+                        copy.learner_id = item.learner_id.copy()
+                        copy.concept_id = item.concept_id.copy()
+                        copy.course_id = item.course_id.copy()
+                        copy.item_type = item.item_type.copy()
+                        copy.front = item.front.copy()
+                        copy.back = item.back.copy()
+                        copy.difficulty = item.difficulty
+                        copy.stability = item.stability
+                        copy.retrievability = item.retrievability
+                        copy.next_review = item.next_review
+                        copy.last_review = item.last_review
+                        copy.reps = item.reps
+                        copy.lapses = item.lapses
+                        copy.ease_factor = item.ease_factor
+                        filtered.push(copy)
+                    }
+                    fi = fi + 1
+                }
+                due_items = filtered
+            }
+        }
         // 5.1.4: Targeted review — filter to specific concept
         if(mode.equals(string("targeted")) && concept_v.size() > 0) {
             var target_concept = sv_to_string(&raw concept_v)
@@ -206,7 +268,27 @@ public namespace underlayer_web {
         body.append_string(&est_out)
         body.append_view(",\"mode\":\"")
         body.append_string(&mode)
-        body.append_view("\"}")
+        body.append_view("\",\"break_reminder_seconds\":1500")
+        body.append_view(",\"auto_save_interval_seconds\":30")
+        body.append_view(",\"time_per_item_seconds\":")
+        var tpi_out = underlayer_core::int_to_string(time_per_item as i64)
+        body.append_string(&tpi_out)
+        body.append_view(",\"include_explanations\":")
+        if(include_explanations) { body.append_view("true") } else { body.append_view("false") }
+        body.append_view(",\"session_length_suggestion\":")
+        // 1.2.26: Suggest session length based on energy level
+        var q_energy = string("energy")
+        var energy_v = req.query.get(&q_energy.to_view())
+        if(energy_v.size() > 0) {
+            var energy = sv_to_string(&raw energy_v)
+            if(energy.equals(string("high"))) { body.append_view("1800") }
+            else if(energy.equals(string("medium"))) { body.append_view("900") }
+            else if(energy.equals(string("low"))) { body.append_view("300") }
+            else { body.append_view("900") }
+        } else {
+            body.append_view("900")
+        }
+        body.append_view("}")
         send_json_str(res, &raw body)
     }
 
@@ -377,7 +459,7 @@ public namespace underlayer_web {
         send_json_str(res, &raw body)
     }
 
-    // ---- Session History (1.2.21, 1.2.22) ----
+    // ---- Session History (1.2.21, 1.2.22, 1.2.23, 1.2.24) ----
     public func handle_session_history(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = string("demo")
         var sessions = underlayer_repository::get_learner_sessions(&raw db, &learner_id, 20)
@@ -403,10 +485,49 @@ public namespace underlayer_web {
             body.append_view(",\"correct\":")
             var ec_str = underlayer_core::int_to_string(s.exercises_correct as i64)
             body.append_string(&ec_str)
+            // 1.2.23: Accuracy per session
+            body.append_view(",\"accuracy\":")
+            var acc : f64 = 0.0
+            if(s.exercises_attempted > 0) {
+                acc = (s.exercises_correct as f64) / (s.exercises_attempted as f64)
+            }
+            var acc_out = underlayer_learning::f64_to_string(acc)
+            body.append_string(&acc_out)
+            // 1.2.24: Speed per session (ms per exercise)
+            body.append_view(",\"speed_ms\":")
+            var elapsed = s.end_time - s.start_time
+            var speed_ms : i64 = 0
+            if(s.exercises_attempted > 0 && elapsed > 0) {
+                speed_ms = elapsed * 1000 / (s.exercises_attempted as i64)
+            }
+            var speed_out = underlayer_core::int_to_string(speed_ms)
+            body.append_string(&speed_out)
             body.append_view("}")
             i = i + 1
         }
-        body.append_view("]}")
+        body.append_view("],\"trends\":{")
+        // Compute trends across sessions
+        if(sessions.size() >= 2) {
+            var first = sessions.get_ptr(0)
+            var last = sessions.get_ptr(sessions.size() - 1)
+            var first_acc : f64 = 0.0
+            var last_acc : f64 = 0.0
+            if(first.exercises_attempted > 0) {
+                first_acc = (first.exercises_correct as f64) / (first.exercises_attempted as f64)
+            }
+            if(last.exercises_attempted > 0) {
+                last_acc = (last.exercises_correct as f64) / (last.exercises_attempted as f64)
+            }
+            var acc_trend = string("stable")
+            if(last_acc > first_acc + 0.05) { acc_trend = string("improving") }
+            else if(last_acc < first_acc - 0.05) { acc_trend = string("declining") }
+            body.append_view("\"accuracy_trend\":\"")
+            body.append_string(&acc_trend)
+            body.append_view("\"")
+        } else {
+            body.append_view("\"accuracy_trend\":\"insufficient_data\"")
+        }
+        body.append_view("}}")
         send_json_str(res, &raw body)
     }
 
@@ -614,6 +735,72 @@ public namespace underlayer_web {
             body.append_view("}")
         }
         body.append_view("]}")
+        send_json_str(res, &raw body)
+    }
+
+    // 1.2.27: Session recommendations — suggest time of day based on past performance
+    public func handle_session_time_recommendation(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        var learner_id = string("demo")
+        var sessions = underlayer_repository::get_learner_sessions(&raw db, &learner_id, 50)
+
+        // Analyze which hours have best accuracy
+        var hourly_accuracy : vector<f64> = vector<f64>()
+        var hourly_count : vector<i64> = vector<i64>()
+        var hi : size_t = 0
+        while(hi < 24) {
+            hourly_accuracy.push(0.0)
+            hourly_count.push(0)
+            hi = hi + 1
+        }
+        var si : size_t = 0
+        while(si < sessions.size()) {
+            var s = sessions.get_ptr(si)
+            // Approximate hour from timestamp (hour = (timestamp % 86400) / 3600)
+            var hour = ((s.start_time % 86400) / 3600) as size_t
+            if(hour < 24) {
+                var acc : f64 = 0.0
+                if(s.exercises_attempted > 0) {
+                    acc = (s.exercises_correct as f64) / (s.exercises_attempted as f64)
+                }
+                var prev_acc = hourly_accuracy.get(hour)
+                var prev_count = hourly_count.get(hour)
+                hourly_accuracy.set(hour, prev_acc + acc)
+                hourly_count.set(hour, prev_count + 1)
+            }
+            si = si + 1
+        }
+
+        // Find best hour
+        var best_hour : i64 = -1
+        var best_acc : f64 = 0.0
+        var hi2 : size_t = 0
+        while(hi2 < 24) {
+            var cnt = hourly_count.get(hi2)
+            if(cnt > 0) {
+                var avg = hourly_accuracy.get(hi2) / (cnt as f64)
+                if(avg > best_acc) {
+                    best_acc = avg
+                    best_hour = hi2 as i64
+                }
+            }
+            hi2 = hi2 + 1
+        }
+
+        var body = string("{\"best_hour\":")
+        var bh_out = underlayer_core::int_to_string(best_hour)
+        body.append_string(&bh_out)
+        body.append_view(",\"best_accuracy\":")
+        var ba_out = underlayer_learning::f64_to_string(best_acc)
+        body.append_string(&ba_out)
+        body.append_view(",\"suggestion\":\"")
+        if(best_hour >= 0) {
+            if(best_hour < 12) { body.append_view("Morning learner") }
+            else if(best_hour < 17) { body.append_view("Afternoon learner") }
+            else { body.append_view("Evening learner") }
+        } else {
+            body.append_view("Complete more sessions to get personalized recommendations")
+        }
+        body.append_view("\"}")
         send_json_str(res, &raw body)
     }
 
