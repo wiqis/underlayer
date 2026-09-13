@@ -55,6 +55,7 @@ public namespace underlayer_learning {
         copy.last_review = src.last_review
         copy.reps = src.reps
         copy.lapses = src.lapses
+        copy.ease_factor = src.ease_factor
         return copy
     }
 

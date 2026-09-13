@@ -18,25 +18,27 @@ public namespace underlayer_learning {
 
     public func init_fsrs_params() : FSRSParams {
         var p = FSRSParams::make()
-        p.w.push(0.4072)
-        p.w.push(0.3366)
-        p.w.push(0.2540)
-        p.w.push(0.1901)
-        p.w.push(0.5530)
-        p.w.push(0.0154)
-        p.w.push(0.0438)
-        p.w.push(0.1242)
-        p.w.push(0.2207)
-        p.w.push(0.2603)
-        p.w.push(0.4722)
-        p.w.push(0.3819)
-        p.w.push(0.0644)
-        p.w.push(0.2169)
-        p.w.push(0.7025)
-        p.w.push(0.0382)
-        p.w.push(0.2276)
-        p.w.push(0.9957)
-        p.w.push(0.0380)
+        p.w.push(0.4072)   // w[0]
+        p.w.push(0.3366)   // w[1]
+        p.w.push(0.2540)   // w[2]
+        p.w.push(0.1901)   // w[3]
+        p.w.push(0.5530)   // w[4]
+        p.w.push(0.0154)   // w[5]
+        p.w.push(0.0438)   // w[6]
+        p.w.push(0.1242)   // w[7]
+        p.w.push(0.2207)   // w[8]
+        p.w.push(0.2603)   // w[9]
+        p.w.push(0.4722)   // w[10]
+        p.w.push(0.3819)   // w[11]
+        p.w.push(0.0644)   // w[12]
+        p.w.push(0.2169)   // w[13]
+        p.w.push(0.7025)   // w[14]
+        p.w.push(0.0382)   // w[15]
+        p.w.push(0.2276)   // w[16]
+        p.w.push(0.9957)   // w[17]
+        p.w.push(0.0380)   // w[18]
+        p.w.push(0.90)     // w[19] — hard interval factor
+        p.w.push(1.15)     // w[20] — easy interval factor
         return p
     }
 
@@ -47,6 +49,8 @@ public namespace underlayer_learning {
         var scheduled_days : i64
         var reps : int
         var lapses : int
+        var ease_factor : f64
+        var grad_step : int
 
         @make
         func make() : ReviewState {
@@ -56,7 +60,9 @@ public namespace underlayer_learning {
                 elapsed_days = 0,
                 scheduled_days = 0,
                 reps = 0,
-                lapses = 0
+                lapses = 0,
+                ease_factor = 2.5,
+                grad_step = 0
             }
         }
     }
@@ -117,20 +123,79 @@ public namespace underlayer_learning {
         return interval as i64
     }
 
+    // 1.1.18/1.1.19: Graduation steps for new cards (in days)
+    // Step 0: 1 day, Step 1: 3 days, Step 2+: graduated
+    public func grad_step_interval(step : int) : i64 {
+        if(step == 0) { return 1 }
+        if(step == 1) { return 3 }
+        return 3  // default
+    }
+
     public func fsrs_update_state(params : &FSRSParams, state : &ReviewState, rating : int) : ReviewState {
         var new_state = ReviewState::make()
+        new_state.ease_factor = state.ease_factor
 
         if(state.reps == 0) {
+            // ---- New card ----
             new_state.difficulty = fsrs_init_difficulty(params, rating)
             new_state.stability = fsrs_init_stability(params, rating)
             new_state.reps = 1
-            if(rating == RATING_AGAIN) { new_state.lapses = 1 } else { new_state.lapses = 0 }
+
+            if(rating == RATING_AGAIN) {
+                // 1.1.18: "Again" on new card — reset to step 0
+                new_state.lapses = 1
+                new_state.grad_step = 0
+                new_state.scheduled_days = 1
+            } else if(rating == RATING_EASY) {
+                // 1.1.19: "Easy" on new card — graduate immediately
+                new_state.lapses = 0
+                new_state.grad_step = -1  // graduated
+                new_state.scheduled_days = fsrs_next_interval(params, &new_state, rating)
+            } else if(rating == RATING_GOOD) {
+                // 1.1.18: "Good" on new card — advance to next graduation step
+                new_state.lapses = 0
+                var next_step = state.grad_step + 1
+                if(next_step >= 2) {
+                    // All steps completed — graduate
+                    new_state.grad_step = -1
+                    new_state.scheduled_days = fsrs_next_interval(params, &new_state, rating)
+                } else {
+                    new_state.grad_step = next_step
+                    new_state.scheduled_days = grad_step_interval(next_step)
+                }
+            } else {
+                // RATING_HARD on new card
+                new_state.lapses = 0
+                new_state.grad_step = state.grad_step
+                if(state.grad_step >= 0 && state.grad_step < 2) {
+                    new_state.scheduled_days = grad_step_interval(state.grad_step)
+                } else {
+                    new_state.scheduled_days = 1
+                }
+            }
         } else {
-            new_state.difficulty = state.difficulty + (rating - 2) as f64 * 0.1
+            // ---- Review card ----
+            // 1.1.15: Ease factor adjustment on each rating
+            // Again: -0.20, Hard: -0.15, Good: +0.00, Easy: +0.15
+            if(rating == RATING_AGAIN) { new_state.ease_factor = state.ease_factor - 0.20 }
+            else if(rating == RATING_HARD) { new_state.ease_factor = state.ease_factor - 0.15 }
+            else if(rating == RATING_EASY) { new_state.ease_factor = state.ease_factor + 0.15 }
+            else { new_state.ease_factor = state.ease_factor }
+            // Clamp ease factor to [1.3, 3.0]
+            if(new_state.ease_factor < 1.3) { new_state.ease_factor = 1.3 }
+            if(new_state.ease_factor > 3.0) { new_state.ease_factor = 3.0 }
+
+            // 1.1.16: Per-item difficulty drift based on review history
+            // Use FSRS v4 formula: D' = D - w6 * (rating - 3)
+            var w6 = *params.w.get_ptr(6)
+            new_state.difficulty = state.difficulty - w6 * ((rating - 3) as f64)
             if(new_state.difficulty < 1.0) { new_state.difficulty = 1.0 }
             if(new_state.difficulty > 10.0) { new_state.difficulty = 10.0 }
+
             new_state.stability = fsrs_next_stability(params, state, rating)
             new_state.reps = state.reps + 1
+            new_state.grad_step = -1  // already graduated
+
             if(rating == RATING_AGAIN) {
                 new_state.lapses = state.lapses + 1
                 // 1.1.14: Lapse recovery — when R < 0.5, reset stability to 50% of previous
@@ -141,10 +206,14 @@ public namespace underlayer_learning {
             } else {
                 new_state.lapses = state.lapses
             }
+
+            new_state.scheduled_days = fsrs_next_interval(params, &new_state, rating)
+            // 1.1.15: Apply ease factor modifier to interval
+            new_state.scheduled_days = (new_state.scheduled_days as f64 * new_state.ease_factor / 2.5) as i64
+            if(new_state.scheduled_days < 1) { new_state.scheduled_days = 1 }
         }
 
         new_state.elapsed_days = state.scheduled_days
-        new_state.scheduled_days = fsrs_next_interval(params, state, rating)
 
         return new_state
     }

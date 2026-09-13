@@ -9,7 +9,7 @@ public namespace underlayer_repository {
     public func get_due_review_items(db : *DbClient, learner_id : &string, course_id : &string, limit : int) : vector<ReviewItem> {
         var items = vector<ReviewItem>()
         var now = underlayer_core::current_timestamp()
-        var sql = string("SELECT id, concept_id, type, front, back, difficulty, stability, retrievability, next_review, reps, lapses FROM review_items WHERE learner_id = '")
+        var sql = string("SELECT id, concept_id, type, front, back, difficulty, stability, retrievability, next_review, reps, lapses, ease_factor FROM review_items WHERE learner_id = '")
         sql.append_string(learner_id)
         sql.append_view("' AND course_id = '")
         sql.append_string(course_id)
@@ -38,6 +38,10 @@ public namespace underlayer_repository {
                 item.next_review = parse_i64(row.vals.get_ptr(8).to_view())
                 item.reps = parse_i64(row.vals.get_ptr(9).to_view()) as int
                 item.lapses = parse_i64(row.vals.get_ptr(10).to_view()) as int
+                // 1.1.15: read ease_factor (column 11, may not exist in old DBs)
+                if(row.vals.size() >= 12) {
+                    item.ease_factor = parse_i64(row.vals.get_ptr(11).to_view()) as f64
+                }
                 items.push(item)
             }
             ri = ri + 1
@@ -67,6 +71,11 @@ public namespace underlayer_repository {
         sql.append_view(", lapses = ")
         var lapses_str = underlayer_core::int_to_string(item.lapses as i64)
         sql.append_view(lapses_str.to_view())
+        // 1.1.15: persist ease_factor
+        sql.append_view(", ease_factor = ")
+        var ef_str = underlayer_core::int_to_string(item.ease_factor as i64)
+        sql.append_view(ef_str.to_view())
+        sql.append_view(".0")
         sql.append_view(" WHERE id = '")
         sql.append_string(&item.id)
         sql.append_view("'")
@@ -74,7 +83,7 @@ public namespace underlayer_repository {
     }
 
     public func insert_review_item(db : *DbClient, item : *ReviewItem) {
-        var sql = string("INSERT OR IGNORE INTO review_items (id, learner_id, concept_id, course_id, type, front, back, difficulty, stability, retrievability, next_review, last_review, reps, lapses) VALUES ('")
+        var sql = string("INSERT OR IGNORE INTO review_items (id, learner_id, concept_id, course_id, type, front, back, difficulty, stability, retrievability, next_review, last_review, reps, lapses, ease_factor) VALUES ('")
         sql.append_string(&item.id)
         sql.append_view("', '")
         sql.append_string(&item.learner_id)
@@ -111,7 +120,10 @@ public namespace underlayer_repository {
         sql.append_view(", ")
         var lapses_str = underlayer_core::int_to_string(item.lapses as i64)
         sql.append_view(lapses_str.to_view())
-        sql.append_view(")")
+        sql.append_view(", ")
+        var ef_str = underlayer_core::int_to_string(item.ease_factor as i64)
+        sql.append_view(ef_str.to_view())
+        sql.append_view(".0)")
         underlayer_db::exec_sql(db, &raw sql)
     }
 

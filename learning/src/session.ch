@@ -44,6 +44,7 @@ public namespace underlayer_learning {
             out.last_review = src.last_review
             out.reps = src.reps
             out.lapses = src.lapses
+            out.ease_factor = src.ease_factor
         }
     }
 

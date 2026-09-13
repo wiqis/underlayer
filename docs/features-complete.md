@@ -64,11 +64,11 @@
 - [x] P0 1.1.12 Support minimum interval (default 1 day)
 - [x] P1 1.1.13 Support graduated intervals for new cards (1d, 3d, 7d before first review)
 - [x] P1 1.1.14 Support lapse recovery: when R < 0.5, reset stability to 50% of previous
-- [ ] P1 1.1.15 Support ease factor adjustment on each rating
-- [ ] P1 1.1.16 Support per-item difficulty drift based on review history
+- [x] P1 1.1.15 Support ease factor adjustment on each rating
+- [x] P1 1.1.16 Support per-item difficulty drift based on review history
 - [x] P1 1.1.17 Support state transitions: New -> Learning -> Review -> Relearning
-- [ ] P1 1.1.18 Support "Good" on New card advances to next graduation step
-- [ ] P1 1.1.19 Support "Easy" on New card graduates immediately
+- [x] P1 1.1.18 Support "Good" on New card advances to next graduation step
+- [x] P1 1.1.19 Support "Easy" on New card graduates immediately
 - [x] P1 1.1.20 Support "Again" on Review card enters relearning
 - [x] P1 1.1.21 Support "Hard" on Review card reduces interval by 20%
 - [x] P1 1.1.22 Support "Easy" on Review card increases interval by 1.3x

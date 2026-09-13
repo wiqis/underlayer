@@ -128,7 +128,12 @@ public namespace underlayer_web {
         resp.append_string(&streak_out)
         resp.append_view(",\"new_status\":\"")
         resp.append_string(&state.status)
-        resp.append_view("\"}")
+        resp.append_view("\"")
+        // 1.1.15: Include ease_factor in response
+        resp.append_view(",\"ease_factor\":")
+        var ef_out = underlayer_learning::f64_to_string(new_rs.ease_factor)
+        resp.append_string(&ef_out)
+        resp.append_view("}")
         send_json_str(res, &raw resp)
     }
 

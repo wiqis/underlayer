@@ -166,6 +166,7 @@ public namespace underlayer_models {
         var last_review : i64
         var reps : int
         var lapses : int
+        var ease_factor : f64    // 1.1.15: per-item ease factor
 
         @make
         func make() : ReviewItem {
@@ -183,7 +184,8 @@ public namespace underlayer_models {
                 next_review = 0,
                 last_review = 0,
                 reps = 0,
-                lapses = 0
+                lapses = 0,
+                ease_factor = 2.5
             }
         }
     }
