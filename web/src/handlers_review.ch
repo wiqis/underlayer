@@ -52,9 +52,13 @@ public namespace underlayer_web {
         var q_cid = string("concept_id")
         var q_crsid = string("course_id")
         var q_rat = string("rating")
+        var q_sid = string("session_id")
+        var q_time = string("time_spent_ms")
         var cid_v = req.query.get(&q_cid.to_view())
         var crsid_v = req.query.get(&q_crsid.to_view())
         var rat_v = req.query.get(&q_rat.to_view())
+        var sid_v = req.query.get(&q_sid.to_view())
+        var time_v = req.query.get(&q_time.to_view())
         if(cid_v.size() == 0 || crsid_v.size() == 0 || rat_v.size() == 0) {
             send_error(res, 400u, &string("missing query params: concept_id, course_id, rating"))
             return
@@ -102,6 +106,16 @@ public namespace underlayer_web {
         else { state.status = string("reviewing") }
 
         underlayer_repository::upsert_concept_state(&raw db, &raw state)
+
+        // Record session item if session_id provided (1.2.6, 1.2.7)
+        if(sid_v.size() > 0) {
+            var session_id = sv_to_string(&raw sid_v)
+            var time_spent : i64 = 0
+            if(time_v.size() > 0) {
+                time_spent = underlayer_repository::parse_i64(time_v)
+            }
+            underlayer_repository::record_session_item(&raw db, &session_id, &concept_id, rating, time_spent)
+        }
 
         var resp = string("{\"status\":\"ok\",\"rating\":")
         var rating_out = underlayer_core::int_to_string(rating as i64)
@@ -163,6 +177,187 @@ public namespace underlayer_web {
         body.append_string(&total_str)
         body.append_view("}")
         send_json_str(res, &raw body)
+    }
+
+    // ---- Session History (1.2.21, 1.2.22) ----
+    public func handle_session_history(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        var learner_id = string("demo")
+        var sessions = underlayer_repository::get_learner_sessions(&raw db, &learner_id, 20)
+
+        var body = std::string("{\"sessions\":[")
+        var i : size_t = 0
+        while(i < sessions.size()) {
+            if(i > 0) { body.append_view(",") }
+            var s = sessions.get_ptr(i)
+            body.append_view("{\"id\":\"")
+            body.append_string(&s.id)
+            body.append_view("\",\"start_time\":")
+            var st_str = underlayer_core::int_to_string(s.start_time)
+            body.append_string(&st_str)
+            body.append_view(",\"end_time\":")
+            var et_str = underlayer_core::int_to_string(s.end_time)
+            body.append_string(&et_str)
+            body.append_view(",\"type\":\"")
+            body.append_string(&s.session_type)
+            body.append_view("\",\"attempted\":")
+            var ea_str = underlayer_core::int_to_string(s.exercises_attempted as i64)
+            body.append_string(&ea_str)
+            body.append_view(",\"correct\":")
+            var ec_str = underlayer_core::int_to_string(s.exercises_correct as i64)
+            body.append_string(&ec_str)
+            body.append_view("}")
+            i = i + 1
+        }
+        body.append_view("]}")
+        send_json_str(res, &raw body)
+    }
+
+    // ---- Session Detail (1.2.22) ----
+    public func handle_session_detail(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        var q_sid = string("session_id")
+        var sid_v = req.query.get(&q_sid.to_view())
+        if(sid_v.size() == 0) {
+            var path = req.path.to_view()
+            var segments = underlayer_core::path_segments(&path)
+            if(segments.size() >= 2) {
+                sid_v = *segments.get_ptr(segments.size() - 1)
+            }
+        }
+        if(sid_v.size() == 0) {
+            send_error(res, 400u, &string("missing session_id param or path segment"))
+            return
+        }
+        var session_id = sv_to_string(&raw sid_v)
+
+        var items = underlayer_repository::get_session_items(&raw db, &session_id)
+        var stats = underlayer_repository::get_session_stats(&raw db, &session_id)
+
+        var body = std::string("{\"session_id\":\"")
+        body.append_string(&session_id)
+        body.append_view("\",\"stats\":{\"total\":")
+        var t_str = underlayer_core::int_to_string(stats.total_items as i64)
+        body.append_string(&t_str)
+        body.append_view(",\"correct\":")
+        var c_str = underlayer_core::int_to_string(stats.correct_items as i64)
+        body.append_string(&c_str)
+        body.append_view(",\"time_ms\":")
+        var tm_str = underlayer_core::int_to_string(stats.total_time_ms)
+        body.append_string(&tm_str)
+        body.append_view("},\"items\":[")
+        var i : size_t = 0
+        while(i < items.size()) {
+            if(i > 0) { body.append_view(",") }
+            var item = items.get_ptr(i)
+            body.append_view("{\"concept\":\"")
+            body.append_string(&item.concept_id)
+            body.append_view("\",\"rating\":")
+            var r_str = underlayer_core::int_to_string(item.rating as i64)
+            body.append_string(&r_str)
+            body.append_view(",\"time_ms\":")
+            var it_str = underlayer_core::int_to_string(item.time_spent_ms)
+            body.append_string(&it_str)
+            body.append_view(",\"at\":")
+            var a_str = underlayer_core::int_to_string(item.reviewed_at)
+            body.append_string(&a_str)
+            body.append_view("}")
+            i = i + 1
+        }
+        body.append_view("]}")
+        send_json_str(res, &raw body)
+    }
+
+    // ---- Session Pause (1.2.9) ----
+    public func handle_session_pause(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        var q_sid = string("session_id")
+        var sid_v = req.query.get(&q_sid.to_view())
+        if(sid_v.size() == 0) {
+            send_error(res, 400u, &string("missing query param: session_id"))
+            return
+        }
+        var session_id = sv_to_string(&raw sid_v)
+        underlayer_repository::pause_session(&raw db, &raw session_id)
+        var resp = string("{\"status\":\"ok\",\"session_id\":\"")
+        resp.append_string(&session_id)
+        resp.append_view("\",\"state\":\"paused\"}")
+        send_json_str(res, &raw resp)
+    }
+
+    // ---- Session Resume (1.2.10) ----
+    public func handle_session_resume(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        var q_sid = string("session_id")
+        var sid_v = req.query.get(&q_sid.to_view())
+        if(sid_v.size() == 0) {
+            send_error(res, 400u, &string("missing query param: session_id"))
+            return
+        }
+        var session_id = sv_to_string(&raw sid_v)
+        underlayer_repository::resume_session(&raw db, &raw session_id)
+        // Return items already reviewed so client can rebuild state
+        var items = underlayer_repository::get_session_items(&raw db, &session_id)
+        var resp = string("{\"status\":\"ok\",\"session_id\":\"")
+        resp.append_string(&session_id)
+        resp.append_view("\",\"state\":\"active\",\"reviewed\":")
+        var t_str = underlayer_core::int_to_string(items.size() as i64)
+        resp.append_string(&t_str)
+        resp.append_view("}")
+        send_json_str(res, &raw resp)
+    }
+
+    // ---- Session Abort (1.2.11) ----
+    public func handle_session_abort(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        var q_sid = string("session_id")
+        var sid_v = req.query.get(&q_sid.to_view())
+        if(sid_v.size() == 0) {
+            send_error(res, 400u, &string("missing query param: session_id"))
+            return
+        }
+        var session_id = sv_to_string(&raw sid_v)
+        underlayer_repository::abort_session(&raw db, &raw session_id)
+        var resp = string("{\"status\":\"ok\",\"session_id\":\"")
+        resp.append_string(&session_id)
+        resp.append_view("\",\"state\":\"aborted\"}")
+        send_json_str(res, &raw resp)
+    }
+
+    // ---- Session Undo (1.2.12) ----
+    public func handle_session_undo(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        var q_sid = string("session_id")
+        var sid_v = req.query.get(&q_sid.to_view())
+        if(sid_v.size() == 0) {
+            send_error(res, 400u, &string("missing query param: session_id"))
+            return
+        }
+        var session_id = sv_to_string(&raw sid_v)
+        var undone = underlayer_repository::undo_last_item(&raw db, &raw session_id)
+        if(!undone) {
+            send_error(res, 404u, &string("no items to undo"))
+            return
+        }
+        var resp = string("{\"status\":\"ok\",\"session_id\":\"")
+        resp.append_string(&session_id)
+        resp.append_view("\",\"undone\":true}")
+        send_json_str(res, &raw resp)
+    }
+
+    // ---- Session Skip (1.2.13) ----
+    public func handle_session_skip(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        var q_sid = string("session_id")
+        var q_cid = string("concept_id")
+        var sid_v = req.query.get(&q_sid.to_view())
+        var cid_v = req.query.get(&q_cid.to_view())
+        if(sid_v.size() == 0 || cid_v.size() == 0) {
+            send_error(res, 400u, &string("missing query params: session_id, concept_id"))
+            return
+        }
+        var session_id = sv_to_string(&raw sid_v)
+        var concept_id = sv_to_string(&raw cid_v)
+        underlayer_repository::skip_item(&raw db, &raw session_id, &raw concept_id)
+        var resp = string("{\"status\":\"ok\",\"session_id\":\"")
+        resp.append_string(&session_id)
+        resp.append_view("\",\"skipped\":\"")
+        resp.append_string(&concept_id)
+        resp.append_view("\"}")
+        send_json_str(res, &raw resp)
     }
 
 }

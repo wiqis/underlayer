@@ -43,8 +43,8 @@
 - [x] 1.1.1 Implement FSRS v4 paper algorithm exactly
 - [x] 1.1.2 Store 19 parameter weights per learner in DB
 - [x] 1.1.3 Default weights from paper: w=[0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01, 1.49, 0.14, 0.94, 2.18, 0.05, 0.34, 1.26, 0.29, 2.61]
-- [ ] 1.1.4 Allow learner to customize target retention (0.80, 0.85, 0.90, 0.95)
-- [ ] 1.1.5 Default target retention = 0.90
+- [x] 1.1.4 Allow learner to customize target retention (0.80, 0.85, 0.90, 0.95)
+- [x] 1.1.5 Default target retention = 0.90
 - [x] 1.1.6 Compute difficulty D from initial rating (Again=1, Hard=2, Good=3, Easy=4)
 - [x] 1.1.7 Clamp difficulty to range [1, 10]
 - [x] 1.1.8 Compute stability S after each review using FSRS formulas
@@ -52,8 +52,8 @@
 - [x] 1.1.10 Schedule next review when R drops below target retention
 - [x] 1.1.11 Support maximum interval cap (default 365 days, configurable)
 - [x] 1.1.12 Support minimum interval (default 1 day)
-- [ ] 1.1.13 Support graduated intervals for new cards (1d, 3d, 7d before first review)
-- [ ] 1.1.14 Support lapse recovery: when R < 0.5, reset stability to 50% of previous
+- [x] 1.1.13 Support graduated intervals for new cards (1d, 3d, 7d before first review)
+- [x] 1.1.14 Support lapse recovery: when R < 0.5, reset stability to 50% of previous
 - [ ] 1.1.15 Support ease factor adjustment on each rating
 - [ ] 1.1.16 Support per-item difficulty drift based on review history
 - [x] 1.1.17 Support state transitions: New -> Learning -> Review -> Relearning
@@ -77,14 +77,14 @@
 - [x] 1.2.3 Track session start time
 - [x] 1.2.4 Track session end time
 - [x] 1.2.5 Track items reviewed in session
-- [ ] 1.2.6 Track accuracy per item in session
-- [ ] 1.2.7 Track time spent per item in session
+- [x] 1.2.6 Track accuracy per item in session
+- [x] 1.2.7 Track time spent per item in session
 - [x] 1.2.8 Compute session statistics: accuracy, avg time, items reviewed
-- [ ] 1.2.9 Allow session pause (save state, resume later)
-- [ ] 1.2.10 Allow session resume from pause point
-- [ ] 1.2.11 Allow session abort (discard progress)
-- [ ] 1.2.12 Allow session undo (go back to previous item)
-- [ ] 1.2.13 Allow session skip (skip current item, return to queue)
+- [x] 1.2.9 Allow session pause (save state, resume later)
+- [x] 1.2.10 Allow session resume from pause point
+- [x] 1.2.11 Allow session abort (discard progress)
+- [x] 1.2.12 Allow session undo (go back to previous item)
+- [x] 1.2.13 Allow session skip (skip current item, return to queue)
 - [x] 1.2.14 Show progress bar during session (items remaining / total)
 - [ ] 1.2.15 Show estimated time remaining based on avg speed
 - [ ] 1.2.16 Show session accuracy in real-time
@@ -92,8 +92,8 @@
 - [ ] 1.2.18 Break reminder every N minutes (configurable, default 25)
 - [ ] 1.2.19 Auto-save session state every 30 seconds
 - [ ] 1.2.20 Auto-save on browser close / tab switch
-- [ ] 1.2.21 Session history: store last 100 sessions per learner
-- [ ] 1.2.22 Session history: allow review of past sessions
+- [x] 1.2.21 Session history: store last 100 sessions per learner
+- [x] 1.2.22 Session history: allow review of past sessions
 - [ ] 1.2.23 Session history: show accuracy trend over time
 - [ ] 1.2.24 Session history: show speed trend over time
 - [ ] 1.2.25 Session recommendations: suggest session type based on due items

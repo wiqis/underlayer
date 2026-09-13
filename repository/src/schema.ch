@@ -11,8 +11,10 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw sql2)
         var sql3 = string("CREATE TABLE IF NOT EXISTS review_items (id TEXT PRIMARY KEY, learner_id TEXT, concept_id TEXT, course_id TEXT, type TEXT, front TEXT, back TEXT, difficulty REAL DEFAULT 5.0, stability REAL DEFAULT 1.0, retrievability REAL DEFAULT 1.0, next_review INTEGER, last_review INTEGER, reps INTEGER DEFAULT 0, lapses INTEGER DEFAULT 0)")
         underlayer_db::exec_sql(db, &raw sql3)
-        var sql4 = string("CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, learner_id TEXT, start_time INTEGER, end_time INTEGER, type TEXT, exercises_attempted INTEGER DEFAULT 0, exercises_correct INTEGER DEFAULT 0)")
+        var sql4 = string("CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, learner_id TEXT, start_time INTEGER, end_time INTEGER, type TEXT, exercises_attempted INTEGER DEFAULT 0, exercises_correct INTEGER DEFAULT 0, status TEXT DEFAULT 'active')")
         underlayer_db::exec_sql(db, &raw sql4)
+        var sql5 = string("CREATE TABLE IF NOT EXISTS session_items (id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT, concept_id TEXT, rating INTEGER, time_spent_ms INTEGER, reviewed_at INTEGER)")
+        underlayer_db::exec_sql(db, &raw sql5)
         var idx1 = string("CREATE INDEX IF NOT EXISTS idx_cs_learner ON concept_states(learner_id)")
         underlayer_db::exec_sql(db, &raw idx1)
         var idx2 = string("CREATE INDEX IF NOT EXISTS idx_ri_learner ON review_items(learner_id)")
@@ -21,6 +23,8 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw idx3)
         var idx4 = string("CREATE INDEX IF NOT EXISTS idx_sess_learner ON sessions(learner_id)")
         underlayer_db::exec_sql(db, &raw idx4)
+        var idx5 = string("CREATE INDEX IF NOT EXISTS idx_si_session ON session_items(session_id)")
+        underlayer_db::exec_sql(db, &raw idx5)
     }
 
 }

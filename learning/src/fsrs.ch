@@ -5,11 +5,13 @@ public namespace underlayer_learning {
 
     public struct FSRSParams {
         var w : vector<f64>
+        var target_retention : f64  // 1.1.4: target retention rate (default 0.90)
 
         @make
         func make() : FSRSParams {
             return FSRSParams {
-                w = vector<f64>()
+                w = vector<f64>(),
+                target_retention = 0.90
             }
         }
     }
@@ -101,8 +103,9 @@ public namespace underlayer_learning {
 
     public func fsrs_next_interval(params : &FSRSParams, state : &ReviewState, rating : int) : i64 {
         var s_new = fsrs_next_stability(params, state, rating)
+        // 1.1.4: Use target retention instead of hardcoded 0.9
         var d_factor = exp(*params.w.get_ptr(8) * (state.difficulty - 3.0)) - 1.0
-        var interval = s_new * d_factor
+        var interval = s_new * (d_factor * params.target_retention / 0.9)
 
         if(rating == RATING_AGAIN) { interval = 1.0 }
         if(rating == RATING_HARD) { interval = interval * *params.w.get_ptr(9) }
@@ -130,6 +133,11 @@ public namespace underlayer_learning {
             new_state.reps = state.reps + 1
             if(rating == RATING_AGAIN) {
                 new_state.lapses = state.lapses + 1
+                // 1.1.14: Lapse recovery — when R < 0.5, reset stability to 50% of previous
+                var r = fsrs_retrievability(state, state.elapsed_days as f64)
+                if(r < 0.5) {
+                    new_state.stability = state.stability * 0.5
+                }
             } else {
                 new_state.lapses = state.lapses
             }

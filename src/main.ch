@@ -105,6 +105,36 @@ public func main() : int {
         underlayer_web::handle_course_progress(db, courses_dir, &req, &raw mut res)
     }))
 
+    // ---- Session History (1.2.21, 1.2.22) ----
+    srv.router.add("GET", "/api/sessions", (|&db|(req, res) => {
+        underlayer_web::handle_session_history(db, &req, &raw mut res)
+    }))
+
+    // ---- Session Detail (1.2.22) ----
+    srv.router.add("GET", "/api/sessions/:sessionId", (|&db|(req, res) => {
+        underlayer_web::handle_session_detail(db, &req, &raw mut res)
+    }))
+    srv.router.add("GET", "/api/session/detail", (|&db|(req, res) => {
+        underlayer_web::handle_session_detail(db, &req, &raw mut res)
+    }))
+
+    // ---- Session Management (1.2.9-1.2.13) ----
+    srv.router.add("POST", "/api/session/pause", (|&db|(req, res) => {
+        underlayer_web::handle_session_pause(db, &req, &raw mut res)
+    }))
+    srv.router.add("POST", "/api/session/resume", (|&db|(req, res) => {
+        underlayer_web::handle_session_resume(db, &req, &raw mut res)
+    }))
+    srv.router.add("POST", "/api/session/abort", (|&db|(req, res) => {
+        underlayer_web::handle_session_abort(db, &req, &raw mut res)
+    }))
+    srv.router.add("POST", "/api/session/undo", (|&db|(req, res) => {
+        underlayer_web::handle_session_undo(db, &req, &raw mut res)
+    }))
+    srv.router.add("POST", "/api/session/skip", (|&db|(req, res) => {
+        underlayer_web::handle_session_skip(db, &req, &raw mut res)
+    }))
+
     // Course landing page
     srv.router.add("GET", "/courses/:courseId", (|&courses_dir|(req, res) => {
         var path = req.path.to_view()
