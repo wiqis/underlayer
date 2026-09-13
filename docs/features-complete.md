@@ -155,7 +155,7 @@
 - [x] P2 1.4.20 Show weakness history (when it became weak, when it resolved)
 - [x] P2 1.4.21 Weakness dashboard: all weak concepts with severity and trend
 - [ ] P2 1.4.22 Weakness comparison: anonymous (how do others find this concept?)
-- [ ] P2 1.4.23 Weakness export: download weakness report
+- [x] P2 1.4.23 Weakness export: download weakness report
 - [ ] P2 1.4.24 Weakness alerts: notify when new concept becomes weak
 
 ### 1.5 Knowledge Health
