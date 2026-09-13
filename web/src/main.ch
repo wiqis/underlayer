@@ -7,7 +7,12 @@ using underlayer_models::Course
 using underlayer_models::Module
 using underlayer_models::ConceptRef
 using underlayer_models::ReviewItem
+using underlayer_models::ConceptState
 using underlayer_models::Session
+using underlayer_learning::FSRSParams
+using underlayer_learning::ReviewState
+using underlayer_core
+using underlayer_repository
 
 public namespace underlayer_web {
 
@@ -47,6 +52,53 @@ public namespace underlayer_web {
         var i : size_t = 0
         while(i < sv.size()) { out.append(sv.get(i)); i = i + 1 }
         return out
+    }
+
+    // JSON helpers
+    private func json_get(obj : *JsonValue, key : *char) : *mut JsonValue {
+        if(obj == null) { return null }
+        if(!(obj is JsonValue.Object)) { return null }
+        var Object(map) = *obj else unreachable
+        var k = string::make_no_len(key)
+        return map.get_ptr(&k)
+    }
+
+    private func json_str(val : *JsonValue) : string {
+        if(val == null) { return string() }
+        if(val is JsonValue.String) {
+            var String(s) = *val else unreachable
+            return s.copy()
+        }
+        return string()
+    }
+
+    private func json_get_str(obj : *JsonValue, key : *char) : string {
+        var field = json_get(obj, key)
+        return json_str(field)
+    }
+
+    private func json_int(val : *JsonValue) : i64 {
+        if(val == null) { return 0 }
+        if(val is JsonValue.Number) {
+            var Number(s) = *val else unreachable
+            var result : i64 = 0
+            var negative = false
+            var i : size_t = 0
+            if(s.size() > 0 && s.get(0) == '-') { negative = true; i = 1 }
+            while(i < s.size()) {
+                var c = s.get(i)
+                if(c >= '0' && c <= '9') { result = result * 10 + (c as i64 - 48) }
+                i = i + 1
+            }
+            if(negative) { result = -result }
+            return result
+        }
+        return 0
+    }
+
+    private func json_get_int(obj : *JsonValue, key : *char) : int {
+        var field = json_get(obj, key)
+        return json_int(field) as int
     }
 
     // Route a concept ID to the correct render function
@@ -315,10 +367,83 @@ public namespace underlayer_web {
         send_json_str(res, &raw body)
     }
 
-    public func handle_review_submit(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        // For now, acknowledge — full rating recording will use FSRS
-        var body = std::string("{\"status\":\"ok\"}")
-        send_json_str(res, &raw body)
+    public func handle_review_submit(db : &DbClient, req : *mut http::Request, res : *mut http::ResponseWriter) {
+        // Use query params for now (body reading has issues with Content-Length)
+        var q_cid = string("concept_id")
+        var q_crsid = string("course_id")
+        var q_rat = string("rating")
+        var cid_v = req.query.get(&q_cid.to_view())
+        var crsid_v = req.query.get(&q_crsid.to_view())
+        var rat_v = req.query.get(&q_rat.to_view())
+        if(cid_v.size() == 0 || crsid_v.size() == 0 || rat_v.size() == 0) {
+            send_error(res, 400u, &string("missing query params: concept_id, course_id, rating"))
+            return
+        }
+        var concept_id = sv_to_string(&raw cid_v)
+        var course_id = sv_to_string(&raw crsid_v)
+        var rating_str = sv_to_string(&raw rat_v)
+        var learner_id = string("demo")
+
+        // Parse rating (again/1, hard/2, good/3, easy/4)
+        var rating : int = 3
+        if(rating_str.equals(string("again")) || rating_str.equals(string("1"))) { rating = 1 }
+        if(rating_str.equals(string("hard")) || rating_str.equals(string("2"))) { rating = 2 }
+        if(rating_str.equals(string("good")) || rating_str.equals(string("3"))) { rating = 3 }
+        if(rating_str.equals(string("easy")) || rating_str.equals(string("4"))) { rating = 4 }
+
+        // Get current concept state
+        var state = underlayer_repository::get_concept_state(&raw db, &learner_id, &concept_id, &course_id)
+        state.learner_id = learner_id.copy()
+        state.concept_id = concept_id.copy()
+        state.course_id = course_id.copy()
+
+        // Initialize FSRS params and convert ConceptState to ReviewState
+        var params = underlayer_learning::init_fsrs_params()
+        var rs = ReviewState::make()
+        rs.difficulty = state.difficulty_rating
+        if(rs.difficulty < 1.0) { rs.difficulty = 5.0 }
+        if(rs.difficulty > 10.0) { rs.difficulty = 5.0 }
+        rs.stability = 1.0
+        rs.reps = state.attempts
+        rs.lapses = state.attempts - state.correct
+        rs.elapsed_days = 0
+        rs.scheduled_days = state.next_review - state.last_studied
+        if(rs.scheduled_days < 0) { rs.scheduled_days = 0 }
+
+        // Apply FSRS update
+        var new_rs = underlayer_learning::fsrs_update_state(&params, &rs, rating)
+
+        // Update ConceptState with new FSRS values
+        state.attempts = state.attempts + 1
+        if(rating >= 3) { state.correct = state.correct + 1 }
+        if(rating >= 3) { state.streak = state.streak + 1 } else { state.streak = 0 }
+        state.last_studied = underlayer_core::current_timestamp()
+        state.next_review = state.last_studied + new_rs.scheduled_days
+        state.difficulty_rating = new_rs.difficulty
+
+        // Update status based on reps and streak
+        if(new_rs.reps == 1) { state.status = string("learning") }
+        else if(new_rs.lapses > 0) { state.status = string("reviewing") }
+        else if(new_rs.reps >= 5 && state.streak >= 3) { state.status = string("mastered") }
+        else { state.status = string("reviewing") }
+
+        // Persist updated state
+        underlayer_repository::upsert_concept_state(&raw db, &raw state)
+
+        // Build response JSON
+        var resp = string("{\"status\":\"ok\",\"rating\":")
+        var rating_out = underlayer_core::int_to_string(rating as i64)
+        resp.append_string(&rating_out)
+        resp.append_view(",\"next_interval\":")
+        var interval_out = underlayer_core::int_to_string(new_rs.scheduled_days)
+        resp.append_string(&interval_out)
+        resp.append_view(",\"streak\":")
+        var streak_out = underlayer_core::int_to_string(state.streak as i64)
+        resp.append_string(&streak_out)
+        resp.append_view(",\"new_status\":\"")
+        resp.append_string(&state.status)
+        resp.append_view("\"}")
+        send_json_str(res, &raw resp)
     }
 
     // ---- Learner Progress ----

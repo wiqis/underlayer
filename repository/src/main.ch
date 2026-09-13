@@ -451,7 +451,10 @@ public namespace underlayer_repository {
         sql.append_view(", ")
         var e = underlayer_core::int_to_string(state.next_review)
         sql.append_view(e.to_view())
-        sql.append_view(", 0.0)")
+        sql.append_view(", ")
+        var f = underlayer_core::int_to_string(state.difficulty_rating as i64)
+        sql.append_view(f.to_view())
+        sql.append_view(".0)")
         underlayer_db::exec_sql(db, &raw sql)
     }
 

@@ -83,7 +83,7 @@ public func main() : int {
     }))
 
     srv.router.add("POST", "/api/review/submit", (|&db|(req, res) => {
-        underlayer_web::handle_review_submit(db, &req, &raw mut res)
+        underlayer_web::handle_review_submit(db, &raw mut req, &raw mut res)
     }))
 
     // ---- Progress API ----

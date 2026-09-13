@@ -40,29 +40,29 @@
 
 ### 1.1 FSRS Spaced Repetition Algorithm
 
-- [ ] 1.1.1 Implement FSRS v4 paper algorithm exactly
-- [ ] 1.1.2 Store 19 parameter weights per learner in DB
-- [ ] 1.1.3 Default weights from paper: w=[0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01, 1.49, 0.14, 0.94, 2.18, 0.05, 0.34, 1.26, 0.29, 2.61]
+- [x] 1.1.1 Implement FSRS v4 paper algorithm exactly
+- [x] 1.1.2 Store 19 parameter weights per learner in DB
+- [x] 1.1.3 Default weights from paper: w=[0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01, 1.49, 0.14, 0.94, 2.18, 0.05, 0.34, 1.26, 0.29, 2.61]
 - [ ] 1.1.4 Allow learner to customize target retention (0.80, 0.85, 0.90, 0.95)
 - [ ] 1.1.5 Default target retention = 0.90
-- [ ] 1.1.6 Compute difficulty D from initial rating (Again=1, Hard=2, Good=3, Easy=4)
-- [ ] 1.1.7 Clamp difficulty to range [1, 10]
-- [ ] 1.1.8 Compute stability S after each review using FSRS formulas
-- [ ] 1.1.9 Compute retrievability R = 1 / (1 + (t/S) * c) where c = -0.5
-- [ ] 1.1.10 Schedule next review when R drops below target retention
-- [ ] 1.1.11 Support maximum interval cap (default 365 days, configurable)
-- [ ] 1.1.12 Support minimum interval (default 1 day)
+- [x] 1.1.6 Compute difficulty D from initial rating (Again=1, Hard=2, Good=3, Easy=4)
+- [x] 1.1.7 Clamp difficulty to range [1, 10]
+- [x] 1.1.8 Compute stability S after each review using FSRS formulas
+- [x] 1.1.9 Compute retrievability R = 1 / (1 + (t/S) * c) where c = -0.5
+- [x] 1.1.10 Schedule next review when R drops below target retention
+- [x] 1.1.11 Support maximum interval cap (default 365 days, configurable)
+- [x] 1.1.12 Support minimum interval (default 1 day)
 - [ ] 1.1.13 Support graduated intervals for new cards (1d, 3d, 7d before first review)
 - [ ] 1.1.14 Support lapse recovery: when R < 0.5, reset stability to 50% of previous
 - [ ] 1.1.15 Support ease factor adjustment on each rating
 - [ ] 1.1.16 Support per-item difficulty drift based on review history
-- [ ] 1.1.17 Support state transitions: New -> Learning -> Review -> Relearning
+- [x] 1.1.17 Support state transitions: New -> Learning -> Review -> Relearning
 - [ ] 1.1.18 Support "Good" on New card advances to next graduation step
 - [ ] 1.1.19 Support "Easy" on New card graduates immediately
-- [ ] 1.1.20 Support "Again" on Review card enters relearning
-- [ ] 1.1.21 Support "Hard" on Review card reduces interval by 20%
-- [ ] 1.1.22 Support "Easy" on Review card increases interval by 1.3x
-- [ ] 1.1.23 Compute next interval: interval = stability * (target_retention^(1/c) - 1)
+- [x] 1.1.20 Support "Again" on Review card enters relearning
+- [x] 1.1.21 Support "Hard" on Review card reduces interval by 20%
+- [x] 1.1.22 Support "Easy" on Review card increases interval by 1.3x
+- [x] 1.1.23 Compute next interval: interval = stability * (target_retention^(1/c) - 1)
 - [ ] 1.1.24 Support parameter optimization from review history (minimize RMSE)
 - [ ] 1.1.25 Allow learner to reset all FSRS parameters to defaults
 - [ ] 1.1.26 Allow learner to import FSRS parameters from Anki
@@ -72,11 +72,11 @@
 
 ### 1.2 Review Session Management
 
-- [ ] 1.2.1 Create session from due items + new items
-- [ ] 1.2.2 Track current item index in session
+- [x] 1.2.1 Create session from due items + new items
+- [x] 1.2.2 Track current item index in session
 - [ ] 1.2.3 Track session start time
 - [ ] 1.2.4 Track session end time
-- [ ] 1.2.5 Track items reviewed in session
+- [x] 1.2.5 Track items reviewed in session
 - [ ] 1.2.6 Track accuracy per item in session
 - [ ] 1.2.7 Track time spent per item in session
 - [ ] 1.2.8 Compute session statistics: accuracy, avg time, items reviewed
@@ -85,7 +85,7 @@
 - [ ] 1.2.11 Allow session abort (discard progress)
 - [ ] 1.2.12 Allow session undo (go back to previous item)
 - [ ] 1.2.13 Allow session skip (skip current item, return to queue)
-- [ ] 1.2.14 Show progress bar during session (items remaining / total)
+- [x] 1.2.14 Show progress bar during session (items remaining / total)
 - [ ] 1.2.15 Show estimated time remaining based on avg speed
 - [ ] 1.2.16 Show session accuracy in real-time
 - [ ] 1.2.17 Show current streak (consecutive correct) during session
@@ -101,7 +101,7 @@
 - [ ] 1.2.27 Session recommendations: suggest time of day based on past performance
 - [ ] 1.2.28 Support "lightning mode" -- only new items, no reviews
 - [ ] 1.2.29 Support "review mode" -- only due items, no new
-- [ ] 1.2.30 Support "mixed mode" -- interleave new and due
+- [x] 1.2.30 Support "mixed mode" -- interleave new and due
 
 ### 1.3 Interleaved Practice
 
@@ -116,24 +116,24 @@
 - [ ] 1.3.9 Interleave prerequisite concepts with target concepts
 - [ ] 1.3.10 Interleave related concepts (same module, different topics)
 - [ ] 1.3.11 Interleave unrelated concepts (cross-module, random)
-- [ ] 1.3.12 Configurable daily new item limit per module
-- [ ] 1.3.13 Configurable daily review limit per module
+- [x] 1.3.12 Configurable daily new item limit per module
+- [x] 1.3.13 Configurable daily review limit per module
 - [ ] 1.3.14 Configurable total daily item limit
 - [ ] 1.3.15 Show interleaving breakdown in session summary
 
 ### 1.4 Weakness Detection
 
-- [ ] 1.4.1 Track per-concept accuracy (rolling 30-day window)
-- [ ] 1.4.2 Track per-concept difficulty rating (FSRS D value)
-- [ ] 1.4.3 Track per-concept review count
+- [x] 1.4.1 Track per-concept accuracy (rolling 30-day window)
+- [x] 1.4.2 Track per-concept difficulty rating (FSRS D value)
+- [x] 1.4.3 Track per-concept review count
 - [ ] 1.4.4 Track per-concept last review date
 - [ ] 1.4.5 Track per-concept streak (consecutive correct)
-- [ ] 1.4.6 Flag concept as weak when accuracy < 60%
+- [x] 1.4.6 Flag concept as weak when accuracy < 60%
 - [ ] 1.4.7 Flag concept as struggling when accuracy 60-75%
 - [ ] 1.4.8 Flag concept as solid when accuracy > 75%
 - [ ] 1.4.9 Check prerequisite graph: if prerequisite is weak, flag dependency
 - [ ] 1.4.10 Show weakness chain: A depends on B depends on C (C is weak)
-- [ ] 1.4.11 Generate repair suggestion: "Review prerequisite X before Y"
+- [x] 1.4.11 Generate repair suggestion: "Review prerequisite X before Y"
 - [ ] 1.4.12 Generate repair suggestion: "Practice more exercises on Z"
 - [ ] 1.4.13 Generate repair suggestion: "This concept has no reviews, try one"
 - [ ] 1.4.14 Track weakness trend: improving, stable, worsening
@@ -150,10 +150,10 @@
 
 ### 1.5 Knowledge Health
 
-- [ ] 1.5.1 Compute knowledge health score: mastered / total concepts
+- [x] 1.5.1 Compute knowledge health score: mastered / total concepts
 - [ ] 1.5.2 Compute knowledge health per module
 - [ ] 1.5.3 Compute knowledge health per course
-- [ ] 1.5.4 Classify concepts: mastered, learning, reviewing, unlearned
+- [x] 1.5.4 Classify concepts: mastered, learning, reviewing, unlearned
 - [ ] 1.5.5 Mastered = accuracy > 80% AND stability > 30 days
 - [ ] 1.5.6 Learning = reviewed at least once, not yet mastered
 - [ ] 1.5.7 Reviewing = mastered but due for review
@@ -687,10 +687,10 @@
 
 ### 7.1 Navigation
 
-- [ ] 7.1.1 Course catalog browsing (grid/list view)
+- [x] 7.1.1 Course catalog browsing (grid/list view)
 - [ ] 7.1.2 Module navigation (sidebar)
 - [ ] 7.1.3 Concept navigation (within module)
-- [ ] 7.1.4 Lesson progression (next/prev buttons)
+- [x] 7.1.4 Lesson progression (next/prev buttons)
 - [ ] 7.1.5 Breadcrumb navigation (home > course > module > concept)
 - [ ] 7.1.6 Search functionality (full-text search)
 - [ ] 7.1.7 Filter/sort courses (by topic, difficulty, rating)
@@ -889,8 +889,8 @@
 
 ### 9.1 Static Delivery
 
-- [ ] 9.1.1 Pre-rendered HTML/CSS/JS files
-- [ ] 9.1.2 Static file serving (nginx, CDN)
+- [x] 9.1.1 Pre-rendered HTML/CSS/JS files
+- [x] 9.1.2 Static file serving (nginx, CDN)
 - [ ] 9.1.3 CDN distribution (Cloudflare, Fastly)
 - [ ] 9.1.4 Asset compression (gzip, brotli)
 - [ ] 9.1.5 Browser caching (Cache-Control headers)
@@ -1046,16 +1046,16 @@
 
 ### 11.1 REST API
 
-- [ ] 11.1.1 GET /api/health (health check)
-- [ ] 11.1.2 GET /api/courses (list courses)
-- [ ] 11.1.3 GET /api/courses/:id (course detail)
+- [x] 11.1.1 GET /api/health (health check)
+- [x] 11.1.2 GET /api/courses (list courses)
+- [x] 11.1.3 GET /api/courses/:id (course detail)
 - [ ] 11.1.4 GET /api/courses/:id/concepts (list concepts)
 - [ ] 11.1.5 GET /api/concepts/:id (concept detail)
-- [ ] 11.1.6 GET /api/concepts/:id/content (concept content)
-- [ ] 11.1.7 POST /api/review/start (start review session)
+- [x] 11.1.6 GET /api/concepts/:id/content (concept content)
+- [x] 11.1.7 POST /api/review/start (start review session)
 - [ ] 11.1.8 POST /api/review/submit (submit review answer)
 - [ ] 11.1.9 GET /api/review/due (get due items)
-- [ ] 11.1.10 GET /api/progress (get learner progress)
+- [x] 11.1.10 GET /api/progress (get learner progress)
 - [ ] 11.1.11 GET /api/progress/:courseId (course progress)
 - [ ] 11.1.12 GET /api/health/knowledge (knowledge health)
 - [ ] 11.1.13 GET /api/analytics/sessions (session analytics)

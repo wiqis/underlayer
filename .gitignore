@@ -4,3 +4,6 @@ build
 *.def
 *.o
 *.db
+*.db-shm
+*.db-wal
+*.log

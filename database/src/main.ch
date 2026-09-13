@@ -27,14 +27,10 @@ public namespace underlayer_db {
 
     public struct DbClient {
         var is_sqlite : bool
-        var sqlite_conn : sqlite::Database
+        var sqlite_handle : *mut sqlite::sqlite3
         var turso_client : http::Client
         var turso_url : string
         var turso_token : string
-    }
-
-    private struct QueryCallbackData {
-        var result : *QueryResult
     }
 
     public func is_remote_url(url : *string) : bool {
@@ -66,57 +62,68 @@ public namespace underlayer_db {
             client.default_timeout_secs = 15
             var result = DbClient {
                 is_sqlite = false,
-                sqlite_conn = unsafe(sqlite::Database.make(null)),
+                sqlite_handle = null,
                 turso_client = client,
                 turso_url = http_url.copy(),
                 turso_token = token.copy()
             }
             return result
         }
-        var db_result = sqlite::Database.open(url.to_view())
-        if(db_result is Result.Err) {
-            printf("[underlayer_db] Error opening SQLite database\n")
+        var h : *mut sqlite::sqlite3 = null
+        var open_res = sqlite::ffi::sqlite3_open_v2(url.data(), &raw mut h, (sqlite::OpenFlag.READWRITE | sqlite::OpenFlag.CREATE) as int, null)
+        if(open_res != 0 || h == null) {
+            printf("[underlayer_db] Error opening SQLite database: rc=%d\n", open_res)
             var result = DbClient {
                 is_sqlite = true,
-                sqlite_conn = unsafe(sqlite::Database.make(null)),
+                sqlite_handle = null,
                 turso_client = http::Client(),
                 turso_url = string(),
                 turso_token = string()
             }
             return result
         }
-        var Ok(db) = db_result else unreachable
-        apply_sqlite_pragmas(&raw db)
+        // Apply PRAGMAs directly via FFI
+        apply_pragmas(h)
         var local_result = DbClient {
             is_sqlite = true,
-            sqlite_conn = unsafe(sqlite::Database.make(null)),
+            sqlite_handle = h,
             turso_client = http::Client(),
             turso_url = string(),
             turso_token = string()
         }
-        // Transfer ownership of database connection
-        unsafe { memcpy(&raw mut local_result.sqlite_conn, &raw db, sizeof(sqlite::Database)) }
         return local_result
     }
 
-    private func apply_sqlite_pragmas(db : *sqlite::Database) {
-        db.execute("PRAGMA journal_mode=WAL")
-        db.execute("PRAGMA busy_timeout=5000")
-        db.execute("PRAGMA synchronous=NORMAL")
-        db.execute("PRAGMA foreign_keys=ON")
+    private func apply_pragmas(h : *mut sqlite::sqlite3) {
+        var errmsg : *mut char = null
+        var pragma1 = string("PRAGMA journal_mode=WAL")
+        sqlite::ffi::sqlite3_exec(h, pragma1.data(), null, null, &raw mut errmsg)
+        if(errmsg != null) { sqlite::ffi::sqlite3_free(errmsg as *void); errmsg = null }
+        var pragma2 = string("PRAGMA busy_timeout=5000")
+        sqlite::ffi::sqlite3_exec(h, pragma2.data(), null, null, &raw mut errmsg)
+        if(errmsg != null) { sqlite::ffi::sqlite3_free(errmsg as *void); errmsg = null }
+        var pragma3 = string("PRAGMA synchronous=NORMAL")
+        sqlite::ffi::sqlite3_exec(h, pragma3.data(), null, null, &raw mut errmsg)
+        if(errmsg != null) { sqlite::ffi::sqlite3_free(errmsg as *void); errmsg = null }
+        var pragma4 = string("PRAGMA foreign_keys=ON")
+        sqlite::ffi::sqlite3_exec(h, pragma4.data(), null, null, &raw mut errmsg)
+        if(errmsg != null) { sqlite::ffi::sqlite3_free(errmsg as *void); errmsg = null }
     }
 
     public func exec_sql(db : *DbClient, sql : *string) : ExecResult {
-        if(db.is_sqlite) {
-            db.sqlite_conn.execute(sql.to_view())
+        if(db.is_sqlite && db.sqlite_handle != null) {
+            var errmsg : *mut char = null
+            sqlite::ffi::sqlite3_exec(db.sqlite_handle, sql.data(), null, null, &raw mut errmsg)
+            if(errmsg != null) {
+                sqlite::ffi::sqlite3_free(errmsg as *void)
+            }
             var result = ExecResult {
-                last_insert_rowid = db.sqlite_conn.last_insert_rowid(),
-                rows_affected = db.sqlite_conn.changes() as i64
+                last_insert_rowid = sqlite::ffi::sqlite3_last_insert_rowid(db.sqlite_handle),
+                rows_affected = sqlite::ffi::sqlite3_changes(db.sqlite_handle) as i64
             }
             return result
         }
-        // Turso HTTP path (Phase 2)
-        var result = ExecResult { last_insert_rowid = 0, rows_affected = 0 }
+        var result = ExecResult { last_insert_rowid: 0, rows_affected: 0 }
         return result
     }
 
@@ -126,50 +133,44 @@ public namespace underlayer_db {
             rows = vector<QueryRow>(),
             rows_affected = 0
         }
-        if(db.is_sqlite) {
-            var stmt_res = db.sqlite_conn.prepare(sql.to_view())
-            if(stmt_res is Result.Err) {
+        if(db.is_sqlite && db.sqlite_handle != null) {
+            var h_stmt : *mut sqlite::sqlite3_stmt = null
+            var res = sqlite::ffi::sqlite3_prepare_v2(db.sqlite_handle, sql.data(), sql.size() as int, &raw mut h_stmt, null)
+            if(res != 0 || h_stmt == null) {
                 return result
             }
-            var Ok(stmt) = stmt_res else unreachable
-            // Get column names from first step
-            var col_count = stmt.column_count()
+            var col_count = sqlite::ffi::sqlite3_column_count(h_stmt)
             var ci : int = 0
             while(ci < col_count) {
-                var col_name = stmt.column_name(ci)
+                var col_name_ptr = sqlite::ffi::sqlite3_column_name(h_stmt, ci)
                 var col_str = string()
-                var ch_idx : size_t = 0
-                while(ch_idx < col_name.size()) {
-                    col_str.append(col_name.get(ch_idx))
-                    ch_idx = ch_idx + 1
+                if(col_name_ptr != null) {
+                    var ch_idx : size_t = 0
+                    while(col_name_ptr[ch_idx] != 0) { col_str.append(col_name_ptr[ch_idx]); ch_idx = ch_idx + 1 }
                 }
                 result.columns.push(col_str)
                 ci = ci + 1
             }
-            // Iterate rows
             while(true) {
-                var step_res = stmt.step()
-                if(step_res is Result.Err) { break }
-                var Ok(has_row) = step_res else unreachable
-                if(!has_row) { break }
+                var step_res = sqlite::ffi::sqlite3_step(h_stmt)
+                if(step_res != 100) { break }
                 var row = QueryRow { vals = vector<string>() }
                 var ri : int = 0
                 while(ri < col_count) {
-                    var text = stmt.column_text(ri)
+                    var text_ptr = sqlite::ffi::sqlite3_column_text(h_stmt, ri)
                     var val_str = string()
-                    var vi : size_t = 0
-                    while(vi < text.size()) {
-                        val_str.append(text.get(vi))
-                        vi = vi + 1
+                    if(text_ptr != null) {
+                        var vi : size_t = 0
+                        while(text_ptr[vi] != 0) { val_str.append(text_ptr[vi]); vi = vi + 1 }
                     }
                     row.vals.push(val_str)
                     ri = ri + 1
                 }
                 result.rows.push(row)
             }
+            sqlite::ffi::sqlite3_finalize(h_stmt)
             return result
         }
-        // Turso HTTP path (Phase 2)
         return result
     }
 
@@ -190,8 +191,8 @@ public namespace underlayer_db {
     }
 
     public func close(db : *DbClient) {
-        if(db.is_sqlite) {
-            db.sqlite_conn.close()
+        if(db.is_sqlite && db.sqlite_handle != null) {
+            sqlite::ffi::sqlite3_close_v2(db.sqlite_handle)
         }
     }
 }
