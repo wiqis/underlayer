@@ -86,9 +86,23 @@ public func main() : int {
         underlayer_web::handle_review_submit(db, &raw mut req, &raw mut res)
     }))
 
+    srv.router.add("POST", "/api/review/end", (|&db|(req, res) => {
+        underlayer_web::handle_review_end(db, &raw mut req, &raw mut res)
+    }))
+
+    // ---- Due Items ----
+    srv.router.add("GET", "/api/review/due", (|&db, &courses_dir|(req, res) => {
+        underlayer_web::handle_review_due(db, courses_dir, &req, &raw mut res)
+    }))
+
     // ---- Progress API ----
     srv.router.add("GET", "/api/progress", (|&db, &courses_dir|(req, res) => {
         underlayer_web::handle_progress(db, courses_dir, &req, &raw mut res)
+    }))
+
+    // ---- Course Progress API ----
+    srv.router.add("GET", "/api/progress/:courseId", (|&db, &courses_dir|(req, res) => {
+        underlayer_web::handle_course_progress(db, courses_dir, &req, &raw mut res)
     }))
 
     // Course landing page

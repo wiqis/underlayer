@@ -338,15 +338,19 @@ public namespace underlayer_web {
         // Fetch due review items from repository
         var due_items = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, 10)
 
-        // Create review session using learning module
-        var session = underlayer_learning::start_review_session(due_items)
+        // Create session record in DB
+        var now = underlayer_core::current_timestamp()
+        var session_id = underlayer_core::int_to_string(now)
+        underlayer_repository::create_session(&raw db, &raw session_id, &raw learner_id, now)
 
-        // Build JSON response with items
-        var body = std::string("{\"items\":[")
+        // Build JSON response with session info + items
+        var body = std::string("{\"session_id\":\"")
+        body.append_string(&session_id)
+        body.append_view("\",\"items\":[")
         var i : size_t = 0
-        while(i < session.items.size()) {
+        while(i < due_items.size()) {
             if(i > 0) { body.append_view(",") }
-            var item = session.items.get_ptr(i)
+            var item = due_items.get_ptr(i)
             body.append_view("{\"id\":\"")
             body.append_string(&item.id)
             body.append_view("\",\"concept\":\"")
@@ -361,8 +365,10 @@ public namespace underlayer_web {
             i = i + 1
         }
         body.append_view("],\"total\":")
-        var total_str = underlayer_core::int_to_string(session.items.size() as i64)
+        var total_str = underlayer_core::int_to_string(due_items.size() as i64)
         body.append_string(&total_str)
+        body.append_view(",\"started_at\":")
+        body.append_string(&session_id)
         body.append_view("}")
         send_json_str(res, &raw body)
     }
@@ -444,6 +450,107 @@ public namespace underlayer_web {
         resp.append_string(&state.status)
         resp.append_view("\"}")
         send_json_str(res, &raw resp)
+    }
+
+    // ---- Review Session End ----
+    public func handle_review_end(db : &DbClient, req : *mut http::Request, res : *mut http::ResponseWriter) {
+        var q_sid = string("session_id")
+        var sid_v = req.query.get(&q_sid.to_view())
+        if(sid_v.size() == 0) {
+            send_error(res, 400u, &string("missing query param: session_id"))
+            return
+        }
+        var session_id = sv_to_string(&raw sid_v)
+        underlayer_repository::finish_session(&raw db, &raw session_id, 0, 0)
+
+        var resp = string("{\"status\":\"ok\",\"session_id\":\"")
+        resp.append_string(&session_id)
+        resp.append_view("\"}")
+        send_json_str(res, &raw resp)
+    }
+
+    // ---- Get Due Items ----
+    public func handle_review_due(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+        var learner_id = string("demo")
+        var course_id = string("elf")
+        var limit : int = 10
+
+        var due_items = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, limit)
+        var body = std::string("{\"items\":[")
+        var i : size_t = 0
+        while(i < due_items.size()) {
+            if(i > 0) { body.append_view(",") }
+            var item = due_items.get_ptr(i)
+            body.append_view("{\"id\":\"")
+            body.append_string(&item.id)
+            body.append_view("\",\"concept\":\"")
+            body.append_string(&item.concept_id)
+            body.append_view("\",\"type\":\"")
+            body.append_string(&item.item_type)
+            body.append_view("\",\"front\":\"")
+            body.append_string(&item.front)
+            body.append_view("\",\"back\":\"")
+            body.append_string(&item.back)
+            body.append_view("\"}")
+            i = i + 1
+        }
+        body.append_view("],\"total\":")
+        var total_str = underlayer_core::int_to_string(due_items.size() as i64)
+        body.append_string(&total_str)
+        body.append_view("}")
+        send_json_str(res, &raw body)
+    }
+
+    // ---- Course Progress ----
+    public func handle_course_progress(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        var course_id_raw = string("elf")
+        if(segments.size() >= 4) {
+            var sv = segments.get_ptr(3)
+            var i : size_t = 0
+            while(i < sv.size()) { course_id_raw.append(sv.get(i)); i = i + 1 }
+        }
+        var learner_id = string("demo")
+        var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id_raw)
+        var health = underlayer_learning::compute_knowledge_health(&raw states)
+        var body = std::string("{\"course_id\":\"")
+        body.append_string(&course_id_raw)
+        body.append_view("\",\"health\":")
+        var health_str = underlayer_core::int_to_string((health.health_score * 100.0) as i64)
+        body.append_string(&health_str)
+        body.append_view(",\"mastered\":")
+        var mastered_str = underlayer_core::int_to_string(health.mastered as i64)
+        body.append_string(&mastered_str)
+        body.append_view(",\"learning\":")
+        var learning_str = underlayer_core::int_to_string(health.learning as i64)
+        body.append_string(&learning_str)
+        body.append_view(",\"reviewing\":")
+        var reviewing_str = underlayer_core::int_to_string(health.reviewing as i64)
+        body.append_string(&reviewing_str)
+        body.append_view(",\"unlearned\":")
+        var unlearned_str = underlayer_core::int_to_string(health.unlearned as i64)
+        body.append_string(&unlearned_str)
+        body.append_view(",\"concepts\":[")
+        var ci : size_t = 0
+        while(ci < states.size()) {
+            if(ci > 0) { body.append_view(",") }
+            var s = states.get_ptr(ci)
+            body.append_view("{\"concept_id\":\"")
+            body.append_string(&s.concept_id)
+            body.append_view("\",\"status\":\"")
+            body.append_string(&s.status)
+            body.append_view("\",\"attempts\":")
+            var a_str = underlayer_core::int_to_string(s.attempts as i64)
+            body.append_string(&a_str)
+            body.append_view(",\"correct\":")
+            var c_str = underlayer_core::int_to_string(s.correct as i64)
+            body.append_string(&c_str)
+            body.append_view("}")
+            ci = ci + 1
+        }
+        body.append_view("]}")
+        send_json_str(res, &raw body)
     }
 
     // ---- Learner Progress ----

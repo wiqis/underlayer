@@ -74,12 +74,12 @@
 
 - [x] 1.2.1 Create session from due items + new items
 - [x] 1.2.2 Track current item index in session
-- [ ] 1.2.3 Track session start time
-- [ ] 1.2.4 Track session end time
+- [x] 1.2.3 Track session start time
+- [x] 1.2.4 Track session end time
 - [x] 1.2.5 Track items reviewed in session
 - [ ] 1.2.6 Track accuracy per item in session
 - [ ] 1.2.7 Track time spent per item in session
-- [ ] 1.2.8 Compute session statistics: accuracy, avg time, items reviewed
+- [x] 1.2.8 Compute session statistics: accuracy, avg time, items reviewed
 - [ ] 1.2.9 Allow session pause (save state, resume later)
 - [ ] 1.2.10 Allow session resume from pause point
 - [ ] 1.2.11 Allow session abort (discard progress)
@@ -1053,10 +1053,11 @@
 - [ ] 11.1.5 GET /api/concepts/:id (concept detail)
 - [x] 11.1.6 GET /api/concepts/:id/content (concept content)
 - [x] 11.1.7 POST /api/review/start (start review session)
-- [ ] 11.1.8 POST /api/review/submit (submit review answer)
-- [ ] 11.1.9 GET /api/review/due (get due items)
+- [x] 11.1.8 POST /api/review/submit (submit review answer)
+- [x] 11.1.9 POST /api/review/end (end review session)
+- [x] 11.1.9 GET /api/review/due (get due items)
 - [x] 11.1.10 GET /api/progress (get learner progress)
-- [ ] 11.1.11 GET /api/progress/:courseId (course progress)
+- [x] 11.1.11 GET /api/progress/:courseId (course progress)
 - [ ] 11.1.12 GET /api/health/knowledge (knowledge health)
 - [ ] 11.1.13 GET /api/analytics/sessions (session analytics)
 - [ ] 11.1.14 GET /api/analytics/retention (retention metrics)
