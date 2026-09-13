@@ -18,6 +18,12 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw sql4)
         var sql5 = string("CREATE TABLE IF NOT EXISTS session_items (id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT, concept_id TEXT, rating INTEGER, time_spent_ms INTEGER, reviewed_at INTEGER)")
         underlayer_db::exec_sql(db, &raw sql5)
+        // 4.1.1-4.1.5: Exercise table
+        var sql6 = string("CREATE TABLE IF NOT EXISTS exercises (id TEXT PRIMARY KEY, concept_id TEXT, type TEXT, question TEXT, answer TEXT, options_json TEXT, correct_index INTEGER DEFAULT 0, explanation TEXT, hint1 TEXT, hint2 TEXT, hint3 TEXT, difficulty REAL DEFAULT 0.5)")
+        underlayer_db::exec_sql(db, &raw sql6)
+        // 4.1.3: Add correct_indices column for multi-select exercises
+        var sql6b = string("ALTER TABLE exercises ADD COLUMN correct_indices_json TEXT DEFAULT '[]'")
+        underlayer_db::exec_sql(db, &raw sql6b)
         var idx1 = string("CREATE INDEX IF NOT EXISTS idx_cs_learner ON concept_states(learner_id)")
         underlayer_db::exec_sql(db, &raw idx1)
         var idx2 = string("CREATE INDEX IF NOT EXISTS idx_ri_learner ON review_items(learner_id)")
@@ -28,6 +34,11 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw idx4)
         var idx5 = string("CREATE INDEX IF NOT EXISTS idx_si_session ON session_items(session_id)")
         underlayer_db::exec_sql(db, &raw idx5)
+        // 6.1.5: Learning goals table
+        var sql7 = string("CREATE TABLE IF NOT EXISTS learning_goals (id TEXT PRIMARY KEY, learner_id TEXT, course_id TEXT, target_date INTEGER, created_at INTEGER)")
+        underlayer_db::exec_sql(db, &raw sql7)
+        var idx6 = string("CREATE INDEX IF NOT EXISTS idx_lg_learner ON learning_goals(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx6)
     }
 
 }

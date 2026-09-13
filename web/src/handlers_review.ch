@@ -9,11 +9,108 @@ using underlayer_learning::ReviewState
 
 public namespace underlayer_web {
 
+    // 5.1.1-5.1.5: Review session types via mode parameter
+    // mode=new (5.1.1), due (5.1.2), cram (5.1.3), targeted (5.1.4), weakness (5.1.5)
     public func handle_review_start(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = string("demo")
         var course_id = string("elf")
 
-        var due_items = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, 10)
+        // Check for mode parameter (5.1.1-5.1.5)
+        var q_mode = string("mode")
+        var mode_v = req.query.get(&q_mode.to_view())
+        var mode = string("due")
+        if(mode_v.size() > 0) {
+            mode = sv_to_string(&raw mode_v)
+        }
+
+        // Check for targeted concept (5.1.4)
+        var q_concept = string("concept_id")
+        var concept_v = req.query.get(&q_concept.to_view())
+
+        var due_items : std::vector<underlayer_models::ReviewItem> = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, 10)
+
+        // 5.1.3: Cramming mode — return all review items (ignore next_review)
+        if(mode.equals(string("cram"))) {
+            due_items = underlayer_repository::get_all_review_items(&raw db, &learner_id, &course_id, 50)
+        }
+        // 5.1.4: Targeted review — filter to specific concept
+        if(mode.equals(string("targeted")) && concept_v.size() > 0) {
+            var target_concept = sv_to_string(&raw concept_v)
+            var filtered = std::vector<underlayer_models::ReviewItem>()
+            var fi : size_t = 0
+            while(fi < due_items.size()) {
+                var item = due_items.get_ptr(fi)
+                if(item.concept_id.equals(&target_concept)) {
+                    var copy = underlayer_models::ReviewItem::make()
+                    copy.id = item.id.copy()
+                    copy.learner_id = item.learner_id.copy()
+                    copy.concept_id = item.concept_id.copy()
+                    copy.course_id = item.course_id.copy()
+                    copy.item_type = item.item_type.copy()
+                    copy.front = item.front.copy()
+                    copy.back = item.back.copy()
+                    copy.difficulty = item.difficulty
+                    copy.stability = item.stability
+                    copy.retrievability = item.retrievability
+                    copy.next_review = item.next_review
+                    copy.last_review = item.last_review
+                    copy.reps = item.reps
+                    copy.lapses = item.lapses
+                    copy.ease_factor = item.ease_factor
+                    filtered.push(copy)
+                }
+                fi = fi + 1
+            }
+            due_items = filtered
+        }
+        // 5.1.5: Weakness repair — get states, find weak concepts, filter items
+        if(mode.equals(string("weakness"))) {
+            var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
+            var weak_concepts = std::vector<std::string>()
+            var si : size_t = 0
+            while(si < states.size()) {
+                var state = states.get_ptr(si)
+                if(state.attempts > 0) {
+                    var accuracy = (state.correct as f64) / (state.attempts as f64)
+                    if(accuracy < 0.6) {
+                        weak_concepts.push(state.concept_id.copy())
+                    }
+                }
+                si = si + 1
+            }
+            var filtered = std::vector<underlayer_models::ReviewItem>()
+            var fi : size_t = 0
+            while(fi < due_items.size()) {
+                var item = due_items.get_ptr(fi)
+                var wi : size_t = 0
+                while(wi < weak_concepts.size()) {
+                    var wc_ptr = weak_concepts.get_ptr(wi)
+                    var wc_copy = wc_ptr.copy()
+                    if(item.concept_id.equals(&wc_copy)) {
+                        var copy = underlayer_models::ReviewItem::make()
+                        copy.id = item.id.copy()
+                        copy.learner_id = item.learner_id.copy()
+                        copy.concept_id = item.concept_id.copy()
+                        copy.course_id = item.course_id.copy()
+                        copy.item_type = item.item_type.copy()
+                        copy.front = item.front.copy()
+                        copy.back = item.back.copy()
+                        copy.difficulty = item.difficulty
+                        copy.stability = item.stability
+                        copy.retrievability = item.retrievability
+                        copy.next_review = item.next_review
+                        copy.last_review = item.last_review
+                        copy.reps = item.reps
+                        copy.lapses = item.lapses
+                        copy.ease_factor = item.ease_factor
+                        filtered.push(copy)
+                    }
+                    wi = wi + 1
+                }
+                fi = fi + 1
+            }
+            due_items = filtered
+        }
 
         var now = underlayer_core::current_timestamp()
         var session_id = underlayer_core::int_to_string(now)

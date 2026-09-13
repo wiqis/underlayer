@@ -263,6 +263,14 @@ public namespace underlayer_models {
         return t
     }
 
+    public func exercise_type_multi_recognize() : ExerciseType {
+        var t = ExerciseType::make()
+        t.id = string("multi_recognize")
+        t.label = string("Multi-Select")
+        t.description = string("Select all correct answers from options.")
+        return t
+    }
+
     // ---- Exercise (a single question/task) ----
     public struct Exercise {
         var id : string
@@ -272,7 +280,11 @@ public namespace underlayer_models {
         var answer : string
         var options : vector<string>    // for recognize type: the choices
         var correct_index : int         // index into options for recognize type
-        var explanation : string        // shown after answering
+        var correct_indices : vector<int>  // for multi_recognize: multiple correct indices
+        var explanation : string        // shown after answering (4.2.2, 4.2.3)
+        var hint1 : string              // 4.2.4/4.2.5: conceptual hint
+        var hint2 : string              // 4.2.4: directional hint
+        var hint3 : string              // 4.2.4: almost answer
         var difficulty : float          // 0.0 (easy) to 1.0 (hard)
 
         @make
@@ -285,7 +297,11 @@ public namespace underlayer_models {
                 answer = string(),
                 options = vector<string>(),
                 correct_index = 0,
+                correct_indices = vector<int>(),
                 explanation = string(),
+                hint1 = string(),
+                hint2 = string(),
+                hint3 = string(),
                 difficulty = 0.5f
             }
         }

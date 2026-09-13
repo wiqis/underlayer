@@ -49,6 +49,45 @@ public namespace underlayer_repository {
         return items
     }
 
+    // 5.1.3: Get all review items (for cramming mode, ignore next_review)
+    public func get_all_review_items(db : *DbClient, learner_id : &string, course_id : &string, limit : int) : vector<ReviewItem> {
+        var items = vector<ReviewItem>()
+        var sql = string("SELECT id, concept_id, type, front, back, difficulty, stability, retrievability, next_review, reps, lapses, ease_factor FROM review_items WHERE learner_id = '")
+        sql.append_string(learner_id)
+        sql.append_view("' AND course_id = '")
+        sql.append_string(course_id)
+        sql.append_view("' ORDER BY next_review ASC LIMIT ")
+        var lim_str = underlayer_core::int_to_string(limit as i64)
+        sql.append_view(lim_str.to_view())
+        var result = underlayer_db::query_sql(db, &raw sql)
+        var ri : size_t = 0
+        while(ri < result.rows.size()) {
+            var row = result.rows.get_ptr(ri)
+            if(row.vals.size() >= 11) {
+                var item = ReviewItem::make()
+                item.id = row.vals.get_ptr(0).copy()
+                item.learner_id = learner_id.copy()
+                item.concept_id = row.vals.get_ptr(1).copy()
+                item.course_id = course_id.copy()
+                item.item_type = row.vals.get_ptr(2).copy()
+                item.front = row.vals.get_ptr(3).copy()
+                item.back = row.vals.get_ptr(4).copy()
+                item.difficulty = parse_i64(row.vals.get_ptr(5).to_view()) as f64
+                item.stability = parse_i64(row.vals.get_ptr(6).to_view()) as f64
+                item.retrievability = parse_i64(row.vals.get_ptr(7).to_view()) as f64
+                item.next_review = parse_i64(row.vals.get_ptr(8).to_view())
+                item.reps = parse_i64(row.vals.get_ptr(9).to_view()) as int
+                item.lapses = parse_i64(row.vals.get_ptr(10).to_view()) as int
+                if(row.vals.size() >= 12) {
+                    item.ease_factor = parse_i64(row.vals.get_ptr(11).to_view()) as f64
+                }
+                items.push(item)
+            }
+            ri = ri + 1
+        }
+        return items
+    }
+
     public func update_review_item(db : *DbClient, item : *ReviewItem) {
         var sql = string("UPDATE review_items SET difficulty = ")
         var diff_str = underlayer_core::int_to_string(item.difficulty as i64)

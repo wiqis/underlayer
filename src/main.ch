@@ -105,6 +105,32 @@ public func main() : int {
         underlayer_web::handle_course_progress(db, courses_dir, &req, &raw mut res)
     }))
 
+    // ---- Learning Goals (6.1.5) ----
+    srv.router.add("POST", "/api/goals", (|&db|(req, res) => {
+        underlayer_web::handle_set_goal(db, &raw mut req, &raw mut res)
+    }))
+    srv.router.add("DELETE", "/api/goals", (|&db|(req, res) => {
+        underlayer_web::handle_delete_goal(db, &req, &raw mut res)
+    }))
+
+    // ---- Navigation API (7.1.2, 7.1.3, 7.1.5) ----
+    srv.router.add("GET", "/api/navigation/:courseId/:conceptId", (|&courses_dir|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 4) {
+            var course_id = segments.get_ptr(2)
+            var concept_id = segments.get_ptr(3)
+            underlayer_web::handle_navigation(courses_dir, course_id, concept_id, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var ct = std::string_view("application/json")
+            res.set_header_view(std::string_view("Content-Type"), &ct)
+            var body = std::string("{\"error\": \"missing course or concept id\"}")
+            var bv = body.to_view()
+            res.write_view(&bv)
+        }
+    }))
+
     // ---- Session History (1.2.21, 1.2.22) ----
     srv.router.add("GET", "/api/sessions", (|&db|(req, res) => {
         underlayer_web::handle_session_history(db, &req, &raw mut res)
@@ -133,6 +159,31 @@ public func main() : int {
     }))
     srv.router.add("POST", "/api/session/skip", (|&db|(req, res) => {
         underlayer_web::handle_session_skip(db, &req, &raw mut res)
+    }))
+
+    // ---- Exercise API (4.1.1-4.1.5, 4.2.1-4.2.5) ----
+    srv.router.add("GET", "/api/exercises/:conceptId", (|&db|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 3) {
+            var concept_id = segments.get_ptr(2)
+            underlayer_web::handle_get_exercises(db, concept_id, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var ct = std::string_view("application/json")
+            res.set_header_view(std::string_view("Content-Type"), &ct)
+            var body = std::string("{\"error\": \"missing concept id\"}")
+            var bv = body.to_view()
+            res.write_view(&bv)
+        }
+    }))
+
+    srv.router.add("POST", "/api/exercises/submit", (|&db|(req, res) => {
+        underlayer_web::handle_exercise_submit(db, &raw mut req, &raw mut res)
+    }))
+
+    srv.router.add("GET", "/api/exercises/hint", (|&db|(req, res) => {
+        underlayer_web::handle_exercise_hint(db, &req, &raw mut res)
     }))
 
     // Course landing page

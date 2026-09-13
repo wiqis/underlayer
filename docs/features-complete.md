@@ -452,11 +452,11 @@
 
 ### 4.1 Exercise Types
 
-- [ ] P1 4.1.1 Multiple choice: 4 options, 1 correct
-- [ ] P1 4.1.2 Multiple choice: N options, 1 correct
-- [ ] P1 4.1.3 Multiple choice: N options, M correct (multi-select)
-- [ ] P1 4.1.4 Free recall: text input, no hints
-- [ ] P1 4.1.5 Cued recall: text input with partial hint
+- [x] P1 4.1.1 Multiple choice: 4 options, 1 correct
+- [x] P1 4.1.2 Multiple choice: N options, 1 correct
+- [x] P1 4.1.3 Multiple choice: N options, M correct (multi-select)
+- [x] P1 4.1.4 Free recall: text input, no hints
+- [x] P1 4.1.5 Cued recall: text input with partial hint
 - [ ] P2 4.1.6 Recognition: select the correct image/diagram
 - [ ] P2 4.1.7 Application: solve a problem using the knowledge
 - [ ] P2 4.1.8 Fill in the blank: complete a sentence
@@ -480,11 +480,11 @@
 
 ### 4.2 Exercise Feedback
 
-- [ ] P1 4.2.1 Immediate correctness feedback (correct/incorrect)
-- [ ] P1 4.2.2 "Explain why wrong" feedback on every incorrect answer
-- [ ] P1 4.2.3 "Explain why correct" feedback on every correct answer
-- [ ] P1 4.2.4 Hint system: 3 progressive hints per exercise
-- [ ] P1 4.2.5 Hint 1: conceptual hint (what to think about)
+- [x] P1 4.2.1 Immediate correctness feedback (correct/incorrect)
+- [x] P1 4.2.2 "Explain why wrong" feedback on every incorrect answer
+- [x] P1 4.2.3 "Explain why correct" feedback on every correct answer
+- [x] P1 4.2.4 Hint system: 3 progressive hints per exercise
+- [x] P1 4.2.5 Hint 1: conceptual hint (what to think about)
 - [ ] P2 4.2.6 Hint 2: directional hint (where to look)
 - [ ] P2 4.2.7 Hint 3: almost answer (nearly correct)
 - [ ] P2 4.2.8 Solution reveal after 3 failed attempts
@@ -545,11 +545,11 @@
 
 ### 5.1 Review Session Types
 
-- [ ] P1 5.1.1 New concept learning: introduce new material
-- [ ] P1 5.1.2 Due item review: review items past their due date
-- [ ] P1 5.1.3 Cramming mode: review everything (for exams)
-- [ ] P1 5.1.4 Targeted review: review specific concepts
-- [ ] P1 5.1.5 Weakness repair review: focus on weak concepts
+- [x] P1 5.1.1 New concept learning: introduce new material
+- [x] P1 5.1.2 Due item review: review items past their due date
+- [x] P1 5.1.3 Cramming mode: review everything (for exams)
+- [x] P1 5.1.4 Targeted review: review specific concepts
+- [x] P1 5.1.5 Weakness repair review: focus on weak concepts
 - [ ] P2 5.1.6 Cumulative review: mix of all types
 - [ ] P2 5.1.7 Speed review: timed reviews (3 seconds per item)
 - [ ] P2 5.1.8 Deep review: with explanations and context
@@ -621,11 +621,11 @@
 
 ### 6.1 Learner Progress
 
-- [ ] P1 6.1.1 Concept state tracking (new, learning, reviewing, mastered)
-- [ ] P1 6.1.2 Knowledge health computation (overall and per module)
-- [ ] P1 6.1.3 Progress visualization (charts, graphs)
-- [ ] P1 6.1.4 Progress milestones (25%, 50%, 75%, 100%)
-- [ ] P1 6.1.5 Progress goals (set target completion date)
+- [x] P1 6.1.1 Concept state tracking (new, learning, reviewing, mastered)
+- [x] P1 6.1.2 Knowledge health computation (overall and per module)
+- [x] P1 6.1.3 Progress visualization (charts, graphs)
+- [x] P1 6.1.4 Progress milestones (25%, 50%, 75%, 100%)
+- [x] P1 6.1.5 Progress goals (set target completion date)
 - [ ] P2 6.1.6 Progress sharing (public profile)
 - [ ] P2 6.1.7 Progress export (JSON, CSV)
 - [ ] P2 6.1.8 Progress import (from another account)
@@ -698,10 +698,10 @@
 ### 7.1 Navigation
 
 - [x] P1 7.1.1 Course catalog browsing (grid/list view)
-- [ ] P1 7.1.2 Module navigation (sidebar)
-- [ ] P1 7.1.3 Concept navigation (within module)
+- [x] P1 7.1.2 Module navigation (sidebar)
+- [x] P1 7.1.3 Concept navigation (within module)
 - [x] P1 7.1.4 Lesson progression (next/prev buttons)
-- [ ] P1 7.1.5 Breadcrumb navigation (home > course > module > concept)
+- [x] P1 7.1.5 Breadcrumb navigation (home > course > module > concept)
 - [ ] P2 7.1.6 Search functionality (full-text search)
 - [ ] P2 7.1.7 Filter/sort courses (by topic, difficulty, rating)
 - [ ] P2 7.1.8 Favorites/bookmarks (save courses for later)
@@ -715,9 +715,9 @@
 
 ### 7.2 UI Components
 
-- [ ] P1 7.2.1 Card component (course card, concept card)
-- [ ] P1 7.2.2 Button component (primary, secondary, outline, ghost)
-- [ ] P1 7.2.3 Badge component (status, difficulty, category)
+- [x] P1 7.2.1 Card component (course card, concept card)
+- [x] P1 7.2.2 Button component (primary, secondary, outline, ghost)
+- [x] P1 7.2.3 Badge component (status, difficulty, category)
 - [ ] P2 7.2.4 Progress component (bar, circular, steps)
 - [ ] P2 7.2.5 Alert component (info, success, warning, error)
 - [ ] P2 7.2.6 Modal/dialog component
