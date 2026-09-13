@@ -1,398 +1,270 @@
-# Coding Conventions Skill — Underlayer
+# Coding Conventions — Underlayer
 
-**Load this BEFORE writing any Chemical code.** Style rules, naming conventions, and patterns extracted from analyzing the actual codebase.
+Style rules, naming conventions, and **trusted implementation patterns** for the Underlayer platform.
 
 ---
 
-## Naming Conventions
+## Feature Priority System (MANDATORY)
+
+Every feature in `docs/features-complete.md` has a priority tag. **Always work on the lowest available priority number.**
+
+| Tag | Priority | What It Means | When to Work On |
+|-----|----------|---------------|-----------------|
+| **P0** | Critical | Must have for MVP | NOW — nothing else matters |
+| **P1** | Important | Should have for launch | After all P0 checked |
+| **P2** | Nice to have | Enhances experience | After all P1 checked |
+| **P3** | Future | Long-term vision | After all P2 checked |
+
+**Rules:**
+1. Never implement a P3 feature when P0 or P1 features remain unchecked.
+2. When multiple features share the same priority, implement in numerical order.
+3. After implementing a feature, check it off (`- [ ]` to `- [x]`) and verify the server builds + runs.
+
+---
+
+## Naming
 
 | Element | Convention | Example |
 |---------|-----------|---------|
 | Functions | `snake_case` | `render_home()`, `parse_i64_from_str()` |
 | Variables | `snake_case` | `total_tests`, `vec_destruct_called` |
-| Constants | `snake_case` | `ANSI_COLOR_RESET`, `default_open_flags` |
-| Struct fields | `snake_case` | `price_pkr`, `seller_name`, `is_featured` |
-| Struct names | `PascalCase` | `Vehicle`, `DbClient`, `QueryResult` |
-| Enum variants | `PascalCase` | `Option.Some`, `Result.Err`, `JsonValue.String` |
+| Constants | `snake_case` | `ANSI_COLOR_RESET` |
+| Struct fields | `snake_case` | `price_pkr`, `seller_name` |
+| Struct names | `PascalCase` | `Vehicle`, `DbClient` |
+| Enum variants | `PascalCase` | `Option.Some`, `Result.Err` |
 | Module names | `snake_case` | `cars_db`, `cars_core` |
-| Namespaces | `snake_case` | `public namespace cars_db { ... }` |
-| Generic params | Single uppercase | `T`, `U`, `V`, `K`, `R` |
-| Test functions | `test_snake_case()` | `test_vectors()`, `test_strings()` |
-| Test names | Lowercase descriptive | `"vector of ints work"` |
+| Namespaces | `snake_case` | `public namespace cars_db` |
+| Generic params | Single uppercase | `T`, `U`, `V` |
+| Test functions | `test_*()` | `test_vectors()` |
 
 ---
 
-## String Building Pattern
+## Multi-File Modules (CRITICAL)
 
-**Never use `+` for strings.** Use `append_view()` / `append_string()`:
+**The Chemical compiler compiles faster when code is split across many small files.** Large single files cause slow compilation. Every module MUST use multiple files.
+
+### Rules
+
+1. **No file over 250 lines.** If a file exceeds 250 lines, split it.
+2. **One concern per file.** Each file handles one logical unit (e.g., one handler group, one CRUD entity, one algorithm).
+3. **Shared private helpers become public.** When splitting, private helpers used across files must become `public` in a `helpers.ch` file.
+4. **`main.ch` is just the root.** It contains either nothing (just a comment listing files) or minimal shared constants.
+5. **File naming:** `snake_case.ch` describing the content (e.g., `handlers_review.ch`, `concept_states.ch`, `fsrs.ch`).
+
+### File Structure
+
+Every file in a module follows this pattern:
 
 ```chemical
-// WRONG
-var msg = "Hello" + " " + "World"
+import std
+import cstd
 
-// CORRECT
-var msg = std::string("Hello")
-msg.append_view(" ")
-msg.append_view("World")
-// OR
-var msg = std::string("Hello World")
+import underlayer_core
+import underlayer_models
 
-// CORRECT — backtick template
-var msg = `Hello ${"World"}`
+public namespace underlayer_repository {
+    // ... all code here ...
+}
 ```
 
-### String Comparison
-```chemical
-// WRONG
-if(s1 == s2) { ... }
+**Critical rules:**
+- `import std` — always needed for `std::string`, `std::vector`, etc.
+- `import cstd` — needed if using `printf`, `fprintf`, `fflush`, etc.
+- The namespace name MUST match the directory name.
+- Relative imports for sibling modules: `"../core"`, `"../models"`
 
-// CORRECT
-if(s1.equals(&s2)) { ... }
-if(s1.equals_view("hello")) { ... }
+---
+
+## String Building
+
+**Never use `+` for strings.** Use `append_view()` on a `std::string`.
+
+```chemical
+// Building a JSON response
+var body = std::string("{\"ok\":true,\"data\":{\"id\":\"")
+body.append_view(id.to_view())
+body.append_view("\",\"name\":\"")
+body.append_view(name.to_view())
+body.append_view("\"}}")
+
+// Building a SQL query
+var sql = std::string("SELECT * FROM users WHERE id = '")
+sql.append_view(user_id)
+sql.append_view("' AND active = 1")
+
+// Building an error message
+var msg = std::string("Failed to load concept '")
+msg.append_view(concept_id)
+msg.append_view("' in course '")
+msg.append_view(course_id)
+msg.append_view("'")
 ```
 
 ---
 
-## Error Handling Pattern
+## Error Handling
 
-### Result Extraction
+**No `try/catch`.** Use `Result<T, std::string>` with explicit checks.
+
 ```chemical
-// Pattern 1: if + var Err
-var result = db.execute(sql)
+// Pattern 1: Check and return early
+var result = database::query(db, sql.to_view())
 if(result is Result.Err) {
-    var Err(e) = result else unreachable
-    printf("Error: %s\n", e.to_string().data())
-    return Result.Err(e)
+    return Result.Err(std::string("Query failed"))
 }
-var Ok(value) = result else unreachable
+var rows = result.value()
 
-// Pattern 2: switch
-switch(result) {
-    Ok(value) => { /* use value */ }
-    Err(error) => { /* handle error */ }
+// Pattern 2: Unwrap with else unreachable
+var Ok(mut db) = get_global_db() else unreachable
+
+// Pattern 3: Nested operations
+func load_concept(db : *mut database::Database, course_id : std::string_view, concept_id : std::string_view) : Result<Concept, std::string> {
+    var course_result = get_course(db, course_id)
+    if(course_result is Result.Err) {
+        return Result.Err(std::string("Course not found"))
+    }
+    var Ok(course) = course_result else unreachable
+
+    var concept_result = get_concept_from_course(db, course_id, concept_id)
+    if(concept_result is Result.Err) {
+        return Result.Err(std::string("Concept not found"))
+    }
+    var Ok(concept) = concept_result else unreachable
+
+    return Result.Ok(concept)
 }
-```
-
-### Option Extraction
-```chemical
-// Pattern 1: if + var Some
-var opt = get_optional()
-if(opt is Option.Some) {
-    var Some(value) = opt else unreachable
-    // use value
-} else {
-    // handle None
-}
-
-// Pattern 2: switch
-switch(opt) {
-    Some(value) => { /* use value */ }
-    None => { /* handle missing */ }
-}
-
-// Pattern 3: take()
-var opt = get_optional()
-var value = opt.take()  // Extracts value, sets opt to None
 ```
 
 ---
 
 ## Struct Patterns
 
-### Plain Data Struct (no constructor)
 ```chemical
+// Plain data
 public struct Vehicle {
     var id : i64
     var make : std::string
-    var model : std::string
-    var year : i32
-
-    // Methods
-    public func full_title(&self) : std::string {
-        var out = self.make.copy()
-        out.append_view(" ")
-        out.append_view(self.model.to_view())
-        return out
-    }
 }
-```
 
-### Struct with @direct_init
-```chemical
-@direct_init
-public struct Vehicle {
-    var id : i64
-    var make : std::string
-    var model : std::string
-
-    public func create(make_ : std::string, model_ : std::string) : Vehicle {
-        return Vehicle {
-            id = 0, make = make_, model = model_
-        }
-    }
-}
-```
-
-### Struct with @make Constructor
-```chemical
+// With @make
 @make
 public struct AppConfig {
     var port : uint
-    var db_url : std::string
-
-    @make
-    func make() : AppConfig {
-        return AppConfig {
-            port = 9000u,
-            db_url = std::string("./app.db")
-        }
-    }
+    @make func make() { return AppConfig { port = 9000u } }
 }
-```
 
-**Critical:** A struct with `@make` but WITHOUT `@direct_init` **cannot** use `{}` syntax at all. Use `T.make()` instead. With both `@make` + `@direct_init`, both `T{}` and `T.make()` work.
-
-### Struct with Destructor
-```chemical
-public struct Database {
-    private var handle : *mut sqlite3 = null
-
-    @delete
-    func delete(&mut self) {
-        if(self.handle != null) {
-            ffi::sqlite3_close_v2(self.handle)
-            self.handle = null
-        }
-    }
+// Struct initialization
+var learner = underlayer_models::Learner {
+    id = id.copy(),
+    name = std::string(name),
+    email = std::string(email)
 }
 ```
 
 ---
 
-## Function Patterns
-
-### Basic Function
-```chemical
-public func render_home(db : *DbClient, req : *Request, res : *ResponseWriter) {
-    // ...
-}
-```
-
-### Function with Result Return
-```chemical
-public func load_course(id : string) : Result<Course, Error> {
-    var data = fs::read_entire_file(path)?
-    return Result.Ok(course)
-}
-```
-
-### Function with Default Parameters
-```chemical
-func get_int_or(&self, name : std::string_view, fallback : i64) : i64 {
-    // ...
-}
-```
-
-### Generic Function
-```chemical
-func <T = int> create_pair(a : T, b : T) : Pair<T, T> {
-    return Pair<T, T> { a : a, b : b }
-}
-```
-
----
-
-## Import Patterns
-
-### Module-Level Using
-```chemical
-using std::string
-using std::string_view
-using std::vector
-using std::Result
-```
-
-### Namespace Import (test files only)
-```chemical
-using namespace std;
-```
-
-### Never Do This
-- ❌ `using namespace std;` in library code — pollutes namespace
-- ❌ Import unused modules — keep imports minimal
-
----
-
-## Comment Style
+## Route Handlers
 
 ```chemical
-// Copyright (c) Chemical Language Foundation 2026.
-
-// -------------------------------------------------------
-// Module description
-// What this module does and how it's used
-// -------------------------------------------------------
-
-// Single line comments for explanations
-var x = 0  // inline comment (rare)
-
-// Section banners:
-// ---------------------------------
-// Category Name
-// ----------------------------------
-```
-
----
-
-## Route Handler Pattern
-
-```chemical
-// Lambda captures: (|(captures)|(params) => { body })
-
 // No captures
-srv.router.add("GET", "/health", (req, res) => {
-    res.set_header_view("Content-Type", "application/json")
-    res.write_view("{\"status\":\"ok\"}")
-})
+srv.router.add("GET", "/health", (req, res) => { ... })
 
 // Capture by reference
-srv.router.add("GET", "/", (|&db|(req, res) => {
-    cars_web::render_home(&raw db, &req, res)
-}))
+srv.router.add("GET", "/", (|&db|(req, res) => { ... }))
 
 // Multiple captures
-srv.router.add("GET", "/", (|&pool, &db_name|(req, res) => {
-    var client = pool.pop()
-    // ...
-    pool.push(&mut client)
-}))
+srv.router.add("POST", "/", (|&db, &config|(req, res) => { ... }))
 ```
 
 ---
 
-## Database Pattern
+## QueryMap Access
+
+`QueryMap.get()` takes `&string_view` and returns `string_view`. Empty string means missing.
 
 ```chemical
-// Query
-func query(db : *DbClient, sql : *string, out : *mut QueryResult) {
-    if(db.is_sqlite) {
-        sqlite_query(&raw db.sqlite_conn, sql, out)
-    } else {
-        turso_query(db, sql, out)
-    }
-}
+var query = req.query()
 
-// Execute
-func exec(db : *DbClient, sql : *string) : ExecResult {
-    if(db.is_sqlite) {
-        return sqlite_exec(&raw db.sqlite_conn, sql)
-    }
-    return turso_exec(db, sql)
+// Get string param
+var name_view = query.get("name")
+if(name_view.size() == 0u) {
+    send_error(res, 400, "VALIDATION_ERROR", "Missing name")
+    return
 }
+var name = sv_to_string(name_view)
 
-// Usage
-var result = db.exec("INSERT INTO learners VALUES (?)")
-if(result is Result.Err) {
-    var Err(e) = result else unreachable
-    printf("[db] error: %s\n", e.to_string().data())
-}
+// Get int param
+var limit_view = query.get("limit")
+var limit = parse_optional_int(limit_view, 20)
 ```
 
 ---
 
-## JSON Serialization Pattern
+## Path Segments
+
+`path_segments()` splits on `/` and **skips empty segments**. For `/api/sessions/12345`:
+- Returns: `["api", "sessions", "12345"]` (3 segments)
+- NOT: `["", "api", "sessions", "12345"]`
 
 ```chemical
-// Manual string building (no #json macro in libs)
-func to_json(&self, body : &mut string) {
-    body.append_view("{\"id\":\"")
-    var escaped = json_escape(self.id.to_view())
-    body.append_view(escaped.to_view())
-    body.append_view("\",\"name\":\"")
-    escaped = json_escape(self.name.to_view())
-    body.append_view(escaped.to_view())
-    body.append_view("\"}")
-}
+var path = req.path()
+var segments = path_segments(path)
 
-// JSON escape helper
-public func json_escape(view : string_view) : string {
-    var out = string()
-    for(var i = 0u; i < view.size(); i++) {
-        var c = view.get(i)
-        if(c == '"') { out.append_view("\\\"") }
-        else if(c == '\\') { out.append_view("\\\\") }
-        else if(c == '\n') { out.append_view("\\n") }
-        else if(c == '\r') { out.append_view("\\r") }
-        else if(c == '\t') { out.append_view("\\t") }
-        else { out.append(c) }
-    }
-    return out
+// Always use segments.size() - 1 for the last segment
+if(segments.size() < 1u) {
+    send_error(res, 400, "INVALID_REQUEST", "Missing ID")
+    return
+}
+var id = sv_to_string(segments.get(segments.size() - 1u))
+```
+
+---
+
+## Vector Iteration
+
+Chemical has no C-style for loop. Use `while` with manual increment.
+
+```chemical
+var items = get_items()
+var i = 0u
+while(i < items.size()) {
+    var item = items.get_ptr(i)
+    // Use item.field, item.method()
+    i = i + 1u
 }
 ```
 
 ---
 
-## HTML Page Pattern
+## `if` / `else` Rules
+
+**Every `if` MUST have an `else`.** No inline `if` expressions.
 
 ```chemical
-public func render_page(db : *DbClient) : std::string {
-    var page = HtmlPage()
-    page.defaultUniversalSetup()        // REQUIRED for components
-    page.defaultPrepare()
-    page.appendTitle(std::string_view("Page Title — Underlayer"))
+// CORRECT
+var x : int
+if(cond) { x = a } else { x = b }
 
-    #html {
-        <div class="page">
-            <h1>Hello World</h1>
-            @{if(show_content) {
-                #html {
-                    <p>Content here</p>
-                }
-            } else {
-                #html {
-                    <p>No content</p>
-                }
-            }}
-        </div>
-    }
+// CORRECT — empty else
+if(cond) { do_something() } @else { }
 
-    #css {
-        .page { max-width: 800px; margin: 0 auto; }
-    }
+// WRONG — no else
+// if(cond) { x = a }
 
-    return page.toString()
-}
+// WRONG — inline if
+// var x = if(cond) a else b
 ```
 
 ---
 
-## Test Pattern
+## Float Literals
+
+`0.5` is `double`. For `float` parameters use `0.5f`.
 
 ```chemical
-func test_my_feature() {
-    test("descriptive test name", () => {
-        var result = my_function()
-        return result == expected
-    })
-
-    test("another test", () => {
-        var v = vector<int>()
-        v.push(10)
-        return v.size() == 1 && v.get(0) == 10
-    })
-}
-```
-
----
-
-## Namespace Pattern
-
-```chemical
-public namespace my_module {
-    // All public declarations go here
-    public struct MyStruct { ... }
-    public func my_function() { ... }
-}
+func set_volume(vol : float) { ... }
+set_volume(0.5f)    // correct
+set_volume(0.5)     // TypeCheck error
 ```
 
 ---
@@ -401,19 +273,18 @@ public namespace my_module {
 
 Before writing code, verify:
 
-- [ ] **NEVER use string appends for HTML/CSS/JS** — use `#html`, `#css`, `#js` macros
-- [ ] No `+` for strings (use `append_view()`)
+- [ ] No `+` for strings — use `append_view()`
 - [ ] Every `if` has an `else`
 - [ ] No `0.5` for float (use `0.5f`)
-- [ ] No `arr[i]` (use `arr.get(i)`)
-- [ ] `vector.get(i)` returns COPY — use `get_ptr(i)` for destructible types
-- [ ] `string_view` has no ownership — don't store beyond source
-- [ ] `defaultUniversalSetup()` before any component usage
-- [ ] `Result.Err` extraction: `var Err(e) = result else unreachable`
-- [ ] `Option.Some` extraction: `var Some(value) = opt else unreachable`
-- [ ] Lambda captures: `(|var|` by value, `(|&var|` by reference
-- [ ] Test functions named `test_snake_case()`
-- [ ] Namespaces match module name
-- [ ] `@delete` for destructors with null check
-- [ ] `@make` for constructors (use `T.make()` not `T{}` without `@direct_init`)
-- [ ] `using std::string` at module level (not `using namespace`)
+- [ ] `vector.get(i)` returns COPY — use `get_ptr(i)`
+- [ ] `string_view` has no ownership
+- [ ] `defaultUniversalSetup()` before components
+- [ ] `var Err(e) = result else unreachable`
+- [ ] Lambda captures: `(|var|` value, `(|&var|` reference
+- [ ] Test functions: `test_snake_case()`
+- [ ] Feature priorities: P0 first, P3 last
+- [ ] File max 250 lines — split if exceeded
+- [ ] Private helpers across files → public in `helpers.ch`
+- [ ] `path_segments()` — use `size() - 1` for last segment
+- [ ] `QueryMap.get()` — returns empty string if missing
+- [ ] `string.data()` may not be null-terminated — use `.size()` for SQLite
