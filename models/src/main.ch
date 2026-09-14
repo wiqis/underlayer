@@ -188,6 +188,26 @@ public namespace underlayer_models {
         }
     }
 
+    // ---- AggregateStats (cross-learner aggregation for anonymous comparison) ----
+    public struct AggregateStats {
+        var total_attempts : i64
+        var total_correct : i64
+        var learner_count : i64
+        var accuracy : f64
+        var average_severity : f64
+
+        @make
+        func make() : AggregateStats {
+            return AggregateStats {
+                total_attempts = 0,
+                total_correct = 0,
+                learner_count = 0,
+                accuracy = 0.0,
+                average_severity = 0.0
+            }
+        }
+    }
+
     // ---- ReviewItem ----
     public struct ReviewItem {
         var id : string

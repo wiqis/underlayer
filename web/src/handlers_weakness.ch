@@ -4,7 +4,6 @@ using std::vector
 using underlayer_db::DbClient
 using underlayer_learning::WeaknessReport
 using underlayer_learning::WeaknessCluster
-using underlayer_learning::WeaknessHistoryEntry
 using underlayer_learning::detect_weaknesses
 using underlayer_learning::cluster_weaknesses
 using underlayer_learning::compute_weakness_trend
@@ -102,14 +101,25 @@ public namespace underlayer_web {
             return
         }
         var concept_id = sv_to_string(&raw cid_v)
+        var course_id = string("elf")
 
-        // Simulated anonymous data — in production this would aggregate from all users
+        // Aggregate stats across ALL learners for this concept
+        var stats = underlayer_repository::get_aggregate_concept_stats(&raw db, &concept_id, &course_id)
+
         var body = string("{\"concept_id\":\"")
         body.append_string(&concept_id)
-        body.append_view("\",\"anonymous_accuracy\":0.72")
-        body.append_view(",\"anonymous_total_attempts\":156")
-        body.append_view(",\"common_mistakes\":[\"byte-order-confusion\",\"offset-calculation\"]")
-        body.append_view(",\"average_severity\":42")
+        body.append_view("\",\"anonymous_accuracy\":")
+        var acc_out = underlayer_learning::f64_to_string(stats.accuracy)
+        body.append_string(&acc_out)
+        body.append_view(",\"anonymous_total_attempts\":")
+        var att_out = underlayer_core::int_to_string(stats.total_attempts)
+        body.append_string(&att_out)
+        body.append_view(",\"anonymous_learner_count\":")
+        var lc_out = underlayer_core::int_to_string(stats.learner_count)
+        body.append_string(&lc_out)
+        body.append_view(",\"average_severity\":")
+        var sev_out = underlayer_learning::f64_to_string(stats.average_severity)
+        body.append_string(&sev_out)
         body.append_view("}")
         send_json_str(res, &raw body)
     }

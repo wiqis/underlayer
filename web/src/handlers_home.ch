@@ -28,6 +28,10 @@ public namespace underlayer_web {
                         <a href="/review" class="nav-link">Review</a>
                         <a href="/progress" class="nav-link">Progress</a>
                     </div>
+                    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                        <span class="theme-icon-light">☀️</span>
+                        <span class="theme-icon-dark">🌙</span>
+                    </button>
                 </div>
             </div>
 
@@ -106,44 +110,66 @@ public namespace underlayer_web {
         }
 
         #css {
-            body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 0; background: #fafafa; }
-            a { color: #3b82f6; text-decoration: none; }
+            body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 0; background: hsl(var(--background)); color: hsl(var(--foreground)); }
+            a { color: hsl(217 91% 60%); text-decoration: none; }
             a:hover { text-decoration: underline; }
-            .navbar { background: #ffffff; border-bottom: 1px solid #e5e7eb; padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
+            .navbar { background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
             .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; }
-            .nav-brand { font-size: 1.25rem; font-weight: 700; color: #111827; text-decoration: none; }
-            .nav-brand:hover { color: #3b82f6; text-decoration: none; }
+            .nav-brand { font-size: 1.25rem; font-weight: 700; color: hsl(var(--foreground)); text-decoration: none; }
+            .nav-brand:hover { color: hsl(217 91% 60%); text-decoration: none; }
             .nav-links { display: flex; gap: 1.5rem; }
-            .nav-link { color: #6b7280; text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.75rem; border-radius: 6px; transition: all 0.15s; }
-            .nav-link:hover { color: #111827; background: #f3f4f6; text-decoration: none; }
-            .nav-link.active { color: #3b82f6; background: #eff6ff; }
-            .hero { background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%); color: white; padding: 4rem 2rem; }
+            .nav-link { color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.75rem; border-radius: 6px; transition: all 0.15s; }
+            .nav-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); text-decoration: none; }
+            .nav-link.active { color: hsl(217 91% 60%); background: hsl(217 91% 60% / 10%); }
+            .theme-toggle { background: none; border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 0.5rem; cursor: pointer; font-size: 1.1rem; line-height: 1; }
+            .theme-toggle:hover { background: hsl(var(--accent)); }
+            .theme-icon-dark { display: none; }
+            .dark .theme-icon-light { display: none; }
+            .dark .theme-icon-dark { display: inline; }
+            .hero { background: linear-gradient(135deg, hsl(213 60% 24%) 0%, hsl(217 91% 60%) 100%); color: white; padding: 4rem 2rem; }
             .hero-inner { max-width: 800px; margin: 0 auto; text-align: center; }
             .hero h1 { font-size: 2.5rem; margin-bottom: 1rem; font-weight: 700; }
             .hero p { font-size: 1.1rem; opacity: 0.9; line-height: 1.7; max-width: 600px; margin: 0 auto; }
             .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
             .section { margin-bottom: 3rem; }
-            .section h2 { font-size: 1.5rem; margin-bottom: 1.5rem; color: #111827; }
+            .section h2 { font-size: 1.5rem; margin-bottom: 1.5rem; color: hsl(var(--foreground)); }
             .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; }
-            .course-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; transition: box-shadow 0.2s; }
-            .course-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-            .course-badge { display: inline-block; padding: 0.25rem 0.75rem; background: #eff6ff; color: #2563eb; border-radius: 9999px; font-size: 0.8rem; font-weight: 500; margin-bottom: 1rem; }
-            .course-card h3 { font-size: 1.25rem; margin-bottom: 0.5rem; color: #111827; }
-            .course-card p { color: #6b7280; margin-bottom: 1rem; font-size: 0.95rem; }
-            .course-stats { display: flex; gap: 1rem; margin-bottom: 1rem; font-size: 0.85rem; color: #9ca3af; }
+            .course-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 1.5rem; transition: box-shadow 0.2s; }
+            .course-card:hover { box-shadow: 0 4px 12px hsl(var(--shadow)); }
+            .course-badge { display: inline-block; padding: 0.25rem 0.75rem; background: hsl(217 91% 60% / 10%); color: hsl(217 91% 60%); border-radius: 9999px; font-size: 0.8rem; font-weight: 500; margin-bottom: 1rem; }
+            .course-card h3 { font-size: 1.25rem; margin-bottom: 0.5rem; color: hsl(var(--foreground)); }
+            .course-card p { color: hsl(var(--muted-foreground)); margin-bottom: 1rem; font-size: 0.95rem; }
+            .course-stats { display: flex; gap: 1rem; margin-bottom: 1rem; font-size: 0.85rem; color: hsl(var(--muted-foreground)); }
             .btn { display: inline-block; padding: 0.6rem 1.25rem; border-radius: 8px; font-weight: 500; font-size: 0.9rem; cursor: pointer; border: none; text-decoration: none; }
-            .btn-primary { background: #3b82f6; color: white; }
-            .btn-primary:hover { background: #2563eb; text-decoration: none; }
+            .btn-primary { background: hsl(217 91% 60%); color: white; }
+            .btn-primary:hover { background: hsl(217 91% 50%); text-decoration: none; }
             .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
-            .feature-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; }
-            .feature-icon { width: 40px; height: 40px; background: #eff6ff; color: #2563eb; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; margin-bottom: 1rem; }
-            .feature-card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: #111827; }
-            .feature-card p { color: #6b7280; font-size: 0.9rem; }
+            .feature-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 1.5rem; }
+            .feature-icon { width: 40px; height: 40px; background: hsl(217 91% 60% / 10%); color: hsl(217 91% 60%); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; margin-bottom: 1rem; }
+            .feature-card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: hsl(var(--foreground)); }
+            .feature-card p { color: hsl(var(--muted-foreground)); font-size: 0.9rem; }
             .action-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
-            .action-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; text-decoration: none; transition: all 0.15s; }
-            .action-card:hover { border-color: #3b82f6; box-shadow: 0 2px 8px rgba(59,130,246,0.12); text-decoration: none; }
-            .action-card h3 { font-size: 1rem; margin-bottom: 0.5rem; color: #111827; }
-            .action-card p { color: #6b7280; font-size: 0.85rem; margin: 0; }
+            .action-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 1.5rem; text-decoration: none; transition: all 0.15s; }
+            .action-card:hover { border-color: hsl(217 91% 60%); box-shadow: 0 2px 8px hsl(217 91% 60% / 20%); text-decoration: none; }
+            .action-card h3 { font-size: 1rem; margin-bottom: 0.5rem; color: hsl(var(--foreground)); }
+            .action-card p { color: hsl(var(--muted-foreground)); font-size: 0.85rem; margin: 0; }
+        }
+
+        #js {
+            function getTheme() {
+                var saved = localStorage.getItem('theme');
+                if (saved) return saved;
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            function setTheme(theme) {
+                document.documentElement.classList.toggle('dark', theme === 'dark');
+                localStorage.setItem('theme', theme);
+            }
+            function toggleTheme() {
+                var current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                setTheme(current === 'dark' ? 'light' : 'dark');
+            }
+            setTheme(getTheme());
         }
 
         send_page(res, &raw page)

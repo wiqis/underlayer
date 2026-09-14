@@ -51,23 +51,28 @@ public func test_weakness_export_returns_200(env : &mut TestEnv) {
 }
 
 @test
-public func test_weakness_compare_returns_200(env : &mut TestEnv) {
+public func test_weakness_compare_returns_json(env : &mut TestEnv) {
     var db = test_helpers::setup_test_db()
-    var courses_dir = string("./courses")
     var cfg = server.ServerConfig()
-    cfg.addr = string("127.0.0.1:19922")
+    cfg.addr = string("127.0.0.1:19925")
     var srv = server.Server(cfg)
     srv.router.add("GET", "/api/weaknesses/compare", (|&db|(req, res) => {
         underlayer_web::handle_weakness_compare(db, &req, &raw mut res)
     }))
-    srv.serve_async(19922u)
+    srv.serve_async(19925u)
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
-    var res = client.get("http://127.0.0.1:19922/api/weaknesses/compare?concept_id=bytes")
+    var res = client.get("http://127.0.0.1:19925/api/weaknesses/compare?concept_id=bytes")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unreachable
-    if(resp.status != 200u) { env.error("expected status 200") }
+    var body_opt = resp.body.read_to_string()
+    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Some(body) = body_opt else unreachable
+    // Verify real aggregated data fields are present
+    if(body.find(string_view("anonymous_accuracy")) == std::NPOS) { env.error("missing anonymous_accuracy") }
+    if(body.find(string_view("anonymous_total_attempts")) == std::NPOS) { env.error("missing anonymous_total_attempts") }
+    if(body.find(string_view("average_severity")) == std::NPOS) { env.error("missing average_severity") }
 
     srv.shutdown()
     underlayer_db::close(&raw db)

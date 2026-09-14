@@ -3,6 +3,7 @@ using std::string
 using std::vector
 using underlayer_db::DbClient
 using underlayer_models::ConceptState
+using underlayer_models::AggregateStats
 
 public namespace underlayer_repository {
 
@@ -95,6 +96,32 @@ public namespace underlayer_repository {
             ri = ri + 1
         }
         return states
+    }
+
+    // Aggregate concept stats across ALL learners for anonymous comparison.
+    public func get_aggregate_concept_stats(db : *DbClient, concept_id : &string, course_id : &string) : AggregateStats {
+        var stats = AggregateStats::make()
+        var sql = string("SELECT SUM(attempts) as total_attempts, SUM(correct) as total_correct, COUNT(*) as learner_count FROM concept_states WHERE concept_id = '")
+        sql.append_string(concept_id)
+        sql.append_view("' AND course_id = '")
+        sql.append_string(course_id)
+        sql.append_view("'")
+        var result = underlayer_db::query_sql(db, &raw sql)
+        if(result.rows.size() > 0) {
+            var row = result.rows.get_ptr(0)
+            if(row.vals.size() >= 3) {
+                stats.total_attempts = parse_i64(row.vals.get_ptr(0).to_view()) as i64
+                stats.total_correct = parse_i64(row.vals.get_ptr(1).to_view()) as i64
+                stats.learner_count = parse_i64(row.vals.get_ptr(2).to_view()) as i64
+                if(stats.total_attempts > 0) {
+                    stats.accuracy = (stats.total_correct as f64) / (stats.total_attempts as f64)
+                }
+                if(stats.total_attempts > 0 && stats.total_correct < stats.total_attempts) {
+                    stats.average_severity = ((stats.total_attempts - stats.total_correct) as f64) / (stats.total_attempts as f64) * 100.0
+                }
+            }
+        }
+        return stats
     }
 
 }

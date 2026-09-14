@@ -46,6 +46,10 @@ public namespace underlayer_web {
                         <a href="/review" class="nav-link">Review</a>
                         <a href="/progress" class="nav-link">Progress</a>
                     </div>
+                    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                        <span class="theme-icon-light">☀️</span>
+                        <span class="theme-icon-dark">🌙</span>
+                    </button>
                 </div>
             </div>
 
@@ -131,15 +135,37 @@ public namespace underlayer_web {
 
         #css {
             [data-chx-i] { display: contents; }
-            .container { font-family: system-ui, sans-serif; }
-            .navbar { background: #ffffff; border-bottom: 1px solid #e5e7eb; padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
+            .container { font-family: system-ui, sans-serif; background: hsl(var(--background)); color: hsl(var(--foreground)); min-height: 100vh; }
+            .navbar { background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
             .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; }
-            .nav-brand { font-size: 1.25rem; font-weight: 700; color: #111827; text-decoration: none; }
-            .nav-brand:hover { color: #3b82f6; }
+            .nav-brand { font-size: 1.25rem; font-weight: 700; color: hsl(var(--foreground)); text-decoration: none; }
+            .nav-brand:hover { color: hsl(217 91% 60%); }
             .nav-links { display: flex; gap: 1.5rem; }
-            .nav-link { color: #6b7280; text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.75rem; border-radius: 6px; transition: all 0.15s; }
-            .nav-link:hover { color: #111827; background: #f3f4f6; }
-            .nav-link.active { color: #3b82f6; background: #eff6ff; }
+            .nav-link { color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.75rem; border-radius: 6px; transition: all 0.15s; }
+            .nav-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
+            .nav-link.active { color: hsl(217 91% 60%); background: hsl(217 91% 60% / 10%); }
+            .theme-toggle { background: none; border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 0.5rem; cursor: pointer; font-size: 1.1rem; line-height: 1; }
+            .theme-toggle:hover { background: hsl(var(--accent)); }
+            .theme-icon-dark { display: none; }
+            .dark .theme-icon-light { display: none; }
+            .dark .theme-icon-dark { display: inline; }
+        }
+
+        #js {
+            function getTheme() {
+                var saved = localStorage.getItem('theme');
+                if (saved) return saved;
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            function setTheme(theme) {
+                document.documentElement.classList.toggle('dark', theme === 'dark');
+                localStorage.setItem('theme', theme);
+            }
+            function toggleTheme() {
+                var current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                setTheme(current === 'dark' ? 'light' : 'dark');
+            }
+            setTheme(getTheme());
         }
 
         var html_out = page.toString()

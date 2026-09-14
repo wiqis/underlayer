@@ -23,6 +23,10 @@ public namespace underlayer_web {
                         <a href="/review" class="nav-link active">Review</a>
                         <a href="/progress" class="nav-link">Progress</a>
                     </div>
+                    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                        <span class="theme-icon-light">☀️</span>
+                        <span class="theme-icon-dark">🌙</span>
+                    </button>
                 </div>
             </div>
 
@@ -93,50 +97,70 @@ public namespace underlayer_web {
         }
 
         #css {
-            body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 0; background: #fafafa; }
-            .navbar { background: #ffffff; border-bottom: 1px solid #e5e7eb; padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
+            body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 0; background: hsl(var(--background)); color: hsl(var(--foreground)); }
+            .navbar { background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
             .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; }
-            .nav-brand { font-size: 1.25rem; font-weight: 700; color: #111827; text-decoration: none; }
-            .nav-brand:hover { color: #3b82f6; text-decoration: none; }
+            .nav-brand { font-size: 1.25rem; font-weight: 700; color: hsl(var(--foreground)); text-decoration: none; }
+            .nav-brand:hover { color: hsl(217 91% 60%); text-decoration: none; }
             .nav-links { display: flex; gap: 1.5rem; }
-            .nav-link { color: #6b7280; text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.75rem; border-radius: 6px; transition: all 0.15s; }
-            .nav-link:hover { color: #111827; background: #f3f4f6; text-decoration: none; }
-            .nav-link.active { color: #3b82f6; background: #eff6ff; }
+            .nav-link { color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.75rem; border-radius: 6px; transition: all 0.15s; }
+            .nav-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); text-decoration: none; }
+            .nav-link.active { color: hsl(217 91% 60%); background: hsl(217 91% 60% / 10%); }
+            .theme-toggle { background: none; border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 0.5rem; cursor: pointer; font-size: 1.1rem; line-height: 1; }
+            .theme-toggle:hover { background: hsl(var(--accent)); }
+            .theme-icon-dark { display: none; }
+            .dark .theme-icon-light { display: none; }
+            .dark .theme-icon-dark { display: inline; }
             .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
             .review-header { text-align: center; margin-bottom: 2rem; }
             .review-header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
-            .subtitle { color: #6b7280; }
-            .review-status-bar { display: flex; justify-content: center; gap: 3rem; margin-bottom: 2rem; padding: 1rem; background: white; border-radius: 12px; border: 1px solid #e5e7eb; }
+            .subtitle { color: hsl(var(--muted-foreground)); }
+            .review-status-bar { display: flex; justify-content: center; gap: 3rem; margin-bottom: 2rem; padding: 1rem; background: hsl(var(--card)); border-radius: 12px; border: 1px solid hsl(var(--border)); }
             .stat { text-align: center; }
-            .stat-label { display: block; font-size: 0.8rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; }
-            .stat-value { display: block; font-size: 1.5rem; font-weight: 700; color: #111827; }
+            .stat-label { display: block; font-size: 0.8rem; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.05em; }
+            .stat-value { display: block; font-size: 1.5rem; font-weight: 700; color: hsl(var(--foreground)); }
             .review-card-container { perspective: 1000px; margin-bottom: 2rem; }
-            .review-card { background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 3rem 2rem; min-height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-            .card-concept-label { font-size: 0.85rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
-            .card-prompt { font-size: 1.25rem; color: #111827; line-height: 1.6; max-width: 500px; }
+            .review-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 16px; padding: 3rem 2rem; min-height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 2px 8px hsl(var(--shadow)); }
+            .card-concept-label { font-size: 0.85rem; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+            .card-prompt { font-size: 1.25rem; color: hsl(var(--foreground)); line-height: 1.6; max-width: 500px; }
             .review-actions { display: flex; justify-content: center; gap: 1rem; margin-bottom: 3rem; flex-wrap: wrap; }
             .btn { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 10px; font-weight: 600; font-size: 0.95rem; cursor: pointer; border: none; transition: all 0.15s; }
-            .btn-primary { background: #3b82f6; color: white; }
-            .btn-primary:hover { background: #2563eb; }
+            .btn-primary { background: hsl(217 91% 60%); color: white; }
+            .btn-primary:hover { background: hsl(217 91% 50%); }
             .btn-large { padding: 1rem 2rem; font-size: 1.1rem; }
-            .btn-again { background: #ef4444; color: white; }
-            .btn-again:hover { background: #dc2626; }
-            .btn-hard { background: #f59e0b; color: white; }
-            .btn-hard:hover { background: #d97706; }
-            .btn-good { background: #10b981; color: white; }
-            .btn-good:hover { background: #059669; }
-            .btn-easy { background: #6366f1; color: white; }
-            .btn-easy:hover { background: #4f46e5; }
+            .btn-again { background: hsl(0 84% 60%); color: white; }
+            .btn-again:hover { background: hsl(0 84% 50%); }
+            .btn-hard { background: hsl(38 92% 50%); color: white; }
+            .btn-hard:hover { background: hsl(38 92% 40%); }
+            .btn-good { background: hsl(142 76% 36%); color: white; }
+            .btn-good:hover { background: hsl(142 76% 30%); }
+            .btn-easy { background: hsl(245 58% 51%); color: white; }
+            .btn-easy:hover { background: hsl(245 58% 45%); }
             .hidden { display: none !important; }
-            .review-mode-grid h2 { font-size: 1.25rem; margin-bottom: 1rem; color: #111827; }
+            .review-mode-grid h2 { font-size: 1.25rem; margin-bottom: 1rem; color: hsl(var(--foreground)); }
             .mode-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
-            .mode-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.25rem; cursor: pointer; transition: all 0.15s; }
-            .mode-card:hover { border-color: #3b82f6; box-shadow: 0 2px 8px rgba(59,130,246,0.12); }
-            .mode-card h3 { font-size: 1rem; margin-bottom: 0.35rem; color: #111827; }
-            .mode-card p { color: #6b7280; font-size: 0.85rem; margin: 0; }
+            .mode-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 1.25rem; cursor: pointer; transition: all 0.15s; }
+            .mode-card:hover { border-color: hsl(217 91% 60%); box-shadow: 0 2px 8px hsl(217 91% 60% / 20%); }
+            .mode-card h3 { font-size: 1rem; margin-bottom: 0.35rem; color: hsl(var(--foreground)); }
+            .mode-card p { color: hsl(var(--muted-foreground)); font-size: 0.85rem; margin: 0; }
         }
 
         #js {
+            function getTheme() {
+                var saved = localStorage.getItem('theme');
+                if (saved) return saved;
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            function setTheme(theme) {
+                document.documentElement.classList.toggle('dark', theme === 'dark');
+                localStorage.setItem('theme', theme);
+            }
+            function toggleTheme() {
+                var current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                setTheme(current === 'dark' ? 'light' : 'dark');
+            }
+            setTheme(getTheme());
+
             var currentIndex = 0;
             var totalDue = 0;
             var reviewed = 0;

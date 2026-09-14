@@ -737,11 +737,11 @@
 
 ### 7.3 Theming
 
-- [ ] P2 7.3.1 Light theme (default)
-- [ ] P2 7.3.2 Dark theme
-- [ ] P2 7.3.3 System theme detection (OS preference)
-- [ ] P2 7.3.4 Custom theme support (CSS variables)
-- [ ] P2 7.3.5 Theme persistence (localStorage)
+- [x] P2 7.3.1 Light theme (default)
+- [x] P2 7.3.2 Dark theme
+- [x] P2 7.3.3 System theme detection (OS preference)
+- [x] P2 7.3.4 Custom theme support (CSS variables)
+- [x] P2 7.3.5 Theme persistence (localStorage)
 - [ ] P2 7.3.6 Theme preview (before applying)
 - [ ] P2 7.3.7 Font size adjustment (small, medium, large)
 - [ ] P2 7.3.8 Color blind mode (protanopia, deuteranopia, tritanopia)
