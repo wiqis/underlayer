@@ -8,5 +8,3 @@ import http
 import json
 import "../core"
 import "../../sqlite3"
-
-link c "sqlite3.c"
