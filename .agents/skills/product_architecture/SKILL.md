@@ -13,95 +13,118 @@ Underlayer is a learning platform for deep technical subjects. It consists of:
 2. **Android app** — offline-first course player with spaced repetition
 3. **Course format** — self-contained, portable directories with Chemical source files that compile to pre-rendered HTML/CSS/JS
 
-## Module Structure
+## Module Structure (as implemented)
 
 ```
 underlayer/
-├── chemical.mod              (project manifest)
-├── src/main.ch               (wiring only — route registration, context building)
+├── chemical.mod              (project manifest — application underlayer, imports all modules;
+│                              source "app" if !test, source "tests" if test)
+├── app/main.ch               (server entrypoint: config → DB → schema → routes → serve)
+├── tests/src/*.ch            (@test functions — run via scripts/test.sh)
 │
-├── core/                     (config, env, logging, string+time utils)
+├── core/                     (module underlayer_core — src/main.ch only, 188 lines)
+│   load_config, get_env_str, get_env_uint, parse_uint,
+│   int_to_string, u32_to_string, log_info, log_error,
+│   current_timestamp, path_segments, json_escape, make_json_string
+│
+├── models/                   (module underlayer_models — src/main.ch only, 374 lines)
+│   Course, Module, ConceptRef, Concept, Manifest,
+│   Learner, ConceptState, ReviewItem, Session,
+│   ExerciseType (+8 factory funcs), Exercise
+│
+├── database/                 (module underlayer_db — src/main.ch only, 198 lines)
+│   DbClient, is_remote_url, make_client, exec_sql, query_sql,
+│   query_sql_single, close  (auto-selects SQLite or Turso by URL)
+│
+├── repository/               (module underlayer_repository — ALL SQL lives here)
 │   └── src/
-│       ├── config.ch         (read env vars: PORT, DATABASE_URL, DATABASE_TOKEN)
-│       ├── logging.ch        (printf-based logging)
-│       └── utils.ch          (string helpers, time formatting)
+│       ├── main.ch           (module root)
+│       ├── helpers.ch        (parse_i64, parse_int, parse_f64, json helpers — public)
+│       ├── schema.ch         (init_schema — CREATE TABLE IF NOT EXISTS + migrations)
+│       ├── courses.ch        (load_course: disk manifest.json → hardcoded ELF fallback)
+│       ├── learners.ch       (create_learner, get_learner)
+│       ├── concept_states.ch (get/upsert/get_all_concept_state)
+│       ├── review_items.ch   (get_due/get_all/update/insert_review_item)
+│       ├── sessions.ch       (create/insert/finish/pause/resume/abort/undo/skip)
+│       ├── session_items.ch  (record/get items, stats, history)
+│       ├── exercises.ch      (get/get_for_concept/insert/count_exercises)
+│       └── goals.ch          (get/set/delete_learning_goal)
 │
-├── models/                   (plain domain structs — no business logic)
+├── learning/                 (module underlayer_learning — pure algorithms, no SQL)
 │   └── src/
-│       ├── course.ch         (Course, Module, Manifest)
-│       ├── concept.ch        (Concept, LearningUnit, Source)
-│       ├── exercise.ch       (Exercise, Option, ExerciseType)
-│       ├── learner.ch        (Learner, ConceptState, EnergyProfile)
-│       └── review.ch         (ReviewItem, ReviewType)
+│       ├── main.ch           (module root — rating constants)
+│       ├── fsrs.ch           (FSRS v4: params, retrievability, next_interval, update_state, optimize/reset/export)
+│       ├── session.ch        (ReviewSession: start, get_current_item, advance, is_complete)
+│       ├── queue.ch          (review queue: build, interleave, adaptive strength)
+│       ├── weakness.ch       (detect weaknesses, trends, chains, clusters, repair)
+│       ├── health.ch         (knowledge health: depth, breadth, gaps, trends, projection)
+│       └── utils.ch          (f64_to_string)
 │
-├── database/                 (dual-backend: SQLite local + Turso HTTP remote)
+├── web/                      (module underlayer_web — handlers, pages, static serving)
 │   └── src/
-│       ├── client.ch         (DbClient — auto-selects SQLite or Turso based on URL)
-│       ├── schema.ch         (CREATE TABLE statements)
-│       └── migrations.ch     (schema versioning)
+│       ├── main.ch           (module root — WebConfig struct + file listing)
+│       ├── helpers.ch        (send_page, send_json_str, send_error, sv_to_string, render_concept)
+│       ├── json_helpers.ch   (json_get, json_str, json_get_str, json_int, json_get_int)
+│       ├── handlers_home.ch         (handle_health, handle_home)
+│       ├── handlers_courses.ch      (list courses, get course, filter)
+│       ├── handlers_lessons.ch      (lesson viewer, course landing)
+│       ├── handlers_review.ch       (start/submit/end/due + modes + recommendations)
+│       ├── handlers_review_page.ch  (GET /review HTML page)
+│       ├── handlers_progress.ch     (progress, course progress, export)
+│       ├── handlers_progress_page.ch(GET /progress HTML page)
+│       ├── handlers_dashboard.ch    (GET /dashboard)
+│       ├── handlers_learners.ch     (create/get learner)
+│       ├── handlers_exercises.ch    (get/submit/hint)
+│       ├── handlers_weakness.ch     (dashboard, export, compare, alerts)
+│       ├── handlers_search.ch       (GET /api/search)
+│       ├── handlers_navigation.ch   (prev/next concept)
+│       ├── handlers_settings.ch     (FSRS settings: optimize/reset/export/import)
+│       └── static.ch                (content_type_for_ext, handle_static_file)
 │
-├── repository/               (ALL SQL lives here — schema + CRUD)
+├── content/                  (module underlayer_content — 24 concept render functions)
 │   └── src/
-│       ├── init.ch           (init_schema(), seed_demo_data())
-│       ├── courses.ch        (course CRUD — reads manifest.json + concept files)
-│       ├── learners.ch       (learner CRUD)
-│       ├── reviews.ch        (review item CRUD)
-│       └── sessions.ch       (session logging)
+│       ├── bytes.ch, binary-representation.ch, file-layout.ch,
+│       ├── elf-identification.ch, elf-header-fields.ch, entry-point.ch,
+│       ├── program-header-table.ch, segment-types.ch, memory-mapping.ch,
+│       ├── section-header-table.ch, common-sections.ch, section-vs-segment.ch,
+│       ├── symbol-table.ch, binding.ch, visibility.ch,
+│       ├── relocation-entries.ch, relocation-types.ch, dynamic-relocations.ch,
+│       ├── dynamic-section.ch, shared-libraries.ch, ld-so.ch,
+│       └── loader.ch, memory-layout.ch, execution.ch
+│                              (each exports render_<concept_id>() : string)
 │
-├── content/                  (course loading, lesson rendering)
-│   └── src/
-│       ├── CourseLoader.ch   (read manifest.json, load concept .ch files)
-│       └── LessonRenderer.ch (render concept → HtmlPage → string)
-│
-├── learning/                 (FSRS engine, progress tracking, review scheduling)
-│   └── src/
-│       ├── fsrs.ch           (FSRS algorithm: difficulty, stability, retrievability)
-│       ├── review.ch         (review session management, due items)
-│       ├── progress.ch       (concept state tracking, knowledge health)
-│       └── weakness.ch       (weakness detection, repair suggestions)
-│
-├── web/                      (public pages, API routes, static file serving)
-│   └── src/
-│       ├── main.ch           (route registration, server startup)
-│       ├── health.ch         (GET /api/health)
-│       ├── courses.ch        (GET /api/courses, GET /api/courses/:id)
-│       ├── lessons.ch        (GET /api/courses/:id/lessons/:concept_id)
-│       └── static.ch         (serve courses/*/output/ directories)
-│
-├── courses/                  (course content — self-contained directories)
-│   └── elf/
-│       ├── chemical.mod      (imports page, html_cbi, css_cbi, js_cbi)
-│       ├── manifest.json     (metadata, version, module sequence)
-│       ├── src/
-│       │   ├── main.ch       (build entry — calls render functions, writes output/)
-│       │   ├── bytes.ch      (concept page using #html + #css + #js)
-│       │   └── ...
-│       ├── output/           (generated — pre-rendered HTML/CSS/JS)
-│       └── assets/           (sample ELF files, images)
+├── courses/elf/              (course content: chemical.mod, manifest.json, src/ —
+│                              4 source files so far: main.ch, bytes.ch,
+│                              binary-representation.ch, file-layout.ch)
 │
 └── .agents/skills/           (this documentation)
 ```
 
-## Dependency Chain
+**Important:** the `courses/elf/src/` files duplicate renderers for the first 3 concepts so the course can be pre-rendered to static output. The server-rendered path uses `content/src/*.ch` via `underlayer_web::render_concept()`. When adding a concept, add the renderer to `content/src/` AND register the ID→function mapping in `web/src/helpers.ch::render_concept()`.
+
+## Dependency Chain (as implemented in chemical.mod files)
 
 ```
-src/main.ch
+app/main.ch  (entrypoint — wires everything, registers all routes)
    ↓
-web/                         (HTTP routes, static file serving)
+web (underlayer_web)         (HTTP handlers, pages, static file serving)
+   ↓ imports ../content, ../repository, ../learning is NOT imported by web —
+   │  learning is used via repository where needed; keep it that way
+content (underlayer_content) (concept renderers — imports core only)
    ↓
-content/                     (course loading, lesson rendering)
+repository (underlayer_repository) (ALL SQL lives here — imports core, database, models)
    ↓
-learning/                    (FSRS, progress, scheduling)
+learning (underlayer_learning)     (pure algorithms — imports core, models, no SQL)
    ↓
-repository/                  (ALL SQL lives here)
+models (underlayer_models)         (plain domain structs — imports std only)
+database (underlayer_db)           (SQLite + Turso — imports std, cstd, http, json, core, sqlite3)
    ↓
-models/                      (plain domain structs)
-database/                    (dual-backend SQLite + Turso HTTP)
-   ↓
-core/                        (config, env, logging, utils)
+core (underlayer_core)             (config, env, logging, utils — imports std, cstd)
 ```
 
-**Rule:** A layer may only call layers below it. If you are tempted to run SQL inside `web/`, stop — add a repository function instead.
+**Rule:** A layer may only call layers below it. If you are tempted to run SQL inside `web/`, stop — add a repository function instead. If `learning/` ever needs SQL, take the data in as parameters instead — it stays pure.
+
+**Namespace rule:** each module's namespace matches its directory: `underlayer_core`, `underlayer_models`, `underlayer_db`, `underlayer_repository`, `underlayer_learning`, `underlayer_web`, `underlayer_content`.
 
 ## Data Flow
 
@@ -136,11 +159,16 @@ Returns Course struct with concepts, metadata
 ```
 Request: GET /api/courses/elf/lessons/elf-header
   ↓
-web/lessons reads course ID + concept ID from URL
+web/handlers_lessons reads course ID + concept ID from URL
   ↓
-web/lessons reads courses/elf/output/elf-header.html (pre-rendered)
+web/helpers.ch::render_concept() maps concept_id → underlayer_content::render_<id>()
   ↓
-Returns HTML file directly (no rendering on request)
+HtmlPage built with #html/#css/#js, sent via send_page()
+  ↓
+Returns HTML (rendered server-side at request time — concepts are compiled in)
+
+Static assets (css/js files under courses/elf/) are served by
+web/static.ch::handle_static_file via the /courses/* catch-all route.
 ```
 
 ### Learning Session Flow
@@ -257,13 +285,13 @@ web/static serves these files via HTTP
 
 ## Key Design Decisions
 
-### 1. Course Pages Are Pre-Rendered
+### 1. Concept Pages Are Compiled In, Rendered On Request
 
-Course concept .ch files compile to static HTML/CSS/JS at build time. The web server serves these pre-rendered files — it does NOT render pages on every request. This means:
-- Fast page loads (no server-side rendering)
-- Course pages can be served from CDN
-- Offline support is trivial (download the output/ directory)
-- The `page` library's `HtmlPage.toString()` or `writeToDirectory()` generates the files
+Concept render functions live in `content/src/*.ch` and are compiled into the server binary. On request, `web/src/handlers_lessons.ch` calls `underlayer_web::render_concept()` which dispatches by concept ID to the matching `underlayer_content::render_*()` function. This means:
+- No file I/O for lesson HTML — render functions build an `HtmlPage` in memory
+- Adding a concept = new file in `content/src/` + one mapping line in `web/src/helpers.ch::render_concept()`
+- Static assets (`.css`, `.js`, images) still come from disk via `static.ch`
+- The `courses/elf/src/` directory mirrors 3 concepts for the pre-render-to-output flow (GitHub Pages mode); keep it in sync with `content/src/`
 
 ### 1b. Dual-Mode Architecture (Static + Backend)
 
@@ -291,19 +319,25 @@ Every course MUST work without a backend:
 
 ### 2. Database Is Dual-Backend
 
-The `DbClient` auto-selects based on connection URL:
-- Local file path (e.g., `./underlayer.db`) → SQLite3 via `lang/compiled/sqlite3/`
-- HTTP/HTTPS URL (e.g., `https://xxx.turso.io`) → Turso HTTP via `lang/compiled/academic/libturso/`
+`underlayer_db::make_client(url, token)` auto-selects based on the connection URL:
+- Local file path (e.g., `./underlayer.db`) → SQLite3
+- HTTP/HTTPS URL (e.g., `https://xxx.turso.io`) → Turso HTTP
 
-This matches the pattern from `lang/compiled/cars/database/`.
+`app/main.ch` skips `init_schema()` for remote URLs (remote DBs are provisioned externally).
 
-### 3. FSRS Over SM-2
+Note: current repository code builds SQL with `string` + `append_view`/`append_string` (no parameterized queries). Values inserted into SQL must be trusted or escaped via `underlayer_core::json_escape`/`make_json_string` equivalents — see `api_reference` skill for the schema.
 
-FSRS (Free Spaced Repetition Scheduler) is used instead of SM-2 because:
+### 3. FSRS Over SM-2 — Implemented
+
+FSRS v4 is implemented in `learning/src/fsrs.ch` (not just planned):
+- `FSRSParams` with paper-default weights, `fsrs_retrievability`, `fsrs_next_interval`, `fsrs_update_state`
+- `optimize_fsrs_params` (prediction-error based), `reset_fsrs_params`, `export_fsrs_params`
+- Exposed via `/api/fsrs/optimize`, `/api/fsrs/reset`, `/api/fsrs/export`, `/api/fsrs/import`
+
+FSRS is used instead of SM-2 because:
 - 20-30% fewer reviews for same retention
 - Better handles difficult items
 - Parameters derived from actual forgetting curves
-- Modern algorithm (2023) based on memory research
 
 ### 4. Chemical for Everything
 

@@ -1,6 +1,6 @@
 # Underlayer — Skills Index
 
-Comprehensive documentation for the `lang/compiled/underlayer` project. Load the relevant skill before working on a particular area.
+Comprehensive documentation for the Underlayer project (root `chemical.mod`, modules under `core/`, `database/`, `models/`, `repository/`, `learning/`, `web/`, `content/`). Load the relevant skill before working on a particular area.
 
 ## Quick Start: I Need To...
 
@@ -16,12 +16,17 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 | Build an interactive exercise | `micro_interactions` | `course_writing` |
 | Set up deployment | `deployment` | `engineering_patterns` |
 | Understand the system | `product_architecture` | — |
+| Add/modify an API route | `api_reference` | `web_development` |
+| Query or extend the DB | `api_reference` | `coding_conventions` |
+| Write a platform test | `testing` | `coding_conventions` |
+| Check feature priority | `features_checklist` | — |
 
 ## Available Skills
 
 | Skill | File | Description |
 |-------|------|-------------|
 | **Product Architecture** | `product_architecture/SKILL.md` | System design, module structure, data flow, technology decisions |
+| **API Reference** | `api_reference/SKILL.md` | Every HTTP route, DB table, repository function, and handler file — generated from the actual code |
 | **Learning Design** | `learning_design/SKILL.md` | How concepts are taught, FSRS, retrieval practice, interleaving, anxiety-friendly design |
 | **Course Architecture** | `course_architecture/SKILL.md` | Course file structure, concept dependencies, lesson format, exercise types |
 | **User Flows** | `user_flows/SKILL.md` | Every screen, action, and data flow — onboarding, course browsing, learning sessions, review, dashboard, adaptation |
@@ -35,6 +40,7 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 | **Course Writing** | `course_writing/SKILL.md` | Practical guide for AI agents writing .ch course files: patterns, mistakes, Chemical syntax, exercises |
 | **Libraries Reference** | `libs_reference/SKILL.md` | Complete catalog of available libraries: std, page, server, http, json, fs, encoding, components, sqlite3, Turso |
 | **Coding Conventions** | `coding_conventions/SKILL.md` | Style rules, naming conventions, and patterns extracted from the actual codebase |
+| **Testing** | `testing/SKILL.md` | Test infrastructure: `@test` + TestEnv, `serve_async` HTTP test pattern, test scripts, port allocation |
 
 ## Which Skill to Load
 
@@ -56,17 +62,17 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 | Task | Load | Why |
 |------|------|-----|
 | Understanding the overall system | `product_architecture` | System design, module structure |
+| Finding an existing route or table | `api_reference` | Routes, schema, repository functions — from real code |
+| Adding a route or endpoint | `api_reference` + `web_development` | Route patterns + handler/page patterns |
 | Designing screens or user interactions | `user_flows` | Every screen, action, data flow |
-| Writing routes or API endpoints | `user_flows` | Route definitions, data flow |
 | Implementing onboarding or dashboard | `user_flows` | Screen-by-screen flow |
 | Adding tooltips, toasts, or micro-animations | `micro_interactions` | 35 tiny UI features |
 | Designing keyboard shortcuts | `micro_interactions` | Shortcut patterns |
 | Building empty states or loading skeletons | `micro_interactions` | Skeleton patterns |
 | Error handling, logging, or security | `engineering_patterns` | Blind spots checklist |
-| Database migrations or caching | `engineering_patterns` | Connection pooling, schema |
-| Testing strategy or monitoring | `engineering_patterns` | Test patterns, metrics |
-| Setting up routes or server config | `libs_reference` | Server API |
-| Database operations | `libs_reference` | SQLite3, Turso API |
+| Database migrations or caching | `engineering_patterns` + `api_reference` | Schema rules + current tables |
+| Testing strategy or monitoring | `testing` | `@test` pattern, test scripts |
+| Server config or library APIs | `libs_reference` | Server, SQLite3, Turso APIs |
 
 ### Chemical Language
 
@@ -106,12 +112,24 @@ Comprehensive documentation for the `lang/compiled/underlayer` project. Load the
 
 ## Project Stats
 
-- **Status:** Planning (no code yet)
+- **Status:** Working platform — server builds, runs, and serves the ELF course; 210/1883 checklist items done (all P0 core learning loop)
 - **Language:** Chemical
-- **First course:** ELF — Executable and Linkable Format
+- **First course:** ELF — Executable and Linkable Format (24 concepts, 8 modules)
 - **Target platforms:** Web + Android (offline)
 - **Database:** Dual-backend SQLite (local) + Turso HTTP (remote)
-- **Course format:** Chemical source files with #html/#css/#js/#md macros → pre-rendered HTML/CSS/JS
-- **Core features:** Spaced repetition (FSRS), interleaved practice, retrieval-first design, anxiety-friendly pacing
-- **Total documents:** 25 docs + 14 skills + 1 AGENTS.md + 1 README
+- **Course format:** Chemical source files with #html/#css/#js macros → pre-rendered HTML/CSS/JS
+- **Core features implemented:** FSRS v4, 10 review modes, exercise engine, weakness detection, knowledge health, session management, goals, search, navigation, progress export
+- **Total documents:** 28 docs + 20 skills + 1 AGENTS.md + 1 README
 - **AI course development:** 4 core skills (course_generation, course_writing, review_quality, technical_research) + 5 supporting docs
+
+## Keeping Skills Accurate
+
+Skills were last reconciled against the code on **2026-09-14**. When you change module structure, routes, schema, or build commands, update the relevant skill in the same commit:
+
+| Changed... | Update... |
+|---|---|
+| Route added/removed | `api_reference/SKILL.md` |
+| Module/file layout | `product_architecture/SKILL.md` |
+| DB table or repository function | `api_reference/SKILL.md` |
+| Build/run/test commands | `features_checklist/SKILL.md`, `testing/SKILL.md` |
+| New convention discovered | `coding_conventions/SKILL.md` |

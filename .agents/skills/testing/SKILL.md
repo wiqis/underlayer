@@ -1,9 +1,91 @@
 ---
 name: Testing Guide
-description: Comprehensive guide to the Chemical compiler test infrastructure — how tests are organized, written, and executed. Covers the test framework, @test annotation dispatch, test_env and test libraries, and how compiler plugins get tested via lang/tests/build.lab.
+description: How to write and run tests for the Underlayer platform (@test + TestEnv, serve_async HTTP pattern, test scripts) and the underlying Chemical compiler test infrastructure.
 ---
 
 # Testing Guide
+
+## Part 1 — Underlayer Platform Tests (this project)
+
+The Underlayer test suite lives in `tests/src/` and is built from the root `chemical.mod` with `source "tests" if test`.
+
+### Layout
+
+```
+tests/src/
+├── test_helpers.ch            # setup_test_db() — makes ./test_underlayer_tmp.db + init_schema
+├── health_test.ch             # /api/health
+├── api_test.ch                # /api/progress, /api/review/start, /api/review/due, /api/search
+├── additional_api_test.ch     # learners, goals, sessions, fsrs, exercises, navigation (largest)
+├── session_test.ch            # /api/sessions, /api/review/recommendations, /api/recent
+├── session_pause_test.ch      # pause/resume/abort/undo/skip
+├── progress_detailed_test.ch  # /api/progress/export, /api/analytics/sessions, /api/fsrs/export
+├── weakness_test.ch           # /api/weaknesses + export/compare/alerts
+├── courses_test.ch            # /api/courses + lessons
+├── content_test.ch            # course content + search
+├── search_test.ch             # /api/search
+├── pages_test.ch              # /, /dashboard, /review, /progress HTML pages
+├── page_html_test.ch          # page HTML sanity checks
+└── ..._test.ch
+```
+
+### The Test Pattern (copy this)
+
+Every test is `@test`-annotated, takes `env : &mut TestEnv`, spins up an in-process HTTP server on a **unique port in the 19.8xx–19.9xx range**, and issues real requests with `http::Client`:
+
+```chemical
+@test
+public func test_health_returns_200(env : &mut TestEnv) {
+    var db = test_helpers::setup_test_db()
+    var courses_dir = string("./courses")
+    var cfg = server.ServerConfig()
+    cfg.addr = string("127.0.0.1:19876")        // ← UNIQUE port per test
+    var srv = server.Server(cfg)
+    srv.router.add("GET", "/api/health", (req, res) => {
+        underlayer_web::handle_health(&req, &raw mut res)
+    })
+    srv.serve_async(19876u)
+    std::concurrent.sleep_ms(200u)               // wait for startup
+
+    var client = http::Client()
+    var res = client.get("http://127.0.0.1:19876/api/health")
+    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Ok(resp) = res else unreachable
+    if(resp.status != 200u) { env.error("expected status 200") }
+
+    srv.shutdown()                               // ALWAYS clean up, also on failure paths
+    underlayer_db::close(&raw db)
+}
+```
+
+**Conventions:**
+- Each test registers **only the routes it needs** (closures capture locals by reference, so helpers can't do the registration for you — see the comment in `test_helpers.ch`)
+- Pick a port not used by any other test (the suite uses 19876–19993; grep before choosing)
+- Failure path: call `env.error("msg")` then clean up (`srv.shutdown()`, `underlayer_db::close(&raw db)`) and `return`
+- DB-backed tests start from `test_helpers::setup_test_db()` — a throwaway SQLite file
+- POST bodies are sent with `client.post(url, content_type, body)` style calls; JSON built with string appends
+
+### Running
+
+```bash
+./scripts/test.sh                                    # build tests.exe + run all @test functions
+./scripts/test.sh --no-build                         # skip rebuild
+./scripts/test.sh --test-names "test_health_returns_200"
+./scripts/test.sh --test-names "name1,name2"         # several
+./scripts/test.sh --test-ids "1073741823"            # by numeric ID
+```
+
+`scripts/test.sh` builds with `$COMPILER "$MOD" -o "$EXE" -frecompile-plugins --test --no-cache` where `MOD` is the root `chemical.mod`. `scripts/underlayer-build-test.sh` additionally starts the real server and curls every endpoint (build + smoke test in one).
+
+### Adding a test for a new endpoint
+
+1. Create/extend a `tests/src/<area>_test.ch`
+2. Copy the pattern above; register only your route(s)
+3. Choose an unused port in the 19.8xx/19.9xx range
+4. Assert status codes **and** response body content (`resp.body.read_to_string()` + `body.find(string_view("...")) != std::NPOS`)
+5. Cover the error path too (missing params → 400, unknown IDs → 404) — most existing tests pair happy + error cases
+
+## Part 2 — Chemical Compiler Test Infrastructure (reference)
 
 The Chemical compiler has a multi-layered test infrastructure. Tests can be inline (called manually), annotation-based (auto-dispatched via `@test`), or library-level (for compiler plugins). Understanding these layers is essential for writing effective tests.
 

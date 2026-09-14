@@ -144,71 +144,111 @@ public func render_bytes() : std::string {
 | Learning analytics | `sessions` table |
 | Adaptive difficulty | `review_items` table |
 
-## Pattern for Route Handlers (Backend Mode)
+## Pattern for Route Handlers (Backend Mode) — as used in web/src/
+
+Real example shape from `handlers_review_page.ch` / `handlers_home.ch`:
 
 ```chemical
-public func handle_page(req : &http::Request, res : *mut http::ResponseWriter) {
+public func handle_review_page(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
     var page = HtmlPage()
-    page.default_prepare()
-    page.append_title(std::string_view("Page Title - Underlayer"))
+    page.defaultUniversalSetup()          // 1. hydration runtime — REQUIRED
+    page.defaultPrepare()                 // 2. charset + viewport — REQUIRED
+    page.injectDefaultComponentsTheme()   // 3. shadcn theme tokens — REQUIRED
+    page.appendTitle(std::string_view("Review — Underlayer"))
 
     #html {
-        <div class="content">
-            <h1>Page Title</h1>
-            <p>Content here</p>
+        <div class="navbar"> ... shared nav across all pages ... </div>
+        <div class="container">
+            <h1>Review Session</h1>
         </div>
     }
 
     #css {
-        .content { max-width: 800px; margin: 0 auto; }
+        body { font-family: system-ui, sans-serif; ... }
+        /* page styles — same .navbar/.container base in every handler */
     }
 
     #js {
-        // Interactive behavior
+        // Vanilla client-side JS, ASCII only.
+        // Talks to the backend via fetch() against /api/* endpoints.
+        fetch("/api/review/due?course_id=elf&limit=50")
+            .then(function(r) { return r.json(); })
+            .then(function(data) { /* render */ });
     }
 
-    var ct = std::string_view("text/html; charset=utf-8")
-    res.set_header_view(std::string_view("Content-Type"), &ct)
-    var html = page.to_string()
-    var hv = html.to_view()
-    res.write_view(&hv)
+    send_page(res, &raw page)   // from web/src/helpers.ch — sets text/html header + writes
 }
 ```
 
-## Pattern for Static Emission
+### JSON API handlers (no page)
 
 ```chemical
-// courses/elf/src/bytes.ch
-public func render_bytes() : std::string {
-    var page = HtmlPage()
-    page.default_prepare()
-    page.append_title(std::string_view("Bytes and Binary - Underlayer"))
-
-    #html {
-        <div class="lesson">
-            <h1>Bytes and Binary</h1>
-            <p>Every file is made of bytes...</p>
-        </div>
-    }
-
-    #css {
-        .lesson { max-width: 800px; margin: 0 auto; }
-    }
-
-    #js {
-        function selectByte(el) { /* ... */ }
-    }
-
-    return page.to_string()
-}
-
-// courses/elf/src/main.ch — Build entry
-public func main() : int {
-    var bytes_html = render_bytes()
-    write_output("output/bytes.html", &raw bytes_html)
-    return 0
+public func handle_progress(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    // 1. Parse query/body
+    var learner_id = sv_to_string(...)            // helpers.ch
+    // 2. Call repository (never SQL here)
+    var states = underlayer_repository::get_all_concept_states(db, &learner_id, &course_id)
+    // 3. Build JSON string
+    var body = std::string("{\"learner_id\":\"")
+    body.append_string(&learner_id)
+    body.append_view("\"}")
+    // 4. Send
+    send_json_str(res, &raw body)                 // helpers.ch
 }
 ```
+
+### Error responses
+
+```chemical
+var err = std::string("Concept not found")
+send_error(res, 404u, &raw err)   // status + {"error":"..."}
+```
+
+Route lambdas in `app/main.ch` validate segment counts and write a minimal JSON error inline when short:
+
+## Pattern for Concept Renderers (content/src/)
+
+Each concept is a render function compiled into the server:
+
+```chemical
+// content/src/bytes.ch
+public namespace underlayer_content {
+    public func render_bytes() : string {
+        var page = HtmlPage()
+        page.defaultUniversalSetup()
+        page.defaultPrepare()
+        page.appendTitle(std::string_view("Bytes and Binary — Underlayer"))
+
+        #html { /* lesson markup */ }
+        #css  { /* scoped lesson styles */ }
+        #js   { /* interactivity, ASCII only */ }
+
+        return page.toString()
+    }
+}
+```
+
+**Registration is manual and required.** Add the concept ID mapping in `web/src/helpers.ch::render_concept()`:
+
+```chemical
+var new_id = std::string("my-concept")
+if(cid.equals(&new_id)) { return underlayer_content::render_my_concept() }
+```
+
+Missing registration = empty page. The mapping currently covers all 24 ELF concepts (`bytes` … `execution`); unknown IDs return an empty string.
+
+## Pattern for Pre-Rendered Static Emission (courses/elf/src/)
+
+The course module mirrors 3 concepts for GitHub-Pages-style static output:
+
+```chemical
+// courses/elf/src/bytes.ch — same shape as content/src version
+public func render_bytes() : std::string { ... return page.toString() }
+
+// courses/elf/src/main.ch — build entry that writes output files
+```
+
+`courses/elf/chemical.mod` imports `"../../content"` and `"../../core"` — reuse the content renderers instead of duplicating markup when possible.
 
 ## Universal Components
 
@@ -325,7 +365,27 @@ content/
 ### Module Imports for Universal Components
 
 ```chemical
-// content/chemical.mod
+// web/chemical.mod (as implemented)
+module underlayer_web
+source "src"
+import std
+import cstd
+import http
+import json
+import fs
+import page
+import html_cbi
+import css_cbi
+import js_cbi
+import universal_cbi
+import components
+import "../core"
+import "../database"
+import "../models"
+import "../repository"
+import "../content"
+
+// content/chemical.mod (as implemented)
 module underlayer_content
 source "src"
 import std
@@ -334,8 +394,7 @@ import page
 import html_cbi
 import css_cbi
 import js_cbi
-import components         # Design system primitives
-import "../core"          # Underlayer utils
+import "../core"
 ```
 
 ### Gotchas

@@ -33,9 +33,12 @@ Every feature in `docs/features-complete.md` has a priority tag. **Always work o
 | Struct names | `PascalCase` | `Vehicle`, `DbClient` |
 | Enum variants | `PascalCase` | `Option.Some`, `Result.Err` |
 | Module names | `snake_case` | `cars_db`, `cars_core` |
-| Namespaces | `snake_case` | `public namespace cars_db` |
+| Namespaces | `snake_case` | `public namespace underlayer_web` |
 | Generic params | Single uppercase | `T`, `U`, `V` |
-| Test functions | `test_*()` | `test_vectors()` |
+| Test functions | `test_*()` | `test_health_returns_200` |
+| Render functions (content) | `render_<concept_id_snake>` | `render_binary_representation()` |
+| Handler files | `handlers_<area>.ch` | `handlers_review_page.ch` |
+| Concept files | `<concept-id>.ch` (kebab) | `file-layout.ch` |
 
 ---
 
@@ -269,22 +272,125 @@ set_volume(0.5)     // TypeCheck error
 
 ---
 
+## Verified Patterns From This Codebase (2026-09-14)
+
+These are extracted from the actual Underlayer modules — copy them instead of inventing variants.
+
+### Module → Namespace → Naming
+
+| Directory | Module | Namespace |
+|---|---|---|
+| `core/` | `underlayer_core` | `public namespace underlayer_core` |
+| `models/` | `underlayer_models` | `public namespace underlayer_models` |
+| `database/` | `underlayer_db` | `public namespace underlayer_db` |
+| `repository/` | `underlayer_repository` | `public namespace underlayer_repository` |
+| `learning/` | `underlayer_learning` | `public namespace underlayer_learning` |
+| `web/` | `underlayer_web` | `public namespace underlayer_web` |
+| `content/` | `underlayer_content` | `public namespace underlayer_content` |
+
+### Page Build Pattern (web/ HTML pages)
+
+```chemical
+public func handle_something_page(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    var page = HtmlPage()
+    page.defaultUniversalSetup()          // hydration runtime
+    page.defaultPrepare()                 // charset + viewport
+    page.injectDefaultComponentsTheme()   // shadcn theme tokens
+    page.appendTitle(std::string_view("Page — Underlayer"))
+
+    #html { /* page markup incl. .navbar shared across pages */ }
+    #css  { /* page styles */ }
+    #js   { /* vanilla client-side JS; use fetch() against /api/* */ }
+
+    send_page(res, &raw page)             // helper in web/src/helpers.ch
+}
+```
+
+All three setup calls are required on every page — handlers in this codebase call them in that order.
+
+### Response Helpers (web/src/helpers.ch)
+
+```chemical
+send_page(res, &raw page)                    // text/html; charset=utf-8
+send_json_str(res, &raw body_string)         // application/json
+send_error(res, 404u, &raw err_msg_string)   // sets status + {"error":"..."} JSON
+sv_to_string(&raw sv)                        // string_view → owned string (char loop)
+```
+
+JSON responses in this codebase are built with `std::string("...")` + `append_view(...)` and integer values via `underlayer_core::int_to_string(...)`.
+
+### JSON Body Parsing (web/src/json_helpers.ch)
+
+```chemical
+var parsed = json::parse(req.body.to_view())   // or similar; may be Result
+// then, on the root JsonValue:
+var name  = json_get_str(&raw root, "name")    // "" if missing
+var count = json_get_int(&raw root, "count")   // 0 if missing
+```
+
+Same helpers exist in `repository/src/helpers.ch` (`json_i64` additionally).
+
+### Core Utility Functions (underlayer_core)
+
+```chemical
+underlayer_core::int_to_string(42)          // i64 → string
+underlayer_core::u32_to_string(9000u)       // uint → string
+underlayer_core::current_timestamp()        // i64 epoch seconds
+underlayer_core::path_segments(&raw sv)     // vector<string_view>, splits on '/'
+underlayer_core::json_escape(&raw sv)       // escape for embedding in JSON strings
+underlayer_core::make_json_string(&raw sv)  // wrap in quotes + escape
+underlayer_core::log_info(&raw sv)
+underlayer_core::log_error(&raw sv)
+```
+
+### Route Registration (app/main.ch)
+
+Routes live in `app/main.ch`, not in the web module. Pattern for parametrized routes:
+
+```chemical
+srv.router.add("GET", "/api/courses/:courseId/lessons/:conceptId", (|&courses_dir|(req, res) => {
+    var path = req.path.to_view()
+    var segments = underlayer_core::path_segments(&path)
+    if(segments.size() >= 4) {
+        var course_id = segments.get_ptr(1)
+        var concept_id = segments.get_ptr(3)
+        underlayer_web::handle_lesson(courses_dir, course_id, concept_id, &req, &raw mut res)
+    } else {
+        res.status = 400u
+        // ... minimal JSON error via write_view
+    }
+}))
+```
+
+Index by segment position (`segments.get_ptr(1)` for `:courseId` in `/api/courses/:courseId`), not by name — the router does not substitute params.
+
+### Handler Signature Conventions
+
+| Kind | Signature |
+|---|---|
+| Needs DB + dir | `(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter)` |
+| Needs DB only | `(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter)` |
+| Static only | `(req : &http::Request, res : *mut http::ResponseWriter)` |
+| Request mutation (POST body) | pass `&raw mut req` from the route lambda |
+
 ## Gotchas Checklist
 
 Before writing code, verify:
 
-- [ ] No `+` for strings — use `append_view()`
+- [ ] No `+` for strings — use `append_view()` / `append_string()`
 - [ ] Every `if` has an `else`
 - [ ] No `0.5` for float (use `0.5f`)
 - [ ] `vector.get(i)` returns COPY — use `get_ptr(i)`
-- [ ] `string_view` has no ownership
-- [ ] `defaultUniversalSetup()` before components
+- [ ] `string_view` has no ownership — convert with `sv_to_string` to store
+- [ ] `defaultUniversalSetup()` + `defaultPrepare()` + `injectDefaultComponentsTheme()` before `#html`
 - [ ] `var Err(e) = result else unreachable`
 - [ ] Lambda captures: `(|var|` value, `(|&var|` reference
-- [ ] Test functions: `test_snake_case()`
+- [ ] Test functions: `@test` + `test_snake_case(env : &mut TestEnv)`
 - [ ] Feature priorities: P0 first, P3 last
-- [ ] File max 250 lines — split if exceeded
+- [ ] File max 250 lines — split if exceeded (web/ and repository/ follow this; `models/src/main.ch` at 374 and `app/main.ch` are known exceptions)
 - [ ] Private helpers across files → public in `helpers.ch`
-- [ ] `path_segments()` — use `size() - 1` for last segment
+- [ ] `path_segments()` — use `size() - 1` for last segment; index by position
 - [ ] `QueryMap.get()` — returns empty string if missing
 - [ ] `string.data()` may not be null-terminated — use `.size()` for SQLite
+- [ ] SQL built with string appends — never embed user-controlled values unescaped
+- [ ] New concept? Register ID in `web/src/helpers.ch::render_concept()`
