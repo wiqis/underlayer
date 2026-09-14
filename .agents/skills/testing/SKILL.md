@@ -1,0 +1,930 @@
+---
+name: Testing Guide
+description: Comprehensive guide to the Chemical compiler test infrastructure — how tests are organized, written, and executed. Covers the test framework, @test annotation dispatch, test_env and test libraries, and how compiler plugins get tested via lang/tests/build.lab.
+---
+
+# Testing Guide
+
+The Chemical compiler has a multi-layered test infrastructure. Tests can be inline (called manually), annotation-based (auto-dispatched via `@test`), or library-level (for compiler plugins). Understanding these layers is essential for writing effective tests.
+
+## Test Architecture Overview
+
+```
+lang/tests/
+├── build.lab                  # Master build script — wires everything together
+├── common/                    # Shared tests (run in both interpret and compiled modes)
+│   ├── chemical.mod
+│   └── src/
+│       ├── test.ch            # test(), assertEquals(), print_test_stats()
+│       └── main.ch            # run_common_tests()
+├── interpret/                 # Interpretation-only tests
+│   ├── chemical.mod
+│   └── src/main.ch            # Entry point for --arg-interpret
+├── native_common/             # Pointer arithmetic tests (interpret + compiled)
+│   ├── chemical.mod
+│   └── src/main.ch            # run_native_common_tests()
+├── src/                       # Compiled-only tests
+│   ├── chemical.mod
+│   ├── tests.ch               # run_executable_tests(), main()
+│   ├── basic/                 # Basic language feature tests
+│   ├── comptime/              # Compile-time feature tests
+│   ├── core/                  # Core language tests
+│   ├── generic/               # Generic instantiation tests
+│   ├── stdlib/                # Standard library tests
+│   └── compiler_plugins/      # Tests that depend on specific libraries
+├── compiler_plugins/          # Library-specific tests (html, css, js, universal, md)
+│   ├── html/
+│   ├── css/
+│   ├── js/
+│   ├── universal/
+│   ├── md/
+│   └── runner/
+└── submod2/, submod3/         # Sub-module tests for module import/export
+```
+
+## Two Test Dispatch Mechanisms
+
+### 1. Manual Inline Tests
+
+Tests are written as regular functions and called explicitly:
+
+```chemical
+// lang/tests/common/src/main.ch
+public func run_common_tests() {
+    test("arithmetic addition", () => { return 2 + 2 == 4 });
+    test("string equality", () => { return "hello" == "hello" });
+    // Every test function is called explicitly here
+}
+```
+
+**Flow:**
+1. `run_common_tests()` is called from the module's entry point
+2. Inside, each `test(...)` call is made explicitly
+3. `test()` is defined in `common/src/test.ch`
+
+### 2. `@test` Annotation Dispatch
+
+Tests annotated with `@test` are automatically discovered and dispatched:
+
+```chemical
+@test
+func my_auto_test() : bool {
+    return 2 + 2 == 4
+}
+```
+
+**Flow:**
+1. `intrinsics::get_tests<TestFunction>()` (defined in `compiler/Interpreter/Core.cpp`) collects all `@test`-annotated functions
+2. `test_runner(argc, argv)` from the `test_env` library dispatches them
+3. Each test function runs in a **separate process** via IPC
+4. Test results are communicated back to the parent process
+
+```chemical
+// In lang/tests/src/tests.ch:
+public func main(argc : int, argv : **char) : int {
+    if(argc > 1) {
+        run_executable_tests()           // Manual inline tests
+    } else {
+        // Default: run @test annotated functions
+    }
+    test_runner(argc, argv)              // Auto-dispatched @test functions
+    print_test_stats()
+}
+```
+
+## The Test Framework (`lang/tests/common/src/test.ch`)
+
+### Core Functions
+
+```chemical
+var total_tests = 0;
+var tests_passed = 0;
+var tests_failed = 0;
+
+public func test(name : *char, assert : () => bool) {
+    if(assert()) {
+        comptime if(intrinsics::is_interpretation()) {
+            intrinsics::expr_println(`${ANSI_COLOR_GREEN}Test ${total_tests + 1} [${name}] succeeded${ANSI_COLOR_RESET}`);
+        } else {
+            printf("%sTest %d [%s] succeeded %s\n", ANSI_COLOR_GREEN, total_tests + 1, name, ANSI_COLOR_RESET);
+        }
+        tests_passed++;
+    } else {
+        comptime if(intrinsics::is_interpretation()) {
+            intrinsics::expr_println(`${ANSI_COLOR_RED}Test ${total_tests + 1} [${name}] failed${ANSI_COLOR_RESET}`);
+        } else {
+            printf("%sTest %d [%s] failed %s\n", ANSI_COLOR_RED, total_tests + 1, name, ANSI_COLOR_RESET);
+        }
+        tests_failed++;
+    }
+    total_tests++;
+}
+
+public func print_test_stats() {
+    var color = tests_failed > 0 ? ANSI_COLOR_RED : ANSI_COLOR_GREEN;
+    comptime if(intrinsics::is_interpretation()) {
+        intrinsics::expr_println(`Total ${total_tests} ${ANSI_COLOR_GREEN}Passed ${tests_passed}${ANSI_COLOR_RESET} ${color}Failed ${tests_failed}${ANSI_COLOR_RESET}`);
+    } else {
+        printf("Total %d %sPassed %d%s %sFailed %d%s", total_tests, ...);
+    }
+}
+```
+
+**Key design:** Uses `comptime if(intrinsics::is_interpretation())` to select between:
+- **Interpretation path**: `intrinsics::expr_println()` with expressive strings (backtick `${}` templates)
+- **Compiled path**: Standard `printf()` with ANSI escape codes
+
+## The `test_env` Library (`lang/libs/test_env/`)
+
+The `test_env` library provides the infrastructure for `@test` annotation dispatch:
+
+```chemical
+// Key functions:
+func test_runner(argc : int, argv : **char) {
+    // 1. Uses intrinsics::get_tests<TestFunction>() to collect all @test functions
+    // 2. Spawns a child process for each test via IPC
+    // 3. Waits for all tests to complete
+    // 4. Collects results
+}
+```
+
+The `test_runner` function:
+- Dispatches each `@test`-annotated function in a **separate process**
+- Uses IPC to communicate pass/fail results back to the parent
+- Enables isolation: one test crashing doesn't affect others
+- Parallel execution: tests can run concurrently
+
+## The `test` Library (`lang/libs/test/`)
+
+The `test` library provides the `TestFunction` struct and related types:
+
+```chemical
+// TestFunction — the type used by @test-annotated functions
+// Collected by intrinsics::get_tests<TestFunction>()
+// Each function must return bool (true = pass, false = fail)
+```
+
+## How Tests Are Wired in `lang/tests/build.lab`
+
+The master build script (`lang/tests/build.lab`) is the central wiring point:
+
+### Module Creation Flow
+
+```chemical
+func build(ctx : *mut AppBuildContext) : *mut LabJob {
+    // Check for --arg-test-plugins → build library test executable
+    if(ctx.has_arg("test-plugins")) {
+        return test_lib_exe(ctx, "all")
+    }
+
+    // Check for --arg-interpret → build interpretation job
+    if(ctx.has_arg("interpret")) {
+        const interp_job = ctx.build_interpretation("chemical-interpret")
+        var common_module = get_common_mod(ctx, interp_job)
+        var native_common_mod = get_common_native_mod(ctx, interp_job)
+        const interp_mod = ctx.directory_app_module("", "interpret_tests", interp_path, [native_common_mod, common_module])
+        ctx.add_module(interp_job, interp_mod)
+        ctx.define(interp_job, &definition)
+        return interp_job
+    }
+
+    // Default: build compiled test executable
+    const exe_job = ctx.build_exe("chemical-tests")
+    ctx.add_module(exe_job, get_main_module(ctx, exe_job))
+    ctx.define(exe_job, &definition)
+    return exe_job
+}
+```
+
+### Module Dependency Chain
+
+```
+chemical-tests (executable)
+├── ext_module (C file: ext/file.c)
+├── ext_cpp_module (CPP file: ext/file2.cpp)
+├── submod (Chemical sub-module)
+├── submod2_module (from submod2/build.lab)
+├── submod3_module (from submod3/build.lab)
+├── std_module (@std)
+├── core_module (@core — provides core interfaces)
+├── bcrypt_module (@bcrypt)
+├── uuid_module (@uuid)
+├── json_module (@json)
+├── atomic_module (@atomic)
+├── datetime_module (@datetime)
+├── regex_module (@regex)
+├── fs_module (@fs)
+├── net_module (@net)
+├── docgen_module (@docgen)
+├── test_module (@test)
+├── test_env_module (@test_env — provides test_runner)
+├── common_mod (common/tests — shared tests)
+└── native_common_mod (native_common/ — pointer tests)
+```
+
+### Library Test Wiring
+
+Library tests (for compiler plugins like `html_cbi`, `css_cbi`, etc.) are built separately:
+
+```chemical
+func test_lib_exe(ctx : *mut AppBuildContext, which : &std::string_view) : *mut LabJob {
+    const exe_job = ctx.build_exe("chemical-libs-tests")
+    ctx.set_environment_testing(exe_job, true)
+    switch(which) {
+        "html" => { ctx.add_module(exe_job, htmlTestMod.build(ctx, exe_job)) }
+        "css"  => { ctx.add_module(exe_job, cssTestMod.build(ctx, exe_job)) }
+        // ... etc
+        default => {
+            // Build ALL library tests
+            ctx.add_module(exe_job, htmlTestMod.build(ctx, exe_job))
+            ctx.add_module(exe_job, cssTestMod.build(ctx, exe_job))
+            ctx.add_module(exe_job, jsTestMod.build(ctx, exe_job))
+            ctx.add_module(exe_job, mdTestMod.build(ctx, exe_job))
+            ctx.add_module(exe_job, universalTestMod.build(ctx, exe_job))
+        }
+    }
+    ctx.add_module(exe_job, testLibsRunner.build(ctx, exe_job))
+    return exe_job
+}
+```
+
+Each library test module has its own `build.lab` in `lang/tests/compiler_plugins/<name>/`.
+
+## Adding a New Test
+
+### Option A: Inline Test (Manual)
+
+1. **Create your test function** in an appropriate file:
+   ```chemical
+   // lang/tests/common/src/arithmetic.ch
+   func test_new_feature() {
+       test("my new feature works", () => {
+           return my_func(3, 4) == 7;
+       });
+   }
+   ```
+
+2. **Register the test** — call it from the appropriate runner:
+   - `run_common_tests()` in `lang/tests/common/src/main.ch` — for interpret + compiled
+   - `run_native_common_tests()` in `lang/tests/native_common/src/main.ch` — for pointer tests
+   - `run_executable_tests()` in `lang/tests/src/tests.ch` — for compiled-only tests
+
+3. **Source the file** — ensure the file is in the module's source path
+
+### Option B: `@test` Annotation (Auto-Dispatched)
+
+1. **Annotate your function**:
+   ```chemical
+   @test
+   func my_auto_test() : bool {
+       return 2 + 2 == 4
+   }
+   ```
+
+2. **No registration needed** — `intrinsics::get_tests<TestFunction>()` discovers it automatically
+
+3. **Ensure dependencies** — the `test_env` module must be imported in the build
+
+### Option B2: `@test` with `TestEnv` (for library tests)
+
+Library tests in `lang/tests/libs/` use this pattern. The `TestEnv` provides `env.error("msg")` for failure reporting:
+
+```chemical
+@test
+public func my_lib_test(env : &mut TestEnv) {
+    var result = my_lib_func()
+    if(result is Result.Err) { env.error("should succeed"); return }
+    var Ok(value) = result else unreachable
+    if(value != 42) { env.error("expected 42") }
+}
+```
+
+**Key differences from plain `@test`:**
+- Takes `env : &mut TestEnv` parameter (not `: bool` return)
+- Uses `env.error("msg"); return` for failure (not assertions)
+- Functions must be `public` (called from test runner in different package)
+- Test file needs `using std::Result;` if using `Result.Err`/`Result.Ok` patterns
+
+**Test file location**: `lang/tests/libs/<name>/tests.ch` — the `lang/tests/libs/` module is a standalone suite (`chemical.mod` + `main.ch` calling `test_runner`), dispatched via `--arg-test-libs` (i.e. `./scripts/test.sh --tcc --libs`). It is not part of the main `lang/tests/src/` suite.
+
+#### HTTPS Error Path & Integration Test Patterns
+
+For testing HTTP-TLS integration (`http::Client` with `https://` URLs), follow these patterns:
+
+**URL parsing tests** (no network needed):
+```chemical
+@test
+public func https_url_parsing_works(env : &mut TestEnv) {
+    var u = http::URL::parse(string_view("https://example.com"))
+    if(u is std::Option.None) { env.error("should parse"); return }
+    var Some(url) = u else unreachable
+    if(!url.scheme.equals_with_len("https", 5)) { env.error("scheme should be https") }
+    if(url.port != 443u) { env.error("default https port should be 443") }
+}
+```
+
+**Error path tests** (connection refused / invalid host):
+```chemical
+@test
+public func https_connection_refused_returns_error(env : &mut TestEnv) {
+    var client = http::Client()
+    var res = client.get(string_view("https://127.0.0.1:49999/nonexistent"))
+    if(res is Result.Ok) {
+        env.error("https connection to closed port should fail")
+    }
+}
+```
+
+**Server lifecycle pattern** (start server, make requests, clean up):
+```chemical
+@test
+public func https_server_test_pattern(env : &mut TestEnv) {
+    // 1. Configure server
+    var cfg = http::server::ServerConfig()
+    cfg.addr = std::string::make_no_len("127.0.0.1:49998")
+    var srv = http::server::Server(cfg)
+    
+    // 2. Add routes
+    srv.router.add("GET", "/", ||(req, res) => {
+        res.write_string(std::string::make_no_len("response"))
+    })
+    
+    // 3. Start async and wait for startup
+    var thread = srv.serve_async(49998u)
+    std.concurrent.sleep_ms(100u)
+    
+    // 4. Make client requests
+    var client = http::Client()
+    var res = client.get(string_view("http://127.0.0.1:49998/"))
+    // ... verify response ...
+    
+    // 5. Clean up
+    srv.shutdown()
+    thread.join()
+}
+```
+
+**Key conventions:**
+- When writing tests in `lang/tests/libs/tls/tests.ch` (no `using namespace http;`), fully qualify: `http::server::Server`, `http::URL`, `http::Client`
+- When writing tests in `lang/tests/libs/net/net_test.ch` (has `using namespace http;`), `server::Server` works directly
+- Use high port numbers (49xxx range) to avoid conflicts with other tests
+- Keep test names prefixed with the feature area (e.g., `https_` for HTTPS tests)
+- Always call `srv.shutdown()` + `thread.join()` in that order for clean server teardown
+
+```bash
+# Run all lib tests:
+./scripts/test.sh --tcc
+
+# Build + run from scratch:
+cmake-build-debug/Compiler lang/tests/build.lab --build-dir lang/tests -o lang/tests/test.exe --mode debug_complete --no-cache -v
+./lang/tests/test.exe
+```
+
+### Option C: Library Test (for Compiler Plugins like html_cbi, css_cbi)
+
+These are different from standard library tests — they test CBI compiler plugins:
+
+1. **Create the test module** at `lang/tests/compiler_plugins/<name>/`:
+   ```
+   lang/tests/compiler_plugins/<name>/
+   ├── chemical.mod
+   ├── build.lab            # Calls testLibsRunner's test infrastructure
+   └── src/
+       └── main.ch          # Test functions
+   ```
+
+2. **Wire in the master build.lab** — add import and build call in `lang/tests/build.lab`
+
+3. **Run with**:
+   ```bash
+   ./scripts/test.sh --tcc --plugins
+   ```
+
+### Option D: Negative Tests (Compiler Failure Verification)
+
+Negative tests verify the compiler correctly rejects invalid code. They work by spawning
+the compiler binary via `popen`, compiling a `.ch` source file, and checking the exit code
+and stderr for expected error substrings. This is the Chemical source equivalent of the
+C++ tests in `core/tests/NegativeLifetimeTests.cpp`.
+
+#### Structure
+
+```
+lang/tests/negative/
+├── src/
+│   └── main.ch              # Test runner — invokes compiler via popen
+```
+
+No `chemical.mod` is needed in the negative test package — the test runner lives in the
+main test module and is built as a separate executable.
+
+#### Build system wiring
+
+The negative test executable is built separately and gated behind `--arg-negative`:
+
+```chemical
+// In lang/tests/build.lab — inside the build() function:
+if(ctx.has_arg("negative")) {
+    const neg_job = ctx.build_exe("chemical-negative-tests")
+    ctx.add_module(neg_job, core_module)
+    ctx.add_module(neg_job, cstd_module)
+    ctx.add_module(neg_job, std_module)
+    ctx.add_module(neg_job, fs_module)
+    ctx.add_module(neg_job, neg_tests_mod)
+    ctx.define(neg_job, &definition)
+    return neg_job
+}
+```
+
+The negative test source module is declared as:
+```chemical
+const neg_tests_mod = LabModuleSource {
+    name: "negative_tests",
+    source_dir: "lang/tests/negative/src"
+}
+```
+
+#### Running
+
+```bash
+./scripts/test.sh --tcc --negative        # Build + run negative tests
+./scripts/test.sh --tcc --negative --no-build  # Skip rebuild
+```
+
+The `--negative` flag in `scripts/test.sh` translates to `--arg-negative` and uses a
+separate output path (`lang/tests/build/negative-tests-tcc.exe`) to avoid overwriting
+the main test executable.
+
+#### How the test runner works
+
+The runner in `lang/tests/negative/src/main.ch` does:
+
+1. Creates a temp directory under `/tmp/chemical_neg_tests/`
+2. For each test case, writes a `chemical.mod` and `test.ch` with intentionally invalid code
+3. Invokes the compiler via `popen(cmd, "r")` and captures stderr
+4. Checks the exit code (non-zero for expected errors) and stderr for expected error substrings
+5. Cleans up the temp directory
+
+#### Key API used in the test runner
+
+| API | Source | Notes |
+|-----|--------|-------|
+| `intrinsics::get_compiler_path()` | Compiler intrinsic | Returns `*char` — path to the compiler binary |
+| `popen(cmd, "r")` | C stdlib (`cstd`) | Opens a pipe to a command; returns `*mut FILE` |
+| `pclose(pipe)` | C stdlib | Closes pipe, returns exit status |
+| `fgets(buf, size, pipe)` | C stdlib | Reads a line from a pipe |
+| `sprintf(buf, fmt, ...)` | C stdlib | Format string into a buffer |
+| `mkdir(path, mode)` | C stdlib | Create a directory |
+| `fwrite`, `fopen`, `fclose` | C stdlib | File I/O for writing temp files |
+
+#### Important pointer gotcha in the test runner
+
+Array indexing `arr[i]` produces a **reference** (`&char`), not a raw pointer (`*char`).
+To pass array elements to C functions expecting `*char` or `*mut char`, use `&raw` or `&raw mut`:
+
+```chemical
+var cmd : char[2048]
+sprintf(&raw mut cmd[0], "%s \"%s\"", compiler, mod_path)  // ✅ *mut char
+var pipe = popen(&raw cmd[0], "r")                         // ✅ *char (read-only)
+
+// WRONG — produces &char, not *char:
+// sprintf(&cmd[0], ...)   // TypeCheck error: &char does not satisfy *mut char
+// popen(&cmd[0], ...)     // TypeCheck error: &char does not satisfy *char
+```
+
+#### Writing a new negative test
+
+1. Add a new `var ch_N = "..."` string literal containing the invalid Chemical source
+2. Call `run_single_negative_test()` with the source and expected error info:
+   - `expect_error: true` — test passes when compiler exits non-zero and stderr contains expected text
+   - `expect_error: false` — test passes when compiler exits zero (compiles successfully)
+   - `expected_sub` — substring to search for in stderr (empty string `""` means any error is fine)
+3. Wrap in `test("name", ...)` call
+
+#### Example
+
+```chemical
+var ch_new = "struct Foo {\n    func broken(&self) : ??? {\n    }\n}\n"
+test("broken_return_type_errors",
+    run_single_negative_test("/tmp/chemical_neg_tests", "broken_return_type",
+        mod, ch_new, true, "TypeCheck"))
+```
+
+## Dedicated Library Test Suites (process, environment, webview)
+
+Some libraries have their own separately-runnable test executables so the main `--tcc` suite
+stays fast and so environment-specific suites (e.g. webview needs GTK + a display) can be run
+independently. These are wired in `lang/tests/build.lab` and gated behind dedicated flags in
+`scripts/test.sh`.
+
+| Library | Test location | Run command | Notes |
+|---------|---------------|-------------|-------|
+| `process` | `lang/tests/process/src/process_test.ch` | `./scripts/test.sh --tcc --process` | POSIX `fork`/`exec` via `process::execute` |
+| `environment` | `lang/tests/process/src/environment_test.ch` | `./scripts/test.sh --tcc --process` | Env var get/set/unset — shares the `--process` suite (a separate `--environment` flag was deemed overkill) |
+| `webview` | `lang/tests/webview/src/webview_test.ch` | `./scripts/test.sh --tcc --webview` | Requires GTK3 + WebKit2GTK to **link/run** |
+
+### Where to write the tests
+
+Each suite is a standalone `application` module under `lang/tests/`:
+
+- `lang/tests/process/chemical.mod` — `application process_tests`, `source "src"`, imports `cstd`, `std`, `test`, `test_env`, `process`, `environment`.
+- `lang/tests/webview/chemical.mod` — `application webview_tests`, `source "src"`, imports `cstd`, `std`, `test`, `test_env`, `webview`, `window`.
+
+Each `src/` directory has a `main.ch` that simply calls `test_runner(argc, argv)` (the `@test`
+functions are auto-discovered), plus one or more `*_test.ch` files with the actual `@test`
+functions. Tests use the standard `@test` + `TestEnv` pattern and report failures with
+`env.error("msg"); return` (see Option B2 above).
+
+To add a new test, drop another `@test` function into the relevant `*_test.ch` (or a new file in
+the same `src/` directory) — no build.lab change is needed. To add a whole new library suite,
+create `lang/tests/<name>/chemical.mod` + `src/`, import it in `lang/tests/build.lab`, add a
+`test_<name>_exe(ctx)` function returning a `build_exe` job, and add a `test-<name>` branch in
+`build()` plus a matching `--<name>` flag in `scripts/test.sh`.
+
+### Webview test constraints (headless)
+
+The webview + window libraries **link against GTK3 / WebKit2GTK**, which are not present in
+headless CI — so `--webview` can only be *linked/run* where those libs exist. The test source
+can still be validated headlessly via C-emission:
+
+```bash
+./scripts/test.sh --tcc --webview --no-run --emit-c
+```
+
+Only the **display-independent** API can be exercised in tests:
+
+- `webview::WebView.make()` default field values (`width == 800`, `height == 600`, `title == "Chemical WebView"`, `initialized == false`)
+- `webview::webview_set_title(&raw mut wv, "...")` / `webview::webview_set_size(&raw mut wv, w, h)` — these update struct fields **without** creating a display.
+
+Do **not** call `webview::create` / `show` / `run` in tests — they require a graphical display
+and will fail in headless environments.
+
+### How to run
+
+```bash
+# Process + environment library tests (no special system deps)
+./scripts/test.sh --tcc --process
+
+# Webview library tests (requires GTK3 + WebKit2GTK)
+./scripts/test.sh --tcc --webview
+
+# Skip compiler rebuild when only .ch/.lab files changed:
+./scripts/test.sh --tcc --process --no-build
+```
+
+### `--target` flag
+
+`scripts/test.sh` accepts `--target <triple>` to forward a target triple to the compiler command
+line. It is **omitted** unless specified (so default runs are unaffected):
+
+```bash
+./scripts/test.sh --tcc --process --target x86_64-linux-gnu
+```
+
+### Move-semantics note for test helpers
+
+`PatternMatchId` values (`var Some(v) = result else unreachable`) and struct-member accesses are
+**non-movable**. When writing helper functions, pass them by pointer with `&raw` rather than by
+value, otherwise you'll hit:
+`[SymRes:link] error: cannot move this value without re-initializing memory`.
+
+```chemical
+func string_eq(a : *string, b : string_view) : bool { ... }
+// call as: string_eq(&raw v, string_view("expected"))
+
+func stdout_contains(data : *vector<u8>, expected : string_view) : bool { ... }
+// call as: stdout_contains(&raw r.output.stdout_data, "hello")
+```
+
+## Writing Tests for Compiler Failure
+
+There are two approaches to testing that the compiler correctly rejects invalid code:
+
+### Approach 1: Negative Tests (Preferred)
+
+Use the negative test infrastructure described in **Option D** above. These tests
+spawn the compiler binary, compile a `.ch` file with intentionally invalid code, and
+check that the expected errors appear. Run with:
+
+```bash
+./scripts/test.sh --tcc --negative
+```
+
+This is the Chemical-source equivalent of the C++ tests in `core/tests/NegativeLifetimeTests.cpp`.
+See **Option D** for the full API reference and patterns.
+
+### Approach 2: Comptime Intrinsics (Limited)
+
+For simpler cases, you can use comptime intrinsics:
+
+```chemical
+// Pattern: test that a specific code causes a compile error
+func test_type_error() {
+    // The key is that the test function itself never gets compiled with bad code
+    // Instead, use intrinsics or comptime to trigger specific errors
+    comptime {
+        // This checks that intrinsics::error() works
+        // intrinsics::error("this should fail")
+    }
+}
+```
+
+For testing compile-time errors from the C++ side, add diagnostics checks in the compilation pipeline and verify `has_errors()` returns true.
+
+### Debugging Test Crashes with GDB Backtraces
+
+When a test crashes with `RUNTIME ERROR: invalid memory access`, use `-bt` or `-bt-full` flags to get a stack trace:
+
+```bash
+# Basic backtrace (bt full)
+./scripts/test.sh --tcc --bt
+
+# Full backtrace with registers, disassembly, locals, args
+./scripts/test.sh --tcc --bt-full
+
+# For interpretation tests:
+./scripts/test.sh --tcc --interpret --bt
+```
+
+The `-bt` flag wraps the test executable (or compiler in interpretation mode) with:
+```bash
+gdb -batch -ex "run" -ex "bt full" --args <program>
+```
+
+The `-bt-full` flag adds thread info, registers, instruction disassembly at `$pc`, and local/arg variable values.
+
+> Both flags imply `-g` automatically. Works in all modes (compiled, interpret, negative).
+
+> ⚠️ However, `-bt` only catches crashes in the **parent process**. The `@test` runner dispatches tests via `posix_spawnp` subprocesses, so child-process crashes are NOT caught by `-bt`. For those, use the standalone module approach below.
+
+### Isolating Library-Dependent Test Failures
+
+When a test failure depends on library code (TLS, audio, HTTP, etc.), a bare `.ch` file
+cannot import them. Create a **standalone module with a `chemical.mod`** instead:
+
+```bash
+mkdir -p lang/compiled/my_test/src
+```
+
+**`lang/compiled/my_test/chemical.mod`**:
+```
+application my_test
+source "src"
+import cstd
+import std
+import tls           # add whatever libs the failure requires
+import audio
+import net
+```
+
+**`lang/compiled/my_test/src/main.ch`** — reproduce the exact failing code path:
+```chemical
+@extern
+public func printf(format : *char, _ : any...) : int
+
+public func main() : int {
+    // mirror the failing @test code here
+    var ssl : tls::SSLContext
+    tls::ssl_init(&raw mut ssl)
+    // ...
+    printf("Done\n")
+    return 0
+}
+```
+
+**Compile and run:**
+```bash
+cmake-build-debug/Compiler "lang/compiled/my_test/chemical.mod" \
+    -o "lang/compiled/my_test/main.exe" \
+    --mode debug_complete --assertions
+
+./lang/compiled/my_test/main.exe
+```
+
+**Get a GDB backtrace on SIGSEGV:**
+```bash
+gdb -batch -ex run -ex bt -ex "info registers" -ex "x/16i \$pc" \
+    ./lang/compiled/my_test/main.exe
+```
+
+**Inspect the LLVM IR:**
+```bash
+cmake-build-debug/Compiler "lang/compiled/my_test/chemical.mod" \
+    -o "lang/compiled/my_test/main.exe" \
+    --mode debug_complete --assertions \
+    --out-ll-all --build-dir "lang/compiled/my_test/build/"
+
+# IR at: lang/compiled/my_test/build/modules/<name>/llvm_ir.ll
+```
+
+This approach gives you:
+- **Full library access** — no manual code copying
+- **Fast iteration** — no need to rebuild the full test suite
+- **Focused LLVM IR** — only your module's codegen, easy to inspect
+- **GDB backtraces** — the standalone executable runs in a single process, so the parent-process `gdb -batch` approach works for all crashes
+
+## Running Tests
+
+### Interpretation Tests
+
+```bash
+./scripts/test.sh --tcc --interpret              # Build + run
+./scripts/test.sh --tcc --interpret --no-build   # Skip rebuild
+```
+
+### Compiled Tests
+
+```bash
+./scripts/test.sh --tcc                          # Build + run
+./scripts/test.sh --tcc --no-run                 # Build only
+./scripts/test.sh --tcc --no-build               # Use existing binary
+```
+
+### Library Tests
+
+```bash
+./scripts/test.sh --tcc --libs                      # Library tests (bcrypt, uuid, json, fs, crypto, audio, ...)
+```
+
+
+### Individual Library Tests
+
+```bash
+# Run the whole library suite, then filter by name with --test-names:
+./scripts/test.sh --tcc --libs
+./lang/tests/build/tests-tcc.exe --test-names test_sha256_hello
+```
+
+### Manual Test Execution
+
+```bash
+# Interpret:
+./chemical lang/tests/build.lab --arg-interpret --mode debug_complete --no-cache
+
+# Compiled:
+cmake-build-debug/TCCCompiler lang/tests/build.lab -o tests.exe --mode debug_quick --no-cache
+./tests.exe
+```
+
+## Test Directory Structure Reference
+
+```
+lang/tests/
+├── src/                    # Compiled-only tests
+│   ├── basics/             # Basic language features
+│   ├── comptime/           # Compile-time features
+│   │   ├── basic.ch        # Sum, structs, strings, enums, constructors
+│   │   ├── features.ch     # Bitwise ops, loops, casting, for-in, destructors
+│   │   ├── expressions.ch  # Comptime block expressions
+│   │   ├── satisfies.ch    # Type relationship tests
+│   │   ├── is_value.ch     # Type identity tests
+│   │   └── vector.ch       # Vector operations
+│   ├── core/               # Core language tests
+│   ├── generic/            # Generic tests
+│   ├── stdlib/             # Standard library tests
+│   └── compiler_plugins/   # Tests that depend on specific libraries
+├── libs/                       # Library tests (standalone suite, --arg-test-libs)
+│   ├── chemical.mod            # Suite module: imports test, test_env + all tested libs
+│   ├── main.ch                 # Entry point: calls test_runner(argc, argv)
+│   ├── bcrypt/, uuid/, json/, datetime/, regex/, fs/, path/, encoding/
+│   ├── crypto/, compression/, osrand/, mime/
+│   ├── audio/, font/, archive/, image/
+│   └── integration/            # Cross-library integration tests
+├── compiler_plugins/           # CBI plugin tests (html, css, js, universal, md)
+│   ├── html/src/               # html_cbi plugin tests
+│   ├── css/src/                # css_cbi plugin tests
+│   ├── js/src/                 # js_cbi plugin tests
+│   ├── universal/src/          # universal_cbi plugin tests
+│   ├── md/src/                 # md_cbi plugin tests
+│   └── runner/                 # Library test runner
+```
+
+The `lang/tests/libs/` suite is built and run separately from the main test executable:
+
+```bash
+./scripts/test.sh --tcc --libs
+```
+
+## Running Specific Tests
+
+### How Test IDs Work
+
+Every `@test`-annotated function gets a numeric ID assigned at compile time by
+`intrinsics::get_tests<TestFunction>()`. When the test suite runs, the results
+display the ID alongside the function name:
+
+```
+  - test_fs_file_low_level_api (id 1073741823)
+  - font_create_empty_works    (id 1073741824)
+```
+
+**Inline tests** (manually called in `run_common_tests()` etc.) are also numbered
+sequentially and display their ID as part of the output:
+
+```
+Test 1505 [bitwise & with bool expression does not crash] succeeded
+```
+
+### Running a Single Test by ID
+
+Use `--test-ids` with a comma-separated list of IDs. Combine with `--skip-sequential`
+to skip the inline tests:
+
+```bash
+# Run one @test by ID
+./scripts/test.sh --tcc --no-build --skip-sequential --test-ids 1073741823
+
+# Run multiple @tests by ID
+./scripts/test.sh --tcc --no-build --skip-sequential --test-ids 1073741823,1073741824,1073741825
+```
+
+Or run the test executable directly:
+
+```bash
+./lang/tests/build/tests-tcc.exe --skip-sequential --test-ids 1073741823
+```
+
+### Running Tests by Function Name
+
+Use `--test-names` with comma-separated function names:
+
+```bash
+# By name, single
+./scripts/test.sh --tcc --no-build --skip-sequential \
+    --test-names font_create_empty_works
+
+# By name, multiple
+./scripts/test.sh --tcc --no-build --skip-sequential \
+    --test-names font_create_empty_works,test_hex_encode_upper
+```
+
+### Skipping Sequential Inline Tests
+
+The `--skip-sequential` flag skips all inline (sequential) tests registered in
+`run_executable_tests()` and only dispatches `@test`-annotated functions via the
+test runner. This is useful when you're iterating on a single `@test` function:
+
+```bash
+# Only @test functions, no inline tests
+./lang/tests/build/tests.exe --skip-sequential
+
+# With test ID filter
+./lang/tests/build/tests.exe --skip-sequential --test-ids 1073741823
+
+# Equivalently via test.sh
+./scripts/test.sh --tcc --no-build --skip-sequential --test-ids 1073741823
+```
+
+### Finding a Test's ID
+
+Run the full test suite once. The @test results section prints each function name
+with its ID:
+
+```
+  - font_create_empty_works (id 1073741824)
+  PASS
+```
+
+For inline tests, the test number is shown in the "Test N [name]" format during
+the inline run (before the @test section).
+
+### ID Stability
+
+Test IDs are stable within a single build of the test executable. Recompiling
+with different backends (TCC vs LLVM) or different source files may shuffle the
+ordering. Always check the IDs from the test output of the exact executable
+you're using.
+
+### Direct Test Executable Usage (without test.sh)
+
+```bash
+# Build
+cmake-build-debug/Compiler "lang/tests/build.lab" -o "lang/tests/build/tests.exe" --mode debug_complete
+
+# Run a single @test by ID (skip inline tests)
+./lang/tests/build/tests.exe --skip-sequential --test-ids 1073741823
+
+# Run multiple @tests by name
+./lang/tests/build/tests.exe --skip-sequential --test-names test1,test2
+
+# Normal full run (inline + @test)
+./lang/tests/build/tests.exe
+```
+
+## Best Practices
+
+1. **Always test both modes**: Write tests that work in both interpretation and compiled modes
+2. **Use `comptime if(is_interpretation())`** for mode-specific code
+3. **Keep tests simple**: Each test should verify ONE behavior
+4. **Name tests descriptively**: Use names like `"arithmetic addition works"` not `"test1"`
+5. **Prefer inline tests** for new features (easier to debug)
+6. **Use `@test` annotations** for integration tests (isolation via separate processes)
+7. **Avoid pointer arithmetic** in shared tests (works differently in interpreter)
+8. **Test compiler failures**: Add tests that verify the compiler correctly rejects invalid input
+9. **Use the single-test debugging workflow**: Copy failing test to `lang/compiled/temp.ch`
+
+## Related Skills
+
+- **Build System** (`.agents/skills/build_system/SKILL.md`) — How tests are built: `build.lab` wiring, interpretation jobs, library tests
+- **Interpreter Internals** (`.agents/skills/interpreter/SKILL.md`) — How interpretation tests run, move semantics, debugging
+- **Intrinsics & Reflection** (`.agents/skills/intrinsics_compiler_reflection/SKILL.md`) — `is_interpretation()`, `expr_println()`, `get_tests()`, and other intrinsics used in tests

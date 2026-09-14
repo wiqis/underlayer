@@ -32,7 +32,27 @@ public func main() : int {
 
     // ---- Routes ----
 
-    // Health check
+    // ---- Learner CRUD ----
+    srv.router.add("POST", "/api/learners", (|&db|(req, res) => {
+        underlayer_web::handle_create_learner(db, &req, &raw mut res)
+    }))
+    srv.router.add("GET", "/api/learners/:learnerId", (|&db|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 3) {
+            var learner_id = segments.get_ptr(2)
+            underlayer_web::handle_get_learner(db, learner_id, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var ct = std::string_view("application/json")
+            res.set_header_view(std::string_view("Content-Type"), &ct)
+            var body = std::string("{\"error\": \"missing learner id\"}")
+            var bv = body.to_view()
+            res.write_view(&bv)
+        }
+    }))
+
+    // ---- Health check ----
     srv.router.add("GET", "/api/health", (req, res) => {
         underlayer_web::handle_health(&req, &raw mut res)
     })
