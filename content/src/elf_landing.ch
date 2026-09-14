@@ -138,6 +138,9 @@ public func render_elf_landing() : string {
         .nav-link { color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.75rem; border-radius: 6px; transition: all 0.15s; }
         .nav-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); text-decoration: none; }
         .nav-link.active { color: hsl(217 91% 60%); background: hsl(217 91% 60% / 10%); }
+        .nav-right { display: flex; align-items: center; gap: 0.75rem; }
+        .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 0.5rem; }
+        .hamburger-line { display: block; width: 24px; height: 2px; background: hsl(var(--foreground)); margin: 4px 0; transition: all 0.3s; }
         .theme-toggle { background: none; border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 0.5rem; cursor: pointer; font-size: 1.1rem; line-height: 1; }
         .theme-toggle:hover { background: hsl(var(--accent)); }
         .theme-icon-dark { display: none; }
@@ -158,6 +161,15 @@ public func render_elf_landing() : string {
         .concept-list li:last-child { border-bottom: none; }
         .concept-list a { color: hsl(217 91% 60%); text-decoration: none; }
         .concept-list a:hover { text-decoration: underline; }
+        @media (max-width: 768px) {
+            .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); flex-direction: column; padding: 1rem; gap: 0.5rem; }
+            .nav-links.open { display: flex; }
+            .nav-link { padding: 0.75rem 1rem; }
+            .hamburger { display: block; }
+            .course-landing { padding: 1rem; }
+            .course-header h1 { font-size: 1.5rem; }
+            .course-meta { flex-wrap: wrap; }
+        }
     }
 
     #js {

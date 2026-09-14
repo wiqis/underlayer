@@ -16,6 +16,11 @@ public namespace underlayer_web {
             <div class="navbar">
                 <div class="nav-inner">
                     <a href="/" class="nav-brand">Underlayer</a>
+                    <button class="hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Toggle menu">
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                    </button>
                     <div class="nav-links">
                         <a href="/" class="nav-link">Home</a>
                         <a href="/courses/elf" class="nav-link">Courses</a>
@@ -23,10 +28,12 @@ public namespace underlayer_web {
                         <a href="/review" class="nav-link">Review</a>
                         <a href="/progress" class="nav-link active">Progress</a>
                     </div>
-                    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-                        <span class="theme-icon-light">☀️</span>
-                        <span class="theme-icon-dark">🌙</span>
-                    </button>
+                    <div class="nav-right">
+                        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                            <span class="theme-icon-light">☀️</span>
+                            <span class="theme-icon-dark">🌙</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -128,6 +135,9 @@ public namespace underlayer_web {
             .nav-link { color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.75rem; border-radius: 6px; transition: all 0.15s; }
             .nav-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); text-decoration: none; }
             .nav-link.active { color: hsl(217 91% 60%); background: hsl(217 91% 60% / 10%); }
+            .nav-right { display: flex; align-items: center; gap: 0.75rem; }
+            .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 0.5rem; }
+            .hamburger-line { display: block; width: 24px; height: 2px; background: hsl(var(--foreground)); margin: 4px 0; transition: all 0.3s; }
             .theme-toggle { background: none; border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 0.5rem; cursor: pointer; font-size: 1.1rem; line-height: 1; }
             .theme-toggle:hover { background: hsl(var(--accent)); }
             .theme-icon-dark { display: none; }
@@ -175,6 +185,15 @@ public namespace underlayer_web {
             .concept-link { color: hsl(217 91% 60%); font-size: 0.8rem; text-decoration: none; margin-left: 1rem; }
             .concept-link:hover { text-decoration: underline; }
             .muted { color: hsl(var(--muted-foreground)); text-align: center; padding: 2rem; }
+            @media (max-width: 768px) {
+                .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); flex-direction: column; padding: 1rem; gap: 0.5rem; }
+                .nav-links.open { display: flex; }
+                .nav-link { padding: 0.75rem 1rem; }
+                .hamburger { display: block; }
+                .container { padding: 1rem; }
+                .stats-grid { grid-template-columns: repeat(2, 1fr); }
+                .dual-grid { grid-template-columns: 1fr; }
+            }
         }
 
         #js {
