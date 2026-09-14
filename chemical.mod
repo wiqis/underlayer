@@ -4,6 +4,8 @@
 application underlayer
 
 source "src"
+source "app" if !test
+source "tests" if test
 
 import std
 import cstd
@@ -20,6 +22,9 @@ import fs
 import net
 import encoding
 import uuid
+
+import test if test
+import test_env if test
 
 link "m" if linux
 
