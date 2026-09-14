@@ -60,13 +60,10 @@ public func test_get_course_elf_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:19882")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/courses/:courseId", (|&courses_dir|(req, res) => {
-        var path = req.path.to_view()
-        var segments = underlayer_core::path_segments(&path)
-        if(segments.size() >= 3) {
-            var course_id = segments.get_ptr(2)
-            underlayer_web::handle_get_course(courses_dir, course_id, &req, &raw mut res)
-        }
+    var course_id = string("elf")
+    srv.router.add("GET", "/api/courses/elf", (|&courses_dir, &course_id|(req, res) => {
+        var cv = course_id.to_view()
+        underlayer_web::handle_get_course(courses_dir, &raw cv, &req, &raw mut res)
     }))
     srv.serve_async(19882u)
     std::concurrent.sleep_ms(200u)
@@ -88,13 +85,10 @@ public func test_get_course_elf_contains_title(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:19883")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/courses/:courseId", (|&courses_dir|(req, res) => {
-        var path = req.path.to_view()
-        var segments = underlayer_core::path_segments(&path)
-        if(segments.size() >= 3) {
-            var course_id = segments.get_ptr(2)
-            underlayer_web::handle_get_course(courses_dir, course_id, &req, &raw mut res)
-        }
+    var course_id = string("elf")
+    srv.router.add("GET", "/api/courses/elf", (|&courses_dir, &course_id|(req, res) => {
+        var cv = course_id.to_view()
+        underlayer_web::handle_get_course(courses_dir, &raw cv, &req, &raw mut res)
     }))
     srv.serve_async(19883u)
     std::concurrent.sleep_ms(200u)
@@ -119,13 +113,10 @@ public func test_get_nonexistent_course_returns_404(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:19884")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/courses/:courseId", (|&courses_dir|(req, res) => {
-        var path = req.path.to_view()
-        var segments = underlayer_core::path_segments(&path)
-        if(segments.size() >= 3) {
-            var course_id = segments.get_ptr(2)
-            underlayer_web::handle_get_course(courses_dir, course_id, &req, &raw mut res)
-        }
+    var course_id = string("nonexistent")
+    srv.router.add("GET", "/api/courses/nonexistent", (|&courses_dir, &course_id|(req, res) => {
+        var cv = course_id.to_view()
+        underlayer_web::handle_get_course(courses_dir, &raw cv, &req, &raw mut res)
     }))
     srv.serve_async(19884u)
     std::concurrent.sleep_ms(200u)
@@ -147,14 +138,12 @@ public func test_get_lesson_bytes_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:19885")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/courses/:courseId/lessons/:conceptId", (|&courses_dir|(req, res) => {
-        var path = req.path.to_view()
-        var segments = underlayer_core::path_segments(&path)
-        if(segments.size() >= 4) {
-            var course_id = segments.get_ptr(1)
-            var concept_id = segments.get_ptr(3)
-            underlayer_web::handle_lesson(courses_dir, course_id, concept_id, &req, &raw mut res)
-        }
+    var course_id = string("elf")
+    var concept_id = string("bytes")
+    srv.router.add("GET", "/api/courses/elf/lessons/bytes", (|&courses_dir, &course_id, &concept_id|(req, res) => {
+        var ccv = course_id.to_view()
+        var tcv = concept_id.to_view()
+        underlayer_web::handle_lesson(courses_dir, &raw ccv, &raw tcv, &req, &raw mut res)
     }))
     srv.serve_async(19885u)
     std::concurrent.sleep_ms(200u)
@@ -176,14 +165,12 @@ public func test_get_nonexistent_lesson_returns_404(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:19886")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/courses/:courseId/lessons/:conceptId", (|&courses_dir|(req, res) => {
-        var path = req.path.to_view()
-        var segments = underlayer_core::path_segments(&path)
-        if(segments.size() >= 4) {
-            var course_id = segments.get_ptr(1)
-            var concept_id = segments.get_ptr(3)
-            underlayer_web::handle_lesson(courses_dir, course_id, concept_id, &req, &raw mut res)
-        }
+    var course_id = string("elf")
+    var concept_id = string("nonexistent")
+    srv.router.add("GET", "/api/courses/elf/lessons/nonexistent", (|&courses_dir, &course_id, &concept_id|(req, res) => {
+        var ccv = course_id.to_view()
+        var tcv = concept_id.to_view()
+        underlayer_web::handle_lesson(courses_dir, &raw ccv, &raw tcv, &req, &raw mut res)
     }))
     srv.serve_async(19886u)
     std::concurrent.sleep_ms(200u)
