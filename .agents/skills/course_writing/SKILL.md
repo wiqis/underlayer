@@ -102,11 +102,11 @@ Courses are compiled to static HTML/CSS/JS files. This enables:
 Each concept file emits a complete HTML page:
 
 ```chemical
-// courses/elf/src/bytes.ch
+// courses/elf/src/bytes.ch  (also content/src/bytes.ch for the server-rendered path)
 public func render_bytes() : std::string {
     var page = HtmlPage()
-    page.default_prepare()
-    page.append_title(std::string_view("Bytes and Binary - Underlayer"))
+    page.defaultPrepare()                 // camelCase — this is what compiles
+    page.appendTitle(&title)              // title : string_view built beforehand
 
     #html {
         <div class="lesson">
@@ -118,9 +118,11 @@ public func render_bytes() : std::string {
     #css { .lesson { max-width: 800px; } }
     #js { function selectByte(el) { /* ... */ } }
 
-    return page.to_string()  // Complete HTML page
+    return page.toString()  // Complete HTML page
 }
 ```
+
+**Method casing warning:** HtmlPage methods are camelCase in this codebase — `defaultPrepare()`, `defaultUniversalSetup()`, `injectDefaultComponentsTheme()`, `appendTitle(...)`, `toString()`. The snake_case spellings (`default_prepare`, `to_string`, `append_title`) seen in older documents do not compile.
 
 The build entry calls all render functions and writes output:
 
@@ -156,7 +158,7 @@ import "../content/components/ProgressBar"   // Custom course components
 
 public func render_bytes() : std::string {
     var page = HtmlPage()
-    page.default_prepare()
+    page.defaultPrepare()
 
     #html {
         <div class="lesson">
@@ -183,7 +185,7 @@ public func render_bytes() : std::string {
     #css { .lesson { max-width: 800px; } }
     #js { function selectByte(el) { /* ... */ } }
 
-    return page.to_string()
+    return page.toString()
 }
 ```
 

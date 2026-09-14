@@ -6,39 +6,29 @@ Load this skill when structuring course content, concept dependencies, or lesson
 
 > **Also load `course_writing`** for the practical guide to writing .ch files: common mistakes, Chemical syntax, exercise patterns. This skill covers *course file structure*; `course_writing` covers *how to write each file*.
 
-## Course File Structure
+## Course File Structure (as implemented — verified 2026-09-14)
 
 ```
 courses/
   elf/
-    chemical.mod                    (module declaration)
-    manifest.json                   (metadata, version, concept list)
+    chemical.mod                    (application elf_course — imports page/html_cbi/css_cbi/js_cbi/fs
+                                     + "../../content" + "../../core")
+    manifest.json                   (metadata, version, module sequence, concepts)
     src/
-      main.ch                       (build entry — calls render functions, writes output/)
+      main.ch                       (build entry)
       bytes.ch                      (concept page: #html + #css + #js → HtmlPage)
       binary-representation.ch
       file-layout.ch
-      elf-header.ch
-      program-headers.ch
-      sections.ch
-      symbols.ch
-      relocations.ch
-      dynamic-linking.ch
-    output/                         (generated — pre-rendered HTML/CSS/JS)
-      bytes.html + bytes.css + bytes.js
-      elf-header.html + elf-header.css + elf-header.js
-      ...
-    assets/
-      samples/
-        hello.elf
-        libcrypto.so
-        malformed.elf
-      images/
-        elf-layout.svg
-        ...
+      (future concepts go here)
+    assets/                         (sample ELF files, images — to be added)
 ```
 
-## Course chemical.mod
+**Two rendering paths exist.** The 24 ELF concepts currently render server-side from `content/src/*.ch` (module `underlayer_content`), dispatched by `web/src/helpers.ch::render_concept()`. The `courses/elf/src/` files mirror the first 3 concepts for the pre-render-to-output flow (GitHub Pages mode). When adding a concept:
+1. Add `content/src/<concept-id>.ch` with `render_<id>() : string` in namespace `underlayer_content`
+2. Register the ID in `web/src/helpers.ch::render_concept()`
+3. Optionally mirror in `courses/elf/src/` for static output
+
+## Course chemical.mod (as implemented)
 
 ```chemical
 application elf_course
@@ -51,92 +41,56 @@ import page
 import html_cbi
 import css_cbi
 import js_cbi
-import universal_cbi
-import components              // platform universal components (Button, Card, etc.)
-import "./components"          // course-specific components (optional)
+import fs
+
+import "../../content"
+import "../../core"
 ```
 
-### Import Rules
+Add `universal_cbi` + `components` only when the course actually defines/uses universal components. Note the function-name casing: HtmlPage methods are camelCase in real code — `page.defaultPrepare()`, `page.defaultUniversalSetup()`, `page.injectDefaultComponentsTheme()`, `page.appendTitle(&title)`, `page.toString()`.
 
-| Import | When to Use |
-|--------|-------------|
-| `page` | Always — HtmlPage builder |
-| `html_cbi` | Always — `#html` macro for JSX-like HTML |
-| `css_cbi` | Always — `#css` macro for scoped styles |
-| `js_cbi` | When page has interactivity — `#js` macro |
-| `universal_cbi` | When using `#universal` component definitions |
-| `components` | When using platform components (Button, Card, Input, etc.) |
-| `"./components"` | When course defines its own components |
+## Manifest Format (matches repository/src/courses.ch parser)
 
-## Manifest Format
+The loader reads: top-level `id`, `title`, `version` (int), `description`, `author`, `license`, `language`, `difficulty`, `importance`, `completion_criteria`, `min_score`, `dependencies` (string array), `modules` (with `id`, `title`, `concepts` as **string array of concept IDs**), and `concepts` (array of objects with `id`, `title`, `module_id`, `description`, `estimated_minutes`, `difficulty`, `importance` — plain strings also accepted). Missing fields get defaults (`language=en`, `difficulty=intermediate`, `importance=core`, `estimated_minutes=10`). If `manifest.json` is missing/unparseable, the hardcoded ELF fallback in `courses.ch` serves all 24 concepts.
 
 ```json
 {
   "id": "elf",
-  "title": "ELF — Executable and Linkable Format",
+  "title": "Executable and Linkable Format",
   "version": 1,
-  "description": "Understand the ELF binary format from first principles",
-  "prerequisites": [],
-  "estimated_hours": 20,
+  "description": "A deep dive into the ELF binary format",
   "modules": [
-    {
-      "id": "fundamentals",
-      "title": "Fundamentals",
-      "order": 1,
-      "concepts": ["bytes", "binary-representation", "file-layout"]
-    },
-    {
-      "id": "elf-header",
-      "title": "ELF Header",
-      "order": 2,
-      "concepts": ["identification", "header-fields", "entry-point"]
-    }
+    { "id": "fundamentals", "title": "Fundamentals", "concepts": ["bytes", "binary-representation", "file-layout"] },
+    { "id": "elf-header", "title": "ELF Header", "concepts": ["elf-identification", "elf-header-fields", "entry-point"] }
   ],
   "concepts": [
     {
       "id": "bytes",
       "title": "Bytes and Binary",
-      "module": "fundamentals",
-      "prerequisites": [],
-      "estimated_minutes": 15,
-      "importance": "core",
-      "source_file": "bytes.ch"
+      "module_id": "fundamentals",
+      "description": "Understanding bytes.",
+      "estimated_minutes": 10,
+      "difficulty": "intermediate",
+      "importance": "core"
     }
-  ],
-  "assets": [
-    "assets/samples/hello.elf",
-    "assets/samples/libcrypto.so"
   ]
 }
 ```
 
-## Concept Dependency Graph (ELF)
+## Concept Dependency Graph (ELF — 8 modules, 24 concepts, as in the manifest)
 
 ```
-Bytes
-  ↓
-Binary Representation
-  ↓
-File Layout
-  ↓
-ELF Identification
-  ↓
-ELF Header Fields
-  ↓
-Entry Point
-  ↓
-Program Header Table ──→ Segment Types ──→ Memory Mapping
-  ↓
-Section Header ──→ Common Sections ──→ Section vs Segment
-  ↓
-Symbol Table ──→ Binding ──→ Visibility
-  ↓
-Relocation Types
-  ↓
-Dynamic Section ──→ Libraries ──→ ld.so
-  ↓
-Loader ──→ Memory Layout ──→ Execution
+Module 1 Fundamentals:      bytes → binary-representation → file-layout
+Module 2 ELF Header:        elf-identification → elf-header-fields → entry-point
+Module 3 Program Headers:   program-header-table → segment-types → memory-mapping
+Module 4 Sections:          section-header-table → common-sections → section-vs-segment
+Module 5 Symbols:           symbol-table → binding → visibility
+Module 6 Relocations:       relocation-entries → relocation-types → dynamic-relocations
+Module 7 Dynamic Linking:   dynamic-section → shared-libraries → ld-so
+Module 8 Loading & Exec:    loader → memory-layout → execution
 ```
+
+Concept IDs use kebab-case and map 1:1 to `content/src/<id>.ch` files and `render_<id_underscored>()` functions.
 
 ## Concept File Format
 

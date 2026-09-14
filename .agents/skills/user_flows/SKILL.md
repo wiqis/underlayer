@@ -315,37 +315,66 @@ Adapt from data: increase weights for signals that predict poor outcomes
 
 ## API Endpoints
 
+> **Implemented vs. planned (verified 2026-09-14).** The routes below marked ✅ exist in `app/main.ch`. The onboarding/session-flow endpoints marked ⬜ are the design target from the flows above — not yet implemented. Full list of implemented routes: see the `api_reference` skill.
+
+### Implemented ✅
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/health` | GET | Server status |
+| `/api/learners` + `/:learnerId` | POST/GET | Learner CRUD |
+| `/api/courses`, `/api/courses/all`, `/api/courses/:courseId` | GET | Course listing/detail/filter |
+| `/api/courses/:courseId/lessons/:conceptId` | GET | Lesson content |
+| `/api/review/start?course_id=&mode=&count=` | GET | Start review (10 modes) |
+| `/api/review/submit` | POST | Submit rating |
+| `/api/review/end` | POST | End session |
+| `/api/review/due` | GET | Due items |
+| `/api/sessions`, `/api/sessions/:id`, `/api/session/detail` | GET | History/detail |
+| `/api/session/pause\|resume\|abort\|undo\|skip` | POST | Session controls |
+| `/api/exercises/:conceptId`, `/api/exercises/submit`, `/api/exercises/hint` | GET/POST | Exercise engine |
+| `/api/progress`, `/api/progress/:courseId`, `/api/progress/export` | GET | Progress |
+| `/api/analytics/sessions`, `/api/analytics/concept/:conceptId` | GET | Analytics |
+| `/api/weaknesses` (+export/compare/alerts) | GET | Weakness dashboard |
+| `/api/goals` | POST/DELETE | Learning goals |
+| `/api/fsrs/optimize\|reset\|export\|import` | GET/POST | FSRS settings |
+| `/api/search`, `/api/navigation/:courseId/:conceptId`, `/api/recent` | GET | Discovery |
+
+### Pages ✅
+
+| Path | Purpose |
+|------|---------|
+| `/` | Home (course grid, quick actions) |
+| `/dashboard` | Dashboard |
+| `/review` | Review UI (6 mode cards, rating buttons) |
+| `/progress` | Progress UI |
+| `/courses/:courseId` | Course landing |
+| `/courses/:courseId/lessons/:conceptId` | Lesson viewer |
+
+### Planned ⬜
+
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/api/onboarding` | POST | Save onboarding data |
-| `/api/courses` | GET | List courses |
-| `/api/courses/:id` | GET | Course detail |
-| `/api/sessions/start` | POST | Start learning session |
-| `/api/sessions/:id/next` | POST | Get next item |
-| `/api/sessions/:id/complete` | POST | End session |
-| `/api/review/start` | POST | Start review session |
-| `/api/review/submit` | POST | Submit review |
-| `/api/dashboard` | GET | Dashboard data |
-| `/api/settings` | GET/PUT | Preferences |
+| `/api/sessions/start` / `next` / `complete` | POST | Structured learning-session flow |
+| `/api/dashboard` | GET | Dashboard data (page exists; data comes from other endpoints) |
+| `/api/settings` | GET/PUT | Preferences (page + persistence) |
+| Any auth endpoint | — | No authentication yet; learner_id is passed explicitly |
 
 ## Implementation Patterns (Chemical)
 
-### Route Registration
+### Route Registration (as implemented in app/main.ch)
 
 ```chemical
-var srv = server::Server(config)
-
-srv.router.add("POST", "/api/onboarding", (|&db|(req, res) => {
-    var body = req.body.read_to_string()
-    var data = json::parse(body.to_view())
-    // Save to database, return starting concept
+srv.router.add("GET", "/api/courses", (|&courses_dir|(req, res) => {
+    underlayer_web::handle_list_courses(courses_dir, &req, &raw mut res)
 }))
 
-srv.router.add("GET", "/api/courses", (|&db|(req, res) => {
-    var courses = repository::list_courses(&db)
-    res.send_json(courses)
+srv.router.add("POST", "/api/review/submit", (|&db|(req, res) => {
+    underlayer_web::handle_review_submit(db, &raw mut req, &raw mut res)
 }))
 ```
+
+Handlers build JSON with string appends and send via `send_json_str` / `send_error` (from `web/src/helpers.ch`).
 
 ### Page Rendering
 

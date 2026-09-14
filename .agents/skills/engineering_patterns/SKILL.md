@@ -2,6 +2,8 @@
 
 The "boring but critical" stuff. AIs tend to make blind decisions about error handling, logging, security, and testing. This skill documents every pattern so decisions are deliberate, not accidental.
 
+> **⚠ Reality check (verified 2026-09-14):** this skill is partly *aspirational*. The implemented codebase currently has: flat `{"error":"..."}` error responses (not the envelope below), no request_ids, no rate limiting, no auth, no CORS, string-concatenated SQL in the repository layer, and logging via `underlayer_core::log_info/log_error` (printf, two levels). Config reads only `PORT`, `DATABASE_URL`, `DATABASE_TOKEN`, `COURSES_DIR` (see `core/src/main.ch::load_config`). Treat the sections below as the target standard to grow into — and when you implement one of these (e.g. the error envelope), migrate handlers + tests together so they stay consistent.
+
 ---
 
 ## Quick Reference

@@ -21,7 +21,8 @@
 | `#css` macro | `import css_cbi` | css_cbi |
 | `#js` macro | `import js_cbi` | js_cbi |
 | `#md` macro | `import md_cbi` | md_cbi |
-| SQLite3 | `import "github.com/chemicallang/sqlite3"` | sqlite3 |
+| SQLite3 | `import "../../sqlite3"` (relative path used by `database/chemical.mod`) | sqlite3 |
+| UUID | `import uuid` | uuid |
 | Turso HTTP | (use http client directly) | libturso |
 
 ---
@@ -158,7 +159,8 @@ public func render_page() : std::string {
     var page = HtmlPage()
     page.defaultUniversalSetup()
     page.defaultPrepare()
-    page.appendTitle(std::string_view("My Page — Underlayer"))
+    var title = std::string_view("My Page — Underlayer")
+    page.appendTitle(&title)
 
     #html {
         <div class="content">
@@ -190,11 +192,11 @@ The `page` library enables both static and backend serving:
 // Concept file emits complete HTML
 public func render_concept() : std::string {
     var page = HtmlPage()
-    page.default_prepare()
+    page.defaultPrepare()
     #html { <div>...</div> }
     #css { ... }
     #js { ... }
-    return page.to_string()  // Complete HTML page
+    return page.toString()  // Complete HTML page
 }
 ```
 
@@ -203,12 +205,13 @@ public func render_concept() : std::string {
 // Route handler serves the same HTML
 public func handle_lesson(req : &http::Request, res : *mut http::ResponseWriter) {
     var page = HtmlPage()
-    page.default_prepare()
+    page.defaultPrepare()
     #html { <div>...</div> }
     #css { ... }
     #js { ... }
-    var html = page.to_string()
-    res.write_view(html.to_view())
+    var html = page.toString()
+    var hv = html.to_view()
+    res.write_view(&hv)
 }
 ```
 
@@ -223,31 +226,41 @@ Both modes produce identical HTML. The difference is delivery: file system vs HT
 import server
 ```
 
-### Key Types
+### Key Types (verified against web/ + tests/src usage)
 
 **ServerConfig**
 ```chemical
-var cfg = server::ServerConfig()
-cfg.addr = std::string(":9000")        // Listen address
-cfg.worker_count = 4u                   // Thread count
-cfg.request_timeout_ms = 30000u        // Request timeout
+var cfg = server.ServerConfig()
+cfg.addr = std::string("127.0.0.1:19876")   // Listen address (port 9000 in production)
 ```
 
 **Server**
 ```chemical
-var srv = server::Server(cfg)
+var srv = server.Server(cfg)
 
-// Route registration
-srv.router.add("GET", "/path", handler)
-srv.router.add("POST", "/path", handler)
-srv.router.add("GET", "/path/:param", handler)
-srv.router.add("GET", "/path/:param*", handler)  // Wildcard
+// Route registration — no param substitution; extract via path_segments()
+srv.router.add("GET", "/api/courses/:courseId", handler)
+srv.router.add("GET", "/courses/*", handler)      // Wildcard (static files)
 
 // Start serving
-srv.serve()                             // Blocking
-srv.serve_async()                       // Non-blocking
-srv.shutdown()                          // Graceful shutdown
+srv.serve()                          // Blocking (production)
+srv.serve_async(19876u)              // Non-blocking, port arg — used in tests
+srv.shutdown()                       // Graceful shutdown (always pair with serve_async)
 ```
+
+**Real test-server pattern** (see `testing` skill / `tests/src/health_test.ch`):
+```chemical
+var cfg = server.ServerConfig()
+cfg.addr = string("127.0.0.1:19876")
+var srv = server.Server(cfg)
+srv.router.add("GET", "/api/health", (req, res) => {
+    underlayer_web::handle_health(&req, &raw mut res)
+})
+srv.serve_async(19876u)
+std::concurrent.sleep_ms(200u)
+```
+
+> Note: tests call it as `server.ServerConfig()` / `server.Server(cfg)` — namespace-qualified, no `::`.
 
 ### Route Handler Pattern
 ```chemical
@@ -268,20 +281,23 @@ srv.router.add("GET", "/", (|&pool, &db_name|(req, res) => {
 }))
 ```
 
-### Request/Response
+### Request/Response (as used in web/src handlers)
 ```chemical
 // Request
-req.path.to_view()                     // URL path
-req.method                             // HTTP method
-req.get_header("Content-Type")         // Header
-var body_opt = req.body.read_to_string()  // Body (Option)
+var path = req.path.to_view()                  // URL path
+var segments = underlayer_core::path_segments(&path)  // vector<string_view>
+req.query.get(&key_sv)                         // QueryMap — takes &string_view key, returns string_view ("" if missing)
+var body = json::parse(req.body...)            // POST body → JsonValue
 
 // Response
-res.status = 200u                       // Status code
-res.set_header_view("Key", "Value")    // Set header
-res.write_view("content")              // Write body
-res.send_file(path)                    // Zero-copy file send
+res.status = 200u                              // Status code (uint)
+var ct = std::string_view("application/json")
+res.set_header_view(std::string_view("Content-Type"), &ct)   // Set header
+var bv = body.to_view()
+res.write_view(&bv)                            // Write body
 ```
+
+Prefer the shared helpers instead of raw response writing: `send_page`, `send_json_str`, `send_error` in `web/src/helpers.ch`.
 
 ### Path Parameters
 ```chemical
@@ -294,9 +310,9 @@ if(matched && params.size() > 0u) {
 ```
 
 ### Gotchas
-- `send_headers` always appends "OK" after status code
-- Path params require `web::match_pattern()` — not automatic
-- Lambda captures: `(|var|` by value, `(|&var|` by reference
+- The router does NOT substitute `:param` — extract by position with `underlayer_core::path_segments()`; e.g. for `/api/courses/:courseId/lessons/:conceptId`, course = segment 1, concept = segment 3
+- Lambda captures: `(|var|` by value, `(|&var|` by reference; handlers take `&req` and `&raw mut res`
+- `serve_async(port)` + `sleep_ms(200u)` + later `shutdown()` is the established test lifecycle
 
 ---
 
@@ -590,12 +606,14 @@ func card_styles(page : &mut HtmlPage) : *char {
 
 ---
 
-## sqlite3 — SQLite Bindings
+## sqlite3 — SQLite Bindings (as wrapped by underlayer_db)
 
-### Import
+### Import (used in database/chemical.mod)
 ```chemical
-import "github.com/chemicallang/sqlite3"
+import "../../sqlite3"
 ```
+
+> **Underlayer note:** application code never calls sqlite3 directly — use the dual-backend wrapper in `database/src/main.ch`: `underlayer_db::make_client(url, token)`, `exec_sql`, `query_sql`, `query_sql_single`, `close`, `is_remote_url`. See the `api_reference` skill for the full API and schema. The raw sqlite3 API below is for reference.
 
 ### Key Types
 
@@ -665,13 +683,15 @@ func init_database(path : string) : Result<sqlite::Database, sqlite::Error> {
 
 ---
 
-## Turso HTTP Client (libturso pattern)
+## Turso HTTP Client (libturso pattern — selected automatically by underlayer_db)
 
 ### Import
 ```chemical
 import http
 import json
 ```
+
+When `DATABASE_URL` starts with http(s), `underlayer_db::make_client` routes all `exec_sql`/`query_sql` calls through the Turso HTTP v2 pipeline instead of SQLite. Schema init is skipped for remote URLs.
 
 ### Key Types (from analyzing libturso)
 

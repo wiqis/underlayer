@@ -117,8 +117,9 @@ if(result is Result.Err) {
 }
 var rows = result.value()
 
-// Pattern 2: Unwrap with else unreachable
-var Ok(mut db) = get_global_db() else unreachable
+// Pattern 2: Unwrap with else unreachable (for values that CANNOT fail)
+// NOTE: no get_global_db() exists — db is created in app/main.ch and captured
+// into route lambdas as db : &DbClient
 
 // Pattern 3: Nested operations
 func load_concept(db : *mut database::Database, course_id : std::string_view, concept_id : std::string_view) : Result<Concept, std::string> {

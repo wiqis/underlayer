@@ -36,17 +36,20 @@ Free Spaced Repetition Scheduler. Models three variables per review item:
 | Stability (S) | Time until recall drops below target | days |
 | Retrievability (R) | Current probability of recall | 0-1 |
 
-### How It Schedules
+### How It Schedules (as implemented in learning/src/fsrs.ch)
 
 1. Learner encounters a new review item
 2. Rates recall: Again (1), Hard (2), Good (3), Easy (4)
 3. FSRS updates D, S, R based on the rating
-4. Computes next interval: `interval = S * (target_retrievability - 1)`
-5. Item appears again when retrievability drops below target
+4. Computes next interval from the updated stability:
+   `interval = s_new * (exp(w[8]*(D-3)) - 1) * target_retention / 0.9`, then Again → 1 day, Hard ×w[9], Easy ×w[10], clamped to [1, 36500] days
+5. New cards use graduation steps: 1 day, then 3 days, then FSRS takes over
+
+The engine uses 21 weights: 19 FSRS-4.5-style parameters plus w[19] (hard factor 0.90) and w[20] (easy factor 1.15). `optimize_fsrs_params` adjusts weights from review history via prediction-error hill climbing.
 
 ### Target Retention
 
-Default: 90%. Higher retention = more reviews per day.
+Default in code: **0.90** (`FSRSParams::make`), customizable per learner (checklist 1.1.4). Higher retention = more reviews per day.
 
 | Target | Reviews/Day (approx) |
 |---|---|
@@ -54,8 +57,6 @@ Default: 90%. Higher retention = more reviews per day.
 | 85% | 30 |
 | 90% | 50 |
 | 95% | 80 |
-
-For anxiety-friendly design, default to 85% (fewer reviews, less pressure).
 
 ### Rating Guide
 

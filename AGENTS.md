@@ -491,6 +491,9 @@ Load the relevant skill before working on a particular area:
 | Skill | Use When |
 |---|---|
 | `features_checklist` | **MANDATORY before any work.** Master feature checklist (1884 items) with priority tags (P0-P3). **Always work on lowest P number first.** Check off after implementation. |
+| `api_reference` | Adding/modifying HTTP routes, DB tables, or repository functions — generated from actual code (routes, schema, function catalogs) |
+| `web_development` | Writing web handlers or HTML pages — #html/#css/#js macro rules, page setup pattern, handler conventions |
+| `testing` | Writing or running tests — `@test` + TestEnv pattern, `serve_async` HTTP test setup, `scripts/test.sh` |
 | `product_architecture` | Understanding the overall system design |
 | `learning_design` | Designing how concepts are taught and tested |
 | `course_architecture` | Structuring course content and progressions |

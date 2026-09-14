@@ -25,7 +25,7 @@ res.write_view(body.to_view())
 ```chemical
 // CORRECT - ALWAYS DO THIS
 var page = HtmlPage()
-page.default_prepare()
+page.defaultPrepare()   // camelCase — see method-casing note below
 
 #html {
     <div class="lesson">
@@ -41,8 +41,13 @@ page.default_prepare()
     function handleClick() { ... }
 }
 
-var html = page.to_string()
-res.write_view(html.to_view())
+var html = page.toString()
+var hv = html.to_view()
+res.write_view(&hv)
+
+### Method casing (verified against web/src/)
+
+HtmlPage methods are **camelCase**: `defaultPrepare()`, `defaultUniversalSetup()`, `injectDefaultComponentsTheme()`, `appendTitle(std::string_view)`, `toString()`. Response methods: `res.set_header_view(...)`, `res.write_view(...)`. `res.status = 200u` is a field assignment, not a method.
 ```
 
 ### If a macro fails to parse
@@ -108,7 +113,7 @@ Every course MUST work without a backend:
 // Each concept file emits a complete HTML page
 public func render_bytes() : std::string {
     var page = HtmlPage()
-    page.default_prepare()
+    page.defaultPrepare()
 
     #html {
         <div class="lesson">
@@ -120,7 +125,7 @@ public func render_bytes() : std::string {
     #css { /* Scoped styles */ }
     #js { /* Client-side interactivity */ }
 
-    return page.to_string()  // Complete HTML page
+    return page.toString()  // Complete HTML page
 }
 ```
 

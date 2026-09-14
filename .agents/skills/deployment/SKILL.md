@@ -42,34 +42,34 @@ If any step fails:
 
 ### Stack
 
-- **Server:** Chemical `server::Server` (single binary, thread pool)
-- **Database (local):** SQLite3 via `lang/compiled/sqlite3/`
-- **Database (remote):** Turso HTTP v2 via `lang/compiled/academic/libturso/`
+- **Server:** Chemical `server::Server` (single binary, thread pool) — entrypoint `app/main.ch`
+- **Database (local):** SQLite3 (imported by `database/chemical.mod` as `"../../sqlite3"`)
+- **Database (remote):** Turso HTTP v2 (selected automatically by `underlayer_db::make_client` when `DATABASE_URL` is http(s))
 - **Hosting:** Fly.io (or similar — single binary deployment)
 
-### Build Commands
+### Build & Run Commands (real paths — verified 2026-09-14)
 
 ```bash
-# Build the platform binary
+# Build the platform binary (from project root)
 cmake-build-debug/TCCCompiler lang/compiled/underlayer/chemical.mod \
     -o lang/compiled/underlayer/build/underlayer.exe --mode debug_quick --no-cache -bm-modules
 
-# Build course pages (generates output/ directories)
-cmake-build-debug/TCCCompiler lang/compiled/underlayer/courses/elf/chemical.mod \
-    -o lang/compiled/underlayer/courses/elf/build/elf-pages.exe --mode debug_quick --no-cache -bm-modules
+# NOTE: when building inside this repo (where the module tree is at the root),
+# the equivalent command is just:
+cmake-build-debug/TCCCompiler chemical.mod --mode debug_quick --no-cache -bm-modules
+# TCCCompiler may emit a.exe into the CWD — check both locations.
 
-# Generate HTML output
-./lang/compiled/underlayer/courses/elf/build/elf-pages.exe
-# → writes courses/elf/output/*.html + *.css + *.js
+# Convenience scripts (scripts/):
+./scripts/serve.sh                       # build + run server on :9000 (--no-build, --port N supported)
+./scripts/test.sh                        # build tests.exe + run all @test functions
+./scripts/underlayer-build-test.sh       # build + start + curl every endpoint + stop (always exits)
 
-# Package for deployment
-tar -czf underlayer.tar.gz build/underlayer.exe courses/
-
-# Deploy to Fly.io
-fly deploy
+# Smoke test after start
+curl localhost:9000/api/health           # → {"status": "ok", "version": "0.1.0"}
+curl localhost:9000/courses/elf/lessons/bytes
 ```
 
-### Environment Variables
+### Environment Variables (read by core/src/main.ch::load_config)
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
@@ -77,6 +77,8 @@ fly deploy
 | `DATABASE_URL` | SQLite file path or Turso HTTP URL | `./underlayer.db` |
 | `DATABASE_TOKEN` | Turso auth token (empty for local) | (empty) |
 | `COURSES_DIR` | Course content directory | `./courses` |
+
+Remote (Turso) URLs skip `init_schema()` — schema is provisioned externally.
 
 ## Course Page Deployment
 
@@ -113,33 +115,22 @@ Course output is just HTML/CSS/JS files. They can be:
 - No backend required
 - Progress stored in localStorage
 
-**Backend Mode (Full Server):**
-- Same HTML/CSS/JS files served by backend
-- Plus API endpoints for user features
-- Server-side progress, analytics, adaptive learning
-- Cross-device sync
+**Backend Mode (Full Server — this is what actually runs today):**
+- Concept pages are compiled INTO the server binary (`content/src/*.ch` render functions, dispatched by `web/src/helpers.ch::render_concept()`)
+- Static assets served from disk via `static.ch` under `/courses/*`
+- API endpoints for review, progress, exercises, weaknesses, FSRS
+- `courses/elf/src/` mirrors 3 concepts for optional static output; the pre-render step is not wired into CI
 
-**Deployment Pattern:**
+**Static output build (when wired):**
 ```bash
-# Build course pages
 cmake-build-debug/TCCCompiler courses/elf/chemical.mod \
     -o courses/elf/build/elf-pages.exe --mode debug_quick
 ./courses/elf/build/elf-pages.exe
 # → writes courses/elf/output/*.html + *.css + *.js
 
-# Commit output to repo
 git add courses/elf/output/
 git commit -m "Update ELF course pages"
-
-# Push to GitHub
-git push
-# → GitHub Pages serves automatically
-
-# Backend server (optional)
-cmake-build-debug/TCCCompiler underlayer/chemical.mod \
-    -o underlayer/build/underlayer.exe --mode debug_quick
-./underlayer/build/underlayer.exe
-# → serves same files + API endpoints
+git push   # GitHub Pages serves automatically
 ```
 
 ## Android App

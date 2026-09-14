@@ -2,7 +2,9 @@
 
 ## Available Components (from `lang/libs/components`)
 
-Underlayer can use the full shadcn-style component library. Import via `import components` in `chemical.mod`.
+Underlayer can use the shadcn-style component library. Import via `import components` in `chemical.mod`.
+
+> **⚠ Implementation status (verified 2026-09-14):** the `components` library is imported by the root `chemical.mod` and by `web/`, and the required page setup calls (`defaultUniversalSetup`, `defaultPrepare`, `injectDefaultComponentsTheme`) are used on every platform page. However, **no page in this repo currently renders the JSX-style components below** — all platform pages (home, dashboard, review, progress, lessons) use plain HTML (`<div class="navbar">...`) inside `#html { }`. Treat the component examples here as the target style for new interactive widgets, and check `implementation_gaps` for known `#universal` bugs before relying on stateful components. Plain HTML + scoped `#css` remains the safe default for course content.
 
 ### Core Components for Learning Platform
 
@@ -31,18 +33,19 @@ Underlayer can use the full shadcn-style component library. Import via `import c
 
 ### Theme Injection
 
-Always inject the theme before using components:
+Always inject the theme before using components (this exact sequence appears in every handler in `web/src/`):
 
 ```chemical
-public func render_page() : std::string {
-    var page = HtmlPage()
-    page.defaultUniversalSetup()     // hydration runtime for #universal components
-    page.defaultPrepare()            // charset + viewport
-    page.injectDefaultComponentsTheme()  // shadcn theme CSS tokens
-    // ... use components ...
-    return page.toString()
-}
+var page = HtmlPage()
+page.defaultUniversalSetup()          // hydration runtime for #universal components
+page.defaultPrepare()                 // charset + viewport
+page.injectDefaultComponentsTheme()   // shadcn theme CSS tokens
+page.appendTitle(std::string_view("..."))
+// ... #html / #css / #js ...
+return page.toString()
 ```
+
+Note the camelCase method names — that is what compiles in this codebase (`snake_case` variants like `default_prepare()` shown in older docs will not).
 
 ### Component Pattern in Underlayer
 
@@ -84,7 +87,7 @@ public func render_concept() : std::string {
     #css { /* scoped styles */ }
     #js { /* interactivity */ }
 
-    return page.to_string()
+    return page.toString()
 }
 ```
 
@@ -295,8 +298,8 @@ Header for course landing page with title, description, and stats.
 
 ```chemical
 var page = HtmlPage()
-page.default_prepare()
-page.inject_default_components_theme()
+page.defaultPrepare()
+page.injectDefaultComponentsTheme()
 
 #html {
     <Container size="lg">

@@ -211,140 +211,112 @@ public namespace underlayer_repository {
 
 ---
 
-## 3. API Handler Pattern
+## 3. API Handler Pattern (actual signatures — verified 2026-09-14)
 
-### handler file structure
+### Real handler file structure (from web/src/handlers_learners.ch, handlers_home.ch, helpers.ch)
 
 ```chemical
 import std
-import cstd
-
-import underlayer_core
-import underlayer_models
-import underlayer_database
-import underlayer_repository
+import std::string
+import std::string_view
+using underlayer_db::DbClient
 
 public namespace underlayer_web {
 
-    // Helper: send JSON string response
-    public func send_json_str(res : *mut server.Response, json_str : std::string_view) {
-        res.status(200)
-        res.set_header("Content-Type", "application/json")
-        var body = std::string()
-        body.append_view(json_str)
-        res.set_body OwnedString(body)
+    // Helper: send HTML page (web/src/helpers.ch)
+    public func send_page(res : *mut http::ResponseWriter, page : *HtmlPage) {
+        var ct = std::string_view("text/html; charset=utf-8")
+        res.set_header_view(std::string_view("Content-Type"), &ct)
+        var html = page.toString()
+        var hv = html.to_view()
+        res.write_view(&hv)
     }
 
-    // Helper: send error response
-    public func send_error(res : *mut server.Response, status : int, code : std::string_view, message : std::string_view) {
-        res.status(status)
-        res.set_header("Content-Type", "application/json")
-        var body = std::string("{\"ok\":false,\"error\":{\"code\":\"")
-        body.append_view(code)
-        body.append_view("\",\"message\":\"")
-        body.append_view(message)
-        body.append_view("\"}}")
-        res.set_body OwnedString(body)
+    // Helper: send JSON string response
+    public func send_json_str(res : *mut http::ResponseWriter, body : *string) {
+        var ct = std::string_view("application/json")
+        res.set_header_view(std::string_view("Content-Type"), &ct)
+        var bv = body.to_view()
+        res.write_view(&bv)
+    }
+
+    // Helper: send error response — flat {"error":"..."} envelope
+    public func send_error(res : *mut http::ResponseWriter, status : uint, msg : &string) {
+        res.status = status
+        var ct = std::string_view("application/json")
+        res.set_header_view(std::string_view("Content-Type"), &ct)
+        var body = std::string("{\"error\":\"")
+        body.append_string(msg)
+        body.append_view("\"}")
+        var bv = body.to_view()
+        res.write_view(&bv)
     }
 
     // Handler: no database needed
-    public func handle_health(req : *server.Request, res : *mut server.Response) {
-        send_json_str(res, "{\"ok\":true,\"data\":{\"status\":\"healthy\"}}")
+    public func handle_health(req : &http::Request, res : *mut http::ResponseWriter) {
+        var body = std::string("{\"status\": \"ok\", \"version\": \"0.1.0\"}")
+        send_json_str(res, &raw body)
     }
 
-    // Handler: with database
-    public func handle_list_learners(req : *server.Request, res : *mut server.Response) {
-        var db_result = get_global_db()
-        if(db_result is Result.Err) {
-            send_error(res, 500, "DATABASE_ERROR", "Database not available")
-            return
-        }
-        var Ok(mut db) = db_result else unreachable
-
-        var learners_result = underlayer_repository::list_learners(&db)
-        if(learners_result is Result.Err) {
-            send_error(res, 500, "QUERY_ERROR", "Failed to load learners")
-            return
-        }
-        var Ok(mut learners) = learners_result else unreachable
-
-        // Build JSON manually (no json lib needed for simple cases)
-        var body = std::string("{\"ok\":true,\"data\":{\"learners\":[")
-        var i = 0u
-        while(i < learners.size()) {
-            var learner = learners.get_ptr(i)
-            if(i > 0u) { body.append_view(",") }
-            body.append_view("{\"id\":\"")
-            body.append_view(learner.id.to_view())
-            body.append_view("\",\"name\":\"")
-            body.append_view(learner.name.to_view())
-            body.append_view("\"}")
-            i = i + 1u
-        }
-        body.append_view("]}}")
-        send_json_str(res, body.to_view())
-    }
-
-    // Handler: with URL parameter
-    public func handle_get_learner(req : *server.Request, res : *mut server.Response) {
-        // Extract parameter from URL path
-        var path = req.path()
-        var segments = path_segments(path)
-        // For /api/learners/:id, the ID is the last segment
-        if(segments.size() < 1u) {
-            send_error(res, 400, "INVALID_REQUEST", "Missing learner ID")
-            return
-        }
-        var learner_id = sv_to_string(segments.get(segments.size() - 1u))
-
-        var db_result = get_global_db()
-        if(db_result is Result.Err) {
-            send_error(res, 500, "DATABASE_ERROR", "Database not available")
-            return
-        }
-        var Ok(mut db) = db_result else unreachable
-
-        var learner_result = underlayer_repository::get_learner(&db, learner_id.to_view())
-        if(learner_result is Result.Err) {
-            send_error(res, 404, "NOT_FOUND", "Learner not found")
-            return
-        }
-        var Ok(mut learner) = learner_result else unreachable
-
-        var body = std::string("{\"ok\":true,\"data\":{\"id\":\"")
-        body.append_view(learner.id.to_view())
-        body.append_view("\",\"name\":\"")
-        body.append_view(learner.name.to_view())
-        body.append_view("\"}}")
-        send_json_str(res, body.to_view())
-    }
-
-    // Handler: with query parameters
-    public func handle_get_due(req : *server.Request, res : *mut server.Response) {
-        var query = req.query()
-        // QueryMap.get() takes &string_view and returns string_view
-        var learner_id_view = query.get("learner_id")
-        if(learner_id_view.size() == 0u) {
-            send_error(res, 400, "VALIDATION_ERROR", "Missing learner_id")
-            return
-        }
-        var learner_id = sv_to_string(learner_id_view)
-
-        // ... use learner_id ...
+    // Handler: with database — db passed in as &DbClient, not a global
+    public func handle_create_learner(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        // parse JSON body via json_helpers.ch, call underlayer_repository, send_json_str
     }
 }
+```
+
+**Signature rules (all handlers in web/src/ follow these):**
+
+| Need | Signature |
+|---|---|
+| Static | `(req : &http::Request, res : *mut http::ResponseWriter)` |
+| DB | `(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter)` |
+| DB + courses dir | `(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter)` |
+| courses_dir only | `(courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter)` |
+| POST body mutation | route lambda passes `&raw mut req` |
+
+There is **no `get_global_db()`** — the DB client is created once in `app/main.ch` and captured into route lambdas via `(|&db| ...)`.
+
+### URL param extraction (route lambdas in app/main.ch)
+
+```chemical
+srv.router.add("GET", "/api/learners/:learnerId", (|&db|(req, res) => {
+    var path = req.path.to_view()
+    var segments = underlayer_core::path_segments(&path)
+    if(segments.size() >= 3) {                       // /api/learners/:id → id is index 2
+        var learner_id = segments.get_ptr(2)
+        underlayer_web::handle_get_learner(db, learner_id, &req, &raw mut res)
+    } else {
+        res.status = 400u
+        var ct = std::string_view("application/json")
+        res.set_header_view(std::string_view("Content-Type"), &ct)
+        var body = std::string("{\"error\": \"missing learner id\"}")
+        var bv = body.to_view()
+        res.write_view(&bv)
+    }
+}))
+```
+
+### Query parameters (actual API: `req.query.get(&key)`)
+
+```chemical
+// QueryMap.get takes &string_view key and returns string_view (empty if missing)
+var q_mode = std::string("mode")
+var mode_v = req.query.get(&q_mode.to_view())
+if(mode_v.size() == 0u) { /* default or 400 */ }
+var mode = sv_to_string(&raw mode_v)
 ```
 
 ### Key handler patterns
 
 | Pattern | Code |
 |---------|------|
-| Extract URL param | `var segments = path_segments(req.path()); var id = sv_to_string(segments.get(segments.size() - 1u))` |
-| Extract query param | `var val = sv_to_string(query.get("key"))` |
-| Check query empty | `if(query.get("key").size() == 0u) { ... }` |
-| Send JSON | `send_json_str(res, body.to_view())` |
-| Send error | `send_error(res, 404, "NOT_FOUND", "message")` |
-| Database access | `var Ok(mut db) = get_global_db() else unreachable` |
+| Extract URL param | `var segments = underlayer_core::path_segments(&path); var id = segments.get_ptr(<position>)` |
+| Extract query param | `req.query.get(&key_sv)` → empty view if missing |
+| Send JSON | `send_json_str(res, &raw body_string)` |
+| Send error | `var e = std::string("msg"); send_error(res, 404u, &raw e)` |
+| Send HTML | `send_page(res, &raw page)` |
+| Database access | captured `db : &DbClient` from the route lambda |
 
 ---
 
@@ -544,7 +516,8 @@ if(result is Result.Err) {
 var rows = result.value()
 
 // Pattern 2: Unwrap with else unreachable (for values that CANNOT fail)
-var Ok(mut db) = get_global_db() else unreachable
+// NOTE: there is no get_global_db() in this codebase — the DbClient is created in
+// app/main.ch and captured into route lambdas as db : &DbClient (see section 8).
 
 // Pattern 3: Nested operations
 func load_concept(db : *mut database::Database, course_id : std::string_view, concept_id : std::string_view) : Result<Concept, std::string> {
@@ -568,44 +541,47 @@ func load_concept(db : *mut database::Database, course_id : std::string_view, co
 
 ## 8. Route Registration Pattern
 
-In `src/main.ch`, register routes inside `start_server()`:
+Routes live in `app/main.ch` inside `main()` — not in a `start_server()` helper:
 
 ```chemical
-func start_server(config : Config) {
-    var db_result = init_database(config)
-    var Ok(mut db) = db_result else { return }
+public func main() : int {
+    var cfg = underlayer_core::load_config()
+    var db = underlayer_db::make_client(db_url.copy(), db_token.copy())
+    if(!underlayer_db::is_remote_url(&raw db_url)) {
+        underlayer_repository::init_schema(&raw db)
+    }
 
-    var srv = server::Server(config.port)
+    var cfg_server = server.ServerConfig()
+    var addr = std::string(":")
+    addr.append_view(underlayer_core::u32_to_string(port).to_view())
+    cfg_server.addr = addr
+    var srv = server.Server(cfg_server)
 
-    // Health check (no auth)
+    // Health check (no captures)
     srv.router.add("GET", "/api/health", (req, res) => {
-        underlayer_web::handle_health(req, res)
+        underlayer_web::handle_health(&req, &raw mut res)
     })
 
-    // List items (no captures needed)
-    srv.router.add("GET", "/api/learners", (req, res) => {
-        underlayer_web::handle_list_learners(req, res)
-    })
-
-    // Get item by ID (capture db by reference)
-    srv.router.add("GET", "/api/learners/:id", (|&db|(req, res) => {
-        underlayer_web::handle_get_learner(&db, req, res)
-    }))
-
-    // Create item (capture db by reference)
+    // DB-backed (capture db by reference)
     srv.router.add("POST", "/api/learners", (|&db|(req, res) => {
-        underlayer_web::handle_create_learner(&db, req, res)
+        underlayer_web::handle_create_learner(db, &req, &raw mut res)
     }))
 
-    // ... more routes ...
+    // DB + courses dir (multiple captures)
+    srv.router.add("GET", "/api/review/start", (|&db, &courses_dir|(req, res) => {
+        underlayer_web::handle_review_start(db, courses_dir, &req, &raw mut res)
+    }))
+
+    srv.serve()
+    underlayer_db::close(&raw db)
+    return 0
 }
 ```
 
 **Capture rules:**
-- No captures: `(req, res) => { ... }`
-- Capture by reference: `(|&var|(req, res) => { ... })`
-- Capture by value: `(|var|(req, res) => { ... })`
-- Multiple captures: `(|&db, &config|(req, res) => { ... })`
+- No captures: `(req, res) => { ... }` — pass `&req`, `&raw mut res` to the handler
+- Capture by reference: `(|&db| ...)` — db is used as `db` (already a reference inside)
+- Multiple captures: `(|&db, &courses_dir| ...)`
 
 ---
 
@@ -764,7 +740,7 @@ Every course MUST work without a backend:
 // Each concept file emits a complete HTML page
 public func render_concept() : std::string {
     var page = HtmlPage()
-    page.default_prepare()
+    page.defaultPrepare()   // camelCase — this is what compiles
 
     #html {
         <div class="lesson">
@@ -776,7 +752,7 @@ public func render_concept() : std::string {
     #css { /* Scoped styles */ }
     #js { /* Client-side interactivity */ }
 
-    return page.to_string()  // Complete HTML page
+    return page.toString()  // Complete HTML page
 }
 ```
 
@@ -1019,19 +995,25 @@ These concepts appear in multiple documents. The canonical source is marked with
 
 Teaching design documents are technology-agnostic. Implementation documents are Chemical-specific. No document maps "Quiz component from catalog" to "here's the `#html` code."
 
-**Action needed**: Create `docs/pedagogy-to-implementation.md`.
+**Status**: `docs/pedagogy-to-implementation.md` now exists.
 
-### FSRS Implementation May Not Match Paper
+### FSRS Implementation Uses FSRS-4.5-Style Weights
 
-The code uses a simplified formula. The FSRS-5 paper has a more complex model. Parameters may not produce correct scheduling.
+`learning/src/fsrs.ch` initializes **21 weights** (19 FSRS-4.5-style parameters + w[19] hard factor 0.90 + w[20] easy factor 1.15) with target retention 0.90 (customizable per 1.1.4). Interval formula: `s_new * (exp(w[8]*(D-3)) - 1) * target_retention / 0.9`, clamped [1, 36500] days, with Again=1 day, Hard×w[9], Easy×w[10]. New-card graduation steps: 1 day, then 3 days. Parameter optimization via prediction-error hill climbing (`optimize_fsrs_params`).
 
-**Action needed**: Verify against the FSRS-5 reference implementation before shipping.
+**Status**: Matches checklist items 1.1.1–1.1.15 as implemented. If upgrading to FSRS-5, replace the weight table and interval math together.
 
 ### No End-to-End Test Specification
 
 No document specifies how to verify the entire system works end-to-end.
 
-**Action needed**: Create `docs/e2e-test-plan.md`.
+**Partial mitigation**: `scripts/underlayer-build-test.sh` builds, starts the server, and curls every major endpoint. Full E2E spec still missing.
+
+### Error Envelope Divergence
+
+`engineering_patterns` specifies `{ok, error:{code,message}}`, but every implemented handler returns the flat `{"error":"..."}` (via `send_error`) and health returns `{"status":"ok"}`. Tests assert against the flat format.
+
+**Action needed**: Either adopt the envelope in `send_error` + all handlers + tests, or simplify the spec. Don't mix both.
 
 ### AI Constraint Pipeline Has No Error Recovery
 
