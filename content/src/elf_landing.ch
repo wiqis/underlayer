@@ -15,6 +15,19 @@ public func render_elf_landing() : string {
     page.appendTitle(&title)
 
     #html {
+        <div class="navbar">
+            <div class="nav-inner">
+                <a href="/" class="nav-brand">Underlayer</a>
+                <div class="nav-links">
+                    <a href="/" class="nav-link">Home</a>
+                    <a href="/courses/elf" class="nav-link active">Courses</a>
+                    <a href="/dashboard" class="nav-link">Dashboard</a>
+                    <a href="/review" class="nav-link">Review</a>
+                    <a href="/progress" class="nav-link">Progress</a>
+                </div>
+            </div>
+        </div>
+
         <div class="course-landing">
             <div class="course-header">
                 <h1>Executable and Linkable Format</h1>
@@ -111,7 +124,16 @@ public func render_elf_landing() : string {
     }
 
     #css {
-        .course-landing { max-width: 800px; margin: 0 auto; padding: 2rem; font-family: system-ui, sans-serif; }
+        body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 0; background: #fafafa; }
+        .navbar { background: #ffffff; border-bottom: 1px solid #e5e7eb; padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
+        .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; }
+        .nav-brand { font-size: 1.25rem; font-weight: 700; color: #111827; text-decoration: none; }
+        .nav-brand:hover { color: #3b82f6; text-decoration: none; }
+        .nav-links { display: flex; gap: 1.5rem; }
+        .nav-link { color: #6b7280; text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.75rem; border-radius: 6px; transition: all 0.15s; }
+        .nav-link:hover { color: #111827; background: #f3f4f6; text-decoration: none; }
+        .nav-link.active { color: #3b82f6; background: #eff6ff; }
+        .course-landing { max-width: 800px; margin: 0 auto; padding: 2rem; }
         .course-header { margin-bottom: 2rem; }
         .course-header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
         .course-description { font-size: 1.1rem; color: #4b5563; margin-bottom: 1rem; }
