@@ -271,3 +271,108 @@ public func test_progress_page_has_title(env : &mut TestEnv) {
     srv.shutdown()
     underlayer_db::close(&raw db)
 }
+
+@test
+public func test_home_page_has_theme_toggle(env : &mut TestEnv) {
+    var db = test_helpers::setup_test_db()
+    var cfg = server.ServerConfig()
+    cfg.addr = string("127.0.0.1:19975")
+    var srv = server.Server(cfg)
+    srv.router.add("GET", "/", (req, res) => {
+        underlayer_web::handle_home(&req, &raw mut res)
+    })
+    srv.serve_async(19975u)
+    std::concurrent.sleep_ms(200u)
+
+    var client = http::Client()
+    var res = client.get("http://127.0.0.1:19975/")
+    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Ok(resp) = res else unreachable
+    var body_opt = resp.body.read_to_string()
+    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Some(body) = body_opt else unreachable
+    if(body.find(string_view("theme-toggle")) == std::NPOS) { env.error("home page missing theme-toggle") }
+    if(body.find(string_view("toggleTheme")) == std::NPOS) { env.error("home page missing toggleTheme JS") }
+
+    srv.shutdown()
+    underlayer_db::close(&raw db)
+}
+
+@test
+public func test_home_page_has_hamburger_menu(env : &mut TestEnv) {
+    var db = test_helpers::setup_test_db()
+    var cfg = server.ServerConfig()
+    cfg.addr = string("127.0.0.1:19976")
+    var srv = server.Server(cfg)
+    srv.router.add("GET", "/", (req, res) => {
+        underlayer_web::handle_home(&req, &raw mut res)
+    })
+    srv.serve_async(19976u)
+    std::concurrent.sleep_ms(200u)
+
+    var client = http::Client()
+    var res = client.get("http://127.0.0.1:19976/")
+    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Ok(resp) = res else unreachable
+    var body_opt = resp.body.read_to_string()
+    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Some(body) = body_opt else unreachable
+    if(body.find(string_view("hamburger")) == std::NPOS) { env.error("home page missing hamburger button") }
+    if(body.find(string_view("@media")) == std::NPOS) { env.error("home page missing @media responsive CSS") }
+
+    srv.shutdown()
+    underlayer_db::close(&raw db)
+}
+
+@test
+public func test_home_page_has_skip_link(env : &mut TestEnv) {
+    var db = test_helpers::setup_test_db()
+    var cfg = server.ServerConfig()
+    cfg.addr = string("127.0.0.1:19977")
+    var srv = server.Server(cfg)
+    srv.router.add("GET", "/", (req, res) => {
+        underlayer_web::handle_home(&req, &raw mut res)
+    })
+    srv.serve_async(19977u)
+    std::concurrent.sleep_ms(200u)
+
+    var client = http::Client()
+    var res = client.get("http://127.0.0.1:19977/")
+    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Ok(resp) = res else unreachable
+    var body_opt = resp.body.read_to_string()
+    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Some(body) = body_opt else unreachable
+    if(body.find(string_view("skip-link")) == std::NPOS) { env.error("home page missing skip-link") }
+    if(body.find(string_view("Skip to content")) == std::NPOS) { env.error("home page missing 'Skip to content' text") }
+    if(body.find(string_view("focus-visible")) == std::NPOS) { env.error("home page missing focus-visible CSS") }
+
+    srv.shutdown()
+    underlayer_db::close(&raw db)
+}
+
+@test
+public func test_home_page_has_search_modal(env : &mut TestEnv) {
+    var db = test_helpers::setup_test_db()
+    var cfg = server.ServerConfig()
+    cfg.addr = string("127.0.0.1:19978")
+    var srv = server.Server(cfg)
+    srv.router.add("GET", "/", (req, res) => {
+        underlayer_web::handle_home(&req, &raw mut res)
+    })
+    srv.serve_async(19978u)
+    std::concurrent.sleep_ms(200u)
+
+    var client = http::Client()
+    var res = client.get("http://127.0.0.1:19978/")
+    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Ok(resp) = res else unreachable
+    var body_opt = resp.body.read_to_string()
+    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Some(body) = body_opt else unreachable
+    if(body.find(string_view("search-modal")) == std::NPOS) { env.error("home page missing search-modal") }
+    if(body.find(string_view("openSearch")) == std::NPOS) { env.error("home page missing openSearch JS") }
+
+    srv.shutdown()
+    underlayer_db::close(&raw db)
+}

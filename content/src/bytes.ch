@@ -114,8 +114,9 @@ public func render_bytes() : string {
         .unit-connect { border-color: #10b981; background: #ecfdf5; }
         h1 { font-size: 1.5rem; margin-bottom: 1rem; }
         h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }
-        .hex-dump { background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 6px; font-family: monospace; }
-        .hex-interactive { font-family: monospace; background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 6px; }
+        .hex-dump { background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 6px; font-family: monospace; overflow-x: auto; }
+        .hex-dump pre { white-space: pre; margin: 0; }
+        .hex-interactive { font-family: monospace; background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 6px; overflow-x: auto; }
         .hex-byte { display: inline-block; width: 2ch; margin-right: 1rem; cursor: pointer; border-radius: 2px; padding: 0.25rem; }
         .hex-byte:hover { background: rgba(59, 130, 246, 0.3); }
         .hex-byte.selected { background: rgba(59, 130, 246, 0.5); }
@@ -128,6 +129,14 @@ public func render_bytes() : string {
         table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
         th, td { padding: 0.5rem; border: 1px solid #d1d5db; text-align: left; }
         th { background: #f9fafb; font-weight: 600; }
+        code { background: #f3f4f6; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.9em; font-family: monospace; }
+        pre { background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 6px; font-family: monospace; overflow-x: auto; white-space: pre; }
+        @media (max-width: 640px) {
+            .lesson { padding: 1rem; }
+            .unit { padding: 1rem; }
+            table { font-size: 0.85rem; }
+            th, td { padding: 0.35rem; }
+        }
     }
 
     #js {

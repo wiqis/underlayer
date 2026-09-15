@@ -754,9 +754,9 @@
 
 ### 7.4 Responsive Design
 
-- [ ] P2 7.4.1 Mobile layout (< 640px)
-- [ ] P2 7.4.2 Tablet layout (640px - 1024px)
-- [ ] P2 7.4.3 Desktop layout (> 1024px)
+- [x] P2 7.4.1 Mobile layout (< 640px)
+- [x] P2 7.4.2 Tablet layout (640px - 1024px)
+- [x] P2 7.4.3 Desktop layout (> 1024px)
 - [ ] P2 7.4.4 Large screen layout (> 1440px)
 - [ ] P2 7.4.5 Orientation handling (portrait, landscape)
 - [ ] P2 7.4.6 Touch interactions (tap, swipe, long-press)
@@ -764,16 +764,16 @@
 - [ ] P2 7.4.8 Pinch-to-zoom (hex viewer, diagrams)
 - [ ] P2 7.4.9 Responsive images (srcset, sizes)
 - [ ] P2 7.4.10 Responsive typography (clamp, fluid)
-- [ ] P2 7.4.11 Responsive navigation (hamburger menu on mobile)
-- [ ] P2 7.4.12 Responsive tables (horizontal scroll on mobile)
+- [x] P2 7.4.11 Responsive navigation (hamburger menu on mobile)
+- [x] P2 7.4.12 Responsive tables (horizontal scroll on mobile)
 - [ ] P2 7.4.13 Responsive visualizations (resize on window change)
 - [ ] P2 7.4.14 Responsive exercises (adapt to screen size)
-- [ ] P2 7.4.15 Responsive code blocks (horizontal scroll)
+- [x] P2 7.4.15 Responsive code blocks (horizontal scroll)
 
 ### 7.5 Keyboard & Input
 
-- [ ] P2 7.5.1 Keyboard navigation (Tab, Enter, Escape)
-- [ ] P2 7.5.2 Keyboard shortcuts (Ctrl+K for search)
+- [x] P2 7.5.1 Keyboard navigation (Tab, Enter, Escape)
+- [x] P2 7.5.2 Keyboard shortcuts (Ctrl+K for search)
 - [ ] P2 7.5.3 Keyboard shortcuts list (help dialog)
 - [ ] P2 7.5.4 Custom keyboard shortcuts (user-defined)
 - [ ] P2 7.5.5 Screen reader support (ARIA labels)
@@ -784,8 +784,8 @@
 - [ ] P2 7.5.10 Stylus/pen support (drawing exercises)
 - [ ] P2 7.5.11 Multi-touch support (pinch, rotate)
 - [ ] P2 7.5.12 Accessibility shortcuts (contrast, font size)
-- [ ] P2 7.5.13 Focus visible indicator (focus ring)
-- [ ] P2 7.5.14 Skip links (skip to content)
+- [x] P2 7.5.13 Focus visible indicator (focus ring)
+- [x] P2 7.5.14 Skip links (skip to content)
 - [ ] P2 7.5.15 Landmark regions (navigation, main, footer)
 
 ---

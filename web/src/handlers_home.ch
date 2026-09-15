@@ -18,6 +18,7 @@ public namespace underlayer_web {
         page.appendTitle(&title)
 
         #html {
+            <a href="#main-content" class="skip-link">Skip to content</a>
             <div class="navbar">
                 <div class="nav-inner">
                     <a href="/" class="nav-brand">Underlayer</a>
@@ -34,11 +35,23 @@ public namespace underlayer_web {
                         <a href="/progress" class="nav-link">Progress</a>
                     </div>
                     <div class="nav-right">
+                        <button class="search-trigger" onclick="openSearch()" aria-label="Search (Ctrl+K)">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                        </button>
                         <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
                             <span class="theme-icon-light">☀️</span>
                             <span class="theme-icon-dark">🌙</span>
                         </button>
                     </div>
+                </div>
+            </div>
+
+            <div class="search-modal" id="search-modal">
+                <div class="search-backdrop" onclick="closeSearch()"></div>
+                <div class="search-dialog">
+                    <input type="text" id="search-input" class="search-input" placeholder="Search concepts..." oninput="doSearch(this.value)" />
+                    <div class="search-results" id="search-results"></div>
+                    <div class="search-hint">Press Escape to close</div>
                 </div>
             </div>
 
@@ -49,7 +62,7 @@ public namespace underlayer_web {
                 </div>
             </div>
 
-            <div class="container">
+            <div class="container" id="main-content">
                 <div class="section">
                     <h2>Available Courses</h2>
                     <div class="course-grid">
@@ -118,6 +131,9 @@ public namespace underlayer_web {
 
         #css {
             body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 0; background: hsl(var(--background)); color: hsl(var(--foreground)); }
+            .skip-link { position: absolute; top: -100%; left: 0; background: hsl(217 91% 60%); color: white; padding: 0.75rem 1.5rem; z-index: 200; font-weight: 600; text-decoration: none; border-radius: 0 0 8px 0; }
+            .skip-link:focus { top: 0; }
+            :focus-visible { outline: 2px solid hsl(217 91% 60%); outline-offset: 2px; }
             a { color: hsl(217 91% 60%); text-decoration: none; }
             a:hover { text-decoration: underline; }
             .navbar { background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
@@ -163,6 +179,18 @@ public namespace underlayer_web {
             .action-card:hover { border-color: hsl(217 91% 60%); box-shadow: 0 2px 8px hsl(217 91% 60% / 20%); text-decoration: none; }
             .action-card h3 { font-size: 1rem; margin-bottom: 0.5rem; color: hsl(var(--foreground)); }
             .action-card p { color: hsl(var(--muted-foreground)); font-size: 0.85rem; margin: 0; }
+            .search-trigger { background: none; border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 0.5rem; cursor: pointer; color: hsl(var(--muted-foreground)); display: flex; align-items: center; justify-content: center; }
+            .search-trigger:hover { background: hsl(var(--accent)); color: hsl(var(--foreground)); }
+            .search-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000; }
+            .search-modal.open { display: flex; align-items: flex-start; justify-content: center; padding-top: 20vh; }
+            .search-backdrop { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); }
+            .search-dialog { position: relative; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); overflow: hidden; }
+            .search-input { width: 100%; padding: 1rem 1.25rem; border: none; background: transparent; font-size: 1rem; color: hsl(var(--foreground)); outline: none; }
+            .search-input::placeholder { color: hsl(var(--muted-foreground)); }
+            .search-results { max-height: 300px; overflow-y: auto; }
+            .search-result-item { display: block; padding: 0.75rem 1.25rem; color: hsl(var(--foreground)); text-decoration: none; border-top: 1px solid hsl(var(--border)); }
+            .search-result-item:hover { background: hsl(var(--accent)); }
+            .search-hint { padding: 0.5rem 1.25rem; font-size: 0.8rem; color: hsl(var(--muted-foreground)); border-top: 1px solid hsl(var(--border)); }
             @media (max-width: 768px) {
                 .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); flex-direction: column; padding: 1rem; gap: 0.5rem; }
                 .nav-links.open { display: flex; }
@@ -198,6 +226,62 @@ public namespace underlayer_web {
                 setTheme(current === 'dark' ? 'light' : 'dark');
             }
             setTheme(getTheme());
+
+            var allConcepts = [
+                {name: "Bytes and Binary", url: "/courses/elf/lessons/bytes"},
+                {name: "Binary Representation", url: "/courses/elf/lessons/binary-representation"},
+                {name: "File Layout", url: "/courses/elf/lessons/file-layout"},
+                {name: "ELF Identification", url: "/courses/elf/lessons/elf-identification"},
+                {name: "ELF Header Fields", url: "/courses/elf/lessons/elf-header-fields"},
+                {name: "Entry Point", url: "/courses/elf/lessons/entry-point"},
+                {name: "Program Header Table", url: "/courses/elf/lessons/program-header-table"},
+                {name: "Segment Types", url: "/courses/elf/lessons/segment-types"},
+                {name: "Memory Mapping", url: "/courses/elf/lessons/memory-mapping"},
+                {name: "Section Header Table", url: "/courses/elf/lessons/section-header-table"},
+                {name: "Common Sections", url: "/courses/elf/lessons/common-sections"},
+                {name: "Section vs Segment", url: "/courses/elf/lessons/section-vs-segment"},
+                {name: "Symbol Table", url: "/courses/elf/lessons/symbol-table"},
+                {name: "Symbol Binding", url: "/courses/elf/lessons/binding"},
+                {name: "Symbol Visibility", url: "/courses/elf/lessons/visibility"},
+                {name: "Relocation Entries", url: "/courses/elf/lessons/relocation-entries"},
+                {name: "Relocation Types", url: "/courses/elf/lessons/relocation-types"},
+                {name: "Dynamic Relocations", url: "/courses/elf/lessons/dynamic-relocations"},
+                {name: "Dynamic Section", url: "/courses/elf/lessons/dynamic-section"},
+                {name: "Shared Libraries", url: "/courses/elf/lessons/shared-libraries"},
+                {name: "The Dynamic Linker", url: "/courses/elf/lessons/ld-so"},
+                {name: "The Kernel Loader", url: "/courses/elf/lessons/loader"},
+                {name: "Process Memory Layout", url: "/courses/elf/lessons/memory-layout"},
+                {name: "The Startup Sequence", url: "/courses/elf/lessons/execution"}
+            ];
+
+            function openSearch() {
+                document.getElementById("search-modal").classList.add("open");
+                document.getElementById("search-input").focus();
+            }
+            function closeSearch() {
+                document.getElementById("search-modal").classList.remove("open");
+                document.getElementById("search-input").value = "";
+                document.getElementById("search-results").innerHTML = "";
+            }
+            function doSearch(q) {
+                var results = document.getElementById("search-results");
+                results.innerHTML = "";
+                if(q.length < 2) return;
+                var lower = q.toLowerCase();
+                for(var i = 0; i < allConcepts.length; i++) {
+                    if(allConcepts[i].name.toLowerCase().indexOf(lower) !== -1) {
+                        var a = document.createElement("a");
+                        a.className = "search-result-item";
+                        a.href = allConcepts[i].url;
+                        a.textContent = allConcepts[i].name;
+                        results.appendChild(a);
+                    }
+                }
+            }
+            document.addEventListener("keydown", function(e) {
+                if((e.ctrlKey || e.metaKey) && e.key === "k") { e.preventDefault(); openSearch(); }
+                if(e.key === "Escape") { closeSearch(); }
+            });
         }
 
         send_page(res, &raw page)

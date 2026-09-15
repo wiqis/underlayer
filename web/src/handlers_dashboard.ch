@@ -36,6 +36,7 @@ public namespace underlayer_web {
         page.appendTitle(std::string_view("Dashboard — Underlayer"))
 
         #html {
+            <a href="#main-content" class="skip-link">Skip to content</a>
             <div class="navbar">
                 <div class="nav-inner">
                     <a href="/" class="nav-brand">Underlayer</a>
@@ -60,7 +61,7 @@ public namespace underlayer_web {
                 </div>
             </div>
 
-            <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
+            <div class="container" id="main-content" style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
                 <div style="margin-bottom: 2rem;">
                     <H1>Dashboard</H1>
                     <Text variant="muted">Welcome back to your learning journey</Text>
@@ -142,6 +143,9 @@ public namespace underlayer_web {
 
         #css {
             [data-chx-i] { display: contents; }
+            .skip-link { position: absolute; top: -100%; left: 0; background: hsl(217 91% 60%); color: white; padding: 0.75rem 1.5rem; z-index: 200; font-weight: 600; text-decoration: none; border-radius: 0 0 8px 0; }
+            .skip-link:focus { top: 0; }
+            :focus-visible { outline: 2px solid hsl(217 91% 60%); outline-offset: 2px; }
             .container { font-family: system-ui, sans-serif; background: hsl(var(--background)); color: hsl(var(--foreground)); min-height: 100vh; }
             .navbar { background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
             .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; }

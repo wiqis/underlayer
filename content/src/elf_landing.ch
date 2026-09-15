@@ -16,6 +16,7 @@ public func render_elf_landing() : string {
     page.appendTitle(&title)
 
     #html {
+        <a href="#main-content" class="skip-link">Skip to content</a>
         <div class="navbar">
             <div class="nav-inner">
                 <a href="/" class="nav-brand">Underlayer</a>
@@ -33,7 +34,7 @@ public func render_elf_landing() : string {
             </div>
         </div>
 
-        <div class="course-landing">
+        <div class="course-landing" id="main-content">
             <div class="course-header">
                 <h1>Executable and Linkable Format</h1>
                 <p class="course-description">A deep dive into the ELF binary format — headers, sections, segments, symbols, relocations, and dynamic linking.</p>
@@ -130,6 +131,9 @@ public func render_elf_landing() : string {
 
     #css {
         body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 0; background: hsl(var(--background)); color: hsl(var(--foreground)); }
+        .skip-link { position: absolute; top: -100%; left: 0; background: hsl(217 91% 60%); color: white; padding: 0.75rem 1.5rem; z-index: 200; font-weight: 600; text-decoration: none; border-radius: 0 0 8px 0; }
+        .skip-link:focus { top: 0; }
+        :focus-visible { outline: 2px solid hsl(217 91% 60%); outline-offset: 2px; }
         .navbar { background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
         .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; }
         .nav-brand { font-size: 1.25rem; font-weight: 700; color: hsl(var(--foreground)); text-decoration: none; }
