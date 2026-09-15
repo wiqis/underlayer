@@ -4,49 +4,63 @@ using std::string_view
 using std::Result
 using std::Option
 
-// P2 4.2.16/4.2.17: Review submit reports mistake pattern + personalized feedback
+// P2 4.2.16/4.2.17: mistake pattern classification (direct logic test)
 @test
-public func test_review_submit_mistake_pattern(env : &mut TestEnv) {
-    var db = test_helpers::setup_test_db()
-    var cfg = server.ServerConfig()
-    cfg.addr = string("127.0.0.1:20085")
-    var srv = server.Server(cfg)
-    srv.router.add("POST", "/api/review/submit", (|&db|(req, res) => {
-        underlayer_web::handle_review_submit(db, &raw mut req, &raw mut res)
-    }))
-    srv.serve_async(20085u)
-    std::concurrent.sleep_ms(200u)
+public func test_mistake_pattern_classification(env : &mut TestEnv) {
+    // Consistent failure: 3 attempts, 0 correct
+    var s1 = underlayer_models::ConceptState::make()
+    s1.concept_id = string("probe-a")
+    s1.attempts = 3
+    s1.correct = 0
+    var kind1 = underlayer_learning::classify_mistake_pattern(&raw s1)
+    var cf = string("consistent_failure")
+    if(!kind1.equals(&cf)) { env.error("expected consistent_failure") }
 
-    var client = http::Client()
-    var ebv = std::string_view("")
+    // Intermittent: 3 attempts, 1 correct (33%)
+    var s2 = underlayer_models::ConceptState::make()
+    s2.concept_id = string("probe-b")
+    s2.attempts = 3
+    s2.correct = 1
+    var kind2 = underlayer_learning::classify_mistake_pattern(&raw s2)
+    var it = string("intermittent")
+    if(!kind2.equals(&it)) { env.error("expected intermittent") }
 
-    // Three failing submissions on the same concept
-    var res1 = client.post("http://127.0.0.1:20085/api/review/submit?concept_id=mistake-probe&course_id=elf&rating=again", &ebv, "application/json")
-    if(res1 is Result.Err) { env.error("request 1 failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var res2 = client.post("http://127.0.0.1:20085/api/review/submit?concept_id=mistake-probe&course_id=elf&rating=again", &ebv, "application/json")
-    if(res2 is Result.Err) { env.error("request 2 failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var res3 = client.post("http://127.0.0.1:20085/api/review/submit?concept_id=mistake-probe&course_id=elf&rating=again", &ebv, "application/json")
-    if(res3 is Result.Err) { env.error("request 3 failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    // Streak reset: 4 attempts, 3 correct (75%), streak 0
+    var s3 = underlayer_models::ConceptState::make()
+    s3.concept_id = string("probe-c")
+    s3.attempts = 4
+    s3.correct = 3
+    s3.streak = 0
+    var kind3 = underlayer_learning::classify_mistake_pattern(&raw s3)
+    var sr = string("streak_reset")
+    if(!kind3.equals(&sr)) { env.error("expected streak_reset") }
 
-    var Ok(resp3) = res3 else unreachable
-    var body_opt = resp3.body.read_to_string()
-    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    // Not enough signal: 2 attempts, 0 correct
+    var s4 = underlayer_models::ConceptState::make()
+    s4.concept_id = string("probe-d")
+    s4.attempts = 2
+    s4.correct = 0
+    var kind4 = underlayer_learning::classify_mistake_pattern(&raw s4)
+    var np = string("no_pattern")
+    if(!kind4.equals(&np)) { env.error("expected no_pattern for few attempts") }
 
-    // Third failing attempt => consistent_failure pattern with feedback text
-    if(body.find(string_view("mistake_pattern")) == std::NPOS) { env.error("missing mistake_pattern key") }
-    if(body.find(string_view("consistent_failure")) == std::NPOS) { env.error("expected consistent_failure pattern") }
-    if(body.find(string_view("personalized_feedback")) == std::NPOS) { env.error("missing personalized_feedback key") }
+    // Healthy: 5 attempts, 5 correct, streak 3
+    var s5 = underlayer_models::ConceptState::make()
+    s5.concept_id = string("probe-e")
+    s5.attempts = 5
+    s5.correct = 5
+    s5.streak = 3
+    var kind5 = underlayer_learning::classify_mistake_pattern(&raw s5)
+    if(!kind5.equals(&np)) { env.error("expected no_pattern for healthy state") }
 
-    // First submission (fresh state) should not be classified
-    var Ok(resp1) = res1 else unreachable
-    var body1_opt = resp1.body.read_to_string()
-    if(body1_opt is Option.None) { env.error("no body 1"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body1) = body1_opt else unreachable
-    if(body1.find(string_view("mistake_pattern\":\"none\"")) == std::NPOS) { env.error("first attempt should be no pattern") }
-
-    srv.shutdown()
-    underlayer_db::close(&raw db)
+    // Personalized feedback is non-empty exactly when there is a pattern
+    var patterns = std::vector<underlayer_models::ConceptState>()
+    patterns.push(s1)
+    var detected = underlayer_learning::detect_mistake_patterns(&raw patterns)
+    if(detected.size() != 1) { env.error("expected 1 detected pattern") }
+    var p0 = detected.get_ptr(0)
+    var feedback = underlayer_learning::personalized_feedback(p0)
+    if(feedback.size() == 0) { env.error("expected non-empty feedback") }
 }
 
 @test

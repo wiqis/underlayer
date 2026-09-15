@@ -230,6 +230,39 @@ public func main() : int {
         underlayer_web::handle_velocity_analytics(db, &req, &raw mut res)
     }))
 
+    // ---- Learning Analytics (P2 6.2.4-6.2.7, 6.2.10-6.2.12, 6.2.15) ----
+    srv.router.add("GET", "/api/analytics/temporal", (|&db|(req, res) => {
+        underlayer_web::handle_temporal_analytics(db, &req, &raw mut res)
+    }))
+
+    srv.router.add("GET", "/api/analytics/retention", (|&db|(req, res) => {
+        underlayer_web::handle_retention_analytics(db, &req, &raw mut res)
+    }))
+
+    srv.router.add("GET", "/api/analytics/dropoff", (|&db|(req, res) => {
+        underlayer_web::handle_dropoff_analytics(db, &req, &raw mut res)
+    }))
+
+    srv.router.add("GET", "/api/analytics/funnel", (|&db|(req, res) => {
+        underlayer_web::handle_funnel_analytics(db, &req, &raw mut res)
+    }))
+
+    srv.router.add("GET", "/api/analytics/comparative", (|&db|(req, res) => {
+        underlayer_web::handle_comparative_analytics(db, &req, &raw mut res)
+    }))
+
+    srv.router.add("GET", "/api/analytics/platform", (|&db|(req, res) => {
+        underlayer_web::handle_platform_analytics(db, &req, &raw mut res)
+    }))
+
+    srv.router.add("GET", "/api/analytics/cohorts", (|&db|(req, res) => {
+        underlayer_web::handle_cohort_analytics(db, &req, &raw mut res)
+    }))
+
+    srv.router.add("GET", "/api/analytics/devices", (|&db|(req, res) => {
+        underlayer_web::handle_device_analytics(db, &req, &raw mut res)
+    }))
+
     // ---- Course Progress API ----
     srv.router.add("GET", "/api/progress/:courseId", (|&db, &courses_dir|(req, res) => {
         underlayer_web::handle_course_progress(db, courses_dir, &req, &raw mut res)
@@ -436,6 +469,9 @@ public func main() : int {
     // Settings page
     srv.router.add("GET", "/settings", (req, res) => {
         underlayer_web::handle_settings_page(&req, &raw mut res)
+    })
+    srv.router.add("GET", "/components", (req, res) => {
+        underlayer_web::handle_components_demo_page(&req, &raw mut res)
     })
     srv.router.add("GET", "/u/:username", (req, res) => {
         var path = req.path.to_view()

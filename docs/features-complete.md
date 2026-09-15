@@ -647,18 +647,18 @@
 - [x] P2 6.2.1 Session analytics (length, accuracy, time)
 - [x] P2 6.2.2 Concept analytics (mastery, time, attempts)
 - [x] P2 6.2.3 Course analytics (completion, velocity)
-- [ ] P2 6.2.4 Platform analytics (engagement, retention)
-- [ ] P2 6.2.5 Cohort analytics (group comparison)
-- [ ] P2 6.2.6 Temporal analytics (time-of-day, day-of-week)
-- [ ] P2 6.2.7 Device analytics (mobile vs desktop)
+- [x] P2 6.2.4 Platform analytics (engagement, retention)
+- [x] P2 6.2.5 Cohort analytics (group comparison)
+- [x] P2 6.2.6 Temporal analytics (time-of-day, day-of-week)
+- [x] P2 6.2.7 Device analytics (mobile vs desktop)
 - [x] P2 6.2.8 Difficulty analytics (easy/hard distribution)
 - [x] P2 6.2.9 Error analytics (common mistakes)
-- [ ] P2 6.2.10 Drop-off analytics (where learners quit)
-- [ ] P2 6.2.11 Funnel analytics (registration to first lesson to completion)
-- [ ] P2 6.2.12 Retention analytics (return rate)
+- [x] P2 6.2.10 Drop-off analytics (where learners quit)
+- [x] P2 6.2.11 Funnel analytics (registration to first lesson to completion)
+- [x] P2 6.2.12 Retention analytics (return rate)
 - [x] P2 6.2.13 Engagement analytics (sessions per week)
 - [x] P2 6.2.14 Velocity analytics (concepts per week)
-- [ ] P2 6.2.15 Comparative analytics (vs other learners)
+- [x] P2 6.2.15 Comparative analytics (vs other learners)
 
 ### 6.3 Retention Metrics
 
@@ -732,8 +732,8 @@
 - [x] P2 7.2.16 Skeleton component (loading placeholder)
 - [x] P2 7.2.17 Avatar component (user, course, module)
 - [x] P2 7.2.18 Separator/divider component
-- [ ] P2 7.2.19 Scroll area component
-- [ ] P2 7.2.20 Resizable panel component
+- [x] P2 7.2.19 Scroll area component
+- [x] P2 7.2.20 Resizable panel component
 
 ### 7.3 Theming
 
@@ -742,12 +742,12 @@
 - [x] P2 7.3.3 System theme detection (OS preference)
 - [x] P2 7.3.4 Custom theme support (CSS variables)
 - [x] P2 7.3.5 Theme persistence (localStorage)
-- [ ] P2 7.3.6 Theme preview (before applying)
+- [x] P2 7.3.6 Theme preview (before applying)
 - [x] P2 7.3.7 Font size adjustment (small, medium, large)
 - [x] P2 7.3.8 Color blind mode (protanopia, deuteranopia, tritanopia)
 - [x] P2 7.3.9 High contrast mode
 - [x] P2 7.3.10 Reduced motion mode (prefers-reduced-motion)
-- [ ] P2 7.3.11 Custom font support (upload fonts)
+- [x] P2 7.3.11 Custom font support (upload fonts)
 - [x] P2 7.3.12 Line height adjustment
 - [x] P2 7.3.13 Letter spacing adjustment
 - [x] P2 7.3.14 Content width adjustment (narrow, normal, wide)
