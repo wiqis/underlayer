@@ -99,6 +99,55 @@ public func render_common_sections() : string {
                 <h2>Connect</h2>
                 <p>You now know the common sections. But remember — sections and segments are different things. The next concept clarifies this distinction.</p>
             </div>
+
+            <div class="unit unit-retrieve">
+                <h2>Match Code to Output</h2>
+                <p>Match each section type to its correct description:</p>
+                <div class="match-quiz" id="match-cs-1">
+                    <div class="match-row">
+                        <span class="match-item">.text</span>
+                        <select class="match-select" data-correct="executable machine code">
+                            <option value="">Select...</option>
+                            <option value="initialized data">initialized data</option>
+                            <option value="executable machine code">executable machine code</option>
+                            <option value="uninitialized data (zeroed at runtime)">uninitialized data (zeroed at runtime)</option>
+                            <option value="read-only data">read-only data</option>
+                        </select>
+                    </div>
+                    <div class="match-row">
+                        <span class="match-item">.data</span>
+                        <select class="match-select" data-correct="initialized data">
+                            <option value="">Select...</option>
+                            <option value="initialized data">initialized data</option>
+                            <option value="executable machine code">executable machine code</option>
+                            <option value="uninitialized data (zeroed at runtime)">uninitialized data (zeroed at runtime)</option>
+                            <option value="read-only data">read-only data</option>
+                        </select>
+                    </div>
+                    <div class="match-row">
+                        <span class="match-item">.bss</span>
+                        <select class="match-select" data-correct="uninitialized data (zeroed at runtime)">
+                            <option value="">Select...</option>
+                            <option value="initialized data">initialized data</option>
+                            <option value="executable machine code">executable machine code</option>
+                            <option value="uninitialized data (zeroed at runtime)">uninitialized data (zeroed at runtime)</option>
+                            <option value="read-only data">read-only data</option>
+                        </select>
+                    </div>
+                    <div class="match-row">
+                        <span class="match-item">.rodata</span>
+                        <select class="match-select" data-correct="read-only data">
+                            <option value="">Select...</option>
+                            <option value="initialized data">initialized data</option>
+                            <option value="executable machine code">executable machine code</option>
+                            <option value="uninitialized data (zeroed at runtime)">uninitialized data (zeroed at runtime)</option>
+                            <option value="read-only data">read-only data</option>
+                        </select>
+                    </div>
+                    <button class="match-check-btn" onclick="checkMatch('match-cs-1')">Check Matches</button>
+                    <div class="match-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
@@ -120,6 +169,20 @@ public func render_common_sections() : string {
         .quiz-option:hover { border-color: #3b82f6; }
         .quiz-option.correct { border-color: #059669; background: #ecfdf5; }
         .quiz-option.wrong { border-color: #dc2626; background: #fef2f2; }
+        .match-quiz { margin-top: 1rem; }
+        .match-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem; }
+        .match-item { font-weight: 500; font-family: monospace; min-width: 5rem; }
+        .match-select { padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; background: white; font-size: 0.9rem; min-width: 20rem; }
+        .match-select:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
+        .match-select.correct { border-color: #059669; background: #ecfdf5; }
+        .match-select.wrong { border-color: #dc2626; background: #fef2f2; }
+        .match-check-btn { margin-top: 0.75rem; padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; font-size: 0.9rem; }
+        .match-check-btn:hover { background: #f9fafb; border-color: #3b82f6; }
+        .match-feedback { margin-top: 0.5rem; font-size: 0.9rem; }
+        @media (max-width: 640px) {
+            .match-row { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+            .match-select { min-width: 100%; }
+        }
         table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
         th, td { padding: 0.5rem; border: 1px solid #d1d5db; text-align: left; }
         th { background: #f9fafb; font-weight: 600; }
@@ -133,6 +196,33 @@ public func render_common_sections() : string {
             for(var i = 0; i < options.length; i++) { options[i].disabled = true; }
             if(correct) { btn.classList.add('correct'); feedback.textContent = 'Correct!'; feedback.style.color = '#059669'; }
             else { btn.classList.add('wrong'); feedback.textContent = 'Not quite.'; feedback.style.color = '#dc2626'; }
+        }
+
+        function checkMatch(quizId) {
+            var quiz = document.getElementById(quizId);
+            var selects = quiz.querySelectorAll('.match-select');
+            var feedback = quiz.querySelector('.match-feedback');
+            var allCorrect = true;
+            for(var i = 0; i < selects.length; i++) {
+                var sel = selects[i];
+                var correct = sel.getAttribute('data-correct');
+                if(sel.value === correct) {
+                    sel.classList.add('correct');
+                    sel.classList.remove('wrong');
+                } else {
+                    sel.classList.add('wrong');
+                    sel.classList.remove('correct');
+                    allCorrect = false;
+                }
+                sel.disabled = true;
+            }
+            if(allCorrect) {
+                feedback.textContent = 'All matches correct!';
+                feedback.style.color = '#059669';
+            } else {
+                feedback.textContent = 'Some matches are incorrect. Review the highlighted items.';
+                feedback.style.color = '#dc2626';
+            }
         }
     }
     return page.toString()

@@ -123,6 +123,31 @@ gcc -pie -S compare.c -o - | grep call</pre></div>
                 <h2>Connect</h2>
                 <p>Static relocations are resolved at link time. But shared libraries also need dynamic relocations — patches applied by ld.so at load time. That's the next concept.</p>
             </div>
+
+            <div class="unit unit-retrieve">
+                <h2>Sort by Complexity</h2>
+                <p>Sort the relocation types from simplest (least work at link time) to most complex (most work):</p>
+                <div class="sort-quiz" id="sort-rt-1">
+                    <div class="sort-item" draggable="true" data-complexity="1">
+                        <span class="sort-text">R_X86_64_64 — absolute 64-bit address (S + A)</span>
+                        <span class="sort-handle">⋮⋮</span>
+                    </div>
+                    <div class="sort-item" draggable="true" data-complexity="3">
+                        <span class="sort-text">R_X86_64_GOTPCRELX — GOT entry + linker relaxation</span>
+                        <span class="sort-handle">⋮⋮</span>
+                    </div>
+                    <div class="sort-item" draggable="true" data-complexity="2">
+                        <span class="sort-text">R_X86_64_PLT32 — PLT entry (L + A - P)</span>
+                        <span class="sort-handle">⋮⋮</span>
+                    </div>
+                    <div class="sort-item" draggable="true" data-complexity="4">
+                        <span class="sort-text">R_X86_64_RELATIVE — base + addend (dynamic relocation)</span>
+                        <span class="sort-handle">⋮⋮</span>
+                    </div>
+                    <button class="sort-check-btn" onclick="checkSort('sort-rt-1')">Check Order</button>
+                    <div class="sort-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
@@ -145,6 +170,17 @@ gcc -pie -S compare.c -o - | grep call</pre></div>
         .quiz-option:hover { border-color: #3b82f6; }
         .quiz-option.correct { border-color: #059669; background: #ecfdf5; }
         .quiz-option.wrong { border-color: #dc2626; background: #fef2f2; }
+        .sort-quiz { margin-top: 1rem; }
+        .sort-item { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; margin-bottom: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: grab; user-select: none; }
+        .sort-item:active { cursor: grabbing; background: #f9fafb; }
+        .sort-item.dragging { opacity: 0.5; border-style: dashed; }
+        .sort-text { flex: 1; font-size: 0.9rem; }
+        .sort-handle { color: #9ca3af; font-size: 1.1rem; }
+        .sort-item.correct { border-color: #059669; background: #ecfdf5; }
+        .sort-item.wrong { border-color: #dc2626; background: #fef2f2; }
+        .sort-check-btn { margin-top: 0.75rem; padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; font-size: 0.9rem; }
+        .sort-check-btn:hover { background: #f9fafb; border-color: #3b82f6; }
+        .sort-feedback { margin-top: 0.5rem; font-size: 0.9rem; }
         table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
         th, td { padding: 0.5rem; border: 1px solid #d1d5db; text-align: left; }
         th { background: #f9fafb; font-weight: 600; }
@@ -170,6 +206,62 @@ gcc -pie -S compare.c -o - | grep call</pre></div>
                 feedback.style.color = '#dc2626';
             }
         }
+
+        function checkSort(quizId) {
+            var quiz = document.getElementById(quizId);
+            var items = quiz.querySelectorAll('.sort-item');
+            var feedback = quiz.querySelector('.sort-feedback');
+            var allCorrect = true;
+            for(var i = 0; i < items.length; i++) {
+                var expected = i + 1;
+                var actual = parseInt(items[i].getAttribute('data-complexity'));
+                if(actual === expected) {
+                    items[i].classList.add('correct');
+                    items[i].classList.remove('wrong');
+                } else {
+                    items[i].classList.add('wrong');
+                    items[i].classList.remove('correct');
+                    allCorrect = false;
+                }
+                items[i].draggable = false;
+            }
+            if(allCorrect) {
+                feedback.textContent = 'Correct order!';
+                feedback.style.color = '#059669';
+            } else {
+                feedback.textContent = 'Some items are out of order. Review the highlighted items.';
+                feedback.style.color = '#dc2626';
+            }
+        }
+
+        var sortDragSrc = null;
+        document.querySelectorAll('.sort-item').forEach(function(item) {
+            item.addEventListener('dragstart', function(e) {
+                sortDragSrc = this;
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            item.addEventListener('dragend', function() {
+                this.classList.remove('dragging');
+            });
+            item.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            });
+            item.addEventListener('drop', function(e) {
+                e.preventDefault();
+                if(sortDragSrc !== this) {
+                    var parent = this.parentNode;
+                    var srcIdx = Array.prototype.indexOf.call(parent.children, sortDragSrc);
+                    var dstIdx = Array.prototype.indexOf.call(parent.children, this);
+                    if(srcIdx < dstIdx) {
+                        parent.insertBefore(sortDragSrc, this.nextSibling);
+                    } else {
+                        parent.insertBefore(sortDragSrc, this);
+                    }
+                }
+            });
+        });
     }
 
     return page.toString()

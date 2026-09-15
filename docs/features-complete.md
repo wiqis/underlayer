@@ -464,9 +464,9 @@
 - [x] P2 4.1.10 True/false: with explanation
 - [x] P2 4.1.11 True/false: with "why" explanation
 - [x] P2 4.1.12 Matching: match terms to definitions
-- [ ] P2 4.1.13 Matching: match code to output
-- [ ] P2 4.1.14 Ordering: arrange steps in correct order
-- [ ] P2 4.1.15 Sorting: sort items by property
+- [x] P2 4.1.13 Matching: match code to output
+- [x] P2 4.1.14 Ordering: arrange steps in correct order
+- [x] P2 4.1.15 Sorting: sort items by property
 - [ ] P3 4.1.16 Code completion: write missing code
 - [ ] P3 4.1.17 Code debugging: find the bug
 - [ ] P3 4.1.18 Code debugging: fix the bug

@@ -124,6 +124,35 @@ dpkg -S /lib/x86_64-linux-gnu/libc.so.6</pre></div>
                 <h2>Connect</h2>
                 <p>You now understand the full dynamic linking pipeline. The final module covers how the OS loader actually runs an ELF program — the kernel-side counterpart to ld.so.</p>
             </div>
+
+            <div class="unit unit-retrieve">
+                <h2>Order the Steps</h2>
+                <p>Put the dynamic linker loading steps in the correct order (drag to reorder):</p>
+                <div class="order-quiz" id="order-ld-1">
+                    <div class="order-item" draggable="true" data-order="3">
+                        <span class="order-num">3</span>
+                        <span class="order-text">Process DT_NEEDED entries and load each required shared library</span>
+                    </div>
+                    <div class="order-item" draggable="true" data-order="1">
+                        <span class="order-num">1</span>
+                        <span class="order-text">Kernel maps ELF into memory and passes control to ld.so</span>
+                    </div>
+                    <div class="order-item" draggable="true" data-order="4">
+                        <span class="order-num">4</span>
+                        <span class="order-text">Perform relocations (patch GOT/PLT with resolved addresses)</span>
+                    </div>
+                    <div class="order-item" draggable="true" data-order="2">
+                        <span class="order-num">2</span>
+                        <span class="order-text">Parse dynamic section of the executable and libraries</span>
+                    </div>
+                    <div class="order-item" draggable="true" data-order="5">
+                        <span class="order-num">5</span>
+                        <span class="order-text">Jump to the entry point (e_entry) to start program execution</span>
+                    </div>
+                    <button class="order-check-btn" onclick="checkOrder('order-ld-1')">Check Order</button>
+                    <div class="order-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
@@ -146,6 +175,17 @@ dpkg -S /lib/x86_64-linux-gnu/libc.so.6</pre></div>
         .quiz-option:hover { border-color: #3b82f6; }
         .quiz-option.correct { border-color: #059669; background: #ecfdf5; }
         .quiz-option.wrong { border-color: #dc2626; background: #fef2f2; }
+        .order-quiz { margin-top: 1rem; }
+        .order-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; margin-bottom: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: grab; user-select: none; }
+        .order-item:active { cursor: grabbing; background: #f9fafb; }
+        .order-item.dragging { opacity: 0.5; border-style: dashed; }
+        .order-num { font-weight: 600; color: #6b7280; min-width: 1.5rem; }
+        .order-text { flex: 1; }
+        .order-item.correct { border-color: #059669; background: #ecfdf5; }
+        .order-item.wrong { border-color: #dc2626; background: #fef2f2; }
+        .order-check-btn { margin-top: 0.75rem; padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; font-size: 0.9rem; }
+        .order-check-btn:hover { background: #f9fafb; border-color: #3b82f6; }
+        .order-feedback { margin-top: 0.5rem; font-size: 0.9rem; }
         table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
         th, td { padding: 0.5rem; border: 1px solid #d1d5db; text-align: left; }
         th { background: #f9fafb; font-weight: 600; }
@@ -171,6 +211,67 @@ dpkg -S /lib/x86_64-linux-gnu/libc.so.6</pre></div>
                 feedback.style.color = '#dc2626';
             }
         }
+
+        function checkOrder(quizId) {
+            var quiz = document.getElementById(quizId);
+            var items = quiz.querySelectorAll('.order-item');
+            var feedback = quiz.querySelector('.order-feedback');
+            var allCorrect = true;
+            for(var i = 0; i < items.length; i++) {
+                var expected = i + 1;
+                var actual = parseInt(items[i].querySelector('.order-num').textContent);
+                if(actual === expected) {
+                    items[i].classList.add('correct');
+                    items[i].classList.remove('wrong');
+                } else {
+                    items[i].classList.add('wrong');
+                    items[i].classList.remove('correct');
+                    allCorrect = false;
+                }
+                items[i].draggable = false;
+            }
+            if(allCorrect) {
+                feedback.textContent = 'Correct order!';
+                feedback.style.color = '#059669';
+            } else {
+                feedback.textContent = 'Some items are out of order. The correct sequence is shown by the green items.';
+                feedback.style.color = '#dc2626';
+            }
+        }
+
+        var dragSrc = null;
+        document.querySelectorAll('.order-item').forEach(function(item) {
+            item.addEventListener('dragstart', function(e) {
+                dragSrc = this;
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            item.addEventListener('dragend', function() {
+                this.classList.remove('dragging');
+            });
+            item.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            });
+            item.addEventListener('drop', function(e) {
+                e.preventDefault();
+                if(dragSrc !== this) {
+                    var parent = this.parentNode;
+                    var srcNum = dragSrc.querySelector('.order-num');
+                    var dstNum = this.querySelector('.order-num');
+                    var tmpText = srcNum.textContent;
+                    srcNum.textContent = dstNum.textContent;
+                    dstNum.textContent = tmpText;
+                    var srcIdx = Array.prototype.indexOf.call(parent.children, dragSrc);
+                    var dstIdx = Array.prototype.indexOf.call(parent.children, this);
+                    if(srcIdx < dstIdx) {
+                        parent.insertBefore(dragSrc, this.nextSibling);
+                    } else {
+                        parent.insertBefore(dragSrc, this);
+                    }
+                }
+            });
+        });
     }
 
     return page.toString()
