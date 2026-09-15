@@ -67,7 +67,7 @@ public func render_dynamic_section() : string {
                 <p>Key tags:</p>
                 <table>
                     <thead>
-                        <tr><th>Tag</th><th>Value</th><th>Purpose</th></tr>
+                        <tr><th scope="col">Tag</th><th scope="col">Value</th><th scope="col">Purpose</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>DT_NEEDED</td><td>1</td><td>Shared library dependency (offset into DT_STRTAB)</td></tr>

@@ -67,7 +67,7 @@ public func render_binary_representation() : string {
                 <p>Computers store numbers in binary. But we read hex dumps in hexadecimal because it maps directly to binary: each hex digit = exactly 4 bits.</p>
                 <table>
                     <thead>
-                        <tr><th>Binary</th><th>Hex</th><th>Decimal</th></tr>
+                        <tr><th scope="col">Binary</th><th scope="col">Hex</th><th scope="col">Decimal</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>0000</td><td>0</td><td>0</td></tr>

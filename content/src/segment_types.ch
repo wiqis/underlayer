@@ -70,7 +70,7 @@ public func render_segment_types() : string {
                 <h2>The Actual Detail</h2>
                 <table>
                     <thead>
-                        <tr><th>Type</th><th>Value</th><th>Purpose</th></tr>
+                        <tr><th scope="col">Type</th><th scope="col">Value</th><th scope="col">Purpose</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>PT_NULL</td><td>0</td><td>Unused entry</td></tr>

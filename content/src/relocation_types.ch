@@ -60,7 +60,7 @@ public func render_relocation_types() : string {
                 <p>The most common x86-64 relocation types:</p>
                 <table>
                     <thead>
-                        <tr><th>Type</th><th>Value</th><th>Formula</th><th>Usage</th></tr>
+                        <tr><th scope="col">Type</th><th scope="col">Value</th><th scope="col">Formula</th><th scope="col">Usage</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>R_X86_64_64</td><td>1</td><td>S + A</td><td>Absolute 64-bit address (data references)</td></tr>

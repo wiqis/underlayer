@@ -63,7 +63,7 @@ public func render_symbol_table() : string {
                 <p>ELF has two symbol tables:</p>
                 <table>
                     <thead>
-                        <tr><th>Table</th><th>Section</th><th>Purpose</th><th>Used By</th></tr>
+                        <tr><th scope="col">Table</th><th scope="col">Section</th><th scope="col">Purpose</th><th scope="col">Used By</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>.symtab</td><td>SHT_SYMTAB</td><td>Full symbol table (all symbols)</td><td>Static linker, debugger</td></tr>
@@ -73,7 +73,7 @@ public func render_symbol_table() : string {
                 <p>Each entry is an Elf64_Sym structure (24 bytes on 64-bit):</p>
                 <table>
                     <thead>
-                        <tr><th>Field</th><th>Type</th><th>Size</th><th>Description</th></tr>
+                        <tr><th scope="col">Field</th><th scope="col">Type</th><th scope="col">Size</th><th scope="col">Description</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>st_name</td><td>Elf64_Word</td><td>4 bytes</td><td>Offset into string table</td></tr>

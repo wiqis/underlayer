@@ -65,7 +65,7 @@ public func render_common_sections() : string {
                 <h2>The Actual Detail</h2>
                 <table>
                     <thead>
-                        <tr><th>Section</th><th>Type</th><th>Flags</th><th>Contains</th></tr>
+                        <tr><th scope="col">Section</th><th scope="col">Type</th><th scope="col">Flags</th><th scope="col">Contains</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>.text</td><td>SHT_PROGBITS</td><td>SHF_ALLOC + SHF_EXECINSTR</td><td>Machine code</td></tr>

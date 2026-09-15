@@ -60,7 +60,7 @@ public func render_binding() : string {
                 <p>The binding is stored in the high 4 bits of &lt;code&gt;st_info&lt;/code&gt; in the &lt;code&gt;Elf64_Sym&lt;/code&gt; structure:</p>
                 <table>
                     <thead>
-                        <tr><th>Binding</th><th>Constant</th><th>Value</th><th>Behavior</th></tr>
+                        <tr><th scope="col">Binding</th><th scope="col">Constant</th><th scope="col">Value</th><th scope="col">Behavior</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>Local</td><td>STB_LOCAL</td><td>0</td><td>Not visible outside the object file. Multiple files can have same name.</td></tr>

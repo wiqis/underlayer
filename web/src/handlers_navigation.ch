@@ -1,8 +1,48 @@
 // underlayer_web — Navigation handlers (7.1.2, 7.1.3, 7.1.5).
 using std::string
 using std::string_view
+using underlayer_db::DbClient
 
 public namespace underlayer_web {
+
+    // P2 7.1.13/7.1.15: Nav status — course progress + due review count for the navbar
+    public func handle_nav_status(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        var learner_id = string("demo")
+        var course_id = string("elf")
+
+        // Count concepts the learner has actually attempted
+        var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
+        var started : int = 0
+        var si : size_t = 0
+        while(si < states.size()) {
+            var state = states.get_ptr(si)
+            var not_started = string("not_started")
+            if(state.attempts > 0 && !state.status.equals(&not_started)) {
+                started = started + 1
+            }
+            si = si + 1
+        }
+
+        // 24 concepts — matches render_concept mapping in helpers.ch
+        var total : int = 24
+        var pct : int = (started * 100) / total
+        var due_items = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, 50)
+
+        var body = string("{\"concepts_started\":")
+        var s_str = underlayer_core::int_to_string(started as i64)
+        body.append_string(&s_str)
+        body.append_view(",\"concepts_total\":")
+        var t_str = underlayer_core::int_to_string(total as i64)
+        body.append_string(&t_str)
+        body.append_view(",\"progress_pct\":")
+        var p_str = underlayer_core::int_to_string(pct as i64)
+        body.append_string(&p_str)
+        body.append_view(",\"due_reviews\":")
+        var d_str = underlayer_core::int_to_string(due_items.size() as i64)
+        body.append_string(&d_str)
+        body.append_view("}")
+        send_json_str(res, &raw body)
+    }
 
     // GET /api/navigation/:courseId/:conceptId — returns sidebar, prev/next, breadcrumbs
     public func handle_navigation(courses_dir : &string, course_id : *string_view, concept_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {
@@ -150,6 +190,58 @@ public namespace underlayer_web {
 
         body.append_view("}")
         send_json_str(res, &raw body)
+    }
+
+    // P2 7.1.10: Quick jump — all concepts + nav pages for the command palette.
+    // Concept IDs mirror render_concept() in helpers.ch (24 concepts).
+    public func handle_nav_search(req : &http::Request, res : *mut http::ResponseWriter) {
+        var body = string("{\"entries\":[")
+        body.append_view("{\"label\":\"Home\",\"url\":\"/\",\"kind\":\"page\"}")
+        body.append_view(",{\"label\":\"Dashboard\",\"url\":\"/dashboard\",\"kind\":\"page\"}")
+        body.append_view(",{\"label\":\"Review\",\"url\":\"/review\",\"kind\":\"page\"}")
+        body.append_view(",{\"label\":\"Progress\",\"url\":\"/progress\",\"kind\":\"page\"}")
+
+        // 24 concepts in course order
+        append_nav_entry(&raw body, string("Bytes and Binary"), string("bytes"), true)
+        append_nav_entry(&raw body, string("Binary Representation"), string("binary-representation"), true)
+        append_nav_entry(&raw body, string("File Layout"), string("file-layout"), true)
+        append_nav_entry(&raw body, string("ELF Identification"), string("elf-identification"), true)
+        append_nav_entry(&raw body, string("ELF Header Fields"), string("elf-header-fields"), true)
+        append_nav_entry(&raw body, string("Entry Point"), string("entry-point"), true)
+        append_nav_entry(&raw body, string("Program Header Table"), string("program-header-table"), true)
+        append_nav_entry(&raw body, string("Segment Types"), string("segment-types"), true)
+        append_nav_entry(&raw body, string("Memory Mapping"), string("memory-mapping"), true)
+        append_nav_entry(&raw body, string("Section Header Table"), string("section-header-table"), true)
+        append_nav_entry(&raw body, string("Common Sections"), string("common-sections"), true)
+        append_nav_entry(&raw body, string("Section vs Segment"), string("section-vs-segment"), true)
+        append_nav_entry(&raw body, string("Symbol Table"), string("symbol-table"), true)
+        append_nav_entry(&raw body, string("Symbol Binding"), string("binding"), true)
+        append_nav_entry(&raw body, string("Symbol Visibility"), string("visibility"), true)
+        append_nav_entry(&raw body, string("Relocation Entries"), string("relocation-entries"), true)
+        append_nav_entry(&raw body, string("Relocation Types"), string("relocation-types"), true)
+        append_nav_entry(&raw body, string("Dynamic Relocations"), string("dynamic-relocations"), true)
+        append_nav_entry(&raw body, string("Dynamic Section"), string("dynamic-section"), true)
+        append_nav_entry(&raw body, string("Shared Libraries"), string("shared-libraries"), true)
+        append_nav_entry(&raw body, string("The Dynamic Linker"), string("ld-so"), true)
+        append_nav_entry(&raw body, string("The Kernel Loader"), string("loader"), true)
+        append_nav_entry(&raw body, string("Process Memory Layout"), string("memory-layout"), true)
+        append_nav_entry(&raw body, string("The Startup Sequence"), string("execution"), true)
+
+        body.append_view("]}")
+        send_json_str(res, &raw body)
+    }
+
+    // Append one concept entry (adds comma before every entry).
+    func append_nav_entry(body : *string, label : string, concept_id : string, is_concept : bool) {
+        body.append_view(",\"label\":\"")
+        body.append_string(&label)
+        body.append_view("\",\"url\":\"/courses/elf/lessons/")
+        body.append_string(&concept_id)
+        if(is_concept) {
+            body.append_view("\",\"kind\":\"concept\"}")
+        } else {
+            body.append_view("\",\"kind\":\"page\"}")
+        }
     }
 
 }

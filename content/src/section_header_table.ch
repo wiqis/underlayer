@@ -54,7 +54,7 @@ public func render_section_header_table() : string {
                 <p>Each 64-bit section header entry is 64 bytes:</p>
                 <table>
                     <thead>
-                        <tr><th>Field</th><th>Size</th><th>Description</th></tr>
+                        <tr><th scope="col">Field</th><th scope="col">Size</th><th scope="col">Description</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>sh_name</td><td>4</td><td>Index into section name string table</td></tr>

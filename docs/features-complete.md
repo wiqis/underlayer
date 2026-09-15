@@ -255,18 +255,18 @@
 - [ ] P3 2.2.2 Concept file with #css macro for styling
 - [ ] P3 2.2.3 Concept file with #js macro for interactivity
 - [ ] P3 2.2.4 Concept file with #md macro for markdown content
-- [ ] P3 2.2.5 Concept template: standard lesson layout
-- [ ] P3 2.2.6 Concept template: exercise-focused layout
-- [ ] P3 2.2.7 Concept template: visualization-focused layout
-- [ ] P3 2.2.8 Concept template: mixed layout
+- [x] P3 2.2.5 Concept template: standard lesson layout
+- [x] P3 2.2.6 Concept template: exercise-focused layout
+- [x] P3 2.2.7 Concept template: visualization-focused layout
+- [x] P3 2.2.8 Concept template: mixed layout
 - [ ] P3 2.2.9 Concept inheritance: base concept to specialized
 - [ ] P3 2.2.10 Concept composition: combine smaller concepts
-- [ ] P3 2.2.11 Concept validation: linting for common mistakes
-- [ ] P3 2.2.12 Concept validation: required sections check
-- [ ] P3 2.2.13 Concept validation: exercise count check
-- [ ] P3 2.2.14 Concept validation: asset availability check
-- [ ] P3 2.2.15 Concept validation: link validity check
-- [ ] P3 2.2.16 Concept validation: accessibility check
+- [x] P3 2.2.11 Concept validation: linting for common mistakes
+- [x] P3 2.2.12 Concept validation: required sections check
+- [x] P3 2.2.13 Concept validation: exercise count check
+- [x] P3 2.2.14 Concept validation: asset availability check
+- [x] P3 2.2.15 Concept validation: link validity check
+- [x] P3 2.2.16 Concept validation: accessibility check
 - [ ] P3 2.2.17 Concept preview: render concept without publishing
 - [ ] P3 2.2.18 Concept diff: compare two versions of a concept
 - [ ] P3 2.2.19 Concept history: view all changes to a concept
@@ -495,8 +495,8 @@
 - [x] P2 4.2.13 Streak indicator (consecutive correct)
 - [x] P2 4.2.14 Encouragement messages (context-aware)
 - [x] P2 4.2.15 "This is supposed to be hard" message for difficult exercises
-- [ ] P2 4.2.16 Mistake pattern detection (common errors)
-- [ ] P2 4.2.17 Personalized feedback based on mistake pattern
+- [x] P2 4.2.16 Mistake pattern detection (common errors)
+- [x] P2 4.2.17 Personalized feedback based on mistake pattern
 - [x] P2 4.2.18 Feedback quality rating (was this helpful?)
 
 ### 4.3 Exercise Generation
@@ -705,12 +705,12 @@
 - [x] P2 7.1.6 Search functionality (full-text search)
 - [x] P2 7.1.7 Filter/sort courses (by topic, difficulty, rating)
 - [x] P2 7.1.9 Recent history (last 10 visited concepts)
-- [ ] P2 7.1.10 Quick jump (keyboard shortcuts, command palette)
+- [x] P2 7.1.10 Quick jump (keyboard shortcuts, command palette)
 - [x] P2 7.1.11 Table of contents (per concept)
 - [x] P2 7.1.12 Back to top button
-- [ ] P2 7.1.13 Progress indicator in navigation
+- [x] P2 7.1.13 Progress indicator in navigation
 - [ ] P2 7.1.14 Unread indicator (new content)
-- [ ] P2 7.1.15 Due indicator (review items due)
+- [x] P2 7.1.15 Due indicator (review items due)
 
 ### 7.2 UI Components
 

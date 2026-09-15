@@ -61,7 +61,7 @@ public func render_visibility() : string {
                 <p>Visibility is stored in the low 2 bits of st_other in the Elf64_Sym structure:</p>
                 <table>
                     <thead>
-                        <tr><th>Visibility</th><th>Constant</th><th>Value</th><th>Behavior</th></tr>
+                        <tr><th scope="col">Visibility</th><th scope="col">Constant</th><th scope="col">Value</th><th scope="col">Behavior</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>Default</td><td>STV_DEFAULT</td><td>0</td><td>Symbol is exported. Dynamic linker can interpose it (LD_PRELOAD).</td></tr>
@@ -73,7 +73,7 @@ public func render_visibility() : string {
                 <p>How to set visibility in C/C++:</p>
                 <table>
                     <thead>
-                        <tr><th>Visibility</th><th>C/C++ syntax</th><th>Effect</th></tr>
+                        <tr><th scope="col">Visibility</th><th scope="col">C/C++ syntax</th><th scope="col">Effect</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>Default</td><td>void public_api() -- no attribute needed</td><td>Exported, interposable</td></tr>

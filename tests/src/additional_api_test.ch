@@ -567,3 +567,64 @@ public func test_fsrs_import_returns_200(env : &mut TestEnv) {
     srv.shutdown()
     underlayer_db::close(&raw db)
 }
+
+// ---- Nav Status (P2 7.1.13 progress indicator, P2 7.1.15 due indicator) ----
+
+@test
+public func test_nav_status_returns_counts(env : &mut TestEnv) {
+    var db = test_helpers::setup_test_db()
+    var cfg = server.ServerConfig()
+    cfg.addr = string("127.0.0.1:20086")
+    var srv = server.Server(cfg)
+    srv.router.add("GET", "/api/nav-status", (|&db|(req, res) => {
+        underlayer_web::handle_nav_status(db, &req, &raw mut res)
+    }))
+    srv.serve_async(20086u)
+    std::concurrent.sleep_ms(200u)
+
+    var client = http::Client()
+    var res = client.get("http://127.0.0.1:20086/api/nav-status")
+    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Ok(resp) = res else unreachable
+    if(resp.status != 200u) { env.error("expected status 200") }
+    var body_opt = resp.body.read_to_string()
+    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Some(body) = body_opt else unreachable
+    if(body.find(string_view("concepts_started")) == std::NPOS) { env.error("missing concepts_started") }
+    if(body.find(string_view("concepts_total")) == std::NPOS) { env.error("missing concepts_total") }
+    if(body.find(string_view("progress_pct")) == std::NPOS) { env.error("missing progress_pct") }
+    if(body.find(string_view("due_reviews")) == std::NPOS) { env.error("missing due_reviews") }
+
+    srv.shutdown()
+    underlayer_db::close(&raw db)
+}
+
+// ---- Nav Search / Quick Jump (P2 7.1.10 command palette) ----
+
+@test
+public func test_nav_search_returns_entries(env : &mut TestEnv) {
+    var db = test_helpers::setup_test_db()
+    var cfg = server.ServerConfig()
+    cfg.addr = string("127.0.0.1:20087")
+    var srv = server.Server(cfg)
+    srv.router.add("GET", "/api/nav-search", (req, res) => {
+        underlayer_web::handle_nav_search(&req, &raw mut res)
+    })
+    srv.serve_async(20087u)
+    std::concurrent.sleep_ms(200u)
+
+    var client = http::Client()
+    var res = client.get("http://127.0.0.1:20087/api/nav-search")
+    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Ok(resp) = res else unreachable
+    if(resp.status != 200u) { env.error("expected status 200") }
+    var body_opt = resp.body.read_to_string()
+    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Some(body) = body_opt else unreachable
+    if(body.find(string_view("/courses/elf/lessons/bytes")) == std::NPOS) { env.error("missing bytes lesson entry") }
+    if(body.find(string_view("/courses/elf/lessons/execution")) == std::NPOS) { env.error("missing execution lesson entry") }
+    if(body.find(string_view("\"entries\"")) == std::NPOS) { env.error("missing entries key") }
+
+    srv.shutdown()
+    underlayer_db::close(&raw db)
+}

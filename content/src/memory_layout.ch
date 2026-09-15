@@ -62,7 +62,7 @@ readelf -l /bin/ls | grep -E "LOAD|GNU_RELRO"</pre></div>
                 <p>Key regions from the ELF perspective:</p>
                 <table>
                     <thead>
-                        <tr><th>Region</th><th>Permission</th><th>Source</th><th>Purpose</th></tr>
+                        <tr><th scope="col">Region</th><th scope="col">Permission</th><th scope="col">Source</th><th scope="col">Purpose</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>.text</td><td>r-x (read-execute)</td><td>PT_LOAD (code segment)</td><td>Machine code</td></tr>

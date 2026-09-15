@@ -44,7 +44,7 @@ public func render_ld_so() : string {
                 <p>Key environment variables:</p>
                 <table>
                     <thead>
-                        <tr><th>Variable</th><th>Purpose</th><th>Example</th></tr>
+                        <tr><th scope="col">Variable</th><th scope="col">Purpose</th><th scope="col">Example</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>LD_LIBRARY_PATH</td><td>Additional library search paths</td><td>LD_LIBRARY_PATH=/opt/foo/lib ./myprog</td></tr>

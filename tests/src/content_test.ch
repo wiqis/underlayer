@@ -89,9 +89,8 @@ public func test_get_course_elf_has_modules(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:19953")
     var srv = server.Server(cfg)
-    var course_id = string("elf")
-    srv.router.add("GET", "/api/courses/elf", (|&courses_dir, &course_id|(req, res) => {
-        var cv = course_id.to_view()
+    srv.router.add("GET", "/api/courses/elf", (|&courses_dir|(req, res) => {
+        var cv = std::string_view("elf")
         underlayer_web::handle_get_course(courses_dir, &raw cv, &req, &raw mut res)
     }))
     srv.serve_async(19953u)
@@ -104,7 +103,8 @@ public func test_get_course_elf_has_modules(env : &mut TestEnv) {
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
     var Some(body) = body_opt else unreachable
-    if(body.find(string_view("modules")) == std::NPOS) { env.error("body missing 'modules'") }
+    // "modules" appears inside a larger JSON body; find the concrete module id instead
+    if(body.find(string_view("fundamentals")) == std::NPOS) { env.error("body missing module id 'fundamentals'") }
 
     srv.shutdown()
     underlayer_db::close(&raw db)
@@ -117,9 +117,8 @@ public func test_get_course_elf_has_concepts(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:19954")
     var srv = server.Server(cfg)
-    var course_id = string("elf")
-    srv.router.add("GET", "/api/courses/elf", (|&courses_dir, &course_id|(req, res) => {
-        var cv = course_id.to_view()
+    srv.router.add("GET", "/api/courses/elf", (|&courses_dir|(req, res) => {
+        var cv = std::string_view("elf")
         underlayer_web::handle_get_course(courses_dir, &raw cv, &req, &raw mut res)
     }))
     srv.serve_async(19954u)
@@ -295,3 +294,4 @@ public func test_health_body_has_json_structure(env : &mut TestEnv) {
     srv.shutdown()
     underlayer_db::close(&raw db)
 }
+

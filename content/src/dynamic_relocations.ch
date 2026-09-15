@@ -62,7 +62,7 @@ public func render_dynamic_relocations() : string {
                 <p>Dynamic relocations live in two sections:</p>
                 <table>
                     <thead>
-                        <tr><th>Section</th><th>Purpose</th><th>Processed By</th><th>When</th></tr>
+                        <tr><th scope="col">Section</th><th scope="col">Purpose</th><th scope="col">Processed By</th><th scope="col">When</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>.rela.dyn</td><td>Data references, global offsets</td><td>ld.so (or static linker)</td><td>Load time</td></tr>
@@ -72,7 +72,7 @@ public func render_dynamic_relocations() : string {
                 <p>The most common dynamic relocation types on x86-64:</p>
                 <table>
                     <thead>
-                        <tr><th>Type</th><th>Value</th><th>Formula</th><th>Usage</th></tr>
+                        <tr><th scope="col">Type</th><th scope="col">Value</th><th scope="col">Formula</th><th scope="col">Usage</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>R_X86_64_RELATIVE</td><td>8</td><td>B + A</td><td>Base address + addend (PIC data in shared libs)</td></tr>

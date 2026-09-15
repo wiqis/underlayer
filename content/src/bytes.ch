@@ -69,7 +69,7 @@ public func render_bytes() : string {
                 <p>We write bytes in hexadecimal (base-16) because it's compact: one byte = exactly two hex digits.</p>
                 <table>
                     <thead>
-                        <tr><th>Decimal</th><th>Hex</th><th>Binary</th><th>ASCII</th></tr>
+                        <tr><th scope="col">Decimal</th><th scope="col">Hex</th><th scope="col">Binary</th><th scope="col">ASCII</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>0</td><td>0x00</td><td>00000000</td><td>NUL</td></tr>

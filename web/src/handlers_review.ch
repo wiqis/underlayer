@@ -408,7 +408,27 @@ public namespace underlayer_web {
         resp.append_view(",\"current_streak\":")
         var cs_out = underlayer_core::int_to_string(current_streak as i64)
         resp.append_string(&cs_out)
-        resp.append_view("}")
+        // P2 4.2.16/4.2.17: Mistake pattern + personalized feedback
+        var pattern_states = std::vector<underlayer_models::ConceptState>()
+        pattern_states.push(state)
+        var patterns = underlayer_learning::detect_mistake_patterns(&raw pattern_states)
+        var none_pat = string("none")
+        var feedback = string()
+        if(patterns.size() > 0) {
+            var p0 = patterns.get_ptr(0)
+            resp.append_view(",\"mistake_pattern\":\"")
+            resp.append_string(&p0.pattern)
+            resp.append_view("\"")
+            feedback = underlayer_learning::personalized_feedback(p0)
+        } else {
+            resp.append_view(",\"mistake_pattern\":\"")
+            resp.append_string(&none_pat)
+            resp.append_view("\"")
+        }
+        resp.append_view(",\"personalized_feedback\":\"")
+        var fb_escaped = underlayer_core::json_escape(&feedback.to_view())
+        resp.append_string(&fb_escaped)
+        resp.append_view("\"}")
         send_json_str(res, &raw resp)
     }
 

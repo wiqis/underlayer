@@ -281,6 +281,16 @@ public func main() : int {
         }
     }))
 
+    // ---- Nav Status (P2 7.1.13 progress indicator, P2 7.1.15 due indicator) ----
+    srv.router.add("GET", "/api/nav-status", (|&db|(req, res) => {
+        underlayer_web::handle_nav_status(db, &req, &raw mut res)
+    }))
+
+    // ---- Nav Search / Quick Jump (P2 7.1.10 command palette) ----
+    srv.router.add("GET", "/api/nav-search", (req, res) => {
+        underlayer_web::handle_nav_search(&req, &raw mut res)
+    })
+
     // ---- FSRS Settings (1.1.24-1.1.28) ----
     srv.router.add("POST", "/api/fsrs/optimize", (|&db|(req, res) => {
         underlayer_web::handle_fsrs_optimize(db, &req, &raw mut res)

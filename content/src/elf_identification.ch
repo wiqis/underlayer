@@ -70,7 +70,7 @@ public func render_elf_identification() : string {
                 <h2>The Actual Detail</h2>
                 <table>
                     <thead>
-                        <tr><th>Index</th><th>Name</th><th>Values</th><th>Description</th></tr>
+                        <tr><th scope="col">Index</th><th scope="col">Name</th><th scope="col">Values</th><th scope="col">Description</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>0</td><td>EI_MAG0</td><td>0x7f</td><td>Magic number byte 0</td></tr>

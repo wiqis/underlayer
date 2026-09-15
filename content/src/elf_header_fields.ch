@@ -71,7 +71,7 @@ public func render_elf_header_fields() : string {
                 <p>Here are all fields in the 64-bit ELF header (52 bytes after e_ident, total 64 bytes):</p>
                 <table>
                     <thead>
-                        <tr><th>Field</th><th>Offset</th><th>Size</th><th>Description</th></tr>
+                        <tr><th scope="col">Field</th><th scope="col">Offset</th><th scope="col">Size</th><th scope="col">Description</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>e_ident</td><td>0</td><td>16</td><td>Identification array (previous concept)</td></tr>

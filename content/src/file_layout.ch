@@ -70,7 +70,7 @@ public func render_file_layout() : string {
                 <p>An ELF file has four main parts, in this exact order:</p>
                 <table>
                     <thead>
-                        <tr><th>Part</th><th>Offset</th><th>Purpose</th></tr>
+                        <tr><th scope="col">Part</th><th scope="col">Offset</th><th scope="col">Purpose</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>ELF Header</td><td>0x00</td><td>Identifies the file as ELF, states class (32/64), endianness, and points to other tables</td></tr>

@@ -58,7 +58,7 @@ public func render_section_vs_segment() : string {
                 <p>Key differences:</p>
                 <table>
                     <thead>
-                        <tr><th>Aspect</th><th>Section</th><th>Segment</th></tr>
+                        <tr><th scope="col">Aspect</th><th scope="col">Section</th><th scope="col">Segment</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>Defined by</td><td>Section header table</td><td>Program header table</td></tr>

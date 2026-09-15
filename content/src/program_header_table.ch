@@ -70,7 +70,7 @@ public func render_program_header_table() : string {
                 <p>Each 64-bit program header entry is 56 bytes:</p>
                 <table>
                     <thead>
-                        <tr><th>Field</th><th>Size</th><th>Description</th></tr>
+                        <tr><th scope="col">Field</th><th scope="col">Size</th><th scope="col">Description</th></tr>
                     </thead>
                     <tbody>
                         <tr><td>p_type</td><td>4</td><td>Segment type (PT_LOAD=1, PT_DYNAMIC=2, PT_INTERP=3, ...)</td></tr>
