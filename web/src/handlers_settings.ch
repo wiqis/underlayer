@@ -7,6 +7,81 @@ using underlayer_repository::parse_f64
 
 public namespace underlayer_web {
 
+    // GET /settings — render settings page
+    public func handle_settings_page(req : &http::Request, res : *mut http::ResponseWriter) {
+        var html_out = render_settings_page()
+        var bv = html_out.to_view()
+        res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
+        res.write_view(&bv)
+    }
+
+    // GET /u/:username — render public profile page
+    public func handle_profile_page(req : &http::Request, res : *mut http::ResponseWriter) {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() < 2) {
+            res.status = 404u
+            var ct = std::string_view("text/plain")
+            res.set_header_view(std::string_view("Content-Type"), &ct)
+            var body = std::string("Not found")
+            var bv = body.to_view()
+            res.write_view(&bv)
+            return
+        }
+        var username_sv = segments.get_ptr(1)
+        var username = username_sv.to_string()
+        var html_out = render_profile_page(&raw username)
+        var bv = html_out.to_view()
+        res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
+        res.write_view(&bv)
+    }
+
+    // POST /api/auth/register — real implementation in handlers_auth.ch
+
+    // POST /api/auth/login — real implementation in handlers_auth.ch
+
+    // POST /api/auth/logout — real implementation in handlers_auth.ch
+
+    // GET /api/auth/me — real implementation in handlers_auth.ch
+
+    // POST /api/auth/forgot-password — real implementation in handlers_auth.ch
+
+    // POST /api/auth/reset-password — real implementation in handlers_auth.ch
+
+    // POST /api/auth/verify-email — real implementation in handlers_auth.ch
+
+    // GET /api/user/login-history — real implementation in handlers_auth.ch
+
+    // GET /api/user/profile — real implementation in handlers_profiles.ch
+
+    // PUT /api/user/profile — real implementation in handlers_profiles.ch
+
+    // GET /api/user/:username — real implementation in handlers_profiles.ch
+
+    // GET /api/user/settings — real implementation in handlers_settings_api.ch
+
+    // PUT /api/user/settings — real implementation in handlers_settings_api.ch
+
+    // GET /api/user/learning-preferences — real implementation in handlers_settings_api.ch
+
+    // PUT /api/user/learning-preferences — real implementation in handlers_settings_api.ch
+
+    // GET /api/user/export — real implementation in handlers_data.ch
+
+    // DELETE /api/user/data/:type — real implementation in handlers_data.ch
+
+    // DELETE /api/user/account — real implementation in handlers_data.ch
+
+    // POST /api/user/deactivate — real implementation in handlers_data.ch
+
+    // POST /api/user/reactivate — real implementation in handlers_data.ch
+
+    // POST /api/progress/share — real implementation in handlers_data.ch
+
+    // GET /api/progress/shared/:token — real implementation in handlers_data.ch
+
+    // POST /api/progress/import — real implementation in handlers_data.ch
+
     // POST /api/fsrs/optimize — optimize parameters from review history
     public func handle_fsrs_optimize(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = string("demo")

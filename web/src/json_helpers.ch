@@ -49,4 +49,22 @@ public namespace underlayer_web {
         return json_int(field) as int
     }
 
+    public func json_get_bool(obj : *JsonValue, key : *char) : bool {
+        var field = json_get(obj, key)
+        if(field == null) { return false }
+        if(field is JsonValue.Bool) {
+            var Bool(b) = *field else unreachable
+            return b
+        }
+        if(field is JsonValue.String) {
+            var String(s) = *field else unreachable
+            if(s.to_view().equals(std::string_view("true"))) { return true }
+        }
+        if(field is JsonValue.Number) {
+            var Number(n) = *field else unreachable
+            if(underlayer_repository::parse_i64(n.to_view()) != 0) { return true }
+        }
+        return false
+    }
+
 }

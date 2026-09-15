@@ -7,6 +7,9 @@ import cstd
 import http
 import json
 import fs
+import encoding
+import crypto
+import osrand
 import page
 import html_cbi
 import css_cbi

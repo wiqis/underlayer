@@ -626,9 +626,9 @@
 - [x] P1 6.1.3 Progress visualization (charts, graphs)
 - [x] P1 6.1.4 Progress milestones (25%, 50%, 75%, 100%)
 - [x] P1 6.1.5 Progress goals (set target completion date)
-- [ ] P2 6.1.6 Progress sharing (public profile)
+- [x] P2 6.1.6 Progress sharing (public profile)
 - [x] P2 6.1.7 Progress export (JSON, CSV)
-- [ ] P2 6.1.8 Progress import (from another account)
+- [x] P2 6.1.8 Progress import (from another account)
 - [x] P2 6.1.9 Progress comparison (anonymous, vs average)
 - [x] P2 6.1.10 Progress prediction (estimated completion date)
 - [ ] P3 6.1.11 Progress history (all changes over time)
@@ -1405,11 +1405,11 @@
 
 ### 16.1 Registration
 
-- [ ] P3 16.1.1 Email/password registration form
-- [ ] P3 16.1.2 Email validation (format check)
-- [ ] P3 16.1.3 Email uniqueness check (duplicate detection)
-- [ ] P3 16.1.4 Password strength requirements (min 8 chars, uppercase, number, symbol)
-- [ ] P3 16.1.5 Password confirmation field
+- [x] P3 16.1.1 Email/password registration form
+- [x] P3 16.1.2 Email validation (format check)
+- [x] P3 16.1.3 Email uniqueness check (duplicate detection)
+- [x] P3 16.1.4 Password strength requirements (min 8 chars, uppercase, number, symbol)
+- [x] P3 16.1.5 Password confirmation field
 - [ ] P3 16.1.6 Terms of service acceptance checkbox
 - [ ] P3 16.1.7 Privacy policy acceptance checkbox
 - [ ] P3 16.1.8 CAPTCHA on registration (anti-bot)
@@ -1418,22 +1418,22 @@
 - [ ] P3 16.1.11 Email verification email (verify within 24h)
 - [ ] P3 16.1.12 Email verification link expiry (24 hours)
 - [ ] P3 16.1.13 Email verification resend (max 3 per day)
-- [ ] P3 16.1.14 Auto-login after registration
+- [x] P3 16.1.14 Auto-login after registration
 - [ ] P3 16.1.15 Onboarding questionnaire after registration
 - [ ] P3 16.1.16 Default avatar generation (initials, identicon)
 - [ ] P3 16.1.17 Username generation (fun defaults: learner-42)
 - [ ] P3 16.1.18 Referral tracking (who invited you)
 - [ ] P3 16.1.19 Registration analytics (conversion tracking)
-- [ ] P3 16.1.20 Registration error messages (clear, helpful)
+- [x] P3 16.1.20 Registration error messages (clear, helpful)
 
 ### 16.2 Login
 
-- [ ] P3 16.2.1 Email/password login form
-- [ ] P3 16.2.2 Email field (with autocomplete)
-- [ ] P3 16.2.3 Password field (with show/hide toggle)
-- [ ] P3 16.2.4 "Remember me" checkbox (persistent session)
-- [ ] P3 16.2.5 "Forgot password?" link
-- [ ] P3 16.2.6 "Don't have an account?" link
+- [x] P3 16.2.1 Email/password login form
+- [x] P3 16.2.2 Email field (with autocomplete)
+- [x] P3 16.2.3 Password field (with show/hide toggle)
+- [x] P3 16.2.4 "Remember me" checkbox (persistent session)
+- [x] P3 16.2.5 "Forgot password?" link
+- [x] P3 16.2.6 "Don't have an account?" link
 - [ ] P3 16.2.7 Login rate limiting (5 attempts per 15 minutes)
 - [ ] P3 16.2.8 Account lockout after 10 failed attempts
 - [ ] P3 16.2.9 Account lockout duration (15 minutes, configurable)
@@ -1441,32 +1441,32 @@
 - [ ] P3 16.2.11 Login failure logging (IP, reason, timestamp)
 - [ ] P3 16.2.12 Suspicious login detection (new IP, new device)
 - [ ] P3 16.2.13 Suspicious login notification (email alert)
-- [ ] P3 16.2.14 Session token generation (JWT, 24h expiry)
-- [ ] P3 16.2.15 Session token refresh (sliding window)
-- [ ] P3 16.2.16 Active session listing (see all logged-in devices)
-- [ ] P3 16.2.17 Session revocation (log out specific device)
-- [ ] P3 16.2.18 Revoke all sessions (security breach response)
+- [x] P3 16.2.14 Session token generation (JWT, 24h expiry)
+- [x] P3 16.2.15 Session token refresh (sliding window)
+- [x] P3 16.2.16 Active session listing (see all logged-in devices)
+- [x] P3 16.2.17 Session revocation (log out specific device)
+- [x] P3 16.2.18 Revoke all sessions (security breach response)
 - [ ] P3 16.2.19 Login analytics (success rate, failure reasons)
 - [ ] P3 16.2.20 OAuth login buttons (Google, GitHub, Apple)
 
 ### 16.3 Password Reset
 
-- [ ] P3 16.3.1 "Forgot password?" link on login page
-- [ ] P3 16.3.2 Email input form (enter email to reset)
-- [ ] P3 16.3.3 Reset link generation (unique, time-limited token)
+- [x] P3 16.3.1 "Forgot password?" link on login page
+- [x] P3 16.3.2 Email input form (enter email to reset)
+- [x] P3 16.3.3 Reset link generation (unique, time-limited token)
 - [ ] P3 16.3.4 Reset link sent to email (within 60 seconds)
-- [ ] P3 16.3.5 Reset link expiry (1 hour)
-- [ ] P3 16.3.6 Reset link single-use (invalidate after use)
+- [x] P3 16.3.5 Reset link expiry (1 hour)
+- [x] P3 16.3.6 Reset link single-use (invalidate after use)
 - [ ] P3 16.3.7 Reset link rate limiting (3 per hour per email)
-- [ ] P3 16.3.8 Reset page: new password field
-- [ ] P3 16.3.9 Reset page: confirm password field
+- [x] P3 16.3.8 Reset page: new password field
+- [x] P3 16.3.9 Reset page: confirm password field
 - [ ] P3 16.3.10 Reset page: password strength indicator
-- [ ] P3 16.3.11 Reset success: "password updated" message
+- [x] P3 16.3.11 Reset success: "password updated" message
 - [ ] P3 16.3.12 Reset success: auto-login with new password
 - [ ] P3 16.3.13 Reset success: notification email ("password changed")
-- [ ] P3 16.3.14 Reset success: invalidate all other sessions
-- [ ] P3 16.3.15 Reset failure: "invalid or expired link" message
-- [ ] P3 16.3.16 Reset failure: "try again" link
+- [x] P3 16.3.14 Reset success: invalidate all other sessions
+- [x] P3 16.3.15 Reset failure: "invalid or expired link" message
+- [x] P3 16.3.16 Reset failure: "try again" link
 - [ ] P3 16.3.17 Reset analytics (request count, success rate)
 - [ ] P3 16.3.18 Reset abuse detection (unusual patterns)
 - [ ] P3 16.3.19 Reset IP logging (for security audit)
@@ -1474,11 +1474,11 @@
 
 ### 16.4 Email Verification
 
-- [ ] P3 16.4.1 Verification email sent on registration
-- [ ] P3 16.4.2 Verification link in email (unique token)
-- [ ] P3 16.4.3 Verification link expiry (24 hours)
-- [ ] P3 16.4.4 Verification link single-use
-- [ ] P3 16.4.5 Verification page: "email verified" success
+- [x] P3 16.4.1 Verification email sent on registration
+- [x] P3 16.4.2 Verification link in email (unique token)
+- [x] P3 16.4.3 Verification link expiry (24 hours)
+- [x] P3 16.4.4 Verification link single-use
+- [x] P3 16.4.5 Verification page: "email verified" success
 - [ ] P3 16.4.6 Verification page: "expired" with resend option
 - [ ] P3 16.4.7 Resend verification (max 3 per day)
 - [ ] P3 16.4.8 Unverified account limitations (cannot review)
@@ -1492,21 +1492,21 @@
 
 ### 16.5 Profile Management
 
-- [ ] P3 16.5.1 Display name field (max 50 characters)
-- [ ] P3 16.5.2 Username field (3-20 characters, alphanumeric + underscore)
-- [ ] P3 16.5.3 Username uniqueness check
+- [x] P3 16.5.1 Display name field (max 50 characters)
+- [x] P3 16.5.2 Username field (3-20 characters, alphanumeric + underscore)
+- [x] P3 16.5.3 Username uniqueness check
 - [ ] P3 16.5.4 Username change cooldown (30 days)
 - [ ] P3 16.5.5 Avatar upload (JPG, PNG, GIF, max 5MB)
 - [ ] P3 16.5.6 Avatar crop/resize (200x200px)
 - [ ] P3 16.5.7 Avatar from URL (paste image URL)
 - [ ] P3 16.5.8 Avatar removal (revert to default)
-- [ ] P3 16.5.9 Bio field (max 500 characters, markdown)
-- [ ] P3 16.5.10 Learning goals field (max 200 characters)
-- [ ] P3 16.5.11 Location field (optional, max 100 characters)
-- [ ] P3 16.5.12 Website field (URL validation)
-- [ ] P3 16.5.13 Social links (Twitter, GitHub, LinkedIn)
-- [ ] P3 16.5.14 Profile visibility toggle (public/private/anonymous)
-- [ ] P3 16.5.15 Profile permalink (/u/username)
+- [x] P3 16.5.9 Bio field (max 500 characters, markdown)
+- [x] P3 16.5.10 Learning goals field (max 200 characters)
+- [x] P3 16.5.11 Location field (optional, max 100 characters)
+- [x] P3 16.5.12 Website field (URL validation)
+- [x] P3 16.5.13 Social links (Twitter, GitHub, LinkedIn)
+- [x] P3 16.5.14 Profile visibility toggle (public/private/anonymous)
+- [x] P3 16.5.15 Profile permalink (/u/username)
 - [ ] P3 16.5.16 Profile SEO (meta tags, Open Graph)
 - [ ] P3 16.5.17 Profile statistics display (courses, hours, streak)
 - [ ] P3 16.5.18 Profile badges display
@@ -1517,53 +1517,53 @@
 
 - [ ] P3 16.6.1 Change email (requires password confirmation)
 - [ ] P3 16.6.2 Change email verification (new email must verify)
-- [ ] P3 16.6.3 Change password (requires current password)
+- [x] P3 16.6.3 Change password (requires current password)
 - [ ] P3 16.6.4 Change password notification email
 - [ ] P3 16.6.5 Change username (requires password confirmation)
-- [ ] P3 16.6.6 Change display name
-- [ ] P3 16.6.7 Language preference dropdown
-- [ ] P3 16.6.8 Timezone selection dropdown
-- [ ] P3 16.6.9 Date format preference (MM/DD/YYYY, DD/MM/YYYY, YYYY-MM-DD)
-- [ ] P3 16.6.10 Theme preference (light/dark/system)
-- [ ] P3 16.6.11 Font size preference (small/medium/large)
-- [ ] P3 16.6.12 Notification preferences (per-channel toggles)
-- [ ] P3 16.6.13 Email notification toggle
-- [ ] P3 16.6.14 Push notification toggle
-- [ ] P3 16.6.15 In-app notification toggle
+- [x] P3 16.6.6 Change display name
+- [x] P3 16.6.7 Language preference dropdown
+- [x] P3 16.6.8 Timezone selection dropdown
+- [x] P3 16.6.9 Date format preference (MM/DD/YYYY, DD/MM/YYYY, YYYY-MM-DD)
+- [x] P3 16.6.10 Theme preference (light/dark/system)
+- [x] P3 16.6.11 Font size preference (small/medium/large)
+- [x] P3 16.6.12 Notification preferences (per-channel toggles)
+- [x] P3 16.6.13 Email notification toggle
+- [x] P3 16.6.14 Push notification toggle
+- [x] P3 16.6.15 In-app notification toggle
 
 ### 16.7 Learning Preferences
 
-- [ ] P3 16.7.1 Daily learning goal (minutes: 10, 15, 20, 30, 45, 60)
-- [ ] P3 16.7.2 Daily review goal (items: 5, 10, 20, 30, 50)
-- [ ] P3 16.7.3 Session length preference (10-60 minutes)
-- [ ] P3 16.7.4 Break reminder interval (15, 25, 45, 60 minutes)
-- [ ] P3 16.7.5 Preferred session time (morning/afternoon/evening/flexible)
+- [x] P3 16.7.1 Daily learning goal (minutes: 10, 15, 20, 30, 45, 60)
+- [x] P3 16.7.2 Daily review goal (items: 5, 10, 20, 30, 50)
+- [x] P3 16.7.3 Session length preference (10-60 minutes)
+- [x] P3 16.7.4 Break reminder interval (15, 25, 45, 60 minutes)
+- [x] P3 16.7.5 Preferred session time (morning/afternoon/evening/flexible)
 - [ ] P3 16.7.6 Energy check-in toggle (enable/disable)
-- [ ] P3 16.7.7 Difficulty preference (easy/normal/hard/auto)
+- [x] P3 16.7.7 Difficulty preference (easy/normal/hard/auto)
 - [ ] P3 16.7.8 Interleaving preference (blocked/interleaved/auto)
 - [ ] P3 16.7.9 Review scheduling preference (morning/evening/flexible)
-- [ ] P3 16.7.10 Show/hide streaks toggle
-- [ ] P3 16.7.11 Show/hide leaderboards toggle
-- [ ] P3 16.7.12 Show/hide achievements toggle
+- [x] P3 16.7.10 Show/hide streaks toggle
+- [x] P3 16.7.11 Show/hide leaderboards toggle
+- [x] P3 16.7.12 Show/hide achievements toggle
 - [ ] P3 16.7.13 Auto-play audio toggle
 - [ ] P3 16.7.14 Compact mode toggle
-- [ ] P3 16.7.15 Save preferences (auto-save on change)
+- [x] P3 16.7.15 Save preferences (auto-save on change)
 
 ### 16.8 Data Management
 
-- [ ] P3 16.8.1 Download all data (JSON export)
-- [ ] P3 16.8.2 Download review history (JSON, CSV)
-- [ ] P3 16.8.3 Download progress history (JSON, CSV)
+- [x] P3 16.8.1 Download all data (JSON export)
+- [x] P3 16.8.2 Download review history (JSON, CSV)
+- [x] P3 16.8.3 Download progress history (JSON, CSV)
 - [ ] P3 16.8.4 Download learning analytics (JSON, CSV)
 - [ ] P3 16.8.5 Download FSRS parameters (JSON)
-- [ ] P3 16.8.6 Delete specific data (per-course)
-- [ ] P3 16.8.7 Delete specific data (per-type: reviews, progress, analytics)
-- [ ] P3 16.8.8 Delete account (with confirmation)
-- [ ] P3 16.8.9 Delete account (requires password)
+- [x] P3 16.8.6 Delete specific data (per-course)
+- [x] P3 16.8.7 Delete specific data (per-type: reviews, progress, analytics)
+- [x] P3 16.8.8 Delete account (with confirmation)
+- [x] P3 16.8.9 Delete account (requires password)
 - [ ] P3 16.8.10 Delete account (30-day grace period)
 - [ ] P3 16.8.11 Delete account cancellation (within 30 days)
-- [ ] P3 16.8.12 Account deactivation (temporary, self-serve)
-- [ ] P3 16.8.13 Account reactivation (login with old credentials)
+- [x] P3 16.8.12 Account deactivation (temporary, self-serve)
+- [x] P3 16.8.13 Account reactivation (login with old credentials)
 - [ ] P3 16.8.14 Data portability (GDPR Article 20)
 - [ ] P3 16.8.15 Data correction (GDPR Article 16)
 
@@ -1587,7 +1587,7 @@
 
 ### 16.10 Security
 
-- [ ] P3 16.10.1 Login history (IP, device, timestamp)
+- [x] P3 16.10.1 Login history (IP, device, timestamp)
 - [ ] P3 16.10.2 Active devices list (with revoke option)
 - [ ] P3 16.10.3 Revoke all sessions button
 - [ ] P3 16.10.4 Security alerts (new login notification)

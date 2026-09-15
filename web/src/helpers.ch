@@ -38,6 +38,18 @@ public namespace underlayer_web {
         return out
     }
 
+    public func read_body(req : *mut http::Request) : string {
+        var buf : [8192]u8
+        var out = std::string()
+        while(true) {
+            var n = req.body.read(&raw mut buf[0], 8192)
+            if(n <= 0) { break }
+            var i : size_t = 0
+            while(i < (n as size_t)) { out.append(buf[i] as char); i = i + 1 }
+        }
+        return out
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         var bytes_id = std::string("bytes")

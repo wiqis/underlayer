@@ -39,6 +39,63 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw sql7)
         var idx6 = string("CREATE INDEX IF NOT EXISTS idx_lg_learner ON learning_goals(learner_id)")
         underlayer_db::exec_sql(db, &raw idx6)
+        // 16.5: Learner profiles
+        var sql8 = string("CREATE TABLE IF NOT EXISTS learner_profiles (learner_id TEXT PRIMARY KEY, display_name TEXT, username TEXT UNIQUE, avatar_url TEXT, bio TEXT, learning_goals TEXT, location TEXT, website TEXT, social_twitter TEXT, social_github TEXT, social_linkedin TEXT, visibility TEXT DEFAULT 'public', username_changed_at INTEGER DEFAULT 0, created_at INTEGER, updated_at INTEGER)")
+        underlayer_db::exec_sql(db, &raw sql8)
+        // 16.6: Learner settings
+        var sql9 = string("CREATE TABLE IF NOT EXISTS learner_settings (learner_id TEXT PRIMARY KEY, theme TEXT DEFAULT 'system', font_size TEXT DEFAULT 'medium', language TEXT DEFAULT 'en', timezone TEXT DEFAULT 'UTC', date_format TEXT DEFAULT 'YYYY-MM-DD', email_notifications INTEGER DEFAULT 1, push_notifications INTEGER DEFAULT 1, in_app_notifications INTEGER DEFAULT 1, compact_mode INTEGER DEFAULT 0, created_at INTEGER, updated_at INTEGER)")
+        underlayer_db::exec_sql(db, &raw sql9)
+        // 16.7: Learning preferences
+        var sql10 = string("CREATE TABLE IF NOT EXISTS learning_preferences (learner_id TEXT PRIMARY KEY, daily_goal_minutes INTEGER DEFAULT 20, daily_review_items INTEGER DEFAULT 10, session_length_minutes INTEGER DEFAULT 30, break_reminder_minutes INTEGER DEFAULT 25, preferred_session_time TEXT DEFAULT 'flexible', energy_checkin INTEGER DEFAULT 1, difficulty_preference TEXT DEFAULT 'auto', interleaving_preference TEXT DEFAULT 'auto', review_scheduling TEXT DEFAULT 'flexible', show_streaks INTEGER DEFAULT 1, show_leaderboards INTEGER DEFAULT 1, show_achievements INTEGER DEFAULT 1, auto_play_audio INTEGER DEFAULT 0, created_at INTEGER, updated_at INTEGER)")
+        underlayer_db::exec_sql(db, &raw sql10)
+        // 16.10.1: Login history
+        var sql11 = string("CREATE TABLE IF NOT EXISTS login_history (id INTEGER PRIMARY KEY AUTOINCREMENT, learner_id TEXT, ip_address TEXT, user_agent TEXT, success INTEGER DEFAULT 1, failure_reason TEXT, created_at INTEGER)")
+        underlayer_db::exec_sql(db, &raw sql11)
+        // 16.2.14: Sessions (JWT tokens)
+        var sql12 = string("CREATE TABLE IF NOT EXISTS auth_sessions (id TEXT PRIMARY KEY, learner_id TEXT, token_hash TEXT, device_info TEXT, ip_address TEXT, expires_at INTEGER, last_active INTEGER, created_at INTEGER)")
+        underlayer_db::exec_sql(db, &raw sql12)
+        // 16.3.3: Password reset tokens
+        var sql13 = string("CREATE TABLE IF NOT EXISTS password_reset_tokens (id TEXT PRIMARY KEY, learner_id TEXT, token_hash TEXT, expires_at INTEGER, used INTEGER DEFAULT 0, created_at INTEGER)")
+        underlayer_db::exec_sql(db, &raw sql13)
+        // 16.4.2: Email verification tokens
+        var sql14 = string("CREATE TABLE IF NOT EXISTS email_verification_tokens (id TEXT PRIMARY KEY, learner_id TEXT, email TEXT, token_hash TEXT, expires_at INTEGER, used INTEGER DEFAULT 0, created_at INTEGER)")
+        underlayer_db::exec_sql(db, &raw sql14)
+        // 16.10.7: API keys
+        var sql15 = string("CREATE TABLE IF NOT EXISTS api_keys (id TEXT PRIMARY KEY, learner_id TEXT, key_hash TEXT, name TEXT, last_used_at INTEGER, expires_at INTEGER, created_at INTEGER)")
+        underlayer_db::exec_sql(db, &raw sql15)
+        // 16.10.14: Audit log
+        var sql16 = string("CREATE TABLE IF NOT EXISTS audit_log (id INTEGER PRIMARY KEY AUTOINCREMENT, learner_id TEXT, action TEXT, details TEXT, ip_address TEXT, created_at INTEGER)")
+        underlayer_db::exec_sql(db, &raw sql16)
+        // Indexes for new tables
+        var idx7 = string("CREATE INDEX IF NOT EXISTS idx_lp_learner ON learner_profiles(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx7)
+        var idx8 = string("CREATE INDEX IF NOT EXISTS idx_ls_learner ON learner_settings(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx8)
+        var idx9 = string("CREATE INDEX IF NOT EXISTS idx_lpref_learner ON learning_preferences(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx9)
+        var idx10 = string("CREATE INDEX IF NOT EXISTS idx_lh_learner ON login_history(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx10)
+        var idx11 = string("CREATE INDEX IF NOT EXISTS idx_as_learner ON auth_sessions(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx11)
+        var idx12 = string("CREATE INDEX IF NOT EXISTS idx_as_token ON auth_sessions(token_hash)")
+        underlayer_db::exec_sql(db, &raw idx12)
+        var idx13 = string("CREATE INDEX IF NOT EXISTS idx_prt_learner ON password_reset_tokens(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx13)
+        var idx14 = string("CREATE INDEX IF NOT EXISTS idx_prt_token ON password_reset_tokens(token_hash)")
+        underlayer_db::exec_sql(db, &raw idx14)
+        var idx15 = string("CREATE INDEX IF NOT EXISTS idx_evt_learner ON email_verification_tokens(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx15)
+        var idx16 = string("CREATE INDEX IF NOT EXISTS idx_evt_token ON email_verification_tokens(token_hash)")
+        underlayer_db::exec_sql(db, &raw idx16)
+        var idx17 = string("CREATE INDEX IF NOT EXISTS idx_ak_learner ON api_keys(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx17)
+        var idx18 = string("CREATE INDEX IF NOT EXISTS idx_ak_token ON api_keys(key_hash)")
+        underlayer_db::exec_sql(db, &raw idx18)
+        var idx19 = string("CREATE INDEX IF NOT EXISTS idx_al_learner ON audit_log(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx19)
+        // 16.1.1: Add password_hash column if missing
+        var mig_pw = string("ALTER TABLE learners ADD COLUMN password_hash TEXT DEFAULT ''")
+        underlayer_db::exec_sql(db, &raw mig_pw)
     }
 
 }

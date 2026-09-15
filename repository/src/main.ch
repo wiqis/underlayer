@@ -10,3 +10,5 @@
 //   session_items.ch  — record_session_item, get_session_items, get_session_stats, get_learner_sessions
 //   exercises.ch      — get_exercises_for_concept, get_exercise, insert_exercise, count_exercises
 //   goals.ch          — get_learning_goal, set_learning_goal, delete_learning_goal
+//   profiles.ch       — get_profile, upsert_profile, is_username_available, get_profile_by_username
+//   settings.ch       — get_settings, upsert_settings, get_learning_preferences, upsert_learning_preferences

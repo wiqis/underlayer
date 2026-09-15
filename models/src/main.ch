@@ -583,4 +583,187 @@ public namespace underlayer_models {
             }
         }
     }
+
+    // ---- Account management models (Section 16) ----
+
+    // 16.5: Learner profile
+    public struct LearnerProfile {
+        var learner_id : string
+        var display_name : string
+        var username : string
+        var avatar_url : string
+        var bio : string
+        var learning_goals : string
+        var location : string
+        var website : string
+        var social_twitter : string
+        var social_github : string
+        var social_linkedin : string
+        var visibility : string    // public, private, anonymous
+        var username_changed_at : i64
+
+        @make func make() : LearnerProfile {
+            return LearnerProfile {
+                learner_id = string(), display_name = string(), username = string(),
+                avatar_url = string(), bio = string(), learning_goals = string(),
+                location = string(), website = string(),
+                social_twitter = string(), social_github = string(), social_linkedin = string(),
+                visibility = string("public"), username_changed_at = 0
+            }
+        }
+    }
+
+    // 16.6: Learner settings
+    public struct LearnerSettings {
+        var learner_id : string
+        var theme : string          // light, dark, system
+        var font_size : string      // small, medium, large
+        var language : string
+        var timezone : string
+        var date_format : string    // MM/DD/YYYY, DD/MM/YYYY, YYYY-MM-DD
+        var email_notifications : bool
+        var push_notifications : bool
+        var in_app_notifications : bool
+        var compact_mode : bool
+
+        @make func make() : LearnerSettings {
+            return LearnerSettings {
+                learner_id = string(), theme = string("system"), font_size = string("medium"),
+                language = string("en"), timezone = string("UTC"), date_format = string("YYYY-MM-DD"),
+                email_notifications = true, push_notifications = true,
+                in_app_notifications = true, compact_mode = false
+            }
+        }
+    }
+
+    // 16.7: Learning preferences
+    public struct LearningPreferences {
+        var learner_id : string
+        var daily_goal_minutes : int
+        var daily_review_items : int
+        var session_length_minutes : int
+        var break_reminder_minutes : int
+        var preferred_session_time : string   // morning, afternoon, evening, flexible
+        var energy_checkin : bool
+        var difficulty_preference : string    // easy, normal, hard, auto
+        var interleaving_preference : string  // blocked, interleaved, auto
+        var review_scheduling : string        // morning, evening, flexible
+        var show_streaks : bool
+        var show_leaderboards : bool
+        var show_achievements : bool
+        var auto_play_audio : bool
+
+        @make func make() : LearningPreferences {
+            return LearningPreferences {
+                learner_id = string(), daily_goal_minutes = 20, daily_review_items = 10,
+                session_length_minutes = 30, break_reminder_minutes = 25,
+                preferred_session_time = string("flexible"), energy_checkin = true,
+                difficulty_preference = string("auto"), interleaving_preference = string("auto"),
+                review_scheduling = string("flexible"), show_streaks = true,
+                show_leaderboards = true, show_achievements = true, auto_play_audio = false
+            }
+        }
+    }
+
+    // 16.10.1: Login history entry
+    public struct LoginHistoryEntry {
+        var id : i64
+        var learner_id : string
+        var ip_address : string
+        var user_agent : string
+        var success : bool
+        var failure_reason : string
+
+        @make func make() : LoginHistoryEntry {
+            return LoginHistoryEntry {
+                id = 0, learner_id = string(), ip_address = string(),
+                user_agent = string(), success = true, failure_reason = string()
+            }
+        }
+    }
+
+    // 16.2.14: Auth session (JWT)
+    public struct AuthSession {
+        var id : string
+        var learner_id : string
+        var token_hash : string
+        var device_info : string
+        var ip_address : string
+        var expires_at : i64
+        var last_active : i64
+
+        @make func make() : AuthSession {
+            return AuthSession {
+                id = string(), learner_id = string(), token_hash = string(),
+                device_info = string(), ip_address = string(),
+                expires_at = 0, last_active = 0
+            }
+        }
+    }
+
+    // 16.3.3: Password reset token
+    public struct PasswordResetToken {
+        var id : string
+        var learner_id : string
+        var token_hash : string
+        var expires_at : i64
+        var used : bool
+
+        @make func make() : PasswordResetToken {
+            return PasswordResetToken {
+                id = string(), learner_id = string(), token_hash = string(),
+                expires_at = 0, used = false
+            }
+        }
+    }
+
+    // 16.4.2: Email verification token
+    public struct EmailVerificationToken {
+        var id : string
+        var learner_id : string
+        var email : string
+        var token_hash : string
+        var expires_at : i64
+        var used : bool
+
+        @make func make() : EmailVerificationToken {
+            return EmailVerificationToken {
+                id = string(), learner_id = string(), email = string(),
+                token_hash = string(), expires_at = 0, used = false
+            }
+        }
+    }
+
+    // 16.10.7: API key
+    public struct ApiKey {
+        var id : string
+        var learner_id : string
+        var key_hash : string
+        var name : string
+        var last_used_at : i64
+        var expires_at : i64
+
+        @make func make() : ApiKey {
+            return ApiKey {
+                id = string(), learner_id = string(), key_hash = string(),
+                name = string(), last_used_at = 0, expires_at = 0
+            }
+        }
+    }
+
+    // 16.10.14: Audit log entry
+    public struct AuditLogEntry {
+        var id : i64
+        var learner_id : string
+        var action : string
+        var details : string
+        var ip_address : string
+
+        @make func make() : AuditLogEntry {
+            return AuditLogEntry {
+                id = 0, learner_id = string(), action = string(),
+                details = string(), ip_address = string()
+            }
+        }
+    }
 }
