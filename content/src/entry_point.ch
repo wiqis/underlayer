@@ -76,6 +76,26 @@ $ objdump -d /bin/ls | head -20  # See the disassembly at the entry point</code>
                 <h2>Connect</h2>
                 <p>The ELF header tells us where execution begins. But how does the loader know which parts of the file to map into memory? That's what program headers (next module) describe.</p>
             </div>
+
+            <div class="unit unit-retrieve">
+                <h2>True or False</h2>
+                <p>The entry point address always points directly to the main() function.</p>
+                <div class="tf-quiz" id="tf-ep-1">
+                    <button class="tf-option" onclick="checkTF('tf-ep-1', false, 'The entry point points to _start (libc startup code), which eventually calls main(). Directly jumping to main() would skip critical initialization like setting up the C runtime, global constructors, and argument parsing.')">True</button>
+                    <button class="tf-option" onclick="checkTF('tf-ep-1', true, 'The entry point points to _start (libc startup code), which eventually calls main(). Directly jumping to main() would skip critical initialization like setting up the C runtime, global constructors, and argument parsing.')">False</button>
+                    <div class="tf-feedback"></div>
+                </div>
+            </div>
+
+            <div class="unit unit-retrieve">
+                <h2>True or False</h2>
+                <p>For position-independent executables (PIE), the entry point is typically a small offset like 0x1060 rather than a fixed address like 0x401060.</p>
+                <div class="tf-quiz" id="tf-ep-2">
+                    <button class="tf-option" onclick="checkTF('tf-ep-2', true, 'PIE executables are loaded at a random base address chosen by the kernel. The entry point is a relative offset from that base, so values like 0x1060 are common. Non-PIE executables use fixed virtual addresses like 0x401060.')">True</button>
+                    <button class="tf-option" onclick="checkTF('tf-ep-2', false, 'PIE executables are loaded at a random base address chosen by the kernel. The entry point is a relative offset from that base, so values like 0x1060 are common. Non-PIE executables use fixed virtual addresses like 0x401060.')">False</button>
+                    <div class="tf-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
@@ -98,6 +118,13 @@ $ objdump -d /bin/ls | head -20  # See the disassembly at the entry point</code>
         .quiz-option:hover { border-color: #3b82f6; }
         .quiz-option.correct { border-color: #059669; background: #ecfdf5; }
         .quiz-option.wrong { border-color: #dc2626; background: #fef2f2; }
+        .tf-quiz { margin-top: 1rem; display: flex; gap: 0.75rem; }
+        .tf-option { padding: 0.6rem 1.5rem; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; font-weight: 500; }
+        .tf-option:hover { border-color: #3b82f6; }
+        .tf-option.correct { border-color: #059669; background: #ecfdf5; }
+        .tf-option.wrong { border-color: #dc2626; background: #fef2f2; }
+        .tf-feedback { margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.9rem; line-height: 1.5; background: #f9fafb; display: none; }
+        .tf-feedback.show { display: block; }
     }
 
     #js {
@@ -115,6 +142,26 @@ $ objdump -d /bin/ls | head -20  # See the disassembly at the entry point</code>
                 feedback.textContent = 'Not quite. Try again next time.';
                 feedback.style.color = '#dc2626';
             }
+        }
+
+        function checkTF(quizId, correct, explanation) {
+            var quiz = document.getElementById(quizId);
+            var options = quiz.querySelectorAll('.tf-option');
+            var feedback = quiz.querySelector('.tf-feedback');
+            for(var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var clickedBtn = event.target;
+            if(correct) {
+                clickedBtn.classList.add('correct');
+                feedback.textContent = 'Correct! ' + explanation;
+                feedback.style.background = '#ecfdf5';
+                feedback.style.color = '#059669';
+            } else {
+                clickedBtn.classList.add('wrong');
+                feedback.textContent = 'False. ' + explanation;
+                feedback.style.background = '#fef2f2';
+                feedback.style.color = '#dc2626';
+            }
+            feedback.classList.add('show');
         }
     }
 

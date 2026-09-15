@@ -98,6 +98,13 @@ public func render_bytes() : string {
                 <p>You now understand bytes — the building blocks of every binary format. Next, we'll see how bytes are organized into larger structures.</p>
                 <p>Every ELF header, every section, every symbol table entry — they're all just bytes. The format specification tells us how to interpret them.</p>
             </div>
+
+            <div class="unit unit-retrieve">
+                <h2>Fill in the Blank</h2>
+                <p>Complete the code: A byte has <input type="text" class="fill-blank" id="fb-1" data-answer="8" placeholder="?" /> bits, and can represent values from 0 to <input type="text" class="fill-blank" id="fb-2" data-answer="255" placeholder="?" />.</p>
+                <button class="fill-check-btn" onclick="checkFillBlanks()">Check Answers</button>
+                <div class="fill-feedback" id="fill-feedback"></div>
+            </div>
         </div>
     }
 
@@ -126,6 +133,14 @@ public func render_bytes() : string {
         .quiz-option:hover { border-color: #3b82f6; }
         .quiz-option.correct { border-color: #059669; background: #ecfdf5; }
         .quiz-option.wrong { border-color: #dc2626; background: #fef2f2; }
+        .fill-blank { padding: 0.4rem 0.6rem; border: 1px solid #d1d5db; border-radius: 4px; width: 5rem; font-size: 0.95rem; font-family: monospace; margin: 0 0.25rem; }
+        .fill-blank:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
+        .fill-blank.correct { border-color: #059669; background: #ecfdf5; }
+        .fill-blank.wrong { border-color: #dc2626; background: #fef2f2; }
+        .fill-check-btn { margin-top: 0.75rem; padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; font-size: 0.9rem; }
+        .fill-check-btn:hover { background: #f9fafb; border-color: #3b82f6; }
+        .fill-feedback { margin-top: 0.5rem; font-size: 0.9rem; display: none; }
+        .fill-feedback.show { display: block; }
         table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
         th, td { padding: 0.5rem; border: 1px solid #d1d5db; text-align: left; }
         th { background: #f9fafb; font-weight: 600; }
@@ -163,6 +178,33 @@ public func render_bytes() : string {
             } else {
                 btn.classList.add('wrong');
                 feedback.textContent = 'Not quite. Try again next time.';
+                feedback.style.color = '#dc2626';
+            }
+        }
+
+        function checkFillBlanks() {
+            var blanks = document.querySelectorAll('.fill-blank');
+            var allCorrect = true;
+            var feedback = document.getElementById('fill-feedback');
+            for(var i = 0; i < blanks.length; i++) {
+                var el = blanks[i];
+                var answer = el.getAttribute('data-answer');
+                var val = el.value.trim();
+                if(val === answer) {
+                    el.classList.add('correct');
+                    el.classList.remove('wrong');
+                } else {
+                    el.classList.add('wrong');
+                    el.classList.remove('correct');
+                    allCorrect = false;
+                }
+            }
+            feedback.classList.add('show');
+            if(allCorrect) {
+                feedback.textContent = 'All correct!';
+                feedback.style.color = '#059669';
+            } else {
+                feedback.textContent = 'Check the highlighted fields and try again.';
                 feedback.style.color = '#dc2626';
             }
         }

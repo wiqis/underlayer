@@ -460,9 +460,9 @@
 - [ ] P2 4.1.6 Recognition: select the correct image/diagram
 - [ ] P2 4.1.7 Application: solve a problem using the knowledge
 - [x] P2 4.1.8 Fill in the blank: complete a sentence
-- [ ] P2 4.1.9 Fill in the blank: complete a code block
+- [x] P2 4.1.9 Fill in the blank: complete a code block
 - [x] P2 4.1.10 True/false: with explanation
-- [ ] P2 4.1.11 True/false: with "why" explanation
+- [x] P2 4.1.11 True/false: with "why" explanation
 - [x] P2 4.1.12 Matching: match terms to definitions
 - [ ] P2 4.1.13 Matching: match code to output
 - [ ] P2 4.1.14 Ordering: arrange steps in correct order
