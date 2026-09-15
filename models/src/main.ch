@@ -5,6 +5,148 @@ using std::vector
 
 public namespace underlayer_models {
 
+    // ---- Course writing features (2.1.9-2.1.20) ----
+
+    // 2.1.9: Alternative path through content
+    public struct BranchPath {
+        var from_concept : string
+        var to_concept : string
+        var condition : string     // e.g., "mastery < 0.5"
+        var description : string
+
+        @make
+        func make() : BranchPath {
+            return BranchPath {
+                from_concept = string(),
+                to_concept = string(),
+                condition = string(),
+                description = string()
+            }
+        }
+    }
+
+    // 2.1.10: Multiple courses as one package
+    public struct CourseBundle {
+        var id : string
+        var title : string
+        var course_ids : vector<string>
+
+        @make
+        func make() : CourseBundle {
+            return CourseBundle {
+                id = string(),
+                title = string(),
+                course_ids = vector<string>()
+            }
+        }
+    }
+
+    // 2.1.14: Course assets declaration
+    public struct CourseAsset {
+        var id : string
+        var asset_type : string    // image, sample, data, binary
+        var path : string
+        var description : string
+        var concept_id : string    // which concept uses this asset
+
+        @make
+        func make() : CourseAsset {
+            return CourseAsset {
+                id = string(),
+                asset_type = string(),
+                path = string(),
+                description = string(),
+                concept_id = string()
+            }
+        }
+    }
+
+    // 2.1.15: Review items declaration (per concept)
+    public struct ReviewItemDecl {
+        var concept_id : string
+        var item_type : string     // recall, recognize, apply, explain
+        var front : string
+        var back : string
+        var difficulty : f64
+
+        @make
+        func make() : ReviewItemDecl {
+            return ReviewItemDecl {
+                concept_id = string(),
+                item_type = string("recall"),
+                front = string(),
+                back = string(),
+                difficulty = 0.5
+            }
+        }
+    }
+
+    // 2.1.16: Exercises declaration (per concept)
+    public struct ExerciseDecl {
+        var concept_id : string
+        var exercise_type : string   // recall, recognize, apply, explain, multi_recognize, fill_blank, true_false, matching
+        var question : string
+        var answer : string
+        var options : vector<string>
+        var correct_index : int
+        var explanation : string
+        var difficulty : f64
+
+        @make
+        func make() : ExerciseDecl {
+            return ExerciseDecl {
+                concept_id = string(),
+                exercise_type = string("recall"),
+                question = string(),
+                answer = string(),
+                options = vector<string>(),
+                correct_index = 0,
+                explanation = string(),
+                difficulty = 0.5
+            }
+        }
+    }
+
+    // 2.1.17: Visualizations declaration (per concept)
+    public struct VisualizationDecl {
+        var concept_id : string
+        var vis_type : string       // hex_viewer, memory_map, header_dump, struct_layout, graph
+        var title : string
+        var data_source : string    // "elf_header", "section_table", "custom"
+        var config : string         // JSON config for the visualization
+
+        @make
+        func make() : VisualizationDecl {
+            return VisualizationDecl {
+                concept_id = string(),
+                vis_type = string(),
+                title = string(),
+                data_source = string(),
+                config = string()
+            }
+        }
+    }
+
+    // 2.1.20: Course certificate template
+    public struct CertificateConfig {
+        var template_id : string
+        var badge_url : string
+        var title : string
+        var description : string
+        var criteria : string       // completion criteria text
+
+        @make
+        func make() : CertificateConfig {
+            return CertificateConfig {
+                template_id = string(),
+                badge_url = string(),
+                title = string(),
+                description = string(),
+                criteria = string()
+            }
+        }
+    }
+
     // ---- Course ----
     public struct Course {
         var id : string
@@ -21,6 +163,25 @@ public namespace underlayer_models {
         var min_score : f64                // 2.1.19: minimum score for completion
         var modules : vector<Module>
         var concepts : vector<ConceptRef>
+        // 2.1.9: Course branching
+        var branching : bool
+        var alternative_paths : vector<BranchPath>
+        // 2.1.10: Course bundling
+        var bundles : vector<CourseBundle>
+        // 2.1.13: Minimum platform version
+        var min_platform_version : string
+        // 2.1.14: Course assets
+        var assets : vector<CourseAsset>
+        // 2.1.15: Review items declaration
+        var review_item_decls : vector<ReviewItemDecl>
+        // 2.1.16: Exercises declaration
+        var exercise_decls : vector<ExerciseDecl>
+        // 2.1.17: Visualizations declaration
+        var visualization_decls : vector<VisualizationDecl>
+        // 2.1.18: Navigation structure (linear or tree)
+        var navigation : string
+        // 2.1.20: Certificate configuration
+        var certificate : CertificateConfig
 
         @make
         func make() : Course {
@@ -38,7 +199,17 @@ public namespace underlayer_models {
                 completion_criteria = string("all_concepts"),
                 min_score = 0.0,
                 modules = vector<Module>(),
-                concepts = vector<ConceptRef>()
+                concepts = vector<ConceptRef>(),
+                branching = false,
+                alternative_paths = vector<BranchPath>(),
+                bundles = vector<CourseBundle>(),
+                min_platform_version = string("1.0"),
+                assets = vector<CourseAsset>(),
+                review_item_decls = vector<ReviewItemDecl>(),
+                exercise_decls = vector<ExerciseDecl>(),
+                visualization_decls = vector<VisualizationDecl>(),
+                navigation = string("linear"),
+                certificate = CertificateConfig::make()
             }
         }
     }
@@ -121,6 +292,17 @@ public namespace underlayer_models {
         var author : string
         var license : string
         var language : string
+        // 2.1.9-2.1.20: Extended manifest fields
+        var branching : bool
+        var alternative_paths : vector<BranchPath>
+        var bundles : vector<CourseBundle>
+        var min_platform_version : string
+        var assets : vector<CourseAsset>
+        var review_item_decls : vector<ReviewItemDecl>
+        var exercise_decls : vector<ExerciseDecl>
+        var visualization_decls : vector<VisualizationDecl>
+        var navigation : string
+        var certificate : CertificateConfig
 
         @make
         func make() : Manifest {
@@ -135,7 +317,17 @@ public namespace underlayer_models {
                 estimated_minutes = 0,
                 author = string(),
                 license = string(),
-                language = string("en")
+                language = string("en"),
+                branching = false,
+                alternative_paths = vector<BranchPath>(),
+                bundles = vector<CourseBundle>(),
+                min_platform_version = string("1.0"),
+                assets = vector<CourseAsset>(),
+                review_item_decls = vector<ReviewItemDecl>(),
+                exercise_decls = vector<ExerciseDecl>(),
+                visualization_decls = vector<VisualizationDecl>(),
+                navigation = string("linear"),
+                certificate = CertificateConfig::make()
             }
         }
     }

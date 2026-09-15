@@ -236,18 +236,18 @@
 - [x] P2 2.1.6 Difficulty level per concept (beginner, intermediate, advanced)
 - [x] P2 2.1.7 Importance level (core, important, supplementary)
 - [x] P2 2.1.8 Course versioning (semver: major.minor.patch)
-- [ ] P2 2.1.9 Course branching (alternative paths through content)
-- [ ] P2 2.1.10 Course bundling (multiple courses as one package)
+- [x] P2 2.1.9 Course branching (alternative paths through content)
+- [x] P2 2.1.10 Course bundling (multiple courses as one package)
 - [x] P2 2.1.11 Course metadata (author, license, tags, language)
 - [x] P2 2.1.12 Course dependencies (requires other courses)
-- [ ] P2 2.1.13 Course compatibility (minimum platform version)
-- [ ] P2 2.1.14 Course assets declaration (images, samples, etc.)
-- [ ] P2 2.1.15 Course review items declaration (auto-generated or manual)
-- [ ] P2 2.1.16 Course exercises declaration (per concept)
-- [ ] P2 2.1.17 Course visualizations declaration (per concept)
-- [ ] P2 2.1.18 Course navigation structure (linear vs tree)
+- [x] P2 2.1.13 Course compatibility (minimum platform version)
+- [x] P2 2.1.14 Course assets declaration (images, samples, etc.)
+- [x] P2 2.1.15 Course review items declaration (auto-generated or manual)
+- [x] P2 2.1.16 Course exercises declaration (per concept)
+- [x] P2 2.1.17 Course visualizations declaration (per concept)
+- [x] P2 2.1.18 Course navigation structure (linear vs tree)
 - [x] P2 2.1.19 Course completion criteria (all concepts, or minimum score)
-- [ ] P2 2.1.20 Course certificate template
+- [x] P2 2.1.20 Course certificate template
 
 ### 2.2 Concept Authoring
 

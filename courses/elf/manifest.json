@@ -3,6 +3,28 @@
     "title": "Executable and Linkable Format",
     "version": 1,
     "description": "A deep dive into the ELF binary format — headers, sections, segments, symbols, relocations, and dynamic linking.",
+    "author": "Underlayer",
+    "license": "MIT",
+    "language": "en",
+    "difficulty": "intermediate",
+    "importance": "core",
+    "completion_criteria": "all_concepts",
+    "min_platform_version": "1.0",
+    "navigation": "linear",
+    "branching": false,
+    "alternative_paths": [],
+    "bundles": [],
+    "assets": [],
+    "review_item_decls": [],
+    "exercise_decls": [],
+    "visualization_decls": [],
+    "certificate": {
+        "template_id": "elf-completion",
+        "badge_url": "/badges/elf-complete.svg",
+        "title": "ELF Format Mastery",
+        "description": "Completed the full ELF binary format course",
+        "criteria": "Complete all 24 concepts with 80% quiz accuracy"
+    },
     "modules": [
         {
             "id": "fundamentals",

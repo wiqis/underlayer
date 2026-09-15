@@ -5,6 +5,13 @@ using std::vector
 using underlayer_models::Course
 using underlayer_models::Module
 using underlayer_models::ConceptRef
+using underlayer_models::BranchPath
+using underlayer_models::CourseBundle
+using underlayer_models::CourseAsset
+using underlayer_models::ReviewItemDecl
+using underlayer_models::ExerciseDecl
+using underlayer_models::VisualizationDecl
+using underlayer_models::CertificateConfig
 
 public namespace underlayer_repository {
 
@@ -54,6 +61,163 @@ public namespace underlayer_repository {
         course.completion_criteria = json_get_str(&raw root, "completion_criteria")
         if(course.completion_criteria.size() == 0) { course.completion_criteria = string("all_concepts") }
         course.min_score = json_get_int(&raw root, "min_score") as f64
+        // 2.1.9: Parse branching
+        course.branching = json_get_bool(&raw root, "branching")
+        // 2.1.9: Parse alternative paths
+        var paths_val = json_get(&raw root, "alternative_paths")
+        if(paths_val != null && paths_val is JsonValue.Array) {
+            var Array(paths_arr) = *paths_val else unreachable
+            var pi : size_t = 0
+            while(pi < paths_arr.size()) {
+                var pval = paths_arr.get_ptr(pi)
+                var bp = BranchPath::make()
+                if(pval is JsonValue.Object) {
+                    bp.from_concept = json_get_str(pval, "from_concept")
+                    bp.to_concept = json_get_str(pval, "to_concept")
+                    bp.condition = json_get_str(pval, "condition")
+                    bp.description = json_get_str(pval, "description")
+                }
+                course.alternative_paths.push(bp)
+                pi = pi + 1
+            }
+        }
+        // 2.1.10: Parse bundles
+        var bundles_val = json_get(&raw root, "bundles")
+        if(bundles_val != null && bundles_val is JsonValue.Array) {
+            var Array(bundles_arr) = *bundles_val else unreachable
+            var bi : size_t = 0
+            while(bi < bundles_arr.size()) {
+                var bval = bundles_arr.get_ptr(bi)
+                var bundle = CourseBundle::make()
+                if(bval is JsonValue.Object) {
+                    bundle.id = json_get_str(bval, "id")
+                    bundle.title = json_get_str(bval, "title")
+                    var cids_val = json_get(bval, "course_ids")
+                    if(cids_val != null && cids_val is JsonValue.Array) {
+                        var Array(cids_arr) = *cids_val else unreachable
+                        var ci2 : size_t = 0
+                        while(ci2 < cids_arr.size()) {
+                            var cidv = cids_arr.get_ptr(ci2)
+                            if(cidv is JsonValue.String) {
+                                var String(cid_str) = *cidv else unreachable
+                                bundle.course_ids.push(cid_str.copy())
+                            }
+                            ci2 = ci2 + 1
+                        }
+                    }
+                }
+                course.bundles.push(bundle)
+                bi = bi + 1
+            }
+        }
+        // 2.1.13: Parse min_platform_version
+        course.min_platform_version = json_get_str(&raw root, "min_platform_version")
+        if(course.min_platform_version.size() == 0) { course.min_platform_version = string("1.0") }
+        // 2.1.14: Parse assets
+        var assets_val = json_get(&raw root, "assets")
+        if(assets_val != null && assets_val is JsonValue.Array) {
+            var Array(assets_arr) = *assets_val else unreachable
+            var ai : size_t = 0
+            while(ai < assets_arr.size()) {
+                var aval = assets_arr.get_ptr(ai)
+                var asset = CourseAsset::make()
+                if(aval is JsonValue.Object) {
+                    asset.id = json_get_str(aval, "id")
+                    asset.asset_type = json_get_str(aval, "asset_type")
+                    asset.path = json_get_str(aval, "path")
+                    asset.description = json_get_str(aval, "description")
+                    asset.concept_id = json_get_str(aval, "concept_id")
+                }
+                course.assets.push(asset)
+                ai = ai + 1
+            }
+        }
+        // 2.1.15: Parse review_item_decls
+        var rids_val = json_get(&raw root, "review_item_decls")
+        if(rids_val != null && rids_val is JsonValue.Array) {
+            var Array(rids_arr) = *rids_val else unreachable
+            var ri : size_t = 0
+            while(ri < rids_arr.size()) {
+                var rval = rids_arr.get_ptr(ri)
+                var rid = ReviewItemDecl::make()
+                if(rval is JsonValue.Object) {
+                    rid.concept_id = json_get_str(rval, "concept_id")
+                    rid.item_type = json_get_str(rval, "item_type")
+                    rid.front = json_get_str(rval, "front")
+                    rid.back = json_get_str(rval, "back")
+                    rid.difficulty = json_get_int(rval, "difficulty") as f64
+                    if(rid.difficulty == 0.0) { rid.difficulty = 0.5 }
+                }
+                course.review_item_decls.push(rid)
+                ri = ri + 1
+            }
+        }
+        // 2.1.16: Parse exercise_decls
+        var edecl_val = json_get(&raw root, "exercise_decls")
+        if(edecl_val != null && edecl_val is JsonValue.Array) {
+            var Array(edecl_arr) = *edecl_val else unreachable
+            var ei : size_t = 0
+            while(ei < edecl_arr.size()) {
+                var eval_ = edecl_arr.get_ptr(ei)
+                var edecl = ExerciseDecl::make()
+                if(eval_ is JsonValue.Object) {
+                    edecl.concept_id = json_get_str(eval_, "concept_id")
+                    edecl.exercise_type = json_get_str(eval_, "exercise_type")
+                    edecl.question = json_get_str(eval_, "question")
+                    edecl.answer = json_get_str(eval_, "answer")
+                    var opts_val = json_get(eval_, "options")
+                    if(opts_val != null && opts_val is JsonValue.Array) {
+                        var Array(opts_arr) = *opts_val else unreachable
+                        var oi : size_t = 0
+                        while(oi < opts_arr.size()) {
+                            var oval = opts_arr.get_ptr(oi)
+                            if(oval is JsonValue.String) {
+                                var String(opt_str) = *oval else unreachable
+                                edecl.options.push(opt_str.copy())
+                            }
+                            oi = oi + 1
+                        }
+                    }
+                    edecl.correct_index = json_get_int(eval_, "correct_index")
+                    edecl.explanation = json_get_str(eval_, "explanation")
+                    edecl.difficulty = json_get_int(eval_, "difficulty") as f64
+                    if(edecl.difficulty == 0.0) { edecl.difficulty = 0.5 }
+                }
+                course.exercise_decls.push(edecl)
+                ei = ei + 1
+            }
+        }
+        // 2.1.17: Parse visualization_decls
+        var vdecl_val = json_get(&raw root, "visualization_decls")
+        if(vdecl_val != null && vdecl_val is JsonValue.Array) {
+            var Array(vdecl_arr) = *vdecl_val else unreachable
+            var vi : size_t = 0
+            while(vi < vdecl_arr.size()) {
+                var vval = vdecl_arr.get_ptr(vi)
+                var vdecl = VisualizationDecl::make()
+                if(vval is JsonValue.Object) {
+                    vdecl.concept_id = json_get_str(vval, "concept_id")
+                    vdecl.vis_type = json_get_str(vval, "vis_type")
+                    vdecl.title = json_get_str(vval, "title")
+                    vdecl.data_source = json_get_str(vval, "data_source")
+                    vdecl.config = json_get_str(vval, "config")
+                }
+                course.visualization_decls.push(vdecl)
+                vi = vi + 1
+            }
+        }
+        // 2.1.18: Parse navigation
+        course.navigation = json_get_str(&raw root, "navigation")
+        if(course.navigation.size() == 0) { course.navigation = string("linear") }
+        // 2.1.20: Parse certificate
+        var cert_val = json_get(&raw root, "certificate")
+        if(cert_val != null && cert_val is JsonValue.Object) {
+            course.certificate.template_id = json_get_str(cert_val, "template_id")
+            course.certificate.badge_url = json_get_str(cert_val, "badge_url")
+            course.certificate.title = json_get_str(cert_val, "title")
+            course.certificate.description = json_get_str(cert_val, "description")
+            course.certificate.criteria = json_get_str(cert_val, "criteria")
+        }
         // 2.1.12: Parse dependencies
         var deps_val = json_get(&raw root, "dependencies")
         if(deps_val != null && deps_val is JsonValue.Array) {
