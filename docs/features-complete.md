@@ -497,7 +497,7 @@
 - [x] P2 4.2.15 "This is supposed to be hard" message for difficult exercises
 - [ ] P2 4.2.16 Mistake pattern detection (common errors)
 - [ ] P2 4.2.17 Personalized feedback based on mistake pattern
-- [ ] P2 4.2.18 Feedback quality rating (was this helpful?)
+- [x] P2 4.2.18 Feedback quality rating (was this helpful?)
 
 ### 4.3 Exercise Generation
 
@@ -763,7 +763,7 @@
 - [ ] P2 7.4.7 Swipe gestures (prev/next concept)
 - [ ] P2 7.4.8 Pinch-to-zoom (hex viewer, diagrams)
 - [ ] P2 7.4.9 Responsive images (srcset, sizes)
-- [ ] P2 7.4.10 Responsive typography (clamp, fluid)
+- [x] P2 7.4.10 Responsive typography (clamp, fluid)
 - [x] P2 7.4.11 Responsive navigation (hamburger menu on mobile)
 - [x] P2 7.4.12 Responsive tables (horizontal scroll on mobile)
 - [ ] P2 7.4.13 Responsive visualizations (resize on window change)
@@ -783,7 +783,7 @@
 - [ ] P2 7.5.9 Game controller support (navigation)
 - [ ] P2 7.5.10 Stylus/pen support (drawing exercises)
 - [ ] P2 7.5.11 Multi-touch support (pinch, rotate)
-- [ ] P2 7.5.12 Accessibility shortcuts (contrast, font size)
+- [x] P2 7.5.12 Accessibility shortcuts (contrast, font size)
 - [x] P2 7.5.13 Focus visible indicator (focus ring)
 - [x] P2 7.5.14 Skip links (skip to content)
 - [x] P2 7.5.15 Landmark regions (navigation, main, footer)

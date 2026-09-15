@@ -123,6 +123,7 @@ public func render_binary_representation() : string {
                 <ul class="toc-list" id="toc-list"></ul>
             </nav>
             <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Top</button>
+            <div class="a11y-toast" id="a11y-toast"></div>
         </div>
         </main>
         <footer role="contentinfo"><p>Underlayer — Learn Things Deeply</p></footer>
@@ -201,6 +202,18 @@ public func render_binary_representation() : string {
         .cb-controls .a11y-btn { font-size: 0.65rem; }
         .cb-controls .a11y-btn.active { background: #1f2937; color: white; border-color: #1f2937; }
         footer { text-align: center; padding: 2rem 1rem; color: #6b7280; font-size: 0.85rem; border-top: 1px solid #e5e7eb; margin-top: 2rem; }
+        .lesson h1 { font-size: clamp(1.3rem, 3vw, 1.8rem); }
+        .lesson h2 { font-size: clamp(1rem, 2.5vw, 1.3rem); }
+        .lesson p { font-size: clamp(0.9rem, 2vw, 1.05rem); }
+        .lesson code { font-size: clamp(0.8rem, 1.8vw, 0.95em); }
+        .feedback-rating { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; padding: 0.5rem 0.75rem; background: #f9fafb; border-radius: 6px; font-size: 0.85rem; }
+        .feedback-rating span { color: #6b7280; }
+        .feedback-btn { padding: 0.3rem 0.7rem; border: 1px solid #d1d5db; border-radius: 4px; background: white; cursor: pointer; font-size: 0.85rem; }
+        .feedback-btn:hover { background: #f3f4f6; }
+        .feedback-btn.selected { background: #1f2937; color: white; border-color: #1f2937; }
+        .feedback-thanks { color: #059669; font-size: 0.85rem; display: none; }
+        .a11y-toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); padding: 0.5rem 1rem; background: #1f2937; color: white; border-radius: 6px; font-size: 0.85rem; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        .a11y-toast.show { opacity: 1; }
     }
 
     #js {
@@ -314,6 +327,52 @@ public func render_binary_representation() : string {
             if(cb !== 'none') { setColorBlind(cb); }
             else { var b = document.getElementById('cb-none'); if(b) b.classList.add('active'); }
         })();
+
+        function showToast(msg) {
+            var t = document.getElementById('a11y-toast');
+            if(!t) { t = document.createElement('div'); t.id = 'a11y-toast'; t.className = 'a11y-toast'; document.body.appendChild(t); }
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(function() { t.classList.remove('show'); }, 1500);
+        }
+        document.addEventListener('keydown', function(e) {
+            if(e.altKey && e.key === 'c') { e.preventDefault(); toggleHighContrast(); showToast('High contrast toggled'); }
+            if(e.altKey && e.key === 'r') { e.preventDefault(); toggleReducedMotion(); showToast('Reduced motion toggled'); }
+            if(e.altKey && e.key === '=') { e.preventDefault(); cycleFontSize(); }
+        });
+        function cycleFontSize() {
+            var sizes = ['small','medium','large'];
+            var current = localStorage.getItem('ulf-font-size') || 'medium';
+            var idx = (sizes.indexOf(current) + 1) % sizes.length;
+            var lesson = document.querySelector('.lesson');
+            if(!lesson) return;
+            lesson.classList.remove('font-small','font-large');
+            if(sizes[idx] === 'small') lesson.classList.add('font-small');
+            if(sizes[idx] === 'large') lesson.classList.add('font-large');
+            localStorage.setItem('ulf-font-size', sizes[idx]);
+            var el = document.getElementById('font-size');
+            if(el) el.value = sizes[idx];
+            showToast('Font size: ' + sizes[idx]);
+        }
+        function addFeedbackRatings() {
+            var feedbacks = document.querySelectorAll('.quiz-feedback, .tf-feedback, .recognize-feedback, .app-feedback, .match-feedback, .fill-feedback');
+            for(var i = 0; i < feedbacks.length; i++) {
+                var fb = feedbacks[i];
+                if(fb.nextElementSibling && fb.nextElementSibling.classList.contains('feedback-rating')) continue;
+                var div = document.createElement('div');
+                div.className = 'feedback-rating';
+                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">👍</button><button class="feedback-btn" onclick="rateFeedback(this, false)">👎</button><span class="feedback-thanks">Thanks!</span>';
+                fb.parentNode.insertBefore(div, fb.nextSibling);
+            }
+        }
+        function rateFeedback(btn, helpful) {
+            var container = btn.parentElement;
+            var btns = container.querySelectorAll('.feedback-btn');
+            for(var i = 0; i < btns.length; i++) btns[i].disabled = true;
+            btn.classList.add('selected');
+            container.querySelector('.feedback-thanks').style.display = 'inline';
+        }
+        addFeedbackRatings();
     }
 
     return page.toString()
