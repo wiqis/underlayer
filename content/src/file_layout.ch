@@ -14,6 +14,24 @@ public func render_file_layout() : string {
 
     #html {
         <div class="lesson">
+            <a href="#main-content" class="skip-link">Skip to content</a>
+            <div class="a11y-controls">
+                <button class="a11y-btn" onclick="toggleHighContrast()" aria-label="Toggle high contrast">HC</button>
+                <button class="a11y-btn" onclick="toggleReducedMotion()" aria-label="Toggle reduced motion">RM</button>
+                <button class="a11y-btn" onclick="openShortcuts()" aria-label="Keyboard shortcuts">?</button>
+            </div>
+            <div class="shortcuts-modal" id="shortcuts-modal">
+                <div class="shortcuts-backdrop" onclick="closeShortcuts()"></div>
+                <div class="shortcuts-dialog">
+                    <h3>Keyboard Shortcuts</h3>
+                    <dl>
+                        <dt><kbd>Ctrl</kbd>+<kbd>K</kbd></dt><dd>Open search</dd>
+                        <dt><kbd>Esc</kbd></dt><dd>Close search / dialog</dd>
+                        <dt><kbd>↑</kbd></dt><dd>Back to top</dd>
+                    </dl>
+                    <button onclick="closeShortcuts()" class="shortcuts-close">Close</button>
+                </div>
+            </div>
             <div class="reading-controls">
                 <label>Font: <select id="font-size" onchange="setFontSize(this.value)"><option value="small">Small</option><option value="medium" selected>Medium</option><option value="large">Large</option></select></label>
                 <label>Spacing: <select id="line-height" onchange="setLineHeight(this.value)"><option value="compact">Compact</option><option value="normal" selected>Normal</option><option value="relaxed">Relaxed</option></select></label>
@@ -165,6 +183,27 @@ $ readelf -l /bin/ls | head -10
         .lesson.ls-loose { letter-spacing: 0.04em; }
         .lesson.w-narrow { max-width: 640px; margin: 0 auto; }
         .lesson.w-wide { max-width: 1100px; margin: 0 auto; }
+        .a11y-controls { position: fixed; top: 1rem; left: 1rem; display: flex; gap: 0.35rem; z-index: 60; }
+        .a11y-btn { width: 2rem; height: 2rem; border: 1px solid #d1d5db; border-radius: 4px; background: white; cursor: pointer; font-size: 0.75rem; font-weight: 600; color: #374151; }
+        .a11y-btn:hover { background: #f3f4f6; }
+        .a11y-btn.active { background: #1f2937; color: white; border-color: #1f2937; }
+        .shortcuts-modal { display: none; position: fixed; inset: 0; z-index: 100; }
+        .shortcuts-modal.open { display: flex; align-items: center; justify-content: center; }
+        .shortcuts-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.5); }
+        .shortcuts-dialog { position: relative; background: white; border-radius: 8px; padding: 1.5rem; max-width: 400px; width: 90%; box-shadow: 0 4px 24px rgba(0,0,0,0.15); }
+        .shortcuts-dialog h3 { margin: 0 0 1rem; font-size: 1.1rem; }
+        .shortcuts-dialog dl { display: grid; grid-template-columns: auto 1fr; gap: 0.5rem 1rem; }
+        .shortcuts-dialog dt { font-family: monospace; }
+        .shortcuts-dialog dd { margin: 0; color: #6b7280; }
+        .shortcuts-close { margin-top: 1rem; padding: 0.4rem 1rem; border: 1px solid #d1d5db; border-radius: 4px; background: white; cursor: pointer; }
+        kbd { display: inline-block; padding: 0.15rem 0.4rem; border: 1px solid #d1d5db; border-radius: 3px; background: #f9fafb; font-family: monospace; font-size: 0.85em; }
+        .lesson.high-contrast { background: #000; color: #fff; }
+        .lesson.high-contrast h1, .lesson.high-contrast h2 { color: #ff0; }
+        .lesson.high-contrast a { color: #0ff; }
+        .lesson.high-contrast code { background: #222; color: #0f0; }
+        .lesson.high-contrast .quiz-option { background: #111; color: #fff; border-color: #555; }
+        .lesson.reduced-motion *, .lesson.reduced-motion *::before, .lesson.reduced-motion *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        @media (min-width: 1440px) { .lesson { max-width: 960px; } }
     }
 
     #js {
@@ -235,6 +274,32 @@ $ readelf -l /bin/ls | head -10
             if(cwEl) cwEl.value = cw;
         }
         applySettings();
+
+        function toggleHighContrast() {
+            var lesson = document.querySelector('.lesson');
+            if(!lesson) return;
+            lesson.classList.toggle('high-contrast');
+            localStorage.setItem('ulf-high-contrast', lesson.classList.contains('high-contrast') ? '1' : '0');
+            var btn = document.querySelectorAll('.a11y-btn')[0];
+            if(btn) btn.classList.toggle('active', lesson.classList.contains('high-contrast'));
+        }
+        function toggleReducedMotion() {
+            var lesson = document.querySelector('.lesson');
+            if(!lesson) return;
+            lesson.classList.toggle('reduced-motion');
+            localStorage.setItem('ulf-reduced-motion', lesson.classList.contains('reduced-motion') ? '1' : '0');
+            var btn = document.querySelectorAll('.a11y-btn')[1];
+            if(btn) btn.classList.toggle('active', lesson.classList.contains('reduced-motion'));
+        }
+        function openShortcuts() { document.getElementById('shortcuts-modal').classList.add('open'); }
+        function closeShortcuts() { document.getElementById('shortcuts-modal').classList.remove('open'); }
+        (function() {
+            var lesson = document.querySelector('.lesson');
+            if(!lesson) return;
+            if(localStorage.getItem('ulf-high-contrast') === '1') { lesson.classList.add('high-contrast'); var b = document.querySelectorAll('.a11y-btn')[0]; if(b) b.classList.add('active'); } else { }
+            if(localStorage.getItem('ulf-reduced-motion') === '1') { lesson.classList.add('reduced-motion'); var b2 = document.querySelectorAll('.a11y-btn')[1]; if(b2) b2.classList.add('active'); } else if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) { lesson.classList.add('reduced-motion'); var b3 = document.querySelectorAll('.a11y-btn')[1]; if(b3) b3.classList.add('active'); } else { }
+            document.addEventListener('keydown', function(e) { if(e.key === 'Escape') { closeShortcuts(); } else { } });
+        })();
     }
 
     return page.toString()

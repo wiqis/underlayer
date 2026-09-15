@@ -745,8 +745,8 @@
 - [ ] P2 7.3.6 Theme preview (before applying)
 - [x] P2 7.3.7 Font size adjustment (small, medium, large)
 - [ ] P2 7.3.8 Color blind mode (protanopia, deuteranopia, tritanopia)
-- [ ] P2 7.3.9 High contrast mode
-- [ ] P2 7.3.10 Reduced motion mode (prefers-reduced-motion)
+- [x] P2 7.3.9 High contrast mode
+- [x] P2 7.3.10 Reduced motion mode (prefers-reduced-motion)
 - [ ] P2 7.3.11 Custom font support (upload fonts)
 - [x] P2 7.3.12 Line height adjustment
 - [x] P2 7.3.13 Letter spacing adjustment
@@ -757,7 +757,7 @@
 - [x] P2 7.4.1 Mobile layout (< 640px)
 - [x] P2 7.4.2 Tablet layout (640px - 1024px)
 - [x] P2 7.4.3 Desktop layout (> 1024px)
-- [ ] P2 7.4.4 Large screen layout (> 1440px)
+- [x] P2 7.4.4 Large screen layout (> 1440px)
 - [ ] P2 7.4.5 Orientation handling (portrait, landscape)
 - [ ] P2 7.4.6 Touch interactions (tap, swipe, long-press)
 - [ ] P2 7.4.7 Swipe gestures (prev/next concept)
@@ -774,7 +774,7 @@
 
 - [x] P2 7.5.1 Keyboard navigation (Tab, Enter, Escape)
 - [x] P2 7.5.2 Keyboard shortcuts (Ctrl+K for search)
-- [ ] P2 7.5.3 Keyboard shortcuts list (help dialog)
+- [x] P2 7.5.3 Keyboard shortcuts list (help dialog)
 - [ ] P2 7.5.4 Custom keyboard shortcuts (user-defined)
 - [ ] P2 7.5.5 Screen reader support (ARIA labels)
 - [ ] P2 7.5.6 Voice input support (speech-to-text)
