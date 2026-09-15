@@ -744,7 +744,7 @@
 - [x] P2 7.3.5 Theme persistence (localStorage)
 - [ ] P2 7.3.6 Theme preview (before applying)
 - [x] P2 7.3.7 Font size adjustment (small, medium, large)
-- [ ] P2 7.3.8 Color blind mode (protanopia, deuteranopia, tritanopia)
+- [x] P2 7.3.8 Color blind mode (protanopia, deuteranopia, tritanopia)
 - [x] P2 7.3.9 High contrast mode
 - [x] P2 7.3.10 Reduced motion mode (prefers-reduced-motion)
 - [ ] P2 7.3.11 Custom font support (upload fonts)
@@ -758,7 +758,7 @@
 - [x] P2 7.4.2 Tablet layout (640px - 1024px)
 - [x] P2 7.4.3 Desktop layout (> 1024px)
 - [x] P2 7.4.4 Large screen layout (> 1440px)
-- [ ] P2 7.4.5 Orientation handling (portrait, landscape)
+- [x] P2 7.4.5 Orientation handling (portrait, landscape)
 - [ ] P2 7.4.6 Touch interactions (tap, swipe, long-press)
 - [ ] P2 7.4.7 Swipe gestures (prev/next concept)
 - [ ] P2 7.4.8 Pinch-to-zoom (hex viewer, diagrams)
@@ -767,7 +767,7 @@
 - [x] P2 7.4.11 Responsive navigation (hamburger menu on mobile)
 - [x] P2 7.4.12 Responsive tables (horizontal scroll on mobile)
 - [ ] P2 7.4.13 Responsive visualizations (resize on window change)
-- [ ] P2 7.4.14 Responsive exercises (adapt to screen size)
+- [x] P2 7.4.14 Responsive exercises (adapt to screen size)
 - [x] P2 7.4.15 Responsive code blocks (horizontal scroll)
 
 ### 7.5 Keyboard & Input
@@ -776,7 +776,7 @@
 - [x] P2 7.5.2 Keyboard shortcuts (Ctrl+K for search)
 - [x] P2 7.5.3 Keyboard shortcuts list (help dialog)
 - [ ] P2 7.5.4 Custom keyboard shortcuts (user-defined)
-- [ ] P2 7.5.5 Screen reader support (ARIA labels)
+- [x] P2 7.5.5 Screen reader support (ARIA labels)
 - [ ] P2 7.5.6 Voice input support (speech-to-text)
 - [ ] P2 7.5.7 Switch access support (external switches)
 - [ ] P2 7.5.8 External keyboard support (Bluetooth)
@@ -786,7 +786,7 @@
 - [ ] P2 7.5.12 Accessibility shortcuts (contrast, font size)
 - [x] P2 7.5.13 Focus visible indicator (focus ring)
 - [x] P2 7.5.14 Skip links (skip to content)
-- [ ] P2 7.5.15 Landmark regions (navigation, main, footer)
+- [x] P2 7.5.15 Landmark regions (navigation, main, footer)
 
 ---
 

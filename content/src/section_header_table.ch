@@ -186,6 +186,27 @@ Section Headers:
         .lesson.high-contrast .quiz-option { background: #111; color: #fff; border-color: #555; }
         .lesson.reduced-motion *, .lesson.reduced-motion *::before, .lesson.reduced-motion *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         @media (min-width: 1440px) { .lesson { max-width: 960px; } }
+        @media (orientation: portrait) and (max-width: 768px) {
+            .lesson { padding: 1rem; }
+            .unit { padding: 1rem; }
+            h1 { font-size: 1.3rem; }
+            .hex-dump { font-size: 0.8rem; padding: 0.75rem; }
+            .quiz-option { padding: 0.6rem 0.75rem; font-size: 0.9rem; }
+        }
+        @media (orientation: landscape) and (max-height: 500px) {
+            .lesson { padding: 0.75rem 2rem; }
+            .unit { padding: 0.75rem 1rem; margin-bottom: 1rem; }
+            h1 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+        }
+        @media (max-width: 480px) {
+            .quiz-option { padding: 0.5rem 0.75rem; font-size: 0.85rem; }
+            .tf-quiz { flex-direction: column; }
+            .tf-option { width: 100%; }
+            .match-row { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+            .match-select { min-width: 100%; }
+            .order-item { padding: 0.5rem 0.75rem; }
+            .sort-item { padding: 0.5rem 0.75rem; }
+        }
     }
 
     #js {

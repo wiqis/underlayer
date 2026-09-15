@@ -13,12 +13,19 @@ public func render_elf_header_fields() : string {
     page.appendTitle(&title)
 
     #html {
-        <div class="lesson">
-            <div class="a11y-controls">
-                <button class="a11y-btn" onclick="toggleHighContrast()" aria-label="Toggle high contrast">HC</button>
-                <button class="a11y-btn" onclick="toggleReducedMotion()" aria-label="Toggle reduced motion">RM</button>
-                <button class="a11y-btn" onclick="openShortcuts()" aria-label="Keyboard shortcuts">?</button>
-            </div>
+        <header role="banner">
+            <nav role="navigation" aria-label="Main navigation">
+                <div class="a11y-controls">
+                    <button class="a11y-btn" onclick="toggleHighContrast()" aria-label="Toggle high contrast">HC</button>
+                    <button class="a11y-btn" onclick="toggleReducedMotion()" aria-label="Toggle reduced motion">RM</button>
+                    <button class="a11y-btn" onclick="openShortcuts()" aria-label="Keyboard shortcuts">?</button>
+                </div>
+                <div class="cb-controls">
+                    <button class="a11y-btn" onclick="setColorBlind('none')" aria-label="Normal vision" id="cb-none">NV</button>
+                    <button class="a11y-btn" onclick="setColorBlind('protanopia')" aria-label="Protanopia mode" id="cb-pro">P</button>
+                    <button class="a11y-btn" onclick="setColorBlind('deuteranopia')" aria-label="Deuteranopia mode" id="cb-deu">D</button>
+                    <button class="a11y-btn" onclick="setColorBlind('tritanopia')" aria-label="Tritanopia mode" id="cb-tri">T</button>
+                </div>
             <div class="shortcuts-modal" id="shortcuts-modal">
                 <div class="shortcuts-backdrop" onclick="closeShortcuts()"></div>
                 <div class="shortcuts-dialog">
@@ -31,6 +38,9 @@ public func render_elf_header_fields() : string {
                     <button onclick="closeShortcuts()" class="shortcuts-close">Close</button>
                 </div>
             </div>
+            </nav>
+            </header>
+            <main id="main-content" role="main">
             <div class="reading-controls">
                 <label>Font: <select id="font-size" onchange="setFontSize(this.value)"><option value="small">Small</option><option value="medium" selected>Medium</option><option value="large">Large</option></select></label>
                 <label>Spacing: <select id="line-height" onchange="setLineHeight(this.value)"><option value="compact">Compact</option><option value="normal" selected>Normal</option><option value="relaxed">Relaxed</option></select></label>
@@ -116,9 +126,9 @@ public func render_elf_header_fields() : string {
                 <h2>Check Your Understanding</h2>
                 <p>What field in the ELF header tells the loader where the program header table begins?</p>
                 <div class="quiz" id="quiz-ehf-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-1', this, false)">e_shoff</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-1', this, true)">e_phoff</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-1', this, false)">e_entry</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-1', this, false)" aria-label="Option: e_shoff">e_shoff</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-1', this, true)" aria-label="Option: e_phoff">e_phoff</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-1', this, false)" aria-label="Option: e_entry">e_entry</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -127,9 +137,9 @@ public func render_elf_header_fields() : string {
                 <h2>Apply It</h2>
                 <p>If <code>e_phnum = 9</code> and <code>e_phentsize = 56</code>, how many bytes does the program header table occupy?</p>
                 <div class="quiz" id="quiz-ehf-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-2', this, false)">56 bytes</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-2', this, true)">504 bytes</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-2', this, false)">9 bytes</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-2', this, false)" aria-label="Option: 56 bytes">56 bytes</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-2', this, true)" aria-label="Option: 504 bytes">504 bytes</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-2', this, false)" aria-label="Option: 9 bytes">9 bytes</button>
                     <div class="quiz-feedback"></div>
                 </div>
                 <p><em>9 entries × 56 bytes each = 504 bytes total.</em></p>
@@ -140,12 +150,20 @@ public func render_elf_header_fields() : string {
                 <p>You now understand every field in the ELF header. The entry point field (next concept) deserves special attention — it's where execution begins.</p>
             </div>
 
-            <nav class="toc" id="toc">
+            <nav class="toc" id="toc" aria-label="Table of contents">
                 <div class="toc-title">On this page</div>
                 <ul class="toc-list" id="toc-list"></ul>
             </nav>
             <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Top</button>
-        </div>
+            </main>
+            <footer role="contentinfo"><p>Underlayer — Learn Things Deeply</p></footer>
+        <svg style="position:absolute;width:0;height:0">
+            <defs>
+                <filter id="protanopia"><feColorMatrix type="matrix" values="0.567,0.433,0,0,0 0.558,0.442,0,0,0 0,0.242,0.758,0,0 0,0,0,1,0"/></filter>
+                <filter id="deuteranopia"><feColorMatrix type="matrix" values="0.625,0.375,0,0,0 0.7,0.3,0,0,0 0,0.3,0.7,0,0 0,0,0,1,0"/></filter>
+                <filter id="tritanopia"><feColorMatrix type="matrix" values="0.95,0.05,0,0,0 0,0.433,0.567,0,0 0,0.475,0.525,0,0 0,0,0,1,0"/></filter>
+            </defs>
+        </svg>
     }
 
     #css {
@@ -211,6 +229,10 @@ public func render_elf_header_fields() : string {
         .lesson.high-contrast .quiz-option { background: #111; color: #fff; border-color: #555; }
         .lesson.reduced-motion *, .lesson.reduced-motion *::before, .lesson.reduced-motion *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         @media (min-width: 1440px) { .lesson { max-width: 960px; } }
+        .cb-controls { position: fixed; top: 1rem; left: 5rem; display: flex; gap: 0.35rem; z-index: 60; }
+        .cb-controls .a11y-btn { font-size: 0.65rem; }
+        .cb-controls .a11y-btn.active { background: #1f2937; color: white; border-color: #1f2937; }
+        footer { text-align: center; padding: 2rem 1rem; color: #6b7280; font-size: 0.85rem; border-top: 1px solid #e5e7eb; margin-top: 2rem; }
     }
 
     #js {
@@ -307,6 +329,23 @@ public func render_elf_header_fields() : string {
             if(localStorage.getItem('ulf-reduced-motion') === '1') { lesson.classList.add('reduced-motion'); var b2 = document.querySelectorAll('.a11y-btn')[1]; if(b2) b2.classList.add('active'); }
             else if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) { lesson.classList.add('reduced-motion'); var b3 = document.querySelectorAll('.a11y-btn')[1]; if(b3) b3.classList.add('active'); }
             document.addEventListener('keydown', function(e) { if(e.key === 'Escape') closeShortcuts(); });
+        })();
+
+        function setColorBlind(mode) {
+            var lesson = document.querySelector('.lesson');
+            if(!lesson) return;
+            var filters = { 'protanopia': 'url(#protanopia)', 'deuteranopia': 'url(#deuteranopia)', 'tritanopia': 'url(#tritanopia)' };
+            lesson.style.filter = filters[mode] || '';
+            localStorage.setItem('ulf-color-blind', mode);
+            document.querySelectorAll('.cb-controls .a11y-btn').forEach(function(b) { b.classList.remove('active'); });
+            var id = mode === 'none' ? 'cb-none' : 'cb-' + mode.substring(0,3);
+            var activeBtn = document.getElementById(id);
+            if(activeBtn) activeBtn.classList.add('active');
+        }
+        (function() {
+            var cb = localStorage.getItem('ulf-color-blind') || 'none';
+            if(cb !== 'none') { setColorBlind(cb); }
+            else { var b = document.getElementById('cb-none'); if(b) b.classList.add('active'); }
         })();
     }
 
