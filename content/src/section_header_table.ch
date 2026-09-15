@@ -122,6 +122,9 @@ Section Headers:
             </nav>
             <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Top</button>
             <div class="a11y-toast" id="a11y-toast"></div>
+            <div class="swipe-hint">← Swipe to navigate →</div>
+            <link rel="prev" href="">
+            <link rel="next" href="">
         </div>
     }
 
@@ -220,6 +223,14 @@ Section Headers:
         .feedback-thanks { color: #059669; font-size: 0.85rem; display: none; }
         .a11y-toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); padding: 0.5rem 1rem; background: #1f2937; color: white; border-radius: 6px; font-size: 0.85rem; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
         .a11y-toast.show { opacity: 1; }
+        .hex-dump, pre { touch-action: manipulation; overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+        table { max-width: 100%; overflow-x: auto; display: block; }
+        .tap-feedback { transition: background 0.15s; }
+        .tap-feedback:active { background: #e5e7eb !important; }
+        .swipe-hint { text-align: center; padding: 0.5rem; color: #9ca3af; font-size: 0.8rem; display: none; }
+        @media (pointer: coarse) { .swipe-hint { display: block; } }
+        .quiz-option, .tf-option, .recognize-option { -webkit-tap-highlight-color: transparent; }
+        .quiz-option:active, .tf-option:active { transform: scale(0.98); transition: transform 0.1s; }
     }
 
     #js {
@@ -364,6 +375,34 @@ Section Headers:
             else if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) { lesson.classList.add('reduced-motion'); var b3 = document.querySelectorAll('.a11y-btn')[1]; if(b3) { b3.classList.add('active'); } else { } }
             else { }
             document.addEventListener('keydown', function(e) { if(e.key === 'Escape') { closeShortcuts(); } else { } });
+        })();
+
+        (function() {
+            var touchStartX = 0;
+            var touchStartY = 0;
+            var longPressTimer = null;
+            document.addEventListener('touchstart', function(e) {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+                var target = e.target;
+                if(target.closest('.quiz-option, .tf-option, .recognize-option')) {
+                    longPressTimer = setTimeout(function() { target.style.background = '#dbeafe'; }, 500);
+                }
+            }, { passive: true });
+            document.addEventListener('touchend', function(e) {
+                clearTimeout(longPressTimer);
+                var dx = e.changedTouches[0].screenX - touchStartX;
+                var dy = e.changedTouches[0].screenY - touchStartY;
+                if(Math.abs(dx) > 80 && Math.abs(dy) < 40) {
+                    if(dx > 0) { var prev = document.querySelector('link[rel="prev"]'); if(prev) window.location.href = prev.href; }
+                    else { var next = document.querySelector('link[rel="next"]'); if(next) window.location.href = next.href; }
+                }
+            }, { passive: true });
+            var hexBlocks = document.querySelectorAll('.hex-dump, pre');
+            for(var i = 0; i < hexBlocks.length; i++) {
+                var el = hexBlocks[i];
+                el.style.touchAction = 'pinch-zoom';
+            }
         })();
     }
     return page.toString()
