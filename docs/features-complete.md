@@ -743,14 +743,14 @@
 - [x] P2 7.3.4 Custom theme support (CSS variables)
 - [x] P2 7.3.5 Theme persistence (localStorage)
 - [ ] P2 7.3.6 Theme preview (before applying)
-- [ ] P2 7.3.7 Font size adjustment (small, medium, large)
+- [x] P2 7.3.7 Font size adjustment (small, medium, large)
 - [ ] P2 7.3.8 Color blind mode (protanopia, deuteranopia, tritanopia)
 - [ ] P2 7.3.9 High contrast mode
 - [ ] P2 7.3.10 Reduced motion mode (prefers-reduced-motion)
 - [ ] P2 7.3.11 Custom font support (upload fonts)
-- [ ] P2 7.3.12 Line height adjustment
-- [ ] P2 7.3.13 Letter spacing adjustment
-- [ ] P2 7.3.14 Content width adjustment (narrow, normal, wide)
+- [x] P2 7.3.12 Line height adjustment
+- [x] P2 7.3.13 Letter spacing adjustment
+- [x] P2 7.3.14 Content width adjustment (narrow, normal, wide)
 
 ### 7.4 Responsive Design
 

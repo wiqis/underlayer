@@ -14,6 +14,12 @@ public func render_memory_mapping() : string {
 
     #html {
         <div class="lesson">
+            <div class="reading-controls">
+                <label>Font: <select id="font-size" onchange="setFontSize(this.value)"><option value="small">Small</option><option value="medium" selected>Medium</option><option value="large">Large</option></select></label>
+                <label>Spacing: <select id="line-height" onchange="setLineHeight(this.value)"><option value="compact">Compact</option><option value="normal" selected>Normal</option><option value="relaxed">Relaxed</option></select></label>
+                <label>Letters: <select id="letter-spacing" onchange="setLetterSpacing(this.value)"><option value="tight">Tight</option><option value="normal" selected>Normal</option><option value="loose">Loose</option></select></label>
+                <label>Width: <select id="content-width" onchange="setContentWidth(this.value)"><option value="narrow">Narrow</option><option value="normal" selected>Normal</option><option value="wide">Wide</option></select></label>
+            </div>
             <h1>Memory Mapping</h1>
 
             <div class="unit unit-why">
@@ -115,6 +121,17 @@ Offset  Section               VirtAddr  Section
         .back-to-top { position: fixed; bottom: 2rem; right: 2rem; padding: 0.6rem 1rem; background: #1f2937; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 50; }
         .back-to-top.visible { opacity: 1; pointer-events: auto; }
         .back-to-top:hover { background: #111827; }
+        .reading-controls { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; padding: 0.75rem 1rem; background: #f3f4f6; border-radius: 8px; font-size: 0.85rem; }
+        .reading-controls label { display: flex; align-items: center; gap: 0.35rem; }
+        .reading-controls select { padding: 0.25rem 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.85rem; }
+        .lesson.font-small { font-size: 0.9rem; }
+        .lesson.font-large { font-size: 1.15rem; }
+        .lesson.lh-compact p { line-height: 1.4; }
+        .lesson.lh-relaxed p { line-height: 2.0; }
+        .lesson.ls-tight { letter-spacing: -0.02em; }
+        .lesson.ls-loose { letter-spacing: 0.04em; }
+        .lesson.w-narrow { max-width: 640px; margin: 0 auto; }
+        .lesson.w-wide { max-width: 1100px; margin: 0 auto; }
     }
 
     #js {
@@ -147,6 +164,45 @@ Offset  Section               VirtAddr  Section
                 tocList.appendChild(li);
             }
         })();
+
+        function setFontSize(v) { localStorage.setItem('ulf-font-size', v); applySettings(); }
+        function setLineHeight(v) { localStorage.setItem('ulf-line-height', v); applySettings(); }
+        function setLetterSpacing(v) { localStorage.setItem('ulf-letter-spacing', v); applySettings(); }
+        function setContentWidth(v) { localStorage.setItem('ulf-content-width', v); applySettings(); }
+        function applySettings() {
+            var lesson = document.querySelector('.lesson');
+            if(!lesson) return;
+            lesson.classList.remove('font-small','font-large','lh-compact','lh-relaxed','ls-tight','ls-loose','w-narrow','w-wide');
+            var fs = localStorage.getItem('ulf-font-size') || 'medium';
+            if(fs === 'small') { lesson.classList.add('font-small'); }
+            else if(fs === 'large') { lesson.classList.add('font-large'); }
+            else { }
+            var lh = localStorage.getItem('ulf-line-height') || 'normal';
+            if(lh === 'compact') { lesson.classList.add('lh-compact'); }
+            else if(lh === 'relaxed') { lesson.classList.add('lh-relaxed'); }
+            else { }
+            var ls = localStorage.getItem('ulf-letter-spacing') || 'normal';
+            if(ls === 'tight') { lesson.classList.add('ls-tight'); }
+            else if(ls === 'loose') { lesson.classList.add('ls-loose'); }
+            else { }
+            var cw = localStorage.getItem('ulf-content-width') || 'normal';
+            if(cw === 'narrow') { lesson.classList.add('w-narrow'); }
+            else if(cw === 'wide') { lesson.classList.add('w-wide'); }
+            else { }
+            var fsEl = document.getElementById('font-size');
+            var lhEl = document.getElementById('line-height');
+            var lsEl = document.getElementById('letter-spacing');
+            var cwEl = document.getElementById('content-width');
+            if(fsEl) { fsEl.value = fs; }
+            else { }
+            if(lhEl) { lhEl.value = lh; }
+            else { }
+            if(lsEl) { lsEl.value = ls; }
+            else { }
+            if(cwEl) { cwEl.value = cw; }
+            else { }
+        }
+        applySettings();
     }
     return page.toString()
 }
