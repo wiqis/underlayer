@@ -143,6 +143,30 @@ readelf -sW ./my_program</pre></div>
                 <h2>Connect</h2>
                 <p>Each symbol has a binding (local, global, weak) and a visibility. These determine how the linker resolves symbols across object files — that is what the next two concepts cover.</p>
             </div>
+
+            <div class="unit unit-retrieve">
+                <h2>Recognize the Output</h2>
+                <p>Which type of symbol does this readelf output represent?</p>
+                <div class="hex-dump"><pre>    8: 0000000000000000     0 FUNC    WEAK   DEFAULT  UND __cxa_atexit</pre></div>
+                <div class="recognize-quiz" id="rec-st-1">
+                    <button class="recognize-option" onclick="checkRecognize('rec-st-1', this, false)">A local function defined in this file</button>
+                    <button class="recognize-option" onclick="checkRecognize('rec-st-1', this, true)">An imported function from libc (undefined, weak binding)</button>
+                    <button class="recognize-option" onclick="checkRecognize('rec-st-1', this, false)">A global variable in .bss</button>
+                    <div class="recognize-feedback"></div>
+                </div>
+            </div>
+
+            <div class="unit unit-retrieve">
+                <h2>Recognize the Output</h2>
+                <p>What does this symbol table entry tell you?</p>
+                <div class="hex-dump"><pre>   42: 0000000000401130    23 FUNC    GLOBAL DEFAULT  13 main</pre></div>
+                <div class="recognize-quiz" id="rec-st-2">
+                    <button class="recognize-option" onclick="checkRecognize('rec-st-2', this, false)">Undefined function (import)</button>
+                    <button class="recognize-option" onclick="checkRecognize('rec-st-2', this, true)">Defined function: main() at 0x401130, 23 bytes, in section 13 (.text)</button>
+                    <button class="recognize-option" onclick="checkRecognize('rec-st-2', this, false)">A 23-byte global variable</button>
+                    <div class="recognize-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
@@ -165,6 +189,12 @@ readelf -sW ./my_program</pre></div>
         .quiz-option:hover { border-color: #3b82f6; }
         .quiz-option.correct { border-color: #059669; background: #ecfdf5; }
         .quiz-option.wrong { border-color: #dc2626; background: #fef2f2; }
+        .recognize-quiz { margin-top: 1rem; }
+        .recognize-option { display: block; width: 100%; padding: 0.75rem 1rem; margin: 0.5rem 0; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; text-align: left; }
+        .recognize-option:hover { border-color: #3b82f6; }
+        .recognize-option.correct { border-color: #059669; background: #ecfdf5; }
+        .recognize-option.wrong { border-color: #dc2626; background: #fef2f2; }
+        .recognize-feedback { margin-top: 0.5rem; font-size: 0.9rem; }
         table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
         th, td { padding: 0.5rem; border: 1px solid #d1d5db; text-align: left; }
         th { background: #f9fafb; font-weight: 600; }
@@ -187,6 +217,22 @@ readelf -sW ./my_program</pre></div>
             } else {
                 btn.classList.add('wrong');
                 feedback.textContent = 'Not quite. Try again next time.';
+                feedback.style.color = '#dc2626';
+            }
+        }
+
+        function checkRecognize(quizId, btn, correct) {
+            var quiz = document.getElementById(quizId);
+            var options = quiz.querySelectorAll('.recognize-option');
+            var feedback = quiz.querySelector('.recognize-feedback');
+            for(var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            if(correct) {
+                btn.classList.add('correct');
+                feedback.textContent = 'Correct! You can read the symbol type, binding, and section from the readelf output.';
+                feedback.style.color = '#059669';
+            } else {
+                btn.classList.add('wrong');
+                feedback.textContent = 'Not quite. Look at the FUNC/GLOBAL/DEFAULT fields to determine the type.';
                 feedback.style.color = '#dc2626';
             }
         }

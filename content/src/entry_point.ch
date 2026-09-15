@@ -96,6 +96,39 @@ $ objdump -d /bin/ls | head -20  # See the disassembly at the entry point</code>
                     <div class="tf-feedback"></div>
                 </div>
             </div>
+
+            <div class="unit unit-apply">
+                <h2>Apply: Debug Scenario</h2>
+                <p>A developer writes a minimal ELF loader. Their program crashes with SIGSEGV at address 0x0. They check the ELF header and find:</p>
+                <div class="hex-dump"><pre>Entry point address: 0x0000000000000000
+Type: ET_EXEC (not PIE)
+Machine: x86-64</pre></div>
+                <p>What went wrong, and how would you fix it?</p>
+                <div class="app-quiz" id="app-ep-1">
+                    <div class="app-step">
+                        <span class="app-step-num">1.</span>
+                        <span>The entry point is</span>
+                        <select class="app-select" data-correct="zero — the linker had no _start symbol to resolve">
+                            <option value="">Select...</option>
+                            <option value="too high for the address space">too high for the address space</option>
+                            <option value="zero — the linker had no _start symbol to resolve">zero — the linker had no _start symbol to resolve</option>
+                            <option value="pointing to a read-only section">pointing to a read-only section</option>
+                        </select>
+                    </div>
+                    <div class="app-step">
+                        <span class="app-step-num">2.</span>
+                        <span>The fix is to</span>
+                        <select class="app-select" data-correct="define a _start function that calls main()">
+                            <option value="">Select...</option>
+                            <option value="change e_entry manually with a hex editor">change e_entry manually with a hex editor</option>
+                            <option value="define a _start function that calls main()">define a _start function that calls main()</option>
+                            <option value="disable ASLR">disable ASLR</option>
+                        </select>
+                    </div>
+                    <button class="app-check-btn" onclick="checkApp('app-ep-1')">Check Solution</button>
+                    <div class="app-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
@@ -125,6 +158,20 @@ $ objdump -d /bin/ls | head -20  # See the disassembly at the entry point</code>
         .tf-option.wrong { border-color: #dc2626; background: #fef2f2; }
         .tf-feedback { margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.9rem; line-height: 1.5; background: #f9fafb; display: none; }
         .tf-feedback.show { display: block; }
+        .app-quiz { margin-top: 1rem; }
+        .app-step { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+        .app-step-num { font-weight: 600; color: #6b7280; }
+        .app-select { padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; background: white; font-size: 0.9rem; min-width: 18rem; }
+        .app-select:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
+        .app-select.correct { border-color: #059669; background: #ecfdf5; }
+        .app-select.wrong { border-color: #dc2626; background: #fef2f2; }
+        .app-check-btn { margin-top: 0.75rem; padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; font-size: 0.9rem; }
+        .app-check-btn:hover { background: #f9fafb; border-color: #3b82f6; }
+        .app-feedback { margin-top: 0.5rem; font-size: 0.9rem; }
+        @media (max-width: 640px) {
+            .app-step { flex-direction: column; align-items: flex-start; }
+            .app-select { min-width: 100%; }
+        }
     }
 
     #js {
@@ -162,6 +209,33 @@ $ objdump -d /bin/ls | head -20  # See the disassembly at the entry point</code>
                 feedback.style.color = '#dc2626';
             }
             feedback.classList.add('show');
+        }
+
+        function checkApp(quizId) {
+            var quiz = document.getElementById(quizId);
+            var selects = quiz.querySelectorAll('.app-select');
+            var feedback = quiz.querySelector('.app-feedback');
+            var allCorrect = true;
+            for(var i = 0; i < selects.length; i++) {
+                var sel = selects[i];
+                var correct = sel.getAttribute('data-correct');
+                if(sel.value === correct) {
+                    sel.classList.add('correct');
+                    sel.classList.remove('wrong');
+                } else {
+                    sel.classList.add('wrong');
+                    sel.classList.remove('correct');
+                    allCorrect = false;
+                }
+                sel.disabled = true;
+            }
+            if(allCorrect) {
+                feedback.textContent = 'Correct diagnosis! The entry point being 0x0 means the linker resolved e_entry from _start, but no _start was defined. The fix is to provide a _start function.';
+                feedback.style.color = '#059669';
+            } else {
+                feedback.textContent = 'Some steps are incorrect. Review the highlighted fields.';
+                feedback.style.color = '#dc2626';
+            }
         }
     }
 

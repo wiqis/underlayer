@@ -457,8 +457,8 @@
 - [x] P1 4.1.3 Multiple choice: N options, M correct (multi-select)
 - [x] P1 4.1.4 Free recall: text input, no hints
 - [x] P1 4.1.5 Cued recall: text input with partial hint
-- [ ] P2 4.1.6 Recognition: select the correct image/diagram
-- [ ] P2 4.1.7 Application: solve a problem using the knowledge
+- [x] P2 4.1.6 Recognition: select the correct image/diagram
+- [x] P2 4.1.7 Application: solve a problem using the knowledge
 - [x] P2 4.1.8 Fill in the blank: complete a sentence
 - [x] P2 4.1.9 Fill in the blank: complete a code block
 - [x] P2 4.1.10 True/false: with explanation
