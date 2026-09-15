@@ -33,10 +33,10 @@ public func main() : int {
     // ---- Routes ----
 
     // ---- Learner CRUD ----
-    srv.router.add("POST", "/api/learners", (|&db|(req, res) => {
+    srv.router.add("POST", "/api/learners", (|db|(req, res) => {
         underlayer_web::handle_create_learner(&raw db, &req, &raw mut res)
     }))
-    srv.router.add("GET", "/api/learners/:learnerId", (|&db|(req, res) => {
+    srv.router.add("GET", "/api/learners/:learnerId", (|db|(req, res) => {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
@@ -442,55 +442,55 @@ public func main() : int {
         }
     })
     // Auth API (from handlers_auth.ch)
-    srv.router.add("POST", "/api/auth/register", (|&db|(req, res) => {
+    srv.router.add("POST", "/api/auth/register", (|db|(req, res) => {
         underlayer_web::handle_register(&raw db, &raw mut req, &raw mut res)
     }))
-    srv.router.add("POST", "/api/auth/login", (|&db|(req, res) => {
+    srv.router.add("POST", "/api/auth/login", (|db|(req, res) => {
         underlayer_web::handle_login(&raw db, &raw mut req, &raw mut res)
     }))
-    srv.router.add("POST", "/api/auth/logout", (|&db|(req, res) => {
+    srv.router.add("POST", "/api/auth/logout", (|db|(req, res) => {
         underlayer_web::handle_logout(&raw db, &req, &raw mut res)
     }))
-    srv.router.add("GET", "/api/auth/me", (|&db|(req, res) => {
+    srv.router.add("GET", "/api/auth/me", (|db|(req, res) => {
         underlayer_web::handle_get_me(&raw db, &req, &raw mut res)
     }))
-    srv.router.add("POST", "/api/auth/forgot-password", (|&db|(req, res) => {
+    srv.router.add("POST", "/api/auth/forgot-password", (|db|(req, res) => {
         underlayer_web::handle_forgot_password(&raw db, &raw mut req, &raw mut res)
     }))
-    srv.router.add("POST", "/api/auth/reset-password", (|&db|(req, res) => {
+    srv.router.add("POST", "/api/auth/reset-password", (|db|(req, res) => {
         underlayer_web::handle_reset_password(&raw db, &raw mut req, &raw mut res)
     }))
-    srv.router.add("POST", "/api/auth/verify-email", (|&db|(req, res) => {
+    srv.router.add("POST", "/api/auth/verify-email", (|db|(req, res) => {
         underlayer_web::handle_verify_email(&raw db, &raw mut req, &raw mut res)
     }))
-    srv.router.add("GET", "/api/user/login-history", (|&db|(req, res) => {
+    srv.router.add("GET", "/api/user/login-history", (|db|(req, res) => {
         underlayer_web::handle_login_history(&raw db, &req, &raw mut res)
     }))
     // Profile API (from handlers_profiles.ch)
-    srv.router.add("GET", "/api/user/profile", (|&db|(req, res) => {
+    srv.router.add("GET", "/api/user/profile", (|db|(req, res) => {
         underlayer_web::handle_get_profile(&raw db, &req, &raw mut res)
     }))
-    srv.router.add("PUT", "/api/user/profile", (|&db|(req, res) => {
+    srv.router.add("PUT", "/api/user/profile", (|db|(req, res) => {
         underlayer_web::handle_update_profile(&raw db, &req, &raw mut res)
     }))
     // Settings API (from handlers_settings.ch)
-    srv.router.add("GET", "/api/user/settings", (|&db|(req, res) => {
+    srv.router.add("GET", "/api/user/settings", (|db|(req, res) => {
         underlayer_web::handle_get_settings(&raw db, &req, &raw mut res)
     }))
-    srv.router.add("PUT", "/api/user/settings", (|&db|(req, res) => {
+    srv.router.add("PUT", "/api/user/settings", (|db|(req, res) => {
         underlayer_web::handle_update_settings(&raw db, &req, &raw mut res)
     }))
-    srv.router.add("GET", "/api/user/learning-preferences", (|&db|(req, res) => {
+    srv.router.add("GET", "/api/user/learning-preferences", (|db|(req, res) => {
         underlayer_web::handle_get_learning_preferences(&raw db, &req, &raw mut res)
     }))
-    srv.router.add("PUT", "/api/user/learning-preferences", (|&db|(req, res) => {
+    srv.router.add("PUT", "/api/user/learning-preferences", (|db|(req, res) => {
         underlayer_web::handle_update_learning_preferences(&raw db, &req, &raw mut res)
     }))
     // Data management API (from handlers_data.ch)
-    srv.router.add("GET", "/api/user/export", (|&db|(req, res) => {
+    srv.router.add("GET", "/api/user/export", (|db|(req, res) => {
         underlayer_web::handle_export_data(&raw db, &req, &raw mut res)
     }))
-    srv.router.add("DELETE", "/api/user/data/:type", (|&db|(req, res) => {
+    srv.router.add("DELETE", "/api/user/data/:type", (|db|(req, res) => {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
@@ -505,20 +505,20 @@ public func main() : int {
             res.write_view(&bv)
         }
     }))
-    srv.router.add("DELETE", "/api/user/account", (|&db|(req, res) => {
+    srv.router.add("DELETE", "/api/user/account", (|db|(req, res) => {
         underlayer_web::handle_delete_account(&raw db, &req, &raw mut res)
     }))
-    srv.router.add("POST", "/api/user/deactivate", (|&db|(req, res) => {
+    srv.router.add("POST", "/api/user/deactivate", (|db|(req, res) => {
         underlayer_web::handle_deactivate_account(&raw db, &req, &raw mut res)
     }))
-    srv.router.add("POST", "/api/user/reactivate", (|&db|(req, res) => {
+    srv.router.add("POST", "/api/user/reactivate", (|db|(req, res) => {
         underlayer_web::handle_reactivate_account(&raw db, &req, &raw mut res)
     }))
     // Progress sharing (from handlers_data.ch)
-    srv.router.add("POST", "/api/progress/share", (|&db|(req, res) => {
+    srv.router.add("POST", "/api/progress/share", (|db|(req, res) => {
         underlayer_web::handle_share_progress(&raw db, &req, &raw mut res)
     }))
-    srv.router.add("GET", "/api/progress/shared/:token", (|&db|(req, res) => {
+    srv.router.add("GET", "/api/progress/shared/:token", (|db|(req, res) => {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
@@ -532,11 +532,11 @@ public func main() : int {
             res.write_view(&bv)
         }
     }))
-    srv.router.add("POST", "/api/progress/import", (|&db|(req, res) => {
+    srv.router.add("POST", "/api/progress/import", (|db|(req, res) => {
         underlayer_web::handle_import_progress(&raw db, &mut req, &raw mut res)
     }))
 
-    srv.router.add("GET", "/api/user/:username", (|&db|(req, res) => {
+    srv.router.add("GET", "/api/user/:username", (|db|(req, res) => {
         underlayer_web::handle_get_public_profile(&raw db, &req, &raw mut res)
     }))
 

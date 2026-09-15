@@ -646,18 +646,18 @@
 
 - [x] P2 6.2.1 Session analytics (length, accuracy, time)
 - [x] P2 6.2.2 Concept analytics (mastery, time, attempts)
-- [ ] P2 6.2.3 Course analytics (completion, velocity)
+- [x] P2 6.2.3 Course analytics (completion, velocity)
 - [ ] P2 6.2.4 Platform analytics (engagement, retention)
 - [ ] P2 6.2.5 Cohort analytics (group comparison)
 - [ ] P2 6.2.6 Temporal analytics (time-of-day, day-of-week)
 - [ ] P2 6.2.7 Device analytics (mobile vs desktop)
-- [ ] P2 6.2.8 Difficulty analytics (easy/hard distribution)
-- [ ] P2 6.2.9 Error analytics (common mistakes)
+- [x] P2 6.2.8 Difficulty analytics (easy/hard distribution)
+- [x] P2 6.2.9 Error analytics (common mistakes)
 - [ ] P2 6.2.10 Drop-off analytics (where learners quit)
 - [ ] P2 6.2.11 Funnel analytics (registration to first lesson to completion)
 - [ ] P2 6.2.12 Retention analytics (return rate)
-- [ ] P2 6.2.13 Engagement analytics (sessions per week)
-- [ ] P2 6.2.14 Velocity analytics (concepts per week)
+- [x] P2 6.2.13 Engagement analytics (sessions per week)
+- [x] P2 6.2.14 Velocity analytics (concepts per week)
 - [ ] P2 6.2.15 Comparative analytics (vs other learners)
 
 ### 6.3 Retention Metrics
