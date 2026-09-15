@@ -79,6 +79,12 @@ Offset  Section               VirtAddr  Section
                 <h2>Connect</h2>
                 <p>Program headers describe segments for the loader. But what about the section header table — how do sections relate to segments? That's next.</p>
             </div>
+
+            <nav class="toc" id="toc">
+                <div class="toc-title">On this page</div>
+                <ul class="toc-list" id="toc-list"></ul>
+            </nav>
+            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Top</button>
         </div>
     }
 
@@ -100,6 +106,15 @@ Offset  Section               VirtAddr  Section
         .quiz-option:hover { border-color: #3b82f6; }
         .quiz-option.correct { border-color: #059669; background: #ecfdf5; }
         .quiz-option.wrong { border-color: #dc2626; background: #fef2f2; }
+        .toc { position: sticky; top: 2rem; padding: 1rem; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; margin-bottom: 1.5rem; }
+        .toc-title { font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-bottom: 0.5rem; }
+        .toc-list { list-style: none; padding: 0; margin: 0; }
+        .toc-list li { margin-bottom: 0.25rem; }
+        .toc-list a { color: #374151; text-decoration: none; font-size: 0.85rem; display: block; padding: 0.2rem 0.5rem; border-radius: 4px; }
+        .toc-list a:hover { background: #e5e7eb; }
+        .back-to-top { position: fixed; bottom: 2rem; right: 2rem; padding: 0.6rem 1rem; background: #1f2937; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 50; }
+        .back-to-top.visible { opacity: 1; pointer-events: auto; }
+        .back-to-top:hover { background: #111827; }
     }
 
     #js {
@@ -111,6 +126,27 @@ Offset  Section               VirtAddr  Section
             if(correct) { btn.classList.add('correct'); feedback.textContent = 'Correct!'; feedback.style.color = '#059669'; }
             else { btn.classList.add('wrong'); feedback.textContent = 'Not quite.'; feedback.style.color = '#dc2626'; }
         }
+
+        (function() {
+            var btn = document.getElementById('back-to-top');
+            window.addEventListener('scroll', function() {
+                if(window.scrollY > 300) { btn.classList.add('visible'); }
+                else { btn.classList.remove('visible'); }
+            });
+            var tocList = document.getElementById('toc-list');
+            var headings = document.querySelectorAll('.lesson h2');
+            for(var i = 0; i < headings.length; i++) {
+                var h = headings[i];
+                var id = 'section-' + i;
+                h.id = id;
+                var li = document.createElement('li');
+                var a = document.createElement('a');
+                a.href = '#' + id;
+                a.textContent = h.textContent;
+                li.appendChild(a);
+                tocList.appendChild(li);
+            }
+        })();
     }
     return page.toString()
 }

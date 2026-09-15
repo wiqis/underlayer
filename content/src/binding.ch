@@ -113,6 +113,12 @@ nm test | grep ' x'    # shows uppercase 'D' (b.o's x wins)</pre></div>
                 <h2>Connect</h2>
                 <p>Binding controls <em>which</em> definition the linker picks. But visibility controls whether the dynamic linker can see a symbol at all — that's the next concept.</p>
             </div>
+
+            <nav class="toc" id="toc">
+                <div class="toc-title">On this page</div>
+                <ul class="toc-list" id="toc-list"></ul>
+            </nav>
+            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Top</button>
         </div>
     }
 
@@ -142,6 +148,15 @@ nm test | grep ' x'    # shows uppercase 'D' (b.o's x wins)</pre></div>
         li { margin-bottom: 0.25rem; }
         pre { background: #f3f4f6; padding: 1rem; border-radius: 6px; overflow-x: auto; }
         code { font-family: ui-monospace, monospace; font-size: 0.9em; }
+        .toc { position: sticky; top: 2rem; padding: 1rem; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; margin-bottom: 1.5rem; }
+        .toc-title { font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-bottom: 0.5rem; }
+        .toc-list { list-style: none; padding: 0; margin: 0; }
+        .toc-list li { margin-bottom: 0.25rem; }
+        .toc-list a { color: #374151; text-decoration: none; font-size: 0.85rem; display: block; padding: 0.2rem 0.5rem; border-radius: 4px; }
+        .toc-list a:hover { background: #e5e7eb; }
+        .back-to-top { position: fixed; bottom: 2rem; right: 2rem; padding: 0.6rem 1rem; background: #1f2937; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 50; }
+        .back-to-top.visible { opacity: 1; pointer-events: auto; }
+        .back-to-top:hover { background: #111827; }
     }
 
     #js {
@@ -160,6 +175,27 @@ nm test | grep ' x'    # shows uppercase 'D' (b.o's x wins)</pre></div>
                 feedback.style.color = '#dc2626';
             }
         }
+
+        (function() {
+            var btn = document.getElementById('back-to-top');
+            window.addEventListener('scroll', function() {
+                if(window.scrollY > 300) { btn.classList.add('visible'); }
+                else { btn.classList.remove('visible'); }
+            });
+            var tocList = document.getElementById('toc-list');
+            var headings = document.querySelectorAll('.lesson h2');
+            for(var i = 0; i < headings.length; i++) {
+                var h = headings[i];
+                var id = 'section-' + i;
+                h.id = id;
+                var li = document.createElement('li');
+                var a = document.createElement('a');
+                a.href = '#' + id;
+                a.textContent = h.textContent;
+                li.appendChild(a);
+                tocList.appendChild(li);
+            }
+        })();
     }
 
     return page.toString()

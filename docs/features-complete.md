@@ -706,8 +706,8 @@
 - [x] P2 7.1.7 Filter/sort courses (by topic, difficulty, rating)
 - [x] P2 7.1.9 Recent history (last 10 visited concepts)
 - [ ] P2 7.1.10 Quick jump (keyboard shortcuts, command palette)
-- [ ] P2 7.1.11 Table of contents (per concept)
-- [ ] P2 7.1.12 Back to top button
+- [x] P2 7.1.11 Table of contents (per concept)
+- [x] P2 7.1.12 Back to top button
 - [ ] P2 7.1.13 Progress indicator in navigation
 - [ ] P2 7.1.14 Unread indicator (new content)
 - [ ] P2 7.1.15 Due indicator (review items due)

@@ -102,6 +102,8 @@ public namespace underlayer_web {
                     </div>
                 </div>
             </div>
+
+            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Top</button>
         }
 
         #css {
@@ -168,6 +170,9 @@ public namespace underlayer_web {
                 .card-prompt { font-size: 1.1rem; }
                 .mode-grid { grid-template-columns: 1fr; }
             }
+            .back-to-top { position: fixed; bottom: 2rem; right: 2rem; padding: 0.6rem 1rem; background: #1f2937; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 50; }
+            .back-to-top.visible { opacity: 1; pointer-events: auto; }
+            .back-to-top:hover { background: #111827; }
         }
 
         #js {
@@ -327,6 +332,16 @@ public namespace underlayer_web {
                 if(remaining < 0) { remaining = 0; }
                 document.getElementById("remaining-count").textContent = remaining;
             }
+
+            (function() {
+                var btn = document.getElementById('back-to-top');
+                if(btn) {
+                    window.addEventListener('scroll', function() {
+                        if(window.scrollY > 300) { btn.classList.add('visible'); }
+                        else { btn.classList.remove('visible'); }
+                    });
+                }
+            })();
         }
 
         var html_out = page.toString()
