@@ -1,23 +1,35 @@
-﻿// ELF Course ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Concept 19: Dynamic Section
-// The .dynamic section ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the control structure for dynamic linking.
+﻿// ELF Course ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Concept 1: Bytes and Binary
+// Uses #html, #css, #js macros for all markup.
+// Emits a complete HTML page that works in both static and backend modes.
+
 public namespace underlayer_content {
 
 using std::string
 
 using std::string_view
 
-public func render_dynamic_section() : string {
+public func render_bytes() : string {
     var page = HtmlPage()
     page.defaultPrepare()
-    var title = std::string_view("Dynamic Section ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Underlayer")
+    var title = std::string_view("Bytes and Binary ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Underlayer")
     page.appendTitle(&title)
 
     #html {
+        <header role="banner">
+        </header>
+        <main id="main-content" role="main">
         <div class="lesson">
+            <a href="#main-content" class="skip-link">Skip to content</a>
             <div class="a11y-controls">
                 <button class="a11y-btn" onclick="toggleHighContrast()" aria-label="Toggle high contrast">HC</button>
                 <button class="a11y-btn" onclick="toggleReducedMotion()" aria-label="Toggle reduced motion">RM</button>
                 <button class="a11y-btn" onclick="openShortcuts()" aria-label="Keyboard shortcuts">?</button>
+            </div>
+            <div class="cb-controls">
+                <button class="a11y-btn" onclick="setColorBlind('none')" aria-label="Normal vision" id="cb-none">NV</button>
+                <button class="a11y-btn" onclick="setColorBlind('protanopia')" aria-label="Protanopia mode" id="cb-pro">P</button>
+                <button class="a11y-btn" onclick="setColorBlind('deuteranopia')" aria-label="Deuteranopia mode" id="cb-deu">D</button>
+                <button class="a11y-btn" onclick="setColorBlind('tritanopia')" aria-label="Tritanopia mode" id="cb-tri">T</button>
             </div>
             <div class="shortcuts-modal" id="shortcuts-modal">
                 <div class="shortcuts-backdrop" onclick="closeShortcuts()"></div>
@@ -26,7 +38,7 @@ public func render_dynamic_section() : string {
                     <dl>
                         <dt><kbd>Ctrl</kbd>+<kbd>K</kbd></dt><dd>Open search</dd>
                         <dt><kbd>Esc</kbd></dt><dd>Close search / dialog</dd>
-                        <dt><kbd>ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ</kbd></dt><dd>Back to top</dd>
+                        <dt><kbd>ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“</kbd></dt><dd>Back to top</dd>
                     </dl>
                     <button onclick="closeShortcuts()" class="shortcuts-close">Close</button>
                 </div>
@@ -37,134 +49,114 @@ public func render_dynamic_section() : string {
                 <label>Letters: <select id="letter-spacing" onchange="setLetterSpacing(this.value)"><option value="tight">Tight</option><option value="normal" selected>Normal</option><option value="loose">Loose</option></select></label>
                 <label>Width: <select id="content-width" onchange="setContentWidth(this.value)"><option value="narrow">Narrow</option><option value="normal" selected>Normal</option><option value="wide">Wide</option></select></label>
             </div>
-            <h1>The Dynamic Section</h1>
+            <h1>Bytes and Binary</h1>
 
             <div class="unit unit-why">
                 <h2>Why This Matters</h2>
-                <p>When ld.so loads your program, how does it know which shared libraries you need? Where is the symbol table? Where are the relocations? The answer is the <strong>.dynamic</strong> section ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â a table of key-value pairs that tells the dynamic linker everything it needs to know.</p>
-                <p>The .dynamic section is the "instruction manual" that ld.so reads to set up your program's runtime environment.</p>
+                <p>Every file on your computer ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â including executables, images, and documents ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â is made of bytes. Understanding bytes is the foundation for understanding any binary format, including ELF.</p>
+                <p>Without understanding bytes, you can't read hex dumps, debug parsers, or reason about file layouts.</p>
             </div>
 
             <div class="unit unit-model">
                 <h2>A Simple Model</h2>
-                <p>Think of .dynamic as a configuration file embedded in the ELF binary. Each entry is a tag-value pair:</p>
-                <ul>
-                    <li><strong>DT_NEEDED</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â "I need this shared library" (e.g., libc.so.6)</li>
-                    <li><strong>DT_SYMTAB</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â "The dynamic symbol table is at this offset"</li>
-                    <li><strong>DT_STRTAB</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â "The string table is at this offset"</li>
-                    <li><strong>DT_REL/DT_RELA</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â "The relocation table is at this offset"</li>
-                    <li><strong>DT_INIT</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â "Call this function before main()"</li>
-                    <li><strong>DT_FINI</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â "Call this function after main() returns"</li>
-                </ul>
+                <p>Think of a byte as a small container that holds a number between 0 and 255. That's it. A byte is just a number.</p>
+                <p>When you see <code>0x41</code> in a hex dump, that's the number 65 in decimal. It happens to be the ASCII code for the letter 'A'.</p>
             </div>
 
             <div class="unit unit-reality">
                 <h2>The Actual Detail</h2>
-                <p>Each dynamic entry is an <strong>Elf64_Dyn</strong> structure:</p>
-                <div class="hex-dump"><pre># Elf64_Dyn structure (16 bytes):
-#   d_tag  (Elf64_Sxword)  What this entry describes
-#   d_un   (union)         Value: either d_val (integer) or d_ptr (address)</pre></div>
-                <p>Key tags:</p>
+                <p>A byte is 8 bits. Each bit is either 0 or 1. So a byte can represent 2^8 = 256 different values (0-255).</p>
+                <p>We write bytes in hexadecimal (base-16) because it's compact: one byte = exactly two hex digits.</p>
                 <table>
                     <thead>
-                        <tr><th>Tag</th><th>Value</th><th>Purpose</th></tr>
+                        <tr><th>Decimal</th><th>Hex</th><th>Binary</th><th>ASCII</th></tr>
                     </thead>
                     <tbody>
-                        <tr><td>DT_NEEDED</td><td>1</td><td>Shared library dependency (offset into DT_STRTAB)</td></tr>
-                        <tr><td>DT_SYMTAB</td><td>6</td><td>Address of .dynsym section</td></tr>
-                        <tr><td>DT_STRTAB</td><td>5</td><td>Address of .dynstr section</td></tr>
-                        <tr><td>DT_RELA</td><td>7</td><td>Address of .rela.dyn section</td></tr>
-                        <tr><td>DT_RELASZ</td><td>8</td><td>Size of .rela.dyn in bytes</td></tr>
-                        <tr><td>DT_JMPREL</td><td>23</td><td>Address of .rela.plt (PLT relocations)</td></tr>
-                        <tr><td>DT_INIT</td><td>12</td><td>Initialization function address</td></tr>
-                        <tr><td>DT_FINI</td><td>13</td><td>Finalization function address</td></tr>
-                        <tr><td>DT_INIT_ARRAY</td><td>25</td><td>Array of init functions</td></tr>
-                        <tr><td>DT_NEEDED</td><td>1</td><td>Each occurrence = one library dependency</td></tr>
+                        <tr><td>0</td><td>0x00</td><td>00000000</td><td>NUL</td></tr>
+                        <tr><td>65</td><td>0x41</td><td>01000001</td><td>A</td></tr>
+                        <tr><td>127</td><td>0x7f</td><td>01111111</td><td>DEL</td></tr>
+                        <tr><td>255</td><td>0xff</td><td>11111111</td><td>ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â</td></tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="unit unit-example">
                 <h2>A Real Example</h2>
+                <p>The ELF magic number starts with these 4 bytes:</p>
                 <div class="hex-dump">
-                    <pre>$ readelf -d /bin/ls
-
-Dynamic section at offset 0x3ba0 contains 30 entries:
-  Tag        Type                 Name/Value
- 0x0000000000000001 (NEEDED)     Shared library: [libc.so.6]
- 0x000000000000000c (INIT)       0x3000
- 0x000000000000000d (FINI)       0x5c1c
- 0x0000000000000019 (INIT_ARRAY) 0x3be8
- 0x000000000000001b (INIT_ARRAYSZ) 8 (bytes)
- 0x000000000000001a (FINI_ARRAY) 0x3bf0
- 0x000000000000001c (FINI_ARRAYSZ) 8 (bytes)
- 0x0000000000000005 (STRTAB)     0x2288
- 0x0000000000000006 (SYMTAB)     0x1a80
- 0x000000000000000a (STRSZ)      568 (bytes)
- 0x000000000000000b (SYMENT)     24 (bytes)
- 0x0000000000000015 (PLTREL)     RELA
- 0x0000000000000002 (PLTGOT)     0x3fe8
- 0x0000000000000017 (JMPREL)     0x2918
- 0x0000000000000007 (RELA)       0x27e0
- 0x0000000000000008 (RELASZ)     312 (bytes)
- 0x0000000000000009 (RELAENT)    24 (bytes)</pre>
+                    <pre>7f 45 4c 46</pre>
                 </div>
-                <p>The DT_NEEDED entries tell you exactly which libraries are required:</p>
-                <ul>
-                    <li><strong>libc.so.6</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the C standard library (nearly every program needs this)</li>
-                </ul>
-                <p>A complex program might show dozens of DT_NEEDED entries for different libraries.</p>
+                <p>In decimal: 127, 69, 76, 70. In ASCII: <code>. E L F</code>. That's right ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â the first four bytes literally spell "ELF".</p>
             </div>
 
             <div class="unit unit-interact">
                 <h2>Try It</h2>
-                <div class="hex-dump"><pre># See the dynamic section of any ELF
-readelf -d /bin/ls
-
-# Count library dependencies
-readelf -d /bin/ls | grep NEEDED | wc -l
-
-# See what a typical program links against
-readelf -d /usr/bin/python3 | grep NEEDED
-
-# Compare: static vs dynamic binary
-gcc -o dynamic hello.c
-gcc -static -o static hello.c
-readelf -d dynamic    # has .dynamic section
-readelf -d static     # no .dynamic section (or empty)</pre></div>
+                <p>Click on each byte to see its decimal, hex, and ASCII values:</p>
+                <div class="hex-interactive" id="hex-1">
+                    <span class="hex-byte" data-val="127" onclick="selectByte(this)">7f</span>
+                    <span class="hex-byte" data-val="69" onclick="selectByte(this)">45</span>
+                    <span class="hex-byte" data-val="76" onclick="selectByte(this)">4c</span>
+                    <span class="hex-byte" data-val="70" onclick="selectByte(this)">46</span>
+                    <div class="hex-info" id="hex-info">Click a byte above</div>
+                </div>
             </div>
 
             <div class="unit unit-retrieve">
                 <h2>Check Your Understanding</h2>
-                <p>What is the purpose of DT_NEEDED entries in the .dynamic section?</p>
-                <div class="quiz" id="quiz-ds-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ds-1', this, false)">They list the exported symbols</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ds-1', this, true)">They specify which shared libraries the program depends on</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ds-1', this, false)">They store the program's entry point</button>
+                <p>Without looking back: what decimal value does the hex byte 0x41 represent?</p>
+                <div class="quiz" id="quiz-1">
+                    <button class="quiz-option" onclick="checkQuiz('quiz-1', this, false)" aria-label="Option: 32">32</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-1', this, true)" aria-label="Option: 65">65</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-1', this, false)" aria-label="Option: 127">127</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
 
             <div class="unit unit-apply">
                 <h2>Apply It</h2>
-                <p>If you see a DT_NEEDED entry for "libfoo.so.3" but the library is installed as "libfoo.so.4", what will happen?</p>
-                <div class="quiz" id="quiz-ds-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ds-2', this, false)">ld.so will use libfoo.so.4 automatically</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ds-2', this, true)">ld.so will fail to load the program with "libfoo.so.3: cannot open shared object file"</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ds-2', this, false)">The program will crash at runtime</button>
+                <p>Here's a hex dump of 4 bytes. What ASCII text do they spell?</p>
+                <div class="hex-dump">
+                    <pre>48 65 6c 6c</pre>
+                </div>
+                <div class="quiz" id="quiz-2">
+                    <button class="quiz-option" onclick="checkQuiz('quiz-2', this, false)" aria-label="Option: ELF">ELF</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-2', this, true)" aria-label="Option: Hell">Hell</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-2', this, false)" aria-label="Option: Help">Help</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>The .dynamic section lists library dependencies. But how do shared libraries themselves work ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â how are they built, versioned, and found at runtime? That's the next concept.</p>
+                <p>You now understand bytes ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â the building blocks of every binary format. Next, we'll see how bytes are organized into larger structures.</p>
+                <p>Every ELF header, every section, every symbol table entry ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â they're all just bytes. The format specification tells us how to interpret them.</p>
             </div>
-            <div class="swipe-hint">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Swipe to navigate ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢</div>
+
+            <div class="unit unit-retrieve">
+                <h2>Fill in the Blank</h2>
+                <p>Complete the code: A byte has <input type="text" class="fill-blank" id="fb-1" data-answer="8" placeholder="?" /> bits, and can represent values from 0 to <input type="text" class="fill-blank" id="fb-2" data-answer="255" placeholder="?" />.</p>
+                <button class="fill-check-btn" onclick="checkFillBlanks()">Check Answers</button>
+                <div class="fill-feedback" id="fill-feedback"></div>
+            </div>
+            <nav class="toc" id="toc" aria-label="Table of contents">
+                <div class="toc-title">On this page</div>
+                <ul class="toc-list" id="toc-list"></ul>
+            </nav>
+            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ Top</button>
+            <div class="a11y-toast" id="a11y-toast"></div>
+            <div class="swipe-hint">ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Ãƒâ€šÃ‚Â Swipe to navigate ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢</div>
             <link rel="prev" href="">
             <link rel="next" href="">
         </div>
-        <div class="a11y-toast" id="a11y-toast"></div>
+        </main>
+        <footer role="contentinfo"><p>Underlayer ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Learn Things Deeply</p></footer>
+        <svg style="position:absolute;width:0;height:0">
+            <defs>
+                <filter id="protanopia"><feColorMatrix type="matrix" values="0.567,0.433,0,0,0 0.558,0.442,0,0,0 0,0.242,0.758,0,0 0,0,0,1,0"/></filter>
+                <filter id="deuteranopia"><feColorMatrix type="matrix" values="0.625,0.375,0,0,0 0.7,0.3,0,0,0 0,0.3,0.7,0,0 0,0,0,1,0"/></filter>
+                <filter id="tritanopia"><feColorMatrix type="matrix" values="0.95,0.05,0,0,0 0,0.433,0.567,0,0 0,0.475,0.525,0,0 0,0,0,1,0"/></filter>
+            </defs>
+        </svg>
 
         }
     }}
@@ -182,18 +174,39 @@ readelf -d static     # no .dynamic section (or empty)</pre></div>
         h1 { font-size: 1.5rem; margin-bottom: 1rem; }
         h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }
         .hex-dump { background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 6px; font-family: monospace; overflow-x: auto; }
+        .hex-dump pre { white-space: pre; margin: 0; }
+        .hex-interactive { font-family: monospace; background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 6px; overflow-x: auto; }
+        .hex-byte { display: inline-block; width: 2ch; margin-right: 1rem; cursor: pointer; border-radius: 2px; padding: 0.25rem; }
+        .hex-byte:hover { background: rgba(59, 130, 246, 0.3); }
+        .hex-byte.selected { background: rgba(59, 130, 246, 0.5); }
+        .hex-info { margin-top: 0.5rem; font-size: 0.85rem; color: #9ca3af; }
         .quiz { margin-top: 1rem; }
         .quiz-option { display: block; width: 100%; padding: 0.75rem 1rem; margin: 0.5rem 0; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; text-align: left; }
         .quiz-option:hover { border-color: #3b82f6; }
         .quiz-option.correct { border-color: #059669; background: #ecfdf5; }
         .quiz-option.wrong { border-color: #dc2626; background: #fef2f2; }
+        .fill-blank { padding: 0.4rem 0.6rem; border: 1px solid #d1d5db; border-radius: 4px; width: 5rem; font-size: 0.95rem; font-family: monospace; margin: 0 0.25rem; }
+        .fill-blank:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
+        .fill-blank.correct { border-color: #059669; background: #ecfdf5; }
+        .fill-blank.wrong { border-color: #dc2626; background: #fef2f2; }
+        .fill-check-btn { margin-top: 0.75rem; padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; font-size: 0.9rem; }
+        .fill-check-btn:hover { background: #f9fafb; border-color: #3b82f6; }
+        .fill-feedback { margin-top: 0.5rem; font-size: 0.9rem; display: none; }
+        .fill-feedback.show { display: block; }
         table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
         th, td { padding: 0.5rem; border: 1px solid #d1d5db; text-align: left; }
         th { background: #f9fafb; font-weight: 600; }
-        ul { margin: 0.5rem 0; padding-left: 1.5rem; }
-        li { margin-bottom: 0.25rem; }
-        pre { background: #f3f4f6; padding: 1rem; border-radius: 6px; overflow-x: auto; }
-        code { font-family: ui-monospace, monospace; font-size: 0.9em; }
+        code { background: #f3f4f6; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.9em; font-family: monospace; }
+        pre { background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 6px; font-family: monospace; overflow-x: auto; white-space: pre; }
+        .toc { position: sticky; top: 2rem; padding: 1rem; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb; margin-bottom: 1.5rem; }
+        .toc-title { font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-bottom: 0.5rem; }
+        .toc-list { list-style: none; padding: 0; margin: 0; }
+        .toc-list li { margin-bottom: 0.25rem; }
+        .toc-list a { color: #374151; text-decoration: none; font-size: 0.85rem; display: block; padding: 0.2rem 0.5rem; border-radius: 4px; }
+        .toc-list a:hover { background: #e5e7eb; }
+        .back-to-top { position: fixed; bottom: 2rem; right: 2rem; padding: 0.6rem 1rem; background: #1f2937; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 50; }
+        .back-to-top.visible { opacity: 1; pointer-events: auto; }
+        .back-to-top:hover { background: #111827; }
         .reading-controls { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; padding: 0.75rem 1rem; background: #f3f4f6; border-radius: 8px; font-size: 0.85rem; }
         .reading-controls label { display: flex; align-items: center; gap: 0.35rem; }
         .reading-controls select { padding: 0.25rem 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.85rem; }
@@ -205,6 +218,15 @@ readelf -d static     # no .dynamic section (or empty)</pre></div>
         .lesson.ls-loose { letter-spacing: 0.04em; }
         .lesson.w-narrow { max-width: 640px; margin: 0 auto; }
         .lesson.w-wide { max-width: 1100px; margin: 0 auto; }
+        @media (max-width: 640px) {
+            .lesson { padding: 1rem; }
+            .unit { padding: 1rem; }
+            table { font-size: 0.85rem; }
+            th, td { padding: 0.35rem; }
+
+        
+        }
+
         .a11y-controls { position: fixed; top: 1rem; left: 1rem; display: flex; gap: 0.35rem; z-index: 60; }
         .a11y-btn { width: 2rem; height: 2rem; border: 1px solid #d1d5db; border-radius: 4px; background: white; cursor: pointer; font-size: 0.75rem; font-weight: 600; color: #374151; }
         .a11y-btn:hover { background: #f3f4f6; }
@@ -226,30 +248,10 @@ readelf -d static     # no .dynamic section (or empty)</pre></div>
         .lesson.high-contrast .quiz-option { background: #111; color: #fff; border-color: #555; }
         .lesson.reduced-motion *, .lesson.reduced-motion *::before, .lesson.reduced-motion *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         @media (min-width: 1440px) { .lesson { max-width: 960px; } }
-        @media (orientation: portrait) and (max-width: 768px) {
-            .lesson { padding: 1rem; }
-            .unit { padding: 1rem; }
-            h1 { font-size: 1.3rem; }
-            .hex-dump { font-size: 0.8rem; padding: 0.75rem; }
-            .quiz-option { padding: 0.6rem 0.75rem; font-size: 0.9rem; }
-
-        
-        }
-
-        @media (orientation: landscape) and (max-height: 500px) {
-            .lesson { padding: 0.75rem 2rem; }
-            .unit { padding: 0.75rem 1rem; margin-bottom: 1rem; }
-            h1 { font-size: 1.2rem; margin-bottom: 0.5rem; }
-        }
-        @media (max-width: 480px) {
-            .quiz-option { padding: 0.5rem 0.75rem; font-size: 0.85rem; }
-            .tf-quiz { flex-direction: column; }
-            .tf-option { width: 100%; }
-            .match-row { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
-            .match-select { min-width: 100%; }
-            .order-item { padding: 0.5rem 0.75rem; }
-            .sort-item { padding: 0.5rem 0.75rem; }
-        }
+        .cb-controls { position: fixed; top: 1rem; left: 5rem; display: flex; gap: 0.35rem; z-index: 60; }
+        .cb-controls .a11y-btn { font-size: 0.65rem; }
+        .cb-controls .a11y-btn.active { background: #1f2937; color: white; border-color: #1f2937; }
+        footer { text-align: center; padding: 2rem 1rem; color: #6b7280; font-size: 0.85rem; border-top: 1px solid #e5e7eb; margin-top: 2rem; }
         .lesson h1 { font-size: clamp(1.3rem, 3vw, 1.8rem); }
         .lesson h2 { font-size: clamp(1rem, 2.5vw, 1.3rem); }
         .lesson p { font-size: clamp(0.9rem, 2vw, 1.05rem); }
@@ -303,6 +305,17 @@ readelf -d static     # no .dynamic section (or empty)</pre></div>
 
     }
     #js {
+        function selectByte(el) {
+            var all = el.parentElement.querySelectorAll('.hex-byte');
+            for(var i = 0; i < all.length; i++) { all[i].classList.remove('selected'); }
+            el.classList.add('selected');
+            var val = parseInt(el.getAttribute('data-val'));
+            var hex = el.textContent;
+            var ascii = (val >= 32 && val < 127) ? String.fromCharCode(val) : '(non-printable)';
+            var info = document.getElementById('hex-info');
+            info.textContent = 'Decimal: ' + val + ' | Hex: 0x' + hex + ' | ASCII: ' + ascii;
+        }
+
         function checkQuiz(quizId, btn, correct) {
             var quiz = document.getElementById(quizId);
             var options = quiz.querySelectorAll('.quiz-option');
@@ -318,6 +331,55 @@ readelf -d static     # no .dynamic section (or empty)</pre></div>
                 feedback.style.color = '#dc2626';
             }
         }
+
+        function checkFillBlanks() {
+            var blanks = document.querySelectorAll('.fill-blank');
+            var allCorrect = true;
+            var feedback = document.getElementById('fill-feedback');
+            for(var i = 0; i < blanks.length; i++) {
+                var el = blanks[i];
+                var answer = el.getAttribute('data-answer');
+                var val = el.value.trim();
+                if(val === answer) {
+                    el.classList.add('correct');
+                    el.classList.remove('wrong');
+                } else {
+                    el.classList.add('wrong');
+                    el.classList.remove('correct');
+                    allCorrect = false;
+                }
+            }
+            feedback.classList.add('show');
+            if(allCorrect) {
+                feedback.textContent = 'All correct!';
+                feedback.style.color = '#059669';
+            } else {
+                feedback.textContent = 'Check the highlighted fields and try again.';
+                feedback.style.color = '#dc2626';
+            }
+        }
+
+        (function() {
+            var btn = document.getElementById('back-to-top');
+            window.addEventListener('scroll', function() {
+                if(window.scrollY > 300) { btn.classList.add('visible'); }
+                else { btn.classList.remove('visible'); }
+            });
+            var tocList = document.getElementById('toc-list');
+            var headings = document.querySelectorAll('.lesson h2');
+            for(var i = 0; i < headings.length; i++) {
+                var h = headings[i];
+                var id = 'section-' + i;
+                h.id = id;
+                var li = document.createElement('li');
+                var a = document.createElement('a');
+                a.href = '#' + id;
+                a.textContent = h.textContent;
+                li.appendChild(a);
+                tocList.appendChild(li);
+            }
+        })();
+
         function setFontSize(v) { localStorage.setItem('ulf-font-size', v); applySettings(); }
         function setLineHeight(v) { localStorage.setItem('ulf-line-height', v); applySettings(); }
         function setLetterSpacing(v) { localStorage.setItem('ulf-letter-spacing', v); applySettings(); }
@@ -370,10 +432,26 @@ readelf -d static     # no .dynamic section (or empty)</pre></div>
         (function() {
             var lesson = document.querySelector('.lesson');
             if(!lesson) return;
-            if(localStorage.getItem('ulf-high-contrast') === '1') { lesson.classList.add('high-contrast'); var b = document.querySelectorAll('.a11y-btn')[0]; if(b) b.classList.add('active'); }
-            if(localStorage.getItem('ulf-reduced-motion') === '1') { lesson.classList.add('reduced-motion'); var b2 = document.querySelectorAll('.a11y-btn')[1]; if(b2) b2.classList.add('active'); }
-            else if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) { lesson.classList.add('reduced-motion'); var b3 = document.querySelectorAll('.a11y-btn')[1]; if(b3) b3.classList.add('active'); }
-            document.addEventListener('keydown', function(e) { if(e.key === 'Escape') closeShortcuts(); });
+            if(localStorage.getItem('ulf-high-contrast') === '1') { lesson.classList.add('high-contrast'); var b = document.querySelectorAll('.a11y-btn')[0]; if(b) b.classList.add('active'); } else { }
+            if(localStorage.getItem('ulf-reduced-motion') === '1') { lesson.classList.add('reduced-motion'); var b2 = document.querySelectorAll('.a11y-btn')[1]; if(b2) b2.classList.add('active'); } else if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) { lesson.classList.add('reduced-motion'); var b3 = document.querySelectorAll('.a11y-btn')[1]; if(b3) b3.classList.add('active'); } else { }
+            document.addEventListener('keydown', function(e) { if(e.key === 'Escape') { closeShortcuts(); } else { } });
+        })();
+
+        function setColorBlind(mode) {
+            var lesson = document.querySelector('.lesson');
+            if(!lesson) return;
+            if(mode !== 'none') { lesson.style.filter = 'url(#' + mode + ')'; }
+            else { lesson.style.filter = ""; }
+            localStorage.setItem('ulf-color-blind', mode);
+            document.querySelectorAll('.cb-controls .a11y-btn').forEach(function(b) { b.classList.remove('active'); });
+            var id = mode === 'none' ? 'cb-none' : 'cb-' + mode.substring(0,3);
+            var activeBtn = document.getElementById(id);
+            if(activeBtn) activeBtn.classList.add('active');
+        }
+        (function() {
+            var cb = localStorage.getItem('ulf-color-blind') || 'none';
+            if(cb !== 'none') { setColorBlind(cb); }
+            else { var b = document.getElementById('cb-none'); if(b) b.classList.add('active'); }
         })();
 
         function showToast(msg) {
@@ -409,7 +487,7 @@ readelf -d static     # no .dynamic section (or empty)</pre></div>
                 if(fb.nextElementSibling && fb.nextElementSibling.classList.contains('feedback-rating')) continue;
                 var div = document.createElement('div');
                 div.className = 'feedback-rating';
-                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â</button><button class="feedback-btn" onclick="rateFeedback(this, false)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ…Â½</button><span class="feedback-thanks">Thanks!</span>';
+                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“Ãƒâ€šÃ‚Â</button><button class="feedback-btn" onclick="rateFeedback(this, false)">ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“Ãƒâ€¦Ã‚Â½</button><span class="feedback-thanks">Thanks!</span>';
                 fb.parentNode.insertBefore(div, fb.nextSibling);
             }
         }
@@ -611,112 +689,6 @@ readelf -d static     # no .dynamic section (or empty)</pre></div>
                 });
             });
         })()
-
-        // 7.1.10: Quick jump / command palette (Ctrl+K or /)
-        (function() {
-            var allConcepts = [
-                {id:'bytes',title:'Bytes and Binary',module:'Fundamentals'},
-                {id:'binary-representation',title:'Binary Representation',module:'Fundamentals'},
-                {id:'file-layout',title:'File Layout',module:'Fundamentals'},
-                {id:'elf-identification',title:'ELF Identification',module:'ELF Header'},
-                {id:'elf-header-fields',title:'ELF Header Fields',module:'ELF Header'},
-                {id:'entry-point',title:'Entry Point',module:'ELF Header'},
-                {id:'program-header-table',title:'Program Header Table',module:'Program Headers'},
-                {id:'segment-types',title:'Segment Types',module:'Program Headers'},
-                {id:'memory-mapping',title:'Memory Mapping',module:'Program Headers'},
-                {id:'section-header-table',title:'Section Header Table',module:'Sections'},
-                {id:'common-sections',title:'Common Sections',module:'Sections'},
-                {id:'section-vs-segment',title:'Section vs Segment',module:'Sections'},
-                {id:'symbol-table',title:'Symbol Table',module:'Symbols'},
-                {id:'binding',title:'Symbol Binding',module:'Symbols'},
-                {id:'visibility',title:'Symbol Visibility',module:'Symbols'},
-                {id:'relocation-entries',title:'Relocation Entries',module:'Relocations'},
-                {id:'relocation-types',title:'Relocation Types',module:'Relocations'},
-                {id:'dynamic-relocations',title:'Dynamic Relocations',module:'Relocations'},
-                {id:'dynamic-section',title:'Dynamic Section',module:'Dynamic Linking'},
-                {id:'shared-libraries',title:'Shared Libraries',module:'Dynamic Linking'}
-            ];
-            var overlay = document.createElement('div');
-            overlay.className = 'quick-jump-overlay';
-            overlay.innerHTML = '<div class="quick-jump"><input type="text" placeholder="Jump to concept... (Esc to close)" id="quickJumpInput" /><div class="quick-jump-results" id="quickJumpResults"></div><div class="quick-jump-hint"><kbd>Up/Down</kbd> navigate <kbd>Enter</kbd> go <kbd>Esc</kbd> close</div></div>';
-            document.body.appendChild(overlay);
-            var input = document.getElementById('quickJumpInput');
-            var results = document.getElementById('quickJumpResults');
-            var selectedIdx = 0;
-            function showResults(query) {
-                var q = query.toLowerCase();
-                var matches = allConcepts.filter(function(c) { return c.title.toLowerCase().indexOf(q) >= 0 || c.module.toLowerCase().indexOf(q) >= 0 || c.id.indexOf(q) >= 0; });
-                results.innerHTML = "";
-                selectedIdx = 0;
-                for(var i = 0; i < matches.length && i < 8; i++) {
-                    var div = document.createElement('div');
-                    div.className = 'result' + (i === 0 ? ' selected' : "");
-                    div.innerHTML = '<div>' + matches[i].title + '</div><div class="module">' + matches[i].module + '</div>';
-                    div.dataset.url = matches[i].id + '.html';
-                    div.addEventListener('click', function() { window.location.href = this.dataset.url; });
-                    results.appendChild(div);
-                }
-            }
-            function openPalette() { overlay.classList.add('active'); input.value = ""; input.focus(); showResults(""); }
-            function closePalette() { overlay.classList.remove('active'); }
-            document.addEventListener('keydown', function(e) {
-                if((e.ctrlKey && e.key === 'k') || (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA')) {
-                    e.preventDefault(); openPalette();
-                }
-                if(e.key === 'Escape') { closePalette(); }
-                if(overlay.classList.contains('active')) {
-                    var items = results.querySelectorAll('.result');
-                    if(e.key === 'ArrowDown') { e.preventDefault(); selectedIdx = Math.min(selectedIdx + 1, items.length - 1); items.forEach(function(item, i) { item.classList.toggle('selected', i === selectedIdx); }); }
-                    if(e.key === 'ArrowUp') { e.preventDefault(); selectedIdx = Math.max(selectedIdx - 1, 0); items.forEach(function(item, i) { item.classList.toggle('selected', i === selectedIdx); }); }
-                    if(e.key === 'Enter' && items[selectedIdx]) { window.location.href = items[selectedIdx].dataset.url; }
-                }
-            });
-            overlay.addEventListener('click', function(e) { if(e.target === overlay) { closePalette(); } });
-            input.addEventListener('input', function() { showResults(this.value); });
-        })();
-
-        // 7.1.13-15: Navigation indicators (progress, unread, due)
-        (function() {
-            var allConcepts = ["bytes","binary-representation","file-layout","elf-identification","elf-header-fields","entry-point","program-header-table","segment-types","memory-mapping","section-header-table","common-sections","section-vs-segment","symbol-table","binding","visibility","relocation-entries","relocation-types","dynamic-relocations","dynamic-section","shared-libraries"];
-            var conceptId = window.location.pathname.split("/").pop().replace(".html", "") || "bytes";
-            var progress = JSON.parse(localStorage.getItem("ulf_progress") || "{}");
-            var reviewed = JSON.parse(localStorage.getItem("ulf_reviewed") || "{}");
-            var dueItems = JSON.parse(localStorage.getItem("ulf_due") || "{}");
-            var idx = allConcepts.indexOf(conceptId);
-            var total = allConcepts.length;
-            var mastered = 0;
-            for(var i = 0; i < total; i++) {
-                if(progress[allConcepts[i]] && progress[allConcepts[i]].status === "mastered") { mastered++; }
-            }
-            var pct = total > 0 ? Math.round((mastered / total) * 100) : 0;
-            var status = "new";
-            if(progress[conceptId] && progress[conceptId].status === "mastered") { status = "mastered"; }
-            else if(progress[conceptId] && progress[conceptId].status === "learning") { status = "learning"; }
-            else if(dueItems[conceptId]) { status = "due"; }
-            var nav = document.createElement("div");
-            nav.className = "nav-indicator";
-            nav.innerHTML = "<div class=\"nav-progress\"><div class=\"nav-progress-fill\" style=\"width:" + pct + "%\"></div></div>" +
-                "<div class=\"nav-status\"><span class=\"indicator " + status + "\">" + status + "</span>" +
-                "<span>" + mastered + "/" + total + " mastered</span></div>" +
-                "<div class=\"nav-links\">" +
-                (idx > 0 ? "<a href=\"" + allConcepts[idx-1] + ".html\">&larr; Prev</a>" : "<a class=\"disabled\">&larr; Prev</a>") +
-                (idx < total - 1 ? "<a href=\"" + allConcepts[idx+1] + ".html\">Next &rarr;</a>" : "<a class=\"disabled\">Next &rarr;</a>") +
-                "</div>";
-            document.body.insertBefore(nav, document.body.firstChild);
-            document.body.style.paddingTop = "50px";
-            if(!reviewed[conceptId]) {
-                reviewed[conceptId] = Date.now();
-                localStorage.setItem("ulf_reviewed", JSON.stringify(reviewed));
-            }
-            if(!progress[conceptId]) {
-                progress[conceptId] = { status: "learning", firstVisited: Date.now(), lastVisited: Date.now() };
-                localStorage.setItem("ulf_progress", JSON.stringify(progress));
-            } else {
-                progress[conceptId].lastVisited = Date.now();
-                localStorage.setItem("ulf_progress", JSON.stringify(progress));
-            }
-        })();
-    }
 
     return page.toString()
 }

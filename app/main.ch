@@ -193,6 +193,43 @@ public func main() : int {
         }
     }))
 
+    // ---- Course Analytics (6.2.3) ----
+    srv.router.add("GET", "/api/analytics/course/:courseId", (|&db|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 4) {
+            var course_id = segments.get_ptr(3)
+            underlayer_web::handle_course_analytics(db, course_id, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var ct = std::string_view("application/json")
+            res.set_header_view(std::string_view("Content-Type"), &ct)
+            var body = std::string("{\"error\": \"missing course id\"}")
+            var bv = body.to_view()
+            res.write_view(&bv)
+        }
+    }))
+
+    // ---- Difficulty Analytics (6.2.8) ----
+    srv.router.add("GET", "/api/analytics/difficulty", (|&db|(req, res) => {
+        underlayer_web::handle_difficulty_analytics(db, &req, &raw mut res)
+    }))
+
+    // ---- Error Analytics (6.2.9) ----
+    srv.router.add("GET", "/api/analytics/errors", (|&db|(req, res) => {
+        underlayer_web::handle_error_analytics(db, &req, &raw mut res)
+    }))
+
+    // ---- Engagement Analytics (6.2.13) ----
+    srv.router.add("GET", "/api/analytics/engagement", (|&db|(req, res) => {
+        underlayer_web::handle_engagement_analytics(db, &req, &raw mut res)
+    }))
+
+    // ---- Velocity Analytics (6.2.14) ----
+    srv.router.add("GET", "/api/analytics/velocity", (|&db|(req, res) => {
+        underlayer_web::handle_velocity_analytics(db, &req, &raw mut res)
+    }))
+
     // ---- Course Progress API ----
     srv.router.add("GET", "/api/progress/:courseId", (|&db, &courses_dir|(req, res) => {
         underlayer_web::handle_course_progress(db, courses_dir, &req, &raw mut res)

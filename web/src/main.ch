@@ -8,6 +8,7 @@
 //   handlers_review.ch       — handle_review_start, submit, end, due (5.1.1-5.1.5 modes)
 //   handlers_exercises.ch    — handle_get_exercises, submit, hint (4.1.1-4.1.5, 4.2.1-4.2.5)
 //   handlers_progress.ch     — handle_progress, handle_course_progress
+//   handlers_analytics.ch    — handle_course_analytics, handle_difficulty_analytics, handle_error_analytics, handle_engagement_analytics, handle_velocity_analytics
 //   handlers_learners.ch     — handle_create_learner, handle_get_learner
 //   handlers_profiles.ch     — handle_get_profile, handle_update_profile, handle_get_public_profile
 //   handlers_settings_api.ch — handle_get_settings, handle_update_settings, handle_get_learning_preferences, handle_update_learning_preferences

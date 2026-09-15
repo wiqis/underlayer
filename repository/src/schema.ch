@@ -96,6 +96,35 @@ public namespace underlayer_repository {
         // 16.1.1: Add password_hash column if missing
         var mig_pw = string("ALTER TABLE learners ADD COLUMN password_hash TEXT DEFAULT ''")
         underlayer_db::exec_sql(db, &raw mig_pw)
+        // 6.2.3: Course analytics
+        var sql_ca = string("CREATE TABLE IF NOT EXISTS course_analytics (id INTEGER PRIMARY KEY AUTOINCREMENT, learner_id TEXT, course_id TEXT, total_concepts INTEGER DEFAULT 0, mastered_concepts INTEGER DEFAULT 0, learning_concepts INTEGER DEFAULT 0, completion_pct REAL DEFAULT 0, velocity_concepts_per_week REAL DEFAULT 0, total_time_seconds INTEGER DEFAULT 0, updated_at INTEGER)")
+        underlayer_db::exec_sql(db, &raw sql_ca)
+        var idx_ca = string("CREATE INDEX IF NOT EXISTS idx_ca_learner ON course_analytics(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx_ca)
+        // 6.2.8: Difficulty analytics (per concept per learner)
+        var sql_da = string("CREATE TABLE IF NOT EXISTS difficulty_analytics (id INTEGER PRIMARY KEY AUTOINCREMENT, learner_id TEXT, concept_id TEXT, avg_rating REAL DEFAULT 0, rating_count INTEGER DEFAULT 0, easy_count INTEGER DEFAULT 0, medium_count INTEGER DEFAULT 0, hard_count INTEGER DEFAULT 0, updated_at INTEGER)")
+        underlayer_db::exec_sql(db, &raw sql_da)
+        var idx_da = string("CREATE INDEX IF NOT EXISTS idx_da_learner ON difficulty_analytics(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx_da)
+        // 6.2.9: Error analytics (common mistakes)
+        var sql_ea = string("CREATE TABLE IF NOT EXISTS error_analytics (id INTEGER PRIMARY KEY AUTOINCREMENT, learner_id TEXT, concept_id TEXT, exercise_id TEXT, error_count INTEGER DEFAULT 0, last_error_at INTEGER, last_error_text TEXT)")
+        underlayer_db::exec_sql(db, &raw sql_ea)
+        var idx_ea = string("CREATE INDEX IF NOT EXISTS idx_ea_learner ON error_analytics(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx_ea)
+        // 6.2.13: Engagement analytics (sessions per week)
+        var sql_ena = string("CREATE TABLE IF NOT EXISTS engagement_analytics (id INTEGER PRIMARY KEY AUTOINCREMENT, learner_id TEXT, week_start INTEGER, sessions_count INTEGER DEFAULT 0, total_time_seconds INTEGER DEFAULT 0, concepts_studied INTEGER DEFAULT 0, exercises_attempted INTEGER DEFAULT 0, exercises_correct INTEGER DEFAULT 0)")
+        underlayer_db::exec_sql(db, &raw sql_ena)
+        var idx_ena = string("CREATE INDEX IF NOT EXISTS idx_ena_learner ON engagement_analytics(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx_ena)
+        var idx_ena_w = string("CREATE INDEX IF NOT EXISTS idx_ena_learner_week ON engagement_analytics(learner_id, week_start)")
+        underlayer_db::exec_sql(db, &raw idx_ena_w)
+        // 6.2.14: Weekly velocity snapshot
+        var sql_va = string("CREATE TABLE IF NOT EXISTS velocity_analytics (id INTEGER PRIMARY KEY AUTOINCREMENT, learner_id TEXT, week_start INTEGER, concepts_completed INTEGER DEFAULT 0, items_reviewed INTEGER DEFAULT 0, accuracy_pct REAL DEFAULT 0, streak_days INTEGER DEFAULT 0)")
+        underlayer_db::exec_sql(db, &raw sql_va)
+        var idx_va = string("CREATE INDEX IF NOT EXISTS idx_va_learner ON velocity_analytics(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx_va)
+        var idx_va_w = string("CREATE INDEX IF NOT EXISTS idx_va_learner_week ON velocity_analytics(learner_id, week_start)")
+        underlayer_db::exec_sql(db, &raw idx_va_w)
     }
 
 }

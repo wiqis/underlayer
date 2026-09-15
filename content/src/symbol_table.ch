@@ -1,5 +1,5 @@
-// ELF Course — Concept 13: Symbol Table
-// The .symtab and .dynsym sections — Elf64_Sym entries, string tables, and how symbols are organized.
+﻿// ELF Course ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Concept 13: Symbol Table
+// The .symtab and .dynsym sections ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Elf64_Sym entries, string tables, and how symbols are organized.
 public namespace underlayer_content {
 
 using std::string
@@ -9,7 +9,7 @@ using std::string_view
 public func render_symbol_table() : string {
     var page = HtmlPage()
     page.defaultPrepare()
-    var title = std::string_view("Symbol Table — Underlayer")
+    var title = std::string_view("Symbol Table ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Underlayer")
     page.appendTitle(&title)
 
     #html {
@@ -26,7 +26,7 @@ public func render_symbol_table() : string {
                     <dl>
                         <dt><kbd>Ctrl</kbd>+<kbd>K</kbd></dt><dd>Open search</dd>
                         <dt><kbd>Esc</kbd></dt><dd>Close search / dialog</dd>
-                        <dt><kbd>↑</kbd></dt><dd>Back to top</dd>
+                        <dt><kbd>ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ</kbd></dt><dd>Back to top</dd>
                     </dl>
                     <button onclick="closeShortcuts()" class="shortcuts-close">Close</button>
                 </div>
@@ -49,11 +49,11 @@ public func render_symbol_table() : string {
                 <h2>A Simple Model</h2>
                 <p>A symbol table is a lookup dictionary. Each entry maps a name (like "main" or "printf") to:</p>
                 <ul>
-                    <li><strong>Value</strong> — An address or offset</li>
-                    <li><strong>Size</strong> — How many bytes the symbol occupies</li>
-                    <li><strong>Type</strong> — Function, object, section, or file</li>
-                    <li><strong>Binding</strong> — Local, global, or weak</li>
-                    <li><strong>Section</strong> — Which section it belongs to</li>
+                    <li><strong>Value</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â An address or offset</li>
+                    <li><strong>Size</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â How many bytes the symbol occupies</li>
+                    <li><strong>Type</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Function, object, section, or file</li>
+                    <li><strong>Binding</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Local, global, or weak</li>
+                    <li><strong>Section</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Which section it belongs to</li>
                 </ul>
                 <p>The names themselves live in a separate string table (.strtab). Each symbol entry holds an offset into that string table.</p>
             </div>
@@ -111,7 +111,7 @@ public func render_symbol_table() : string {
                  0000000000003190 T __do_global_dtors_aux</pre>
                 </div>
                 <p>nm -n sorts by address. U means "undefined" (imported from another library). T means "in text section" (defined here).</p>
-                <p>The .dynsym is a subset — only symbols needed for dynamic linking:</p>
+                <p>The .dynsym is a subset ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â only symbols needed for dynamic linking:</p>
                 <div class="hex-dump">
                     <pre>$ readelf -sW /bin/ls | grep FUNC | head -10
      1: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND __ctype_b_loc
@@ -146,7 +146,7 @@ readelf -sW ./my_program</pre></div>
                 <div class="quiz" id="quiz-st-1">
                     <button class="quiz-option" onclick="checkQuiz('quiz-st-1', this, false)">.symtab is for dynamic linking, .dynsym is for static linking</button>
                     <button class="quiz-option" onclick="checkQuiz('quiz-st-1', this, true)">.symtab has all symbols, .dynsym has only those needed for dynamic linking</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-st-1', this, false)">They are identical — .dynsym is just a backup</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-st-1', this, false)">They are identical ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â .dynsym is just a backup</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -164,7 +164,7 @@ readelf -sW ./my_program</pre></div>
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Each symbol has a binding (local, global, weak) and a visibility. These determine how the linker resolves symbols across object files — that is what the next two concepts cover.</p>
+                <p>Each symbol has a binding (local, global, weak) and a visibility. These determine how the linker resolves symbols across object files ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â that is what the next two concepts cover.</p>
             </div>
 
             <div class="unit unit-retrieve">
@@ -195,14 +195,15 @@ readelf -sW ./my_program</pre></div>
                 <div class="toc-title">On this page</div>
                 <ul class="toc-list" id="toc-list"></ul>
             </nav>
-            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Top</button>
+            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ Top</button>
             <div class="a11y-toast" id="a11y-toast"></div>
-            <div class="swipe-hint">← Swipe to navigate →</div>
+            <div class="swipe-hint">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Swipe to navigate ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢</div>
             <link rel="prev" href="">
             <link rel="next" href="">
         </div>
-    }
 
+        }
+    }}
     #css {
         .lesson { max-width: 800px; margin: 0 auto; padding: 2rem; font-family: system-ui, sans-serif; }
         .unit { margin-bottom: 2rem; padding: 1.5rem; border-radius: 8px; border-left: 4px solid; }
@@ -282,7 +283,10 @@ readelf -sW ./my_program</pre></div>
             h1 { font-size: 1.3rem; }
             .hex-dump { font-size: 0.8rem; padding: 0.75rem; }
             .quiz-option { padding: 0.6rem 0.75rem; font-size: 0.9rem; }
+
+        
         }
+
         @media (orientation: landscape) and (max-height: 500px) {
             .lesson { padding: 0.75rem 2rem; }
             .unit { padding: 0.75rem 1rem; margin-bottom: 1rem; }
@@ -317,8 +321,38 @@ readelf -sW ./my_program</pre></div>
         @media (pointer: coarse) { .swipe-hint { display: block; } }
         .quiz-option, .tf-option, .recognize-option { -webkit-tap-highlight-color: transparent; }
         .quiz-option:active, .tf-option:active { transform: scale(0.98); transition: transform 0.1s; }
-    }
+        /* 7.3.6: Theme preview */
+        .theme-preview-bar { display: flex; gap: 0.5rem; padding: 0.5rem 1rem; background: #f9fafb; border-bottom: 1px solid #e5e7eb; align-items: center; font-size: 0.8rem; }
+        .theme-preview-bar label { color: #6b7280; margin-right: 0.25rem; }
+        .theme-preview-bar .swatch { width: 20px; height: 20px; border-radius: 4px; border: 2px solid transparent; cursor: pointer; transition: border-color 0.2s; }
+        .theme-preview-bar .swatch:hover { border-color: #2563eb; }
+        .theme-preview-bar .swatch.active { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.3); }
+        /* 7.4.13: Responsive visualizations */
+        .hex-dump, pre, .elf-dump { max-width: 100%; overflow-x: auto; font-size: 0.85rem; }
+        @media (max-width: 640px) { .hex-dump, pre, .elf-dump { font-size: 0.75rem; } }
+        @media (max-width: 480px) { .hex-dump, pre, .elf-dump { font-size: 0.7rem; } }
+        .vis-container { resize: horizontal; overflow: auto; min-width: 200px; max-width: 100%; border: 1px dashed #d1d5db; padding: 0.5rem; }
+        table { font-size: 0.85rem; }
+        @media (max-width: 640px) { table { font-size: 0.75rem; } }
 
+        /* 7.1.13-15: Navigation indicators */
+        .nav-indicator { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: white; border-bottom: 1px solid #e5e7eb; padding: 0.5rem 1rem; display: flex; align-items: center; gap: 1rem; font-size: 0.85rem; }
+        .nav-progress { flex: 1; height: 4px; background: #e5e7eb; border-radius: 2px; overflow: hidden; }
+        .nav-progress-fill { height: 100%; background: #10b981; transition: width 0.3s; border-radius: 2px; }
+        .nav-status { display: flex; gap: 0.75rem; align-items: center; }
+        .nav-status .indicator { padding: 0.2rem 0.5rem; border-radius: 10px; font-size: 0.75rem; font-weight: 500; }
+        .nav-status .mastered { background: #d1fae5; color: #065f46; }
+        .nav-status .learning { background: #dbeafe; color: #1e40af; }
+        .nav-status .due { background: #fef3c7; color: #92400e; }
+        .nav-status .new { background: #e5e7eb; color: #374151; }
+        .nav-links { display: flex; gap: 0.5rem; }
+        .nav-links a { padding: 0.3rem 0.75rem; border-radius: 4px; text-decoration: none; background: #f3f4f6; color: #374151; font-size: 0.8rem; }
+        .nav-links a:hover { background: #e5e7eb; }
+        .nav-links a.disabled { opacity: 0.4; pointer-events: none; }
+        @media (max-width: 768px) { .nav-indicator { flex-wrap: wrap; } }
+            }
+
+    }
     #js {
         function checkQuiz(quizId, btn, correct) {
             var quiz = document.getElementById(quizId);
@@ -463,7 +497,7 @@ readelf -sW ./my_program</pre></div>
                 if(fb.nextElementSibling && fb.nextElementSibling.classList.contains('feedback-rating')) continue;
                 var div = document.createElement('div');
                 div.className = 'feedback-rating';
-                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">👍</button><button class="feedback-btn" onclick="rateFeedback(this, false)">👎</button><span class="feedback-thanks">Thanks!</span>';
+                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â</button><button class="feedback-btn" onclick="rateFeedback(this, false)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ…Â½</button><span class="feedback-thanks">Thanks!</span>';
                 fb.parentNode.insertBefore(div, fb.nextSibling);
             }
         }
@@ -501,6 +535,273 @@ readelf -sW ./my_program</pre></div>
             for(var i = 0; i < hexBlocks.length; i++) {
                 var el = hexBlocks[i];
                 el.style.touchAction = 'pinch-zoom';
+            }
+        
+        
+    
+
+        
+
+        // 7.3.6: Theme preview (live color swatches in top bar)
+        (function() {
+            var themes = {
+                'light': { bg: '#ffffff', text: '#111827', accent: '#2563eb', card: '#f9fafb' },
+                'dark': { bg: '#111827', text: '#f9fafb', accent: '#60a5fa', card: '#1f2937' },
+                'blue': { bg: '#eff6ff', text: '#1e3a5f', accent: '#3b82f6', card: '#dbeafe' },
+                'green': { bg: '#f0fdf4', text: '#14532d', accent: '#22c55e', card: '#dcfce7' }
+            };
+            var bar = document.createElement('div');
+            bar.className = 'theme-preview-bar';
+            bar.innerHTML = '<label>Theme:</label>';
+            var current = localStorage.getItem('ulf_theme_preview') || 'light';
+            var keys = ['light', 'dark', 'blue', 'green'];
+            for(var i = 0; i < keys.length; i++) {
+                (function(key) {
+                    var swatch = document.createElement('div');
+                    swatch.className = 'swatch' + (key === current ? ' active' : "");
+                    swatch.style.background = themes[key].accent;
+                    swatch.title = key;
+                    swatch.addEventListener('click', function() {
+                        document.querySelectorAll('.theme-preview-bar .swatch').forEach(function(s) { s.classList.remove('active'); });
+                        swatch.classList.add('active');
+                        localStorage.setItem('ulf_theme_preview', key);
+                        applyTheme(key);
+                    });
+                    bar.appendChild(swatch);
+                })(keys[i]);
+            }
+            document.body.insertBefore(bar, document.body.firstChild);
+            function applyTheme(key) {
+                var t = themes[key];
+                document.documentElement.style.setProperty('--bg', t.bg);
+                document.documentElement.style.setProperty('--text', t.text);
+                document.documentElement.style.setProperty('--accent', t.accent);
+                document.documentElement.style.setProperty('--card', t.card);
+                document.body.style.background = t.bg;
+                document.body.style.color = t.text;
+            }
+            applyTheme(current);
+        })();
+
+        // 7.4.13: Responsive visualizations (resize hex dumps + tables)
+        (function() {
+            function makeResponsive() {
+                var els = document.querySelectorAll('.hex-dump, pre, table, .elf-dump');
+                for(var i = 0; i < els.length; i++) {
+                    var el = els[i];
+                    if(!el.parentElement || el.parentElement.className.indexOf('vis-container') >= 0) continue;
+                    var wrapper = document.createElement('div');
+                    wrapper.className = 'vis-container';
+                    el.parentNode.insertBefore(wrapper, el);
+                    wrapper.appendChild(el);
+                }
+            }
+            if(document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', makeResponsive); }
+            else { makeResponsive(); }
+            var resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    var els = document.querySelectorAll('.hex-dump, pre');
+                    for(var i = 0; i < els.length; i++) {
+                        els[i].style.opacity = '0.7';
+                        setTimeout(function(el) { el.style.opacity = '1'; }.bind(null, els[i]), 100);
+                    }
+                }, 250);
+            });
+        })();
+
+                    }
+            var pct = total > 0 ? Math.round((mastered / total) * 100) : 0;
+            var status = 'new';
+            if(progress[conceptId] && progress[conceptId].status === 'mastered') { status = 'mastered'; }
+            else if(progress[conceptId] && progress[conceptId].status === 'learning') { status = 'learning'; }
+            else if(dueItems[conceptId]) { status = 'due'; }
+            var nav = document.createElement('div');
+            nav.className = 'nav-indicator';
+            nav.innerHTML = '<div class="nav-progress"><div class="nav-progress-fill" style="width:' + pct + '%"></div></div>' +
+                '<div class="nav-status"><span class="indicator ' + status + '">' + status + '</span>' +
+                '<span>' + mastered + '/' + total + ' mastered</span></div>' +
+                '<div class="nav-links">' +
+                (idx > 0 ? '<a href="' + allConcepts[idx-1] + '.html">&larr; Prev</a>' : '<a class="disabled">&larr; Prev</a>') +
+                (idx < total - 1 ? '<a href="' + allConcepts[idx+1] + '.html">Next &rarr;</a>' : '<a class="disabled">Next &rarr;</a>') +
+                '</div>';
+            document.body.insertBefore(nav, document.body.firstChild);
+            document.body.style.paddingTop = '50px';
+            if(!reviewed[conceptId]) {
+                reviewed[conceptId] = Date.now();
+                localStorage.setItem('ulf_reviewed', JSON.stringify(reviewed));
+            }
+            if(!progress[conceptId]) {
+                progress[conceptId] = { status: 'learning', firstVisited: Date.now(), lastVisited: Date.now() };
+                localStorage.setItem('ulf_progress', JSON.stringify(progress));
+            } else {
+                progress[conceptId].lastVisited = Date.now();
+                localStorage.setItem('ulf_progress', JSON.stringify(progress));
+            }
+        })();
+
+        // 4.2.16-17: Exercise mistake pattern detection + personalized feedback
+        (function() {
+            var mistakeLog = JSON.parse(localStorage.getItem('ulf_mistakes') || '{}');
+            function logMistake(conceptId, questionText, correctAnswer) {
+                if(!mistakeLog[conceptId]) { mistakeLog[conceptId] = []; } else { }
+                var exists = false;
+                for(var i = 0; i < mistakeLog[conceptId].length; i++) {
+                    if(mistakeLog[conceptId][i].q === questionText) { exists = true; break; } else { }
+                }
+                if(!exists) {
+                    mistakeLog[conceptId].push({ q: questionText, a: correctAnswer, count: 1, last: Date.now() });
+                } else {
+                    for(var i = 0; i < mistakeLog[conceptId].length; i++) {
+                        if(mistakeLog[conceptId][i].q === questionText) {
+                            mistakeLog[conceptId][i].count++;
+                            mistakeLog[conceptId][i].last = Date.now();
+                        } else { }
+                    }
+                }
+                localStorage.setItem('ulf_mistakes', JSON.stringify(mistakeLog));
+            }
+            function getMistakeCount(conceptId, questionText) {
+                if(!mistakeLog[conceptId]) { return 0; } else { }
+                for(var i = 0; i < mistakeLog[conceptId].length; i++) {
+                    if(mistakeLog[conceptId][i].q === questionText) { return mistakeLog[conceptId][i].count; } else { }
+                }
+                return 0;
+            }
+            function generateHint(conceptId, questionText, correctAnswer) {
+                var count = getMistakeCount(conceptId, questionText);
+                if(count >= 3) {
+                    return "You have gotten this wrong " + count + " times. Key concept: " + correctAnswer.substring(0, 80) + "...";
+                } else if(count >= 2) {
+                    return "This is a tricky one. Think about: " + correctAnswer.substring(0, 60);
+                } else { return ""; }
+            }
+            var conceptId = window.location.pathname.split('/').pop().replace('.html', "") || 'unknown';
+            document.querySelectorAll('.quiz-option, .tf-option, .recognize-option').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var isCorrect = btn.dataset.correct === 'true' || btn.classList.contains('correct');
+                    var questionEl = btn.closest('.quiz, .true-false, .recognize');
+                    if(!isCorrect && questionEl) {
+                        var qText = (questionEl.querySelector('h3') || questionEl.querySelector('p') || {}).textContent || "";
+                        var correctBtn = questionEl.querySelector('[data-correct="true"], .correct');
+                        var correctAns = correctBtn ? correctBtn.textContent : "";
+                        logMistake(conceptId, qText, correctAns);
+                        var hint = generateHint(conceptId, qText, correctAns);
+                        if(hint) {
+                            var hintEl = document.createElement('div');
+                            hintEl.className = 'mistake-hint';
+                            hintEl.style.cssText = 'background:#fef3c7;border:1px solid #f59e0b;padding:0.75rem;border-radius:6px;margin-top:0.5rem;font-size:0.9rem;color:#92400e;';
+                            hintEl.textContent = hint;
+                            questionEl.appendChild(hintEl);
+                        } else { }
+                    } else { }
+                });
+            });
+        })()
+
+        // 7.1.10: Quick jump / command palette (Ctrl+K or /)
+        (function() {
+            var allConcepts = [
+                {id:'bytes',title:'Bytes and Binary',module:'Fundamentals'},
+                {id:'binary-representation',title:'Binary Representation',module:'Fundamentals'},
+                {id:'file-layout',title:'File Layout',module:'Fundamentals'},
+                {id:'elf-identification',title:'ELF Identification',module:'ELF Header'},
+                {id:'elf-header-fields',title:'ELF Header Fields',module:'ELF Header'},
+                {id:'entry-point',title:'Entry Point',module:'ELF Header'},
+                {id:'program-header-table',title:'Program Header Table',module:'Program Headers'},
+                {id:'segment-types',title:'Segment Types',module:'Program Headers'},
+                {id:'memory-mapping',title:'Memory Mapping',module:'Program Headers'},
+                {id:'section-header-table',title:'Section Header Table',module:'Sections'},
+                {id:'common-sections',title:'Common Sections',module:'Sections'},
+                {id:'section-vs-segment',title:'Section vs Segment',module:'Sections'},
+                {id:'symbol-table',title:'Symbol Table',module:'Symbols'},
+                {id:'binding',title:'Symbol Binding',module:'Symbols'},
+                {id:'visibility',title:'Symbol Visibility',module:'Symbols'},
+                {id:'relocation-entries',title:'Relocation Entries',module:'Relocations'},
+                {id:'relocation-types',title:'Relocation Types',module:'Relocations'},
+                {id:'dynamic-relocations',title:'Dynamic Relocations',module:'Relocations'},
+                {id:'dynamic-section',title:'Dynamic Section',module:'Dynamic Linking'},
+                {id:'shared-libraries',title:'Shared Libraries',module:'Dynamic Linking'}
+            ];
+            var overlay = document.createElement('div');
+            overlay.className = 'quick-jump-overlay';
+            overlay.innerHTML = '<div class="quick-jump"><input type="text" placeholder="Jump to concept... (Esc to close)" id="quickJumpInput" /><div class="quick-jump-results" id="quickJumpResults"></div><div class="quick-jump-hint"><kbd>Up/Down</kbd> navigate <kbd>Enter</kbd> go <kbd>Esc</kbd> close</div></div>';
+            document.body.appendChild(overlay);
+            var input = document.getElementById('quickJumpInput');
+            var results = document.getElementById('quickJumpResults');
+            var selectedIdx = 0;
+            function showResults(query) {
+                var q = query.toLowerCase();
+                var matches = allConcepts.filter(function(c) { return c.title.toLowerCase().indexOf(q) >= 0 || c.module.toLowerCase().indexOf(q) >= 0 || c.id.indexOf(q) >= 0; });
+                results.innerHTML = "";
+                selectedIdx = 0;
+                for(var i = 0; i < matches.length && i < 8; i++) {
+                    var div = document.createElement('div');
+                    div.className = 'result' + (i === 0 ? ' selected' : "");
+                    div.innerHTML = '<div>' + matches[i].title + '</div><div class="module">' + matches[i].module + '</div>';
+                    div.dataset.url = matches[i].id + '.html';
+                    div.addEventListener('click', function() { window.location.href = this.dataset.url; });
+                    results.appendChild(div);
+                }
+            }
+            function openPalette() { overlay.classList.add('active'); input.value = ""; input.focus(); showResults(""); }
+            function closePalette() { overlay.classList.remove('active'); }
+            document.addEventListener('keydown', function(e) {
+                if((e.ctrlKey && e.key === 'k') || (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA')) {
+                    e.preventDefault(); openPalette();
+                }
+                if(e.key === 'Escape') { closePalette(); }
+                if(overlay.classList.contains('active')) {
+                    var items = results.querySelectorAll('.result');
+                    if(e.key === 'ArrowDown') { e.preventDefault(); selectedIdx = Math.min(selectedIdx + 1, items.length - 1); items.forEach(function(item, i) { item.classList.toggle('selected', i === selectedIdx); }); }
+                    if(e.key === 'ArrowUp') { e.preventDefault(); selectedIdx = Math.max(selectedIdx - 1, 0); items.forEach(function(item, i) { item.classList.toggle('selected', i === selectedIdx); }); }
+                    if(e.key === 'Enter' && items[selectedIdx]) { window.location.href = items[selectedIdx].dataset.url; }
+                }
+            });
+            overlay.addEventListener('click', function(e) { if(e.target === overlay) { closePalette(); } });
+            input.addEventListener('input', function() { showResults(this.value); });
+        })();
+
+        // 7.1.13-15: Navigation indicators (progress, unread, due)
+        (function() {
+            var allConcepts = ["bytes","binary-representation","file-layout","elf-identification","elf-header-fields","entry-point","program-header-table","segment-types","memory-mapping","section-header-table","common-sections","section-vs-segment","symbol-table","binding","visibility","relocation-entries","relocation-types","dynamic-relocations","dynamic-section","shared-libraries"];
+            var conceptId = window.location.pathname.split("/").pop().replace(".html", "") || "bytes";
+            var progress = JSON.parse(localStorage.getItem("ulf_progress") || "{}");
+            var reviewed = JSON.parse(localStorage.getItem("ulf_reviewed") || "{}");
+            var dueItems = JSON.parse(localStorage.getItem("ulf_due") || "{}");
+            var idx = allConcepts.indexOf(conceptId);
+            var total = allConcepts.length;
+            var mastered = 0;
+            for(var i = 0; i < total; i++) {
+                if(progress[allConcepts[i]] && progress[allConcepts[i]].status === "mastered") { mastered++; }
+            }
+            var pct = total > 0 ? Math.round((mastered / total) * 100) : 0;
+            var status = "new";
+            if(progress[conceptId] && progress[conceptId].status === "mastered") { status = "mastered"; }
+            else if(progress[conceptId] && progress[conceptId].status === "learning") { status = "learning"; }
+            else if(dueItems[conceptId]) { status = "due"; }
+            var nav = document.createElement("div");
+            nav.className = "nav-indicator";
+            nav.innerHTML = "<div class=\"nav-progress\"><div class=\"nav-progress-fill\" style=\"width:" + pct + "%\"></div></div>" +
+                "<div class=\"nav-status\"><span class=\"indicator " + status + "\">" + status + "</span>" +
+                "<span>" + mastered + "/" + total + " mastered</span></div>" +
+                "<div class=\"nav-links\">" +
+                (idx > 0 ? "<a href=\"" + allConcepts[idx-1] + ".html\">&larr; Prev</a>" : "<a class=\"disabled\">&larr; Prev</a>") +
+                (idx < total - 1 ? "<a href=\"" + allConcepts[idx+1] + ".html\">Next &rarr;</a>" : "<a class=\"disabled\">Next &rarr;</a>") +
+                "</div>";
+            document.body.insertBefore(nav, document.body.firstChild);
+            document.body.style.paddingTop = "50px";
+            if(!reviewed[conceptId]) {
+                reviewed[conceptId] = Date.now();
+                localStorage.setItem("ulf_reviewed", JSON.stringify(reviewed));
+            }
+            if(!progress[conceptId]) {
+                progress[conceptId] = { status: "learning", firstVisited: Date.now(), lastVisited: Date.now() };
+                localStorage.setItem("ulf_progress", JSON.stringify(progress));
+            } else {
+                progress[conceptId].lastVisited = Date.now();
+                localStorage.setItem("ulf_progress", JSON.stringify(progress));
             }
         })();
     }
