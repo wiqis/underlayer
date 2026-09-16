@@ -11,9 +11,12 @@ public namespace underlayer_web {
     public func handle_learning_path_page(db : *DbClient, courses_dir : &string, course_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
-            // Not logged in — redirect to login
-            res.status = 302u
-            res.set_header_view(std::string_view("Location"), &std::string_view("/login"))
+            // Not logged in — render page; client-side JS will redirect if the API returns 401
+            var anon_learner = string("demo")
+            var anon_html = render_learning_path_page(db, course_id, &anon_learner)
+            var anon_bv = anon_html.to_view()
+            res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
+            res.write_view(&anon_bv)
             return
         }
         var html = render_learning_path_page(db, course_id, &learner_id)
@@ -67,7 +70,8 @@ public namespace underlayer_web {
 
             var ci : size_t = 0
             while(ci < mod.concepts.size()) {
-                var concept_id = mod.concepts.get_ptr(ci)
+                var concept_id_ptr = mod.concepts.get_ptr(ci)
+                var concept_id = concept_id_ptr.copy()
                 if(ci > 0) { resp.append_view(",") }
 
                 // Find concept title
@@ -76,7 +80,7 @@ public namespace underlayer_web {
                 var cii : size_t = 0
                 while(cii < course.concepts.size()) {
                     var cref = course.concepts.get_ptr(cii)
-                    if(cref.id.equals(concept_id)) {
+                    if(cref.id.equals(&concept_id)) {
                         concept_title = cref.title.copy()
                         concept_desc = cref.description.copy()
                         break
@@ -92,7 +96,7 @@ public namespace underlayer_web {
                 var si : size_t = 0
                 while(si < states.size()) {
                     var st = states.get_ptr(si)
-                    if(st.concept_id.equals(concept_id)) {
+                    if(st.concept_id.equals(&concept_id)) {
                         status = st.status.copy()
                         attempts = st.attempts
                         correct = st.correct
@@ -103,7 +107,7 @@ public namespace underlayer_web {
                 }
 
                 resp.append_view("{\"id\":\"")
-                resp.append_string(concept_id)
+                resp.append_string(&concept_id)
                 resp.append_view("\",\"title\":\"")
                 resp.append_string(&concept_title)
                 resp.append_view("\",\"description\":\"")

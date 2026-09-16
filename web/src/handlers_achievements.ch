@@ -58,7 +58,7 @@ public namespace underlayer_web {
         if(sess_result.rows.size() > 0) {
             var row = sess_result.rows.get_ptr(0)
             if(row.vals.size() > 0) {
-                exercise_count = parse_int(row.vals.get_ptr(0).to_view())
+                exercise_count = underlayer_repository::parse_int(row.vals.get_ptr(0).to_view())
             }
         }
 
@@ -70,7 +70,7 @@ public namespace underlayer_web {
         if(cs_result.rows.size() > 0) {
             var row = cs_result.rows.get_ptr(0)
             if(row.vals.size() > 0) {
-                mastered_count = parse_int(row.vals.get_ptr(0).to_view())
+                mastered_count = underlayer_repository::parse_int(row.vals.get_ptr(0).to_view())
             }
         }
 

@@ -92,7 +92,7 @@ public namespace underlayer_web {
     }
 
     // PUT /api/study-plans/:id — Update plan status
-    public func handle_update_study_plan(db : *DbClient, plan_id : *string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_update_study_plan(db : *DbClient, plan_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
@@ -143,7 +143,7 @@ public namespace underlayer_web {
     }
 
     // DELETE /api/study-plans/:id — Delete a study plan
-    public func handle_delete_study_plan(db : *DbClient, plan_id : *string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_delete_study_plan(db : *DbClient, plan_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")

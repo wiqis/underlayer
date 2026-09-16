@@ -1,43 +1,11 @@
 // underlayer_web — Learning Path Visualization page.
-// Shows course concepts as a visual path with status indicators.
+// Client-side rendered visual path; data from GET /api/courses/:courseId/path
 using std::string
 using std::string_view
-using std::vector
 using underlayer_db::DbClient
-using underlayer_models::Course
-using underlayer_models::Module
-using underlayer_models::ConceptRef
-using underlayer_models::ConceptState
 
 public namespace underlayer_web {
 
-    // Build a status color class name from status string.
-    private func status_color_class(status : &string) : string {
-        if(status.equals(string("mastered"))) { return string("status-mastered") }
-        if(status.equals(string("learning"))) { return string("status-learning") }
-        if(status.equals(string("reviewing"))) { return string("status-reviewing") }
-        return string("status-not-started")
-    }
-
-    // Build a status label from status string.
-    private func status_label(status : &string) : string {
-        if(status.equals(string("mastered"))) { return string("Mastered") }
-        if(status.equals(string("learning"))) { return string("Learning") }
-        if(status.equals(string("reviewing"))) { return string("Reviewing") }
-        return string("Not Started")
-    }
-
-    // Compute accuracy percentage string from attempts/correct.
-    private func accuracy_str(attempts : int, correct : int) : string {
-        if(attempts <= 0) { return string("--") }
-        var pct = (correct * 100) / attempts
-        var pct_str = underlayer_core::int_to_string(pct as i64)
-        var out = pct_str.copy()
-        out.append_view("%")
-        return out
-    }
-
-    // Render the learning path HTML page for a course.
     public func render_learning_path_page(db : *DbClient, course_id : &string, learner_id : &string) : string {
         var page = HtmlPage()
         page.defaultUniversalSetup()
@@ -45,22 +13,9 @@ public namespace underlayer_web {
         page.injectDefaultComponentsTheme()
         page.appendTitle(std::string_view("Learning Path — Underlayer"))
 
-        // Load course
-        var courses_dir = string("./courses")
-        var course = underlayer_repository::load_course_from_disk(&courses_dir, course_id)
-        var course_title = course.title.copy()
-        if(course_title.size() == 0) { course_title = course_id.copy() }
-
-        // Load concept states
-        var states = underlayer_repository::get_all_concept_states(db, learner_id, course_id)
-
-        // Build a map: concept_id -> ConceptState (as strings)
-        // We'll iterate concepts and look up state by id.
-
-        // Start HTML
         #html {
             <a href="#main-content" class="skip-link">Skip to content</a>
-            <nav class="navbar">
+            <div class="navbar">
                 <div class="nav-inner">
                     <a href="/" class="nav-brand">Underlayer</a>
                     <div class="nav-links">
@@ -77,13 +32,13 @@ public namespace underlayer_web {
                         </button>
                     </div>
                 </div>
-            </nav>
+            </div>
 
             <div class="container" id="main-content">
                 <div class="page-header">
                     <h1>Learning Path</h1>
-                    <p class="subtitle">Visual overview of <strong>{course_title}</strong></p>
-                    <a href="/courses/{course_id}" class="back-link">&larr; Back to course</a>
+                    <p class="subtitle" id="lp-subtitle">Visual overview of your course</p>
+                    <a id="lp-back" href="/courses/elf" class="back-link">&larr; Back to course</a>
                 </div>
 
                 <div class="legend">
@@ -92,108 +47,16 @@ public namespace underlayer_web {
                     <span class="legend-item"><span class="legend-dot status-reviewing"></span> Reviewing</span>
                     <span class="legend-item"><span class="legend-dot status-mastered"></span> Mastered</span>
                 </div>
-        }
 
-        // Render each module and its concepts
-        var mi : size_t = 0
-        while(mi < course.modules.size()) {
-            var mod = course.modules.get_ptr(mi)
-            var mod_title = mod.title.copy()
-            var mod_order_str = underlayer_core::int_to_string(mod.order as i64)
-
-            #html {
-                <div class="module-group">
-                    <div class="module-header">
-                        <span class="module-number">{mod_order_str}</span>
-                        <span class="module-title">{mod_title}</span>
-                    </div>
-                    <div class="concept-list">
-            }
-
-            // Render concepts in this module
-            var ci : size_t = 0
-            while(ci < mod.concepts.size()) {
-                var concept_id = mod.concepts.get_ptr(ci)
-
-                // Find concept title from course.concepts
-                var concept_title = concept_id.copy()
-                var concept_desc = string()
-                var cii : size_t = 0
-                while(cii < course.concepts.size()) {
-                    var cref = course.concepts.get_ptr(cii)
-                    if(cref.id.equals(concept_id)) {
-                        concept_title = cref.title.copy()
-                        concept_desc = cref.description.copy()
-                        break
-                    }
-                    cii = cii + 1
-                }
-
-                // Find state for this concept
-                var status = string("not_started")
-                var attempts = 0
-                var correct = 0
-                var si : size_t = 0
-                while(si < states.size()) {
-                    var st = states.get_ptr(si)
-                    if(st.concept_id.equals(concept_id)) {
-                        status = st.status.copy()
-                        attempts = st.attempts
-                        correct = st.correct
-                        break
-                    }
-                    si = si + 1
-                }
-
-                var color_class = status_color_class(&status)
-                var label = status_label(&status)
-                var acc = accuracy_str(attempts, correct)
-                var attempts_str = underlayer_core::int_to_string(attempts as i64)
-
-                #html {
-                    <a href="/courses/{course_id}/lessons/{concept_id}" class="concept-node {color_class}" title="{concept_desc}">
-                        <div class="node-header">
-                            <span class="node-status-dot"></span>
-                            <span class="node-title">{concept_title}</span>
-                        </div>
-                        <div class="node-meta">
-                            <span class="node-status">{label}</span>
-                            <span class="node-stat">{attempts_str} attempts</span>
-                            <span class="node-stat">Accuracy: {acc}</span>
-                        </div>
-                    </a>
-                }
-
-                // Draw connector arrow between concepts (not after the last in module)
-                if(ci < mod.concepts.size() - 1) {
-                    #html {
-                        <div class="connector"></div>
-                    }
-                }
-
-                ci = ci + 1
-            }
-
-            #html {
-                    </div>
+                <div id="lp-body">
+                    <p class="muted">Loading learning path...</p>
                 </div>
-            }
 
-            // Draw connector between modules (not after the last)
-            if(mi < course.modules.size() - 1) {
-                #html {
-                    <div class="module-connector"></div>
-                }
-            }
-
-            mi = mi + 1
-        }
-
-        // Close HTML
-        #html {
                 <div class="stats-bar">
                     <div class="stats-bar-inner" id="path-stats"></div>
                 </div>
+
+                <a href="/review" class="btn btn-primary">Start Review Session</a>
             </div>
 
             <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">&uarr; Top</button>
@@ -230,6 +93,7 @@ public namespace underlayer_web {
             .legend-dot.status-learning { background: hsl(38 92% 50%); }
             .legend-dot.status-reviewing { background: hsl(217 91% 60%); }
             .legend-dot.status-mastered { background: hsl(142 76% 36%); }
+            .muted { color: hsl(var(--muted-foreground)); }
             .module-group { margin-bottom: 0.5rem; }
             .module-header { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 10px 10px 0 0; }
             .module-number { background: hsl(217 91% 60%); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0; }
@@ -252,8 +116,10 @@ public namespace underlayer_web {
             .node-status { font-weight: 500; }
             .connector { width: 2px; height: 12px; background: hsl(var(--border)); margin: 0 auto; }
             .module-connector { width: 2px; height: 20px; background: hsl(217 91% 60% / 40%); margin: 0 auto; }
-            .stats-bar { margin-top: 2rem; padding: 1rem; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 10px; }
+            .stats-bar { margin: 2rem 0 1rem 0; padding: 1rem; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 10px; }
             .stats-bar-inner { font-size: 0.85rem; color: hsl(var(--muted-foreground)); text-align: center; }
+            .btn { display: inline-block; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; }
+            .btn-primary { background: hsl(217 91% 60%); color: white; text-decoration: none; }
             .back-to-top { position: fixed; bottom: 2rem; right: 2rem; padding: 0.6rem 1rem; background: #1f2937; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 50; }
             .back-to-top.visible { opacity: 1; pointer-events: auto; }
             .back-to-top:hover { background: #111827; }
@@ -281,36 +147,98 @@ public namespace underlayer_web {
             }
             setTheme(getTheme());
 
-            window.addEventListener('DOMContentLoaded', function() {
-                computeStats();
-                (function() {
-                    var btn = document.getElementById('back-to-top');
-                    if(btn) {
-                        window.addEventListener('scroll', function() {
-                            if(window.scrollY > 300) { btn.classList.add('visible'); }
-                            else { btn.classList.remove('visible'); }
-                        });
-                    }
-                })();
-            });
+            var parts = window.location.pathname.split('/').filter(function(p) { return p.length > 0; });
+            var courseId = parts.length >= 2 ? parts[1] : 'elf';
 
-            function computeStats() {
-                var nodes = document.querySelectorAll('.concept-node');
-                var total = nodes.length;
+            function statusClass(status) {
+                if (status === 'mastered') return 'status-mastered';
+                if (status === 'learning') return 'status-learning';
+                if (status === 'reviewing') return 'status-reviewing';
+                return 'status-not-started';
+            }
+            function statusLabel(status) {
+                if (status === 'mastered') return 'Mastered';
+                if (status === 'learning') return 'Learning';
+                if (status === 'reviewing') return 'Reviewing';
+                return 'Not Started';
+            }
+
+            function renderPath(data) {
+                var body = document.getElementById('lp-body');
+                var sub = document.getElementById('lp-subtitle');
+                var back = document.getElementById('lp-back');
+                if (data.title) { sub.textContent = 'Visual overview of ' + data.title; }
+                back.setAttribute('href', '/courses/' + courseId);
+
                 var mastered = 0;
                 var learning = 0;
                 var reviewing = 0;
-                for(var i = 0; i < total; i++) {
-                    if(nodes[i].classList.contains('status-mastered')) { mastered++; }
-                    else if(nodes[i].classList.contains('status-learning')) { learning++; }
-                    else if(nodes[i].classList.contains('status-reviewing')) { reviewing++; }
+                var total = 0;
+                var html = '';
+                var mi = 0;
+                while (mi < data.modules.length) {
+                    var mod = data.modules[mi];
+                    html += '<div class="module-group">';
+                    html += '<div class="module-header">';
+                    html += '<span class="module-number">' + (mi + 1) + '</span>';
+                    html += '<span class="module-title">' + mod.title + '</span>';
+                    html += '</div>';
+                    html += '<div class="concept-list">';
+                    var ci = 0;
+                    while (ci < mod.concepts.length) {
+                        var c = mod.concepts[ci];
+                        total = total + 1;
+                        if (c.status === 'mastered') { mastered = mastered + 1; }
+                        else if (c.status === 'learning') { learning = learning + 1; }
+                        else if (c.status === 'reviewing') { reviewing = reviewing + 1; }
+                        var cls = statusClass(c.status);
+                        var acc = c.attempts > 0 ? Math.round(c.correct * 100 / c.attempts) + '%' : '--';
+                        html += '<a href="/courses/' + courseId + '/lessons/' + c.id + '" class="concept-node ' + cls + '">';
+                        html += '<div class="node-header">';
+                        html += '<span class="node-status-dot"></span>';
+                        html += '<span class="node-title">' + c.title + '</span>';
+                        html += '</div>';
+                        html += '<div class="node-meta">';
+                        html += '<span class="node-status">' + statusLabel(c.status) + '</span>';
+                        html += '<span class="node-stat">' + c.attempts + ' attempts</span>';
+                        html += '<span class="node-stat">Accuracy: ' + acc + '</span>';
+                        html += '</div></a>';
+                        html += '<div class="connector"></div>';
+                        ci = ci + 1;
+                    }
+                    html += '</div></div>';
+                    if (mi < data.modules.length - 1) { html += '<div class="module-connector"></div>'; }
+                    mi = mi + 1;
                 }
+                body.innerHTML = html;
+
                 var pct = total > 0 ? Math.round(mastered * 100 / total) : 0;
-                var el = document.getElementById('path-stats');
-                if(el) {
-                    el.textContent = total + ' concepts — ' + mastered + ' mastered (' + pct + '%), ' + learning + ' learning, ' + reviewing + ' reviewing, ' + (total - mastered - learning - reviewing) + ' not started';
-                }
+                var notStarted = total - mastered - learning - reviewing;
+                document.getElementById('path-stats').textContent = total + ' concepts — ' + mastered + ' mastered (' + pct + '%), ' + learning + ' learning, ' + reviewing + ' reviewing, ' + notStarted + ' not started';
             }
+
+            fetch('/api/courses/' + courseId + '/path', {
+                headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('session_token') || '') }
+            }).then(function(r) { return r.json(); })
+              .then(function(data) {
+                if (!data || !data.modules) {
+                    document.getElementById('lp-body').innerHTML = '<p class="muted">Could not load learning path.</p>';
+                    return;
+                }
+                renderPath(data);
+              }).catch(function() {
+                document.getElementById('lp-body').innerHTML = '<p class="muted">Failed to load learning path.</p>';
+              });
+
+            window.addEventListener('DOMContentLoaded', function() {
+                var btn = document.getElementById('back-to-top');
+                if (btn) {
+                    window.addEventListener('scroll', function() {
+                        if (window.scrollY > 300) { btn.classList.add('visible'); }
+                        else { btn.classList.remove('visible'); }
+                    });
+                }
+            });
         }
 
         return page.toString()

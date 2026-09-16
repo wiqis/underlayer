@@ -43,6 +43,14 @@ public namespace underlayer_web {
             ci = ci + 1
         }
 
+        // Locals for HTML interpolation (dots are not allowed in {..})
+        var total_concepts = health.total_concepts
+        var mastered_count = health.mastered
+        var learning_count = health.learning
+        var reviewing_count = health.reviewing
+        var unlearned_count = health.unlearned
+        var session_count = sessions.size() as i64
+
         // Build page
         var page = HtmlPage()
         page.defaultUniversalSetup()
@@ -85,15 +93,15 @@ public namespace underlayer_web {
 
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-number" id="total-concepts">{health.total_concepts}</div>
+                        <div class="stat-number" id="total-concepts">{total_concepts}</div>
                         <div class="stat-label">Total Concepts</div>
                     </div>
                     <div class="stat-card stat-mastered">
-                        <div class="stat-number" id="mastered-count">{health.mastered}</div>
+                        <div class="stat-number" id="mastered-count">{mastered_count}</div>
                         <div class="stat-label">Mastered</div>
                     </div>
                     <div class="stat-card stat-learning">
-                        <div class="stat-number" id="learning-count">{health.learning}</div>
+                        <div class="stat-number" id="learning-count">{learning_count}</div>
                         <div class="stat-label">Learning</div>
                     </div>
                     <div class="stat-card stat-accuracy">
@@ -101,7 +109,7 @@ public namespace underlayer_web {
                         <div class="stat-label">Accuracy</div>
                     </div>
                     <div class="stat-card stat-sessions">
-                        <div class="stat-number" id="session-count">{sessions.size() as i64}</div>
+                        <div class="stat-number" id="session-count">{session_count}</div>
                         <div class="stat-label">Total Sessions</div>
                     </div>
                 </div>
@@ -113,22 +121,22 @@ public namespace underlayer_web {
                             <div class="bar-row">
                                 <span class="bar-label">Mastered</span>
                                 <div class="bar-track"><div class="bar-fill bar-mastered" id="bar-mastered"></div></div>
-                                <span class="bar-value" id="bar-mastered-val">{health.mastered}</span>
+                                <span class="bar-value" id="bar-mastered-val">{mastered_count}</span>
                             </div>
                             <div class="bar-row">
                                 <span class="bar-label">Learning</span>
                                 <div class="bar-track"><div class="bar-fill bar-learning" id="bar-learning"></div></div>
-                                <span class="bar-value" id="bar-learning-val">{health.learning}</span>
+                                <span class="bar-value" id="bar-learning-val">{learning_count}</span>
                             </div>
                             <div class="bar-row">
                                 <span class="bar-label">Reviewing</span>
                                 <div class="bar-track"><div class="bar-fill bar-reviewing" id="bar-reviewing"></div></div>
-                                <span class="bar-value" id="bar-reviewing-val">{health.reviewing}</span>
+                                <span class="bar-value" id="bar-reviewing-val">{reviewing_count}</span>
                             </div>
                             <div class="bar-row">
                                 <span class="bar-label">Unlearned</span>
                                 <div class="bar-track"><div class="bar-fill bar-unlearned" id="bar-unlearned"></div></div>
-                                <span class="bar-value" id="bar-unlearned-val">{health.unlearned}</span>
+                                <span class="bar-value" id="bar-unlearned-val">{unlearned_count}</span>
                             </div>
                         </div>
                     </div>
@@ -315,12 +323,12 @@ public namespace underlayer_web {
             });
 
             function renderBars() {
-                var total = {health.total_concepts};
+                var total = {total_concepts};
                 if(total <= 0) { total = 1; }
-                setWidth('bar-mastered', ({health.mastered} * 100) / total);
-                setWidth('bar-learning', ({health.learning} * 100) / total);
-                setWidth('bar-reviewing', ({health.reviewing} * 100) / total);
-                setWidth('bar-unlearned', ({health.unlearned} * 100) / total);
+                setWidth('bar-mastered', ({mastered_count} * 100) / total);
+                setWidth('bar-learning', ({learning_count} * 100) / total);
+                setWidth('bar-reviewing', ({reviewing_count} * 100) / total);
+                setWidth('bar-unlearned', ({unlearned_count} * 100) / total);
             }
 
             function renderDifficulty() {
@@ -438,6 +446,10 @@ public namespace underlayer_web {
         if(total_items > 0) { accuracy = (total_correct as f64) / (total_items as f64) }
         var accuracy_pct = (accuracy * 100.0) as i64
 
+        var total_concepts = health.total_concepts
+        var mastered_count = health.mastered
+        var learning_count = health.learning
+
         var page = HtmlPage()
         page.defaultUniversalSetup()
         page.defaultPrepare()
@@ -474,20 +486,20 @@ public namespace underlayer_web {
             <div class="container" id="main-content">
                 <div class="page-header">
                     <h1>Course Analytics</h1>
-                    <p class="subtitle">Detailed analytics for course: {course_id}</p>
+                    <p class="subtitle">Detailed analytics for course: <span id="course-title-label">elf</span></p>
                 </div>
 
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-number">{health.total_concepts}</div>
+                        <div class="stat-number">{total_concepts}</div>
                         <div class="stat-label">Total Concepts</div>
                     </div>
                     <div class="stat-card stat-mastered">
-                        <div class="stat-number">{health.mastered}</div>
+                        <div class="stat-number">{mastered_count}</div>
                         <div class="stat-label">Mastered</div>
                     </div>
                     <div class="stat-card stat-learning">
-                        <div class="stat-number">{health.learning}</div>
+                        <div class="stat-number">{learning_count}</div>
                         <div class="stat-label">Learning</div>
                     </div>
                     <div class="stat-card stat-accuracy">

@@ -51,7 +51,7 @@ public namespace underlayer_web {
             return
         }
         var learner = underlayer_repository::get_learner(db, &learner_id)
-        var learner_name = learner.name
+        var learner_name = learner.name.copy()
         if(learner_name.size() == 0) { learner_name = string("Learner") }
         var course_title = course_id.copy()
         var cert_id = underlayer_repository::issue_certificate(db, &learner_id, &course_id, &learner_name, &course_title)
@@ -75,7 +75,7 @@ public namespace underlayer_web {
 
     // ---- GET /api/certificates/:id — Get a specific certificate ----
 
-    public func handle_get_certificate(db : *DbClient, cert_id : *string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_get_certificate(db : *DbClient, cert_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
         var cert = underlayer_repository::get_certificate(db, cert_id)
         if(cert.id.size() == 0) {
             var err = string("certificate not found")
@@ -146,7 +146,7 @@ public namespace underlayer_web {
 
     // ---- GET /certificates/:id — HTML certificate page ----
 
-    public func handle_certificate_page(db : *DbClient, cert_id : *string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_certificate_page(db : *DbClient, cert_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
         var cert = underlayer_repository::get_certificate(db, cert_id)
         if(cert.id.size() == 0) {
             var err = string("certificate not found")

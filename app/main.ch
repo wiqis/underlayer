@@ -691,7 +691,7 @@ public func main() : int {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
-            var feedback_id = segments.get_ptr(3).to_string()
+            var feedback_id = segments.get_ptr(2).to_string()
             underlayer_web::handle_update_feedback_status(&raw db, &feedback_id, &req, &raw mut res)
         } else {
             res.status = 400u
@@ -953,11 +953,13 @@ public func main() : int {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 2) {
-            var cert_id = segments.get_ptr(2).to_string()
+            var cert_id = segments.get_ptr(1).to_string()
             underlayer_web::handle_certificate_page(&raw db, &cert_id, &req, &raw mut res)
         } else {
             res.status = 400u
-            res.write_view(&(std::string("missing certificate id").to_view()))
+            var body = std::string("missing certificate id")
+            var bv = body.to_view()
+            res.write_view(&bv)
         }
     }))
 
@@ -972,21 +974,23 @@ public func main() : int {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 2) {
-            var course_id = segments.get_ptr(2).to_string()
+            var course_id = segments.get_ptr(1).to_string()
             underlayer_web::handle_course_analytics_page(&raw db, &course_id, &req, &raw mut res)
         } else {
             res.status = 400u
-            res.write_view(&(std::string("missing course id").to_view()))
+            var body = std::string("missing course id")
+            var bv = body.to_view()
+            res.write_view(&bv)
         }
     }))
 
     // ---- Learning Path Visualization ----
-    srv.router.add("GET", "/api/courses/:courseId/path", (|db|(req, res) => {
+    srv.router.add("GET", "/api/courses/:courseId/path", (|db, &courses_dir|(req, res) => {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var course_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_learning_path_api(&raw db, &courses_dir, &course_id, &req, &raw mut res)
+            underlayer_web::handle_learning_path_api(&raw db, courses_dir, &course_id, &req, &raw mut res)
         } else {
             res.status = 400u
             var body = std::string("{\"error\":\"missing course id\"}")
@@ -995,15 +999,17 @@ public func main() : int {
             res.write_view(&bv)
         }
     }))
-    srv.router.add("GET", "/courses/:courseId/path", (|db|(req, res) => {
+    srv.router.add("GET", "/courses/:courseId/path", (|db, &courses_dir|(req, res) => {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var course_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_learning_path_page(&raw db, &courses_dir, &course_id, &req, &raw mut res)
+            var course_id = segments.get_ptr(1).to_string()
+            underlayer_web::handle_learning_path_page(&raw db, courses_dir, &course_id, &req, &raw mut res)
         } else {
             res.status = 400u
-            res.write_view(&(std::string("missing course id").to_view()))
+            var body = std::string("missing course id")
+            var bv = body.to_view()
+            res.write_view(&bv)
         }
     }))
 
