@@ -130,7 +130,7 @@ public namespace content_validator {
         var id_val = json_get_str(&raw root, "id")
         if(id_val.size() == 0) {
             results.push(fail(&fields_check, &std::string("missing required field: id"), &manifest_path))
-        } @else {
+        } else {
             results.push(pass(&fields_check, &std::string("required fields present")))
         }
 
@@ -188,7 +188,7 @@ public namespace content_validator {
                     r.message = std::string("module '").append_string(&mod_id).append_view("' missing concepts array")
                     r.file_path = manifest_path.copy()
                     results.push(r)
-                } @else {
+                } else {
                     var Array(concepts_arr) = *concepts_val else unreachable
                     if(concepts_arr.size() == 0) {
                         var r = ValidationResult::make()
@@ -287,7 +287,7 @@ public namespace content_validator {
             if(meta_res is std::Result.Err) {
                 var Err(e) = meta_res else unreachable
                 results.push(fail(&check, &e.message(), &fpath))
-            } @else {
+            } else {
                 var Ok(m) = meta_res else unreachable
                 if(m.len == 0) {
                     results.push(fail(&check, &std::string("file is empty"), &fpath))
@@ -378,7 +378,7 @@ public namespace content_validator {
                         r.message = std::string("asset '").append_string(&asset_id).append_view(std::string("' not found"))
                         r.file_path = full_path.copy()
                         results.push(r)
-                    } @else {
+                    } else {
                         // Check file size is reasonable (> 0 bytes)
                         var meta_res = fs::metadata(full_path.data())
                         if(meta_res is std::Result.Err) {
@@ -389,7 +389,7 @@ public namespace content_validator {
                             r.message = e.message()
                             r.file_path = full_path.copy()
                             results.push(r)
-                        } @else {
+                        } else {
                             var Ok(m) = meta_res else unreachable
                             if(m.len == 0) {
                                 var r = ValidationResult::make()
@@ -544,7 +544,7 @@ public namespace content_validator {
                     }
 
                     i = j + 1
-                } @else {
+                } else {
                     i = i + 1
                 }
             }
@@ -642,7 +642,7 @@ public namespace content_validator {
                         r.message = std::string("module '").append_string(&mod_id).append_view(std::string("' missing concepts"))
                         r.file_path = manifest_path.copy()
                         results.push(r)
-                    } @else {
+                    } else {
                         var Array(concepts_arr2) = *concepts_val2 else unreachable
                         if(concepts_arr2.size() == 0) {
                             var r = ValidationResult::make()

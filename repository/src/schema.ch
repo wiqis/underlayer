@@ -166,6 +166,52 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw sql_assess)
         var idx_assess = string("CREATE INDEX IF NOT EXISTS idx_assess_learner ON skill_assessments(learner_id)")
         underlayer_db::exec_sql(db, &raw idx_assess)
+        // Bookmarks table
+        var sql_bm = string("CREATE TABLE IF NOT EXISTS bookmarks (id TEXT PRIMARY KEY, learner_id TEXT NOT NULL, concept_id TEXT NOT NULL, course_id TEXT NOT NULL, note TEXT DEFAULT '', created_at INTEGER NOT NULL)")
+        underlayer_db::exec_sql(db, &raw sql_bm)
+        var idx_bm_learner = string("CREATE INDEX IF NOT EXISTS idx_bm_learner ON bookmarks(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx_bm_learner)
+        var idx_bm_concept = string("CREATE INDEX IF NOT EXISTS idx_bm_concept ON bookmarks(learner_id, concept_id)")
+        underlayer_db::exec_sql(db, &raw idx_bm_concept)
+        // Certificates table
+        var sql_cert = string("CREATE TABLE IF NOT EXISTS certificates (id TEXT PRIMARY KEY, learner_id TEXT NOT NULL, course_id TEXT NOT NULL, learner_name TEXT NOT NULL, course_title TEXT NOT NULL, completion_date TEXT NOT NULL, certificate_url TEXT DEFAULT '', created_at INTEGER NOT NULL)")
+        underlayer_db::exec_sql(db, &raw sql_cert)
+        var idx_cert_learner = string("CREATE INDEX IF NOT EXISTS idx_cert_learner ON certificates(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx_cert_learner)
+        // Notes table
+        var sql_notes = string("CREATE TABLE IF NOT EXISTS learner_notes (id TEXT PRIMARY KEY, learner_id TEXT NOT NULL, concept_id TEXT NOT NULL, course_id TEXT NOT NULL, content TEXT NOT NULL, section_ref TEXT DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)")
+        underlayer_db::exec_sql(db, &raw sql_notes)
+        var idx_notes_learner = string("CREATE INDEX IF NOT EXISTS idx_notes_learner ON learner_notes(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx_notes_learner)
+        var idx_notes_concept = string("CREATE INDEX IF NOT EXISTS idx_notes_concept ON learner_notes(learner_id, concept_id)")
+        underlayer_db::exec_sql(db, &raw idx_notes_concept)
+        // Achievements table
+        var sql_ach = string("CREATE TABLE IF NOT EXISTS achievements (id TEXT PRIMARY KEY, learner_id TEXT NOT NULL, badge_type TEXT NOT NULL, badge_name TEXT NOT NULL, description TEXT NOT NULL, icon TEXT DEFAULT '', earned_at INTEGER NOT NULL)")
+        underlayer_db::exec_sql(db, &raw sql_ach)
+        var idx_ach_learner = string("CREATE INDEX IF NOT EXISTS idx_ach_learner ON achievements(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx_ach_learner)
+        var idx_ach_type = string("CREATE INDEX IF NOT EXISTS idx_ach_type ON achievements(learner_id, badge_type)")
+        underlayer_db::exec_sql(db, &raw idx_ach_type)
+        // Course reviews table
+        var sql_cr = string("CREATE TABLE IF NOT EXISTS course_reviews (id TEXT PRIMARY KEY, learner_id TEXT NOT NULL, course_id TEXT NOT NULL, rating INTEGER NOT NULL, title TEXT DEFAULT '', review_text TEXT DEFAULT '', helpful_count INTEGER DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)")
+        underlayer_db::exec_sql(db, &raw sql_cr)
+        var idx_cr_course = string("CREATE INDEX IF NOT EXISTS idx_cr_course ON course_reviews(course_id)")
+        underlayer_db::exec_sql(db, &raw idx_cr_course)
+        var idx_cr_learner = string("CREATE INDEX IF NOT EXISTS idx_cr_learner ON course_reviews(learner_id, course_id)")
+        underlayer_db::exec_sql(db, &raw idx_cr_learner)
+        // Streaks table
+        var sql_streak = string("CREATE TABLE IF NOT EXISTS learning_streaks (learner_id TEXT PRIMARY KEY, current_streak INTEGER DEFAULT 0, longest_streak INTEGER DEFAULT 0, total_active_days INTEGER DEFAULT 0, last_active_date TEXT DEFAULT '')")
+        underlayer_db::exec_sql(db, &raw sql_streak)
+        // Daily activity log
+        var sql_daily = string("CREATE TABLE IF NOT EXISTS daily_activity (learner_id TEXT NOT NULL, activity_date TEXT NOT NULL, sessions_count INTEGER DEFAULT 0, PRIMARY KEY (learner_id, activity_date))")
+        underlayer_db::exec_sql(db, &raw sql_daily)
+        // Study plans table
+        var sql_sp = string("CREATE TABLE IF NOT EXISTS study_plans (id TEXT PRIMARY KEY, learner_id TEXT NOT NULL, course_id TEXT NOT NULL, plan_date TEXT NOT NULL, start_hour INTEGER DEFAULT 0, duration_minutes INTEGER DEFAULT 30, focus_concepts TEXT DEFAULT '', status TEXT DEFAULT 'planned', created_at INTEGER NOT NULL)")
+        underlayer_db::exec_sql(db, &raw sql_sp)
+        var idx_sp_learner = string("CREATE INDEX IF NOT EXISTS idx_sp_learner ON study_plans(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx_sp_learner)
+        var idx_sp_date = string("CREATE INDEX IF NOT EXISTS idx_sp_date ON study_plans(learner_id, plan_date)")
+        underlayer_db::exec_sql(db, &raw idx_sp_date)
     }
 
 }

@@ -10,6 +10,8 @@
 //   handlers_exercises_bulk.ch — handle_exercise_import, handle_exercise_seed, handle_exercise_stats
 //   handlers_progress.ch     — handle_progress, handle_course_progress
 //   handlers_analytics.ch    — handle_course_analytics, handle_difficulty_analytics, handle_error_analytics, handle_engagement_analytics, handle_velocity_analytics
+//   pages_analytics.ch       — render_analytics_page, render_course_analytics_page
+//   handlers_analytics_pages.ch — handle_analytics_page, handle_course_analytics_page, handle_analytics_overview_api
 //   handlers_learners.ch     — handle_create_learner, handle_get_learner
 //   handlers_profiles.ch     — handle_get_profile, handle_update_profile, handle_get_public_profile
 //   handlers_settings_api.ch — handle_get_settings, handle_update_settings, handle_get_learning_preferences, handle_update_learning_preferences
@@ -20,6 +22,14 @@
 //   handlers_knowledge_health.ch — handle_knowledge_health, handle_knowledge_health_per_module, handle_knowledge_projection, handle_enroll_course, handle_get_enrollments
 //   handlers_learning_path.ch — handle_get_prerequisites, handle_add_prerequisite, handle_remove_prerequisite, handle_can_enroll, handle_skill_assessment, handle_get_assessment
 //   handlers_feedback.ch      — handle_submit_feedback, handle_get_concept_feedback, handle_get_admin_feedback, handle_update_feedback_status, handle_report_exercise, handle_get_admin_reports, handle_feedback_stats
+//   handlers_bookmarks.ch    — handle_add_bookmark, handle_remove_bookmark, handle_get_bookmarks, handle_check_bookmark
+//   handlers_certificates.ch — handle_issue_certificate, handle_get_certificate, handle_get_certificates, handle_certificate_page
+//   handlers_notes.ch        — handle_create_note, handle_update_note, handle_delete_note, handle_get_concept_notes, handle_search_notes
+//   handlers_achievements.ch — handle_get_achievements, handle_check_achievements, handle_achievement_count
+//   handlers_course_reviews.ch — handle_submit_review, handle_get_course_reviews, handle_update_review, handle_delete_review, handle_mark_review_helpful, handle_course_rating_summary
+//   handlers_streaks.ch      — handle_get_streak, handle_record_activity, handle_weekly_activity
+//   handlers_study_plan.ch   — handle_create_study_plan, handle_get_study_plans, handle_update_study_plan, handle_delete_study_plan
+//   pages_help.ch            — render_help_page, render_shortcuts_page, render_faq_page, render_about_page
 //   static.ch                — content_type_for_ext, file_extension, handle_static_file
 using std::string
 

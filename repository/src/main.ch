@@ -16,3 +16,10 @@
 //   feedback.ch       — submit_feedback, get_feedback_for_concept, get_all_pending_feedback, update_feedback_status, report_exercise, get_exercise_reports, get_all_exercise_reports, get_feedback_stats
 //   prerequisites.ch  — get_prerequisites, add_prerequisite, remove_prerequisite, check_prerequisites, get_missing_prerequisites, save_assessment_result, get_latest_assessment
 //   notifications.ch — create_notification, get_notifications, get_unread_count, mark_read, mark_all_read, delete_notification, delete_old_notifications
+//   streaks.ch       — record_activity, get_streak, get_weekly_activity
+//   course_reviews.ch — submit_review, get_reviews_for_course, get_learner_review, update_review, delete_review, mark_helpful, get_course_rating_summary
+//   achievements.ch  — grant_achievement, get_achievements, has_achievement, get_achievement_count, check_and_award_streak, check_and_award_milestones
+//   notes.ch         — create_note, update_note, delete_note, get_notes_for_concept, get_notes_for_course, search_notes
+//   certificates.ch  — issue_certificate, get_certificate, get_learner_certificates, has_certificate
+//   bookmarks.ch      — add_bookmark, remove_bookmark, get_bookmarks, get_bookmarks_for_course, is_bookmarked
+//   study_plan.ch     — create_plan, get_plans, get_plans_for_date, get_plan, update_plan_status, delete_plan, get_upcoming_plans

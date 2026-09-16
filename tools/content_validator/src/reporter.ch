@@ -22,7 +22,7 @@ public namespace content_validator {
                 }
                 printf("\n")
                 passed_count = passed_count + 1
-            } @else {
+            } else {
                 printf("  FAIL  %s", r.check_name.data())
                 if(r.message.size() > 0) {
                     printf(" — %s", r.message.data())
@@ -42,7 +42,7 @@ public namespace content_validator {
         if(failed_count > 0) {
             printf("Status: FAILED\n")
             return true
-        } @else {
+        } else {
             printf("Status: ALL PASSED\n")
             return false
         }

@@ -185,4 +185,74 @@ public namespace underlayer_core {
         out.append('"')
         return out
     }
+
+    // ---- Date formatting (epoch seconds -> "YYYY-MM-DD") ----
+    public func date_string(timestamp : i64) : std::string {
+        var secs_per_day : i64 = 86400
+        var days = timestamp / secs_per_day
+        // Days since 1970-01-01 (civil_from_days algorithm)
+        var z = days + 719468
+        var era = z
+        if(era >= 0) { era = z / 146097 } else { era = (z - 146096) / 146097 }
+        var doe = z - era * 146097
+        var yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365
+        var y = yoe + era * 400
+        var doy = doe - (365 * yoe + yoe / 4 - yoe / 100)
+        var mp = (5 * doy + 2) / 153
+        var d = doy - (153 * mp + 2) / 5 + 1
+        var m = mp
+        if(m < 10) { m = m + 3 } else { m = m - 9 }
+        if(m <= 2) { y = y + 1 }
+        // Format as YYYY-MM-DD
+        var out = std::string()
+        var year_str = int_to_string(y)
+        // Pad year to 4 digits
+        var ypad = 4 - year_str.size()
+        while(ypad > 0) { out.append('0'); ypad = ypad - 1 }
+        out.append_view(year_str.to_view())
+        out.append('-')
+        if(m < 10) { out.append('0') }
+        var m_str = int_to_string(m)
+        out.append_view(m_str.to_view())
+        out.append('-')
+        if(d < 10) { out.append('0') }
+        var d_str = int_to_string(d)
+        out.append_view(d_str.to_view())
+        return out
+    }
+
+    // ---- Subtract days from a date string ("YYYY-MM-DD") ----
+    public func date_string_subtract_days(date : &std::string_view, days : int) : std::string {
+        // Parse YYYY-MM-DD back to epoch days, subtract, reformat
+        var secs_per_day : i64 = 86400
+        // Parse year
+        var year : i64 = 0
+        var i : size_t = 0
+        while(i < date.size() && date.get(i) != '-') {
+            var c = date.get(i)
+            if(c >= '0' && c <= '9') { year = year * 10 + (c as i64 - 48) }
+            i = i + 1
+        }
+        i = i + 1 // skip '-'
+        var month : i64 = 0
+        while(i < date.size() && date.get(i) != '-') {
+            var c = date.get(i)
+            if(c >= '0' && c <= '9') { month = month * 10 + (c as i64 - 48) }
+            i = i + 1
+        }
+        i = i + 1 // skip '-'
+        var day : i64 = 0
+        while(i < date.size()) {
+            var c = date.get(i)
+            if(c >= '0' && c <= '9') { day = day * 10 + (c as i64 - 48) }
+            i = i + 1
+        }
+        // Convert to days since epoch (reverse of civil_from_days)
+        var m_adj = month
+        var y_adj = year
+        if(m_adj <= 2) { m_adj = m_adj + 12; y_adj = y_adj - 1 }
+        var epoch_days = (365 * y_adj + y_adj / 4 - y_adj / 100 + y_adj / 400 + (153 * (m_adj - 3) + 2) / 5 + day - 719468)
+        epoch_days = epoch_days - (days as i64)
+        return date_string(epoch_days * secs_per_day)
+    }
 }
