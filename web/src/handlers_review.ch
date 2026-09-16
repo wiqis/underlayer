@@ -353,6 +353,7 @@ public namespace underlayer_web {
 
         underlayer_repository::upsert_concept_state(&raw db, &raw state)
         underlayer_repository::record_activity(&raw db, &learner_id)
+        underlayer_repository::run_achievement_checks(&raw db, &learner_id)
 
         // 1.2.16: Compute session accuracy from state
         var session_accuracy : f64 = 0.0

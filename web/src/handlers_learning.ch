@@ -41,6 +41,7 @@ public namespace underlayer_web {
                         state.last_studied = underlayer_core::current_timestamp()
                         underlayer_repository::upsert_concept_state(db, &raw state)
                         underlayer_repository::record_activity(db, &learner_id)
+                        underlayer_repository::run_achievement_checks(db, &learner_id)
                         var ok = string("{\"ok\":true,\"recorded\":true,\"status\":\"")
                         ok.append_string(&state.status)
                         ok.append_view("\"}")

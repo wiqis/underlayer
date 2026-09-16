@@ -61,6 +61,13 @@ public namespace underlayer_repository {
         sql.append_view(now_str.to_view())
         sql.append_view(")")
         underlayer_db::exec_sql(db, &raw sql)
+        var ntype = string("achievement")
+        var ntitle = string("Achievement Unlocked")
+        var nmsg = badge_name.copy()
+        var ncourse = string("")
+        var nconcept = string("")
+        var nurl = string("/achievements")
+        create_notification(db, learner_id, &ntype, &ntitle, &nmsg, &ncourse, &nconcept, &nurl)
         return ach_id
     }
 
@@ -121,53 +128,98 @@ public namespace underlayer_repository {
 
     public func check_and_award_streak(db : *DbClient, learner_id : &string, streak_days : int) {
         if(streak_days >= 3) {
-            if(!has_achievement(db, learner_id, &string("streak_3"))) {
-                grant_achievement(db, learner_id, &string("streak_3"), &string("3-Day Streak"), &string("Studied for 3 consecutive days"), &string("flame"))
+            var t3 = string("streak_3")
+            if(!has_achievement(db, learner_id, &t3)) {
+                var n = string("3-Day Streak")
+                var d = string("Studied for 3 consecutive days")
+                var ic = string("flame")
+                grant_achievement(db, learner_id, &t3, &n, &d, &ic)
             }
         }
         if(streak_days >= 7) {
-            if(!has_achievement(db, learner_id, &string("streak_7"))) {
-                grant_achievement(db, learner_id, &string("streak_7"), &string("7-Day Streak"), &string("Studied for 7 consecutive days"), &string("fire"))
+            var t7 = string("streak_7")
+            if(!has_achievement(db, learner_id, &t7)) {
+                var n = string("7-Day Streak")
+                var d = string("Studied for 7 consecutive days")
+                var ic = string("fire")
+                grant_achievement(db, learner_id, &t7, &n, &d, &ic)
             }
         }
         if(streak_days >= 30) {
-            if(!has_achievement(db, learner_id, &string("streak_30"))) {
-                grant_achievement(db, learner_id, &string("streak_30"), &string("30-Day Streak"), &string("Studied for 30 consecutive days"), &string("trophy"))
+            var t30 = string("streak_30")
+            if(!has_achievement(db, learner_id, &t30)) {
+                var n = string("30-Day Streak")
+                var d = string("Studied for 30 consecutive days")
+                var ic = string("trophy")
+                grant_achievement(db, learner_id, &t30, &n, &d, &ic)
             }
         }
         if(streak_days >= 100) {
-            if(!has_achievement(db, learner_id, &string("streak_100"))) {
-                grant_achievement(db, learner_id, &string("streak_100"), &string("100-Day Streak"), &string("Studied for 100 consecutive days"), &string("diamond"))
+            var t100 = string("streak_100")
+            if(!has_achievement(db, learner_id, &t100)) {
+                var n = string("100-Day Streak")
+                var d = string("Studied for 100 consecutive days")
+                var ic = string("diamond")
+                grant_achievement(db, learner_id, &t100, &n, &d, &ic)
             }
         }
     }
 
     public func check_and_award_milestones(db : *DbClient, learner_id : &string, concepts_mastered : int, total_exercises : int) {
         if(total_exercises >= 1) {
-            if(!has_achievement(db, learner_id, &string("first_lesson"))) {
-                grant_achievement(db, learner_id, &string("first_lesson"), &string("First Steps"), &string("Completed your first exercise"), &string("seedling"))
+            var t1 = string("first_lesson")
+            if(!has_achievement(db, learner_id, &t1)) {
+                var n = string("First Steps")
+                var d = string("Completed your first exercise")
+                var ic = string("seedling")
+                grant_achievement(db, learner_id, &t1, &n, &d, &ic)
             }
         }
         if(total_exercises >= 10) {
-            if(!has_achievement(db, learner_id, &string("exercise_10"))) {
-                grant_achievement(db, learner_id, &string("exercise_10"), &string("Getting Started"), &string("Completed 10 exercises"), &string("book"))
+            var t10 = string("exercise_10")
+            if(!has_achievement(db, learner_id, &t10)) {
+                var n = string("Getting Started")
+                var d = string("Completed 10 exercises")
+                var ic = string("book")
+                grant_achievement(db, learner_id, &t10, &n, &d, &ic)
             }
         }
         if(total_exercises >= 100) {
-            if(!has_achievement(db, learner_id, &string("exercise_100"))) {
-                grant_achievement(db, learner_id, &string("exercise_100"), &string("Century Club"), &string("Completed 100 exercises"), &string("star"))
+            var t100 = string("exercise_100")
+            if(!has_achievement(db, learner_id, &t100)) {
+                var n = string("Century Club")
+                var d = string("Completed 100 exercises")
+                var ic = string("star")
+                grant_achievement(db, learner_id, &t100, &n, &d, &ic)
             }
         }
         if(concepts_mastered >= 5) {
-            if(!has_achievement(db, learner_id, &string("master_5"))) {
-                grant_achievement(db, learner_id, &string("master_5"), &string("Knowledge Seeker"), &string("Mastered 5 concepts"), &string("compass"))
+            var t5 = string("master_5")
+            if(!has_achievement(db, learner_id, &t5)) {
+                var n = string("Knowledge Seeker")
+                var d = string("Mastered 5 concepts")
+                var ic = string("compass")
+                grant_achievement(db, learner_id, &t5, &n, &d, &ic)
             }
         }
         if(concepts_mastered >= 20) {
-            if(!has_achievement(db, learner_id, &string("master_all"))) {
-                grant_achievement(db, learner_id, &string("master_all"), &string("Master Scholar"), &string("Mastered all available concepts"), &string("crown"))
+            var ta = string("master_all")
+            if(!has_achievement(db, learner_id, &ta)) {
+                var n = string("Master Scholar")
+                var d = string("Mastered all available concepts")
+                var ic = string("crown")
+                grant_achievement(db, learner_id, &ta, &n, &d, &ic)
             }
         }
+    }
+
+    // Evaluate all achievement rules for a learner. Call after learning activity.
+    public func run_achievement_checks(db : *DbClient, learner_id : &string) {
+        var streak = get_streak(db, learner_id)
+        check_and_award_streak(db, learner_id, streak.current_streak)
+        var mastered = count_mastered_concepts(db, learner_id)
+        var attempts = count_total_attempts(db, learner_id)
+        check_and_award_milestones(db, learner_id, mastered, attempts)
     }
 
 }

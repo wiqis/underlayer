@@ -124,4 +124,34 @@ public namespace underlayer_repository {
         return stats
     }
 
+    // Count of concepts the learner has mastered, across all courses.
+    public func count_mastered_concepts(db : *DbClient, learner_id : &string) : int {
+        var sql = string("SELECT COUNT(*) FROM concept_states WHERE learner_id = '")
+        sql.append_string(learner_id)
+        sql.append_view("' AND status = 'mastered'")
+        var result = underlayer_db::query_sql(db, &raw sql)
+        if(result.rows.size() > 0) {
+            var row = result.rows.get_ptr(0)
+            if(row.vals.size() > 0) {
+                return parse_i64(row.vals.get_ptr(0).to_view()) as int
+            }
+        }
+        return 0
+    }
+
+    // Total attempts the learner has made, across all courses.
+    public func count_total_attempts(db : *DbClient, learner_id : &string) : int {
+        var sql = string("SELECT COALESCE(SUM(attempts), 0) FROM concept_states WHERE learner_id = '")
+        sql.append_string(learner_id)
+        sql.append_view("'")
+        var result = underlayer_db::query_sql(db, &raw sql)
+        if(result.rows.size() > 0) {
+            var row = result.rows.get_ptr(0)
+            if(row.vals.size() > 0) {
+                return parse_i64(row.vals.get_ptr(0).to_view()) as int
+            }
+        }
+        return 0
+    }
+
 }

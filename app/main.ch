@@ -1026,6 +1026,12 @@ public func main() : int {
     srv.router.add("GET", "/about", (|db|(req, res) => {
         underlayer_web::handle_about_page(&req, &raw mut res)
     }))
+    srv.router.add("GET", "/terms", (|db|(req, res) => {
+        underlayer_web::handle_terms_page(&req, &raw mut res)
+    }))
+    srv.router.add("GET", "/privacy", (|db|(req, res) => {
+        underlayer_web::handle_privacy_page(&req, &raw mut res)
+    }))
 
     // ---- Feature Pages (bookmarks, notes, planner, achievements, streaks, notifications, certificates) ----
     srv.router.add("GET", "/bookmarks", (|db|(req, res) => {
