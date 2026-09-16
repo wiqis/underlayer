@@ -23,7 +23,7 @@ public namespace underlayer_repository {
         return load_course_hardcoded(course_id)
     }
 
-    private func load_course_from_disk(courses_dir : &string, course_id : &string) : Course {
+    public func load_course_from_disk(courses_dir : &string, course_id : &string) : Course {
         var course = Course::make()
         var path = courses_dir.copy()
         path.append_view(string_view("/"))

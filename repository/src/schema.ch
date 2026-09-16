@@ -128,6 +128,13 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw idx_va)
         var idx_va_w = string("CREATE INDEX IF NOT EXISTS idx_va_learner_week ON velocity_analytics(learner_id, week_start)")
         underlayer_db::exec_sql(db, &raw idx_va_w)
+        // Course enrollments
+        var sql_enroll = string("CREATE TABLE IF NOT EXISTS enrollments (id TEXT PRIMARY KEY, learner_id TEXT, course_id TEXT, enrolled_at INTEGER, last_accessed INTEGER, completed_at INTEGER, status TEXT DEFAULT 'active')")
+        underlayer_db::exec_sql(db, &raw sql_enroll)
+        var idx_enroll = string("CREATE INDEX IF NOT EXISTS idx_enroll_learner ON enrollments(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx_enroll)
+        var idx_enroll_course = string("CREATE INDEX IF NOT EXISTS idx_enroll_course ON enrollments(course_id)")
+        underlayer_db::exec_sql(db, &raw idx_enroll_course)
     }
 
 }

@@ -15,6 +15,8 @@
 //   handlers_settings.ch     — handle_fsrs_optimize/reset/export/import, settings, profile, auth, data
 //   pages_auth.ch            — handle_login_page, handle_register_page, handle_forgot_password_page, handle_reset_password_page
 //   pages_settings.ch        — render_settings_page, render_profile_page
+//   pages_onboarding.ch      — handle_onboarding_page, handle_onboarding_complete, handle_check_onboarding
+//   handlers_knowledge_health.ch — handle_knowledge_health, handle_knowledge_health_per_module, handle_knowledge_projection, handle_enroll_course, handle_get_enrollments
 //   static.ch                — content_type_for_ext, file_extension, handle_static_file
 using std::string
 

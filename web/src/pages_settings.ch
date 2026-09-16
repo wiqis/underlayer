@@ -332,7 +332,7 @@ public namespace underlayer_web {
         return html_out
     }
 
-    // Public profile page
+    // Public profile page with learning progress
     public func render_profile_page(username_str : *string) : string {
         var page = HtmlPage()
         page.defaultUniversalSetup()
@@ -344,40 +344,138 @@ public namespace underlayer_web {
         #html {
             <div class="profile-page">
                 <div class="profile-card">
-                    <div class="profile-avatar"></div>
+                    <div class="profile-avatar" id="avatar"></div>
                     <h1 id="displayName">Loading...</h1>
                     <p id="bio" class="profile-bio"></p>
+                    <div id="locationRow" class="profile-location" style="display:none"></div>
+                    <div id="websiteRow" class="profile-website" style="display:none"></div>
+                    <div id="socialRow" class="profile-social" style="display:none"></div>
                     <div class="profile-stats" id="stats"></div>
+                </div>
+                <div class="learning-section" id="learningSection" style="display:none">
+                    <h2>Learning Progress</h2>
+                    <div class="learning-summary" id="learningSummary"></div>
+                    <div class="course-list" id="courseList"></div>
                 </div>
             </div>
         }
         #css {
-            .profile-page { max-width: 600px; margin: 2rem auto; padding: 0 1rem; font-family: system-ui, sans-serif; }
-            .profile-card { text-align: center; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px hsl(var(--shadow)); }
-            .profile-avatar { width: 100px; height: 100px; border-radius: 50%; background: hsl(var(--muted)); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: hsl(var(--muted-foreground)); }
-            .profile-bio { color: hsl(var(--muted-foreground)); margin: 1rem 0; line-height: 1.5; }
-            .profile-stats { display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem; }
+            .profile-page { max-width: 700px; margin: 2rem auto; padding: 0 1rem; font-family: system-ui, sans-serif; }
+            .profile-card { text-align: center; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px hsl(var(--shadow)); margin-bottom: 1.5rem; }
+            .profile-avatar { width: 100px; height: 100px; border-radius: 50%; background: hsl(var(--muted)); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 700; color: hsl(var(--primary)); overflow: hidden; }
+            .profile-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+            .profile-bio { color: hsl(var(--muted-foreground)); margin: 0.75rem 0; line-height: 1.5; }
+            .profile-location, .profile-website, .profile-social { font-size: 0.85rem; color: hsl(var(--muted-foreground)); margin: 0.25rem 0; }
+            .profile-location a, .profile-website a { color: hsl(217 91% 60%); text-decoration: none; }
+            .profile-location a:hover, .profile-website a:hover { text-decoration: underline; }
+            .profile-social a { color: hsl(217 91% 60%); text-decoration: none; margin: 0 0.5rem; }
+            .profile-social a:hover { text-decoration: underline; }
+            .profile-stats { display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid hsl(var(--border)); }
             .stat-item { text-align: center; }
             .stat-value { font-size: 1.5rem; font-weight: 700; color: hsl(217 91% 60%); }
-            .stat-label { font-size: 0.8rem; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.05em; }
+            .stat-label { font-size: 0.75rem; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; }
+            .learning-section { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 2rem; box-shadow: 0 4px 20px hsl(var(--shadow)); }
+            .learning-section h2 { font-size: 1.1rem; font-weight: 600; color: hsl(var(--foreground)); margin-bottom: 1.25rem; }
+            .learning-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+            .summary-card { background: hsl(var(--background)); border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 1rem; text-align: center; }
+            .summary-card .value { font-size: 1.25rem; font-weight: 700; color: hsl(217 91% 60%); }
+            .summary-card .label { font-size: 0.75rem; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; }
+            .course-list { display: flex; flex-direction: column; gap: 0.75rem; }
+            .course-item { background: hsl(var(--background)); border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; }
+            .course-info { flex: 1; min-width: 0; }
+            .course-name { font-weight: 600; color: hsl(var(--foreground)); font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .course-meta { font-size: 0.8rem; color: hsl(var(--muted-foreground)); margin-top: 0.2rem; }
+            .course-progress { width: 120px; flex-shrink: 0; }
+            .progress-bar { height: 6px; background: hsl(var(--muted)); border-radius: 3px; overflow: hidden; }
+            .progress-fill { height: 100%; background: hsl(217 91% 60%); border-radius: 3px; transition: width 0.3s ease; }
+            .progress-text { font-size: 0.75rem; color: hsl(var(--muted-foreground)); text-align: right; margin-top: 0.25rem; }
+            .course-status { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.2rem 0.5rem; border-radius: 4px; flex-shrink: 0; }
+            .status-active { background: hsl(217 91% 60% / 10%); color: hsl(217 91% 60%); }
+            .status-completed { background: hsl(142 71% 45% / 10%); color: hsl(142 71% 45%); }
+            .no-courses { text-align: center; color: hsl(var(--muted-foreground)); padding: 2rem; font-size: 0.9rem; }
+            @media (max-width: 600px) { .profile-page { padding: 0 0.5rem; } .profile-card { padding: 1.5rem; } .profile-stats { gap: 1rem; } .course-item { flex-wrap: wrap; } .course-progress { width: 100%; } }
         }
         #js {
             var pathParts = window.location.pathname.split('/u/');
             var username = pathParts.length > 1 ? pathParts[1] : '';
             if(username) {
+                // Fetch profile data
                 fetch('/api/user/' + username)
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
-                        if(data.display_name) { document.getElementById('displayName').textContent = data.display_name; }
-                        else { document.getElementById('displayName').textContent = data.username || username; }
-                        if(data.bio) { document.getElementById('bio').textContent = data.bio; }
-                        var statsHtml = '';
-                        if(data.courses_completed !== undefined) { statsHtml += '<div class="stat-item"><div class="stat-value">' + data.courses_completed + '</div><div class="stat-label">Courses</div></div>'; }
-                        if(data.total_reviews !== undefined) { statsHtml += '<div class="stat-item"><div class="stat-value">' + data.total_reviews + '</div><div class="stat-label">Reviews</div></div>'; }
-                        if(data.streak_days !== undefined) { statsHtml += '<div class="stat-item"><div class="stat-value">' + data.streak_days + '</div><div class="stat-label">Day Streak</div></div>'; }
-                        if(statsHtml) { document.getElementById('stats').innerHTML = statsHtml; }
+                        if(data.error) { document.getElementById('displayName').textContent = 'User not found'; return; }
+                        // Display name
+                        var name = data.display_name || data.username || username;
+                        document.getElementById('displayName').textContent = name;
+                        // Avatar
+                        var avatarEl = document.getElementById('avatar');
+                        if(data.avatar_url) { avatarEl.innerHTML = '<img src="' + data.avatar_url + '" alt="Avatar" />'; }
+                        else { var initials = name.charAt(0).toUpperCase(); avatarEl.textContent = initials; }
+                        // Bio
+                        if(data.bio) { document.getElementById('bio').textContent = data.bio; document.getElementById('bio').style.display = 'block'; }
+                        // Location
+                        if(data.location) { document.getElementById('locationRow').textContent = '\uD83D\uDCCD ' + data.location; document.getElementById('locationRow').style.display = 'block'; }
+                        // Website
+                        if(data.website) { document.getElementById('websiteRow').innerHTML = '\uD83C\uDF10 <a href="' + data.website + '" target="_blank" rel="noopener">' + data.website + '</a>'; document.getElementById('websiteRow').style.display = 'block'; }
+                        // Social links
+                        var socialParts = [];
+                        if(data.social_twitter) { socialParts.push('<a href="https://twitter.com/' + data.social_twitter + '" target="_blank" rel="noopener">Twitter</a>'); }
+                        if(data.social_github) { socialParts.push('<a href="https://github.com/' + data.social_github + '" target="_blank" rel="noopener">GitHub</a>'); }
+                        if(data.social_linkedin) { socialParts.push('<a href="https://linkedin.com/in/' + data.social_linkedin + '" target="_blank" rel="noopener">LinkedIn</a>'); }
+                        if(socialParts.length > 0) { document.getElementById('socialRow').innerHTML = socialParts.join(' '); document.getElementById('socialRow').style.display = 'block'; }
                     }).catch(function() {
                         document.getElementById('displayName').textContent = 'User not found';
+                    });
+
+                // Fetch stats data
+                fetch('/api/user/' + username + '/stats')
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if(data.error) { return; }
+                        var statsHtml = '';
+                        if(data.courses_completed !== undefined) { statsHtml += '<div class="stat-item"><div class="stat-value">' + data.courses_completed + '</div><div class="stat-label">Courses Done</div></div>'; }
+                        if(data.total_concepts_mastered !== undefined) { statsHtml += '<div class="stat-item"><div class="stat-value">' + data.total_concepts_mastered + '</div><div class="stat-label">Concepts</div></div>'; }
+                        if(data.total_exercises_completed !== undefined) { statsHtml += '<div class="stat-item"><div class="stat-value">' + data.total_exercises_completed + '</div><div class="stat-label">Exercises</div></div>'; }
+                        var hours = data.total_time_seconds ? Math.floor(data.total_time_seconds / 3600) : 0;
+                        if(hours > 0) { statsHtml += '<div class="stat-item"><div class="stat-value">' + hours + '</div><div class="stat-label">Hours</div></div>'; }
+                        if(statsHtml) { document.getElementById('stats').innerHTML = statsHtml; }
+                    }).catch(function() {});
+
+                // Fetch courses data
+                fetch('/api/user/' + username + '/courses')
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if(!Array.isArray(data) || data.length === 0) {
+                            document.getElementById('courseList').innerHTML = '<div class="no-courses">No courses in progress yet.</div>';
+                            document.getElementById('learningSection').style.display = 'block';
+                            return;
+                        }
+                        // Learning summary
+                        var totalStarted = 0;
+                        var totalMastered = 0;
+                        var totalConcepts = 0;
+                        data.forEach(function(c) { totalStarted += c.concepts_started || 0; totalMastered += c.concepts_mastered || 0; totalConcepts += c.total_concepts || 0; });
+                        var summaryHtml = '<div class="summary-card"><div class="value">' + totalStarted + '</div><div class="label">Concepts Started</div></div>';
+                        summaryHtml += '<div class="summary-card"><div class="value">' + totalMastered + '</div><div class="label">Concepts Mastered</div></div>';
+                        summaryHtml += '<div class="summary-card"><div class="value">' + totalConcepts + '</div><div class="label">Total Concepts</div></div>';
+                        document.getElementById('learningSummary').innerHTML = summaryHtml;
+                        // Course list
+                        var html = '';
+                        data.forEach(function(c) {
+                            var pct = c.progress_pct || 0;
+                            var statusClass = c.status === 'completed' ? 'status-completed' : 'status-active';
+                            var statusLabel = c.status === 'completed' ? 'Completed' : 'In Progress';
+                            var meta = c.concepts_mastered + '/' + c.total_concepts + ' concepts mastered';
+                            html += '<div class="course-item">';
+                            html += '<div class="course-info"><div class="course-name">' + c.course_id + '</div><div class="course-meta">' + meta + '</div></div>';
+                            html += '<div class="course-progress"><div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div><div class="progress-text">' + Math.round(pct) + '%</div></div>';
+                            html += '<span class="course-status ' + statusClass + '">' + statusLabel + '</span>';
+                            html += '</div>';
+                        });
+                        document.getElementById('courseList').innerHTML = html;
+                        document.getElementById('learningSection').style.display = 'block';
+                    }).catch(function() {
+                        document.getElementById('learningSection').style.display = 'block';
                     });
             }
         }

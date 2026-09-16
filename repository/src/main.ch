@@ -12,3 +12,4 @@
 //   goals.ch          — get_learning_goal, set_learning_goal, delete_learning_goal
 //   profiles.ch       — get_profile, upsert_profile, is_username_available, get_profile_by_username
 //   settings.ch       — get_settings, upsert_settings, get_learning_preferences, upsert_learning_preferences
+//   enrollments.ch    — enroll_learner, get_enrollment, get_learner_enrollments, update_last_accessed, complete_enrollment

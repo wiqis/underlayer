@@ -7,7 +7,10 @@ public namespace underlayer_web {
 
     // 7.2.4, 7.2.5, 1.5.20: Dashboard with progress, knowledge health, and stats
     public func handle_dashboard(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) {
+            learner_id = string("demo")
+        }
         var course_id = string("elf")
 
         // Get knowledge health

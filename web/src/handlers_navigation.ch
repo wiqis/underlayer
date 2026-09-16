@@ -7,7 +7,10 @@ public namespace underlayer_web {
 
     // P2 7.1.13/7.1.15: Nav status — course progress + due review count for the navbar
     public func handle_nav_status(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) {
+            learner_id = string("demo")
+        }
         var course_id = string("elf")
 
         // Count concepts the learner has actually attempted

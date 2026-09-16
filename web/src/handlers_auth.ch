@@ -58,7 +58,7 @@ public namespace underlayer_web {
         return token
     }
 
-    private func auth_get_learner_id(db : *DbClient, req : &http::Request) : string {
+    public func auth_get_learner_id(db : *DbClient, req : &http::Request) : string {
         var token = extract_bearer_token(req)
         if(token.size() == 0) { return string() }
         var token_hash = hash_token(&raw token)

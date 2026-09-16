@@ -586,6 +586,66 @@ public func main() : int {
         underlayer_web::handle_get_public_profile(&raw db, &req, &raw mut res)
     }))
 
+    // ---- Knowledge Health API (1.5.20) ----
+    srv.router.add("GET", "/api/health/knowledge", (|db|(req, res) => {
+        underlayer_web::handle_knowledge_health(&raw db, &req, &raw mut res)
+    }))
+    srv.router.add("GET", "/api/health/knowledge/per-module", (|db, &courses_dir|(req, res) => {
+        underlayer_web::handle_knowledge_health_per_module(&raw db, courses_dir, &req, &raw mut res)
+    }))
+    srv.router.add("GET", "/api/health/knowledge/projection", (|db|(req, res) => {
+        underlayer_web::handle_knowledge_projection(&raw db, &req, &raw mut res)
+    }))
+
+    // ---- Course Enrollment API ----
+    srv.router.add("POST", "/api/courses/:courseId/enroll", (|db|(req, res) => {
+        underlayer_web::handle_enroll_course(&raw db, &req, &raw mut res)
+    }))
+    srv.router.add("GET", "/api/enrollments", (|db|(req, res) => {
+        underlayer_web::handle_get_enrollments(&raw db, &req, &raw mut res)
+    }))
+
+    // ---- Onboarding (Agent 1) ----
+    srv.router.add("GET", "/onboarding", (req, res) => {
+        underlayer_web::handle_onboarding_page(&req, &raw mut res)
+    })
+    srv.router.add("POST", "/api/onboarding/complete", (|db|(req, res) => {
+        underlayer_web::handle_onboarding_complete(&raw db, &req, &raw mut res)
+    }))
+    srv.router.add("GET", "/api/onboarding/check", (|db|(req, res) => {
+        underlayer_web::handle_check_onboarding(&raw db, &req, &raw mut res)
+    }))
+
+    // ---- Profile stats & courses (Agent 5) ----
+    srv.router.add("GET", "/api/user/:username/stats", (|db|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 3) {
+            var username = segments.get_ptr(2).to_string()
+            underlayer_web::handle_profile_stats(&raw db, &username, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var body = std::string("{\"error\":\"missing username\"}")
+            var bv = body.to_view()
+            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
+            res.write_view(&bv)
+        }
+    }))
+    srv.router.add("GET", "/api/user/:username/courses", (|db|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 3) {
+            var username = segments.get_ptr(2).to_string()
+            underlayer_web::handle_profile_courses(&raw db, &username, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var body = std::string("{\"error\":\"missing username\"}")
+            var bv = body.to_view()
+            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
+            res.write_view(&bv)
+        }
+    }))
+
     // ---- Start server ----
     printf("[underlayer] Server running at http://localhost:%s\n", underlayer_core::u32_to_string(port).data())
     printf("[underlayer] Courses dir: %s\n", cfg.courses_dir.data())
