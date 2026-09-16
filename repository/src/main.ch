@@ -13,3 +13,6 @@
 //   profiles.ch       — get_profile, upsert_profile, is_username_available, get_profile_by_username
 //   settings.ch       — get_settings, upsert_settings, get_learning_preferences, upsert_learning_preferences
 //   enrollments.ch    — enroll_learner, get_enrollment, get_learner_enrollments, update_last_accessed, complete_enrollment
+//   feedback.ch       — submit_feedback, get_feedback_for_concept, get_all_pending_feedback, update_feedback_status, report_exercise, get_exercise_reports, get_all_exercise_reports, get_feedback_stats
+//   prerequisites.ch  — get_prerequisites, add_prerequisite, remove_prerequisite, check_prerequisites, get_missing_prerequisites, save_assessment_result, get_latest_assessment
+//   notifications.ch — create_notification, get_notifications, get_unread_count, mark_read, mark_all_read, delete_notification, delete_old_notifications

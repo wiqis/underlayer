@@ -1,4 +1,4 @@
-// Underlayer — Server entrypoint
+﻿// Underlayer â€” Server entrypoint
 // Phase 1: Minimal working platform serving static courses.
 using std::string
 using std::string_view
@@ -368,6 +368,17 @@ public func main() : int {
         underlayer_web::handle_session_skip(db, &req, &raw mut res)
     }))
 
+    // ---- Bulk Exercise Import API ----
+    srv.router.add("POST", "/api/exercises/import", (|&db|(req, res) => {
+        underlayer_web::handle_exercise_import(db, &raw mut req, &raw mut res)
+    }))
+    srv.router.add("POST", "/api/exercises/seed", (|&db|(req, res) => {
+        underlayer_web::handle_exercise_seed(db, &raw mut req, &raw mut res)
+    }))
+    srv.router.add("GET", "/api/exercises/stats", (|&db|(req, res) => {
+        underlayer_web::handle_exercise_stats(db, &req, &raw mut res)
+    }))
+
     // ---- Exercise API (4.1.1-4.1.5, 4.2.1-4.2.5) ----
     srv.router.add("GET", "/api/exercises/:conceptId", (|&db|(req, res) => {
         var path = req.path.to_view()
@@ -640,6 +651,155 @@ public func main() : int {
         } else {
             res.status = 400u
             var body = std::string("{\"error\":\"missing username\"}")
+            var bv = body.to_view()
+            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
+            res.write_view(&bv)
+        }
+    }))
+
+    // ---- Content Feedback API ----
+    srv.router.add("POST", "/api/feedback", (|db|(req, res) => {
+        underlayer_web::handle_submit_feedback(&raw db, &req, &raw mut res)
+    }))
+    srv.router.add("GET", "/api/feedback/stats", (|db|(req, res) => {
+        underlayer_web::handle_feedback_stats(&raw db, &req, &raw mut res)
+    }))
+    srv.router.add("GET", "/api/feedback/admin", (|db|(req, res) => {
+        underlayer_web::handle_get_admin_feedback(&raw db, &req, &raw mut res)
+    }))
+    srv.router.add("GET", "/api/feedback/admin/reports", (|db|(req, res) => {
+        underlayer_web::handle_get_admin_reports(&raw db, &req, &raw mut res)
+    }))
+    srv.router.add("POST", "/api/feedback/report-exercise", (|db|(req, res) => {
+        underlayer_web::handle_report_exercise(&raw db, &req, &raw mut res)
+    }))
+    srv.router.add("GET", "/api/feedback/concept/:conceptId", (|db|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 4) {
+            var concept_id = segments.get_ptr(3).to_string()
+            underlayer_web::handle_get_concept_feedback(&raw db, &concept_id, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var body = std::string("{\"error\":\"missing concept id\"}")
+            var bv = body.to_view()
+            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
+            res.write_view(&bv)
+        }
+    }))
+    srv.router.add("PUT", "/api/feedback/:id/status", (|db|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 4) {
+            var feedback_id = segments.get_ptr(3).to_string()
+            underlayer_web::handle_update_feedback_status(&raw db, &feedback_id, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var body = std::string("{\"error\":\"missing feedback id\"}")
+            var bv = body.to_view()
+            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
+            res.write_view(&bv)
+        }
+    }))
+
+    // ---- Notifications API ----
+    srv.router.add("GET", "/api/notifications", (|db|(req, res) => {
+        underlayer_web::handle_get_notifications(&raw db, &req, &raw mut res)
+    }))
+    srv.router.add("GET", "/api/notifications/unread-count", (|db|(req, res) => {
+        underlayer_web::handle_unread_count(&raw db, &req, &raw mut res)
+    }))
+    srv.router.add("POST", "/api/notifications/read-all", (|db|(req, res) => {
+        underlayer_web::handle_mark_all_read(&raw db, &req, &raw mut res)
+    }))
+    srv.router.add("POST", "/api/notifications/:id/read", (|db|(req, res) => {
+        underlayer_web::handle_mark_read(&raw db, &req, &raw mut res)
+    }))
+    srv.router.add("DELETE", "/api/notifications/:id", (|db|(req, res) => {
+        underlayer_web::handle_delete_notification(&raw db, &req, &raw mut res)
+    }))
+
+    // ---- Course Prerequisites API ----
+    srv.router.add("GET", "/api/courses/:courseId/prerequisites", (|db|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 3) {
+            var course_id = segments.get_ptr(2).to_string()
+            underlayer_web::handle_get_prerequisites(&raw db, &course_id, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var body = std::string("{\"error\":\"missing course id\"}")
+            var bv = body.to_view()
+            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
+            res.write_view(&bv)
+        }
+    }))
+    srv.router.add("POST", "/api/courses/:courseId/prerequisites", (|db|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 3) {
+            var course_id = segments.get_ptr(2).to_string()
+            underlayer_web::handle_add_prerequisite(&raw db, &course_id, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var body = std::string("{\"error\":\"missing course id\"}")
+            var bv = body.to_view()
+            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
+            res.write_view(&bv)
+        }
+    }))
+    srv.router.add("DELETE", "/api/courses/:courseId/prerequisites/:requiredId", (|db|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 4) {
+            var course_id = segments.get_ptr(2).to_string()
+            var required_id = segments.get_ptr(3).to_string()
+            underlayer_web::handle_remove_prerequisite(&raw db, &course_id, &required_id, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var body = std::string("{\"error\":\"missing course or required id\"}")
+            var bv = body.to_view()
+            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
+            res.write_view(&bv)
+        }
+    }))
+    srv.router.add("GET", "/api/courses/:courseId/can-enroll", (|db|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 3) {
+            var course_id = segments.get_ptr(2).to_string()
+            underlayer_web::handle_can_enroll(&raw db, &course_id, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var body = std::string("{\"error\":\"missing course id\"}")
+            var bv = body.to_view()
+            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
+            res.write_view(&bv)
+        }
+    }))
+    srv.router.add("POST", "/api/courses/:courseId/assess", (|db|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 3) {
+            var course_id = segments.get_ptr(2).to_string()
+            underlayer_web::handle_skill_assessment(&raw db, &course_id, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var body = std::string("{\"error\":\"missing course id\"}")
+            var bv = body.to_view()
+            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
+            res.write_view(&bv)
+        }
+    }))
+    srv.router.add("GET", "/api/courses/:courseId/assessment", (|db|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 3) {
+            var course_id = segments.get_ptr(2).to_string()
+            underlayer_web::handle_get_assessment(&raw db, &course_id, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var body = std::string("{\"error\":\"missing course id\"}")
             var bv = body.to_view()
             res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
             res.write_view(&bv)

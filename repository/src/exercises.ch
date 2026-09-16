@@ -7,6 +7,18 @@ using underlayer_models::ExerciseType
 
 public namespace underlayer_repository {
 
+    // Exercise stats for a concept
+    public struct ExerciseStats {
+        var concept_id : string
+        var exercise_count : int
+        var avg_difficulty : f64
+        
+        @make
+        func make() : ExerciseStats {
+            return ExerciseStats { concept_id = string(), exercise_count = 0, avg_difficulty = 0.0 }
+        }
+    }
+
     // Get exercises for a concept
     public func get_exercises_for_concept(db : *DbClient, concept_id : &string, limit : int) : vector<Exercise> {
         var exercises = vector<Exercise>()
@@ -253,6 +265,43 @@ public namespace underlayer_repository {
             }
         }
         return 0
+    }
+
+    // Bulk insert exercises
+    public func insert_exercises_bulk(db : *DbClient, exercises : *vector<Exercise>) : int {
+        var inserted_count = 0
+        var i : size_t = 0
+        while(i < exercises.size()) {
+            var ex = exercises.get_ptr(i)
+            insert_exercise(db, ex)
+            inserted_count = inserted_count + 1
+            i = i + 1
+        }
+        return inserted_count
+    }
+
+    // Get exercise stats for all concepts
+    public func get_exercise_stats(db : *DbClient) : vector<ExerciseStats> {
+        var stats = vector<ExerciseStats>()
+        var sql = string("SELECT concept_id, COUNT(*) as exercise_count, AVG(difficulty) as avg_difficulty FROM exercises GROUP BY concept_id ORDER BY concept_id")
+        var result = underlayer_db::query_sql(db, &raw sql)
+        var i : size_t = 0
+        while(i < result.rows.size()) {
+            var row = result.rows.get_ptr(i)
+            if(row.vals.size() >= 3) {
+                var stat = ExerciseStats::make()
+                stat.concept_id = row.vals.get_ptr(0).copy()
+                stat.exercise_count = parse_i64(row.vals.get_ptr(1).to_view()) as int
+                // Parse average difficulty
+                var avg_diff_str = row.vals.get_ptr(2).to_view()
+                if(avg_diff_str.size() > 0) {
+                    stat.avg_difficulty = parse_i64(avg_diff_str) as f64
+                }
+                stats.push(stat)
+            }
+            i = i + 1
+        }
+        return stats
     }
 
 }

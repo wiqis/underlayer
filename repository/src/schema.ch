@@ -135,6 +135,37 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw idx_enroll)
         var idx_enroll_course = string("CREATE INDEX IF NOT EXISTS idx_enroll_course ON enrollments(course_id)")
         underlayer_db::exec_sql(db, &raw idx_enroll_course)
+        // Notifications table
+        var sql_notif = string("CREATE TABLE IF NOT EXISTS notifications (id TEXT PRIMARY KEY, learner_id TEXT NOT NULL, type TEXT NOT NULL, title TEXT NOT NULL, message TEXT NOT NULL, course_id TEXT DEFAULT '', concept_id TEXT DEFAULT '', is_read INTEGER DEFAULT 0, action_url TEXT DEFAULT '', created_at INTEGER NOT NULL)")
+        underlayer_db::exec_sql(db, &raw sql_notif)
+        var idx_notif_learner = string("CREATE INDEX IF NOT EXISTS idx_notif_learner ON notifications(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx_notif_learner)
+        var idx_notif_read = string("CREATE INDEX IF NOT EXISTS idx_notif_read ON notifications(learner_id, is_read)")
+        underlayer_db::exec_sql(db, &raw idx_notif_read)
+        // Content feedback table
+        var sql_fb = string("CREATE TABLE IF NOT EXISTS content_feedback (id TEXT PRIMARY KEY, learner_id TEXT NOT NULL, concept_id TEXT NOT NULL, course_id TEXT DEFAULT '', feedback_type TEXT NOT NULL, message TEXT NOT NULL, page_url TEXT DEFAULT '', status TEXT DEFAULT 'pending', admin_notes TEXT DEFAULT '', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)")
+        underlayer_db::exec_sql(db, &raw sql_fb)
+        var idx_fb_concept = string("CREATE INDEX IF NOT EXISTS idx_fb_concept ON content_feedback(concept_id)")
+        underlayer_db::exec_sql(db, &raw idx_fb_concept)
+        var idx_fb_status = string("CREATE INDEX IF NOT EXISTS idx_fb_status ON content_feedback(status)")
+        underlayer_db::exec_sql(db, &raw idx_fb_status)
+        // Exercise reports table
+        var sql_er = string("CREATE TABLE IF NOT EXISTS exercise_reports (id TEXT PRIMARY KEY, learner_id TEXT NOT NULL, exercise_id TEXT NOT NULL, concept_id TEXT NOT NULL, report_type TEXT NOT NULL, message TEXT NOT NULL, status TEXT DEFAULT 'pending', created_at INTEGER NOT NULL)")
+        underlayer_db::exec_sql(db, &raw sql_er)
+        var idx_er_exercise = string("CREATE INDEX IF NOT EXISTS idx_er_exercise ON exercise_reports(exercise_id)")
+        underlayer_db::exec_sql(db, &raw idx_er_exercise)
+        var idx_er_status = string("CREATE INDEX IF NOT EXISTS idx_er_status ON exercise_reports(status)")
+        underlayer_db::exec_sql(db, &raw idx_er_status)
+        // Prerequisites table
+        var sql_prereq = string("CREATE TABLE IF NOT EXISTS course_prerequisites (course_id TEXT NOT NULL, required_course_id TEXT NOT NULL, min_mastery_pct INTEGER DEFAULT 80, PRIMARY KEY (course_id, required_course_id))")
+        underlayer_db::exec_sql(db, &raw sql_prereq)
+        var idx_prereq = string("CREATE INDEX IF NOT EXISTS idx_prereq_course ON course_prerequisites(course_id)")
+        underlayer_db::exec_sql(db, &raw idx_prereq)
+        // Skill assessments table
+        var sql_assess = string("CREATE TABLE IF NOT EXISTS skill_assessments (id INTEGER PRIMARY KEY AUTOINCREMENT, learner_id TEXT NOT NULL, course_id TEXT NOT NULL, score INTEGER DEFAULT 0, total INTEGER DEFAULT 0, placement TEXT DEFAULT 'beginner', recommended_start TEXT DEFAULT '', created_at INTEGER NOT NULL)")
+        underlayer_db::exec_sql(db, &raw sql_assess)
+        var idx_assess = string("CREATE INDEX IF NOT EXISTS idx_assess_learner ON skill_assessments(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx_assess)
     }
 
 }
