@@ -129,6 +129,43 @@ public namespace underlayer_web {
         }
     }
 
+    // GET /api/notes — Get all notes for the authenticated learner
+    public func handle_get_notes(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        var learner_id = auth_get_learner_id(db, req)
+        if(learner_id.size() == 0) {
+            var err = string("unauthorized")
+            send_error(res, 401u, &err)
+        } else {
+            var notes = underlayer_repository::get_all_notes(db, &learner_id)
+            var resp = string("[")
+            var ri : size_t = 0
+            while(ri < notes.size()) {
+                if(ri > 0) { resp.append_view(",") } else { }
+                var n = notes.get_ptr(ri)
+                resp.append_view("{\"id\":\"")
+                resp.append_string(&n.id)
+                resp.append_view("\",\"concept_id\":\"")
+                resp.append_string(&n.concept_id)
+                resp.append_view("\",\"course_id\":\"")
+                resp.append_string(&n.course_id)
+                resp.append_view("\",\"content\":\"")
+                resp.append_string(&n.content)
+                resp.append_view("\",\"section_ref\":\"")
+                resp.append_string(&n.section_ref)
+                resp.append_view("\",\"created_at\":")
+                var created_str = underlayer_core::int_to_string(n.created_at)
+                resp.append_view(created_str.to_view())
+                resp.append_view(",\"updated_at\":")
+                var updated_str = underlayer_core::int_to_string(n.updated_at)
+                resp.append_view(updated_str.to_view())
+                resp.append_view("}")
+                ri = ri + 1
+            }
+            resp.append_view("]")
+            send_json_str(res, &raw resp)
+        }
+    }
+
     // GET /api/notes/search?q=query — Search notes
     public func handle_search_notes(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = auth_get_learner_id(db, req)
@@ -136,26 +173,10 @@ public namespace underlayer_web {
             var err = string("unauthorized")
             send_error(res, 401u, &err)
         } else {
-            var path = req.path.to_view()
             var query = string()
-            // Parse q parameter from URL: /api/notes/search?q=...
-            var qi : size_t = 0
-            while(qi < path.size()) {
-                if(path.get(qi) == '?') {
-                    var pi = qi + 1
-                    while(pi < path.size()) {
-                        if(path.get(pi) == 'q' && pi + 1 < path.size() && path.get(pi + 1) == '=') {
-                            var vi = pi + 2
-                            while(vi < path.size() && path.get(vi) != '&') {
-                                query.append(path.get(vi))
-                                vi = vi + 1
-                            }
-                        } else { }
-                        pi = pi + 1
-                    }
-                } else { }
-                qi = qi + 1
-            }
+            var q_key = string("q")
+            var qv = req.query.get(&q_key.to_view())
+            if(qv.size() > 0) { query = sv_to_string(&raw qv) }
             if(query.size() == 0) {
                 var err = string("q parameter is required")
                 send_error(res, 400u, &err)

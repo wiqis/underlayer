@@ -9,13 +9,16 @@ public namespace underlayer_web {
     public func handle_course_progress(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
-        var course_id_raw = string("elf")
-        if(segments.size() >= 4) {
-            var sv = segments.get_ptr(3)
+        var course_id_raw = string()
+        if(segments.size() >= 3) {
+            var sv = segments.get_ptr(2)
             var i : size_t = 0
             while(i < sv.size()) { course_id_raw.append(sv.get(i)); i = i + 1 }
+        } else {
+            course_id_raw = string("elf")
         }
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id_raw)
         var health = underlayer_learning::compute_knowledge_health(&raw states)
         var body = std::string("{\"course_id\":\"")
@@ -58,7 +61,8 @@ public namespace underlayer_web {
     }
 
     public func handle_progress(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
 
         var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
@@ -191,7 +195,8 @@ public namespace underlayer_web {
             return
         }
         var target_date = parse_i64(td_v) as i64
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, &*req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
         underlayer_repository::set_learning_goal(&raw db, &learner_id, &course_id, target_date)
         var ok_body = string("{\"ok\":true}")
@@ -200,7 +205,8 @@ public namespace underlayer_web {
 
     // 6.1.5: Delete learning goal
     public func handle_delete_goal(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
         underlayer_repository::delete_learning_goal(&raw db, &learner_id, &course_id)
         var ok_body = string("{\"ok\":true}")
@@ -209,7 +215,8 @@ public namespace underlayer_web {
 
     // 6.1.7: Progress export (JSON)
     public func handle_progress_export(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
         var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
         var sessions = underlayer_repository::get_learner_sessions(&raw db, &learner_id, 100)
@@ -262,7 +269,8 @@ public namespace underlayer_web {
 
     // 6.2.1: Session analytics (length, accuracy, time)
     public func handle_session_analytics(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
         var sessions = underlayer_repository::get_learner_sessions(&raw db, &learner_id, 50)
         var total_items : int = 0
@@ -304,7 +312,8 @@ public namespace underlayer_web {
 
     // 6.2.2: Concept analytics (mastery, time, attempts)
     public func handle_concept_analytics(db : &DbClient, concept_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var cid = sv_to_string(concept_id)
         var course_id = string("elf")
         var state = underlayer_repository::get_concept_state(&raw db, &learner_id, &course_id, &cid)

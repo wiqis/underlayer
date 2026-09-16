@@ -124,7 +124,8 @@ public namespace underlayer_web {
 
     // P2 6.2.7: Device analytics — mobile vs desktop from login user agents
     public func handle_device_analytics(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var rows = underlayer_repository::query_login_agents(&raw db, &learner_id)
 
         var mobile : i64 = 0

@@ -84,7 +84,8 @@ public namespace underlayer_web {
 
     // POST /api/fsrs/optimize — optimize parameters from review history
     public func handle_fsrs_optimize(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var history = underlayer_repository::get_all_review_history(&raw db, &learner_id)
         if(history.size() < 10) {
             send_error(res, 400u, &string("need at least 10 reviews for optimization"))

@@ -1,4 +1,4 @@
-// ELF Course ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Concept 20: Shared Libraries
+// ELF Course — Concept 20: Shared Libraries
 // How .so files work, soname versioning, library paths, and the linking model.
 public namespace underlayer_content {
 
@@ -9,7 +9,7 @@ using std::string_view
 public func render_shared_libraries() : string {
     var page = HtmlPage()
     page.defaultPrepare()
-    var title = std::string_view("Shared Libraries ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Underlayer")
+    var title = std::string_view("Shared Libraries — Underlayer")
     page.appendTitle(&title)
 
     #html {
@@ -26,7 +26,7 @@ public func render_shared_libraries() : string {
                     <dl>
                         <dt><kbd>Ctrl</kbd>+<kbd>K</kbd></dt><dd>Open search</dd>
                         <dt><kbd>Esc</kbd></dt><dd>Close search / dialog</dd>
-                        <dt><kbd>ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ</kbd></dt><dd>Back to top</dd>
+                        <dt><kbd>↑</kbd></dt><dd>Back to top</dd>
                     </dl>
                     <button onclick="closeShortcuts()" class="shortcuts-close">Close</button>
                 </div>
@@ -49,9 +49,9 @@ public func render_shared_libraries() : string {
                 <h2>A Simple Model</h2>
                 <p>A shared library is a position-independent ELF executable that can be loaded at any address. It's built with three key concepts:</p>
                 <ul>
-                    <li><strong>Real name</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â The actual file: libfoo.so.1.2.3</li>
-                    <li><strong>Soname</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â The compatibility name: libfoo.so.1 (symlink to real name)</li>
-                    <li><strong>Linker name</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â The development name: libfoo.so (symlink to soname, used at compile time)</li>
+                    <li><strong>Real name</strong> — The actual file: libfoo.so.1.2.3</li>
+                    <li><strong>Soname</strong> — The compatibility name: libfoo.so.1 (symlink to real name)</li>
+                    <li><strong>Linker name</strong> — The development name: libfoo.so (symlink to soname, used at compile time)</li>
                 </ul>
                 <p>This three-level naming lets you update a library (bump 1.2.3 to 1.2.4) without breaking programs linked against soname "libfoo.so.1".</p>
             </div>
@@ -138,7 +138,7 @@ ldconfig -p | head -10</pre></div>
                 <p>You upgrade libfoo.so.1.2.3 to libfoo.so.1.2.4. Do you need to recompile programs that use libfoo?</p>
                 <div class="quiz" id="quiz-sl-2">
                     <button class="quiz-option" onclick="checkQuiz('quiz-sl-2', this, false)">Yes, always recompile</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-sl-2', this, true)">No ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â update the libfoo.so.1 symlink to point to 1.2.4, and existing programs will use the new version automatically</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-sl-2', this, true)">No — update the libfoo.so.1 symlink to point to 1.2.4, and existing programs will use the new version automatically</button>
                     <button class="quiz-option" onclick="checkQuiz('quiz-sl-2', this, false)">Only if the ABI changed</button>
                     <div class="quiz-feedback"></div>
                 </div>
@@ -148,7 +148,7 @@ ldconfig -p | head -10</pre></div>
                 <h2>Connect</h2>
                 <p>Shared libraries are found and loaded by the dynamic linker (ld.so). The next concept covers how ld.so searches for libraries, processes relocations, and sets up the runtime environment.</p>
             </div>
-            <div class="swipe-hint">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Swipe to navigate ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢</div>
+            <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">
             <link rel="next" href="">
         </div>
@@ -257,6 +257,66 @@ ldconfig -p | head -10</pre></div>
         .quiz-option:active, .tf-option:active { transform: scale(0.98); transition: transform 0.1s; }
     }
     #js {
+        function __ul_ctx() {
+            var parts = window.location.pathname.split('/').filter(function(p) { return p.length > 0; });
+            if (parts.length >= 4) {
+                if (parts[0] === 'courses') {
+                    if (parts[2] === 'lessons') {
+                        return { course: parts[1], concept: parts[3] };
+                    }
+                }
+            }
+            return null;
+        }
+        function __ul_token() {
+            var t = '';
+            try { t = localStorage.getItem('session_token') || ''; } catch (e) { t = ''; }
+            return t;
+        }
+        function __ul_report_attempt(correct) {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            var rating = 'again';
+            if (correct) { rating = 'good'; }
+            var url = '/api/review/submit?concept_id=' + encodeURIComponent(ctx.concept) + '&course_id=' + encodeURIComponent(ctx.course) + '&rating=' + rating;
+            try { fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(function() {}); } catch (e) {}
+        }
+        function __ul_report_view() {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            try {
+                fetch('/api/learning/view', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+                    body: JSON.stringify({ course_id: ctx.course, concept_id: ctx.concept })
+                }).catch(function() {});
+            } catch (e) {}
+        }
+        document.addEventListener('DOMContentLoaded', function() { __ul_report_view(); });
+        document.addEventListener('click', function(ev) {
+            var el = ev.target;
+            while (el && el !== document && !(el.classList && el.classList.contains('quiz-option'))) { el = el.parentNode; }
+            if (!el || el === document) { return; }
+            setTimeout(function() { __ul_report_attempt(el.classList.contains('correct')); }, 80);
+        }, true);
+        document.addEventListener('change', function(ev) {
+            var el = ev.target;
+            if (!el || !el.classList) { return; }
+            var isBlank = el.classList.contains('fill-blank');
+            var isSelect = el.classList.contains('app-select');
+            if (!isBlank && !isSelect) { return; }
+            var ans = el.getAttribute('data-answer');
+            if (!ans) { ans = el.getAttribute('data-correct'); }
+            if (!ans) { return; }
+            var val = '';
+            if (el.value) { val = el.value; }
+            val = val.trim();
+            __ul_report_attempt(val === ans);
+        }, true);
         function checkQuiz(quizId, btn, correct) {
             var quiz = document.getElementById(quizId);
             var options = quiz.querySelectorAll('.quiz-option');
@@ -363,7 +423,7 @@ ldconfig -p | head -10</pre></div>
                 if(fb.nextElementSibling && fb.nextElementSibling.classList.contains('feedback-rating')) continue;
                 var div = document.createElement('div');
                 div.className = 'feedback-rating';
-                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â</button><button class="feedback-btn" onclick="rateFeedback(this, false)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ…Â½</button><span class="feedback-thanks">Thanks!</span>';
+                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">👍</button><button class="feedback-btn" onclick="rateFeedback(this, false)">👎</button><span class="feedback-thanks">Thanks!</span>';
                 fb.parentNode.insertBefore(div, fb.nextSibling);
             }
         }

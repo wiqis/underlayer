@@ -12,7 +12,8 @@ public namespace underlayer_web {
     // 5.1.1-5.1.5: Review session types via mode parameter
     // mode=new (5.1.1), due (5.1.2), cram (5.1.3), targeted (5.1.4), weakness (5.1.5)
     public func handle_review_start(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
 
         // Check for mode parameter (5.1.1-5.1.5)
@@ -310,7 +311,8 @@ public namespace underlayer_web {
         var concept_id = sv_to_string(&raw cid_v)
         var course_id = sv_to_string(&raw crsid_v)
         var rating_str = sv_to_string(&raw rat_v)
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, &*req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
 
         var rating : int = 3
         if(rating_str.equals(string("again")) || rating_str.equals(string("1"))) { rating = 1 }
@@ -350,6 +352,7 @@ public namespace underlayer_web {
         else { state.status = string("reviewing") }
 
         underlayer_repository::upsert_concept_state(&raw db, &raw state)
+        underlayer_repository::record_activity(&raw db, &learner_id)
 
         // 1.2.16: Compute session accuracy from state
         var session_accuracy : f64 = 0.0
@@ -449,7 +452,8 @@ public namespace underlayer_web {
     }
 
     public func handle_review_due(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
         var limit : int = 10
 
@@ -481,7 +485,8 @@ public namespace underlayer_web {
 
     // ---- Session History (1.2.21, 1.2.22, 1.2.23, 1.2.24) ----
     public func handle_session_history(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var sessions = underlayer_repository::get_learner_sessions(&raw db, &learner_id, 20)
 
         var body = std::string("{\"sessions\":[")
@@ -701,7 +706,8 @@ public namespace underlayer_web {
 
     // 1.2.25: Session recommendations — suggest session type based on due items
     public func handle_session_recommendations(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
         var due_items = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, 50)
         var new_count : int = 0
@@ -760,7 +766,8 @@ public namespace underlayer_web {
 
     // 1.2.27: Session recommendations — suggest time of day based on past performance
     public func handle_session_time_recommendation(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var sessions = underlayer_repository::get_learner_sessions(&raw db, &learner_id, 50)
 
         // Analyze which hours have best accuracy

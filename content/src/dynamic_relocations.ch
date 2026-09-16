@@ -1,5 +1,5 @@
-// ELF Course ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Concept 18: Dynamic Relocations
-// .rela.dyn, .rela.plt ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â how the dynamic linker patches addresses at load time.
+// ELF Course — Concept 18: Dynamic Relocations
+// .rela.dyn, .rela.plt — how the dynamic linker patches addresses at load time.
 public namespace underlayer_content {
 
 using std::string
@@ -9,7 +9,7 @@ using std::string_view
 public func render_dynamic_relocations() : string {
     var page = HtmlPage()
     page.defaultPrepare()
-    var title = std::string_view("Dynamic Relocations ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Underlayer")
+    var title = std::string_view("Dynamic Relocations — Underlayer")
     page.appendTitle(&title)
 
     #html {
@@ -26,7 +26,7 @@ public func render_dynamic_relocations() : string {
                     <dl>
                         <dt><kbd>Ctrl</kbd>+<kbd>K</kbd></dt><dd>Open search</dd>
                         <dt><kbd>Esc</kbd></dt><dd>Close search / dialog</dd>
-                        <dt><kbd>ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ</kbd></dt><dd>Back to top</dd>
+                        <dt><kbd>↑</kbd></dt><dd>Back to top</dd>
                     </dl>
                     <button onclick="closeShortcuts()" class="shortcuts-close">Close</button>
                 </div>
@@ -42,7 +42,7 @@ public func render_dynamic_relocations() : string {
             <div class="unit unit-why">
                 <h2>Why This Matters</h2>
                 <p>When you link a shared library, the linker can't know where the library will be loaded in memory. Every reference to an external symbol (like calling printf from your library) needs to be patched at load time by the dynamic linker (ld.so).</p>
-                <p>Dynamic relocations are the mechanism that makes shared libraries work ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â they're the "fill in the blanks later" instructions that ld.so processes when loading your program.</p>
+                <p>Dynamic relocations are the mechanism that makes shared libraries work — they're the "fill in the blanks later" instructions that ld.so processes when loading your program.</p>
             </div>
 
             <div class="unit unit-model">
@@ -50,11 +50,11 @@ public func render_dynamic_relocations() : string {
                 <p>Think of dynamic relocations as a to-do list for ld.so:</p>
                 <ol>
                     <li>Load the program and all shared libraries into memory</li>
-                    <li>Process .rela.dyn ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â patch data references (global variables, GOT entries)</li>
-                    <li>Process .rela.plt ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â set up PLT stubs for lazy function binding</li>
+                    <li>Process .rela.dyn — patch data references (global variables, GOT entries)</li>
+                    <li>Process .rela.plt — set up PLT stubs for lazy function binding</li>
                     <li>Jump to the program's entry point</li>
                 </ol>
-                <p>Most dynamic relocations use <strong>lazy binding</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â function addresses are resolved on first call, not at load time. This speeds up program startup.</p>
+                <p>Most dynamic relocations use <strong>lazy binding</strong> — function addresses are resolved on first call, not at load time. This speeds up program startup.</p>
             </div>
 
             <div class="unit unit-reality">
@@ -113,7 +113,7 @@ Relocation section '.rela.plt' at offset 0x... contains 30 entries:
                     <li>The GOT entry points to the resolver stub (not the actual function yet)</li>
                     <li>The resolver stub calls ld.so's _dl_runtime_resolve()</li>
                     <li>ld.so finds the real read() address, writes it into the GOT, and jumps to it</li>
-                    <li>On subsequent calls, the GOT entry points directly to read() ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no resolver overhead</li>
+                    <li>On subsequent calls, the GOT entry points directly to read() — no resolver overhead</li>
                 </ol>
             </div>
 
@@ -139,7 +139,7 @@ LD_BIND_NOW=1 ./myprog</pre></div>
                 <div class="quiz" id="quiz-dr-1">
                     <button class="quiz-option" onclick="checkQuiz('quiz-dr-1', this, false)">GLOB_DAT is for functions, JUMP_SLOT is for data</button>
                     <button class="quiz-option" onclick="checkQuiz('quiz-dr-1', this, true)">GLOB_DAT resolves at load time (for data references), JUMP_SLOT uses lazy binding (for function calls)</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-dr-1', this, false)">They are identical ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â just different names</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-dr-1', this, false)">They are identical — just different names</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -149,7 +149,7 @@ LD_BIND_NOW=1 ./myprog</pre></div>
                 <p>What happens if you set LD_BIND_NOW=1?</p>
                 <div class="quiz" id="quiz-dr-2">
                     <button class="quiz-option" onclick="checkQuiz('quiz-dr-2', this, false)">The program won't start</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-dr-2', this, true)">All function addresses are resolved at load time instead of on first call ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â slightly slower startup but slightly faster first call</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-dr-2', this, true)">All function addresses are resolved at load time instead of on first call — slightly slower startup but slightly faster first call</button>
                     <button class="quiz-option" onclick="checkQuiz('quiz-dr-2', this, false)">All symbols become hidden</button>
                     <div class="quiz-feedback"></div>
                 </div>
@@ -157,9 +157,9 @@ LD_BIND_NOW=1 ./myprog</pre></div>
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Dynamic relocations are processed by the dynamic linker. The next module covers dynamic linking in depth ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the .dynamic section, shared library dependencies, and how ld.so orchestrates everything.</p>
+                <p>Dynamic relocations are processed by the dynamic linker. The next module covers dynamic linking in depth — the .dynamic section, shared library dependencies, and how ld.so orchestrates everything.</p>
             </div>
-            <div class="swipe-hint">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Swipe to navigate ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢</div>
+            <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">
             <link rel="next" href="">
         </div>
@@ -271,6 +271,66 @@ LD_BIND_NOW=1 ./myprog</pre></div>
         .quiz-option:active, .tf-option:active { transform: scale(0.98); transition: transform 0.1s; }
     }
     #js {
+        function __ul_ctx() {
+            var parts = window.location.pathname.split('/').filter(function(p) { return p.length > 0; });
+            if (parts.length >= 4) {
+                if (parts[0] === 'courses') {
+                    if (parts[2] === 'lessons') {
+                        return { course: parts[1], concept: parts[3] };
+                    }
+                }
+            }
+            return null;
+        }
+        function __ul_token() {
+            var t = '';
+            try { t = localStorage.getItem('session_token') || ''; } catch (e) { t = ''; }
+            return t;
+        }
+        function __ul_report_attempt(correct) {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            var rating = 'again';
+            if (correct) { rating = 'good'; }
+            var url = '/api/review/submit?concept_id=' + encodeURIComponent(ctx.concept) + '&course_id=' + encodeURIComponent(ctx.course) + '&rating=' + rating;
+            try { fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(function() {}); } catch (e) {}
+        }
+        function __ul_report_view() {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            try {
+                fetch('/api/learning/view', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+                    body: JSON.stringify({ course_id: ctx.course, concept_id: ctx.concept })
+                }).catch(function() {});
+            } catch (e) {}
+        }
+        document.addEventListener('DOMContentLoaded', function() { __ul_report_view(); });
+        document.addEventListener('click', function(ev) {
+            var el = ev.target;
+            while (el && el !== document && !(el.classList && el.classList.contains('quiz-option'))) { el = el.parentNode; }
+            if (!el || el === document) { return; }
+            setTimeout(function() { __ul_report_attempt(el.classList.contains('correct')); }, 80);
+        }, true);
+        document.addEventListener('change', function(ev) {
+            var el = ev.target;
+            if (!el || !el.classList) { return; }
+            var isBlank = el.classList.contains('fill-blank');
+            var isSelect = el.classList.contains('app-select');
+            if (!isBlank && !isSelect) { return; }
+            var ans = el.getAttribute('data-answer');
+            if (!ans) { ans = el.getAttribute('data-correct'); }
+            if (!ans) { return; }
+            var val = '';
+            if (el.value) { val = el.value; }
+            val = val.trim();
+            __ul_report_attempt(val === ans);
+        }, true);
         function checkQuiz(quizId, btn, correct) {
             var quiz = document.getElementById(quizId);
             var options = quiz.querySelectorAll('.quiz-option');
@@ -377,7 +437,7 @@ LD_BIND_NOW=1 ./myprog</pre></div>
                 if(fb.nextElementSibling && fb.nextElementSibling.classList.contains('feedback-rating')) continue;
                 var div = document.createElement('div');
                 div.className = 'feedback-rating';
-                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â</button><button class="feedback-btn" onclick="rateFeedback(this, false)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ…Â½</button><span class="feedback-thanks">Thanks!</span>';
+                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">👍</button><button class="feedback-btn" onclick="rateFeedback(this, false)">👎</button><span class="feedback-thanks">Thanks!</span>';
                 fb.parentNode.insertBefore(div, fb.nextSibling);
             }
         }

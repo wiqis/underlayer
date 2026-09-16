@@ -1,5 +1,5 @@
-// ELF Course ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Concept 19: Dynamic Section
-// The .dynamic section ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the control structure for dynamic linking.
+// ELF Course — Concept 19: Dynamic Section
+// The .dynamic section — the control structure for dynamic linking.
 public namespace underlayer_content {
 
 using std::string
@@ -9,7 +9,7 @@ using std::string_view
 public func render_dynamic_section() : string {
     var page = HtmlPage()
     page.defaultPrepare()
-    var title = std::string_view("Dynamic Section ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Underlayer")
+    var title = std::string_view("Dynamic Section — Underlayer")
     page.appendTitle(&title)
 
     #html {
@@ -26,7 +26,7 @@ public func render_dynamic_section() : string {
                     <dl>
                         <dt><kbd>Ctrl</kbd>+<kbd>K</kbd></dt><dd>Open search</dd>
                         <dt><kbd>Esc</kbd></dt><dd>Close search / dialog</dd>
-                        <dt><kbd>ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ</kbd></dt><dd>Back to top</dd>
+                        <dt><kbd>↑</kbd></dt><dd>Back to top</dd>
                     </dl>
                     <button onclick="closeShortcuts()" class="shortcuts-close">Close</button>
                 </div>
@@ -41,7 +41,7 @@ public func render_dynamic_section() : string {
 
             <div class="unit unit-why">
                 <h2>Why This Matters</h2>
-                <p>When ld.so loads your program, how does it know which shared libraries you need? Where is the symbol table? Where are the relocations? The answer is the <strong>.dynamic</strong> section ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â a table of key-value pairs that tells the dynamic linker everything it needs to know.</p>
+                <p>When ld.so loads your program, how does it know which shared libraries you need? Where is the symbol table? Where are the relocations? The answer is the <strong>.dynamic</strong> section — a table of key-value pairs that tells the dynamic linker everything it needs to know.</p>
                 <p>The .dynamic section is the "instruction manual" that ld.so reads to set up your program's runtime environment.</p>
             </div>
 
@@ -49,12 +49,12 @@ public func render_dynamic_section() : string {
                 <h2>A Simple Model</h2>
                 <p>Think of .dynamic as a configuration file embedded in the ELF binary. Each entry is a tag-value pair:</p>
                 <ul>
-                    <li><strong>DT_NEEDED</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â "I need this shared library" (e.g., libc.so.6)</li>
-                    <li><strong>DT_SYMTAB</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â "The dynamic symbol table is at this offset"</li>
-                    <li><strong>DT_STRTAB</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â "The string table is at this offset"</li>
-                    <li><strong>DT_REL/DT_RELA</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â "The relocation table is at this offset"</li>
-                    <li><strong>DT_INIT</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â "Call this function before main()"</li>
-                    <li><strong>DT_FINI</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â "Call this function after main() returns"</li>
+                    <li><strong>DT_NEEDED</strong> — "I need this shared library" (e.g., libc.so.6)</li>
+                    <li><strong>DT_SYMTAB</strong> — "The dynamic symbol table is at this offset"</li>
+                    <li><strong>DT_STRTAB</strong> — "The string table is at this offset"</li>
+                    <li><strong>DT_REL/DT_RELA</strong> — "The relocation table is at this offset"</li>
+                    <li><strong>DT_INIT</strong> — "Call this function before main()"</li>
+                    <li><strong>DT_FINI</strong> — "Call this function after main() returns"</li>
                 </ul>
             </div>
 
@@ -111,7 +111,7 @@ Dynamic section at offset 0x3ba0 contains 30 entries:
                 </div>
                 <p>The DT_NEEDED entries tell you exactly which libraries are required:</p>
                 <ul>
-                    <li><strong>libc.so.6</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the C standard library (nearly every program needs this)</li>
+                    <li><strong>libc.so.6</strong> — the C standard library (nearly every program needs this)</li>
                 </ul>
                 <p>A complex program might show dozens of DT_NEEDED entries for different libraries.</p>
             </div>
@@ -158,9 +158,9 @@ readelf -d static     # no .dynamic section (or empty)</pre></div>
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>The .dynamic section lists library dependencies. But how do shared libraries themselves work ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â how are they built, versioned, and found at runtime? That's the next concept.</p>
+                <p>The .dynamic section lists library dependencies. But how do shared libraries themselves work — how are they built, versioned, and found at runtime? That's the next concept.</p>
             </div>
-            <div class="swipe-hint">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Swipe to navigate ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢</div>
+            <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">
             <link rel="next" href="">
         </div>
@@ -272,6 +272,66 @@ readelf -d static     # no .dynamic section (or empty)</pre></div>
         .quiz-option:active, .tf-option:active { transform: scale(0.98); transition: transform 0.1s; }
     }
     #js {
+        function __ul_ctx() {
+            var parts = window.location.pathname.split('/').filter(function(p) { return p.length > 0; });
+            if (parts.length >= 4) {
+                if (parts[0] === 'courses') {
+                    if (parts[2] === 'lessons') {
+                        return { course: parts[1], concept: parts[3] };
+                    }
+                }
+            }
+            return null;
+        }
+        function __ul_token() {
+            var t = '';
+            try { t = localStorage.getItem('session_token') || ''; } catch (e) { t = ''; }
+            return t;
+        }
+        function __ul_report_attempt(correct) {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            var rating = 'again';
+            if (correct) { rating = 'good'; }
+            var url = '/api/review/submit?concept_id=' + encodeURIComponent(ctx.concept) + '&course_id=' + encodeURIComponent(ctx.course) + '&rating=' + rating;
+            try { fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(function() {}); } catch (e) {}
+        }
+        function __ul_report_view() {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            try {
+                fetch('/api/learning/view', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+                    body: JSON.stringify({ course_id: ctx.course, concept_id: ctx.concept })
+                }).catch(function() {});
+            } catch (e) {}
+        }
+        document.addEventListener('DOMContentLoaded', function() { __ul_report_view(); });
+        document.addEventListener('click', function(ev) {
+            var el = ev.target;
+            while (el && el !== document && !(el.classList && el.classList.contains('quiz-option'))) { el = el.parentNode; }
+            if (!el || el === document) { return; }
+            setTimeout(function() { __ul_report_attempt(el.classList.contains('correct')); }, 80);
+        }, true);
+        document.addEventListener('change', function(ev) {
+            var el = ev.target;
+            if (!el || !el.classList) { return; }
+            var isBlank = el.classList.contains('fill-blank');
+            var isSelect = el.classList.contains('app-select');
+            if (!isBlank && !isSelect) { return; }
+            var ans = el.getAttribute('data-answer');
+            if (!ans) { ans = el.getAttribute('data-correct'); }
+            if (!ans) { return; }
+            var val = '';
+            if (el.value) { val = el.value; }
+            val = val.trim();
+            __ul_report_attempt(val === ans);
+        }, true);
         function checkQuiz(quizId, btn, correct) {
             var quiz = document.getElementById(quizId);
             var options = quiz.querySelectorAll('.quiz-option');
@@ -378,7 +438,7 @@ readelf -d static     # no .dynamic section (or empty)</pre></div>
                 if(fb.nextElementSibling && fb.nextElementSibling.classList.contains('feedback-rating')) continue;
                 var div = document.createElement('div');
                 div.className = 'feedback-rating';
-                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â</button><button class="feedback-btn" onclick="rateFeedback(this, false)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ…Â½</button><span class="feedback-thanks">Thanks!</span>';
+                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">👍</button><button class="feedback-btn" onclick="rateFeedback(this, false)">👎</button><span class="feedback-thanks">Thanks!</span>';
                 fb.parentNode.insertBefore(div, fb.nextSibling);
             }
         }

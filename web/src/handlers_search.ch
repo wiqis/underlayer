@@ -89,7 +89,8 @@ public namespace underlayer_web {
 
     // 7.1.9: Recent history (last 10 visited concepts)
     public func handle_recent_history(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var sessions = underlayer_repository::get_learner_sessions(&raw db, &learner_id, 10)
         var recent = vector<string>()
 

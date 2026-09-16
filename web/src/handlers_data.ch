@@ -8,7 +8,8 @@ public namespace underlayer_web {
 
     // 16.8.1-16.8.5: GET /api/user/export — export all user data as JSON
     public func handle_export_data(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var learner = underlayer_repository::get_learner(db, &learner_id)
         var states = underlayer_repository::get_all_concept_states(db, &learner_id, &string("elf"))
         var sessions = underlayer_repository::get_learner_sessions(db, &learner_id, 1000)
@@ -83,7 +84,8 @@ public namespace underlayer_web {
 
     // 16.8.6-16.8.7: DELETE /api/user/data/:type — delete specific data type
     public func handle_delete_data(db : *DbClient, data_type : *string, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var dt = data_type.copy()
         if(dt.equals(&string("reviews"))) {
             var sql = string("DELETE FROM review_items WHERE learner_id = '")
@@ -137,7 +139,8 @@ public namespace underlayer_web {
 
     // 16.8.8-16.8.10: DELETE /api/user/account — delete entire account
     public func handle_delete_account(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var del_sql = string("DELETE FROM concept_states WHERE learner_id = '")
         del_sql.append_string(&learner_id)
         del_sql.append_view("'")
@@ -204,7 +207,8 @@ public namespace underlayer_web {
 
     // 16.8.12: POST /api/user/deactivate — deactivate account (temporary)
     public func handle_deactivate_account(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var now = underlayer_core::current_timestamp()
         var now_str = underlayer_core::int_to_string(now)
         var sql = string("INSERT OR REPLACE INTO learner_settings (learner_id, theme, font_size, language, timezone, date_format, email_notifications, push_notifications, in_app_notifications, compact_mode, created_at, updated_at) VALUES ('")
@@ -225,7 +229,8 @@ public namespace underlayer_web {
 
     // 16.8.13: POST /api/user/reactivate — reactivate account
     public func handle_reactivate_account(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var now = underlayer_core::current_timestamp()
         var now_str = underlayer_core::int_to_string(now)
         var sql = string("INSERT OR REPLACE INTO learner_settings (learner_id, theme, font_size, language, timezone, date_format, email_notifications, push_notifications, in_app_notifications, compact_mode, created_at, updated_at) VALUES ('")
@@ -242,7 +247,8 @@ public namespace underlayer_web {
 
     // 6.1.8: POST /api/progress/import — import progress from another account
     public func handle_import_progress(db : *DbClient, req : &mut http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var body_str = read_body(&raw mut req)
         if(body_str.size() == 0) {
             send_error(res, 400u, &string("missing request body"))
@@ -326,7 +332,8 @@ public namespace underlayer_web {
 
     // 6.1.6: POST /api/progress/share — create public sharing token
     public func handle_share_progress(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var token = underlayer_core::int_to_string(underlayer_core::current_timestamp())
         var body = string("{\"share_url\":\"/u/demo/progress/")
         body.append_view(token.to_view())

@@ -208,6 +208,66 @@ public func render_elf_landing() : string {
     }
 
     #js {
+        function __ul_ctx() {
+            var parts = window.location.pathname.split('/').filter(function(p) { return p.length > 0; });
+            if (parts.length >= 4) {
+                if (parts[0] === 'courses') {
+                    if (parts[2] === 'lessons') {
+                        return { course: parts[1], concept: parts[3] };
+                    }
+                }
+            }
+            return null;
+        }
+        function __ul_token() {
+            var t = '';
+            try { t = localStorage.getItem('session_token') || ''; } catch (e) { t = ''; }
+            return t;
+        }
+        function __ul_report_attempt(correct) {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            var rating = 'again';
+            if (correct) { rating = 'good'; }
+            var url = '/api/review/submit?concept_id=' + encodeURIComponent(ctx.concept) + '&course_id=' + encodeURIComponent(ctx.course) + '&rating=' + rating;
+            try { fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(function() {}); } catch (e) {}
+        }
+        function __ul_report_view() {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            try {
+                fetch('/api/learning/view', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+                    body: JSON.stringify({ course_id: ctx.course, concept_id: ctx.concept })
+                }).catch(function() {});
+            } catch (e) {}
+        }
+        document.addEventListener('DOMContentLoaded', function() { __ul_report_view(); });
+        document.addEventListener('click', function(ev) {
+            var el = ev.target;
+            while (el && el !== document && !(el.classList && el.classList.contains('quiz-option'))) { el = el.parentNode; }
+            if (!el || el === document) { return; }
+            setTimeout(function() { __ul_report_attempt(el.classList.contains('correct')); }, 80);
+        }, true);
+        document.addEventListener('change', function(ev) {
+            var el = ev.target;
+            if (!el || !el.classList) { return; }
+            var isBlank = el.classList.contains('fill-blank');
+            var isSelect = el.classList.contains('app-select');
+            if (!isBlank && !isSelect) { return; }
+            var ans = el.getAttribute('data-answer');
+            if (!ans) { ans = el.getAttribute('data-correct'); }
+            if (!ans) { return; }
+            var val = '';
+            if (el.value) { val = el.value; }
+            val = val.trim();
+            __ul_report_attempt(val === ans);
+        }, true);
         function getTheme() {
             var saved = localStorage.getItem('theme');
             if (saved) return saved;

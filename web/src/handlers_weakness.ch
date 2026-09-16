@@ -13,7 +13,8 @@ public namespace underlayer_web {
 
     // 1.4.21: Weakness dashboard — all weak concepts with severity and trend
     public func handle_weakness_dashboard(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
         var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
         var weaknesses = detect_weaknesses(&raw states)
@@ -59,7 +60,8 @@ public namespace underlayer_web {
 
     // 1.4.23: Weakness export — download weakness report as JSON
     public func handle_weakness_export(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
         var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
         var weaknesses = detect_weaknesses(&raw states)
@@ -126,7 +128,8 @@ public namespace underlayer_web {
 
     // 1.4.24: Weakness alerts — notify when new concept becomes weak
     public func handle_weakness_alerts(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
         var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
         var weaknesses = detect_weaknesses(&raw states)

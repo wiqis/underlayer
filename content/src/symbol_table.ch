@@ -1,5 +1,5 @@
-// ELF Course ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Concept 13: Symbol Table
-// The .symtab and .dynsym sections ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Elf64_Sym entries, string tables, and how symbols are organized.
+// ELF Course — Concept 13: Symbol Table
+// The .symtab and .dynsym sections — Elf64_Sym entries, string tables, and how symbols are organized.
 public namespace underlayer_content {
 
 using std::string
@@ -9,7 +9,7 @@ using std::string_view
 public func render_symbol_table() : string {
     var page = HtmlPage()
     page.defaultPrepare()
-    var title = std::string_view("Symbol Table ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Underlayer")
+    var title = std::string_view("Symbol Table — Underlayer")
     page.appendTitle(&title)
 
     #html {
@@ -26,7 +26,7 @@ public func render_symbol_table() : string {
                     <dl>
                         <dt><kbd>Ctrl</kbd>+<kbd>K</kbd></dt><dd>Open search</dd>
                         <dt><kbd>Esc</kbd></dt><dd>Close search / dialog</dd>
-                        <dt><kbd>ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ</kbd></dt><dd>Back to top</dd>
+                        <dt><kbd>↑</kbd></dt><dd>Back to top</dd>
                     </dl>
                     <button onclick="closeShortcuts()" class="shortcuts-close">Close</button>
                 </div>
@@ -49,11 +49,11 @@ public func render_symbol_table() : string {
                 <h2>A Simple Model</h2>
                 <p>A symbol table is a lookup dictionary. Each entry maps a name (like "main" or "printf") to:</p>
                 <ul>
-                    <li><strong>Value</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â An address or offset</li>
-                    <li><strong>Size</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â How many bytes the symbol occupies</li>
-                    <li><strong>Type</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Function, object, section, or file</li>
-                    <li><strong>Binding</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Local, global, or weak</li>
-                    <li><strong>Section</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Which section it belongs to</li>
+                    <li><strong>Value</strong> — An address or offset</li>
+                    <li><strong>Size</strong> — How many bytes the symbol occupies</li>
+                    <li><strong>Type</strong> — Function, object, section, or file</li>
+                    <li><strong>Binding</strong> — Local, global, or weak</li>
+                    <li><strong>Section</strong> — Which section it belongs to</li>
                 </ul>
                 <p>The names themselves live in a separate string table (.strtab). Each symbol entry holds an offset into that string table.</p>
             </div>
@@ -111,7 +111,7 @@ public func render_symbol_table() : string {
                  0000000000003190 T __do_global_dtors_aux</pre>
                 </div>
                 <p>nm -n sorts by address. U means "undefined" (imported from another library). T means "in text section" (defined here).</p>
-                <p>The .dynsym is a subset ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â only symbols needed for dynamic linking:</p>
+                <p>The .dynsym is a subset — only symbols needed for dynamic linking:</p>
                 <div class="hex-dump">
                     <pre>$ readelf -sW /bin/ls | grep FUNC | head -10
      1: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND __ctype_b_loc
@@ -146,7 +146,7 @@ readelf -sW ./my_program</pre></div>
                 <div class="quiz" id="quiz-st-1">
                     <button class="quiz-option" onclick="checkQuiz('quiz-st-1', this, false)">.symtab is for dynamic linking, .dynsym is for static linking</button>
                     <button class="quiz-option" onclick="checkQuiz('quiz-st-1', this, true)">.symtab has all symbols, .dynsym has only those needed for dynamic linking</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-st-1', this, false)">They are identical ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â .dynsym is just a backup</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-st-1', this, false)">They are identical — .dynsym is just a backup</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -164,7 +164,7 @@ readelf -sW ./my_program</pre></div>
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Each symbol has a binding (local, global, weak) and a visibility. These determine how the linker resolves symbols across object files ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â that is what the next two concepts cover.</p>
+                <p>Each symbol has a binding (local, global, weak) and a visibility. These determine how the linker resolves symbols across object files — that is what the next two concepts cover.</p>
             </div>
 
             <div class="unit unit-retrieve">
@@ -195,9 +195,9 @@ readelf -sW ./my_program</pre></div>
                 <div class="toc-title">On this page</div>
                 <ul class="toc-list" id="toc-list"></ul>
             </nav>
-            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ Top</button>
+            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Top</button>
             <div class="a11y-toast" id="a11y-toast"></div>
-            <div class="swipe-hint">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Swipe to navigate ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢</div>
+            <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">
             <link rel="next" href="">
         </div>
@@ -323,6 +323,66 @@ readelf -sW ./my_program</pre></div>
         .quiz-option:active, .tf-option:active { transform: scale(0.98); transition: transform 0.1s; }
     }
     #js {
+        function __ul_ctx() {
+            var parts = window.location.pathname.split('/').filter(function(p) { return p.length > 0; });
+            if (parts.length >= 4) {
+                if (parts[0] === 'courses') {
+                    if (parts[2] === 'lessons') {
+                        return { course: parts[1], concept: parts[3] };
+                    }
+                }
+            }
+            return null;
+        }
+        function __ul_token() {
+            var t = '';
+            try { t = localStorage.getItem('session_token') || ''; } catch (e) { t = ''; }
+            return t;
+        }
+        function __ul_report_attempt(correct) {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            var rating = 'again';
+            if (correct) { rating = 'good'; }
+            var url = '/api/review/submit?concept_id=' + encodeURIComponent(ctx.concept) + '&course_id=' + encodeURIComponent(ctx.course) + '&rating=' + rating;
+            try { fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(function() {}); } catch (e) {}
+        }
+        function __ul_report_view() {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            try {
+                fetch('/api/learning/view', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+                    body: JSON.stringify({ course_id: ctx.course, concept_id: ctx.concept })
+                }).catch(function() {});
+            } catch (e) {}
+        }
+        document.addEventListener('DOMContentLoaded', function() { __ul_report_view(); });
+        document.addEventListener('click', function(ev) {
+            var el = ev.target;
+            while (el && el !== document && !(el.classList && el.classList.contains('quiz-option'))) { el = el.parentNode; }
+            if (!el || el === document) { return; }
+            setTimeout(function() { __ul_report_attempt(el.classList.contains('correct')); }, 80);
+        }, true);
+        document.addEventListener('change', function(ev) {
+            var el = ev.target;
+            if (!el || !el.classList) { return; }
+            var isBlank = el.classList.contains('fill-blank');
+            var isSelect = el.classList.contains('app-select');
+            if (!isBlank && !isSelect) { return; }
+            var ans = el.getAttribute('data-answer');
+            if (!ans) { ans = el.getAttribute('data-correct'); }
+            if (!ans) { return; }
+            var val = '';
+            if (el.value) { val = el.value; }
+            val = val.trim();
+            __ul_report_attempt(val === ans);
+        }, true);
         function checkQuiz(quizId, btn, correct) {
             var quiz = document.getElementById(quizId);
             var options = quiz.querySelectorAll('.quiz-option');
@@ -466,7 +526,7 @@ readelf -sW ./my_program</pre></div>
                 if(fb.nextElementSibling && fb.nextElementSibling.classList.contains('feedback-rating')) continue;
                 var div = document.createElement('div');
                 div.className = 'feedback-rating';
-                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â</button><button class="feedback-btn" onclick="rateFeedback(this, false)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ…Â½</button><span class="feedback-thanks">Thanks!</span>';
+                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">👍</button><button class="feedback-btn" onclick="rateFeedback(this, false)">👎</button><span class="feedback-thanks">Thanks!</span>';
                 fb.parentNode.insertBefore(div, fb.nextSibling);
             }
         }

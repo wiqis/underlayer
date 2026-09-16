@@ -1,5 +1,5 @@
-// ELF Course ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Concept 15: Symbol Visibility
-// STV_DEFAULT, STV_INTERNAL, STV_HIDDEN, STV_PROTECTED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â controlling dynamic linking exports.
+// ELF Course — Concept 15: Symbol Visibility
+// STV_DEFAULT, STV_INTERNAL, STV_HIDDEN, STV_PROTECTED — controlling dynamic linking exports.
 public namespace underlayer_content {
 
 using std::string
@@ -9,7 +9,7 @@ using std::string_view
 public func render_visibility() : string {
     var page = HtmlPage()
     page.defaultPrepare()
-    var title = std::string_view("Symbol Visibility ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Underlayer")
+    var title = std::string_view("Symbol Visibility — Underlayer")
     page.appendTitle(&title)
 
     #html {
@@ -26,7 +26,7 @@ public func render_visibility() : string {
                     <dl>
                         <dt><kbd>Ctrl</kbd>+<kbd>K</kbd></dt><dd>Open search</dd>
                         <dt><kbd>Esc</kbd></dt><dd>Close search / dialog</dd>
-                        <dt><kbd>ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ</kbd></dt><dd>Back to top</dd>
+                        <dt><kbd>↑</kbd></dt><dd>Back to top</dd>
                     </dl>
                     <button onclick="closeShortcuts()" class="shortcuts-close">Close</button>
                 </div>
@@ -41,7 +41,7 @@ public func render_visibility() : string {
 
             <div class="unit unit-why">
                 <h2>Why This Matters</h2>
-                <p>When you build a shared library (.so), you decide which functions are part of your public API and which are internal implementation details. Symbol visibility is the ELF mechanism for this ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â it controls what the dynamic linker can see and reference from outside the library.</p>
+                <p>When you build a shared library (.so), you decide which functions are part of your public API and which are internal implementation details. Symbol visibility is the ELF mechanism for this — it controls what the dynamic linker can see and reference from outside the library.</p>
                 <p>Correct visibility prevents symbol collisions between libraries, reduces dynamic linker overhead, and enables better optimization.</p>
             </div>
 
@@ -49,10 +49,10 @@ public func render_visibility() : string {
                 <h2>A Simple Model</h2>
                 <p>Think of visibility as four levels of "doors" on your library:</p>
                 <ul>
-                    <li><strong>Default</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â The door is open. Anyone can use this symbol.</li>
-                    <li><strong>Hidden</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â The door is locked. Only code inside this library can use it.</li>
-                    <li><strong>Internal</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Like hidden, plus the symbol is specific to this compilation unit.</li>
-                    <li><strong>Protected</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â The door is open, but the symbol always resolves to this library (never interposed).</li>
+                    <li><strong>Default</strong> — The door is open. Anyone can use this symbol.</li>
+                    <li><strong>Hidden</strong> — The door is locked. Only code inside this library can use it.</li>
+                    <li><strong>Internal</strong> — Like hidden, plus the symbol is specific to this compilation unit.</li>
+                    <li><strong>Protected</strong> — The door is open, but the symbol always resolves to this library (never interposed).</li>
                 </ul>
             </div>
 
@@ -109,7 +109,7 @@ $ readelf -sW libdemo.so | grep -E 'DEFAULT|HIDDEN|PROTECTED'
 0000000000001129 T exported
 000000000000113b T protected_fn
 
-# hidden_fn and default_fn don't appear ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â they're not in .dynsym</pre>
+# hidden_fn and default_fn don't appear — they're not in .dynsym</pre>
                 </div>
             </div>
 
@@ -135,7 +135,7 @@ nm --defined-only libvis.so
                 <p>What does HIDDEN visibility mean for a symbol?</p>
                 <div class="quiz" id="quiz-v-1">
                     <button class="quiz-option" onclick="checkQuiz('quiz-v-1', this, false)">The symbol is available everywhere but marked as internal</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-v-1', this, true)">The symbol is not exported ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â other shared libraries cannot resolve it</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-v-1', this, true)">The symbol is not exported — other shared libraries cannot resolve it</button>
                     <button class="quiz-option" onclick="checkQuiz('quiz-v-1', this, false)">The symbol is stripped from the binary</button>
                     <div class="quiz-feedback"></div>
                 </div>
@@ -146,7 +146,7 @@ nm --defined-only libvis.so
                 <p>Why would you use PROTECTED visibility instead of DEFAULT?</p>
                 <div class="quiz" id="quiz-v-2">
                     <button class="quiz-option" onclick="checkQuiz('quiz-v-2', this, false)">Protected symbols are smaller in the binary</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-v-2', this, true)">To prevent interposition ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ensure calls within the library always resolve to the local definition, even if LD_PRELOAD defines the same symbol</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-v-2', this, true)">To prevent interposition — ensure calls within the library always resolve to the local definition, even if LD_PRELOAD defines the same symbol</button>
                     <button class="quiz-option" onclick="checkQuiz('quiz-v-2', this, false)">Protected symbols load faster</button>
                     <div class="quiz-feedback"></div>
                 </div>
@@ -154,16 +154,16 @@ nm --defined-only libvis.so
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Now you understand how ELF symbols are named (symbol table), scoped (binding), and exported (visibility). The next module covers relocations ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â how the linker patches addresses when combining object files.</p>
+                <p>Now you understand how ELF symbols are named (symbol table), scoped (binding), and exported (visibility). The next module covers relocations — how the linker patches addresses when combining object files.</p>
             </div>
 
             <nav class="toc" id="toc">
                 <div class="toc-title">On this page</div>
                 <ul class="toc-list" id="toc-list"></ul>
             </nav>
-            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ Top</button>
+            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Top</button>
             <div class="a11y-toast" id="a11y-toast"></div>
-            <div class="swipe-hint">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Swipe to navigate ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢</div>
+            <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">
             <link rel="next" href="">
         </div>
@@ -283,6 +283,66 @@ nm --defined-only libvis.so
         .quiz-option:active, .tf-option:active { transform: scale(0.98); transition: transform 0.1s; }
     }
     #js {
+        function __ul_ctx() {
+            var parts = window.location.pathname.split('/').filter(function(p) { return p.length > 0; });
+            if (parts.length >= 4) {
+                if (parts[0] === 'courses') {
+                    if (parts[2] === 'lessons') {
+                        return { course: parts[1], concept: parts[3] };
+                    }
+                }
+            }
+            return null;
+        }
+        function __ul_token() {
+            var t = '';
+            try { t = localStorage.getItem('session_token') || ''; } catch (e) { t = ''; }
+            return t;
+        }
+        function __ul_report_attempt(correct) {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            var rating = 'again';
+            if (correct) { rating = 'good'; }
+            var url = '/api/review/submit?concept_id=' + encodeURIComponent(ctx.concept) + '&course_id=' + encodeURIComponent(ctx.course) + '&rating=' + rating;
+            try { fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(function() {}); } catch (e) {}
+        }
+        function __ul_report_view() {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            try {
+                fetch('/api/learning/view', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+                    body: JSON.stringify({ course_id: ctx.course, concept_id: ctx.concept })
+                }).catch(function() {});
+            } catch (e) {}
+        }
+        document.addEventListener('DOMContentLoaded', function() { __ul_report_view(); });
+        document.addEventListener('click', function(ev) {
+            var el = ev.target;
+            while (el && el !== document && !(el.classList && el.classList.contains('quiz-option'))) { el = el.parentNode; }
+            if (!el || el === document) { return; }
+            setTimeout(function() { __ul_report_attempt(el.classList.contains('correct')); }, 80);
+        }, true);
+        document.addEventListener('change', function(ev) {
+            var el = ev.target;
+            if (!el || !el.classList) { return; }
+            var isBlank = el.classList.contains('fill-blank');
+            var isSelect = el.classList.contains('app-select');
+            if (!isBlank && !isSelect) { return; }
+            var ans = el.getAttribute('data-answer');
+            if (!ans) { ans = el.getAttribute('data-correct'); }
+            if (!ans) { return; }
+            var val = '';
+            if (el.value) { val = el.value; }
+            val = val.trim();
+            __ul_report_attempt(val === ans);
+        }, true);
         function checkQuiz(quizId, btn, correct) {
             var quiz = document.getElementById(quizId);
             var options = quiz.querySelectorAll('.quiz-option');
@@ -410,7 +470,7 @@ nm --defined-only libvis.so
                 if(fb.nextElementSibling && fb.nextElementSibling.classList.contains('feedback-rating')) continue;
                 var div = document.createElement('div');
                 div.className = 'feedback-rating';
-                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â</button><button class="feedback-btn" onclick="rateFeedback(this, false)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ…Â½</button><span class="feedback-thanks">Thanks!</span>';
+                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">👍</button><button class="feedback-btn" onclick="rateFeedback(this, false)">👎</button><span class="feedback-thanks">Thanks!</span>';
                 fb.parentNode.insertBefore(div, fb.nextSibling);
             }
         }

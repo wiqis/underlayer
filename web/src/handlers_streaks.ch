@@ -6,7 +6,8 @@ using underlayer_db::DbClient
 public namespace underlayer_web {
 
     public func handle_get_streak(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var streak = underlayer_repository::get_streak(db, &learner_id)
         var body = std::string("{\"learner_id\":\"")
         body.append_string(&streak.learner_id)
@@ -26,7 +27,8 @@ public namespace underlayer_web {
     }
 
     public func handle_record_activity(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var streak = underlayer_repository::record_activity(db, &learner_id)
         var body = std::string("{\"learner_id\":\"")
         body.append_string(&streak.learner_id)
@@ -46,7 +48,8 @@ public namespace underlayer_web {
     }
 
     public func handle_weekly_activity(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var days = underlayer_repository::get_weekly_activity(db, &learner_id)
         var body = std::string("{\"learner_id\":\"")
         body.append_view(learner_id.to_view())

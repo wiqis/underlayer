@@ -172,4 +172,30 @@ public namespace underlayer_repository {
         return notes
     }
 
+    public func get_all_notes(db : *DbClient, learner_id : &string) : vector<Note> {
+        var notes = vector<Note>()
+        var sql = string("SELECT id, learner_id, concept_id, course_id, content, section_ref, created_at, updated_at FROM learner_notes WHERE learner_id = '")
+        sql.append_view(learner_id.to_view())
+        sql.append_view("' ORDER BY updated_at DESC")
+        var result = underlayer_db::query_sql(db, &raw sql)
+        var ri : size_t = 0
+        while(ri < result.rows.size()) {
+            var row = result.rows.get_ptr(ri)
+            if(row.vals.size() >= 8) {
+                var n = Note::make()
+                n.id = row.vals.get_ptr(0).copy()
+                n.learner_id = row.vals.get_ptr(1).copy()
+                n.concept_id = row.vals.get_ptr(2).copy()
+                n.course_id = row.vals.get_ptr(3).copy()
+                n.content = row.vals.get_ptr(4).copy()
+                n.section_ref = row.vals.get_ptr(5).copy()
+                n.created_at = parse_i64(row.vals.get_ptr(6).to_view())
+                n.updated_at = parse_i64(row.vals.get_ptr(7).to_view())
+                notes.push(n)
+            }
+            ri = ri + 1
+        }
+        return notes
+    }
+
 }

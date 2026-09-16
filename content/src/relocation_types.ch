@@ -1,5 +1,5 @@
-// ELF Course ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Concept 17: Relocation Types
-// R_X86_64_64, R_X86_64_PC32, R_X86_64_PLT32 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the x86-64 relocation types and their formulas.
+// ELF Course — Concept 17: Relocation Types
+// R_X86_64_64, R_X86_64_PC32, R_X86_64_PLT32 — the x86-64 relocation types and their formulas.
 public namespace underlayer_content {
 
 using std::string
@@ -9,7 +9,7 @@ using std::string_view
 public func render_relocation_types() : string {
     var page = HtmlPage()
     page.defaultPrepare()
-    var title = std::string_view("Relocation Types ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Underlayer")
+    var title = std::string_view("Relocation Types — Underlayer")
     page.appendTitle(&title)
 
     #html {
@@ -26,7 +26,7 @@ public func render_relocation_types() : string {
                     <dl>
                         <dt><kbd>Ctrl</kbd>+<kbd>K</kbd></dt><dd>Open search</dd>
                         <dt><kbd>Esc</kbd></dt><dd>Close search / dialog</dd>
-                        <dt><kbd>ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ</kbd></dt><dd>Back to top</dd>
+                        <dt><kbd>↑</kbd></dt><dd>Back to top</dd>
                     </dl>
                     <button onclick="closeShortcuts()" class="shortcuts-close">Close</button>
                 </div>
@@ -41,7 +41,7 @@ public func render_relocation_types() : string {
 
             <div class="unit unit-why">
                 <h2>Why This Matters</h2>
-                <p>The relocation type determines how the linker computes the value to patch into the binary. Different types produce different addressing modes ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â absolute addresses, PC-relative offsets, GOT entries, PLT calls. Choosing the wrong type means broken code.</p>
+                <p>The relocation type determines how the linker computes the value to patch into the binary. Different types produce different addressing modes — absolute addresses, PC-relative offsets, GOT entries, PLT calls. Choosing the wrong type means broken code.</p>
                 <p>Understanding relocation types explains why position-independent code (PIC) works differently from non-PIC, and why shared libraries use different call mechanisms than executables.</p>
             </div>
 
@@ -49,10 +49,10 @@ public func render_relocation_types() : string {
                 <h2>A Simple Model</h2>
                 <p>There are two fundamental ways to reference a symbol:</p>
                 <ul>
-                    <li><strong>Absolute</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â "The value IS the symbol's address." Used for data references and non-PIE executables.</li>
-                    <li><strong>PC-relative</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â "The value is the DISTANCE from here to the symbol." Used for code references and PIE/shared libraries.</li>
+                    <li><strong>Absolute</strong> — "The value IS the symbol's address." Used for data references and non-PIE executables.</li>
+                    <li><strong>PC-relative</strong> — "The value is the DISTANCE from here to the symbol." Used for code references and PIE/shared libraries.</li>
                 </ul>
-                <p>PC-relative is the default for modern code because it's position-independent ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the code works at any address without patching.</p>
+                <p>PC-relative is the default for modern code because it's position-independent — the code works at any address without patching.</p>
             </div>
 
             <div class="unit unit-reality">
@@ -81,7 +81,7 @@ public func render_relocation_types() : string {
                 <p>Key differences between R_X86_64_PC32 and R_X86_64_PLT32:</p>
                 <ul>
                     <li><strong>PC32</strong>: Uses the symbol's final address directly. Used for non-PLT references (global variables, non-PIC calls).</li>
-                    <li><strong>PLT32</strong>: Uses the PLT entry address. Allows lazy binding ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the PLT stub jumps through the GOT, which is resolved at first call.</li>
+                    <li><strong>PLT32</strong>: Uses the PLT entry address. Allows lazy binding — the PLT stub jumps through the GOT, which is resolved at first call.</li>
                 </ul>
             </div>
 
@@ -144,7 +144,7 @@ gcc -pie -S compare.c -o - | grep call</pre></div>
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Static relocations are resolved at link time. But shared libraries also need dynamic relocations ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â patches applied by ld.so at load time. That's the next concept.</p>
+                <p>Static relocations are resolved at link time. But shared libraries also need dynamic relocations — patches applied by ld.so at load time. That's the next concept.</p>
             </div>
 
             <div class="unit unit-retrieve">
@@ -152,26 +152,26 @@ gcc -pie -S compare.c -o - | grep call</pre></div>
                 <p>Sort the relocation types from simplest (least work at link time) to most complex (most work):</p>
                 <div class="sort-quiz" id="sort-rt-1">
                     <div class="sort-item" draggable="true" data-complexity="1">
-                        <span class="sort-text">R_X86_64_64 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â absolute 64-bit address (S + A)</span>
-                        <span class="sort-handle">ÃƒÂ¢Ã¢â‚¬Â¹Ã‚Â®ÃƒÂ¢Ã¢â‚¬Â¹Ã‚Â®</span>
+                        <span class="sort-text">R_X86_64_64 — absolute 64-bit address (S + A)</span>
+                        <span class="sort-handle">⋮⋮</span>
                     </div>
                     <div class="sort-item" draggable="true" data-complexity="3">
-                        <span class="sort-text">R_X86_64_GOTPCRELX ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â GOT entry + linker relaxation</span>
-                        <span class="sort-handle">ÃƒÂ¢Ã¢â‚¬Â¹Ã‚Â®ÃƒÂ¢Ã¢â‚¬Â¹Ã‚Â®</span>
+                        <span class="sort-text">R_X86_64_GOTPCRELX — GOT entry + linker relaxation</span>
+                        <span class="sort-handle">⋮⋮</span>
                     </div>
                     <div class="sort-item" draggable="true" data-complexity="2">
-                        <span class="sort-text">R_X86_64_PLT32 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PLT entry (L + A - P)</span>
-                        <span class="sort-handle">ÃƒÂ¢Ã¢â‚¬Â¹Ã‚Â®ÃƒÂ¢Ã¢â‚¬Â¹Ã‚Â®</span>
+                        <span class="sort-text">R_X86_64_PLT32 — PLT entry (L + A - P)</span>
+                        <span class="sort-handle">⋮⋮</span>
                     </div>
                     <div class="sort-item" draggable="true" data-complexity="4">
-                        <span class="sort-text">R_X86_64_RELATIVE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â base + addend (dynamic relocation)</span>
-                        <span class="sort-handle">ÃƒÂ¢Ã¢â‚¬Â¹Ã‚Â®ÃƒÂ¢Ã¢â‚¬Â¹Ã‚Â®</span>
+                        <span class="sort-text">R_X86_64_RELATIVE — base + addend (dynamic relocation)</span>
+                        <span class="sort-handle">⋮⋮</span>
                     </div>
                     <button class="sort-check-btn" onclick="checkSort('sort-rt-1')">Check Order</button>
                     <div class="sort-feedback"></div>
                 </div>
             </div>
-            <div class="swipe-hint">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Swipe to navigate ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢</div>
+            <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">
             <link rel="next" href="">
         </div>
@@ -294,6 +294,66 @@ gcc -pie -S compare.c -o - | grep call</pre></div>
         .quiz-option:active, .tf-option:active { transform: scale(0.98); transition: transform 0.1s; }
     }
     #js {
+        function __ul_ctx() {
+            var parts = window.location.pathname.split('/').filter(function(p) { return p.length > 0; });
+            if (parts.length >= 4) {
+                if (parts[0] === 'courses') {
+                    if (parts[2] === 'lessons') {
+                        return { course: parts[1], concept: parts[3] };
+                    }
+                }
+            }
+            return null;
+        }
+        function __ul_token() {
+            var t = '';
+            try { t = localStorage.getItem('session_token') || ''; } catch (e) { t = ''; }
+            return t;
+        }
+        function __ul_report_attempt(correct) {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            var rating = 'again';
+            if (correct) { rating = 'good'; }
+            var url = '/api/review/submit?concept_id=' + encodeURIComponent(ctx.concept) + '&course_id=' + encodeURIComponent(ctx.course) + '&rating=' + rating;
+            try { fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(function() {}); } catch (e) {}
+        }
+        function __ul_report_view() {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            try {
+                fetch('/api/learning/view', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+                    body: JSON.stringify({ course_id: ctx.course, concept_id: ctx.concept })
+                }).catch(function() {});
+            } catch (e) {}
+        }
+        document.addEventListener('DOMContentLoaded', function() { __ul_report_view(); });
+        document.addEventListener('click', function(ev) {
+            var el = ev.target;
+            while (el && el !== document && !(el.classList && el.classList.contains('quiz-option'))) { el = el.parentNode; }
+            if (!el || el === document) { return; }
+            setTimeout(function() { __ul_report_attempt(el.classList.contains('correct')); }, 80);
+        }, true);
+        document.addEventListener('change', function(ev) {
+            var el = ev.target;
+            if (!el || !el.classList) { return; }
+            var isBlank = el.classList.contains('fill-blank');
+            var isSelect = el.classList.contains('app-select');
+            if (!isBlank && !isSelect) { return; }
+            var ans = el.getAttribute('data-answer');
+            if (!ans) { ans = el.getAttribute('data-correct'); }
+            if (!ans) { return; }
+            var val = '';
+            if (el.value) { val = el.value; }
+            val = val.trim();
+            __ul_report_attempt(val === ans);
+        }, true);
         function checkQuiz(quizId, btn, correct) {
             var quiz = document.getElementById(quizId);
             var options = quiz.querySelectorAll('.quiz-option');
@@ -457,7 +517,7 @@ gcc -pie -S compare.c -o - | grep call</pre></div>
                 if(fb.nextElementSibling && fb.nextElementSibling.classList.contains('feedback-rating')) continue;
                 var div = document.createElement('div');
                 div.className = 'feedback-rating';
-                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â</button><button class="feedback-btn" onclick="rateFeedback(this, false)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ…Â½</button><span class="feedback-thanks">Thanks!</span>';
+                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">👍</button><button class="feedback-btn" onclick="rateFeedback(this, false)">👎</button><span class="feedback-thanks">Thanks!</span>';
                 fb.parentNode.insertBefore(div, fb.nextSibling);
             }
         }

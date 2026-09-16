@@ -1027,7 +1027,45 @@ public func main() : int {
         underlayer_web::handle_about_page(&req, &raw mut res)
     }))
 
+    // ---- Feature Pages (bookmarks, notes, planner, achievements, streaks, notifications, certificates) ----
+    srv.router.add("GET", "/bookmarks", (|db|(req, res) => {
+        var html = underlayer_web::render_bookmarks_page()
+        underlayer_web::send_html(&raw mut res, &raw html)
+    }))
+    srv.router.add("GET", "/notes", (|db|(req, res) => {
+        var html = underlayer_web::render_notes_page()
+        underlayer_web::send_html(&raw mut res, &raw html)
+    }))
+    srv.router.add("GET", "/study-plans", (|db|(req, res) => {
+        var html = underlayer_web::render_study_plans_page()
+        underlayer_web::send_html(&raw mut res, &raw html)
+    }))
+    srv.router.add("GET", "/achievements", (|db|(req, res) => {
+        var html = underlayer_web::render_achievements_page()
+        underlayer_web::send_html(&raw mut res, &raw html)
+    }))
+    srv.router.add("GET", "/streaks", (|db|(req, res) => {
+        var html = underlayer_web::render_streaks_page()
+        underlayer_web::send_html(&raw mut res, &raw html)
+    }))
+    srv.router.add("GET", "/notifications", (|db|(req, res) => {
+        var html = underlayer_web::render_notifications_page()
+        underlayer_web::send_html(&raw mut res, &raw html)
+    }))
+    srv.router.add("GET", "/certificates", (|db|(req, res) => {
+        var html = underlayer_web::render_certificates_page()
+        underlayer_web::send_html(&raw mut res, &raw html)
+    }))
+
+    // ---- Learning Loop API ----
+    srv.router.add("POST", "/api/learning/view", (|db|(req, res) => {
+        underlayer_web::handle_learning_view(&raw db, &req, &raw mut res)
+    }))
+
     // ---- Notes API ----
+    srv.router.add("GET", "/api/notes", (|db|(req, res) => {
+        underlayer_web::handle_get_notes(&raw db, &req, &raw mut res)
+    }))
     srv.router.add("POST", "/api/notes", (|db|(req, res) => {
         underlayer_web::handle_create_note(&raw db, &req, &raw mut res)
     }))

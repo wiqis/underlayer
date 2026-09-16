@@ -1,4 +1,4 @@
-// ELF Course ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Concept 6: Entry Point
+// ELF Course — Concept 6: Entry Point
 // How e_entry tells the loader where execution begins.
 public namespace underlayer_content {
 
@@ -9,7 +9,7 @@ using std::string_view
 public func render_entry_point() : string {
     var page = HtmlPage()
     page.defaultPrepare()
-    var title = std::string_view("Entry Point ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Underlayer")
+    var title = std::string_view("Entry Point — Underlayer")
     page.appendTitle(&title)
 
     #html {
@@ -33,7 +33,7 @@ public func render_entry_point() : string {
                     <dl>
                         <dt><kbd>Ctrl</kbd>+<kbd>K</kbd></dt><dd>Open search</dd>
                         <dt><kbd>Esc</kbd></dt><dd>Close search / dialog</dd>
-                        <dt><kbd>ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ</kbd></dt><dd>Back to top</dd>
+                        <dt><kbd>↑</kbd></dt><dd>Back to top</dd>
                     </dl>
                     <button onclick="closeShortcuts()" class="shortcuts-close">Close</button>
                 </div>
@@ -51,7 +51,7 @@ public func render_entry_point() : string {
 
             <div class="unit unit-why">
                 <h2>Why This Matters</h2>
-                <p>When you run a program, how does the CPU know where to start executing? The answer is the entry point ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â a virtual address stored in the ELF header. This single field connects the file on disk to the running process.</p>
+                <p>When you run a program, how does the CPU know where to start executing? The answer is the entry point — a virtual address stored in the ELF header. This single field connects the file on disk to the running process.</p>
             </div>
 
             <div class="unit unit-model">
@@ -74,7 +74,7 @@ public func render_entry_point() : string {
 $ gdb -batch -ex "info files" /bin/ls 2>&1 | grep entry
   0x0000000000006810 - 0x0000000000006860 is .init</pre>
                 </div>
-                <p>The entry point 0x6810 falls in the <code>.init</code> section ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the initialization code that runs before <code>main()</code>.</p>
+                <p>The entry point 0x6810 falls in the <code>.init</code> section — the initialization code that runs before <code>main()</code>.</p>
             </div>
 
             <div class="unit unit-interact">
@@ -141,10 +141,10 @@ Machine: x86-64</pre></div>
                     <div class="app-step">
                         <span class="app-step-num">1.</span>
                         <span>The entry point is</span>
-                        <select class="app-select" data-correct="zero ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the linker had no _start symbol to resolve">
+                        <select class="app-select" data-correct="zero — the linker had no _start symbol to resolve">
                             <option value="">Select...</option>
                             <option value="too high for the address space">too high for the address space</option>
-                            <option value="zero ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the linker had no _start symbol to resolve">zero ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the linker had no _start symbol to resolve</option>
+                            <option value="zero — the linker had no _start symbol to resolve">zero — the linker had no _start symbol to resolve</option>
                             <option value="pointing to a read-only section">pointing to a read-only section</option>
                         </select>
                     </div>
@@ -167,12 +167,12 @@ Machine: x86-64</pre></div>
                 <div class="toc-title">On this page</div>
                 <ul class="toc-list" id="toc-list"></ul>
             </nav>
-            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ Top</button>
+            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Top</button>
             </main>
-            <div class="swipe-hint">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Swipe to navigate ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢</div>
+            <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">
             <link rel="next" href="">
-            <footer role="contentinfo"><p>Underlayer ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Learn Things Deeply</p></footer>
+            <footer role="contentinfo"><p>Underlayer — Learn Things Deeply</p></footer>
         <svg style="position:absolute;width:0;height:0">
             <defs>
                 <filter id="protanopia"><feColorMatrix type="matrix" values="0.567,0.433,0,0,0 0.558,0.442,0,0,0 0,0.242,0.758,0,0 0,0,0,1,0"/></filter>
@@ -294,6 +294,66 @@ Machine: x86-64</pre></div>
         .quiz-option:active, .tf-option:active { transform: scale(0.98); transition: transform 0.1s; }
     }
     #js {
+        function __ul_ctx() {
+            var parts = window.location.pathname.split('/').filter(function(p) { return p.length > 0; });
+            if (parts.length >= 4) {
+                if (parts[0] === 'courses') {
+                    if (parts[2] === 'lessons') {
+                        return { course: parts[1], concept: parts[3] };
+                    }
+                }
+            }
+            return null;
+        }
+        function __ul_token() {
+            var t = '';
+            try { t = localStorage.getItem('session_token') || ''; } catch (e) { t = ''; }
+            return t;
+        }
+        function __ul_report_attempt(correct) {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            var rating = 'again';
+            if (correct) { rating = 'good'; }
+            var url = '/api/review/submit?concept_id=' + encodeURIComponent(ctx.concept) + '&course_id=' + encodeURIComponent(ctx.course) + '&rating=' + rating;
+            try { fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(function() {}); } catch (e) {}
+        }
+        function __ul_report_view() {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            try {
+                fetch('/api/learning/view', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+                    body: JSON.stringify({ course_id: ctx.course, concept_id: ctx.concept })
+                }).catch(function() {});
+            } catch (e) {}
+        }
+        document.addEventListener('DOMContentLoaded', function() { __ul_report_view(); });
+        document.addEventListener('click', function(ev) {
+            var el = ev.target;
+            while (el && el !== document && !(el.classList && el.classList.contains('quiz-option'))) { el = el.parentNode; }
+            if (!el || el === document) { return; }
+            setTimeout(function() { __ul_report_attempt(el.classList.contains('correct')); }, 80);
+        }, true);
+        document.addEventListener('change', function(ev) {
+            var el = ev.target;
+            if (!el || !el.classList) { return; }
+            var isBlank = el.classList.contains('fill-blank');
+            var isSelect = el.classList.contains('app-select');
+            if (!isBlank && !isSelect) { return; }
+            var ans = el.getAttribute('data-answer');
+            if (!ans) { ans = el.getAttribute('data-correct'); }
+            if (!ans) { return; }
+            var val = '';
+            if (el.value) { val = el.value; }
+            val = val.trim();
+            __ul_report_attempt(val === ans);
+        }, true);
         function checkQuiz(quizId, btn, correct) {
             var quiz = document.getElementById(quizId);
             var options = quiz.querySelectorAll('.quiz-option');

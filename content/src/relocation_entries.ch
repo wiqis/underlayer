@@ -1,4 +1,4 @@
-// ELF Course ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Concept 16: Relocation Entries
+// ELF Course — Concept 16: Relocation Entries
 // How the linker records patches that need to be applied to code and data.
 public namespace underlayer_content {
 
@@ -9,7 +9,7 @@ using std::string_view
 public func render_relocation_entries() : string {
     var page = HtmlPage()
     page.defaultPrepare()
-    var title = std::string_view("Relocation Entries ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Underlayer")
+    var title = std::string_view("Relocation Entries — Underlayer")
     page.appendTitle(&title)
 
     #html {
@@ -26,7 +26,7 @@ public func render_relocation_entries() : string {
                     <dl>
                         <dt><kbd>Ctrl</kbd>+<kbd>K</kbd></dt><dd>Open search</dd>
                         <dt><kbd>Esc</kbd></dt><dd>Close search / dialog</dd>
-                        <dt><kbd>ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ</kbd></dt><dd>Back to top</dd>
+                        <dt><kbd>↑</kbd></dt><dd>Back to top</dd>
                     </dl>
                     <button onclick="closeShortcuts()" class="shortcuts-close">Close</button>
                 </div>
@@ -41,7 +41,7 @@ public func render_relocation_entries() : string {
 
             <div class="unit unit-why">
                 <h2>Why This Matters</h2>
-                <p>When you compile a function call like printf("hello"), the compiler doesn't know where printf will eventually live in memory. It leaves a placeholder and creates a relocation entry ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â a note that says "patch this address when you know the final location."</p>
+                <p>When you compile a function call like printf("hello"), the compiler doesn't know where printf will eventually live in memory. It leaves a placeholder and creates a relocation entry — a note that says "patch this address when you know the final location."</p>
                 <p>Without relocations, the linker couldn't combine object files into a program, and the dynamic linker couldn't load shared libraries.</p>
             </div>
 
@@ -49,9 +49,9 @@ public func render_relocation_entries() : string {
                 <h2>A Simple Model</h2>
                 <p>A relocation entry is a "TODO note" for the linker:</p>
                 <ul>
-                    <li><strong>Offset</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Where to patch (which byte in the file)</li>
-                    <li><strong>Info</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â What symbol to use and what kind of patch to apply</li>
-                    <li><strong>Addend</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â An extra adjustment to add to the final value</li>
+                    <li><strong>Offset</strong> — Where to patch (which byte in the file)</li>
+                    <li><strong>Info</strong> — What symbol to use and what kind of patch to apply</li>
+                    <li><strong>Addend</strong> — An extra adjustment to add to the final value</li>
                 </ul>
                 <p>When the linker resolves a symbol, it walks all relocation entries for that symbol, computes the correct value, and writes it into the binary at the specified offset.</p>
             </div>
@@ -71,8 +71,8 @@ public func render_relocation_entries() : string {
                 </div>
                 <p>The r_info field packs two values:</p>
                 <ul>
-                    <li><strong>Symbol</strong>: ELF64_R_SYM(info) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â index into the symbol table</li>
-                    <li><strong>Type</strong>: ELF64_R_TYPE(info) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â what kind of relocation to apply</li>
+                    <li><strong>Symbol</strong>: ELF64_R_SYM(info) — index into the symbol table</li>
+                    <li><strong>Type</strong>: ELF64_R_TYPE(info) — what kind of relocation to apply</li>
                 </ul>
                 <p>Relocations live in sections named .rela.text (for code), .rela.data (for data), .rela.dyn (dynamic relocations), and .rela.plt (PLT stubs).</p>
             </div>
@@ -131,7 +131,7 @@ readelf -rW reloc_test | head -20</pre></div>
                 <p>Why are most modern systems using Elf64_Rela instead of Elf64_Rel?</p>
                 <div class="quiz" id="quiz-re-2">
                     <button class="quiz-option" onclick="checkQuiz('quiz-re-2', this, false)">Rela is smaller</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-re-2', this, true)">The addend is stored in the relocation entry itself, not pre-patched into the target location ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â cleaner for position-independent code</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-re-2', this, true)">The addend is stored in the relocation entry itself, not pre-patched into the target location — cleaner for position-independent code</button>
                     <button class="quiz-option" onclick="checkQuiz('quiz-re-2', this, false)">Rel supports more relocation types</button>
                     <div class="quiz-feedback"></div>
                 </div>
@@ -146,9 +146,9 @@ readelf -rW reloc_test | head -20</pre></div>
                 <div class="toc-title">On this page</div>
                 <ul class="toc-list" id="toc-list"></ul>
             </nav>
-            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ Top</button>
+            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Top</button>
             <div class="a11y-toast" id="a11y-toast"></div>
-            <div class="swipe-hint">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Swipe to navigate ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢</div>
+            <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">
             <link rel="next" href="">
         </div>
@@ -268,6 +268,66 @@ readelf -rW reloc_test | head -20</pre></div>
         .quiz-option:active, .tf-option:active { transform: scale(0.98); transition: transform 0.1s; }
     }
     #js {
+        function __ul_ctx() {
+            var parts = window.location.pathname.split('/').filter(function(p) { return p.length > 0; });
+            if (parts.length >= 4) {
+                if (parts[0] === 'courses') {
+                    if (parts[2] === 'lessons') {
+                        return { course: parts[1], concept: parts[3] };
+                    }
+                }
+            }
+            return null;
+        }
+        function __ul_token() {
+            var t = '';
+            try { t = localStorage.getItem('session_token') || ''; } catch (e) { t = ''; }
+            return t;
+        }
+        function __ul_report_attempt(correct) {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            var rating = 'again';
+            if (correct) { rating = 'good'; }
+            var url = '/api/review/submit?concept_id=' + encodeURIComponent(ctx.concept) + '&course_id=' + encodeURIComponent(ctx.course) + '&rating=' + rating;
+            try { fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(function() {}); } catch (e) {}
+        }
+        function __ul_report_view() {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            try {
+                fetch('/api/learning/view', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+                    body: JSON.stringify({ course_id: ctx.course, concept_id: ctx.concept })
+                }).catch(function() {});
+            } catch (e) {}
+        }
+        document.addEventListener('DOMContentLoaded', function() { __ul_report_view(); });
+        document.addEventListener('click', function(ev) {
+            var el = ev.target;
+            while (el && el !== document && !(el.classList && el.classList.contains('quiz-option'))) { el = el.parentNode; }
+            if (!el || el === document) { return; }
+            setTimeout(function() { __ul_report_attempt(el.classList.contains('correct')); }, 80);
+        }, true);
+        document.addEventListener('change', function(ev) {
+            var el = ev.target;
+            if (!el || !el.classList) { return; }
+            var isBlank = el.classList.contains('fill-blank');
+            var isSelect = el.classList.contains('app-select');
+            if (!isBlank && !isSelect) { return; }
+            var ans = el.getAttribute('data-answer');
+            if (!ans) { ans = el.getAttribute('data-correct'); }
+            if (!ans) { return; }
+            var val = '';
+            if (el.value) { val = el.value; }
+            val = val.trim();
+            __ul_report_attempt(val === ans);
+        }, true);
         function checkQuiz(quizId, btn, correct) {
             var quiz = document.getElementById(quizId);
             var options = quiz.querySelectorAll('.quiz-option');
@@ -395,7 +455,7 @@ readelf -rW reloc_test | head -20</pre></div>
                 if(fb.nextElementSibling && fb.nextElementSibling.classList.contains('feedback-rating')) continue;
                 var div = document.createElement('div');
                 div.className = 'feedback-rating';
-                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â</button><button class="feedback-btn" onclick="rateFeedback(this, false)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ…Â½</button><span class="feedback-thanks">Thanks!</span>';
+                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">👍</button><button class="feedback-btn" onclick="rateFeedback(this, false)">👎</button><span class="feedback-thanks">Thanks!</span>';
                 fb.parentNode.insertBefore(div, fb.nextSibling);
             }
         }

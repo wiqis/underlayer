@@ -129,6 +129,8 @@ public namespace underlayer_core {
     }
 
     // ---- Path helpers ----
+    // Returns views that point into the caller's `path` buffer. The caller must
+    // keep the underlying path string alive for as long as the views are used.
     public func path_segments(path : &std::string_view) : std::vector<std::string_view> {
         var segments = std::vector<std::string_view>()
         var start : size_t = 0
@@ -137,27 +139,14 @@ public namespace underlayer_core {
             var c = path.get(i)
             if(c == '/') {
                 if(i > start) {
-                    // Build a string_view from start to i
-                    var j : size_t = start
-                    var seg = std::string()
-                    while(j < i) {
-                        seg.append(path.get(j))
-                        j = j + 1
-                    }
-                    segments.push(seg.to_view())
+                    segments.push(path.subview(start, i))
                 }
                 start = i + 1
             }
             i = i + 1
         }
         if(start < path.size()) {
-            var j : size_t = start
-            var seg = std::string()
-            while(j < path.size()) {
-                seg.append(path.get(j))
-                j = j + 1
-            }
-            segments.push(seg.to_view())
+            segments.push(path.subview(start, path.size()))
         }
         return segments
     }

@@ -8,7 +8,8 @@ public namespace underlayer_web {
 
     // P2 6.2.6: Temporal analytics — time-of-day + day-of-week session distribution
     public func handle_temporal_analytics(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var hours = underlayer_repository::query_temporal_hours(&raw db, &learner_id)
         var weekdays = underlayer_repository::query_temporal_weekdays(&raw db, &learner_id)
 
@@ -46,7 +47,8 @@ public namespace underlayer_web {
 
     // P2 6.2.12: Retention analytics — active days, span, weekly return rate
     public func handle_retention_analytics(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var r = underlayer_repository::query_retention(&raw db, &learner_id)
         var weeks = underlayer_repository::query_retention_weeks(&raw db, &learner_id)
 
@@ -104,7 +106,8 @@ public namespace underlayer_web {
 
     // P2 6.2.10: Drop-off analytics — started-but-stalled concepts, stalest first
     public func handle_dropoff_analytics(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
         var now = underlayer_core::current_timestamp()
         var rows = underlayer_repository::query_dropoff(&raw db, &learner_id, &course_id)
@@ -147,7 +150,8 @@ public namespace underlayer_web {
 
     // P2 6.2.11: Funnel analytics — registered -> attempted -> reviewed -> mastered
     public func handle_funnel_analytics(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var r = underlayer_repository::query_funnel(&raw db, &learner_id)
         var registered : i64 = 0
         var attempted : i64 = 0
@@ -184,7 +188,8 @@ public namespace underlayer_web {
 
     // P2 6.2.15: Comparative analytics — me vs platform average accuracy
     public func handle_comparative_analytics(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var r = underlayer_repository::query_comparative(&raw db, &learner_id)
         var accs = underlayer_repository::query_learner_accuracies(&raw db)
 

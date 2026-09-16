@@ -54,6 +54,13 @@ public namespace underlayer_web {
                         <a href="/dashboard" class="nav-link active">Dashboard</a>
                         <a href="/review" class="nav-link">Review</a>
                         <a href="/progress" class="nav-link">Progress</a>
+                        <a href="/bookmarks" class="nav-link">Bookmarks</a>
+                        <a href="/notes" class="nav-link">Notes</a>
+                        <a href="/study-plans" class="nav-link">Planner</a>
+                        <a href="/achievements" class="nav-link">Achievements</a>
+                        <a href="/streaks" class="nav-link">Streaks</a>
+                        <a href="/notifications" class="nav-link">Alerts</a>
+                        <a href="/certificates" class="nav-link">Certificates</a>
                     </div>
                     <div class="nav-right">
                         <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">

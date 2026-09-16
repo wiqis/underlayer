@@ -13,6 +13,13 @@ public namespace underlayer_web {
         res.write_view(&hv)
     }
 
+    public func send_html(res : *mut http::ResponseWriter, html : *string) {
+        var ct = std::string_view("text/html; charset=utf-8")
+        res.set_header_view(std::string_view("Content-Type"), &ct)
+        var hv = html.to_view()
+        res.write_view(&hv)
+    }
+
     public func send_json_str(res : *mut http::ResponseWriter, body : *string) {
         var ct = std::string_view("application/json")
         res.set_header_view(std::string_view("Content-Type"), &ct)

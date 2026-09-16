@@ -1,4 +1,4 @@
-// ELF Course ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Concept 12: Section vs Segment
+// ELF Course — Concept 12: Section vs Segment
 // Why sections and segments are different things, and how they relate.
 public namespace underlayer_content {
 
@@ -9,7 +9,7 @@ using std::string_view
 public func render_section_vs_segment() : string {
     var page = HtmlPage()
     page.defaultPrepare()
-    var title = std::string_view("Section vs Segment ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Underlayer")
+    var title = std::string_view("Section vs Segment — Underlayer")
     page.appendTitle(&title)
 
     #html {
@@ -26,7 +26,7 @@ public func render_section_vs_segment() : string {
                     <dl>
                         <dt><kbd>Ctrl</kbd>+<kbd>K</kbd></dt><dd>Open search</dd>
                         <dt><kbd>Esc</kbd></dt><dd>Close search / dialog</dd>
-                        <dt><kbd>ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ</kbd></dt><dd>Back to top</dd>
+                        <dt><kbd>↑</kbd></dt><dd>Back to top</dd>
                     </dl>
                     <button onclick="closeShortcuts()" class="shortcuts-close">Close</button>
                 </div>
@@ -76,39 +76,39 @@ public func render_section_vs_segment() : string {
                 <h2>A Real Example</h2>
                 <div class="hex-dump">
                     <pre>Segments (program headers):
-  LOAD  [0x000000-0x0005e8]  R      ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Contains: .interp, .note, .gnu.hash, .dynsym, .dynstr, .gnu.version
-  LOAD  [0x001000-0x002a52]  R E    ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Contains: .init, .plt, .text
-  LOAD  [0x003000-0x003ba0]  R      ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Contains: .rodata, .eh_frame
-  LOAD  [0x003dc0-0x004020]  RW     ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Contains: .data, .bss, .got
+  LOAD  [0x000000-0x0005e8]  R      → Contains: .interp, .note, .gnu.hash, .dynsym, .dynstr, .gnu.version
+  LOAD  [0x001000-0x002a52]  R E    → Contains: .init, .plt, .text
+  LOAD  [0x003000-0x003ba0]  R      → Contains: .rodata, .eh_frame
+  LOAD  [0x003dc0-0x004020]  RW     → Contains: .data, .bss, .got
 
 Sections:
-  .text     ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ In LOAD segment 2 (R E)
-  .data     ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ In LOAD segment 4 (RW)
-  .bss      ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ In LOAD segment 4 (RW, zero-filled)
-  .rodata   ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ In LOAD segment 3 (R)</pre>
+  .text     → In LOAD segment 2 (R E)
+  .data     → In LOAD segment 4 (RW)
+  .bss      → In LOAD segment 4 (RW, zero-filled)
+  .rodata   → In LOAD segment 3 (R)</pre>
                 </div>
-                <p>Notice how 4 segments contain 12+ sections. The loader doesn't know about individual sections ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â it only sees segments.</p>
+                <p>Notice how 4 segments contain 12+ sections. The loader doesn't know about individual sections — it only sees segments.</p>
             </div>
 
             <div class="unit unit-retrieve">
                 <h2>Check Your Understanding</h2>
                 <p>Can a section exist without being in any segment?</p>
                 <div class="quiz" id="quiz-svs-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-1', this, true)">Yes ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â debugging sections like .symtab are not in any LOAD segment</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-1', this, false)">No ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â every section must be in a segment</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-1', this, true)">Yes — debugging sections like .symtab are not in any LOAD segment</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-1', this, false)">No — every section must be in a segment</button>
                     <button class="quiz-option" onclick="checkQuiz('quiz-svs-1', this, false)">Only .bss can exist without a segment</button>
                     <div class="quiz-feedback"></div>
                 </div>
-                <p><em>Sections like .symtab, .strtab, and .debug_* are not loaded into memory ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â they have no corresponding segment.</em></p>
+                <p><em>Sections like .symtab, .strtab, and .debug_* are not loaded into memory — they have no corresponding segment.</em></p>
             </div>
 
             <div class="unit unit-apply">
                 <h2>Apply It</h2>
                 <p>You want to strip debug symbols from a binary. Which tool modifies section headers without touching segments?</p>
                 <div class="quiz" id="quiz-svs-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-2', this, true)">strip ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â removes .symtab and .strtab sections</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-2', this, false)">ld ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â relinks the segments</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-2', this, false)">objcopy ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â copies and modifies segments</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-2', this, true)">strip — removes .symtab and .strtab sections</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-2', this, false)">ld — relinks the segments</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-2', this, false)">objcopy — copies and modifies segments</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -116,16 +116,16 @@ Sections:
             <div class="unit unit-connect">
                 <h2>Connect</h2>
                 <p>Congratulations! You've completed the ELF course fundamentals. You now understand bytes, binary representation, file layout, the ELF header, program headers, sections, and the relationship between them.</p>
-                <p>Next steps: explore symbols, relocations, and dynamic linking ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the advanced topics that make ELF a complete binary format.</p>
+                <p>Next steps: explore symbols, relocations, and dynamic linking — the advanced topics that make ELF a complete binary format.</p>
             </div>
 
             <nav class="toc" id="toc">
                 <div class="toc-title">On this page</div>
                 <ul class="toc-list" id="toc-list"></ul>
             </nav>
-            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ Top</button>
+            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Top</button>
             <div class="a11y-toast" id="a11y-toast"></div>
-            <div class="swipe-hint">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Swipe to navigate ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢</div>
+            <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">
             <link rel="next" href="">
         </div>
@@ -240,6 +240,66 @@ Sections:
         .quiz-option:active, .tf-option:active { transform: scale(0.98); transition: transform 0.1s; }
     }
     #js {
+        function __ul_ctx() {
+            var parts = window.location.pathname.split('/').filter(function(p) { return p.length > 0; });
+            if (parts.length >= 4) {
+                if (parts[0] === 'courses') {
+                    if (parts[2] === 'lessons') {
+                        return { course: parts[1], concept: parts[3] };
+                    }
+                }
+            }
+            return null;
+        }
+        function __ul_token() {
+            var t = '';
+            try { t = localStorage.getItem('session_token') || ''; } catch (e) { t = ''; }
+            return t;
+        }
+        function __ul_report_attempt(correct) {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            var rating = 'again';
+            if (correct) { rating = 'good'; }
+            var url = '/api/review/submit?concept_id=' + encodeURIComponent(ctx.concept) + '&course_id=' + encodeURIComponent(ctx.course) + '&rating=' + rating;
+            try { fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(function() {}); } catch (e) {}
+        }
+        function __ul_report_view() {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            try {
+                fetch('/api/learning/view', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+                    body: JSON.stringify({ course_id: ctx.course, concept_id: ctx.concept })
+                }).catch(function() {});
+            } catch (e) {}
+        }
+        document.addEventListener('DOMContentLoaded', function() { __ul_report_view(); });
+        document.addEventListener('click', function(ev) {
+            var el = ev.target;
+            while (el && el !== document && !(el.classList && el.classList.contains('quiz-option'))) { el = el.parentNode; }
+            if (!el || el === document) { return; }
+            setTimeout(function() { __ul_report_attempt(el.classList.contains('correct')); }, 80);
+        }, true);
+        document.addEventListener('change', function(ev) {
+            var el = ev.target;
+            if (!el || !el.classList) { return; }
+            var isBlank = el.classList.contains('fill-blank');
+            var isSelect = el.classList.contains('app-select');
+            if (!isBlank && !isSelect) { return; }
+            var ans = el.getAttribute('data-answer');
+            if (!ans) { ans = el.getAttribute('data-correct'); }
+            if (!ans) { return; }
+            var val = '';
+            if (el.value) { val = el.value; }
+            val = val.trim();
+            __ul_report_attempt(val === ans);
+        }, true);
         function showToast(msg) {
             var t = document.getElementById('a11y-toast');
             if(!t) { t = document.createElement('div'); t.id = 'a11y-toast'; t.className = 'a11y-toast'; document.body.appendChild(t); }

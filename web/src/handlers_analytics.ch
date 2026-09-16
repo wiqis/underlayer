@@ -7,7 +7,8 @@ public namespace underlayer_web {
 
     // 6.2.3: Course completion + velocity
     public func handle_course_analytics(db : &DbClient, course_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var cid = sv_to_string(course_id)
         var sql = string("SELECT total_concepts, mastered_concepts, learning_concepts, completion_pct, velocity_concepts_per_week, total_time_seconds, updated_at FROM course_analytics WHERE learner_id = '")
         sql.append_string(&learner_id)
@@ -52,7 +53,8 @@ public namespace underlayer_web {
 
     // 6.2.8: Difficulty distribution across concepts
     public func handle_difficulty_analytics(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var sql = string("SELECT concept_id, avg_rating, rating_count, easy_count, medium_count, hard_count FROM difficulty_analytics WHERE learner_id = '")
         sql.append_string(&learner_id)
         sql.append_view("' ORDER BY rating_count DESC")
@@ -89,7 +91,8 @@ public namespace underlayer_web {
 
     // 6.2.9: Most common mistakes
     public func handle_error_analytics(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var sql = string("SELECT concept_id, exercise_id, error_count, last_error_at, last_error_text FROM error_analytics WHERE learner_id = '")
         sql.append_string(&learner_id)
         sql.append_view("' ORDER BY error_count DESC LIMIT 20")
@@ -123,7 +126,8 @@ public namespace underlayer_web {
 
     // 6.2.13: Sessions per week over last 12 weeks
     public func handle_engagement_analytics(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var now = underlayer_core::current_timestamp()
         var twelve_weeks = 12 * 7 * 24 * 3600
         var since = now - twelve_weeks as i64
@@ -166,7 +170,8 @@ public namespace underlayer_web {
 
     // 6.2.14: Concepts completed per week
     public func handle_velocity_analytics(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = string("demo")
+        var learner_id = auth_get_learner_id(&raw db, req)
+        if(learner_id.size() == 0) { learner_id = string("demo") }
         var now = underlayer_core::current_timestamp()
         var twelve_weeks = 12 * 7 * 24 * 3600
         var since = now - twelve_weeks as i64

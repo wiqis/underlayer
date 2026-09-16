@@ -27,13 +27,20 @@ public namespace underlayer_web {
                         <span class="hamburger-line"></span>
                         <span class="hamburger-line"></span>
                     </button>
-                    <div class="nav-links">
-                        <a href="/" class="nav-link active">Home</a>
-                        <a href="/courses/elf" class="nav-link">Courses</a>
-                        <a href="/dashboard" class="nav-link">Dashboard</a>
-                        <a href="/review" class="nav-link">Review</a>
-                        <a href="/progress" class="nav-link">Progress</a>
-                    </div>
+                <div class="nav-links">
+                    <a href="/" class="nav-link active">Home</a>
+                    <a href="/courses/elf" class="nav-link">Courses</a>
+                    <a href="/dashboard" class="nav-link">Dashboard</a>
+                    <a href="/review" class="nav-link">Review</a>
+                    <a href="/progress" class="nav-link">Progress</a>
+                    <a href="/bookmarks" class="nav-link">Bookmarks</a>
+                    <a href="/notes" class="nav-link">Notes</a>
+                    <a href="/study-plans" class="nav-link">Planner</a>
+                    <a href="/achievements" class="nav-link">Achievements</a>
+                    <a href="/streaks" class="nav-link">Streaks</a>
+                    <a href="/notifications" class="nav-link">Alerts</a>
+                    <a href="/certificates" class="nav-link">Certificates</a>
+                </div>
                     <div class="nav-right">
                         <button class="search-trigger" onclick="openSearch()" aria-label="Search (Ctrl+K)">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>

@@ -1,4 +1,4 @@
-// ELF Course ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Concept 1: Bytes and Binary
+// ELF Course — Concept 1: Bytes and Binary
 // Uses #html, #css, #js macros for all markup.
 // Emits a complete HTML page that works in both static and backend modes.
 
@@ -11,7 +11,7 @@ using std::string_view
 public func render_bytes() : string {
     var page = HtmlPage()
     page.defaultPrepare()
-    var title = std::string_view("Bytes and Binary ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Underlayer")
+    var title = std::string_view("Bytes and Binary — Underlayer")
     page.appendTitle(&title)
 
     #html {
@@ -38,7 +38,7 @@ public func render_bytes() : string {
                     <dl>
                         <dt><kbd>Ctrl</kbd>+<kbd>K</kbd></dt><dd>Open search</dd>
                         <dt><kbd>Esc</kbd></dt><dd>Close search / dialog</dd>
-                        <dt><kbd>ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ</kbd></dt><dd>Back to top</dd>
+                        <dt><kbd>↑</kbd></dt><dd>Back to top</dd>
                     </dl>
                     <button onclick="closeShortcuts()" class="shortcuts-close">Close</button>
                 </div>
@@ -53,7 +53,7 @@ public func render_bytes() : string {
 
             <div class="unit unit-why">
                 <h2>Why This Matters</h2>
-                <p>Every file on your computer ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â including executables, images, and documents ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â is made of bytes. Understanding bytes is the foundation for understanding any binary format, including ELF.</p>
+                <p>Every file on your computer — including executables, images, and documents — is made of bytes. Understanding bytes is the foundation for understanding any binary format, including ELF.</p>
                 <p>Without understanding bytes, you can't read hex dumps, debug parsers, or reason about file layouts.</p>
             </div>
 
@@ -75,7 +75,7 @@ public func render_bytes() : string {
                         <tr><td>0</td><td>0x00</td><td>00000000</td><td>NUL</td></tr>
                         <tr><td>65</td><td>0x41</td><td>01000001</td><td>A</td></tr>
                         <tr><td>127</td><td>0x7f</td><td>01111111</td><td>DEL</td></tr>
-                        <tr><td>255</td><td>0xff</td><td>11111111</td><td>ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â</td></tr>
+                        <tr><td>255</td><td>0xff</td><td>11111111</td><td>—</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -86,7 +86,7 @@ public func render_bytes() : string {
                 <div class="hex-dump">
                     <pre>7f 45 4c 46</pre>
                 </div>
-                <p>In decimal: 127, 69, 76, 70. In ASCII: <code>. E L F</code>. That's right ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the first four bytes literally spell "ELF".</p>
+                <p>In decimal: 127, 69, 76, 70. In ASCII: <code>. E L F</code>. That's right — the first four bytes literally spell "ELF".</p>
             </div>
 
             <div class="unit unit-interact">
@@ -128,8 +128,8 @@ public func render_bytes() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>You now understand bytes ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the building blocks of every binary format. Next, we'll see how bytes are organized into larger structures.</p>
-                <p>Every ELF header, every section, every symbol table entry ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â they're all just bytes. The format specification tells us how to interpret them.</p>
+                <p>You now understand bytes — the building blocks of every binary format. Next, we'll see how bytes are organized into larger structures.</p>
+                <p>Every ELF header, every section, every symbol table entry — they're all just bytes. The format specification tells us how to interpret them.</p>
             </div>
 
             <div class="unit unit-retrieve">
@@ -142,14 +142,14 @@ public func render_bytes() : string {
                 <div class="toc-title">On this page</div>
                 <ul class="toc-list" id="toc-list"></ul>
             </nav>
-            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ Top</button>
+            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Top</button>
             <div class="a11y-toast" id="a11y-toast"></div>
-            <div class="swipe-hint">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Swipe to navigate ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢</div>
+            <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">
             <link rel="next" href="">
         </div>
         </main>
-        <footer role="contentinfo"><p>Underlayer ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Learn Things Deeply</p></footer>
+        <footer role="contentinfo"><p>Underlayer — Learn Things Deeply</p></footer>
         <svg style="position:absolute;width:0;height:0">
             <defs>
                 <filter id="protanopia"><feColorMatrix type="matrix" values="0.567,0.433,0,0,0 0.558,0.442,0,0,0 0,0.242,0.758,0,0 0,0,0,1,0"/></filter>
@@ -274,6 +274,66 @@ public func render_bytes() : string {
         .quiz-option:active, .tf-option:active { transform: scale(0.98); transition: transform 0.1s; }
     }
     #js {
+        function __ul_ctx() {
+            var parts = window.location.pathname.split('/').filter(function(p) { return p.length > 0; });
+            if (parts.length >= 4) {
+                if (parts[0] === 'courses') {
+                    if (parts[2] === 'lessons') {
+                        return { course: parts[1], concept: parts[3] };
+                    }
+                }
+            }
+            return null;
+        }
+        function __ul_token() {
+            var t = '';
+            try { t = localStorage.getItem('session_token') || ''; } catch (e) { t = ''; }
+            return t;
+        }
+        function __ul_report_attempt(correct) {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            var rating = 'again';
+            if (correct) { rating = 'good'; }
+            var url = '/api/review/submit?concept_id=' + encodeURIComponent(ctx.concept) + '&course_id=' + encodeURIComponent(ctx.course) + '&rating=' + rating;
+            try { fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(function() {}); } catch (e) {}
+        }
+        function __ul_report_view() {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            try {
+                fetch('/api/learning/view', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+                    body: JSON.stringify({ course_id: ctx.course, concept_id: ctx.concept })
+                }).catch(function() {});
+            } catch (e) {}
+        }
+        document.addEventListener('DOMContentLoaded', function() { __ul_report_view(); });
+        document.addEventListener('click', function(ev) {
+            var el = ev.target;
+            while (el && el !== document && !(el.classList && el.classList.contains('quiz-option'))) { el = el.parentNode; }
+            if (!el || el === document) { return; }
+            setTimeout(function() { __ul_report_attempt(el.classList.contains('correct')); }, 80);
+        }, true);
+        document.addEventListener('change', function(ev) {
+            var el = ev.target;
+            if (!el || !el.classList) { return; }
+            var isBlank = el.classList.contains('fill-blank');
+            var isSelect = el.classList.contains('app-select');
+            if (!isBlank && !isSelect) { return; }
+            var ans = el.getAttribute('data-answer');
+            if (!ans) { ans = el.getAttribute('data-correct'); }
+            if (!ans) { return; }
+            var val = '';
+            if (el.value) { val = el.value; }
+            val = val.trim();
+            __ul_report_attempt(val === ans);
+        }, true);
         function selectByte(el) {
             var all = el.parentElement.querySelectorAll('.hex-byte');
             for(var i = 0; i < all.length; i++) { all[i].classList.remove('selected'); }
@@ -456,7 +516,7 @@ public func render_bytes() : string {
                 if(fb.nextElementSibling && fb.nextElementSibling.classList.contains('feedback-rating')) continue;
                 var div = document.createElement('div');
                 div.className = 'feedback-rating';
-                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â</button><button class="feedback-btn" onclick="rateFeedback(this, false)">ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ…Â½</button><span class="feedback-thanks">Thanks!</span>';
+                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">👍</button><button class="feedback-btn" onclick="rateFeedback(this, false)">👎</button><span class="feedback-thanks">Thanks!</span>';
                 fb.parentNode.insertBefore(div, fb.nextSibling);
             }
         }

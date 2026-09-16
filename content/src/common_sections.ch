@@ -1,5 +1,5 @@
-// ELF Course ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Concept 11: Common Sections
-// .text, .data, .bss, .rodata, .symtab, .strtab ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â what each section contains.
+// ELF Course — Concept 11: Common Sections
+// .text, .data, .bss, .rodata, .symtab, .strtab — what each section contains.
 public namespace underlayer_content {
 
 using std::string
@@ -9,7 +9,7 @@ using std::string_view
 public func render_common_sections() : string {
     var page = HtmlPage()
     page.defaultPrepare()
-    var title = std::string_view("Common Sections ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Underlayer")
+    var title = std::string_view("Common Sections — Underlayer")
     page.appendTitle(&title)
 
     #html {
@@ -26,7 +26,7 @@ public func render_common_sections() : string {
                     <dl>
                         <dt><kbd>Ctrl</kbd>+<kbd>K</kbd></dt><dd>Open search</dd>
                         <dt><kbd>Esc</kbd></dt><dd>Close search / dialog</dd>
-                        <dt><kbd>ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ</kbd></dt><dd>Back to top</dd>
+                        <dt><kbd>↑</kbd></dt><dd>Back to top</dd>
                     </dl>
                     <button onclick="closeShortcuts()" class="shortcuts-close">Close</button>
                 </div>
@@ -48,16 +48,16 @@ public func render_common_sections() : string {
                 <h2>A Simple Model</h2>
                 <p>Sections are like labeled boxes in a warehouse:</p>
                 <ul>
-                    <li><strong>.text</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â The code (executable instructions)</li>
-                    <li><strong>.data</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Initialized global/static variables</li>
-                    <li><strong>.bss</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Uninitialized globals (zero-filled at runtime)</li>
-                    <li><strong>.rodata</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Read-only data (string constants, jump tables)</li>
-                    <li><strong>.symtab</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Symbol table (for debugging)</li>
-                    <li><strong>.strtab</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â String table (names for symbols)</li>
-                    <li><strong>.dynsym</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Dynamic symbol table (for linking)</li>
-                    <li><strong>.dynstr</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Dynamic string table</li>
-                    <li><strong>.rela.text</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Relocations for code</li>
-                    <li><strong>.debug_*</strong> ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â DWARF debugging info</li>
+                    <li><strong>.text</strong> — The code (executable instructions)</li>
+                    <li><strong>.data</strong> — Initialized global/static variables</li>
+                    <li><strong>.bss</strong> — Uninitialized globals (zero-filled at runtime)</li>
+                    <li><strong>.rodata</strong> — Read-only data (string constants, jump tables)</li>
+                    <li><strong>.symtab</strong> — Symbol table (for debugging)</li>
+                    <li><strong>.strtab</strong> — String table (names for symbols)</li>
+                    <li><strong>.dynsym</strong> — Dynamic symbol table (for linking)</li>
+                    <li><strong>.dynstr</strong> — Dynamic string table</li>
+                    <li><strong>.rela.text</strong> — Relocations for code</li>
+                    <li><strong>.debug_*</strong> — DWARF debugging info</li>
                 </ul>
             </div>
 
@@ -81,7 +81,7 @@ public func render_common_sections() : string {
                         <tr><td>.fini</td><td>SHT_PROGBITS</td><td>SHF_ALLOC + SHF_EXECINSTR</td><td>Cleanup code</td></tr>
                     </tbody>
                 </table>
-                <p>Note: .bss has type SHT_NOBITS ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â it takes no space in the file but is zero-filled in memory.</p>
+                <p>Note: .bss has type SHT_NOBITS — it takes no space in the file but is zero-filled in memory.</p>
             </div>
 
             <div class="unit unit-example">
@@ -101,7 +101,7 @@ public func render_common_sections() : string {
                 <p>Why does .bss have type SHT_NOBITS?</p>
                 <div class="quiz" id="quiz-cs-1">
                     <button class="quiz-option" onclick="checkQuiz('quiz-cs-1', this, false)">It contains no data</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-cs-1', this, true)">It takes no space in the file ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â zeroed at runtime</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-cs-1', this, true)">It takes no space in the file — zeroed at runtime</button>
                     <button class="quiz-option" onclick="checkQuiz('quiz-cs-1', this, false)">It's compressed</button>
                     <div class="quiz-feedback"></div>
                 </div>
@@ -111,16 +111,16 @@ public func render_common_sections() : string {
                 <h2>Apply It</h2>
                 <p>If .rodata and .text are in the same PT_LOAD segment, what permissions does the kernel set for .rodata?</p>
                 <div class="quiz" id="quiz-cs-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-cs-2', this, true)">R (read-only) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â same as the segment</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-cs-2', this, false)">RW (read-write) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â data sections are writable</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-cs-2', this, false)">RE (read-execute) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â it's code</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-cs-2', this, true)">R (read-only) — same as the segment</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-cs-2', this, false)">RW (read-write) — data sections are writable</button>
+                    <button class="quiz-option" onclick="checkQuiz('quiz-cs-2', this, false)">RE (read-execute) — it's code</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>You now know the common sections. But remember ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â sections and segments are different things. The next concept clarifies this distinction.</p>
+                <p>You now know the common sections. But remember — sections and segments are different things. The next concept clarifies this distinction.</p>
             </div>
 
             <div class="unit unit-retrieve">
@@ -176,9 +176,9 @@ public func render_common_sections() : string {
                 <div class="toc-title">On this page</div>
                 <ul class="toc-list" id="toc-list"></ul>
             </nav>
-            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Ëœ Top</button>
+            <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Top</button>
             <div class="a11y-toast" id="a11y-toast"></div>
-            <div class="swipe-hint">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Swipe to navigate ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢</div>
+            <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">
             <link rel="next" href="">
         </div>
@@ -307,6 +307,66 @@ public func render_common_sections() : string {
         .quiz-option:active, .tf-option:active { transform: scale(0.98); transition: transform 0.1s; }
     }
     #js {
+        function __ul_ctx() {
+            var parts = window.location.pathname.split('/').filter(function(p) { return p.length > 0; });
+            if (parts.length >= 4) {
+                if (parts[0] === 'courses') {
+                    if (parts[2] === 'lessons') {
+                        return { course: parts[1], concept: parts[3] };
+                    }
+                }
+            }
+            return null;
+        }
+        function __ul_token() {
+            var t = '';
+            try { t = localStorage.getItem('session_token') || ''; } catch (e) { t = ''; }
+            return t;
+        }
+        function __ul_report_attempt(correct) {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            var rating = 'again';
+            if (correct) { rating = 'good'; }
+            var url = '/api/review/submit?concept_id=' + encodeURIComponent(ctx.concept) + '&course_id=' + encodeURIComponent(ctx.course) + '&rating=' + rating;
+            try { fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(function() {}); } catch (e) {}
+        }
+        function __ul_report_view() {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var t = __ul_token();
+            if (!t) { return; }
+            try {
+                fetch('/api/learning/view', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
+                    body: JSON.stringify({ course_id: ctx.course, concept_id: ctx.concept })
+                }).catch(function() {});
+            } catch (e) {}
+        }
+        document.addEventListener('DOMContentLoaded', function() { __ul_report_view(); });
+        document.addEventListener('click', function(ev) {
+            var el = ev.target;
+            while (el && el !== document && !(el.classList && el.classList.contains('quiz-option'))) { el = el.parentNode; }
+            if (!el || el === document) { return; }
+            setTimeout(function() { __ul_report_attempt(el.classList.contains('correct')); }, 80);
+        }, true);
+        document.addEventListener('change', function(ev) {
+            var el = ev.target;
+            if (!el || !el.classList) { return; }
+            var isBlank = el.classList.contains('fill-blank');
+            var isSelect = el.classList.contains('app-select');
+            if (!isBlank && !isSelect) { return; }
+            var ans = el.getAttribute('data-answer');
+            if (!ans) { ans = el.getAttribute('data-correct'); }
+            if (!ans) { return; }
+            var val = '';
+            if (el.value) { val = el.value; }
+            val = val.trim();
+            __ul_report_attempt(val === ans);
+        }, true);
         function showToast(msg) {
             var t = document.getElementById('a11y-toast');
             if(!t) { t = document.createElement('div'); t.id = 'a11y-toast'; t.className = 'a11y-toast'; document.body.appendChild(t); }
