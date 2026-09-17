@@ -241,6 +241,7 @@ public namespace underlayer_repository {
                 var mod = Module::make()
                 mod.id = json_get_str(mod_val, "id")
                 mod.title = json_get_str(mod_val, "title")
+                mod.description = json_get_str(mod_val, "description")
                 mod.order = mi as int + 1
                 var concepts_val = json_get(mod_val, "concepts")
                 if(concepts_val != null && concepts_val is JsonValue.Array) {

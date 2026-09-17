@@ -217,6 +217,7 @@ public namespace underlayer_models {
     public struct Module {
         var id : string
         var title : string
+        var description : string   // short module summary shown on course landing
         var concepts : vector<string>
         var order : int
 
@@ -225,6 +226,7 @@ public namespace underlayer_models {
             return Module {
                 id = string(),
                 title = string(),
+                description = string(),
                 concepts = vector<string>(),
                 order = 0
             }

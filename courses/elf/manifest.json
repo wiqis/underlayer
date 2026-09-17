@@ -1,110 +1,396 @@
 {
-    "id": "elf",
-    "title": "Executable and Linkable Format",
-    "version": 1,
-    "description": "A deep dive into the ELF binary format — headers, sections, segments, symbols, relocations, and dynamic linking.",
-    "author": "Underlayer",
-    "license": "MIT",
-    "language": "en",
-    "difficulty": "intermediate",
-    "importance": "core",
-    "completion_criteria": "all_concepts",
-    "min_platform_version": "1.0",
-    "navigation": "linear",
-    "branching": false,
-    "alternative_paths": [],
-    "bundles": [],
-    "assets": [],
-    "review_item_decls": [],
-    "exercise_decls": [
-        {"concept_id": "bytes", "type": "multiple_choice", "question": "What decimal value does the hex byte 0x41 represent?", "answer": "65", "options": "32|65|127", "correct_index": 1, "explanation": "0x41 = 4*16 + 1 = 65, which is ASCII 'A'. See the RETRIEVE unit.", "hint1": "0x41 in hex is two nibbles: 4 and 1.", "difficulty": 0.3},
-        {"concept_id": "bytes", "type": "multiple_choice", "question": "The hex bytes 48 65 6c 6c spell what ASCII text?", "answer": "Hell", "options": "ELF|Hell|Help", "correct_index": 1, "explanation": "0x48='H', 0x65='e', 0x6c='l', 0x6c='l'. See the APPLY unit.", "hint1": "0x48 is ASCII 'H'.", "difficulty": 0.4},
-        {"concept_id": "bytes", "type": "free_recall", "question": "How many distinct values can a single byte represent?", "answer": "256", "explanation": "A byte is 8 bits, and 2^8 = 256 (values 0-255).", "hint1": "A byte has 8 bits.", "difficulty": 0.3},
-        {"concept_id": "binary-representation", "type": "multiple_choice", "question": "What is the decimal value of the binary byte 00001010?", "answer": "10", "options": "2|10|1010", "correct_index": 1, "explanation": "Bits from the left: 8 + 2 = 10. Binary 1010 = decimal 10.", "hint1": "Set bits are worth 8 and 2.", "difficulty": 0.4},
-        {"concept_id": "binary-representation", "type": "multiple_choice", "question": "What is the decimal value of the hex byte 0x1a?", "answer": "26", "options": "10|16|26", "correct_index": 2, "explanation": "0x1a = 1*16 + 10 = 26 ('a' is 10 in hex).", "hint1": "The low nibble 'a' equals decimal 10.", "difficulty": 0.5},
-        {"concept_id": "file-layout", "type": "multiple_choice", "question": "What part of an ELF file does the runtime loader use to map segments into memory?", "answer": "The program header table", "options": "The ELF header|The program header table|The section header table", "correct_index": 1, "explanation": "The loader reads e_phoff, then walks the program header table. Sections are for linkers, not loaders.", "hint1": "Think about who reads the file at runtime: the loader.", "difficulty": 0.5},
-        {"concept_id": "file-layout", "type": "multiple_choice", "question": "Given e_shoff = 0x3ff0, where does the section header table start?", "answer": "At byte 0x3ff0", "options": "At byte 0x0040|At byte 0x0001|At byte 0x3ff0", "correct_index": 2, "explanation": "e_shoff holds the file offset of the section header table — here 0x3ff0.", "hint1": "e_shoff is a byte offset from the start of the file.", "difficulty": 0.5},
-        {"concept_id": "elf-identification", "type": "multiple_choice", "question": "What are the first 4 bytes of every ELF file?", "answer": "7f 45 4c 46", "options": "45 4c 46 00|7f 45 4c 46|de ad be ef", "correct_index": 1, "explanation": "The ELF magic: 0x7f followed by 'E','L','F' (0x45 0x4c 0x46).", "hint1": "The magic starts with a non-ASCII byte, then spells .ELF.", "difficulty": 0.3},
-        {"concept_id": "elf-identification", "type": "multiple_choice", "question": "A file starts with 7f 45 4c 46 01 02 01 00. What can you tell about it?", "answer": "32-bit, big-endian", "options": "64-bit, little-endian|32-bit, big-endian|Corrupted file", "correct_index": 1, "explanation": "EI_CLASS=01 (ELF32) at offset 4 and EI_DATA=02 (big-endian) at offset 5.", "hint1": "Offset 4 is the class, offset 5 is the data encoding.", "difficulty": 0.6},
-        {"concept_id": "elf-header-fields", "type": "multiple_choice", "question": "What field in the ELF header tells the loader where the program header table begins?", "answer": "e_phoff", "options": "e_shoff|e_phoff|e_entry", "correct_index": 1, "explanation": "e_phoff is the file offset of the program header table; e_shoff is the section header table.", "hint1": "ph = program headers.", "difficulty": 0.4},
-        {"concept_id": "elf-header-fields", "type": "multiple_choice", "question": "If e_phnum = 9 and e_phentsize = 56, how many bytes does the program header table occupy?", "answer": "504 bytes", "options": "65 bytes|504 bytes|56 bytes", "correct_index": 1, "explanation": "9 entries x 56 bytes each = 504 bytes.", "hint1": "Entries times entry size.", "difficulty": 0.5},
-        {"concept_id": "entry-point", "type": "multiple_choice", "question": "What does the entry point address point to?", "answer": "The _start / initialization code", "options": "Your main() function|The _start / initialization code|The first LOAD segment", "correct_index": 1, "explanation": "e_entry points to _start, which sets up libc and then calls main().", "hint1": "main() is not the first thing that runs.", "difficulty": 0.5},
-        {"concept_id": "symbol-table", "type": "free_recall", "question": "What is the difference between .symtab and .dynsym?", "answer": ".dynsym holds only symbols needed at runtime for dynamic linking; .symtab holds all symbols (including local/debug) and can be stripped.", "explanation": ".dynsym is required by ld.so at runtime; .symtab is optional and usually stripped from release binaries.", "hint1": "One is needed at runtime, one is not.", "difficulty": 0.6}
-    ],
-    "visualization_decls": [],
-    "certificate": {
-        "template_id": "elf-completion",
-        "badge_url": "/badges/elf-complete.svg",
-        "title": "ELF Format Mastery",
-        "description": "Completed the full ELF binary format course",
-        "criteria": "Complete all 24 concepts with 80% quiz accuracy"
+  "id": "elf",
+  "title": "Executable and Linkable Format",
+  "version": 1,
+  "description": "A deep dive into the ELF binary format — headers, sections, segments, symbols, relocations, and dynamic linking.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "intermediate",
+  "importance": "core",
+  "completion_criteria": "all_concepts",
+  "min_platform_version": "1.0",
+  "navigation": "linear",
+  "branching": false,
+  "alternative_paths": [],
+  "bundles": [],
+  "assets": [],
+  "review_item_decls": [],
+  "exercise_decls": [
+    {
+      "concept_id": "bytes",
+      "type": "multiple_choice",
+      "question": "What decimal value does the hex byte 0x41 represent?",
+      "answer": "65",
+      "options": "32|65|127",
+      "correct_index": 1,
+      "explanation": "0x41 = 4*16 + 1 = 65, which is ASCII 'A'. See the RETRIEVE unit.",
+      "hint1": "0x41 in hex is two nibbles: 4 and 1.",
+      "difficulty": 0.3
     },
-    "modules": [
-        {
-            "id": "fundamentals",
-            "title": "Fundamentals",
-            "concepts": ["bytes", "binary-representation", "file-layout"]
-        },
-        {
-            "id": "elf-header",
-            "title": "ELF Header",
-            "concepts": ["elf-identification", "elf-header-fields", "entry-point"]
-        },
-        {
-            "id": "program-headers",
-            "title": "Program Headers",
-            "concepts": ["program-header-table", "segment-types", "memory-mapping"]
-        },
-        {
-            "id": "sections",
-            "title": "Sections",
-            "concepts": ["section-header-table", "common-sections", "section-vs-segment"]
-        },
-        {
-            "id": "symbols",
-            "title": "Symbols",
-            "concepts": ["symbol-table", "binding", "visibility"]
-        },
-        {
-            "id": "relocations",
-            "title": "Relocations",
-            "concepts": ["relocation-entries", "relocation-types", "dynamic-relocations"]
-        },
-        {
-            "id": "dynamic-linking",
-            "title": "Dynamic Linking",
-            "concepts": ["dynamic-section", "shared-libraries", "ld-so"]
-        },
-        {
-            "id": "loading",
-            "title": "Loading & Execution",
-            "concepts": ["loader", "memory-layout", "execution"]
-        }
-    ],
-    "concepts": [
-        {"id": "bytes", "title": "Bytes and Binary", "module_id": "fundamentals", "description": "Understanding bytes."},
-        {"id": "binary-representation", "title": "Binary Representation", "module_id": "fundamentals", "description": "How bytes encode numbers."},
-        {"id": "file-layout", "title": "File Layout", "module_id": "fundamentals", "description": "How an ELF file is organized."},
-        {"id": "elf-identification", "title": "ELF Identification", "module_id": "elf-header", "description": "The e_ident array."},
-        {"id": "elf-header-fields", "title": "ELF Header Fields", "module_id": "elf-header", "description": "Every field in the ELF header."},
-        {"id": "entry-point", "title": "Entry Point", "module_id": "elf-header", "description": "Where execution begins."},
-        {"id": "program-header-table", "title": "Program Header Table", "module_id": "program-headers", "description": "How segments are loaded."},
-        {"id": "segment-types", "title": "Segment Types", "module_id": "program-headers", "description": "PT_LOAD, PT_DYNAMIC, PT_INTERP."},
-        {"id": "memory-mapping", "title": "Memory Mapping", "module_id": "program-headers", "description": "File offsets to virtual addresses."},
-        {"id": "section-header-table", "title": "Section Header Table", "module_id": "sections", "description": "The section descriptor table."},
-        {"id": "common-sections", "title": "Common Sections", "module_id": "sections", "description": ".text, .data, .bss, .rodata."},
-        {"id": "section-vs-segment", "title": "Section vs Segment", "module_id": "sections", "description": "Why they are different."},
-        {"id": "symbol-table", "title": "Symbol Table", "module_id": "symbols", "description": "The .symtab and .dynsym tables."},
-        {"id": "binding", "title": "Symbol Binding", "module_id": "symbols", "description": "Local, global, and weak binding."},
-        {"id": "visibility", "title": "Symbol Visibility", "module_id": "symbols", "description": "Controlling dynamic linking exports."},
-        {"id": "relocation-entries", "title": "Relocation Entries", "module_id": "relocations", "description": "How the linker records patches."},
-        {"id": "relocation-types", "title": "Relocation Types", "module_id": "relocations", "description": "R_X86_64_64, PC32, PLT32."},
-        {"id": "dynamic-relocations", "title": "Dynamic Relocations", "module_id": "relocations", "description": "Load-time patches by ld.so."},
-        {"id": "dynamic-section", "title": "Dynamic Section", "module_id": "dynamic-linking", "description": "The .dynamic section control structure."},
-        {"id": "shared-libraries", "title": "Shared Libraries", "module_id": "dynamic-linking", "description": "How .so files work."},
-        {"id": "ld-so", "title": "The Dynamic Linker", "module_id": "dynamic-linking", "description": "ld.so and the resolution algorithm."},
-        {"id": "loader", "title": "The Kernel Loader", "module_id": "loading", "description": "How the kernel maps ELF segments."},
-        {"id": "memory-layout", "title": "Process Memory Layout", "module_id": "loading", "description": "Where text, data, heap, and stack live."},
-        {"id": "execution", "title": "The Startup Sequence", "module_id": "loading", "description": "From _start to main()."}
-    ]
+    {
+      "concept_id": "bytes",
+      "type": "multiple_choice",
+      "question": "The hex bytes 48 65 6c 6c spell what ASCII text?",
+      "answer": "Hell",
+      "options": "ELF|Hell|Help",
+      "correct_index": 1,
+      "explanation": "0x48='H', 0x65='e', 0x6c='l', 0x6c='l'. See the APPLY unit.",
+      "hint1": "0x48 is ASCII 'H'.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "bytes",
+      "type": "free_recall",
+      "question": "How many distinct values can a single byte represent?",
+      "answer": "256",
+      "explanation": "A byte is 8 bits, and 2^8 = 256 (values 0-255).",
+      "hint1": "A byte has 8 bits.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "binary-representation",
+      "type": "multiple_choice",
+      "question": "What is the decimal value of the binary byte 00001010?",
+      "answer": "10",
+      "options": "2|10|1010",
+      "correct_index": 1,
+      "explanation": "Bits from the left: 8 + 2 = 10. Binary 1010 = decimal 10.",
+      "hint1": "Set bits are worth 8 and 2.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "binary-representation",
+      "type": "multiple_choice",
+      "question": "What is the decimal value of the hex byte 0x1a?",
+      "answer": "26",
+      "options": "10|16|26",
+      "correct_index": 2,
+      "explanation": "0x1a = 1*16 + 10 = 26 ('a' is 10 in hex).",
+      "hint1": "The low nibble 'a' equals decimal 10.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "file-layout",
+      "type": "multiple_choice",
+      "question": "What part of an ELF file does the runtime loader use to map segments into memory?",
+      "answer": "The program header table",
+      "options": "The ELF header|The program header table|The section header table",
+      "correct_index": 1,
+      "explanation": "The loader reads e_phoff, then walks the program header table. Sections are for linkers, not loaders.",
+      "hint1": "Think about who reads the file at runtime: the loader.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "file-layout",
+      "type": "multiple_choice",
+      "question": "Given e_shoff = 0x3ff0, where does the section header table start?",
+      "answer": "At byte 0x3ff0",
+      "options": "At byte 0x0040|At byte 0x0001|At byte 0x3ff0",
+      "correct_index": 2,
+      "explanation": "e_shoff holds the file offset of the section header table — here 0x3ff0.",
+      "hint1": "e_shoff is a byte offset from the start of the file.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "elf-identification",
+      "type": "multiple_choice",
+      "question": "What are the first 4 bytes of every ELF file?",
+      "answer": "7f 45 4c 46",
+      "options": "45 4c 46 00|7f 45 4c 46|de ad be ef",
+      "correct_index": 1,
+      "explanation": "The ELF magic: 0x7f followed by 'E','L','F' (0x45 0x4c 0x46).",
+      "hint1": "The magic starts with a non-ASCII byte, then spells .ELF.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "elf-identification",
+      "type": "multiple_choice",
+      "question": "A file starts with 7f 45 4c 46 01 02 01 00. What can you tell about it?",
+      "answer": "32-bit, big-endian",
+      "options": "64-bit, little-endian|32-bit, big-endian|Corrupted file",
+      "correct_index": 1,
+      "explanation": "EI_CLASS=01 (ELF32) at offset 4 and EI_DATA=02 (big-endian) at offset 5.",
+      "hint1": "Offset 4 is the class, offset 5 is the data encoding.",
+      "difficulty": 0.6
+    },
+    {
+      "concept_id": "elf-header-fields",
+      "type": "multiple_choice",
+      "question": "What field in the ELF header tells the loader where the program header table begins?",
+      "answer": "e_phoff",
+      "options": "e_shoff|e_phoff|e_entry",
+      "correct_index": 1,
+      "explanation": "e_phoff is the file offset of the program header table; e_shoff is the section header table.",
+      "hint1": "ph = program headers.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "elf-header-fields",
+      "type": "multiple_choice",
+      "question": "If e_phnum = 9 and e_phentsize = 56, how many bytes does the program header table occupy?",
+      "answer": "504 bytes",
+      "options": "65 bytes|504 bytes|56 bytes",
+      "correct_index": 1,
+      "explanation": "9 entries x 56 bytes each = 504 bytes.",
+      "hint1": "Entries times entry size.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "entry-point",
+      "type": "multiple_choice",
+      "question": "What does the entry point address point to?",
+      "answer": "The _start / initialization code",
+      "options": "Your main() function|The _start / initialization code|The first LOAD segment",
+      "correct_index": 1,
+      "explanation": "e_entry points to _start, which sets up libc and then calls main().",
+      "hint1": "main() is not the first thing that runs.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "symbol-table",
+      "type": "free_recall",
+      "question": "What is the difference between .symtab and .dynsym?",
+      "answer": ".dynsym holds only symbols needed at runtime for dynamic linking; .symtab holds all symbols (including local/debug) and can be stripped.",
+      "explanation": ".dynsym is required by ld.so at runtime; .symtab is optional and usually stripped from release binaries.",
+      "hint1": "One is needed at runtime, one is not.",
+      "difficulty": 0.6
+    }
+  ],
+  "visualization_decls": [],
+  "certificate": {
+    "template_id": "elf-completion",
+    "badge_url": "/badges/elf-complete.svg",
+    "title": "ELF Format Mastery",
+    "description": "Completed the full ELF binary format course",
+    "criteria": "Complete all 24 concepts with 80% quiz accuracy"
+  },
+  "modules": [
+    {
+      "id": "fundamentals",
+      "title": "Fundamentals",
+      "concepts": [
+        "bytes",
+        "binary-representation",
+        "file-layout"
+      ],
+      "description": "Bytes, binary representation, and file layout."
+    },
+    {
+      "id": "elf-header",
+      "title": "ELF Header",
+      "concepts": [
+        "elf-identification",
+        "elf-header-fields",
+        "entry-point"
+      ],
+      "description": "The ELF identification and header structure."
+    },
+    {
+      "id": "program-headers",
+      "title": "Program Headers",
+      "concepts": [
+        "program-header-table",
+        "segment-types",
+        "memory-mapping"
+      ],
+      "description": "How the loader maps segments into memory."
+    },
+    {
+      "id": "sections",
+      "title": "Sections",
+      "concepts": [
+        "section-header-table",
+        "common-sections",
+        "section-vs-segment"
+      ],
+      "description": "The sections that make up an ELF file."
+    },
+    {
+      "id": "symbols",
+      "title": "Symbols",
+      "concepts": [
+        "symbol-table",
+        "binding",
+        "visibility"
+      ],
+      "description": "How ELF names and exports functions and variables."
+    },
+    {
+      "id": "relocations",
+      "title": "Relocations",
+      "concepts": [
+        "relocation-entries",
+        "relocation-types",
+        "dynamic-relocations"
+      ],
+      "description": "How the linker patches addresses when combining objects."
+    },
+    {
+      "id": "dynamic-linking",
+      "title": "Dynamic Linking",
+      "concepts": [
+        "dynamic-section",
+        "shared-libraries",
+        "ld-so"
+      ],
+      "description": "How shared libraries are found, loaded, and connected at runtime."
+    },
+    {
+      "id": "loading",
+      "title": "Loading & Execution",
+      "concepts": [
+        "loader",
+        "memory-layout",
+        "execution"
+      ],
+      "description": "How the OS loads and runs your program."
+    }
+  ],
+  "concepts": [
+    {
+      "id": "bytes",
+      "title": "Bytes and Binary",
+      "module_id": "fundamentals",
+      "description": "Understanding bytes."
+    },
+    {
+      "id": "binary-representation",
+      "title": "Binary Representation",
+      "module_id": "fundamentals",
+      "description": "How bytes encode numbers."
+    },
+    {
+      "id": "file-layout",
+      "title": "File Layout",
+      "module_id": "fundamentals",
+      "description": "How an ELF file is organized."
+    },
+    {
+      "id": "elf-identification",
+      "title": "ELF Identification",
+      "module_id": "elf-header",
+      "description": "The e_ident array."
+    },
+    {
+      "id": "elf-header-fields",
+      "title": "ELF Header Fields",
+      "module_id": "elf-header",
+      "description": "Every field in the ELF header."
+    },
+    {
+      "id": "entry-point",
+      "title": "Entry Point",
+      "module_id": "elf-header",
+      "description": "Where execution begins."
+    },
+    {
+      "id": "program-header-table",
+      "title": "Program Header Table",
+      "module_id": "program-headers",
+      "description": "How segments are loaded."
+    },
+    {
+      "id": "segment-types",
+      "title": "Segment Types",
+      "module_id": "program-headers",
+      "description": "PT_LOAD, PT_DYNAMIC, PT_INTERP."
+    },
+    {
+      "id": "memory-mapping",
+      "title": "Memory Mapping",
+      "module_id": "program-headers",
+      "description": "File offsets to virtual addresses."
+    },
+    {
+      "id": "section-header-table",
+      "title": "Section Header Table",
+      "module_id": "sections",
+      "description": "The section descriptor table."
+    },
+    {
+      "id": "common-sections",
+      "title": "Common Sections",
+      "module_id": "sections",
+      "description": ".text, .data, .bss, .rodata."
+    },
+    {
+      "id": "section-vs-segment",
+      "title": "Section vs Segment",
+      "module_id": "sections",
+      "description": "Why they are different."
+    },
+    {
+      "id": "symbol-table",
+      "title": "Symbol Table",
+      "module_id": "symbols",
+      "description": "The .symtab and .dynsym tables."
+    },
+    {
+      "id": "binding",
+      "title": "Symbol Binding",
+      "module_id": "symbols",
+      "description": "Local, global, and weak binding."
+    },
+    {
+      "id": "visibility",
+      "title": "Symbol Visibility",
+      "module_id": "symbols",
+      "description": "Controlling dynamic linking exports."
+    },
+    {
+      "id": "relocation-entries",
+      "title": "Relocation Entries",
+      "module_id": "relocations",
+      "description": "How the linker records patches."
+    },
+    {
+      "id": "relocation-types",
+      "title": "Relocation Types",
+      "module_id": "relocations",
+      "description": "R_X86_64_64, PC32, PLT32."
+    },
+    {
+      "id": "dynamic-relocations",
+      "title": "Dynamic Relocations",
+      "module_id": "relocations",
+      "description": "Load-time patches by ld.so."
+    },
+    {
+      "id": "dynamic-section",
+      "title": "Dynamic Section",
+      "module_id": "dynamic-linking",
+      "description": "The .dynamic section control structure."
+    },
+    {
+      "id": "shared-libraries",
+      "title": "Shared Libraries",
+      "module_id": "dynamic-linking",
+      "description": "How .so files work."
+    },
+    {
+      "id": "ld-so",
+      "title": "The Dynamic Linker",
+      "module_id": "dynamic-linking",
+      "description": "ld.so and the resolution algorithm."
+    },
+    {
+      "id": "loader",
+      "title": "The Kernel Loader",
+      "module_id": "loading",
+      "description": "How the kernel maps ELF segments."
+    },
+    {
+      "id": "memory-layout",
+      "title": "Process Memory Layout",
+      "module_id": "loading",
+      "description": "Where text, data, heap, and stack live."
+    },
+    {
+      "id": "execution",
+      "title": "The Startup Sequence",
+      "module_id": "loading",
+      "description": "From _start to main()."
+    }
+  ]
 }
