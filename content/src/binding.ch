@@ -143,6 +143,10 @@ nm test | grep ' x'    # shows uppercase 'D' (b.o's x wins)</pre></div>
             </nav>
             <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Top</button>
             <div class="a11y-toast" id="a11y-toast"></div>
+            <div class="unit unit-exercises" id="api-exercises" style="display:none">
+                <h2>Practice Exercises</h2>
+                <div id="exercise-list"></div>
+            </div>
             <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">
             <link rel="next" href="">
@@ -161,6 +165,17 @@ nm test | grep ' x'    # shows uppercase 'D' (b.o's x wins)</pre></div>
         .unit-retrieve { border-color: #06b6d4; background: #ecfeff; }
         .unit-apply { border-color: #f97316; background: #fff7ed; }
         .unit-connect { border-color: #10b981; background: #ecfdf5; }
+        .unit-exercises { border-color: #8b5cf6; background: #f5f3ff; }
+        .exercise-card { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin: 0.75rem 0; }
+        .exercise-card h4 { margin: 0 0 0.5rem 0; font-size: 0.95rem; }
+        .exercise-option { display: block; width: 100%; padding: 0.6rem 0.9rem; margin: 0.4rem 0; border: 1px solid #d1d5db; border-radius: 6px; background: white; cursor: pointer; text-align: left; font-size: 0.92rem; }
+        .exercise-option:hover { border-color: #8b5cf6; }
+        .exercise-option.correct { border-color: #059669; background: #ecfdf5; }
+        .exercise-option.wrong { border-color: #dc2626; background: #fef2f2; }
+        .exercise-input { padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; margin-right: 0.5rem; }
+        .exercise-feedback { margin-top: 0.6rem; padding: 0.6rem 0.8rem; border-radius: 6px; font-size: 0.9rem; display: none; }
+        .exercise-feedback.ok { display: block; background: #ecfdf5; border-left: 3px solid #059669; }
+        .exercise-feedback.err { display: block; background: #fef2f2; border-left: 3px solid #dc2626; }
         h1 { font-size: 1.5rem; margin-bottom: 1rem; }
         h2 { font-size: 1.1rem; margin-bottom: 0.75rem; }
         .hex-dump { background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 6px; font-family: monospace; overflow-x: auto; }
@@ -263,6 +278,76 @@ nm test | grep ' x'    # shows uppercase 'D' (b.o's x wins)</pre></div>
         .quiz-option:active, .tf-option:active { transform: scale(0.98); transition: transform 0.1s; }
     }
     #js {
+        // ---- 4.1.26: server-side exercises, loaded from /api/exercises ----
+        function __ul_load_exercises() {
+            var ctx = __ul_ctx();
+            if (!ctx) { return; }
+            var box = document.getElementById('api-exercises');
+            var list = document.getElementById('exercise-list');
+            if (!box || !list) { return; }
+            fetch('/api/exercises/' + encodeURIComponent(ctx.concept))
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (!data.exercises || data.exercises.length === 0) { return; }
+                    box.style.display = '';
+                    for (var i = 0; i < data.exercises.length; i++) { list.appendChild(__ul_build_exercise(data.exercises[i])); }
+                })
+                .catch(function() {});
+        }
+        function __ul_build_exercise(ex) {
+            var card = document.createElement('div');
+            card.className = 'exercise-card';
+            var h = document.createElement('h4');
+            h.textContent = ex.question;
+            card.appendChild(h);
+            var fb = document.createElement('div');
+            fb.className = 'exercise-feedback';
+            if (ex.type === 'recognize' && ex.options && ex.options.length > 0) {
+                for (var j = 0; j < ex.options.length; j++) {
+                    (function(opt) {
+                        var b = document.createElement('button');
+                        b.className = 'exercise-option';
+                        b.textContent = opt;
+                        b.onclick = function() { __ul_submit_exercise(ex, opt, b, fb); };
+                        card.appendChild(b);
+                    })(ex.options[j]);
+                }
+            } else {
+                var wrap = document.createElement('div');
+                var inp = document.createElement('input');
+                inp.type = 'text';
+                inp.className = 'exercise-input';
+                inp.placeholder = 'Type your answer';
+                var btn = document.createElement('button');
+                btn.className = 'fill-check-btn';
+                btn.textContent = 'Check';
+                btn.onclick = function() { __ul_submit_exercise(ex, inp.value, btn, fb); };
+                wrap.appendChild(inp); wrap.appendChild(btn);
+                card.appendChild(wrap);
+            }
+            card.appendChild(fb);
+            return card;
+        }
+        function __ul_submit_exercise(ex, answer, el, fb) {
+            var url = '/api/exercises/submit?exercise_id=' + encodeURIComponent(ex.id) + '&answer=' + encodeURIComponent(answer);
+            fetch(url, { method: 'POST' })
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    var opts = el.parentNode.querySelectorAll('.exercise-option');
+                    for (var k = 0; k < opts.length; k++) { opts[k].disabled = true; }
+                    if (res.correct) {
+                        if (el.classList) { el.classList.add('correct'); }
+                        fb.className = 'exercise-feedback ok';
+                    } else {
+                        if (el.classList) { el.classList.add('wrong'); }
+                        fb.className = 'exercise-feedback err';
+                    }
+                    var text = (res.correct ? 'Correct! ' : 'Not quite. ') + (res.explanation || '');
+                    fb.textContent = text;
+                })
+                .catch(function() {});
+        }
+        document.addEventListener('DOMContentLoaded', function() { __ul_load_exercises(); });
         function __ul_ctx() {
             var parts = window.location.pathname.split('/').filter(function(p) { return p.length > 0; });
             if (parts.length >= 4) {

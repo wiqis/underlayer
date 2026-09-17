@@ -107,4 +107,37 @@ public namespace underlayer_repository {
         return false
     }
 
+    // Escape a string for embedding inside a single-quoted SQL literal:
+    // ' becomes '' (standard SQL escaping). The codebase builds SQL by string
+    // concatenation, so any user/manifest-supplied text must pass through this
+    // before being appended, or the statement silently breaks.
+    public func sql_escape(s : &string) : string {
+        var out = string()
+        var i : size_t = 0
+        while(i < s.size()) {
+            var c = s.get(i)
+            if(c == '\'') {
+                out.append('\'')
+                out.append('\'')
+            } else {
+                out.append(c)
+            }
+            i = i + 1
+        }
+        return out
+    }
+
+    // Format an f64 with two decimal places (repository-local copy of
+    // underlayer_learning::f64_to_string — the repository layer sits below
+    // learning and must not import it).
+    public func f64_to_string(val : f64) : string {
+        var int_part = val as i64
+        var frac_part = ((val - (int_part as f64)) * 100.0) as i64
+        var result = underlayer_core::int_to_string(int_part)
+        result.append_view(".")
+        var frac_str = underlayer_core::int_to_string(frac_part)
+        result.append_view(frac_str.to_view())
+        return result
+    }
+
 }

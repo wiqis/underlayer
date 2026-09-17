@@ -28,6 +28,9 @@ public namespace underlayer_web {
         var q_concept = string("concept_id")
         var concept_v = req.query.get(&q_concept.to_view())
 
+        // 2.4.21: lazily seed review items so the queue is never permanently empty
+        underlayer_repository::seed_review_items(&raw db, &learner_id, &course_id)
+
         var due_items : std::vector<underlayer_models::ReviewItem> = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, 10)
 
         // 5.1.3: Cramming mode — return all review items (ignore next_review)
@@ -457,6 +460,9 @@ public namespace underlayer_web {
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
         var limit : int = 10
+
+        // 2.4.21: lazily seed review items so the queue is never permanently empty
+        underlayer_repository::seed_review_items(&raw db, &learner_id, &course_id)
 
         var due_items = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, limit)
         var body = std::string("{\"items\":[")

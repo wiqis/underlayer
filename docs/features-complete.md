@@ -298,6 +298,8 @@
 ### 2.4 Review Item Generation
 
 - [ ] P3 2.4.1 Auto-generate review items from concept content
+- [ ] P1 2.4.21 Review item seeding: create per-concept review items on first learner activity (insert_review_item/update_review_item are never called anywhere — the review queue is permanently empty, so /api/review/due always returns [] and FSRS scheduling never engages)
+- [ ] P2 2.4.22 Seed review_item_decls from course manifest (decls field exists but is empty and unread by the seed handler)
 - [ ] P3 2.4.2 Review item templates: free recall
 - [ ] P3 2.4.3 Review item templates: cued recall
 - [ ] P3 2.4.4 Review item templates: recognition (multiple choice)
@@ -477,6 +479,11 @@
 - [ ] P3 4.1.23 Concept mapping: connect related concepts
 - [ ] P3 4.1.24 Open-ended: explain a concept in your own words
 - [ ] P3 4.1.25 Project: build something using the knowledge
+- [ ] P1 4.1.26 Lesson pages render exercises from GET /api/exercises/:conceptId (no page currently consumes the exercise API — wiring gap)
+- [ ] P1 4.1.27 Exercise seeding at startup or on first lesson request (DB starts empty; /api/exercises/seed exists but is manual-only)
+- [ ] P1 4.1.28 Exercise submit updates concept_states and creates/updates review_items via FSRS (currently grades only — results never reach the learning loop)
+- [ ] P1 4.1.29 Exercise UI on lesson pages supports all 8 exercise types (multiple choice, multi-select, fill-blank, hex-inspect, ordering, matching, labeling, predict)
+- [ ] P2 4.1.30 Progressive hints UI wired to GET /api/exercises/hint (API exists, no frontend consumer)
 
 ### 4.2 Exercise Feedback
 
@@ -498,6 +505,7 @@
 - [x] P2 4.2.16 Mistake pattern detection (common errors)
 - [x] P2 4.2.17 Personalized feedback based on mistake pattern
 - [x] P2 4.2.18 Feedback quality rating (was this helpful?)
+- [ ] P2 4.2.19 Real exercise streak counter in submit response (currently hardcoded 0 in JSON)
 
 ### 4.3 Exercise Generation
 
@@ -560,6 +568,11 @@
 - [ ] P3 5.1.13 Spaced repetition only: only FSRS-scheduled items
 - [ ] P3 5.1.14 Manual review: no FSRS, just review on demand
 - [ ] P3 5.1.15 Exam preparation: focus on high-yield items
+- [ ] P1 5.1.16 Review page mode selection fetches POST-style /api/review/start JSON and renders the session in-page (currently `startMode()` navigates the browser to the raw JSON endpoint — broken flow)
+- [ ] P1 5.1.17 Review page calls POST /api/review/end on session completion (sessions currently stay "active" forever)
+- [ ] P1 5.1.18 Review session controls UI: pause/resume/abort/undo/skip buttons wired to /api/session/* (APIs exist, zero frontend consumers)
+- [ ] P1 5.1.19 Review submit/start resolve learner via bearer token only — remove "demo" learner_id fallback that lets anonymous ratings pollute data
+- [ ] P2 5.1.20 Review recommendations surfaced in UI: /api/review/recommendations and /api/review/time-recommendation have no frontend consumer
 
 ### 5.2 Review Item Types
 
@@ -659,6 +672,8 @@
 - [x] P2 6.2.13 Engagement analytics (sessions per week)
 - [x] P2 6.2.14 Velocity analytics (concepts per week)
 - [x] P2 6.2.15 Comparative analytics (vs other learners)
+- [ ] P2 6.2.16 Analytics pages consume the extended analytics endpoints (temporal/retention/dropoff/funnel/platform/cohorts/devices APIs exist — only sessions + overview are fetched by UI)
+- [ ] P2 6.2.17 Progress page and analytics pages pass auth bearer token on fetch (learner identity currently ambiguous server-side)
 
 ### 6.3 Retention Metrics
 
@@ -711,6 +726,16 @@
 - [x] P2 7.1.13 Progress indicator in navigation
 - [ ] P2 7.1.14 Unread indicator (new content)
 - [x] P2 7.1.15 Due indicator (review items due)
+- [ ] P1 7.1.16 Prev/next lesson navigation on concept pages wired to GET /api/navigation/:courseId/:conceptId (rel links are empty; no consumer of the navigation API)
+- [ ] P1 7.1.17 Site navbar on lesson pages — concept pages rendered from content/src are orphaned from site navigation (no navbar, no way back to dashboard)
+- [ ] P1 7.1.18 Auth-aware navbar: Login/Register links when logged out, profile + Logout when logged in (POST /api/auth/logout exists, no UI calls it)
+- [ ] P1 7.1.19 401 handling in authenticated pages: redirect to /login when session token expired (pages currently render empty states silently)
+- [ ] P1 7.1.20 Onboarding gate: logged-in users with incomplete onboarding are routed to /onboarding from home/dashboard (GET /api/onboarding/check exists, never consulted)
+- [ ] P1 7.1.21 Course context from URL/state instead of hardcoded course_id=elf in review page, progress page, and analytics page fetches
+- [ ] P1 7.1.22 Fix analytics page fetch of literal '/api/progress/:courseId' URL (real bug — requests the un-substituted route string)
+- [ ] P1 7.1.23 Course landing page Enroll button wired to POST /api/courses/:courseId/enroll with can-enroll prerequisite feedback (enrollments API has no UI consumer)
+- [ ] P2 7.1.24 Home page "Continue learning" card + due-reviews badge for logged-in learners (user-flow requirement; home is currently static)
+- [ ] P2 7.1.25 Dashboard shows a login prompt instead of rendering "demo" learner data when logged out
 
 ### 7.2 UI Components
 
@@ -1104,6 +1129,8 @@
 - [ ] P3 11.2.13 Two-factor authentication (TOTP)
 - [ ] P3 11.2.14 Backup codes generation
 - [ ] P3 11.2.15 Backup codes recovery
+- [ ] P1 11.2.16 Frontend auth session bootstrap: shared JS helper to read session_token, attach Authorization headers, and refresh/expire gracefully (each page re-implements token handling; /api/auth/me never called to validate)
+- [ ] P1 11.2.17 Register/login flows redirect into the onboarding gate instead of raw home redirect
 
 ### 11.3 Third-Party Integrations
 

@@ -112,110 +112,15 @@ public namespace underlayer_web {
     }
 
     // POST /api/exercises/seed — Seed exercises from course manifest data
+    // (P1 4.1.27: logic moved to underlayer_repository::seed_exercises_from_manifest
+    //  so the same function runs at server startup and via this manual endpoint.)
     public func handle_exercise_seed(db : &DbClient, req : *mut http::Request, res : *mut http::ResponseWriter) {
         var courses_dir = string("./courses")
+        var env_dir = underlayer_core::get_env_str("COURSES_DIR")
+        if(env_dir.size() > 0) { courses_dir = env_dir }
 
-        var courses = vector<string>()
-        courses.push(string("elf"))
-
-        var inserted_count = 0
-        var ci : size_t = 0
-        while(ci < courses.size()) {
-            var course_id = courses.get_ptr(ci).copy()
-            var manifest_path = courses_dir.copy()
-            manifest_path.append_view("/")
-            manifest_path.append_view(course_id.to_view())
-            manifest_path.append_view("/manifest.json")
-
-            var manifest_result = fs::read_entire_file(manifest_path.data())
-            if(manifest_result is std::Result.Err) {
-                ci = ci + 1
-                continue
-            }
-            var Ok(manifest_data) = manifest_result else unreachable
-            var manifest_content = string()
-            var di2 : size_t = 0
-            while(di2 < manifest_data.size()) {
-                manifest_content.append(manifest_data.get(di2) as char)
-                di2 = di2 + 1
-            }
-            if(manifest_content.size() == 0) {
-                ci = ci + 1
-                continue
-            }
-
-            var manifest_json = json::parse(manifest_content.to_view())
-            if(manifest_json is std::Result.Err) {
-                ci = ci + 1
-                continue
-            }
-            var Ok(manifest_val) = manifest_json else unreachable
-
-            var exercise_decls = json_get(&raw manifest_val, "exercise_decls")
-            if(exercise_decls != null && exercise_decls is JsonValue.Array) {
-                var Array(decls) = *exercise_decls else unreachable
-                var di : size_t = 0
-                while(di < decls.size()) {
-                    var decl_ptr = decls.get_ptr(di)
-                    var ex = Exercise::make()
-                    ex.concept_id = json_get_str(decl_ptr, "concept_id")
-                    ex.question = json_get_str(decl_ptr, "question")
-                    ex.answer = json_get_str(decl_ptr, "answer")
-                    ex.explanation = json_get_str(decl_ptr, "explanation")
-                    ex.hint1 = json_get_str(decl_ptr, "hint1")
-                    ex.hint2 = json_get_str(decl_ptr, "hint2")
-                    ex.hint3 = json_get_str(decl_ptr, "hint3")
-                    ex.correct_index = json_get_int(decl_ptr, "correct_index")
-
-                    var type_str = json_get_str(decl_ptr, "type")
-                    if(type_str.equals(string("multiple_choice"))) {
-                        ex.exercise_type = underlayer_models::exercise_type_recognize()
-                    } else if(type_str.equals(string("multi_recognize"))) {
-                        ex.exercise_type = underlayer_models::exercise_type_multi_recognize()
-                    } else if(type_str.equals(string("free_recall"))) {
-                        ex.exercise_type = underlayer_models::exercise_type_recall()
-                    } else if(type_str.equals(string("cued_recall"))) {
-                        ex.exercise_type = underlayer_models::exercise_type_apply()
-                    } else {
-                        ex.exercise_type = underlayer_models::exercise_type_recognize()
-                    }
-
-                    var options_str = json_get_str(decl_ptr, "options")
-                    if(options_str.size() > 0) {
-                        var opt_start : size_t = 0
-                        var oi : size_t = 0
-                        while(oi <= options_str.size()) {
-                            if(oi == options_str.size() || options_str.get(oi) == '|') {
-                                var opt = string()
-                                var oj : size_t = opt_start
-                                while(oj < oi) {
-                                    opt.append(options_str.get(oj))
-                                    oj = oj + 1
-                                }
-                                ex.options.push(opt)
-                                opt_start = oi + 1
-                            }
-                            oi = oi + 1
-                        }
-                    }
-
-                    var id_str = course_id.copy()
-                    id_str.append_view("_")
-                    id_str.append_view(ex.concept_id.to_view())
-                    id_str.append_view("_")
-                    var di_str = underlayer_core::int_to_string(di as i64)
-                    id_str.append_view(di_str.to_view())
-                    ex.id = id_str
-
-                    if(ex.concept_id.size() > 0) {
-                        underlayer_repository::insert_exercise(&raw db, &raw ex)
-                        inserted_count = inserted_count + 1
-                    }
-                    di = di + 1
-                }
-            }
-            ci = ci + 1
-        }
+        var course_id = string("elf")
+        var inserted_count = underlayer_repository::seed_exercises_from_manifest(&raw db, &courses_dir, &course_id)
 
         var resp = std::string("{\"inserted\":")
         var count_str = underlayer_core::int_to_string(inserted_count as i64)

@@ -4,6 +4,7 @@ using std::string_view
 using std::vector
 using underlayer_db::DbClient
 using underlayer_models::Exercise
+using underlayer_learning::ReviewState
 using underlayer_repository::parse_i64
 
 public namespace underlayer_web {
@@ -152,6 +153,78 @@ public namespace underlayer_web {
         // 4.2.8: Solution reveal after 3 failed attempts (client tracks attempts)
         body.append_view(",\"show_solution_after\":3")
         var now = underlayer_core::current_timestamp()
+
+        // ---- 4.1.28: Feed the learning loop ----
+        // Exercise results previously never touched concept_states or review_items,
+        // so practice had zero effect on scheduling. Map correct/incorrect to an
+        // FSRS rating (Good=3 / Again=1), update the concept state, and seed/update
+        // the concept's review item — same pipeline as /api/review/submit.
+        var learner_id = auth_get_learner_id(&raw db, &*req)
+        var authenticated = learner_id.size() > 0
+        var course_id = string("elf")
+        if(authenticated) {
+            var rating : int = 1
+            if(correct) { rating = 3 }
+
+            var state = underlayer_repository::get_concept_state(&raw db, &learner_id, &ex.concept_id, &course_id)
+            state.learner_id = learner_id.copy()
+            state.concept_id = ex.concept_id.copy()
+            state.course_id = course_id.copy()
+
+            var params = underlayer_learning::init_fsrs_params()
+            var rs = ReviewState::make()
+            rs.difficulty = state.difficulty_rating
+            if(rs.difficulty < 1.0) { rs.difficulty = 5.0 }
+            if(rs.difficulty > 10.0) { rs.difficulty = 5.0 }
+            rs.stability = 1.0
+            rs.reps = state.attempts
+            rs.lapses = state.attempts - state.correct
+            rs.elapsed_days = 0
+            rs.scheduled_days = state.next_review - state.last_studied
+            if(rs.scheduled_days < 0) { rs.scheduled_days = 0 }
+
+            var new_rs = underlayer_learning::fsrs_update_state(&params, &rs, rating)
+
+            state.attempts = state.attempts + 1
+            if(correct) {
+                state.correct = state.correct + 1
+                state.streak = state.streak + 1
+            } else {
+                state.streak = 0
+            }
+            state.last_studied = now
+            state.next_review = state.last_studied + new_rs.scheduled_days
+            state.difficulty_rating = new_rs.difficulty
+
+            if(new_rs.reps == 1) { state.status = string("learning") }
+            else if(new_rs.lapses > 0) { state.status = string("reviewing") }
+            else if(new_rs.reps >= 5 && state.streak >= 3) { state.status = string("mastered") }
+            else { state.status = string("reviewing") }
+
+            underlayer_repository::upsert_concept_state(&raw db, &raw state)
+
+            // Seed (first interaction) then update the review item's schedule
+            underlayer_repository::seed_review_items(&raw db, &learner_id, &course_id)
+            var item_id = string()
+            item_id.append_string(&learner_id)
+            item_id.append_view("_")
+            item_id.append_string(&course_id)
+            item_id.append_view("_")
+            item_id.append_string(&ex.concept_id)
+            var item = underlayer_repository::get_review_item(&raw db, &item_id)
+            if(item.id.size() > 0) {
+                item.last_review = now
+                item.reps = item.reps + 1
+                if(!correct) { item.lapses = item.lapses + 1 }
+                item.difficulty = new_rs.difficulty
+                item.stability = new_rs.stability
+                item.next_review = now + new_rs.scheduled_days * 86400
+                underlayer_repository::update_review_item(&raw db, &raw item)
+            }
+
+            underlayer_repository::record_activity(&raw db, &learner_id)
+        }
+
         // 4.2.9: Related concept suggestions
         body.append_view(",\"related_concepts\":[")
         if(!correct && ex.concept_id.size() > 0) {
@@ -160,8 +233,15 @@ public namespace underlayer_web {
             body.append_view("\"}")
         }
         body.append_view("]")
-        // 4.2.13: Streak indicator
-        body.append_view(",\"streak\":0")
+        // 4.2.13: Streak indicator (real value when authenticated — 4.2.19)
+        body.append_view(",\"streak\":")
+        if(authenticated) {
+            var post_state = underlayer_repository::get_concept_state(&raw db, &learner_id, &ex.concept_id, &course_id)
+            var streak_str = underlayer_core::int_to_string(post_state.streak as i64)
+            body.append_string(&streak_str)
+        } else {
+            body.append_view("0")
+        }
         // 4.2.14: Encouragement messages
         body.append_view(",\"encouragement\":\"")
         if(correct) {

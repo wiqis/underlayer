@@ -13,10 +13,19 @@ public func main() : int {
     printf("[underlayer] Starting Underlayer on port %s\n", underlayer_core::u32_to_string(port).data())
 
     var db = underlayer_db::make_client(db_url.copy(), db_token.copy())
+    var courses_dir_pre = cfg.courses_dir.copy()
 
     // ---- Init schema (skip for remote DB) ----
     if(!underlayer_db::is_remote_url(&raw db_url)) {
         underlayer_repository::init_schema(&raw db)
+
+        // 4.1.27: seed exercises from course manifests at startup (idempotent).
+        // Keeps the exercise API functional without a manual seed call.
+        var seed_course = std::string("elf")
+        var seeded = underlayer_repository::seed_exercises_from_manifest(&raw db, &courses_dir_pre, &seed_course)
+        if(seeded > 0) {
+            printf("[underlayer] Seeded %s exercises from manifests\n", underlayer_core::int_to_string(seeded).data())
+        }
     }
 
     // ---- HTTP Server ----

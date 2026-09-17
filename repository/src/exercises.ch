@@ -73,7 +73,7 @@ public namespace underlayer_repository {
                 ex.hint1 = row.vals.get_ptr(8).copy()
                 ex.hint2 = row.vals.get_ptr(9).copy()
                 ex.hint3 = row.vals.get_ptr(10).copy()
-                ex.difficulty = parse_i64(row.vals.get_ptr(11).to_view()) as float
+                ex.difficulty = parse_f64(row.vals.get_ptr(11).to_view()) as float
                 // Parse correct_indices from comma-separated string (12th column)
                 var ci_str = row.vals.get_ptr(12).to_view()
                 if(ci_str.size() > 2) {
@@ -152,7 +152,7 @@ public namespace underlayer_repository {
                 ex.hint1 = row.vals.get_ptr(8).copy()
                 ex.hint2 = row.vals.get_ptr(9).copy()
                 ex.hint3 = row.vals.get_ptr(10).copy()
-                ex.difficulty = parse_i64(row.vals.get_ptr(11).to_view()) as float
+                ex.difficulty = parse_f64(row.vals.get_ptr(11).to_view()) as float
                 // Parse correct_indices
                 var ci_str = row.vals.get_ptr(12).to_view()
                 if(ci_str.size() > 2) {
@@ -195,10 +195,12 @@ public namespace underlayer_repository {
         if(ex.exercise_type.id.equals(string("multi_recognize"))) { type_str = string("multi_recognize") }
         sql.append_string(&type_str)
         sql.append_view("', '")
-        var q_esc = underlayer_core::json_escape(&ex.question.to_view())
+        var q_raw = sql_escape(&ex.question)
+        var q_esc = underlayer_core::json_escape(&q_raw.to_view())
         sql.append_view(q_esc.to_view())
         sql.append_view("', '")
-        var a_esc = underlayer_core::json_escape(&ex.answer.to_view())
+        var a_raw = sql_escape(&ex.answer)
+        var a_esc = underlayer_core::json_escape(&a_raw.to_view())
         sql.append_view(a_esc.to_view())
         sql.append_view("', '")
         // Join options with |
@@ -215,27 +217,33 @@ public namespace underlayer_repository {
             }
             oi = oi + 1
         }
-        var opts_esc = underlayer_core::json_escape(&opts.to_view())
+        var opts_raw = sql_escape(&opts)
+        var opts_esc = underlayer_core::json_escape(&opts_raw.to_view())
         sql.append_view(opts_esc.to_view())
         sql.append_view("', ")
         var ci_str = underlayer_core::int_to_string(ex.correct_index as i64)
         sql.append_view(ci_str.to_view())
         sql.append_view(", '")
-        var exp_esc = underlayer_core::json_escape(&ex.explanation.to_view())
+        var exp_raw = sql_escape(&ex.explanation)
+        var exp_esc = underlayer_core::json_escape(&exp_raw.to_view())
         sql.append_view(exp_esc.to_view())
         sql.append_view("', '")
-        var h1_esc = underlayer_core::json_escape(&ex.hint1.to_view())
+        var h1_raw = sql_escape(&ex.hint1)
+        var h1_esc = underlayer_core::json_escape(&h1_raw.to_view())
         sql.append_view(h1_esc.to_view())
         sql.append_view("', '")
-        var h2_esc = underlayer_core::json_escape(&ex.hint2.to_view())
+        var h2_raw = sql_escape(&ex.hint2)
+        var h2_esc = underlayer_core::json_escape(&h2_raw.to_view())
         sql.append_view(h2_esc.to_view())
         sql.append_view("', '")
-        var h3_esc = underlayer_core::json_escape(&ex.hint3.to_view())
+        var h3_raw = sql_escape(&ex.hint3)
+        var h3_esc = underlayer_core::json_escape(&h3_raw.to_view())
         sql.append_view(h3_esc.to_view())
         sql.append_view("', ")
-        var diff_str = underlayer_core::int_to_string(ex.difficulty as i64)
+        // Write difficulty as a REAL (0.30), not int-truncated
+        var diff_str = f64_to_string(ex.difficulty as f64)
         sql.append_view(diff_str.to_view())
-        sql.append_view(".0, '")
+        sql.append_view(", '")
         // Build correct_indices JSON array
         var ci_json = string("[")
         var cii : size_t = 0

@@ -6,6 +6,32 @@ using underlayer_models::ReviewItem
 
 public namespace underlayer_repository {
 
+    // Fetch a single review item by id. Returns a default item (id == "") if missing.
+    public func get_review_item(db : *DbClient, item_id : &string) : ReviewItem {
+        var item = ReviewItem::make()
+        var sql = string("SELECT id, concept_id, type, front, back, difficulty, stability, retrievability, next_review, last_review, reps, lapses, ease_factor FROM review_items WHERE id = '")
+        sql.append_string(item_id)
+        sql.append_view("' LIMIT 1")
+        var result = underlayer_db::query_sql(db, &raw sql)
+        if(result.rows.size() == 0) { return item }
+        var row = result.rows.get_ptr(0)
+        if(row.vals.size() < 13) { return item }
+        item.id = row.vals.get_ptr(0).copy()
+        item.concept_id = row.vals.get_ptr(1).copy()
+        item.item_type = row.vals.get_ptr(2).copy()
+        item.front = row.vals.get_ptr(3).copy()
+        item.back = row.vals.get_ptr(4).copy()
+        item.difficulty = parse_f64(row.vals.get_ptr(5).to_view())
+        item.stability = parse_f64(row.vals.get_ptr(6).to_view())
+        item.retrievability = parse_f64(row.vals.get_ptr(7).to_view())
+        item.next_review = parse_i64(row.vals.get_ptr(8).to_view())
+        item.last_review = parse_i64(row.vals.get_ptr(9).to_view())
+        item.reps = parse_i64(row.vals.get_ptr(10).to_view()) as int
+        item.lapses = parse_i64(row.vals.get_ptr(11).to_view()) as int
+        item.ease_factor = parse_f64(row.vals.get_ptr(12).to_view())
+        return item
+    }
+
     public func get_due_review_items(db : *DbClient, learner_id : &string, course_id : &string, limit : int) : vector<ReviewItem> {
         var items = vector<ReviewItem>()
         var now = underlayer_core::current_timestamp()
