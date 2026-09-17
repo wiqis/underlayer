@@ -298,7 +298,7 @@
 ### 2.4 Review Item Generation
 
 - [ ] P3 2.4.1 Auto-generate review items from concept content
-- [ ] P1 2.4.21 Review item seeding: create per-concept review items on first learner activity (insert_review_item/update_review_item are never called anywhere — the review queue is permanently empty, so /api/review/due always returns [] and FSRS scheduling never engages)
+- [x] P1 2.4.21 Review item seeding: create per-concept review items on first learner activity (insert_review_item/update_review_item are never called anywhere — the review queue is permanently empty, so /api/review/due always returns [] and FSRS scheduling never engages)
 - [ ] P2 2.4.22 Seed review_item_decls from course manifest (decls field exists but is empty and unread by the seed handler)
 - [ ] P3 2.4.2 Review item templates: free recall
 - [ ] P3 2.4.3 Review item templates: cued recall
@@ -479,9 +479,9 @@
 - [ ] P3 4.1.23 Concept mapping: connect related concepts
 - [ ] P3 4.1.24 Open-ended: explain a concept in your own words
 - [ ] P3 4.1.25 Project: build something using the knowledge
-- [ ] P1 4.1.26 Lesson pages render exercises from GET /api/exercises/:conceptId (no page currently consumes the exercise API — wiring gap)
-- [ ] P1 4.1.27 Exercise seeding at startup or on first lesson request (DB starts empty; /api/exercises/seed exists but is manual-only)
-- [ ] P1 4.1.28 Exercise submit updates concept_states and creates/updates review_items via FSRS (currently grades only — results never reach the learning loop)
+- [x] P1 4.1.26 Lesson pages render exercises from GET /api/exercises/:conceptId (no page currently consumes the exercise API — wiring gap)
+- [x] P1 4.1.27 Exercise seeding at startup or on first lesson request (DB starts empty; /api/exercises/seed exists but is manual-only)
+- [x] P1 4.1.28 Exercise submit updates concept_states and creates/updates review_items via FSRS (currently grades only — results never reach the learning loop)
 - [ ] P1 4.1.29 Exercise UI on lesson pages supports all 8 exercise types (multiple choice, multi-select, fill-blank, hex-inspect, ordering, matching, labeling, predict)
 - [ ] P2 4.1.30 Progressive hints UI wired to GET /api/exercises/hint (API exists, no frontend consumer)
 
