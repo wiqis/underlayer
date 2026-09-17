@@ -45,9 +45,10 @@ If any step fails:
 - **Server:** Chemical `server::Server` (single binary, thread pool) — entrypoint `app/main.ch`
 - **Database (local):** SQLite3 (imported by `database/chemical.mod` as `"../../sqlite3"`)
 - **Database (remote):** Turso HTTP v2 (selected automatically by `underlayer_db::make_client` when `DATABASE_URL` is http(s))
+- **Auth:** bearer tokens + `auth_sessions` table (30-day sessions, hashed tokens) — no external auth provider
 - **Hosting:** Fly.io (or similar — single binary deployment)
 
-### Build & Run Commands (real paths — verified 2026-09-14)
+### Build & Run Commands (real paths — verified 2026-09-17)
 
 ```bash
 # Build the platform binary (from project root)
@@ -59,10 +60,11 @@ cmake-build-debug/TCCCompiler lang/compiled/underlayer/chemical.mod \
 cmake-build-debug/TCCCompiler chemical.mod --mode debug_quick --no-cache -bm-modules
 # TCCCompiler may emit a.exe into the CWD — check both locations.
 
-# Convenience scripts (scripts/):
+# Convenience scripts (scripts/ — .ps1 variants exist for each):
 ./scripts/serve.sh                       # build + run server on :9000 (--no-build, --port N supported)
-./scripts/test.sh                        # build tests.exe + run all @test functions
+./scripts/test.sh                        # build test exe + run all @test functions
 ./scripts/underlayer-build-test.sh       # build + start + curl every endpoint + stop (always exits)
+./scripts/lint-concepts.sh               # validate concept files (sections, exercises, links, assets)
 
 # Smoke test after start
 curl localhost:9000/api/health           # → {"status": "ok", "version": "0.1.0"}

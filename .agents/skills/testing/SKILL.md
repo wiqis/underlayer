@@ -11,6 +11,8 @@ The Underlayer test suite lives in `tests/src/` and is built from the root `chem
 
 ### Layout
 
+tests/src/ contains these test files (as of 2026-09-17):
+
 ```
 tests/src/
 ├── test_helpers.ch            # setup_test_db() — makes ./test_underlayer_tmp.db + init_schema
@@ -18,15 +20,13 @@ tests/src/
 ├── api_test.ch                # /api/progress, /api/review/start, /api/review/due, /api/search
 ├── additional_api_test.ch     # learners, goals, sessions, fsrs, exercises, navigation (largest)
 ├── session_test.ch            # /api/sessions, /api/review/recommendations, /api/recent
-├── session_pause_test.ch      # pause/resume/abort/undo/skip
 ├── progress_detailed_test.ch  # /api/progress/export, /api/analytics/sessions, /api/fsrs/export
 ├── weakness_test.ch           # /api/weaknesses + export/compare/alerts
 ├── courses_test.ch            # /api/courses + lessons
 ├── content_test.ch            # course content + search
 ├── search_test.ch             # /api/search
 ├── pages_test.ch              # /, /dashboard, /review, /progress HTML pages
-├── page_html_test.ch          # page HTML sanity checks
-└── ..._test.ch
+└── page_html_test.ch          # page HTML sanity checks
 ```
 
 ### The Test Pattern (copy this)
@@ -68,14 +68,15 @@ public func test_health_returns_200(env : &mut TestEnv) {
 ### Running
 
 ```bash
-./scripts/test.sh                                    # build tests.exe + run all @test functions
+./scripts/test.sh                                    # build test exe + run all @test functions
 ./scripts/test.sh --no-build                         # skip rebuild
 ./scripts/test.sh --test-names "test_health_returns_200"
 ./scripts/test.sh --test-names "name1,name2"         # several
 ./scripts/test.sh --test-ids "1073741823"            # by numeric ID
+# Windows: scripts/test.ps1 (same flags)
 ```
 
-`scripts/test.sh` builds with `$COMPILER "$MOD" -o "$EXE" -frecompile-plugins --test --no-cache` where `MOD` is the root `chemical.mod`. `scripts/underlayer-build-test.sh` additionally starts the real server and curls every endpoint (build + smoke test in one).
+`scripts/test.sh` builds with `$COMPILER "$MOD" -o "$EXE" -frecompile-plugins --test --no-cache` where `MOD` is the root `chemical.mod`. `scripts/underlayer-build-test.sh` additionally starts the real server and curls every endpoint (build + smoke test in one); `scripts/lint-concepts.sh` validates concept files against content rules.
 
 ### Adding a test for a new endpoint
 

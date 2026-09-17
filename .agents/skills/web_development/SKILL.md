@@ -259,16 +259,16 @@ public func render_bytes() : std::string { ... return page.toString() }
 
 Universal components provide SSR + hydration. They work inside `#html { }` blocks and render on both server and client.
 
-> **⚠️ Current Status:** The `components` library (`lang/libs/components/`) has pre-existing parser errors in `Card.ch:161` and `Sheet.ch:215`. Importing `components` causes build failures. Use plain HTML for course content until these are fixed.
+> **⚠️ Current Status (2026-09-17):** the platform pages use plain HTML inside `#html { }` with scoped `#css` and vanilla JS in `#js { }` — this remains the safe default. No JSX-style component is rendered by any page in this repo yet; if you adopt the `components` library for a widget, check `implementation_gaps` for known `#universal` converter bugs first.
 
 ### When to Use Universal Components
 
 | Use Case | Approach |
 |----------|----------|
 | Static course content (lessons, quizzes) | Plain `#html` + `#js` — simpler, no hydration needed |
-| Interactive widgets shared across pages | `#universal` component — SSR + hydration (when components lib is fixed) |
-| Stateful UI (toggles, tabs, dialogs) | `#universal` component with `useState` (when components lib is fixed) |
-| Design system components (Button, Card, Badge) | Plain HTML with CSS — avoid `import components` until parser errors fixed |
+| Interactive widgets shared across pages | `#universal` component — SSR + hydration (check `implementation_gaps` bugs first) |
+| Stateful UI (toggles, tabs, dialogs) | `#universal` component with `useState` (same caveat) |
+| Design system components (Button, Card, Badge) | Plain HTML with CSS — what every current page does |
 
 ### Universal Component Pattern
 

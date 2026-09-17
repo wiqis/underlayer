@@ -13,42 +13,40 @@ Underlayer is a learning platform for deep technical subjects. It consists of:
 2. **Android app** — offline-first course player with spaced repetition
 3. **Course format** — self-contained, portable directories with Chemical source files that compile to pre-rendered HTML/CSS/JS
 
-## Module Structure (as implemented)
+## Module Structure (as implemented — verified 2026-09-17)
 
 ```
 underlayer/
-├── chemical.mod              (project manifest — application underlayer, imports all modules;
-│                              source "app" if !test, source "tests" if test)
-├── app/main.ch               (server entrypoint: config → DB → schema → routes → serve)
+├── chemical.mod              (application underlayer — source "src" + "app" if !test + "tests" if test;
+│                              imports std, cstd, server, http, json, page, CBI macros, components,
+│                              fs, net, encoding, uuid + ./core ./database ./models ./repository ./learning ./content ./web)
+├── app/main.ch               (server entrypoint, ~1189 lines: config → DB → schema → ALL ~175 routes → serve)
 ├── tests/src/*.ch            (@test functions — run via scripts/test.sh)
 │
-├── core/                     (module underlayer_core — src/main.ch only, 188 lines)
-│   load_config, get_env_str, get_env_uint, parse_uint,
-│   int_to_string, u32_to_string, log_info, log_error,
-│   current_timestamp, path_segments, json_escape, make_json_string
+├── core/                     (module underlayer_core — src/main.ch only, 247 lines)
+│   load_config (PORT/DATABASE_URL/DATABASE_TOKEN/COURSES_DIR), get_env_str, get_env_uint, parse_uint,
+│   int_to_string, u32_to_string, log_info, log_error, current_timestamp, path_segments,
+│   json_escape, make_json_string
 │
-├── models/                   (module underlayer_models — src/main.ch only, 374 lines)
-│   Course, Module, ConceptRef, Concept, Manifest,
-│   Learner, ConceptState, ReviewItem, Session,
-│   ExerciseType (+8 factory funcs), Exercise
+├── models/                   (module underlayer_models — src/main.ch only, 769 lines)
+│   Course, Module, ConceptRef, Concept, Manifest, Learner, ConceptState, ReviewItem, Session,
+│   ExerciseType (+8 factory funcs), Exercise + newer structs: Profile, LearnerSettings,
+│   LearningPreferences, Notification, Achievement, StreakData, StudyPlan, Certificate, ...
 │
 ├── database/                 (module underlayer_db — src/main.ch only, 198 lines)
-│   DbClient, is_remote_url, make_client, exec_sql, query_sql,
-│   query_sql_single, close  (auto-selects SQLite or Turso by URL)
+│   DbClient, is_remote_url, make_client, exec_sql, query_sql, query_sql_single, close
+│   (auto-selects SQLite or Turso by URL)
 │
 ├── repository/               (module underlayer_repository — ALL SQL lives here)
 │   └── src/
-│       ├── main.ch           (module root)
-│       ├── helpers.ch        (parse_i64, parse_int, parse_f64, json helpers — public)
-│       ├── schema.ch         (init_schema — CREATE TABLE IF NOT EXISTS + migrations)
-│       ├── courses.ch        (load_course: disk manifest.json → hardcoded ELF fallback)
-│       ├── learners.ch       (create_learner, get_learner)
-│       ├── concept_states.ch (get/upsert/get_all_concept_state)
-│       ├── review_items.ch   (get_due/get_all/update/insert_review_item)
-│       ├── sessions.ch       (create/insert/finish/pause/resume/abort/undo/skip)
-│       ├── session_items.ch  (record/get items, stats, history)
-│       ├── exercises.ch      (get/get_for_concept/insert/count_exercises)
-│       └── goals.ch          (get/set/delete_learning_goal)
+│       ├── main.ch, helpers.ch, schema.ch (~35 tables), courses.ch,
+│       ├── learners.ch, concept_states.ch, review_items.ch, sessions.ch, session_items.ch,
+│       ├── exercises.ch, goals.ch
+│       ├── profiles.ch, settings.ch, enrollments.ch, prerequisites.ch
+│       ├── notifications.ch, streaks.ch, achievements.ch, certificates.ch
+│       ├── bookmarks.ch, notes.ch, study_plan.ch
+│       ├── course_reviews.ch, feedback.ch
+│       └── analytics_queries.ch (12+ analytics SQL queries)
 │
 ├── learning/                 (module underlayer_learning — pure algorithms, no SQL)
 │   └── src/
@@ -57,50 +55,41 @@ underlayer/
 │       ├── session.ch        (ReviewSession: start, get_current_item, advance, is_complete)
 │       ├── queue.ch          (review queue: build, interleave, adaptive strength)
 │       ├── weakness.ch       (detect weaknesses, trends, chains, clusters, repair)
+│       ├── mistakes.ch       (mistake pattern classification + personalized feedback)
 │       ├── health.ch         (knowledge health: depth, breadth, gaps, trends, projection)
 │       └── utils.ch          (f64_to_string)
 │
-├── web/                      (module underlayer_web — handlers, pages, static serving)
+├── web/                      (module underlayer_web — 55 files: handlers, pages, static serving)
 │   └── src/
-│       ├── main.ch           (module root — WebConfig struct + file listing)
-│       ├── helpers.ch        (send_page, send_json_str, send_error, sv_to_string, render_concept)
-│       ├── json_helpers.ch   (json_get, json_str, json_get_str, json_int, json_get_int)
-│       ├── handlers_home.ch         (handle_health, handle_home)
-│       ├── handlers_courses.ch      (list courses, get course, filter)
-│       ├── handlers_lessons.ch      (lesson viewer, course landing)
-│       ├── handlers_review.ch       (start/submit/end/due + modes + recommendations)
-│       ├── handlers_review_page.ch  (GET /review HTML page)
-│       ├── handlers_progress.ch     (progress, course progress, export)
-│       ├── handlers_progress_page.ch(GET /progress HTML page)
-│       ├── handlers_dashboard.ch    (GET /dashboard)
-│       ├── handlers_learners.ch     (create/get learner)
-│       ├── handlers_exercises.ch    (get/submit/hint)
-│       ├── handlers_weakness.ch     (dashboard, export, compare, alerts)
-│       ├── handlers_search.ch       (GET /api/search)
-│       ├── handlers_navigation.ch   (prev/next concept)
-│       ├── handlers_settings.ch     (FSRS settings: optimize/reset/export/import)
-│       └── static.ch                (content_type_for_ext, handle_static_file)
+│       ├── main.ch, helpers.ch (send_page, send_json_str, send_error, sv_to_string, render_concept),
+│       │   json_helpers.ch, static.ch
+│       ├── handlers_auth.ch  (register/login/logout/me, password reset, email verify,
+│       │                      auth_get_learner_id — bearer token → learner_id)
+│       ├── Core learning: handlers_home, _courses, _lessons, _review, _review_page, _exercises,
+│       │   _exercises_bulk, _progress, _progress_page, _dashboard, _learners, _weakness,
+│       │   _search, _navigation, _settings (FSRS optimize/reset/export/import)
+│       ├── Analytics: handlers_analytics, _analytics_learner, _analytics_pages, _analytics_platform
+│       ├── Social: handlers_profiles, _course_reviews, _feedback, _achievements, _streaks,
+│       │   _certificates, _bookmarks, _notes, _notifications
+│       ├── Paths: handlers_knowledge_health, _learning_path, _learning_path_viz, _study_plan, _learning
+│       ├── Settings/onboarding: handlers_settings_api, pages_settings, pages_onboarding, pages_components
+│       └── Pages: pages_auth, pages_achievements, pages_analytics, pages_bookmarks, pages_certificates,
+│           pages_help, pages_learning_path, pages_legal, pages_notes, pages_notifications,
+│           pages_streaks, pages_study_plans
 │
-├── content/                  (module underlayer_content — 24 concept render functions)
-│   └── src/
-│       ├── bytes.ch, binary-representation.ch, file-layout.ch,
-│       ├── elf-identification.ch, elf-header-fields.ch, entry-point.ch,
-│       ├── program-header-table.ch, segment-types.ch, memory-mapping.ch,
-│       ├── section-header-table.ch, common-sections.ch, section-vs-segment.ch,
-│       ├── symbol-table.ch, binding.ch, visibility.ch,
-│       ├── relocation-entries.ch, relocation-types.ch, dynamic-relocations.ch,
-│       ├── dynamic-section.ch, shared-libraries.ch, ld-so.ch,
-│       └── loader.ch, memory-layout.ch, execution.ch
-│                              (each exports render_<concept_id>() : string)
+├── content/                  (module underlayer_content — 30 source files)
+│   └── src/                  24 ELF concept renderers (bytes…execution), elf_landing.ch,
+│                              template_standard/mixed/visualization/exercise_focus.ch,
+│                              bytes_test.ch
 │
-├── courses/elf/              (course content: chemical.mod, manifest.json, src/ —
-│                              4 source files so far: main.ch, bytes.ch,
-│                              binary-representation.ch, file-layout.ch)
+├── courses/elf/              (chemical.mod, manifest.json; src/main.ch = build entry that calls
+│                              underlayer_content::render_*() and writes output/*.html —
+│                              NO duplication of renderers anymore)
 │
 └── .agents/skills/           (this documentation)
 ```
 
-**Important:** the `courses/elf/src/` files duplicate renderers for the first 3 concepts so the course can be pre-rendered to static output. The server-rendered path uses `content/src/*.ch` via `underlayer_web::render_concept()`. When adding a concept, add the renderer to `content/src/` AND register the ID→function mapping in `web/src/helpers.ch::render_concept()`.
+**Note:** `courses/elf/src/` no longer mirrors concept renderers — `main.ch` reuses `underlayer_content::render_*()` directly. When adding a concept, add the renderer to `content/src/` AND register the ID→function mapping in `web/src/helpers.ch::render_concept()`.
 
 ## Dependency Chain (as implemented in chemical.mod files)
 
@@ -169,6 +158,25 @@ Returns HTML (rendered server-side at request time — concepts are compiled in)
 
 Static assets (css/js files under courses/elf/) are served by
 web/static.ch::handle_static_file via the /courses/* catch-all route.
+```
+
+### Auth Flow (as implemented)
+
+```
+POST /api/auth/register or /api/auth/login
+  ↓
+web/handlers_auth validates + hashes password (stored in learners.password_hash)
+  ↓
+Creates row in auth_sessions: {id, learner_id, token_hash (SHA of 64-hex token),
+                               expires_at = now + 30 days}
+  ↓
+Returns {session_token, learner} — client sends it back as `Authorization: Bearer <token>`
+  ↓
+Protected handlers call auth_get_learner_id(db, req):
+  extracts bearer token → hash → SELECT learner_id FROM auth_sessions
+  WHERE token_hash = <hash> AND expires_at > now
+  ↓
+Empty string = unauthenticated → handler returns an error
 ```
 
 ### Learning Session Flow
@@ -291,7 +299,7 @@ Concept render functions live in `content/src/*.ch` and are compiled into the se
 - No file I/O for lesson HTML — render functions build an `HtmlPage` in memory
 - Adding a concept = new file in `content/src/` + one mapping line in `web/src/helpers.ch::render_concept()`
 - Static assets (`.css`, `.js`, images) still come from disk via `static.ch`
-- The `courses/elf/src/` directory mirrors 3 concepts for the pre-render-to-output flow (GitHub Pages mode); keep it in sync with `content/src/`
+- `courses/elf/src/main.ch` reuses the same renderers to pre-render static output for GitHub Pages mode
 
 ### 1b. Dual-Mode Architecture (Static + Backend)
 
@@ -325,9 +333,13 @@ Every course MUST work without a backend:
 
 `app/main.ch` skips `init_schema()` for remote URLs (remote DBs are provisioned externally).
 
-Note: current repository code builds SQL with `string` + `append_view`/`append_string` (no parameterized queries). Values inserted into SQL must be trusted or escaped via `underlayer_core::json_escape`/`make_json_string` equivalents — see `api_reference` skill for the schema.
+Note: current repository code builds SQL with `string` + `append_view`/`append_string` (no parameterized queries). Values inserted into SQL must be trusted or escaped via `underlayer_core::json_escape`/`make_json_string` equivalents — see `api_reference` skill for the schema. Passwords are stored hashed; bearer tokens are stored only as hashes (`auth_sessions.token_hash`).
 
-### 3. FSRS Over SM-2 — Implemented
+### 3. Auth Is Bearer-Token (Implemented)
+
+Registration/login issue a 30-day session token (64 random hex chars). Only the SHA hash is stored in `auth_sessions.token_hash`. Protected endpoints resolve the learner via `auth_get_learner_id(db, req)` reading `Authorization: Bearer`. Older endpoints (review, progress, courses) still accept explicit `learner_id` params — new user-scoped endpoints should use the bearer pattern.
+
+### 4. FSRS Over SM-2 — Implemented
 
 FSRS v4 is implemented in `learning/src/fsrs.ch` (not just planned):
 - `FSRSParams` with paper-default weights, `fsrs_retrievability`, `fsrs_next_interval`, `fsrs_update_state`
@@ -339,7 +351,7 @@ FSRS is used instead of SM-2 because:
 - Better handles difficult items
 - Parameters derived from actual forgetting curves
 
-### 4. Chemical for Everything
+### 5. Chemical for Everything
 
 All implementation is in Chemical, including the Android bridge. This means:
 - We discover Chemical gaps early

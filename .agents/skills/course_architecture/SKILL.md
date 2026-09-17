@@ -6,7 +6,7 @@ Load this skill when structuring course content, concept dependencies, or lesson
 
 > **Also load `course_writing`** for the practical guide to writing .ch files: common mistakes, Chemical syntax, exercise patterns. This skill covers *course file structure*; `course_writing` covers *how to write each file*.
 
-## Course File Structure (as implemented — verified 2026-09-14)
+## Course File Structure (as implemented — verified 2026-09-17)
 
 ```
 courses/
@@ -23,10 +23,10 @@ courses/
     assets/                         (sample ELF files, images — to be added)
 ```
 
-**Two rendering paths exist.** The 24 ELF concepts currently render server-side from `content/src/*.ch` (module `underlayer_content`), dispatched by `web/src/helpers.ch::render_concept()`. The `courses/elf/src/` files mirror the first 3 concepts for the pre-render-to-output flow (GitHub Pages mode). When adding a concept:
+**Two rendering paths exist.** The 24 ELF concepts render server-side from `content/src/*.ch` (module `underlayer_content`, dispatched by `web/src/helpers.ch::render_concept()`), and `courses/elf/src/main.ch` reuses those same `underlayer_content::render_*()` functions to pre-render static output to `courses/elf/output/` (GitHub Pages mode). When adding a concept:
 1. Add `content/src/<concept-id>.ch` with `render_<id>() : string` in namespace `underlayer_content`
 2. Register the ID in `web/src/helpers.ch::render_concept()`
-3. Optionally mirror in `courses/elf/src/` for static output
+3. Optionally add a write line in `courses/elf/src/main.ch` for static output
 
 ## Course chemical.mod (as implemented)
 

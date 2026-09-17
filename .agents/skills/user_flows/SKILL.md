@@ -315,16 +315,22 @@ Adapt from data: increase weights for signals that predict poor outcomes
 
 ## API Endpoints
 
-> **Implemented vs. planned (verified 2026-09-14).** The routes below marked ✅ exist in `app/main.ch`. The onboarding/session-flow endpoints marked ⬜ are the design target from the flows above — not yet implemented. Full list of implemented routes: see the `api_reference` skill.
+> **Implemented vs. planned (verified 2026-09-17).** The routes below marked ✅ exist in `app/main.ch` (~175 routes total). The onboarding/session-flow endpoints marked ⬜ are the design target from the flows above — the onboarding page + `/api/onboarding/complete` + `/api/onboarding/check` now exist, but the structured `start/next/complete` learning-session flow is not implemented. Full list of implemented routes: see the `api_reference` skill.
 
 ### Implemented ✅
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/api/health` | GET | Server status |
+| `/api/auth/register\|login\|logout`, `/api/auth/me` | POST/GET | **Auth (bearer sessions)** |
+| `/api/auth/forgot-password\|reset-password\|verify-email` | POST | Account recovery |
+| `/api/user/profile\|settings\|learning-preferences` | GET/PUT | Per-learner settings |
+| `/api/user/export`, `/api/user/account` (DELETE) | GET/DELETE | Data export + deletion |
 | `/api/learners` + `/:learnerId` | POST/GET | Learner CRUD |
 | `/api/courses`, `/api/courses/all`, `/api/courses/:courseId` | GET | Course listing/detail/filter |
 | `/api/courses/:courseId/lessons/:conceptId` | GET | Lesson content |
+| `/api/courses/:courseId/enroll`, `/api/enrollments` | POST/GET | Enrollments |
+| `/api/courses/:courseId/reviews(+rating)`, `/api/reviews/:id` | POST/GET/PUT/DELETE | Course reviews |
 | `/api/review/start?course_id=&mode=&count=` | GET | Start review (10 modes) |
 | `/api/review/submit` | POST | Submit rating |
 | `/api/review/end` | POST | End session |
@@ -332,12 +338,21 @@ Adapt from data: increase weights for signals that predict poor outcomes
 | `/api/sessions`, `/api/sessions/:id`, `/api/session/detail` | GET | History/detail |
 | `/api/session/pause\|resume\|abort\|undo\|skip` | POST | Session controls |
 | `/api/exercises/:conceptId`, `/api/exercises/submit`, `/api/exercises/hint` | GET/POST | Exercise engine |
+| `/api/exercises/import\|seed\|stats` | POST/GET | Bulk exercise management |
 | `/api/progress`, `/api/progress/:courseId`, `/api/progress/export` | GET | Progress |
+| `/api/progress/share`, `/api/progress/shared/:token`, `/api/progress/import` | POST/GET | Share + import |
 | `/api/analytics/sessions`, `/api/analytics/concept/:conceptId` | GET | Analytics |
+| `/api/analytics/difficulty\|errors\|engagement\|velocity\|temporal\|retention\|dropoff\|funnel\|comparative\|platform\|cohorts\|devices` | GET | Extended analytics |
 | `/api/weaknesses` (+export/compare/alerts) | GET | Weakness dashboard |
+| `/api/health/knowledge(/per-module)(/projection)` | GET | Knowledge health API |
 | `/api/goals` | POST/DELETE | Learning goals |
 | `/api/fsrs/optimize\|reset\|export\|import` | GET/POST | FSRS settings |
 | `/api/search`, `/api/navigation/:courseId/:conceptId`, `/api/recent` | GET | Discovery |
+| `/api/onboarding/complete`, `/api/onboarding/check` | POST/GET | Onboarding state |
+| `/api/notifications` (+read/unread-count/delete) | GET/POST/DELETE | Notifications |
+| `/api/bookmarks`, `/api/notes`, `/api/streaks`, `/api/achievements`, `/api/study-plans`, `/api/certificates` | CRUD | Feature endpoints |
+| `/api/feedback` (+admin/report-exercise/stats) | POST/GET/PUT | Content feedback |
+| `/api/courses/:courseId/prerequisites`, `/can-enroll`, `/assess(ment)` | CRUD | Learning paths |
 
 ### Pages ✅
 
@@ -349,16 +364,20 @@ Adapt from data: increase weights for signals that predict poor outcomes
 | `/progress` | Progress UI |
 | `/courses/:courseId` | Course landing |
 | `/courses/:courseId/lessons/:conceptId` | Lesson viewer |
+| `/login`, `/register`, `/forgot-password`, `/reset-password` | Auth pages |
+| `/settings`, `/onboarding` | Settings UI, onboarding flow |
+| `/u/:username` | Public profile page |
+| `/analytics(/:courseId)` | Analytics pages |
+| `/bookmarks`, `/notes`, `/study-plans`, `/achievements`, `/streaks`, `/notifications`, `/certificates` | Feature pages |
+| `/courses/:courseId/path` | Learning-path visualization |
+| `/help`, `/shortcuts`, `/faq`, `/about`, `/terms`, `/privacy` | Help + legal |
 
 ### Planned ⬜
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/api/onboarding` | POST | Save onboarding data |
 | `/api/sessions/start` / `next` / `complete` | POST | Structured learning-session flow |
 | `/api/dashboard` | GET | Dashboard data (page exists; data comes from other endpoints) |
-| `/api/settings` | GET/PUT | Preferences (page + persistence) |
-| Any auth endpoint | — | No authentication yet; learner_id is passed explicitly |
 
 ## Implementation Patterns (Chemical)
 

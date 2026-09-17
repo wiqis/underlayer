@@ -112,19 +112,19 @@ Comprehensive documentation for the Underlayer project (root `chemical.mod`, mod
 
 ## Project Stats
 
-- **Status:** Working platform — server builds, runs, and serves the ELF course; 210/1883 checklist items done (all P0 core learning loop)
+- **Status:** Working platform — server builds, runs, and serves the ELF course; 372/1883 checklist items done (all P0 + P1 complete; 9 P2 remain)
 - **Language:** Chemical
 - **First course:** ELF — Executable and Linkable Format (24 concepts, 8 modules)
 - **Target platforms:** Web + Android (offline)
-- **Database:** Dual-backend SQLite (local) + Turso HTTP (remote)
+- **Database:** Dual-backend SQLite (local) + Turso HTTP (remote); ~35 tables
 - **Course format:** Chemical source files with #html/#css/#js macros → pre-rendered HTML/CSS/JS
-- **Core features implemented:** FSRS v4, 10 review modes, exercise engine, weakness detection, knowledge health, session management, goals, search, navigation, progress export
+- **Core features implemented:** FSRS v4, 10 review modes, exercise engine, weakness detection, knowledge health, mistake patterns, session management, goals, search, navigation, progress export/import/share, auth (bearer + hashed passwords), profiles, settings, onboarding, enrollments, learning paths, notifications, bookmarks, notes, achievements, streaks, certificates, study plans, course reviews, feedback/moderation, 12+ analytics endpoints
 - **Total documents:** 28 docs + 20 skills + 1 AGENTS.md + 1 README
 - **AI course development:** 4 core skills (course_generation, course_writing, review_quality, technical_research) + 5 supporting docs
 
 ## Keeping Skills Accurate
 
-Skills were last reconciled against the code on **2026-09-14**. When you change module structure, routes, schema, or build commands, update the relevant skill in the same commit:
+Skills were last reconciled against the code on **2026-09-17**. When you change module structure, routes, schema, or build commands, update the relevant skill in the same commit:
 
 | Changed... | Update... |
 |---|---|

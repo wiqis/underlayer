@@ -211,7 +211,7 @@ public namespace underlayer_repository {
 
 ---
 
-## 3. API Handler Pattern (actual signatures — verified 2026-09-14)
+## 3. API Handler Pattern (actual signatures — verified 2026-09-17)
 
 ### Real handler file structure (from web/src/handlers_learners.ch, handlers_home.ch, helpers.ch)
 

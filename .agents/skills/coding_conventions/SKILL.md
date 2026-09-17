@@ -273,7 +273,7 @@ set_volume(0.5)     // TypeCheck error
 
 ---
 
-## Verified Patterns From This Codebase (2026-09-14)
+## Verified Patterns From This Codebase (2026-09-17)
 
 These are extracted from the actual Underlayer modules — copy them instead of inventing variants.
 
@@ -388,10 +388,11 @@ Before writing code, verify:
 - [ ] Lambda captures: `(|var|` value, `(|&var|` reference
 - [ ] Test functions: `@test` + `test_snake_case(env : &mut TestEnv)`
 - [ ] Feature priorities: P0 first, P3 last
-- [ ] File max 250 lines — split if exceeded (web/ and repository/ follow this; `models/src/main.ch` at 374 and `app/main.ch` are known exceptions)
+- [ ] File max 250 lines — split if exceeded (web/ and repository/ follow this; `models/src/main.ch` at 769 and `app/main.ch` at 1189 are known exceptions)
 - [ ] Private helpers across files → public in `helpers.ch`
 - [ ] `path_segments()` — use `size() - 1` for last segment; index by position
 - [ ] `QueryMap.get()` — returns empty string if missing
 - [ ] `string.data()` may not be null-terminated — use `.size()` for SQLite
-- [ ] SQL built with string appends — never embed user-controlled values unescaped
+- [ ] SQL built with string appends — never embed user-controlled values unescaped (passwords/tokens: store hashes only, as `handlers_auth.ch` does)
 - [ ] New concept? Register ID in `web/src/helpers.ch::render_concept()`
+- [ ] New user-scoped endpoint? Resolve learner via `auth_get_learner_id(db, req)` (bearer token) — see `api_reference`

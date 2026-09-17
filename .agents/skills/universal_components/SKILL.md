@@ -6,7 +6,7 @@ Universal components provide SSR + hydration: the component renders on the serve
 then hydrates on the client (interactive JS). This is the recommended pattern for
 interactive course content.
 
-> **⚠ Implementation status (verified 2026-09-14):** `universal_cbi` is imported in the root and web module, and every page calls `page.defaultUniversalSetup()`, but **no `#universal` component is currently defined in this repo** — interactivity is vanilla JS in `#js { }` blocks. The patterns below are the target style for building shared stateful widgets. Known converter bugs are documented in `implementation_gaps` (reactive props frozen, portal positioning, props serialization). Prefer plain HTML + `#js` for one-off interactions.
+> **⚠ Implementation status (verified 2026-09-17):** `universal_cbi` is imported in the root and web module, and every page calls `page.defaultUniversalSetup()`, but **no `#universal` component is currently defined in this repo** — interactivity is vanilla JS in `#js { }` blocks. The patterns below are the target style for building shared stateful widgets. Known converter bugs are documented in `implementation_gaps` (reactive props frozen, portal positioning, props serialization). Prefer plain HTML + `#js` for one-off interactions.
 
 ### Key Rules
 
