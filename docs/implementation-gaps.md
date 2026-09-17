@@ -178,6 +178,49 @@ An element opened in one `#html` block must be closed in the same block.
 
 Always call `page::escape_html(value)` before embedding untrusted strings in HTML.
 
+### `@{ ... }` Statement Blocks Inside `#html` Are Broken (COMPILER BUG)
+
+`@{}` inside a `#html` block always fails to parse — the html lexer emits
+`ChemicalNodeStart`, then `htmlchild.ch:62` calls the core parser's
+`parseNestedLevelStatement`, which returns `null` (a leading NewLine token after
+`@{` alone triggers it). Error cascade: "expected a chemical node for html child"
+→ "expected a rbrace after the chemical value" → "expected a '</' for ending the
+element" → "expected a rbrace for ending the html macro".
+
+Even when one statement parses, a nested `#html` inside `@{}` cannot lex — the
+html lexer stays in `chemical_mode` and the nested macro is tokenized as raw
+Chemical. **Net effect: no loops/conditionals are possible inside `#html`.**
+
+Workarounds:
+- Static shell + `{title}`/`{int}` interpolation, lists rendered client-side via JS (the course landing pattern).
+- Plain Chemical loops *between* separate balanced `#html` blocks.
+
+Note: AGENTS.md's `#universal` `@{}` example is aspirational — components actually
+use JSX syntax and a different parser; `@{}` fails there too.
+
+### `#js` Parser Drops Parentheses in Non-JSX Mode (COMPILER BUG)
+
+`universal_parser/src/parser/parser_expr.ch:575` only preserves a `JsParen` node
+when `jsx_enabled`. The plain `#js` macro disables JSX, so `(mi + 1)` is emitted
+flat as `mi + 1` and JS evaluates `'Module ' + mi + 1` as `"Module 01"`.
+
+Workaround: hoist arithmetic into a variable before string concatenation
+(`var num = mi + 1; ... + num + ...`). Also hoist loop counters: `var i = idx + 1`.
+
+### `#js` Lexer Mangles Regex Literals
+
+The js_cbi lexer tokenizes `(`/`)` and other regex syntax as operators, breaking
+any `/pattern/` literal in `#js`. Workaround: write string/char logic without
+regex literals (e.g. `escapeHtml` via `indexOf` + `replace`, not `/[&<>"]/g`).
+
+### `fs::read_dir` Lambda Captures Must Be By-Reference (COMPILER BUG)
+
+Value captures (`|dir, out|`) compile but the callback receives **copies** — the
+callback fires, `err == 0`, and the output vector stays empty. Reference capture
+(`|&mut out|`) works. `fs::copy_directory`'s own example uses value capture and
+appears untested/broken. Rule: always capture by reference in read_dir callbacks,
+and copy outer function params to locals the lambda can legally capture.
+
 ## Important: Chemical Gaps for Course Development
 
 ### Missing String Methods

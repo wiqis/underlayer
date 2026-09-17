@@ -1,0 +1,17 @@
+{
+  "id": "demo",
+  "title": "Demo Course <&Test>",
+  "description": "A second course to verify multi-course support & escaping.",
+  "version": 1,
+  "difficulty": "beginner",
+  "modules": [
+    { "id": "m1", "title": "Basics", "description": "Intro & fundamentals", "concepts": ["hello"] },
+    { "id": "m2", "title": "Advanced", "description": "Deeper topics", "concepts": [] }
+  ],
+  "concepts": [
+    { "id": "hello", "title": "Hello World", "module_id": "m1", "description": "First concept" }
+  ],
+  "exercise_decls": [
+    { "concept_id": "hello", "type": "multiple_choice", "question": "What is 2+2?", "answer": "4", "options": "3|4|5", "correct_index": 1, "explanation": "Basic arithmetic", "difficulty": 0.3 }
+  ]
+}

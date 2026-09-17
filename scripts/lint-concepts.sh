@@ -42,8 +42,8 @@ check_file() {
     local label="${basename%.ch}"
     local f=0 w=0
 
-    # Skip test files
-    case "$basename" in *_test.ch) return ;; esac
+    # Skip test files and shared helper/asset files (non-concept pages)
+    case "$basename" in *_test.ch|*_assets.ch|*helpers.ch) return ;; esac
 
     local inside_html inside_js
     inside_html=$(grep -n '#html' "$file" | head -1 | cut -d: -f1)

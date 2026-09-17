@@ -3,7 +3,7 @@
 // Markup-level rules: CSS and JS stay inside #css / #js macro blocks.
 public namespace underlayer_content {
 
-    func render_landing_css(page : *mut HtmlPage) {
+    func render_landing_css(page : &mut HtmlPage) {
         #css {
             body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 0; background: hsl(var(--background)); color: hsl(var(--foreground)); }
             .skip-link { position: absolute; top: -100%; left: 0; background: hsl(217 91% 60%); color: white; padding: 0.75rem 1.5rem; z-index: 200; font-weight: 600; text-decoration: none; border-radius: 0 0 8px 0; }
@@ -68,7 +68,7 @@ public namespace underlayer_content {
         }
     }
 
-    func render_landing_js(page : *mut HtmlPage) {
+    func render_landing_js(page : &mut HtmlPage) {
         #js {
             function __ul_ctx() {
                 var parts = window.location.pathname.split('/').filter(function(p) { return p.length > 0; });

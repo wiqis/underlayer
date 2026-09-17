@@ -248,6 +248,10 @@
 - [x] P2 2.1.18 Course navigation structure (linear vs tree)
 - [x] P2 2.1.19 Course completion criteria (all concepts, or minimum score)
 - [x] P2 2.1.20 Course certificate template
+- [x] P1 2.1.21 Multi-course platform: landing page rendered data-driven from any course's manifest.json (unknown course ids return 404)
+- [x] P1 2.1.22 Multi-course exercise seeding at startup: loop all course directories (fs::read_dir scan, reference-capture lambda required)
+- [x] P1 2.1.23 Course JSON API includes module descriptions (feeds landing module list)
+- [x] P1 2.1.24 html_escape core helper: server-side escaping for course strings interpolated into #html blocks (html_cbi interpolation is raw)
 
 ### 2.2 Concept Authoring
 

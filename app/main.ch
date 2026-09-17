@@ -20,11 +20,19 @@ public func main() : int {
         underlayer_repository::init_schema(&raw db)
 
         // 4.1.27: seed exercises from course manifests at startup (idempotent).
-        // Keeps the exercise API functional without a manual seed call.
-        var seed_course = std::string("elf")
-        var seeded = underlayer_repository::seed_exercises_from_manifest(&raw db, &courses_dir_pre, &seed_course)
-        if(seeded > 0) {
-            printf("[underlayer] Seeded %s exercises from manifests\n", underlayer_core::int_to_string(seeded).data())
+        // Multi-course: loop every course directory found on disk.
+        var all_courses = underlayer_repository::list_courses(&courses_dir_pre)
+        var seeded_total : i64 = 0
+        var ci : size_t = 0
+        while(ci < all_courses.size()) {
+            var cptr = all_courses.get_ptr(ci)
+            var cid = cptr.id.copy()
+            var seeded = underlayer_repository::seed_exercises_from_manifest(&raw db, &courses_dir_pre, &cid)
+            seeded_total = seeded_total + seeded
+            ci = ci + 1
+        }
+        if(seeded_total > 0) {
+            printf("[underlayer] Seeded %s exercises from manifests\n", underlayer_core::int_to_string(seeded_total).data())
         }
     }
 

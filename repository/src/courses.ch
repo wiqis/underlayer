@@ -513,17 +513,41 @@ public namespace underlayer_repository {
 
     public func list_courses(courses_dir : &string) : vector<Course> {
         var courses = vector<Course>()
-        var known = vector<string>()
-        known.push(string("elf"))
-        var i : size_t = 0
-        while(i < known.size()) {
-            var cid_ptr = known.get_ptr(i)
-            var cid_val = cid_ptr.copy()
-            var course = load_course(courses_dir, &cid_val)
+        // Scan the courses directory for subdirectories containing a manifest.json.
+        // This makes the platform multi-course: any new course dir is picked up
+        // automatically at startup without code changes.
+        // NOTE: the lambda MUST capture by reference (&mut) — a value capture
+        // pushes into a copy that is discarded when read_dir returns.
+        var dir_for_lambda = courses_dir.copy()
+        var scan_res = fs::read_dir(dir_for_lambda.data(), (|&mut courses, &dir_for_lambda|(name : *char, name_len : size_t, is_dir : bool) => {
+            if(!is_dir) { return true }
+            var cid = string()
+            var j : size_t = 0
+            while(j < name_len) { cid.append(name[j] as char); j = j + 1 }
+            var dot = string(".")
+            if(cid.equals(&dot)) { return true }
+            var dotdot = string("..")
+            if(cid.equals(&dotdot)) { return true }
+            var course = load_course(dir_for_lambda, &cid)
             if(course.id.size() > 0) {
                 courses.push(course)
             }
-            i = i + 1
+            return true
+        }))
+        if(scan_res is std::Result.Err) {
+            // Directory missing or unreadable — fall back to the known course.
+            var known = vector<string>()
+            known.push(string("elf"))
+            var i : size_t = 0
+            while(i < known.size()) {
+                var cid_ptr = known.get_ptr(i)
+                var cid_val = cid_ptr.copy()
+                var course = load_course(courses_dir, &cid_val)
+                if(course.id.size() > 0) {
+                    courses.push(course)
+                }
+                i = i + 1
+            }
         }
         return courses
     }

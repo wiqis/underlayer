@@ -10,3 +10,4 @@ import css_cbi
 import js_cbi
 import components
 import "../core"
+import "../models"
