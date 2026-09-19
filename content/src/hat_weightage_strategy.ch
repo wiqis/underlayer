@@ -1,4 +1,4 @@
-// HAT course — Concept 2: Weightage and study strategy.
+// HAT course — Concept 2: Weightage and study strategy (verified weights + topic priorities).
 public namespace underlayer_content {
 
 using std::string
@@ -17,93 +17,111 @@ public func render_hat_weightage_strategy() : string {
         <div class="lesson hat-lesson">
             <a href="/courses/hat" class="back-link">Back to course</a>
             <h1>Weightage and Study Strategy</h1>
-            <div class="lesson-meta">14 min · Module 1: Understanding the Test · Planning</div>
+            <div class="lesson-meta">15 min · Module 1: Know the Arena · Planning</div>
 
             <div class="unit unit-why">
                 <h2>Why This Matters</h2>
-                <p>Most candidates divide their study time evenly across the three sections. That feels fair, and it is the single most expensive planning mistake on this test, because the sections do not pay equally. On HAT-1, Quantitative Reasoning is worth 40 marks and the other two are worth 30 each; on HAT-3 the balance flips towards Verbal. Spending equal hours means deliberately over-investing in the cheapest marks and under-investing in the most expensive ones.</p>
-                <p>Worse, the sections do not improve at the same rate. A rule you learn — <em>senior to</em>, not <em>senior than</em> — is worth marks immediately and permanently. A puzzle you practise is worth marks only if a similar puzzle appears. Study time should follow both the marks available and how quickly you convert hours into marks.</p>
+                <p>Most candidates divide their preparation evenly across the three sections, because equal feels fair. On HAT-1 that is the most expensive planning mistake available: Quantitative carries 40 of the 100 marks while the other two carry 30 each, and the two weaker sections are usually where the cheapest marks are hiding.</p>
+                <p>Worse, the sections do not improve at the same rate. A grammar rule learned once is right every single time it appears. A puzzle practised is worth marks only when a similar puzzle shows up. So study time has to follow two things at once: how many marks a section can produce, and how quickly your next hour converts into them.</p>
             </div>
 
             <div class="unit unit-model">
                 <h2>A Simple Model</h2>
-                <p>Model your preparation as a budget problem. You have a fixed number of hours. Each hour you spend on a section buys you some number of marks, and that number <strong>falls</strong> as you get better at the section.</p>
-                <div class="formula">marginal marks per hour = (marks available in the section) x (room left to your ceiling) x (learnability)</div>
-                <p>Useful consequences of this model:</p>
+                <p>Treat preparation as a budget problem with diminishing returns.</p>
+                <div class="formula">marks from the next hour = (marks available) &times; (room left below your ceiling) &times; (learnability)</div>
                 <ul>
-                    <li>A section that is worth 40 marks can never be ignored, but its 20th hour is worth far less than its 1st.</li>
-                    <li>The first hours in a weak section are the cheapest marks on the paper, because your score there starts low and the questions are rule-based.</li>
-                    <li>Sections with slow, noisy returns — typically analytical puzzles — should be practised for procedure, not for volume.</li>
+                    <li><strong>Marks available</strong> sets the ceiling. Quantitative can produce 40 marks, so it can never be ignored; but nobody can score 150 in it.</li>
+                    <li><strong>Room left</strong> sets the return. Going from 40% to 60% in a section is worth more marks per hour than going from 85% to 90%.</li>
+                    <li><strong>Learnability</strong> sets the slope. Rule-based topics (agreement, prepositions, syllogisms, series, percentage templates) improve fast and hold; open-ended reading speed improves slowly.</li>
                 </ul>
-                <p>The model is incomplete where the real test is messier: your personal learnability numbers must come from a real mock, not from a guess. That is what the next lesson builds.</p>
+                <p>Read the formula as a spending rule: every hour goes to the section and topic that maximises the product, not to the section with the biggest headline weight.</p>
             </div>
 
             <div class="unit unit-reality">
                 <h2>The Actual Detail</h2>
-                <p>The published weightages mean your strategy is <em>category-specific</em>. The table below is the one that should decide your study split, not a generic "cover everything" plan.</p>
+                <p>The published section weights for every HAT stream:</p>
                 <table>
                     <thead>
-                        <tr><th scope="col">Category</th><th scope="col">Verbal</th><th scope="col">Analytical</th><th scope="col">Quantitative</th><th scope="col">Where the money is</th></tr>
+                        <tr><th scope="col">Stream</th><th scope="col">Verbal</th><th scope="col">Analytical</th><th scope="col">Quantitative</th><th scope="col">Where your hours should point</th></tr>
                     </thead>
                     <tbody>
-                        <tr><td>HAT-1</td><td>30</td><td>30</td><td>40</td><td>Quantitative first, then buy cheap Verbal marks</td></tr>
-                        <tr><td>HAT-2</td><td>30</td><td>40</td><td>30</td><td>Analytical first</td></tr>
-                        <tr><td>HAT-3</td><td>40</td><td>35</td><td>25</td><td>Verbal first, Analytical second</td></tr>
-                        <tr><td>HAT-4</td><td>40</td><td>30</td><td>30</td><td>Verbal first</td></tr>
-                        <tr><td>HAT-General</td><td>40</td><td>30</td><td>30</td><td>Verbal first</td></tr>
+                        <tr><td><strong>HAT-1</strong></td><td>30</td><td>30</td><td><strong>40</strong></td><td>Protect Quantitative, then buy rule-based Verbal and Analytical marks</td></tr>
+                        <tr><td>HAT-2</td><td>30</td><td><strong>40</strong></td><td>30</td><td>Analytical puzzle procedure first</td></tr>
+                        <tr><td>HAT-3</td><td><strong>40</strong></td><td>35</td><td>25</td><td>Verbal rules first, then puzzle procedure, a floor in Quantitative</td></tr>
+                        <tr><td>HAT-4</td><td><strong>40</strong></td><td>30</td><td>30</td><td>Verbal first</td></tr>
+                        <tr><td>HAT-General</td><td><strong>40</strong></td><td>30</td><td>30</td><td>Verbal first</td></tr>
                     </tbody>
                 </table>
-                <p>Two rules apply to every category:</p>
-                <ul>
-                    <li><strong>The floor rule.</strong> No section should be left so weak that it drags the total under the threshold by itself. A 40-mark section at 50% costs 20 marks; a 25-mark section at 0% costs 25. Floors matter more than peaks.</li>
-                    <li><strong>The no-penalty rule.</strong> Because wrong answers cost nothing, every question you can narrow to two options is worth attempting. Nothing in your preparation should aim at "avoiding wrong answers"; it should aim at "answering more questions".</li>
-                </ul>
                 <div class="callout callout-tip">
-                    <strong>Sequence, not just split.</strong> Rules-based material (grammar, vocabulary, direction sense, coding) rewards short daily repetitions and holds its value. Problem-solving material (arithmetic, algebra, geometry) rewards blocked practice followed by mixed drills. Practise the rule-based material daily in small doses and the problem-based material in longer sessions.
+                    <strong>HAT-1 in one line:</strong> 100% of the paper is the three aptitude sections. There is no technical or subject section to revise, so a Computer Science graduate should spend zero hours on mechanics or logic gates and put all of it into these three sections.
+                </div>
+                <p>The published table stops at section level, so the topic priorities below are inferred from those weights and from the composition of past papers. They are the course's working map, not an official document — but they are what makes the plan concrete.</p>
+                <table>
+                    <thead>
+                        <tr><th scope="col">Section</th><th scope="col">Marks</th><th scope="col">High-frequency topics</th><th scope="col">Practice rule</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Quantitative</td><td>40</td><td>Arithmetic and estimation, percentages, ratio and rate, algebra, geometry, averages, data in tables</td><td>Blocked practice per topic, then mixed timed drills</td></tr>
+                        <tr><td>Verbal</td><td>30</td><td>Synonyms and antonyms, analogies, sentence completion, grammar and error identification, prepositions, reading comprehension</td><td>Short daily repetitions; rules hold their value</td></tr>
+                        <tr><td>Analytical</td><td>30</td><td>Ordering and seating puzzles, deduction, syllogisms, series, data interpretation, assumption and conclusion</td><td>Draw every puzzle; learn a small number of procedures</td></tr>
+                    </tbody>
+                </table>
+                <p>Two rules apply whatever your stream:</p>
+                <ul>
+                    <li><strong>The floor rule.</strong> No section may be left weak enough to sink the total on its own. Sixty marks sit outside Quantitative on HAT-1; a candidate at 40/40 in Quantitative with 6/30 and 7/30 elsewhere scores 53 and is one bad question from failing.</li>
+                    <li><strong>The no-penalty rule.</strong> Nothing in your preparation should aim at "avoiding wrong answers". Aim at "attempting more questions with an elimination step". </li>
+                </ul>
+                <div class="callout callout-warn">
+                    <strong>If your target is a scholarship or a PhD, revisit the weights.</strong> Competitive HEC scholarship shortlists want far more than the 50-mark minimum (70 and above is a realistic target), and the HAT-Subject paper for PhD admission is built differently: 30% aptitude at 15% verbal plus 15% analytical, and 70% subject-specific content, with a 60% qualifying bar.
                 </div>
             </div>
 
             <div class="unit unit-example">
-                <h2>A Real Example</h2>
-                <p>A HAT-1 candidate takes a diagnostic and scores: Quantitative 22/40, Verbal 12/30, Analytical 8/30. That is <strong>42 out of 100</strong> — below the 50-mark threshold. There are 30 study hours available. Two plans compete.</p>
+                <h2>A Worked Example</h2>
+                <p>A HAT-1 diagnostic returns Quantitative 22/40, Verbal 12/30, Analytical 8/30 — a total of <strong>42 out of 100</strong>, below the qualifying line. Thirty study hours are available. Two plans compete.</p>
                 <table>
                     <thead>
-                        <tr><th scope="col">Plan</th><th scope="col">Allocation</th><th scope="col">Assumed return</th><th scope="col">Projected scores</th><th scope="col">Total</th></tr>
+                        <tr><th scope="col">Plan</th><th scope="col">Allocation</th><th scope="col">Assumed return</th><th scope="col">Projected total</th></tr>
                     </thead>
                     <tbody>
-                        <tr><td>A, quant-only</td><td>30 h quantitative</td><td>0.5 marks/h early, 0.3 late (already at 55%)</td><td>Q 37/40, V 12/30, A 8/30</td><td>57</td></tr>
-                        <tr><td>B, balanced to the gaps</td><td>10 h each section</td><td>Q 0.5, V 0.9, A 0.6 marks/h (weak sections gain fastest)</td><td>Q 27/40, V 21/30, A 14/30</td><td>62</td></tr>
+                        <tr><td>A: quantitative only</td><td>30 h quantitative</td><td>0.5 marks/h early, 0.3 late, starting from 55%</td><td>37 + 12 + 8 = <strong>57</strong></td></tr>
+                        <tr><td>B: gap-weighted</td><td>10 h per section</td><td>Q 0.5, V 0.9, A 0.6 marks/h</td><td>27 + 21 + 14 = <strong>62</strong></td></tr>
                     </tbody>
                 </table>
-                <p>Verify the arithmetic: Plan A gives 22 + 15 = 37, and 37 + 12 + 8 = 57. Plan B gives 22 + 5 = 27, 12 + 9 = 21, 8 + 6 = 14, and 27 + 21 + 14 = 62.</p>
-                <p>Plan B wins despite the section weights, because Plan A poured its last ten hours into a section that was already near its ceiling. The lesson is not "ignore weightage" — it is that weightage sets the <em>ceiling</em> of a section's value, while your current gap sets the <em>return</em> on the next hour. Spend the next hour where the return is highest, inside the sections that carry marks.</p>
+                <p>Plan B wins despite the section weights, because Plan A poured its last ten hours into a section already near its ceiling. Weightage set the ceiling; the measured gap set the return. The correct plan protects the strong section with a short consolidation block and then spends everything else where the slope is steepest.</p>
             </div>
 
             <div class="unit unit-interact">
                 <h2>Try It</h2>
                 <div class="quiz" id="quiz-1">
-                    <p>How should study hours be allocated across the three sections?</p>
-                    <button class="quiz-option" data-correct="false" data-explain="Equal splits ignore both the section weights and your current gaps. The measured, not assumed, allocation is the whole point of the next lesson." onclick="checkQuiz('quiz-1', this)">Split study time equally across the three sections</button>
-                    <button class="quiz-option" data-correct="true" data-explain="Weightage sets how much value a section can produce; your measured gap sets the next hour's return. Both belong in the plan." onclick="checkQuiz('quiz-1', this)">Weight each section by its marks, then bias hours toward your weakest measured returns</button>
-                    <button class="quiz-option" data-correct="false" data-explain="Weightage alone is the ceiling, not the plan. A section you are already strong in can absorb 40 hours for two extra marks." onclick="checkQuiz('quiz-1', this)">Study only the heaviest section until it is perfect</button>
+                    <p>How should your study hours be distributed across the three HAT-1 sections?</p>
+                    <button class="quiz-option" data-correct="false" data-explain="Equal hours ignore both the section weights and your measured gaps, and they are the single most common planning error on this test." onclick="checkQuiz('quiz-1', this)">Equally, a third to each section</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Weightage sets the ceiling of a section's value; your measured gap sets the return on the next hour. The plan needs both." onclick="checkQuiz('quiz-1', this)">By marks, then biased toward your weakest measured returns</button>
+                    <button class="quiz-option" data-correct="false" data-explain="Quantitative is worth 40 but it is also the section a technical candidate is strongest in, so its later hours buy the fewest marks per hour." onclick="checkQuiz('quiz-1', this)">Almost entirely on Quantitative, because it is worth the most</button>
                     <div class="quiz-feedback"></div>
                 </div>
                 <div class="quiz" id="quiz-2">
-                    <p>Your strongest section is already near its ceiling and your weakest is very low. What should the plan do?</p>
-                    <button class="quiz-option" data-correct="false" data-explain="Skipping a 30-mark section entirely can cost up to 30 marks, which no other section can repay inside the time budget." onclick="checkQuiz('quiz-2', this)">Skip the weakest section entirely to protect the strongest</button>
-                    <button class="quiz-option" data-correct="true" data-explain="Sections are marks, and a section left at a very low score removes marks that nothing else can recover. Floors protect the total." onclick="checkQuiz('quiz-2', this)">Bring every section to a minimum viable floor, then push the high-return ones</button>
-                    <button class="quiz-option" data-correct="false" data-explain="Raising a 90 percent section by 5 points is harder per hour than raising a 40 percent section by 5 points." onclick="checkQuiz('quiz-2', this)">Perfect the sections you already like before touching the others</button>
+                    <p>You are strong in Quantitative and two sections are weak. What does the floor rule require?</p>
+                    <button class="quiz-option" data-correct="false" data-explain="Skipping a 30-mark section gives away its entire value; no other section can repay 30 marks inside the same time budget." onclick="checkQuiz('quiz-2', this)">Skip the weakest section to protect the strongest</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Floors protect the total: bring each section to a minimum viable level first, then push the highest-return topics." onclick="checkQuiz('quiz-2', this)">Raise every section to a minimum floor, then push the highest returns</button>
+                    <button class="quiz-option" data-correct="false" data-explain="Perfecting a section you already like is the classic inversion: the last marks there are the most expensive on the paper." onclick="checkQuiz('quiz-2', this)">Perfect your favourite section before touching the others</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+                <div class="quiz" id="quiz-3">
+                    <p>Which material converts fastest into marks in the final weeks?</p>
+                    <button class="quiz-option" data-correct="false" data-explain="Reading speed improves slowly and noisily; it is the wrong thing to bet late preparation on." onclick="checkQuiz('quiz-3', this)">Untimed practice at increasing reading speed</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Rule-based material — agreement, prepositions, vocabulary roots, syllogisms, series, percentage templates — is right every time once learned, which makes it the best late investment." onclick="checkQuiz('quiz-3', this)">Rule-based topics such as grammar, vocabulary roots and syllogisms</button>
+                    <button class="quiz-option" data-correct="false" data-explain="Starting an entirely new and rarely tested topic late is the lowest-yield choice available." onclick="checkQuiz('quiz-3', this)">A new topic you have never seen, in case it appears</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
 
             <div class="unit unit-retrieve">
                 <h2>Check Your Understanding</h2>
-                <p>Without looking back: for HAT-1, which section is worth the most marks, and what does the marginal-return model say you should do about a section you are already strong in?</p>
-                <p>The answer is: Quantitative Reasoning at 40 marks; a strong section should be protected to its floor and then de-prioritised, because its next hour buys fewer marks than an hour spent on a weak, rule-based section.</p>
-                <p>Fill in the blanks from memory:</p>
+                <p>Without looking back: on HAT-1, which section carries the most marks, and what does the model say to do with a section you are already strong in?</p>
+                <p>The answer: Quantitative at 40 marks; protect it to a floor and then de-prioritise it, because its next hour buys fewer marks than an hour in a weak, rule-based section.</p>
                 <div id="fill-1">
-                    <p>On HAT-1, Quantitative Reasoning carries <input type="text" class="fill-blank" data-answer="40" placeholder="?" aria-label="quantitative marks" /> marks, and each of the other two sections carries <input type="text" class="fill-blank" data-answer="30" placeholder="?" aria-label="other section marks" />. Because there is no negative marking, a question narrowed to two options should be <input type="text" class="fill-blank" data-answer="answered" placeholder="?" aria-label="action for a narrowed question" />.</p>
+                    <p>On HAT-1, Quantitative carries <input type="text" class="fill-blank" data-answer="40" placeholder="?" aria-label="quantitative marks" /> marks, and Verbal and Analytical carry <input type="text" class="fill-blank" data-answer="30" placeholder="?" aria-label="other sections marks" /> each. The <input type="text" class="fill-blank" data-answer="floor" placeholder="?" aria-label="rule about minimum section level" /> rule says no section may be left weak enough to sink the total, and because there is no negative marking, a question narrowed to two options should always be <input type="text" class="fill-blank" data-answer="answered" placeholder="?" aria-label="action on a narrowed question" />.</p>
                     <button class="fill-check-btn" onclick="checkFillBlanks('fill-1')">Check answers</button>
                     <div class="fill-feedback"></div>
                 </div>
@@ -111,23 +129,23 @@ public func render_hat_weightage_strategy() : string {
 
             <div class="unit unit-apply">
                 <h2>Apply It</h2>
-                <p>You are registering for HAT-3 (Arts and Humanities), where Verbal carries 40 marks, Analytical 35 and Quantitative 25. Your diagnostic shows strong reading but no practice with arrangement puzzles, and arithmetic that you have not touched since school. You have 24 hours a week for three weeks.</p>
+                <p>You are registering for HAT-1 with 24 hours a week for three weeks. Your diagnostic: Quantitative 30/40 (fast but careless), Verbal 10/30 (grammar never studied), Analytical 9/30 (no idea how to draw a puzzle). Allocate the three weeks and justify the split.</p>
                 <details>
                     <summary>Show the reasoning</summary>
-                    <p>Three facts decide the split. First, Verbal carries the most marks, so it gets the largest block — but your reading is already strong, so the money inside this section is in the <em>rule-based</em> parts: grammar and vocabulary, which convert fast. Second, Analytical carries 35 marks and your weakness there is procedural, not conceptual: arrangement and deduction puzzles are a small number of repeatable techniques, so 3 to 4 hours buys a disproportionate share of the 35 marks. Third, Quantitative carries only 25 marks and is your weakest area, which makes it the highest-return-per-hour section up to a <em>floor</em> — enough arithmetic and percentages to stop losing easy marks — after which it should be left alone.</p>
-                    <p>A workable allocation: Verbal 8 hours, Analytical 10 hours, Quantitative 6 hours. The Analytical block is the largest because it combines the second-heaviest weightage with the widest measured gap, and because puzzle technique has a short, steep learning curve that flattens quickly — exactly the shape the marginal-return model rewards.</p>
+                    <p>Quantitative is at 75%, so its remaining value is ten marks and the cheapest of those come from <em>carelessness</em>, not content: a two-hour block on unit checks, backsolving and estimation is enough. Take 3 hours.</p>
+                    <p>Verbal at 10/30 and Analytical at 9/30 are the money. Verbal's gap is rule-based — agreement, prepositions, vocabulary, sentence completion — and rule-based material holds its value, so it deserves steady daily repetition: 9 hours across three weeks, 30 minutes a day, with a timed drill each week. Analytical's gap is procedural: seating and ordering puzzles, syllogisms, series and data interpretation all have a written procedure, and three or four procedures cover most of the section: 12 hours, blocked by family, then mixed timed sets.</p>
+                    <p>That also fixes the ordering: learn the procedure, drill it blocked while it is fragile, then switch to mixed timed sets so the recognition itself gets trained. The final week is mocks and error repair, not new topics.</p>
                 </details>
             </div>
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>You now have a way to divide effort: by marks, adjusted by measured gaps. What you still lack is the measurement — the diagnostic that tells you which gaps you actually have, and the feedback loop that keeps the plan honest as the weeks pass.</p>
-                <p>The next lesson builds that: a six-week structure with a diagnostic at the start, a written error log, and a short daily review block.</p>
+                <p>You now know where the marks are and how to spend hours on them. The next lesson turns that into a calendar: a diagnostic, eight weeks of progressive overload, weekly mocks and an error log that feeds back into your next session.</p>
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-exam-overview">Previous: What the HAT Actually Is</a></span>
-                <span><a href="/courses/hat/lessons/hat-study-plan">Next: A Six-Week Study Plan</a></span>
+                <span><a href="/courses/hat/lessons/hat-exam-overview">Previous: Know the Arena</a></span>
+                <span><a href="/courses/hat/lessons/hat-study-plan">Next: The Eight-Week Program</a></span>
             </div>
         </div>
     }
