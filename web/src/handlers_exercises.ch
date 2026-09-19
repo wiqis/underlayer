@@ -161,7 +161,27 @@ public namespace underlayer_web {
         // the concept's review item — same pipeline as /api/review/submit.
         var learner_id = auth_get_learner_id(&raw db, &*req)
         var authenticated = learner_id.size() > 0
-        var course_id = string("elf")
+        // Multi-course: the lesson page passes its course (query param or JSON
+        // body). Deterministic fallback: look up which seeded course owns this
+        // concept id before defaulting to "elf".
+        var q_cid2 = string("course_id")
+        var cid_v2 = req.query.get(&q_cid2.to_view())
+        var course_id = string()
+        if(cid_v2.size() > 0) { course_id = sv_to_string(&raw cid_v2) }
+        if(course_id.size() == 0) {
+            var body_str2 = read_body(req)
+            if(body_str2.size() > 0) {
+                var pr2 = json::parse(body_str2.to_view())
+                if(pr2 is std::Result.Ok) {
+                    var Ok(parsed2) = pr2 else unreachable
+                    course_id = json_get_str(&raw parsed2, "course_id")
+                }
+            }
+        }
+        if(course_id.size() == 0) {
+            var owner = underlayer_repository::find_course_for_concept(&raw db, &ex.concept_id)
+            if(owner.size() > 0) { course_id = owner } else { course_id = string("elf") }
+        }
         if(authenticated) {
             var rating : int = 1
             if(correct) { rating = 3 }

@@ -297,6 +297,9 @@ public namespace underlayer_web {
     }
 
     public func handle_review_submit(db : &DbClient, req : *mut http::Request, res : *mut http::ResponseWriter) {
+        // Accept BOTH query params and a JSON body — the review page posts a
+        // JSON body ({concept_id, rating, course_id, time_spent}); API consumers
+        // may use query params. Body fields fill any param that is missing.
         var q_cid = string("concept_id")
         var q_crsid = string("course_id")
         var q_rat = string("rating")
@@ -307,8 +310,42 @@ public namespace underlayer_web {
         var rat_v = req.query.get(&q_rat.to_view())
         var sid_v = req.query.get(&q_sid.to_view())
         var time_v = req.query.get(&q_time.to_view())
+
+        var body_concept = string()
+        var body_course = string()
+        var body_rating = string()
+        var body_session = string()
+        var body_time = string()
+        var body_str = read_body(req)
+        if(body_str.size() > 0) {
+            var parse_result = json::parse(body_str.to_view())
+            if(parse_result is std::Result.Ok) {
+                var Ok(parsed) = parse_result else unreachable
+                body_concept = json_get_str_or_num(&raw parsed, "concept_id")
+                body_course = json_get_str_or_num(&raw parsed, "course_id")
+                body_rating = json_get_str_or_num(&raw parsed, "rating")
+                body_session = json_get_str_or_num(&raw parsed, "session_id")
+                // Accept both time_spent and time_spent_ms (the review page
+                // sends seconds; the API documents milliseconds).
+                body_time = json_get_str_or_num(&raw parsed, "time_spent_ms")
+                if(body_time.size() == 0) {
+                    var tsec = json_get_str_or_num(&raw parsed, "time_spent")
+                    if(tsec.size() > 0) {
+                        var tsec_v = tsec.to_view()
+                        var tsec_i = underlayer_repository::parse_i64(tsec_v)
+                        var tms = tsec_i * 1000
+                        body_time = underlayer_core::int_to_string(tms)
+                    }
+                }
+            }
+        }
+        if(cid_v.size() == 0) { cid_v = body_concept.to_view() }
+        if(crsid_v.size() == 0) { crsid_v = body_course.to_view() }
+        if(rat_v.size() == 0) { rat_v = body_rating.to_view() }
+        if(sid_v.size() == 0) { sid_v = body_session.to_view() }
+        if(time_v.size() == 0) { time_v = body_time.to_view() }
         if(cid_v.size() == 0 || crsid_v.size() == 0 || rat_v.size() == 0) {
-            send_error(res, 400u, &string("missing query params: concept_id, course_id, rating"))
+            send_error(res, 400u, &string("missing concept_id, course_id, or rating (query params or JSON body)"))
             return
         }
         var concept_id = sv_to_string(&raw cid_v)

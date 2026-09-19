@@ -312,4 +312,42 @@ public namespace underlayer_repository {
         return stats
     }
 
+    // Multi-course: the exercises table has no course_id column, but seeded
+    // exercise ids are deterministic "<course>_<concept>_<index>". Derive the
+    // owning course from the id prefix of any exercise for this concept.
+    // Returns "" when the concept has no seeded exercises.
+    public func find_course_for_concept(db : *DbClient, concept_id : &string) : string {
+        var sql = string("SELECT id FROM exercises WHERE concept_id = '")
+        sql.append_string(concept_id)
+        sql.append_view("' LIMIT 1")
+        var result = underlayer_db::query_sql(db, &raw sql)
+        if(result.rows.size() == 0) { return string() }
+        var row = result.rows.get_ptr(0)
+        var ex_id = row.vals.get_ptr(0).copy()
+        // id = course + "_" + concept + "_" + index; strip the concept and
+        // index suffixes. Concept ids may themselves contain underscores, so
+        // match the "_" + concept_id + "_" boundary from the end.
+        var suffix = string("_")
+        suffix.append_string(concept_id)
+        suffix.append_view("_")
+        var pos : i64 = -1
+        var si : i64 = 0
+        var limit : i64 = (ex_id.size() - suffix.size()) as i64
+        while(si <= limit) {
+            var matches = true
+            var k : size_t = 0
+            while(k < suffix.size()) {
+                if(ex_id.get(si as size_t + k) != suffix.get(k)) { matches = false; break }
+                k = k + 1
+            }
+            if(matches) { pos = si; break }
+            si = si + 1
+        }
+        if(pos < 0) { return string() }
+        var course = string()
+        var ci : size_t = 0
+        while(ci < pos as size_t) { course.append(ex_id.get(ci)); ci = ci + 1 }
+        return course
+    }
+
 }

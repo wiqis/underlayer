@@ -1,5 +1,7 @@
 build
 */build
+# Pre-rendered course pages (courses/hat/src/main.ch output, courses/elf/src/main.ch output)
+courses/*/output
 *.exe
 *.def
 *.o

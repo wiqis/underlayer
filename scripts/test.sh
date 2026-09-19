@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 # Build and run @test-annotated tests for Underlayer.
-# Usage: ./lang/compiled/underlayer/scripts/test.sh
-#        ./lang/compiled/underlayer/scripts/test.sh --test-names "test_health_returns_200"
-#        ./lang/compiled/underlayer/scripts/test.sh --no-build
+# Usage: scripts/test.sh
+#        scripts/test.sh --test-names "test_health_returns_200"
+#        scripts/test.sh --no-build
+#
+# The compiler is discovered by scripts/_common.sh; set CHEMICAL_ROOT or write
+# scripts/.chemical-path if it is not found automatically.
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-ROOT_DIR="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
-BUILD_DIR="$ROOT_DIR/lang/compiled/underlayer/build"
-EXE="$BUILD_DIR/tests.exe"
-COMPILER="$ROOT_DIR/cmake-build-debug/TCCCompiler.exe"
-MOD="$ROOT_DIR/lang/compiled/underlayer/chemical.mod"
+. "$SCRIPT_DIR/_common.sh"
+
+EXE="$UL_BUILD_DIR/tests.exe"
 
 NO_BUILD=false
 TEST_NAMES=""
@@ -32,13 +33,11 @@ echo "=== Underlayer Test Runner ==="
 
 # 1. Build
 if [ "$NO_BUILD" = false ]; then
+    ul_require_compiler
     echo "[1/2] Building tests.exe with --test..."
-    mkdir -p "$BUILD_DIR"
-    "$COMPILER" "$MOD" -o "$EXE" -frecompile-plugins --test --no-cache $VERBOSE
-    if [ $? -ne 0 ]; then
-        echo "[BUILD FAILED]"
-        exit 1
-    fi
+    mkdir -p "$UL_BUILD_DIR"
+    (cd "$UL_PROJECT_ROOT" && "$UL_COMPILER" chemical.mod \
+        -o "$EXE" -frecompile-plugins --test --no-cache $VERBOSE)
     echo "  Build OK: $EXE"
 else
     echo "[1/2] Skipping build (--no-build)"
@@ -49,12 +48,13 @@ if [ ! -f "$EXE" ]; then
     exit 1
 fi
 
-# 2. Run tests
+# 2. Run tests (from the project root so ./courses resolves)
 echo "[2/2] Running tests..."
 RUN_ARGS=()
 if [ -n "$TEST_NAMES" ]; then RUN_ARGS+=(--test-names "$TEST_NAMES"); fi
 if [ -n "$TEST_IDS" ]; then RUN_ARGS+=(--test-ids "$TEST_IDS"); fi
 
+cd "$UL_PROJECT_ROOT"
 "$EXE" "${RUN_ARGS[@]}"
 EXIT_CODE=$?
 

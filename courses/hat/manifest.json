@@ -1,0 +1,738 @@
+{
+  "id": "hat",
+  "title": "HAT — Higher Education Aptitude Test",
+  "version": 1,
+  "description": "A preparation course for the HEC Higher Education Aptitude Test (HAT), written for HAT-1 candidates in engineering, computing and the physical sciences: test structure, weighted study planning, quantitative and verbal technique, analytical reasoning, and the technical foundations.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "beginner",
+  "importance": "core",
+  "completion_criteria": "all_concepts",
+  "min_platform_version": "1.0",
+  "navigation": "linear",
+  "branching": false,
+  "alternative_paths": [],
+  "bundles": [],
+  "assets": [],
+  "review_item_decls": [],
+  "exercise_decls": [
+    {
+      "concept_id": "hat-exam-overview",
+      "type": "multiple_choice",
+      "question": "What does the abbreviation HAT stand for?",
+      "answer": "Higher Education Aptitude Test",
+      "options": "Higher Education Aptitude Test|Higher Academic Test|Higher Assessment of Teaching",
+      "correct_index": 0,
+      "explanation": "The HAT is the Higher Education Aptitude Test, used for admission to postgraduate programmes in Pakistan.",
+      "hint1": "The first word is the level of study it is used for.",
+      "difficulty": 0.2
+    },
+    {
+      "concept_id": "hat-exam-overview",
+      "type": "multiple_choice",
+      "question": "What is the primary purpose of the HAT?",
+      "answer": "To assess aptitude for postgraduate admission",
+      "options": "To replace the bachelor's degree|To assess aptitude for postgraduate admission|To test typing speed",
+      "correct_index": 1,
+      "explanation": "The test measures aptitude and readiness for postgraduate study, not previous degrees.",
+      "hint1": "It is an aptitude test, not a degree.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "hat-weightage-strategy",
+      "type": "multiple_choice",
+      "question": "A section carries 30% weightage. Out of 100 total marks, how many marks come from it?",
+      "answer": "30",
+      "options": "3|30|300",
+      "correct_index": 1,
+      "explanation": "30% of 100 marks is 30 marks. Weightage tells you where to spend study time.",
+      "hint1": "30% means 30 per hundred.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "hat-weightage-strategy",
+      "type": "multiple_choice",
+      "question": "You have 40 questions and 40 minutes. What is your average time per question?",
+      "answer": "1 minute",
+      "options": "30 seconds|1 minute|3 minutes",
+      "correct_index": 1,
+      "explanation": "40 questions in 40 minutes is one minute per question on average; hard questions must not exceed that budget.",
+      "hint1": "Divide the time by the number of questions.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "hat-study-plan",
+      "type": "multiple_choice",
+      "question": "What is the best use of the final week before the test?",
+      "answer": "Timed full-length mocks and review of errors",
+      "options": "Learning brand new topics|Timed full-length mocks and review of errors|Resting entirely",
+      "correct_index": 1,
+      "explanation": "The final week is for timing, stamina and fixing known mistakes, not for starting new material.",
+      "hint1": "The clock is the skill that is hardest to build late.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "hat-study-plan",
+      "type": "multiple_choice",
+      "question": "Why are past papers the highest-value practice?",
+      "answer": "They show the actual question types and timing",
+      "options": "They are easier than the real test|They show the actual question types and timing|They contain the real answers",
+      "correct_index": 1,
+      "explanation": "Past papers reveal the real question formats and pacing, which generic study material does not.",
+      "hint1": "Practice is valuable for its realism, not its difficulty.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "hat-arithmetic",
+      "type": "multiple_choice",
+      "question": "What is 15% of 240?",
+      "answer": "36",
+      "options": "24|36|45",
+      "correct_index": 1,
+      "explanation": "10% of 240 is 24 and 5% is 12, so 15% is 36.",
+      "hint1": "Build 15% from 10% plus 5%.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "hat-arithmetic",
+      "type": "free_recall",
+      "question": "What is 17 x 12?",
+      "answer": "204",
+      "explanation": "17 x 12 = 17 x 10 + 17 x 2 = 170 + 34 = 204.",
+      "hint1": "Split 12 into 10 plus 2.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "hat-percentages",
+      "type": "multiple_choice",
+      "question": "A price rises from 80 to 100. What is the percentage increase?",
+      "answer": "25%",
+      "options": "20%|25%|80%",
+      "correct_index": 1,
+      "explanation": "The change is 20 on an original of 80, so 20/80 = 25%. Percentage change always divides by the original value.",
+      "hint1": "Divide the change by the original, not the new value.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "hat-percentages",
+      "type": "multiple_choice",
+      "question": "A value falls 20% and then rises 20%. Compared with its starting value it is:",
+      "answer": "4% lower",
+      "options": "Back to the start|4% lower|4% higher",
+      "correct_index": 1,
+      "explanation": "100 becomes 80, then 80 becomes 96, so it ends 4% below the start because the rise is computed on a smaller base.",
+      "hint1": "The two percentage changes are applied to different totals.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "hat-ratio-proportion",
+      "type": "multiple_choice",
+      "question": "Divide 180 in the ratio 2:3:4. What is the largest share?",
+      "answer": "80",
+      "options": "40|60|80",
+      "correct_index": 2,
+      "explanation": "The parts total 9, so each part is 20; the largest share is 4 x 20 = 80.",
+      "hint1": "Add the ratio parts first to find one part.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "hat-ratio-proportion",
+      "type": "multiple_choice",
+      "question": "If 3 workers finish a job in 12 days, how long will 4 workers take at the same rate?",
+      "answer": "9 days",
+      "options": "8 days|9 days|16 days",
+      "correct_index": 1,
+      "explanation": "The job takes 36 worker-days; 4 workers finish it in 36 / 4 = 9 days. This is inverse proportion.",
+      "hint1": "Find the total work in worker-days.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "hat-algebra",
+      "type": "multiple_choice",
+      "question": "Solve for x: 3x + 7 = 22",
+      "answer": "5",
+      "options": "3|5|15",
+      "correct_index": 1,
+      "explanation": "Subtract 7 to get 3x = 15, then divide by 3 to get x = 5.",
+      "hint1": "Undo the addition before the multiplication.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "hat-algebra",
+      "type": "multiple_choice",
+      "question": "Factor x squared + 7x + 12.",
+      "answer": "(x+3)(x+4)",
+      "options": "(x+2)(x+6)|(x+3)(x+4)|(x+1)(x+12)",
+      "correct_index": 1,
+      "explanation": "3 and 4 multiply to 12 and add to 7, which is the coefficient of x.",
+      "hint1": "Find two numbers that multiply to 12 and add to 7.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "hat-geometry",
+      "type": "multiple_choice",
+      "question": "What is the area of a triangle with base 10 and height 6?",
+      "answer": "30",
+      "options": "30|60|16",
+      "correct_index": 0,
+      "explanation": "Area is one half times base times height: 0.5 x 10 x 6 = 30.",
+      "hint1": "Do not forget the one-half factor.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "hat-geometry",
+      "type": "multiple_choice",
+      "question": "The three interior angles of a triangle always sum to:",
+      "answer": "180 degrees",
+      "options": "90 degrees|180 degrees|360 degrees",
+      "correct_index": 1,
+      "explanation": "The interior angles of a Euclidean triangle sum to 180 degrees.",
+      "hint1": "It is the same total for every triangle.",
+      "difficulty": 0.2
+    },
+    {
+      "concept_id": "hat-data-probability",
+      "type": "multiple_choice",
+      "question": "What is the mean of 4, 8, 10 and 14?",
+      "answer": "9",
+      "options": "8|9|12",
+      "correct_index": 1,
+      "explanation": "The sum is 36 and there are four values, so the mean is 36 / 4 = 9.",
+      "hint1": "Add the values, then divide by how many there are.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "hat-data-probability",
+      "type": "multiple_choice",
+      "question": "What is the probability of rolling an even number on a fair six-sided die?",
+      "answer": "1/2",
+      "options": "1/6|1/3|1/2",
+      "correct_index": 2,
+      "explanation": "There are three even outcomes (2, 4, 6) out of six, so the probability is 3/6 = 1/2.",
+      "hint1": "Count the favourable outcomes out of six.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "hat-vocabulary",
+      "type": "multiple_choice",
+      "question": "'Candid' most nearly means:",
+      "answer": "frank",
+      "options": "deceitful|frank|hesitant",
+      "correct_index": 1,
+      "explanation": "Candid means open and honest, that is frank; a candid answer is a straightforward one.",
+      "hint1": "A candid photograph is unposed and honest.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "hat-vocabulary",
+      "type": "multiple_choice",
+      "question": "Which is the best way to learn vocabulary for the test?",
+      "answer": "Learn roots and words in context",
+      "options": "Memorise an alphabetical list|Learn roots and words in context|Read the whole dictionary nightly",
+      "correct_index": 1,
+      "explanation": "Roots let you decode unfamiliar words, and context fixes meaning; a bare list does not transfer to the exam.",
+      "hint1": "Look for the method that scales to words you have never seen.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "hat-analogies",
+      "type": "multiple_choice",
+      "question": "BOOK : READ :: PIANO : ?",
+      "answer": "play",
+      "options": "music|play|listen",
+      "correct_index": 1,
+      "explanation": "The relationship is object to the action performed on it: a book is read and a piano is played.",
+      "hint1": "State what you do with the first object.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "hat-analogies",
+      "type": "multiple_choice",
+      "question": "What is the first step in an analogy question?",
+      "answer": "State the relationship between the given pair",
+      "options": "Look for the longest option|State the relationship between the given pair|Choose the option you recognise",
+      "correct_index": 1,
+      "explanation": "Naming the relationship in a short phrase makes the matching option obvious and filters distractors.",
+      "hint1": "You cannot match a relationship you have not named.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "hat-sentence-completion",
+      "type": "multiple_choice",
+      "question": "'Although the plan was ambitious, it was ___.' Which word fits the signal?",
+      "answer": "impractical",
+      "options": "practical|impractical|approved",
+      "correct_index": 1,
+      "explanation": "Although signals contrast, so the second half must oppose the positive word ambitious.",
+      "hint1": "Although marks a contrast, not an addition.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "hat-sentence-completion",
+      "type": "multiple_choice",
+      "question": "Which relationship does the signal word 'however' express?",
+      "answer": "contrast",
+      "options": "addition|contrast|cause and effect",
+      "correct_index": 1,
+      "explanation": "However marks a turn in direction, so the clause that follows opposes what came before.",
+      "hint1": "It behaves like 'but'.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "hat-grammar-errors",
+      "type": "multiple_choice",
+      "question": "Find the error: 'The list of items are long.' Which word is wrong?",
+      "answer": "are",
+      "options": "list|are|long",
+      "correct_index": 1,
+      "explanation": "The subject is the singular 'list', so the verb must be 'is'. The plural 'items' sits between them as a decoy.",
+      "hint1": "Find the real subject, ignoring the phrase after 'of'.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "hat-grammar-errors",
+      "type": "multiple_choice",
+      "question": "Complete correctly: 'He is senior ___ me.'",
+      "answer": "to",
+      "options": "than|to|of",
+      "correct_index": 1,
+      "explanation": "Senior, junior, superior and inferior take 'to' rather than 'than'.",
+      "hint1": "This word is not like 'taller than'.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "hat-reading-comprehension",
+      "type": "multiple_choice",
+      "question": "Which question type should usually be answered last?",
+      "answer": "Main idea",
+      "options": "Specific detail|Main idea|Vocabulary in context",
+      "correct_index": 1,
+      "explanation": "Answering the specific questions first tells you what the passage says, which makes the main-idea question cheap.",
+      "hint1": "Order the questions so that the later ones benefit from the earlier ones.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "hat-reading-comprehension",
+      "type": "multiple_choice",
+      "question": "An inference answer choice is usually wrong when it:",
+      "answer": "Uses extreme words and goes beyond the passage",
+      "options": "Restates the text|Uses extreme words and goes beyond the passage|Is shorter than the others",
+      "correct_index": 1,
+      "explanation": "The correct inference must be true from the text alone; words like always, never and only push it past the evidence.",
+      "hint1": "Look for overreach, not length.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "hat-critical-reasoning",
+      "type": "multiple_choice",
+      "question": "How do you test whether an option is a required assumption?",
+      "answer": "Negate it and see if the argument collapses",
+      "options": "Ask whether it sounds plausible|Negate it and see if the argument collapses|Check whether you agree with it",
+      "correct_index": 1,
+      "explanation": "If the argument fails once the option is denied, the option was required for the conclusion to hold.",
+      "hint1": "The test is structural, not about agreement.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "hat-critical-reasoning",
+      "type": "multiple_choice",
+      "question": "Ice cream sales and drowning deaths rise together, and the author blames ice cream. The flaw is:",
+      "answer": "Correlation treated as causation",
+      "options": "False dilemma|Correlation treated as causation|Circular reasoning",
+      "correct_index": 1,
+      "explanation": "A third factor such as summer heat drives both, so the observed association does not establish cause.",
+      "hint1": "Two things moving together is not proof of cause.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "hat-logic-deduction",
+      "type": "multiple_choice",
+      "question": "Given 'if P then Q', which statement must be true?",
+      "answer": "If not Q, then not P",
+      "options": "If Q, then P|If not Q, then not P|If not P, then not Q",
+      "correct_index": 1,
+      "explanation": "That is the contrapositive, which is equivalent to the original rule; the converse and inverse are not valid.",
+      "hint1": "Reverse the order and negate both parts.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "hat-logic-deduction",
+      "type": "multiple_choice",
+      "question": "Four files P, Q, R, S are reviewed one per day. S is immediately after Q, Q is not first, and P is before R. What is true in every valid arrangement?",
+      "answer": "P is reviewed first",
+      "options": "P is reviewed last|P is reviewed first|R is reviewed second in every case",
+      "correct_index": 1,
+      "explanation": "The two valid orders are P, Q, S, R and P, R, Q, S, so P is first in both.",
+      "hint1": "Enumerate the arrangements before reading the options.",
+      "difficulty": 0.6
+    },
+    {
+      "concept_id": "hat-data-interpretation",
+      "type": "multiple_choice",
+      "question": "Enrolment rises from a total of 300 to 350. What is the percentage increase?",
+      "answer": "16.7%",
+      "options": "14.3%|16.7%|25%",
+      "correct_index": 1,
+      "explanation": "The change is 50 on an original of 300, so 50 / 300 = 16.7%. Dividing by 350 gives the wrong 14.3%.",
+      "hint1": "Divide by the original total.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "hat-data-interpretation",
+      "type": "multiple_choice",
+      "question": "Department A goes from 120 to 150 and department B from 80 to 100. Which grew faster in percentage terms?",
+      "answer": "They grew at the same rate",
+      "options": "Department A|Department B|They grew at the same rate",
+      "correct_index": 2,
+      "explanation": "A grew 30/120 = 25% and B grew 20/80 = 25%, so the smaller absolute increase is the same percentage rate.",
+      "hint1": "Compute each change as a fraction of its own original.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "hat-pattern-series",
+      "type": "multiple_choice",
+      "question": "What comes next: 2, 5, 10, 17, 26, ?",
+      "answer": "37",
+      "options": "35|37|39",
+      "correct_index": 1,
+      "explanation": "The differences are 3, 5, 7 and 9, so the next is 11 and 26 + 11 = 37.",
+      "hint1": "Write the differences between consecutive terms.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "hat-pattern-series",
+      "type": "multiple_choice",
+      "question": "What comes next: 3, 6, 12, 24, ?",
+      "answer": "48",
+      "options": "30|48|36",
+      "correct_index": 1,
+      "explanation": "The terms double each time, so the next is 48. This is a geometric series with ratio 2.",
+      "hint1": "Check the ratio rather than the difference.",
+      "difficulty": 0.2
+    },
+    {
+      "concept_id": "hat-physics-mechanics",
+      "type": "multiple_choice",
+      "question": "A force acts on a 4 kg mass producing an acceleration of 3 m/s squared. What is the force?",
+      "answer": "12 N",
+      "options": "1.33 N|7 N|12 N",
+      "correct_index": 2,
+      "explanation": "From F = ma: 4 x 3 = 12 newtons.",
+      "hint1": "Newton's second law multiplies mass by acceleration.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "hat-physics-mechanics",
+      "type": "multiple_choice",
+      "question": "A car starts from rest and accelerates at 2 m/s squared for 5 s. What is its final velocity?",
+      "answer": "10 m/s",
+      "options": "5 m/s|10 m/s|50 m/s",
+      "correct_index": 1,
+      "explanation": "Using v = u + at with u = 0: v = 2 x 5 = 10 m/s.",
+      "hint1": "Starting from rest means the initial velocity is zero.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "hat-programming-fundamentals",
+      "type": "multiple_choice",
+      "question": "What is the binary number 1101 in decimal?",
+      "answer": "13",
+      "options": "11|13|15",
+      "correct_index": 1,
+      "explanation": "The place values 8, 4, 2 and 1 give 8 + 4 + 1 = 13, since the twos place is zero.",
+      "hint1": "Add the place values where a 1 appears.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "hat-programming-fundamentals",
+      "type": "multiple_choice",
+      "question": "How many distinct values can a single byte represent?",
+      "answer": "256",
+      "options": "128|256|1024",
+      "correct_index": 1,
+      "explanation": "A byte is 8 bits, so it holds 2 raised to the 8th power, which is 256 values from 0 to 255.",
+      "hint1": "A byte has 8 bits.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "hat-digital-logic",
+      "type": "multiple_choice",
+      "question": "When does an XOR gate output a 1?",
+      "answer": "When the two inputs differ",
+      "options": "When both inputs are 1|When the two inputs differ|When both inputs are 0",
+      "correct_index": 1,
+      "explanation": "XOR is the exclusive OR: it outputs 1 for the rows 0 and 1, and 1 and 0, and 0 when the inputs are equal.",
+      "hint1": "It is true when exactly one input is true.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "hat-digital-logic",
+      "type": "multiple_choice",
+      "question": "Applying De Morgan's law, NOT(A AND B) equals:",
+      "answer": "(NOT A) OR (NOT B)",
+      "options": "NOT A AND NOT B|(NOT A) OR (NOT B)|A AND B",
+      "correct_index": 1,
+      "explanation": "Negate each input and flip the gate: a negated AND becomes an OR of the negated inputs.",
+      "hint1": "Negate the inputs and swap AND for OR.",
+      "difficulty": 0.5
+    }
+  ],
+  "visualization_decls": [],
+  "certificate": {
+    "template_id": "hat-completion",
+    "badge_url": "/badges/hat-complete.svg",
+    "title": "HAT Preparation Complete",
+    "description": "Completed the HAT preparation course",
+    "criteria": "Complete all 21 concepts with 80% quiz accuracy"
+  },
+  "modules": [
+    {
+      "id": "orientation",
+      "title": "Understanding the Test",
+      "concepts": [
+        "hat-exam-overview",
+        "hat-weightage-strategy",
+        "hat-study-plan"
+      ],
+      "description": "What the HAT is, how it is weighted, and how to plan six weeks of preparation."
+    },
+    {
+      "id": "quantitative",
+      "title": "Quantitative Reasoning",
+      "concepts": [
+        "hat-arithmetic",
+        "hat-percentages",
+        "hat-ratio-proportion",
+        "hat-algebra",
+        "hat-geometry",
+        "hat-data-probability"
+      ],
+      "description": "Arithmetic and approximation, percentages, ratio and rate, basic algebra, geometry, and statistics."
+    },
+    {
+      "id": "verbal",
+      "title": "Verbal Reasoning",
+      "concepts": [
+        "hat-vocabulary",
+        "hat-analogies",
+        "hat-sentence-completion",
+        "hat-grammar-errors",
+        "hat-reading-comprehension"
+      ],
+      "description": "Vocabulary by roots and context, analogies, sentence completion, grammar error identification, and timed reading."
+    },
+    {
+      "id": "analytical",
+      "title": "Analytical Reasoning",
+      "concepts": [
+        "hat-critical-reasoning",
+        "hat-logic-deduction",
+        "hat-data-interpretation",
+        "hat-pattern-series"
+      ],
+      "description": "Arguments and assumptions, ordering and grouping puzzles, tables and charts, and number and letter series."
+    },
+    {
+      "id": "subject-engineering",
+      "title": "Subject: Engineering and Computing",
+      "concepts": [
+        "hat-physics-mechanics",
+        "hat-programming-fundamentals",
+        "hat-digital-logic"
+      ],
+      "description": "The HAT-1 technical foundation: mechanics and electricity, computing fundamentals, and digital logic."
+    }
+  ],
+  "concepts": [
+    {
+      "id": "hat-exam-overview",
+      "title": "What the HAT Actually Is",
+      "module_id": "orientation",
+      "description": "Format, sections, scoring and validity of the HEC HAT.",
+      "estimated_minutes": 12,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "hat-weightage-strategy",
+      "title": "Weightage and Study Strategy",
+      "module_id": "orientation",
+      "description": "What carries the most marks and how to allocate study time accordingly.",
+      "estimated_minutes": 14,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "hat-study-plan",
+      "title": "A Six-Week Study Plan",
+      "module_id": "orientation",
+      "description": "A week-by-week plan from diagnostic to timed mock.",
+      "estimated_minutes": 14,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "hat-arithmetic",
+      "title": "Arithmetic You Can Do in Your Head",
+      "module_id": "quantitative",
+      "description": "Approximation, mental arithmetic and estimation before computation.",
+      "estimated_minutes": 15,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "hat-percentages",
+      "title": "Percentages and Percentage Change",
+      "module_id": "quantitative",
+      "description": "Percentage increase and decrease, successive changes, and profit and loss.",
+      "estimated_minutes": 16,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "hat-ratio-proportion",
+      "title": "Ratio, Proportion and Rate",
+      "module_id": "quantitative",
+      "description": "Dividing in ratios, direct and inverse proportion, and work-rate problems.",
+      "estimated_minutes": 16,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "hat-algebra",
+      "title": "Algebra Without Fear",
+      "module_id": "quantitative",
+      "description": "Linear equations, simultaneous equations, factorisation and inequalities.",
+      "estimated_minutes": 16,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "hat-geometry",
+      "title": "Geometry and Measurement",
+      "module_id": "quantitative",
+      "description": "Angles, triangles, area and volume, and unit conversion.",
+      "estimated_minutes": 15,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "hat-data-probability",
+      "title": "Data, Averages and Probability",
+      "module_id": "quantitative",
+      "description": "Mean, median and mode, weighted averages, and basic probability.",
+      "estimated_minutes": 15,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "hat-vocabulary",
+      "title": "Vocabulary You Can Actually Learn",
+      "module_id": "verbal",
+      "description": "Roots, prefixes and suffixes, and learning words in context.",
+      "estimated_minutes": 14,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "hat-analogies",
+      "title": "Analogies and Word Relationships",
+      "module_id": "verbal",
+      "description": "Naming the relationship before comparing the options.",
+      "estimated_minutes": 14,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "hat-sentence-completion",
+      "title": "Sentence Completion and Signal Words",
+      "module_id": "verbal",
+      "description": "Using contrast, addition and cause signals to predict the missing word.",
+      "estimated_minutes": 14,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "hat-grammar-errors",
+      "title": "Finding the Error: Grammar Rules",
+      "module_id": "verbal",
+      "description": "Subject and verb agreement, preposition pairs, comparison forms and parallelism.",
+      "estimated_minutes": 16,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "hat-reading-comprehension",
+      "title": "Reading Comprehension Under Time",
+      "module_id": "verbal",
+      "description": "Question-first reading, the six question types, and scope discipline.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "hat-critical-reasoning",
+      "title": "Assumptions, Conclusions and Arguments",
+      "module_id": "analytical",
+      "description": "Premises and conclusions, the negation test for assumptions, and common flaws.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "hat-logic-deduction",
+      "title": "Ordering, Grouping and Deduction",
+      "module_id": "analytical",
+      "description": "Constraint diagrams, conditionals and the contrapositive, and elimination.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "hat-data-interpretation",
+      "title": "Tables, Charts and Graphs",
+      "module_id": "analytical",
+      "description": "Percentage change versus share of total, and reading displays with suspicion.",
+      "estimated_minutes": 16,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "hat-pattern-series",
+      "title": "Number and Letter Series",
+      "module_id": "analytical",
+      "description": "A five-step checklist for differences, ratios, squares, primes and Fibonacci patterns.",
+      "estimated_minutes": 15,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "hat-physics-mechanics",
+      "title": "Physics and Mechanics for Engineering Candidates",
+      "module_id": "subject-engineering",
+      "description": "Kinematics, Newton's laws, work and energy, momentum, and electric circuits.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "hat-programming-fundamentals",
+      "title": "Computing Fundamentals",
+      "module_id": "subject-engineering",
+      "description": "Number systems, data units, control flow tracing, arrays and Boolean logic.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "hat-digital-logic",
+      "title": "Digital Logic and Circuit Basics",
+      "module_id": "subject-engineering",
+      "description": "Truth tables, De Morgan's laws, universal gates and the half adder.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
+    }
+  ]
+}

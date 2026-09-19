@@ -83,6 +83,16 @@ public namespace underlayer_web {
                             </div>
                             <a href="/courses/elf" class="btn btn-primary">Start Learning</a>
                         </div>
+                        <div class="course-card">
+                            <div class="course-badge">5 Modules</div>
+                            <h3>HAT — Higher Education Aptitude Test</h3>
+                            <p>Preparation for the HEC Higher Education Aptitude Test, written for HAT-1 candidates in engineering, computing and the physical sciences: format and weightage, quantitative and verbal technique, analytical reasoning, and the technical foundations.</p>
+                            <div class="course-stats">
+                                <span>21 Lessons</span>
+                                <span>Beginner</span>
+                            </div>
+                            <a href="/courses/hat" class="btn btn-primary">Start Learning</a>
+                        </div>
                     </div>
                 </div>
 

@@ -57,8 +57,64 @@ public namespace underlayer_web {
         return out
     }
 
+    // HAT course concept ids. The HAT course lives in the same content module
+    // as the ELF course, so ids are namespaced with a `hat-` prefix to stay
+    // unique across courses.
+    public func render_hat_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var exam_overview_id = std::string("hat-exam-overview")
+        var weightage_id = std::string("hat-weightage-strategy")
+        var study_plan_id = std::string("hat-study-plan")
+        var arithmetic_id = std::string("hat-arithmetic")
+        var percentages_id = std::string("hat-percentages")
+        var ratio_id = std::string("hat-ratio-proportion")
+        var algebra_id = std::string("hat-algebra")
+        var geometry_id = std::string("hat-geometry")
+        var data_prob_id = std::string("hat-data-probability")
+        var vocabulary_id = std::string("hat-vocabulary")
+        var analogies_id = std::string("hat-analogies")
+        var sentence_id = std::string("hat-sentence-completion")
+        var grammar_id = std::string("hat-grammar-errors")
+        var reading_id = std::string("hat-reading-comprehension")
+        var critical_id = std::string("hat-critical-reasoning")
+        var deduction_id = std::string("hat-logic-deduction")
+        var data_interp_id = std::string("hat-data-interpretation")
+        var series_id = std::string("hat-pattern-series")
+        var physics_id = std::string("hat-physics-mechanics")
+        var programming_id = std::string("hat-programming-fundamentals")
+        var digital_id = std::string("hat-digital-logic")
+
+        if(cid.equals(&exam_overview_id)) { return underlayer_content::render_hat_exam_overview() }
+        if(cid.equals(&weightage_id)) { return underlayer_content::render_hat_weightage_strategy() }
+        if(cid.equals(&study_plan_id)) { return underlayer_content::render_hat_study_plan() }
+        if(cid.equals(&arithmetic_id)) { return underlayer_content::render_hat_arithmetic() }
+        if(cid.equals(&percentages_id)) { return underlayer_content::render_hat_percentages() }
+        if(cid.equals(&ratio_id)) { return underlayer_content::render_hat_ratio_proportion() }
+        if(cid.equals(&algebra_id)) { return underlayer_content::render_hat_algebra() }
+        if(cid.equals(&geometry_id)) { return underlayer_content::render_hat_geometry() }
+        if(cid.equals(&data_prob_id)) { return underlayer_content::render_hat_data_probability() }
+        if(cid.equals(&vocabulary_id)) { return underlayer_content::render_hat_vocabulary() }
+        if(cid.equals(&analogies_id)) { return underlayer_content::render_hat_analogies() }
+        if(cid.equals(&sentence_id)) { return underlayer_content::render_hat_sentence_completion() }
+        if(cid.equals(&grammar_id)) { return underlayer_content::render_hat_grammar_errors() }
+        if(cid.equals(&reading_id)) { return underlayer_content::render_hat_reading_comprehension() }
+        if(cid.equals(&critical_id)) { return underlayer_content::render_hat_critical_reasoning() }
+        if(cid.equals(&deduction_id)) { return underlayer_content::render_hat_logic_deduction() }
+        if(cid.equals(&data_interp_id)) { return underlayer_content::render_hat_data_interpretation() }
+        if(cid.equals(&series_id)) { return underlayer_content::render_hat_pattern_series() }
+        if(cid.equals(&physics_id)) { return underlayer_content::render_hat_physics_mechanics() }
+        if(cid.equals(&programming_id)) { return underlayer_content::render_hat_programming_fundamentals() }
+        if(cid.equals(&digital_id)) { return underlayer_content::render_hat_digital_logic() }
+        return string()
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
+        // HAT concepts are resolved first; render_hat_concept returns an empty
+        // string for ids it does not own, so unknown ids fall through to the
+        // ELF table below.
+        var hat_html = render_hat_concept(concept_id)
+        if(hat_html.size() > 0) { return hat_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

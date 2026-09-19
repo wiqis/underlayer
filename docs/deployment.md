@@ -216,12 +216,37 @@ When a course updates:
 
 ### Chemical Build
 
-```bash
-# Build web platform
-cmake-build-debug/TCCCompiler lang/compiled/underlayer/chemical.mod \
-    -o lang/compiled/underlayer/build/underlayer.exe --mode debug_quick --no-cache -bm-modules
+Build from the Underlayer directory itself — the project no longer needs to be linked
+into the Chemical repo as `lang/compiled/underlayer`. `database/chemical.mod` imports the
+sqlite3 bindings by URL (`import "github.com/chemicallang/sqlite3"`), which the compiler
+caches under `build/remote/`. Only the compiler binary has to live inside the Chemical
+repo (it needs `import std`).
 
-# Build Android (cross-compilation target)
+```bash
+# CHEMICAL=<path to the chemical repo checkout>
+# Build web platform (from the Underlayer root)
+$CHEMICAL/cmake-build-debug/TCCCompiler chemical.mod \
+    -o build/underlayer.exe -bm-modules --no-cache
+
+# Run it (COURSES_DIR defaults to ./courses, PORT defaults to 9000)
+PORT=9000 ./build/underlayer.exe
+
+# Run the test suite (114 tests)
+$CHEMICAL/cmake-build-debug/TCCCompiler chemical.mod -o build/tests.exe \
+    -frecompile-plugins --test --no-cache && ./build/tests.exe
+
+# Build the HAT course's pre-rendered static pages (writes courses/hat/output/)
+cd courses/hat && $CHEMICAL/cmake-build-debug/TCCCompiler chemical.mod \
+    -bm-modules --no-cache -o build/hat-course.exe && ./build/hat-course.exe
+```
+
+Use `--no-cache`: an incremental build can miss edits to a module that already
+compiled, which looks exactly like "my change did nothing". The scripts under
+`scripts/` still assume a `lang/compiled/underlayer` layout; run the commands above
+directly when that symlink is not set up.
+
+```bash
+# Android (cross-compilation target, historical path)
 cmake-build-debug/TCCCompiler lang/compiled/underlayer/chemical.mod \
     -o lang/compiled/underlayer/build/libunderlayer.so --target android -bm-modules
 ```
@@ -251,7 +276,7 @@ jobs:
 
 | Variable | Purpose | Default |
 |---|---|---|
-| `UNDERLAYER_PORT` | Server port | 9000 |
+| `PORT` | Server port | 9000 |
 | `DATABASE_URL` | Turso HTTP URL | local |
 | `DATABASE_TOKEN` | Turso auth token | - |
 | `STORAGE_BUCKET` | Tigris S3 bucket | - |

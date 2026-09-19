@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
-# Build, start server, test all endpoints, stop server.
-# Usage: bash lang/compiled/underlayer/scripts/underlayer-build-test.sh
+# Build, start the server, smoke-test the endpoints, stop the server.
+# Usage: scripts/underlayer-build-test.sh
+#        PORT=9100 scripts/underlayer-build-test.sh
 # This script ALWAYS exits cleanly — never blocks.
+#
+# The compiler is discovered by scripts/_common.sh; set CHEMICAL_ROOT or write
+# scripts/.chemical-path if it is not found automatically.
+
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
-BUILD_DIR="$ROOT/lang/compiled/underlayer/build"
-URL="http://localhost:9000"
-PORT=9000
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+. "$SCRIPT_DIR/_common.sh"
+
+PORT="${PORT:-9000}"
+URL="http://localhost:$PORT"
 
 pass=0
 fail=0
@@ -29,45 +35,28 @@ echo "=== Underlayer Build + Test ==="
 
 # 1. Build
 echo "[1/3] Building..."
-BUILD_LOG="$BUILD_DIR/build_test.txt"
-(cd "$ROOT" && cmake-build-debug/TCCCompiler "lang/compiled/underlayer/chemical.mod" -v -bm-modules --no-cache >"$BUILD_LOG" 2>&1) || {
+mkdir -p "$UL_BUILD_DIR"
+BUILD_LOG="$UL_BUILD_DIR/build_test.txt"
+if ! ul_build_server >"$BUILD_LOG" 2>&1; then
     echo "[BUILD FAILED] See $BUILD_LOG"
     grep -i "error" "$BUILD_LOG" | head -10
     exit 1
-}
+fi
 echo "  Build OK"
 
-# 2. Find the exe — TCCCompiler outputs a.exe in CWD
-EXE="$ROOT/a.exe"
+# 2. Find the exe
+EXE="$UL_BUILD_DIR/underlayer.exe"
 if [ ! -f "$EXE" ]; then
-    # Fallback: check build dir
-    EXE="$BUILD_DIR/main.exe"
-fi
-if [ ! -f "$EXE" ]; then
-    echo "[ERROR] Cannot find underlayer executable"
+    echo "[ERROR] Cannot find underlayer executable at $EXE"
     exit 1
 fi
 echo "  Using exe: $EXE"
 
 # 3. Kill old server on port
-if command -v lsof >/dev/null 2>&1; then
-    old_pids=$(lsof -ti :$PORT 2>/dev/null || true)
-elif command -v netstat >/dev/null 2>&1; then
-    old_pids=$(netstat -ano 2>/dev/null | grep ":$PORT " | grep LISTENING | awk '{print $NF}' | sort -u || true)
-else
-    old_pids=""
-fi
-if [ -n "$old_pids" ]; then
-    for pid in $old_pids; do
-        kill -9 $pid 2>/dev/null || true
-    done
-    sleep 2
-    echo "  Killed old server"
-fi
+ul_kill_port "$PORT"
 
-# 4. Start server
-"$EXE" &
-SERVER_PID=$!
+# 4. Start server (from the project root so COURSES_DIR=./courses resolves)
+SERVER_PID="$(ul_start_server "$EXE" "$PORT")"
 echo "[2/3] Server started (PID $SERVER_PID), waiting 4s..."
 sleep 4
 
@@ -81,10 +70,17 @@ test_url "progress page"  "/progress"
 test_url "courses api"    "/api/courses"
 test_url "elf course"     "/courses/elf"
 test_url "elf lesson"     "/courses/elf/lessons/bytes"
+test_url "hat course"     "/courses/hat"
+test_url "hat lesson"     "/courses/hat/lessons/hat-exam-overview"
+test_url "hat lesson 2"   "/courses/hat/lessons/hat-digital-logic"
+test_url "hat course api" "/api/courses/hat"
 
 # 6. Kill server
-kill $SERVER_PID 2>/dev/null || true
-wait $SERVER_PID 2>/dev/null || true
+kill "$SERVER_PID" 2>/dev/null || true
+if command -v taskkill >/dev/null 2>&1; then
+    taskkill //F //PID "$SERVER_PID" >/dev/null 2>&1 || true
+fi
+wait "$SERVER_PID" 2>/dev/null || true
 
 # Summary
 total=$((pass + fail))

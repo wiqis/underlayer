@@ -67,4 +67,20 @@ public namespace underlayer_web {
         return false
     }
 
+    // Field as string, tolerant of JSON numbers (e.g. {"rating":3}) — renders
+    // the number's literal text. Returns "" for null/missing/other types.
+    public func json_get_str_or_num(obj : *JsonValue, key : *char) : string {
+        var field = json_get(obj, key)
+        if(field == null) { return string() }
+        if(field is JsonValue.String) {
+            var String(s) = *field else unreachable
+            return s.copy()
+        }
+        if(field is JsonValue.Number) {
+            var Number(n) = *field else unreachable
+            return n.copy()
+        }
+        return string()
+    }
+
 }
