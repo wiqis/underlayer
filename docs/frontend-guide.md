@@ -178,6 +178,33 @@ The theme uses CSS custom properties (HSL values):
 
 Override with `injectComponentsThemeScope()` for custom themes.
 
+### App Shell / Navbar
+
+Every server page (`web/src/*.ch`) and course landing (`content/src/*.ch`) renders the same
+header: `.navbar > .nav-inner > (.nav-brand, .hamburger, .nav-links, .nav-right)`. The CSS is
+duplicated per page, so keep these rules identical when editing one of them:
+
+- `.nav-inner` — `max-width: 1400px`, `padding: 0 1.5rem`, plus `flex-wrap: wrap` with
+  `row-gap`/`column-gap`, so an over-long row wraps instead of giving the whole document a
+  horizontal scrollbar.
+- `.nav-links` — `flex-wrap: wrap`, `flex: 0 1 auto`, `min-width: 0`, `gap: 0.25rem 0.5rem`.
+- `.nav-link` — `padding: 0.5rem 0.6rem`, `white-space: nowrap`.
+
+The collapse breakpoint depends on how many links a page renders, because that is what
+decides when the row stops fitting:
+
+| Links | Pages | Collapse |
+|---|---|---|
+| 10–12 | `/`, `/dashboard`, `/analytics` | `@media (max-width: 1300px)` |
+| ≤6 | everything else | `@media (max-width: 768px)` |
+
+12 links need ~1195px of content box, which is wider than the 1200px container the rest of
+the page uses — so on the dense pages the hamburger must appear at 1300px, otherwise the row
+wraps onto a second line between ~1200px and 1300px. A page's nav rules must include
+`.hamburger { display: block; }` + the `.nav-links` dropdown rules in whichever media query
+it collapses in, and the page must render the hamburger button — pages without it simply
+lose their navigation below the breakpoint.
+
 ### SSR + Hydration Flow
 
 1. **Server**: `#html { <Comp /> }` → SSR renders HTML into page buffer

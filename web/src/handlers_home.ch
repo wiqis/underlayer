@@ -154,11 +154,11 @@ public namespace underlayer_web {
             a { color: hsl(217 91% 60%); text-decoration: none; }
             a:hover { text-decoration: underline; }
             .navbar { background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
-            .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; }
+            .nav-inner { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; row-gap: 0.25rem; column-gap: 1rem; }
             .nav-brand { font-size: 1.25rem; font-weight: 700; color: hsl(var(--foreground)); text-decoration: none; }
             .nav-brand:hover { color: hsl(217 91% 60%); text-decoration: none; }
-            .nav-links { display: flex; gap: 1.5rem; }
-            .nav-link { color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.75rem; border-radius: 6px; transition: all 0.15s; }
+            .nav-links { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.25rem 0.5rem; flex: 0 1 auto; min-width: 0; }
+            .nav-link { color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.6rem; border-radius: 6px; transition: all 0.15s; white-space: nowrap; }
             .nav-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); text-decoration: none; }
             .nav-link.active { color: hsl(217 91% 60%); background: hsl(217 91% 60% / 10%); }
             .nav-right { display: flex; align-items: center; gap: 0.75rem; }
@@ -208,11 +208,13 @@ public namespace underlayer_web {
             .search-result-item { display: block; padding: 0.75rem 1.25rem; color: hsl(var(--foreground)); text-decoration: none; border-top: 1px solid hsl(var(--border)); }
             .search-result-item:hover { background: hsl(var(--accent)); }
             .search-hint { padding: 0.5rem 1.25rem; font-size: 0.8rem; color: hsl(var(--muted-foreground)); border-top: 1px solid hsl(var(--border)); }
-            @media (max-width: 768px) {
+            @media (max-width: 1300px) {
                 .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); flex-direction: column; padding: 1rem; gap: 0.5rem; }
                 .nav-links.open { display: flex; }
                 .nav-link { padding: 0.75rem 1rem; }
                 .hamburger { display: block; }
+            }
+            @media (max-width: 768px) {
                 .hero { padding: 2rem 1rem; }
                 .hero h1 { font-size: 1.75rem; }
                 .hero p { font-size: 1rem; }
