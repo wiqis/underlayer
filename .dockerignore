@@ -1,0 +1,26 @@
+# Keep the build context small (a full checkout is ~240 MB, mostly build output).
+.git
+build
+*/build
+courses/*/build
+courses/*/output
+
+# Local databases and other runtime state
+*.db
+*.db-shm
+*.db-wal
+*.log
+
+# Build artifacts
+*.exe
+*.o
+*.def
+
+# Dev-only files, not needed to compile or run the server
+.agents
+docs
+tests
+tools
+AGENTS.md
+README.md
+*.md
