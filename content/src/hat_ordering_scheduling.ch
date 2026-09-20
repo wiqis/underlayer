@@ -99,7 +99,7 @@ public func render_hat_ordering_scheduling() : string {
             <div class="unit unit-example">
                 <h2>A Second Example, Solved by Counting</h2>
                 <p><em>Six students are divided into two project teams of three. A and B must be on the same team. C must not be on a team with A. D must be with B.</em></p>
-                <p>Start from the strongest link: A, B and D must all be together, and that is already three people — the maximum team size — so team one is exactly {A, B, D}. C is not with A, so C is on team two with the remaining students E and F. The split is fully determined without any case work, purely because the team size acted as a constraint.</p>
+                <p>Start from the strongest link: A, B and D must all be together, and that is already three people — the maximum team size — so team one is exactly &#123;A, B, D&#125;. C is not with A, so C is on team two with the remaining students E and F. The split is fully determined without any case work, purely because the team size acted as a constraint.</p>
                 <p>Counting before drawing is the habit worth taking from this example: limits on group size are among the most powerful conditions in the section, and they are the easiest to overlook because they are expressed as a fact about the setup rather than as a rule about a person.</p>
             </div>
 
