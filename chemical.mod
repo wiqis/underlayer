@@ -3,13 +3,11 @@
 
 application underlayer
 
-source "src"
 source "app" if !test
 source "tests" if test
 
 import std
 import cstd
-import server
 import http
 import json
 import page
