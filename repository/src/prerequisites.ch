@@ -1,4 +1,4 @@
-﻿// underlayer_repository — Course prerequisites and skill assessment.
+// underlayer_repository — Course prerequisites and skill assessment.
 using std::string
 using std::vector
 using underlayer_db::DbClient

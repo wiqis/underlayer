@@ -117,7 +117,7 @@ public func render_hat_percentages() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-arithmetic">Previous: Arithmetic You Can Do in Your Head</a></span>
+                <span><a href="/courses/hat/lessons/hat-fractions-decimals">Previous: Fractions, Decimals and Percentages</a></span>
                 <span><a href="/courses/hat/lessons/hat-ratio-proportion">Next: Ratio, Proportion and Rate</a></span>
             </div>
         </div>

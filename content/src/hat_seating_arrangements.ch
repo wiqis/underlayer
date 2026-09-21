@@ -92,7 +92,7 @@ public func render_hat_seating_arrangements() : string {
                     <li>Take C in seat 1. Then D must be between C and E, which forces seat 2 = D and seat 3 = E.</li>
                     <li>Take C in seat 2. Then D would have to sit between seat 2 and E, but the only seat between them belongs to one of them — impossible. That case dies.</li>
                 </ol>
-                <p>The unique arrangement is <strong>C, D, E, B, A</strong>. Read off the answers: E is in the middle seat, D is immediately right of C, and the two seats beside A are occupied by B and nobody else.</p>
+                <p>The unique arrangement is <strong>C, D, E, B, A</strong>. Read off the answers: E is in the middle seat, D is immediately right of C, and the seat beside A - A is at the right end - is occupied by B.</p>
                 <h2>Worked Circular Puzzle</h2>
                 <p><em>Six people — A, B, C, D, E and F — sit around a circular table facing the centre.</em></p>
                 <ul>
@@ -153,8 +153,8 @@ public func render_hat_seating_arrangements() : string {
                 <p>Five colleagues P, Q, R, S and T sit in a row. P sits at the left end; T sits immediately to the right of P; R does not sit next to T; Q is to the right of S. Solve it and then say what an extra condition would have to be in order to fix S and Q completely.</p>
                 <details>
                     <summary>Show the reasoning</summary>
-                    <p>Seats 1 and 2 are P and T. R is not adjacent to T, so R is not in seat 3. The remaining seats 3, 4 and 5 hold R, S and Q, with Q to the right of S. Cases: R = 3 gives S, Q in 4, 5 with Q right of S, so S = 4, Q = 5 — allowed. R = 4 gives S and Q in 3 and 5, with Q right of S, so S = 3, Q = 5 — allowed. R = 5 gives S and Q in 3 and 4 with Q right of S: S = 3, Q = 4 — allowed. Three arrangements survive: P T R S Q, P T S R Q and P T S Q R.</p>
-                    <p>So the puzzle as given is not unique. A "must be true" question here would ask about something common to all three — for instance P is always at the left end and T always immediately right of P. To fix S and Q completely you would need one more relational fact, such as "S sits exactly in the middle" or "Q is at the right end", each of which kills two of the three cases.</p>
+                    <p>P is at the left end, so seat 1 is P, and T immediately right of P puts T in seat 2. R does not sit next to T, so R is not in seat 3. The remaining seats 3, 4 and 5 hold R, S and Q, with Q to the right of S. Cases: R = 4 leaves S and Q in 3 and 5, and Q right of S gives S = 3, Q = 5, so P T S R Q. R = 5 leaves S and Q in 3 and 4, and Q right of S gives S = 3, Q = 4, so P T S Q R.</p>
+                    <p>So the puzzle as given is not unique: two arrangements survive, P T S R Q and P T S Q R. A "must be true" question would ask about what is common to both - P is at the left end, T is immediately right of P, and S is in seat 3. To pin Q as well you need one more relational fact: "Q is at the right end" forces P T S R Q. Note that a fact already true of both arrangements, such as "S sits exactly in the middle", removes nothing.</p>
                     <p>The practical lesson is the one that saves marks: when your diagram still has multiple cases, do not force a single answer. Answer only what is forced, and use elimination for the questions that ask about possibilities.</p>
                 </details>
             </div>

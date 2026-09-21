@@ -126,8 +126,8 @@ public func render_hat_critical_reasoning() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-reading-comprehension">Previous: Reading Comprehension Under Time</a></span>
-                <span><a href="/courses/hat/lessons/hat-logic-deduction">Next: Ordering, Grouping and Deduction</a></span>
+                <span><a href="/courses/hat/lessons/hat-verbal-drill">Previous: Verbal Drill</a></span>
+                <span><a href="/courses/hat/lessons/hat-cause-effect">Next: Cause and Effect</a></span>
             </div>
         </div>
     }

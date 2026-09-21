@@ -118,7 +118,7 @@ public func render_hat_logic_deduction() : string {
                     <summary>A working example and what to check</summary>
                     <p>Five students A, B, C, D, E in seats 1 to 5. Rules: A sits immediately before B; C is not in seat 1; D sits somewhere before E.</p>
                     <p>Enumerate with the block first. AB occupies 1 and 2, or 2 and 3, or 3 and 4, or 4 and 5. In each case fill the remaining three seats with C, D, E under the rule that D precedes E, while remembering C cannot sit in seat 1.</p>
-                    <p>The value of this exercise is not the answer. It is that you notice which rule did the most work. Here the block is still the starting point, but the exclusion does real work when the block sits on seats 1 and 2, which is precisely the case candidates skip when they solve in their heads.</p>
+                    <p>The value of this exercise is not the answer. It is that you notice which rule did the most work. Here the block is still the starting point, but the exclusion does real work precisely when the block does not occupy seats 1 and 2 - the cases where seat 1 is still free and candidates who solve in their heads forget to check it.</p>
                     <p>Then write three questions against your puzzle: one must-be-true, one could-be-true, and one conditional that adds a new fact. If your could-be-true question has more than one valid option, you have written it wrongly — and discovering that is the whole point of the exercise.</p>
                 </details>
             </div>
@@ -129,8 +129,8 @@ public func render_hat_logic_deduction() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-critical-reasoning">Previous: Assumptions, Conclusions and Arguments</a></span>
-                <span><a href="/courses/hat/lessons/hat-data-interpretation">Next: Tables, Charts and Graphs</a></span>
+                <span><a href="/courses/hat/lessons/hat-cause-effect">Previous: Cause and Effect</a></span>
+                <span><a href="/courses/hat/lessons/hat-seating-arrangements">Next: Seating Arrangements</a></span>
             </div>
         </div>
     }

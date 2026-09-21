@@ -133,7 +133,7 @@ public func render_hat_analogies() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-vocabulary">Previous: Vocabulary You Can Actually Learn</a></span>
+                <span><a href="/courses/hat/lessons/hat-synonyms-antonyms">Previous: Synonyms and Antonyms</a></span>
                 <span><a href="/courses/hat/lessons/hat-sentence-completion">Next: Sentence Completion and Signal Words</a></span>
             </div>
         </div>

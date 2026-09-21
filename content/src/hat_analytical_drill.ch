@@ -162,8 +162,8 @@ public func render_hat_analytical_drill() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-data-sufficiency">Previous: Is the Information Enough?</a></span>
-                <span><a href="/courses/hat/lessons/hat-mock-protocol">Next: How to Run a Mock</a></span>
+                <span><a href="/courses/hat/lessons/hat-pattern-series">Previous: Number and Letter Series</a></span>
+                <span><a href="/courses/hat/lessons/hat-mock-protocol">Next: How to Run a Mock Test</a></span>
             </div>
         </div>
     }

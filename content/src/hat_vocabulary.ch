@@ -145,8 +145,8 @@ public func render_hat_vocabulary() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-data-probability">Previous: Data, Averages and Probability</a></span>
-                <span><a href="/courses/hat/lessons/hat-analogies">Next: Analogies and Word Relationships</a></span>
+                <span><a href="/courses/hat/lessons/hat-quant-drill">Previous: Quantitative Drill</a></span>
+                <span><a href="/courses/hat/lessons/hat-synonyms-antonyms">Next: Synonyms and Antonyms</a></span>
             </div>
         </div>
     }

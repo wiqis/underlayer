@@ -145,7 +145,7 @@ public func render_hat_data_sufficiency() : string {
 
             <div class="lesson-footer">
                 <span><a href="/courses/hat/lessons/hat-coding-decoding">Previous: Coding and Decoding</a></span>
-                <span><a href="/courses/hat/lessons/hat-analytical-drill">Next: Analytical Drill</a></span>
+                <span><a href="/courses/hat/lessons/hat-data-interpretation">Next: Tables, Charts and Graphs</a></span>
             </div>
         </div>
     }

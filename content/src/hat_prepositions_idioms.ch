@@ -42,7 +42,7 @@ public func render_hat_prepositions_idioms() : string {
                     <tbody>
                         <tr><td>depend, insist, rely, congratulate</td><td>on</td><td>differ, escape, prevent, refrain</td><td>from</td></tr>
                         <tr><td>comply, interfere, agree (a person), cope</td><td>with</td><td>object, refer, listen, attend</td><td>to</td></tr>
-                        <tr><td>consist, accuse (a person), approve, dispose</td><td>of</td><td>abide, comply (a rule), stand (by a decision)</td><td>by</td></tr>
+                        <tr><td>consist, accuse (a person), approve, dispose</td><td>of</td><td>abide, stand (by a decision)</td><td>by</td></tr>
                         <tr><td>conform, prefer (one thing to another)</td><td>to</td><td>arrive (a city), believe, engage, participate</td><td>in</td></tr>
                     </tbody>
                 </table>
@@ -161,7 +161,7 @@ public func render_hat_prepositions_idioms() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-grammar-errors">Previous: Finding the Error</a></span>
+                <span><a href="/courses/hat/lessons/hat-grammar-agreement">Previous: Agreement, Pronouns and Modifiers</a></span>
                 <span><a href="/courses/hat/lessons/hat-reading-comprehension">Next: Reading Comprehension Under Time</a></span>
             </div>
         </div>

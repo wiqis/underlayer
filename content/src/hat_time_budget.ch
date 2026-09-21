@@ -78,8 +78,8 @@ public func render_hat_time_budget() : string {
 
             <div class="unit unit-example">
                 <h2>A Worked Example</h2>
-                <p>It is minute 60 with a HAT-1 plan; you have completed 38 quantitative questions and 12 verbal ones. Forty questions remain, and there are 60 minutes left. Do you keep the plan?</p>
-                <p>Arithmetic first: 40 questions with 60 minutes is 90 seconds each, which is 25% more than the neutral 72 seconds — comfortable. What is left is 28 verbal and 30 analytical, which is 58 units of work against 40 remaining questions, because two of the verbal items are shared reading passages. Allocate 25 minutes to verbal and 25 minutes to analytical, holding 10 minutes as the reserve. That is 53 seconds per verbal item and 50 per analytical item, tighter than the neutral pace but achievable, because you are now answering only questions you can see your way through.</p>
+                <p>It is minute 60 with a HAT-1 plan; you have completed 30 quantitative questions, 25 verbal and 5 analytical. Forty questions remain, and there are 60 minutes left. Do you keep the plan?</p>
+                <p>Arithmetic first: 40 questions with 60 minutes is 90 seconds each, which is 25% more than the neutral 72 seconds - comfortable. What is left is 10 quantitative, 5 verbal and 25 analytical. Allocate 15 minutes to the remaining quantitative and verbal items and 40 minutes to the analytical block, holding 5 minutes as the reserve. That is 60 seconds per quantitative or verbal item and 96 seconds per analytical item - tighter than the neutral pace on the short items, but achievable, because you are now answering only questions you can see your way through.</p>
                 <p>What changed at the checkpoint: not the plan's shape, but the reserve. Being behind at one checkpoint should spend the reserve, never the accuracy.</p>
             </div>
 

@@ -125,12 +125,12 @@ public func render_hat_pattern_series() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>That completes the analytical reasoning module. The rest of the course turns to the subject portion, where the questions test the discipline you are applying to study — beginning with physics and mechanics, the largest technical area for most engineering candidates.</p>
+                <p>That completes the analytical question types. The drill that follows puts them together under a clock, because the analytical section rewards a fast, practised routine more than any other. After that, the course turns to the training programme that turns technique into a score: mock tests, the error log, targets and exam-day execution.</p>
             </div>
 
             <div class="lesson-footer">
                 <span><a href="/courses/hat/lessons/hat-data-interpretation">Previous: Tables, Charts and Graphs</a></span>
-                <span><a href="/courses/hat/lessons/hat-physics-mechanics">Next: Physics and Mechanics for Engineering Candidates</a></span>
+                <span><a href="/courses/hat/lessons/hat-analytical-drill">Next: Analytical Drill</a></span>
             </div>
         </div>
     }

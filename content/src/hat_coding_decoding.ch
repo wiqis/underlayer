@@ -149,7 +149,7 @@ N  O  P  Q  R  S  T  U  V  W  X  Y  Z
 
             <div class="lesson-footer">
                 <span><a href="/courses/hat/lessons/hat-relations-and-directions">Previous: Relations and Directions</a></span>
-                <span><a href="/courses/hat/lessons/hat-data-sufficiency">Next: Is the Information Enough?</a></span>
+                <span><a href="/courses/hat/lessons/hat-data-sufficiency">Next: Data Sufficiency</a></span>
             </div>
         </div>
     }

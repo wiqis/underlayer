@@ -114,7 +114,7 @@ public func render_hat_ratio_proportion() : string {
 
             <div class="lesson-footer">
                 <span><a href="/courses/hat/lessons/hat-percentages">Previous: Percentages and Percentage Change</a></span>
-                <span><a href="/courses/hat/lessons/hat-algebra">Next: Algebra Without Fear</a></span>
+                <span><a href="/courses/hat/lessons/hat-averages">Next: Averages and Weighted Means</a></span>
             </div>
         </div>
     }

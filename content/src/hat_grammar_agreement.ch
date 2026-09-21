@@ -150,8 +150,8 @@ public func render_hat_grammar_agreement() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-sentence-completion">Previous: Sentence Completion and Signal Words</a></span>
-                <span><a href="/courses/hat/lessons/hat-grammar-errors">Next: Finding the Error</a></span>
+                <span><a href="/courses/hat/lessons/hat-grammar-errors">Previous: Finding the Error: Grammar Rules</a></span>
+                <span><a href="/courses/hat/lessons/hat-prepositions-idioms">Next: Prepositions, Idioms and Confused Words</a></span>
             </div>
         </div>
     }

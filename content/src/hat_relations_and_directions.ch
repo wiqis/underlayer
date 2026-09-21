@@ -47,7 +47,7 @@ public func render_hat_relations_and_directions() : string {
                         <tr><td>My mother's brother's son</td><td>My cousin</td></tr>
                         <tr><td>Daughter of my father's sister</td><td>My cousin</td></tr>
                         <tr><td>Brother of my wife's father</td><td>My father-in-law's brother, not a blood relative of mine</td></tr>
-                        <tr><td>Son of my grandfather's only daughter</td><td>My mother's brother or me — check the gender of the son against the question</td></tr>
+                        <tr><td>Son of my grandfather's only daughter</td><td>My brother or me - the only daughter is my mother, so her son is my brother or me</td></tr>
                     </tbody>
                 </table>
                 <p>Two disciplines make relationship items reliable: write the gender on the node as soon as a word like mother, sister, son tells you, and read the path backwards as well as forwards, because many questions ask the relation in the opposite direction to the sentence.</p>

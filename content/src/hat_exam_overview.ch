@@ -166,7 +166,7 @@ public func render_hat_exam_overview() : string {
             </div>
 
             <div class="lesson-footer">
-                <span>Module 1 · Lesson 1 of 44</span>
+                <span>Start of the course</span>
                 <span><a href="/courses/hat/lessons/hat-weightage-strategy">Next: Weightage and Study Strategy</a></span>
             </div>
         </div>

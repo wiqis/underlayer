@@ -17,11 +17,11 @@ public func render_hat_programming_fundamentals() : string {
         <div class="lesson hat-lesson">
             <a href="/courses/hat" class="back-link">Back to course</a>
             <h1>Computing Fundamentals</h1>
-            <div class="lesson-meta">20 min · Module 5: Subject — Engineering and Computing · Foundation</div>
+            <div class="lesson-meta">20 min · Module 6: Engineering Foundations (Optional) · Foundation</div>
 
             <div class="unit unit-why">
                 <h2>Why This Matters</h2>
-                <p>For candidates applying to computer science and software engineering programmes, the subject portion includes computing material at the level of a first course: number systems, data types, control flow, arrays, and basic algorithmic reasoning.</p>
+                <p>This lesson is optional background, not a section of the HAT-1 paper. HAT-1 tests reasoning only, so nothing here is examined directly. It is included because candidates applying to computer science and software engineering programmes often want their first-course computing material refreshed before graduate study, and because number systems and Boolean logic sharpen the quantitative and analytical reasoning the test does examine.</p>
                 <p>These questions are the most predictable on the whole paper. There are only a few topics, each has one standard method, and the answers can be verified by hand. The marks are there to be taken, and the way to lose them is to have never converted a binary number under a clock.</p>
             </div>
 
@@ -138,7 +138,7 @@ for i = 1 to 4:
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-physics-mechanics">Previous: Physics and Mechanics for Engineering Candidates</a></span>
+                <span><a href="/courses/hat/lessons/hat-physics-mechanics">Previous: Physics and Mechanics</a></span>
                 <span><a href="/courses/hat/lessons/hat-digital-logic">Next: Digital Logic and Circuit Basics</a></span>
             </div>
         </div>

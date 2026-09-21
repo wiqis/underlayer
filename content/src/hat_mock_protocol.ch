@@ -71,6 +71,9 @@ public func render_hat_mock_protocol() : string {
                     <li><strong>Score by section.</strong> A total of 62 built from 30 quantitative, 20 verbal and 12 analytical is a very different situation from 62 built from 18, 22 and 22 — the first needs arithmetic work, the second needs analysis of puzzles.</li>
                     <li><strong>Log the time stamps.</strong> Section score tells you what you know; the clock tells you whether you can afford to show it.</li>
                 </ul>
+                <div class="callout callout-tip">
+                    <strong>Where to get real papers.</strong> The HEC Education Testing Council publishes sample papers for each HAT category on its website, including a dedicated HAT-Engineering (MS) paper; use those for the baseline mock and the final dress rehearsal. Supplement them with reputable HAT or GRE-style practice sets for volume, and always time them under full conditions. Confirm the current sample paper and test calendar on the ETC portal before you rely on them, because formats and dates are revised periodically. Never practise only on generic aptitude questions: the value of a paper is its resemblance to the real one.
+                </div>
             </div>
 
             <div class="unit unit-example">

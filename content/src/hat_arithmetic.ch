@@ -136,8 +136,8 @@ public func render_hat_arithmetic() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-study-plan">Previous: A Six-Week Study Plan</a></span>
-                <span><a href="/courses/hat/lessons/hat-percentages">Next: Percentages and Percentage Change</a></span>
+                <span><a href="/courses/hat/lessons/hat-triage-and-guessing">Previous: Triage and Guessing</a></span>
+                <span><a href="/courses/hat/lessons/hat-number-properties">Next: Number Properties</a></span>
             </div>
         </div>
     }

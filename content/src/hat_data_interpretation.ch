@@ -133,7 +133,7 @@ public func render_hat_data_interpretation() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-logic-deduction">Previous: Ordering, Grouping and Deduction</a></span>
+                <span><a href="/courses/hat/lessons/hat-data-sufficiency">Previous: Data Sufficiency</a></span>
                 <span><a href="/courses/hat/lessons/hat-pattern-series">Next: Number and Letter Series</a></span>
             </div>
         </div>

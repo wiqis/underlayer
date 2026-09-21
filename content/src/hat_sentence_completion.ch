@@ -122,7 +122,7 @@ public func render_hat_sentence_completion() : string {
 
             <div class="lesson-footer">
                 <span><a href="/courses/hat/lessons/hat-analogies">Previous: Analogies and Word Relationships</a></span>
-                <span><a href="/courses/hat/lessons/hat-grammar-errors">Next: Finding the Error: Grammar Rules</a></span>
+                <span><a href="/courses/hat/lessons/hat-paragraph-completion">Next: Paragraph Completion</a></span>
             </div>
         </div>
     }

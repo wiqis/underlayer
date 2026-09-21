@@ -124,7 +124,7 @@ public func render_hat_synonyms_antonyms() : string {
                 <div class="quiz" id="quiz-2">
                     <p>Choose the word most nearly opposite to MITIGATE:</p>
                     <button class="quiz-option" data-correct="false" data-explain="Relieve is a synonym of mitigate, so it points the same way and cannot be the opposite." onclick="checkQuiz('quiz-2', this)">relieve</button>
-                    <button class="quiz-option" data-correct="true" data-explain="Mitigate means to make less severe; its opposite pole is to make worse. Both admit and relieve are the same direction as mitigate." onclick="checkQuiz('quiz-2', this)">aggravate</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Mitigate means to make less severe; its opposite pole is to make worse. Relieve points the same way as mitigate, so it is not the opposite." onclick="checkQuiz('quiz-2', this)">aggravate</button>
                     <button class="quiz-option" data-correct="false" data-explain="Measure is unrelated to severity; mitigate is about reducing harm, not about assessing it." onclick="checkQuiz('quiz-2', this)">measure</button>
                     <div class="quiz-feedback"></div>
                 </div>

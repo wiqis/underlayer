@@ -17,11 +17,11 @@ public func render_hat_physics_mechanics() : string {
         <div class="lesson hat-lesson">
             <a href="/courses/hat" class="back-link">Back to course</a>
             <h1>Physics and Mechanics for Engineering Candidates</h1>
-            <div class="lesson-meta">20 min · Module 5: Subject — Engineering and Computing · Foundation</div>
+            <div class="lesson-meta">20 min · Module 6: Engineering Foundations (Optional) · Foundation</div>
 
             <div class="unit unit-why">
                 <h2>Why This Matters</h2>
-                <p>The subject portion of HAT-1 is where the test stops being general and starts being about the degree you are applying for. For most engineering and computing candidates it is drawn from first-year physics and mathematics, which means the content is not new — it is the material from your intermediate or A-level course.</p>
+                <p>This lesson is optional background, not a section of the HAT-1 paper. HAT-1 tests verbal, analytical and quantitative reasoning only; the orientation lesson is explicit that there is no technical section. The material is included because engineering and computing candidates often want their school-level physics refreshed before graduate study, and because a confident grasp of mechanics and electricity supports faster, less error-prone quantitative reasoning. Treat it as enrichment, not as revision for a paper that does not contain it.</p>
                 <p>The difficulty is not conceptual. It is that a test gives you about a minute per question, and formulae you last used years ago are not recalled in a minute. This lesson is about the small number of relations that cover most numerical questions, and about avoiding the unit errors that produce a plausible wrong answer.</p>
             </div>
 
@@ -33,7 +33,7 @@ public func render_hat_physics_mechanics() : string {
                     <li><strong>Find the equation that contains those symbols</strong> and the one you are asked for.</li>
                     <li><strong>Convert to SI units before substituting,</strong> and check that the answer's unit matches the quantity.</li>
                 </ol>
-                <p>Step three is not bookkeeping. A large fraction of wrong options in the subject portion are the result of mixing grams with kilograms or centimetres with metres, and the option set usually contains that value.</p>
+                <p>Step three is not bookkeeping. Mixing grams with kilograms or centimetres with metres is a common source of quantitative-reasoning errors, and the option set usually contains the mixed-unit value.</p>
             </div>
 
             <div class="unit unit-reality">
@@ -120,7 +120,7 @@ public func render_hat_physics_mechanics() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-pattern-series">Previous: Number and Letter Series</a></span>
+                <span><a href="/courses/hat/lessons/hat-exam-day">Previous: Exam Day</a></span>
                 <span><a href="/courses/hat/lessons/hat-programming-fundamentals">Next: Computing Fundamentals</a></span>
             </div>
         </div>

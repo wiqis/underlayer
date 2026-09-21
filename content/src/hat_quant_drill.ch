@@ -147,7 +147,7 @@ public func render_hat_quant_drill() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-counting-probability">Previous: Counting and Probability</a></span>
+                <span><a href="/courses/hat/lessons/hat-data-probability">Previous: Data, Averages and Probability</a></span>
                 <span><a href="/courses/hat/lessons/hat-vocabulary">Next: Vocabulary You Can Actually Learn</a></span>
             </div>
         </div>

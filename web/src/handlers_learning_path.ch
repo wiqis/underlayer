@@ -1,4 +1,4 @@
-﻿// underlayer_web — Course prerequisites and skill assessment handlers.
+// underlayer_web — Course prerequisites and skill assessment handlers.
 using std::string
 using std::vector
 using underlayer_db::DbClient

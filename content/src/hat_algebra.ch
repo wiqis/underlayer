@@ -117,7 +117,7 @@ f + 12 = 2(s + 12)</pre>
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-ratio-proportion">Previous: Ratio, Proportion and Rate</a></span>
+                <span><a href="/courses/hat/lessons/hat-counting-probability">Previous: Counting and Probability</a></span>
                 <span><a href="/courses/hat/lessons/hat-geometry">Next: Geometry and Measurement</a></span>
             </div>
         </div>

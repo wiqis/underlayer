@@ -17,7 +17,7 @@ public func render_hat_digital_logic() : string {
         <div class="lesson hat-lesson">
             <a href="/courses/hat" class="back-link">Back to course</a>
             <h1>Digital Logic and Circuit Basics</h1>
-            <div class="lesson-meta">18 min · Module 5: Subject — Engineering and Computing · Foundation</div>
+            <div class="lesson-meta">18 min · Module 6: Engineering Foundations (Optional) · Foundation</div>
 
             <div class="unit unit-why">
                 <h2>Why This Matters</h2>
@@ -122,7 +122,7 @@ public func render_hat_digital_logic() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>That completes the subject module and the course. You now have the test format, a weightage-based study plan, both arithmetic and reasoning techniques, the verbal question types, and the technical foundations for HAT-1. The last thing worth doing is a full timed mock under the timing rules from Lesson 3, because the paper tests recall under a clock, and the clock is the part that no amount of reading can prepare you for.</p>
+                <p>That completes the optional engineering background, and the course. You now have the test format, a weightage-based study plan, the arithmetic and reasoning techniques, the verbal question types, and the accuracy habits that support them. The last thing worth doing is a full timed mock under the pacing rules from Module 1, because the paper tests recall under a clock, and the clock is the part no amount of reading can prepare you for.</p>
             </div>
 
             <div class="lesson-footer">

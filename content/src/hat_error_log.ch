@@ -138,7 +138,7 @@ public func render_hat_error_log() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-mock-protocol">Previous: How to Run a Mock</a></span>
+                <span><a href="/courses/hat/lessons/hat-mock-protocol">Previous: How to Run a Mock Test</a></span>
                 <span><a href="/courses/hat/lessons/hat-score-targets">Next: What Score Do You Need?</a></span>
             </div>
         </div>
