@@ -132,7 +132,7 @@ public func render_hat_course_of_action() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>You have now met the four reasoning question types: assumptions, conclusions, arguments and courses of action. Together they test whether you reason from what is given. The next lesson gathers the whole module into a timed drill so the four types become one skill.</p>
+                <p>You have now met four reasoning question types: assumptions, conclusions, arguments and courses of action. The next lesson examines a fifth kind of claim — causal claims — and the trap of treating correlation as causation.</p>
             </div>
 
             <div class="lesson-footer">

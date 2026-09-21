@@ -146,7 +146,7 @@ public func render_hat_grammar_agreement() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Agreement and pronouns are the mechanical half of grammar. The next lesson turns to the other half of what the examiner tests: word pairs that are simply fixed — prepositions after verbs, idioms and confused words.</p>
+                <p>Agreement and pronouns are the mechanical half of grammar. The next lesson turns to the systems that place an event in time and mark old versus new information: tenses, articles and conditionals.</p>
             </div>
 
             <div class="lesson-footer">

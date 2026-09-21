@@ -21,7 +21,7 @@ public func render_hat_quant_drill() : string {
 
             <div class="unit unit-why">
                 <h2>Why This Matters</h2>
-                <p>This is the first training session rather than teaching session. Reading about percentages does not make you faster at percentages; doing twenty-five mixed questions against a clock does. Mixed practice is deliberately harder than blocked practice, because in the real paper nothing tells you which technique to use — recognising the type <em>is</em> the skill.</p>
+                <p>This is the first training session rather than a teaching session. Reading about percentages does not make you faster at percentages; doing twenty-five mixed questions against a clock does. Mixed practice is deliberately harder than blocked practice, because in the real paper nothing tells you which technique to use — recognising the type <em>is</em> the skill.</p>
                 <p>Run this drill properly once, then again a week later, and compare the two scores. The gap between them is your learning rate, and it is the most honest feedback this course can give you.</p>
             </div>
 

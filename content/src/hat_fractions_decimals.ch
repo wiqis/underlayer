@@ -79,7 +79,7 @@ public func render_hat_fractions_decimals() : string {
                     <strong>Percentages from fractions in one step:</strong> to convert a fraction to a percentage, multiply by 100 and divide by the denominator. 3/8 becomes 300 &divide; 8 = 37.5% without ever writing a decimal.
                 </div>
                 <div class="callout callout-warn">
-                    <strong>The trap that catches most candidates.</strong> When two fractions are compared, the options are usually the two fractions plus "they are equal". Cross-multiply rather than reasoning from the denominators: a larger denominator does not mean a smaller fraction (2/3 is larger than 3/5 despite having a larger denominator than 3/5's numerator comparison suggests).
+                    <strong>The trap that catches most candidates.</strong> When two fractions are compared, the options are usually the two fractions plus "they are equal". Cross-multiply rather than reasoning from the denominators: a larger denominator does not always mean a smaller fraction (5/8 is larger than 4/7, even though 8 is larger than 7).
                 </div>
             </div>
 

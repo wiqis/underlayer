@@ -109,7 +109,7 @@ public func render_hat_mensuration() : string {
                 <div class="quiz" id="quiz-3">
                     <p>What is the volume of a sphere of radius 3 cm?</p>
                     <button class="quiz-option" data-correct="true" data-explain="V = (4/3) &pi; r&sup3; = (4/3) &times; &pi; &times; 27 = 36 &pi; cm&sup3;." onclick="checkQuiz('quiz-3', this)">36 &pi; cm&sup3;</button>
-                    <button class="quiz-option" data-correct="false" data-explain="12 &pi; cm&sup3; drops the factor of one third and miscounts; (4/3) &times; 27 is 36." onclick="checkQuiz('quiz-3', this)">12 &pi; cm&sup3;</button>
+                    <button class="quiz-option" data-correct="false" data-explain="12 &pi; cm&sup3; uses r&sup2; instead of r&sup3;: (4/3) &times; 3&sup2; = 12&pi;, but the sphere formula cubes the radius." onclick="checkQuiz('quiz-3', this)">12 &pi; cm&sup3;</button>
                     <button class="quiz-option" data-correct="false" data-explain="36 cm&sup3; omits &pi;; the answer must stay in terms of &pi; here." onclick="checkQuiz('quiz-3', this)">36 cm&sup3;</button>
                     <div class="quiz-feedback"></div>
                 </div>

@@ -49,7 +49,7 @@ public func render_hat_time_budget() : string {
 
             <div class="unit unit-reality">
                 <h2>The Actual Detail</h2>
-                <p>Here is a concrete HAT-1 plan. It front-loads Quantitative because that section is worth the most and because its questions vary most in cost, and it keeps a fifth of the paper in reserve.</p>
+                <p>Here is a concrete HAT-1 plan. It front-loads Quantitative because that section is worth the most and because its questions vary most in cost, and it keeps about eight minutes in reserve.</p>
                 <table>
                     <thead>
                         <tr><th scope="col">Elapsed</th><th scope="col">Checkpoint</th><th scope="col">Action if behind</th></tr>
@@ -125,7 +125,7 @@ public func render_hat_time_budget() : string {
                 <details>
                     <summary>Show the reasoning</summary>
                     <p>Leave the puzzle now, with a provisional answer shaded, and finish the reading passage while your reading speed is fresh. Then take the untouched analytical sets in order, capped at eight minutes per set, and return to the abandoned puzzle only if the second pass finishes early. If it does not, the provisional answer stays — a guessed set is worth the same as a blank, and you will not leave it blank.</p>
-                    <p>The numbers behind the decision: 34 questions in 75 minutes is 2.2 minutes each, so the pace is comfortable as long as no single item is allowed to become unbounded. Eleven minutes on one setup is already a third of a five-question set's entire value; the mistake was not the attempt, it was the absence of a cap before starting.</p>
+                    <p>The numbers behind the decision: 34 questions in 75 minutes is 2.2 minutes each, so the pace is comfortable as long as no single item is allowed to become unbounded. Eleven minutes on one setup is already more than a whole five-question set's budget; the mistake was not the attempt, it was the absence of a cap before starting.</p>
                 </details>
             </div>
 

@@ -90,7 +90,7 @@ public func render_hat_triage_and_guessing() : string {
                 <p>Question: <em>A shirt marked at Rs 1,480 is sold at 27% off. What is the sale price?</em> Options: Rs 1,081 / Rs 1,096 / Rs 399 / Rs 1,844.</p>
                 <ol>
                     <li><strong>Direction check.</strong> A discount must give a price below 1,480. That immediately kills Rs 1,844.</li>
-                    <li><strong>Magnitude estimate.</strong> 27% of 1,480 is a bit more than a quarter, so about 400. Then 1,480 &minus; 400 = about 1,080. Rs 399 is a factor of four too small — it is the value of the discount itself, not the price. Two options remain.</li>
+                    <li><strong>Magnitude estimate.</strong> 27% of 1,480 is a bit more than a quarter, so about 400. Then 1,480 &minus; 400 = about 1,080. Rs 399 is roughly a third of the correct price — it is the value of the discount itself, not the price. Two options remain.</li>
                     <li><strong>Last-digit check.</strong> 1,480 &times; 0.27 = 399.6, so the discount is 399.6 and the price is 1,480 &minus; 399.6 = 1,080.4, which shades up to Rs 1,081.</li>
                 </ol>
                 <p>Twenty seconds, no long multiplication, exactly one option standing. Note what the work looked like: three cheap checks instead of one expensive calculation. That is the pattern to rehearse until it is automatic.</p>

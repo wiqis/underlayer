@@ -69,7 +69,7 @@ public func render_hat_analytical_drill() : string {
                 <h3>Part F — Coding (Questions 12-13)</h3>
                 <ol class="drill" start="12">
                     <li><strong>Q12.</strong> If CAT is coded as DBU, how is DOG coded?<br />(a) EPH &nbsp;&nbsp; (b) CNG &nbsp;&nbsp; (c) EPI &nbsp;&nbsp; (d) FQI</li>
-                    <li><strong>Q13.</strong> If MOTHER is coded as REHTOM, how is FATHER coded?<br />(a) GBUIFS &nbsp;&nbsp; (b) REHTAF &nbsp;&nbsp; (c) REHTAF reversed &nbsp;&nbsp; (d) FATHEE</li>
+                    <li><strong>Q13.</strong> If MOTHER is coded as REHTOM, how is FATHER coded?<br />(a) GBUIFS &nbsp;&nbsp; (b) REHTAF &nbsp;&nbsp; (c) RETHAF &nbsp;&nbsp; (d) FATHEE</li>
                 </ol>
                 <h3>Part G — Series (Questions 14-16)</h3>
                 <ol class="drill" start="14">
@@ -99,7 +99,7 @@ public func render_hat_analytical_drill() : string {
                         <tr><td>1</td><td>Seating</td><td>(b) E</td><td>The only arrangement is A, E, C, D, B: C is middle, A is leftmost, D is immediately right of C, and E is not at an end, so E takes seat 2 and B seat 5</td></tr>
                         <tr><td>2</td><td>Seating</td><td>(a) B</td><td>Seat 5 is the extreme right in A, E, C, D, B</td></tr>
                         <tr><td>3</td><td>Seating</td><td>(b) C</td><td>D is in seat 4 and C in seat 3, so C is immediately to its left</td></tr>
-                        <tr><td>4</td><td>Scheduling</td><td>(b) T3</td><td>Two arrangements fit the conditions, and both place T3 on Monday: with T2 on Tuesday and T4 after T3, Monday must be the earlier talk</td></tr>
+                        <tr><td>4</td><td>Scheduling</td><td>(b) T3</td><td>T2 is fixed on Tuesday. T1 cannot be Monday, and T4 must come after T3, so T3 is forced onto Monday in every valid arrangement</td></tr>
                         <tr><td>5</td><td>Scheduling</td><td>(d) cannot be determined</td><td>The two valid arrangements are T3, T2, T1, T4 and T3, T2, T4, T1, so Wednesday is T1 in one and T4 in the other</td></tr>
                         <tr><td>6</td><td>Syllogism</td><td>(a) No poets are practical</td><td>Poets sit inside dreamers, and the dreamers circle avoids practical things entirely, so no poet is practical</td></tr>
                         <tr><td>7</td><td>Syllogism</td><td>(d) Nothing follows</td><td>The flightless birds may all lie outside the penguin circle; the overlap between penguins and non-flying birds is not guaranteed</td></tr>

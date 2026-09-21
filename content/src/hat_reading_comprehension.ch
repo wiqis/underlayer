@@ -119,7 +119,7 @@ public func render_hat_reading_comprehension() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>The verbal module is complete. The next module changes the kind of thinking required: analytical reasoning asks not what the text says but what follows from it, and how you can tell. The reading habits you just built — separating claim from support, noticing scope — are the raw material for that module.</p>
+                <p>The verbal module is not finished yet. The next lesson sharpens the same reading skills — tone, purpose and inference — and shows how the question's wording tells you which kind of reading it wants before you answer it.</p>
             </div>
 
             <div class="lesson-footer">

@@ -136,7 +136,7 @@ Sun  Off: no study, one walk, sleep on schedule</pre>
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Energy is now budgeted, not spent by accident. The final lesson puts every thread together on the day itself: the routine, the pacing decisions and the calm execution that carries a rested mind through 120 minutes. See <a href="/courses/hat/lessons/hat-exam-day">Exam Day: Execution Under Pressure</a>.</p>
+                <p>Energy is now budgeted, not spent by accident. The next lesson puts every thread together on the day itself: the routine, the pacing decisions and the calm execution that carries a rested mind through 120 minutes. See <a href="/courses/hat/lessons/hat-exam-day">Exam Day: Execution Under Pressure</a>.</p>
             </div>
 
             <div class="lesson-footer">

@@ -83,7 +83,7 @@ N  O  P  Q  R  S  T  U  V  W  X  Y  Z
                 <h3>2. If MOTHER is coded as REHTOM, how is FATHER coded?</h3>
                 <p>The code is the word reversed. FATHER reversed letter by letter is <strong>REHTAF</strong>.</p>
                 <h3>3. If A = 1 and Z = 26, what is the sum of the letters in DOG?</h3>
-                <p>D is 4, O is 15, G is 7: 4 + 15 + 7 = <strong>26</strong>. Notice that DOG and CAT both sum to 26 — a coincidence of this particular pair, not a rule.</p>
+                <p>D is 4, O is 15, G is 7: 4 + 15 + 7 = <strong>26</strong>. Notice that DOG happens to sum to 26, the number of letters in the alphabet — a coincidence of this particular word, not a rule.</p>
                 <h3>4. In a certain language, "pa ta ka" means "rain comes soon" and "ta ne da" means "comes the storm". Which word means "comes"?</h3>
                 <p>The two sentences share the word "comes", and the only code word shared by "pa ta ka" and "ta ne da" is <strong>ta</strong>. So ta means comes, and the dictionary entry was found by intersection rather than by guessing.</p>
             </div>

@@ -129,7 +129,7 @@ public func render_hat_grammar_punctuation() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Punctuation closes the grammar sequence, but grammar is only half of verbal reasoning. The next lessons put these rules to work under time pressure, in mixed drills that combine error identification, sentence correction and the reading habits built earlier.</p>
+                <p>Punctuation closes the grammar sequence. The next lesson turns to collocation: the prepositions, idioms and easily confused word pairs that are fixed by usage rather than derived from a rule.</p>
             </div>
 
             <div class="lesson-footer">

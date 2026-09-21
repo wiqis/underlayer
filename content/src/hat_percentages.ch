@@ -44,7 +44,7 @@ public func render_hat_percentages() : string {
 
             <div class="unit unit-reality">
                 <h2>The Actual Detail</h2>
-                <p><strong>Percentage of a quantity.</strong> Split into tens where possible. Eighteen percent of 250: 10 percent is 25, so 18 percent is 25 + 20 = 45, since 8 percent is a little over 8 percent of 250 rounded to 20.</p>
+                <p><strong>Percentage of a quantity.</strong> Split into tens where possible. Eighteen percent of 250: 10 percent is 25 and 8 percent is 20, so 18 percent is 25 + 20 = 45.</p>
                 <p><strong>Percentage change.</strong> Use the form:</p>
                 <div class="formula">percentage change = (new value - old value) divided by old value, times 100</div>
                 <p>A price moves from 800 to 920: the change is 120, and 120 divided by 800 is 0.15, so the increase is 15 percent. Note that dividing by the <em>old</em> value is what makes it a percentage increase rather than a percentage of the new price.</p>

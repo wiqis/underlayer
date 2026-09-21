@@ -132,7 +132,7 @@ public func render_hat_grammar_errors() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Grammar rules work at the level of the sentence. The final verbal lesson moves up to the level of the paragraph. Reading comprehension is where the verbal section spends the most words and the most time, and where a small number of habits decide whether you finish or run out of clock.</p>
+                <p>Error identification catches the rules one sentence at a time. The next lesson gathers the most frequently tested of those rules into a single place: subject-verb agreement, pronouns and modifiers, where a long interrupting phrase is the usual trap.</p>
             </div>
 
             <div class="lesson-footer">

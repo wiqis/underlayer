@@ -122,7 +122,7 @@ public func render_hat_critical_reasoning() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Critical reasoning works with words. The next concept works with rules and constraints, where the reasoning is formal and the correct answer can be derived rather than argued: arranging, ordering and deducing.</p>
+                <p>Critical reasoning works on a whole argument. The next lesson narrows the lens to a single statement and asks what it silently presupposes — the unstated premise, tested by negating each option and seeing whether the statement collapses.</p>
             </div>
 
             <div class="lesson-footer">

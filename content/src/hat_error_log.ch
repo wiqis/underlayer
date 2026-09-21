@@ -134,7 +134,7 @@ public func render_hat_error_log() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>The log now tells you where marks are lost, and the mocks tell you whether the repairs worked. The last two lessons set the number you are aiming at and the routine for the day itself.</p>
+                <p>The log now tells you where marks are lost, and the mocks tell you whether the repairs worked. The coming lessons set the number you are aiming at, the routine for the day itself, and the energy plan that keeps both possible.</p>
             </div>
 
             <div class="lesson-footer">

@@ -66,7 +66,7 @@ public func render_hat_statement_assumption() : string {
                 <h2>A Worked Example</h2>
                 <p><em>Statement: &ldquo;Residents should not burn leaves in the open because the smoke worsens air quality in the colony.&rdquo;</em></p>
                 <p>Candidate assumptions: (a) smoke from burning leaves affects air quality; (b) residents burn leaves; (c) burning leaves is the only cause of poor air quality.</p>
-                <p>Option (a) is already stated in the words &ldquo;the smoke worsens air quality&rdquo;, so it cannot be a hidden assumption. Option (c) is too strong: the advice works even if other causes also exist. Option (b) is the assumption: the instruction about residents makes sense only if residents actually engage in the practice. Negate it — no resident burns leaves — and the advisory becomes pointless.</p>
+                <p>Option (a) is already stated in the words &ldquo;the smoke worsens air quality&rdquo;, so it cannot be a hidden assumption. Option (c) is too strong: the advice works even if other causes also exist. Option (b) is the credited assumption: the advice is framed as a correction of an existing practice, so it presumes that residents do burn leaves. If none did, the advisory would be addressing a problem that does not exist.</p>
                 <p>The credited assumption is (b), the modest linking claim. Notice that the conclusion, that residents should stop burning leaves, is the advice the statement delivers, not the assumption behind it.</p>
             </div>
 

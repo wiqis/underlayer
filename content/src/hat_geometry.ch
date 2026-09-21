@@ -79,7 +79,7 @@ public func render_hat_geometry() : string {
                 </div>
                 <div class="quiz" id="quiz-3">
                     <p>A triangle's angles are 3x, 2x and 4x. What is the largest angle?</p>
-                    <button class="quiz-option" data-correct="false" data-explain="The angles are 3x, 2x and 4x, so 9x = 180. Dividing 180 by 3 alone would solve a different equation." onclick="checkQuiz('quiz-3', this)">60 degrees</button>
+                    <button class="quiz-option" data-correct="false" data-explain="9x = 180 gives x = 20, so the angles are 60, 40 and 80. 60 degrees is the smallest angle (3x); the question asks for the largest." onclick="checkQuiz('quiz-3', this)">60 degrees</button>
                     <button class="quiz-option" data-correct="true" data-explain="9x = 180 gives x = 20, so the angles are 60, 40 and 80. The largest is 80 degrees." onclick="checkQuiz('quiz-3', this)">80 degrees</button>
                     <button class="quiz-option" data-correct="false" data-explain="100 comes from taking x = 25 rather than 20; 3x would then be 75, 2x would be 50 and 4x would be 100, summing to 225 instead of 180." onclick="checkQuiz('quiz-3', this)">100 degrees</button>
                     <div class="quiz-feedback"></div>
@@ -110,7 +110,7 @@ public func render_hat_geometry() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Geometry works with exact figures you are given. The final quantitative lesson works with data you have to read: tables, charts and summaries, along with the everyday probability questions that usually share those passages. It is the section where careful reading pays more than calculation.</p>
+                <p>Geometry measures isolated shapes. The next lesson turns that into formula discipline: perimeter, area, surface area and volume, plus the unit conversions that decide whether an otherwise correct answer is accepted.</p>
             </div>
 
             <div class="lesson-footer">

@@ -44,7 +44,7 @@ public func render_hat_exam_day() : string {
                     <li><strong>The three sections are weighted 30 / 30 / 40</strong> — Verbal, Analytical, Quantitative for HAT-1 — and the quantitative section carries the most questions.</li>
                     <li><strong>There is no negative marking.</strong> A blank is a guaranteed zero; a guess is a chance at a mark. Never leave a question unanswered.</li>
                     <li><strong>The qualifying score is commonly 50 out of 100</strong> (many competitive programmes require more), and a valid score is typically usable for two years.</li>
-                    <li><strong>No calculator.</strong> Confirm the permitted stationery and the exact reporting time on your admit card; the format may be paper-based or computer-based depending on your centre.</li>
+                    <li><strong>No calculator.</strong> The paper is answered on an MCQ answer sheet; confirm the permitted stationery and the exact reporting time on your admit card.</li>
                 </ul>
                 <h3>The morning checklist</h3>
                 <ul>
@@ -124,7 +124,7 @@ public func render_hat_exam_day() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>This is the end of the course. You have the material, the technique, the pacing and the execution plan. The remaining work is reps: timed mocks, the error log, and the review schedule Underlayer keeps for you. Walk in having rehearsed, and the test becomes the performance you trained for.</p>
+                <p>This is the end of the core exam-preparation course. You have the material, the technique, the pacing and the execution plan. The remaining work is reps: timed mocks, the error log, and the review schedule Underlayer keeps for you. Walk in having rehearsed, and the test becomes the performance you trained for.</p>
             </div>
 
             <div class="lesson-footer">

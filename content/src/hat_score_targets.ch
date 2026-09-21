@@ -84,7 +84,7 @@ public func render_hat_score_targets() : string {
                         <tr><td>Week 6</td><td>30</td><td>23</td><td>18</td><td>71</td></tr>
                     </tbody>
                 </table>
-                <p>Read that table carefully. Analytical climbs 11 marks in six weeks against a 1-mark gain in quantitative — and that is the expected shape, because analytical started with blanks and quantitative started with knowledge. If instead quantitative is flat and analytical is flat while verbal climbs, the plan is misallocated: you are practising what is already comfortable.</p>
+                <p>Read that table carefully. Analytical climbs 11 marks in six weeks against a 5-mark gain in quantitative — and that is the expected shape, because analytical started with blanks and quantitative started with knowledge. If instead quantitative is flat and analytical is flat while verbal climbs, the plan is misallocated: you are practising what is already comfortable.</p>
                 <div class="callout callout-warn">
                     <strong>The qualifying line is not a target.</strong> Fifty marks qualifies; it does not compete. Where a programme is oversubscribed, the admission decision is made among candidates above the line, and a 72 has a materially different outcome from a 52. Set the competitive number, not the pass mark.
                 </div>
@@ -100,7 +100,7 @@ public func render_hat_score_targets() : string {
             <div class="unit unit-example">
                 <h2>A Worked Example</h2>
                 <p>You have five weeks left. You are at 58 (quantitative 27/40, verbal 22/30, analytical 9/30) and your target is 70. Where do the 12 marks come from, and in what order?</p>
-                <p>First, find the free marks. Twelve analytical questions were unanswered; if four of them were answerable with a drawn diagram, that is 4 marks recoverable within one week by pacing alone, and roughly 6 more over two weeks from drilling the puzzle families. That is 10 of the 12 from a single section.</p>
+                <p>First, find the free marks. Twelve questions in the analytical section were unanswered; if four of them were answerable with a drawn diagram, that is 4 marks recoverable within one week by pacing alone, and roughly 6 more over two weeks from drilling the puzzle families. Most of the 12-mark gap can therefore come from that one section.</p>
                 <p>Second, bank attention. Six of the candidate's misses across two papers were misreads — that is a check habit worth perhaps 2 marks, and it also protects the analytical gains.</p>
                 <p>Third, hold the rest. Quantitative and verbal need maintenance, not investment: one timed set of 40 and one of 30 per week keeps the level while the effort goes where the gap is.</p>
                 <p>Order of operations: week 1 pacing and diagramming, week 2 puzzle drilling plus the check habit, weeks 3-4 mixed sets and error-log review, week 5 a single dress-rehearsal mock and taper. Twelve marks in five weeks is unremarkable when 11 of them were sitting blank.</p>

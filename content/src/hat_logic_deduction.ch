@@ -125,7 +125,7 @@ public func render_hat_logic_deduction() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Deduction works with rules you are given. The next concept works with numbers you are shown: tables, charts and graphs, where the reasoning is arithmetic on presented data rather than logic on stated rules.</p>
+                <p>Deduction on a line of slots is the simplest puzzle family. The next lesson moves the same constraints into a row of seats and a circle, where direction and adjacency add a new layer of rules.</p>
             </div>
 
             <div class="lesson-footer">

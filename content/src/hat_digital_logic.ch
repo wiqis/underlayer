@@ -21,8 +21,8 @@ public func render_hat_digital_logic() : string {
 
             <div class="unit unit-why">
                 <h2>Why This Matters</h2>
-                <p>Digital logic sits directly beneath the number systems and programming you have just covered: gates are what add binary numbers, and Boolean expressions are what conditions in code compile down to. For computing, electronics and electrical candidates it is the most likely place for a short, self-contained numerical question.</p>
-                <p>It is also the fairest topic on the paper. Logic has no interpretation, no vocabulary and no estimation. Given the inputs and the gate, there is exactly one output, and given the truth table, exactly one answer — which means these marks depend only on knowing five gate definitions and two laws.</p>
+                <p>This lesson is optional background, not a section of the HAT-1 paper. HAT-1 tests verbal, analytical and quantitative reasoning only; the orientation lesson is explicit that there is no technical section. Digital logic is included because it sits directly beneath the number systems and programming you have just covered: gates are what add binary numbers, and Boolean expressions are what conditions in code compile down to. For computing, electronics and electrical candidates it is the most likely place for a short, self-contained numerical question on a technical course.</p>
+                <p>It is also the fairest topic of its kind. Logic has no interpretation, no vocabulary and no estimation. Given the inputs and the gate, there is exactly one output, and given the truth table, exactly one answer — which means these marks depend only on knowing five gate definitions and two laws.</p>
             </div>
 
             <div class="unit unit-model">

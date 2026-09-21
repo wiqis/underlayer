@@ -59,7 +59,7 @@ public func render_hat_interest() : string {
                 </table>
                 <p><strong>Growth and decay.</strong> The same multiplier handles a rising population and a falling price. A quantity growing at r percent per year for n years is multiplied by (1 + r &divide; 100) n times; a quantity shrinking uses (1 &minus; r &divide; 100).</p>
                 <div class="callout callout-tip">
-                    <strong>The fastest check on any interest question:</strong> compound interest is always greater than simple interest over the same principal, rate and time. If your answer has them reversed, the arithmetic is wrong somewhere.
+                    <strong>The fastest check on any interest question:</strong> for a whole number of years, compound interest is always greater than simple interest over the same principal, rate and time. If your answer has them reversed, the arithmetic is wrong somewhere.
                 </div>
                 <div class="callout callout-warn">
                     <strong>Two common slips.</strong> Applying the rate to P for every year of a compound question, which quietly turns it into simple interest; and using the two-year difference formula for a term that is not two years.
@@ -96,7 +96,7 @@ public func render_hat_interest() : string {
                     <p>For a principal of 20000 at 5 percent per annum, what is the difference between compound and simple interest over 2 years?</p>
                     <button class="quiz-option" data-correct="true" data-explain="Difference = P times (r divided by 100) squared = 20000 times 0.05 times 0.05 = 50." onclick="checkQuiz('quiz-3', this)">50</button>
                     <button class="quiz-option" data-correct="false" data-explain="100 would need a rate of about 7.1 percent, or a principal of 40000 at 5 percent." onclick="checkQuiz('quiz-3', this)">100</button>
-                    <button class="quiz-option" data-correct="false" data-explain="25 comes from using half the required rate; the formula squares the rate, not the principal." onclick="checkQuiz('quiz-3', this)">25</button>
+                    <button class="quiz-option" data-correct="false" data-explain="25 would come from halving the principal; the difference scales with P, so 10000 times 0.05 times 0.05 gives 25." onclick="checkQuiz('quiz-3', this)">25</button>
                     <div class="quiz-feedback"></div>
                 </div>
                 <div class="quiz" id="quiz-4">
@@ -134,7 +134,7 @@ public func render_hat_interest() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Compound interest is a repeated multiplication by the same factor, and multiplying a number by itself repeatedly is exactly what an exponent counts. The next lesson builds those laws directly, along with roots and surds, the last piece of number sense the quantitative section tests.</p>
+                <p>That completes the finance-arithmetic family. The next lesson stops teaching and starts training: a timed mixed set of twenty-five quantitative questions, which forces you to choose the right technique under a clock — the only skill that matters on the day.</p>
             </div>
 
             <div class="lesson-footer">

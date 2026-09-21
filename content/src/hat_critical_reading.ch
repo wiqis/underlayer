@@ -139,7 +139,7 @@ public func render_hat_critical_reading() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Critical reading is about what a text means. The next set of lessons returns to the machinery that makes a text correct at all: the tenses that place events in time, the articles that mark old and new information, and the conditionals that describe what might have been.</p>
+                <p>Critical reading closes the teaching of verbal technique. The next lesson puts everything in the module to work under a clock: a thirty-question mixed drill at the real paper's pace, with a full answer key and a repair plan.</p>
             </div>
 
             <div class="lesson-footer">

@@ -113,7 +113,7 @@ f + 12 = 2(s + 12)</pre>
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Algebra handles relationships between numbers. Geometry handles relationships between shapes and spaces, and it is the section of the quantitative paper where a single forgotten formula costs a mark that no amount of calculation can recover — because a wrong formula produces a wrong answer with no internal signal that anything went wrong.</p>
+                <p>Algebra handles relationships between numbers when the highest power is one. The next lesson raises the power: quadratic equations, where the unknown is squared, and where the roots can be read from factorisation, the discriminant or the sum-and-product identities — all of which rest on the factorising you have just practised.</p>
             </div>
 
             <div class="lesson-footer">

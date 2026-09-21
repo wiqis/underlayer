@@ -134,14 +134,14 @@ public func render_hat_vocabulary() : string {
                     <summary>Show the reasoning</summary>
                     <p><em>Circumspect</em>: spect means look, and circum means around, so the sense is looking around before acting — cautious and careful. Nothing about the word suggests certainty or speed, which is why it is the opposite of rash.</p>
                     <p><em>Induce</em>: duc means lead, and in- suggests into, so the sense is to lead someone into something — to persuade, or to bring about a result. This is why a doctor inducing labour is bringing a process about, and a fact inducing a conclusion is leading you to it.</p>
-                    <p><em>Prescribe</em>: scrib means write, and pre means before, so the original sense is writing in advance — which is why it applies both to a doctor writing instructions ahead of the treatment and to a rule laid down before the situation arises. Its near-twin <em>proscribe</em> has the same root but means to forbid, since pro- here carries the sense of putting something out in front as banned; the pair is a favourite of test writers precisely because it is so easy to confuse.</p>
+                    <p><em>Prescribe</em>: scrib means write, and pre means before, so the original sense is writing in advance — which is why it applies both to a doctor writing instructions ahead of the treatment and to a rule laid down before the situation arises. Its near-twin <em>proscribe</em> shares the root and means to forbid; it is written pro- (before, publicly) + scrib (write), that is to write publicly against something. The pair is a favourite of test writers precisely because it is so easy to confuse.</p>
                     <p>The skill being practised is not memorising these three words, it is committing to an inference and being able to name the clue that produced it. Naming the clue is what prevents you from talking yourself into the wrong option under time pressure.</p>
                 </details>
             </div>
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Vocabulary gives you the meaning of individual words. The next lesson asks something harder: given two words whose meanings you know, describe the relationship between them and find another pair sharing exactly that relationship. Analogies are the most rule-driven question type in the verbal section.</p>
+                <p>Vocabulary gives you the meaning of individual words. The next lesson works the same knowledge in both directions: picking the closest synonym and, more sharply, the antonym, where a single prefix can reverse the answer. Synonyms and antonyms are where roots pay off twice, once to decode and once to choose.</p>
             </div>
 
             <div class="lesson-footer">

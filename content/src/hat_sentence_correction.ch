@@ -98,7 +98,7 @@ public func render_hat_sentence_correction() : string {
                     <p>Which version is correct: <em>He is senior than me in the department.</em></p>
                     <button class="quiz-option" data-correct="false" data-explain="Than is the error; senior does not take than." onclick="checkQuiz('quiz-4', this)">He is senior than me.</button>
                     <button class="quiz-option" data-correct="true" data-explain="Senior takes to, not than: he is senior to me. The same holds for junior, superior and inferior." onclick="checkQuiz('quiz-4', this)">He is senior to me.</button>
-                    <button class="quiz-option" data-correct="false" data-explain="More senior than is possible in some registers, but the fixed pair senior to is the standard tested form." onclick="checkQuiz('quiz-4', this)">He is more senior than me.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="Senior of me is wrong: senior, junior, superior and inferior all take to." onclick="checkQuiz('quiz-4', this)">He is senior of me.</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -129,7 +129,7 @@ public func render_hat_sentence_correction() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Sentence correction keeps you inside one sentence, judging whether it obeys the rules. The next lesson moves beyond the sentence to meaning that is never stated outright &mdash; the author's tone, purpose and the inferences the text supports but does not spell out.</p>
+                <p>Sentence correction asks you to repair a sentence. The next lesson is the mirror image: finding the single error in a sentence without being told where it is. The same rules apply, but the search is the skill, and the tested list is short and finite.</p>
             </div>
 
             <div class="lesson-footer">

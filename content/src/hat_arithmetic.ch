@@ -132,7 +132,7 @@ public func render_hat_arithmetic() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Exact operations and fast estimation are now in place, so the section can move from arithmetic to the ideas the test actually asks about. The most frequently tested of those ideas, by a wide margin, is the percentage — because percentages are the language of discounts, growth, scores and shares.</p>
+                <p>Exact operations and fast estimation are now in place. The next lesson turns that speed onto the properties of whole numbers — divisibility, primes, HCF and LCM — the shortcuts that answer a question without a full division.</p>
             </div>
 
             <div class="lesson-footer">

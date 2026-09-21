@@ -141,11 +141,13 @@ public namespace underlayer_content {
                 var isBlank = el.classList.contains('fill-blank');
                 var isSelect = el.classList.contains('app-select');
                 if (!isBlank && !isSelect) { return; }
-                var ans = el.getAttribute('data-answer');
-                if (!ans) { return; }
-                var val = '';
-                if (el.value) { val = el.value; }
-                __ul_report_attempt(val.trim() === ans);
+                    var ans = el.getAttribute('data-answer');
+                    if (!ans) { return; }
+                    var val = '';
+                    if (el.value) { val = el.value; }
+                    var valLower = val.trim().toLowerCase();
+                    var ansLower = ans.toLowerCase();
+                    __ul_report_attempt(valLower === ansLower);
             }, true);
 
             // ---- quiz checking ----
@@ -187,7 +189,9 @@ public namespace underlayer_content {
                     var el = blanks[i];
                     var answer = el.getAttribute('data-answer');
                     var val = el.value.trim();
-                    if (val === answer) {
+                    // Case-insensitive so a correct answer typed in lower case
+                    // (for example "nor" for NOR) is still accepted.
+                    if (val.toLowerCase() === answer.toLowerCase()) {
                         el.classList.add('correct');
                         el.classList.remove('wrong');
                     } else {

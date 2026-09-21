@@ -98,7 +98,7 @@ public func render_hat_analogies() : string {
                     <p>Toe is to foot as which of the following?</p>
                     <button class="quiz-option" data-correct="false" data-explain="This is whole to part; the stem is part to whole." onclick="checkQuiz('quiz-3', this)">Tree is to branch</button>
                     <button class="quiz-option" data-correct="true" data-explain="Part to whole: a finger is part of a hand, just as a toe is part of a foot." onclick="checkQuiz('quiz-3', this)">Finger is to hand</button>
-                    <button class="quiz-option" data-correct="false" data-explain="Category to member, not part to whole. A finger is not a part of a body in the same sense — it belongs to a hand." onclick="checkQuiz('quiz-3', this)">Hand is to body</button>
+                    <button class="quiz-option" data-correct="false" data-explain="Part to whole, but at the wrong level: the stem pairs a digit with its limb (toe with foot), so the match must be finger with hand. A hand is only a part of the body, not the corresponding limb-level part." onclick="checkQuiz('quiz-3', this)">Hand is to body</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

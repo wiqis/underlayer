@@ -117,7 +117,7 @@ public func render_hat_sentence_completion() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Sentence completion uses signals about meaning. The next lesson is about signals of correctness: grammar. Error identification questions ask you to find the mistake in a sentence, and because the tested rules are a short, finite list, this is one of the highest-return topics in the whole verbal section.</p>
+                <p>Sentence completion works below the level of the sentence, using the connectives inside it. The next lesson rises to the whole paragraph, where the missing unit is a sentence and the signals are the writer's structure rather than a single word.</p>
             </div>
 
             <div class="lesson-footer">

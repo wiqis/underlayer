@@ -157,7 +157,7 @@ public func render_hat_sets_venn() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Sets give you a picture for every "all", "some" and "none" claim, and a formula for every "at least", "exactly" and "neither" count. The next lesson leaves pure logic and applies the same careful reading to data interpretation, where tables and graphs replace circles but the double-counting trap never goes away.</p>
+                <p>Sets give you a picture for every "all", "some" and "none" claim, and a formula for every "at least", "exactly" and "neither" count. The next lesson leaves circles for a different kind of spatial reasoning: relations and directions, where a set of statements about who is where is turned into a diagram and measured.</p>
             </div>
 
             <div class="lesson-footer">

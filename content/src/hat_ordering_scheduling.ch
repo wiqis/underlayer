@@ -159,7 +159,7 @@ public func render_hat_ordering_scheduling() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Grids and strips are done. The next lesson changes machinery entirely: syllogisms, where the diagram is a pair of circles and the only question is whether a conclusion follows necessarily from two premises.</p>
+                <p>Ordering fixes each item to a slot. The next lesson removes the slots and keeps only the rules: grouping and selection puzzles, where items are sorted into teams and the leftover is a &ldquo;not selected&rdquo; set.</p>
             </div>
 
             <div class="lesson-footer">

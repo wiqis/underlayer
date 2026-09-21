@@ -93,7 +93,7 @@ public func render_hat_syllogisms() : string {
                 <h3>2. Some doctors are musicians. All musicians are artists. Conclusion: some doctors are artists.</h3>
                 <p>Valid. The doctors who are musicians are also artists, and there is at least one such doctor by "some".</p>
                 <h3>3. All roses are flowers. Some flowers fade quickly. Conclusion: some roses fade quickly.</h3>
-                <p>Invalid. Draw the eighty percent of the flower circle that lies outside the rose circle and let all the quickly-fading flowers be there. The premises remain true and the conclusion is false, so it does not follow.</p>
+                <p>Invalid. Draw the part of the flower circle that lies outside the rose circle and let all the quickly-fading flowers be there. The premises remain true and the conclusion is false, so it does not follow.</p>
                 <h3>4. No reptiles are mammals. All snakes are reptiles. Conclusion: no snakes are mammals.</h3>
                 <p>Valid. The snake circle is inside the reptile circle, and the reptile circle avoids mammals entirely, so snakes cannot be mammals.</p>
             </div>
@@ -135,7 +135,7 @@ public func render_hat_syllogisms() : string {
                 <p>Without looking back: which two particular premises never produce a conclusion, and what does "some" mean in these questions?</p>
                 <p>The answer: "some A are B" with "some B are C" yields nothing; and "some" means at least one, possibly all.</p>
                 <div id="fill-1">
-                    <p>In these questions "some" means at least <input type="text" class="fill-blank" data-answer="one" placeholder="?" aria-label="minimum for some" />, and possibly all. "All A are B" and "All B are C" together give all A are <input type="text" class="fill-blank" data-answer="C" placeholder="?" aria-label="chained conclusion" />. To disprove a claimed conclusion you drawn a <input type="text" class="fill-blank" data-answer="counterexample" placeholder="?" aria-label="method of disproof" />, and outside knowledge must be <input type="text" class="fill-blank" data-answer="ignored" placeholder="?" aria-label="role of outside knowledge" />.</p>
+                    <p>In these questions "some" means at least <input type="text" class="fill-blank" data-answer="one" placeholder="?" aria-label="minimum for some" />, and possibly all. "All A are B" and "All B are C" together give all A are <input type="text" class="fill-blank" data-answer="C" placeholder="?" aria-label="chained conclusion" />. To disprove a claimed conclusion you draw a <input type="text" class="fill-blank" data-answer="counterexample" placeholder="?" aria-label="method of disproof" />, and outside knowledge must be <input type="text" class="fill-blank" data-answer="ignored" placeholder="?" aria-label="role of outside knowledge" />.</p>
                     <button class="fill-check-btn" onclick="checkFillBlanks('fill-1')">Check answers</button>
                     <div class="fill-feedback"></div>
                 </div>

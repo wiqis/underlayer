@@ -102,7 +102,7 @@ public func render_hat_exam_overview() : string {
                     </tbody>
                 </table>
                 <p>Total: 30 + 15 + 12 = <strong>57 out of 100</strong>. That clears the 50-mark admission floor, and it would not survive a competitive scholarship shortlist.</p>
-                <p>Read the same score a second way, as a training plan. Quantitative is already at 75%, so its remaining 10 marks are the most expensive on the paper. Verbal and Analytical are at 50% and 40%: eighteen marks are sitting there in <em>rule-based</em> questions — agreement, prepositions, vocabulary, syllogisms, series — that a few weeks of drilling converts into marks. The plan writes itself, and weightage alone would not have written it.</p>
+                <p>Read the same score a second way, as a training plan. Quantitative is already at 75%, so its remaining 10 marks are the most expensive on the paper. Verbal and Analytical are at 50% and 40%: thirty-three marks are sitting there in <em>rule-based</em> questions — agreement, prepositions, vocabulary, syllogisms, series — that a few weeks of drilling converts into marks. The plan writes itself, and weightage alone would not have written it.</p>
             </div>
 
             <div class="unit unit-interact">
@@ -155,7 +155,7 @@ public func render_hat_exam_overview() : string {
                 <details>
                     <summary>Show the reasoning</summary>
                     <p>Register for HAT-1. Quantitative is 40 marks and already fast for you, so the first job is to <em>protect</em> those marks: secure the arithmetic, percentages, ratio and algebra topics that the section is built on, and stop when your accuracy is high and stable. That is not where the remaining marks are.</p>
-                    <p>The remaining marks are in 60 that sit outside Quantitative. Verbal at 30 marks contains a large block of rule-based questions — agreement, prepositions, vocabulary, sentence completion — which convert faster than any other material on the paper, because a rule learned once is right every time. Analytical at 30 marks contains puzzle families with a small number of procedures: draw the grid, encode the constraints, eliminate. Those procedures turn a 40% section into a 65% section in a few weeks, and they are exactly the things this course drils.</p>
+                    <p>The remaining marks are in 60 that sit outside Quantitative. Verbal at 30 marks contains a large block of rule-based questions — agreement, prepositions, vocabulary, sentence completion — which convert faster than any other material on the paper, because a rule learned once is right every time. Analytical at 30 marks contains puzzle families with a small number of procedures: draw the grid, encode the constraints, eliminate. Those procedures turn a 40% section into a 65% section in a few weeks, and they are exactly the things this course drills.</p>
                     <p>What the paper tells you <em>not</em> to do: revise physics, programming or digital logic because you are an engineer. They are not on HAT-1. And do not spend six weeks polishing the section you already like: past 75% accuracy, an hour in Quantitative buys less than an hour anywhere else.</p>
                 </details>
             </div>

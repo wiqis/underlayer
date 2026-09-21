@@ -56,7 +56,7 @@ public func render_hat_paragraph_completion() : string {
                     <li><strong>Too extreme.</strong> Words like all, never, only, always push past what the passage supports. A passage saying a policy has costs does not license "the policy must be abolished".</li>
                     <li><strong>Off-topic.</strong> The option is true and reasonable but about something the passage never raised. True is not the same as relevant.</li>
                     <li><strong>Reversed.</strong> The option continues the wrong direction, usually after a contrast signal such as however.</li>
-                    <li><strong>Circular or repetitive.</strong> The option simply restates an earlier sentence instead of performing the blank's job (for example, concluding when a conclusion was required).</li>
+                    <li><strong>Circular or repetitive.</strong> The option simply restates an earlier sentence instead of performing the blank's job (for example, repeating a premise when a conclusion was required).</li>
                 </ul>
                 <div class="callout callout-tip">
                     <strong>The predictive read.</strong> Cover the options. Say the missing sentence yourself from the passage and its connectives. Then match. An option that changes the subject or the strength of the claim is wrong even if it reads well.
@@ -121,7 +121,7 @@ public func render_hat_paragraph_completion() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>You can now complete an argument from its signals. The next lesson turns to the mechanical side of verbal accuracy: locating the single grammatical error in a sentence, where the rules are finite and the answer is deterministic.</p>
+                <p>You can now complete an argument from its signals. The next lesson turns to the mechanical side of verbal accuracy: sentence correction, where an underlined part of a sentence must be rewritten to obey the rules of grammar, agreement and parallelism.</p>
             </div>
 
             <div class="lesson-footer">

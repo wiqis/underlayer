@@ -129,8 +129,7 @@ public func render_hat_data_probability() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>That completes the quantitative section: arithmetic, percentages, ratio, algebra, geometry and data. Every one of those techniques is tested through <em>words</em>, which is why the next module matters.</p>
-                <p>Verbal Reasoning begins with the part of English that the HAT tests most predictably and that improves fastest with study: vocabulary. It carries marks in every category of the test, and it feeds the grammar, sentence-completion and reading sections that follow.</p>
+                <p>That covers reading data from tables, charts and summaries. The next lesson returns to words: translating a sentence into an equation. Every quantitative technique you have met so far arrives on the paper wrapped in prose, so the translation step is the one that decides whether the technique is ever reached.</p>
             </div>
 
             <div class="lesson-footer">

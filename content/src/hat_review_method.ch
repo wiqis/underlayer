@@ -134,7 +134,7 @@ public func render_hat_review_method() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Review is now scheduled rather than hoped for. The next lesson turns to the machine that does the reviewing: your energy. A review queue only works if you have the stamina to face it daily, so see <a href="/courses/hat/lessons/hat-energy-management">Energy, Sleep and Stamina</a>.</p>
+                <p>Review is now scheduled rather than hoped for. The next lesson turns the technique into a target: how to work out the score you actually need, measure your gap to it, and project whether your current rate of improvement will close it in time.</p>
             </div>
 
             <div class="lesson-footer">

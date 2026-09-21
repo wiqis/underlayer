@@ -138,7 +138,7 @@ public func render_hat_number_properties() : string {
                 <details>
                     <summary>Show the reasoning</summary>
                     <p>Factorise: 12 = 2&sup2; &times; 3, 15 = 3 &times; 5, 18 = 2 &times; 3&sup2;. The LCM takes the largest exponent of each prime: 2&sup2; &times; 3&sup2; &times; 5 = <strong>180</strong>.</p>
-                    <p>The expected distractors: 2,700 (the product, from forgetting that the numbers share factors), 3 (the common factor, confusing LCM with HCF), and 540 (the LCM of 12, 15 and 18 doubled, from an arithmetic slip during factorisation).</p>
+                    <p>The expected distractors: 3,240 (the product, from forgetting that the numbers share factors), 3 (the common factor, confusing LCM with HCF), and 540 (three times the LCM, from an arithmetic slip during factorisation).</p>
                     <p>Checking the answer in five seconds: 180 &divide; 12 = 15, 180 &divide; 15 = 12, 180 &divide; 18 = 10 — all whole numbers, and no smaller multiple passes all three tests, because 90 fails on 12.</p>
                 </details>
             </div>

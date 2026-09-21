@@ -53,7 +53,7 @@ public func render_hat_prepositions_idioms() : string {
                     </thead>
                     <tbody>
                         <tr><td>afraid, aware, capable, fond, guilty, jealous</td><td>of</td><td>interested, proficient, engaged, absorbed</td><td>in</td></tr>
-                        <tr><td>angry (a person), pleased, satisfied, familiar (a thing)</td><td>with</td><td>good, bad, adept, skilled, excel</td><td>at</td></tr>
+                        <tr><td>angry (a person), pleased, satisfied, familiar (a thing)</td><td>with</td><td>good, bad, adept, skilled, expert</td><td>at</td></tr>
                         <tr><td>responsible, eligible, famous, fit, sorry</td><td>for</td><td>superior, inferior, senior, junior, similar, married, accustomed</td><td>to</td></tr>
                         <tr><td>anxious, curious, concerned, particular</td><td>about</td><td>different, safe, protected, derived</td><td>from</td></tr>
                     </tbody>
@@ -90,7 +90,7 @@ public func render_hat_prepositions_idioms() : string {
             <div class="unit unit-example">
                 <h2>Worked Examples</h2>
                 <h3>1. All staff must comply ___ the new safety rules.</h3>
-                <p>Comply pairs with <strong>with</strong>: comply with the rules. Confidently offering "to" comes from reasoning that you comply <em>to</em> an authority — a different verb entirely.</p>
+                <p>Comply pairs with <strong>with</strong>: comply with the rules. Offering "to" comes from reasoning that you comply <em>to</em> an authority — but comply takes with whoever or whatever you obey.</p>
                 <h3>2. The delay had no ___ on the final schedule.</h3>
                 <p>Here the blank needs a noun after "had no", so it is <strong>effect</strong>. "Affect" is the verb form, and "effected" would mean brought about, which changes the meaning.</p>
                 <h3>3. She is senior ___ the other officers.</h3>
@@ -104,7 +104,7 @@ public func render_hat_prepositions_idioms() : string {
                 <div class="quiz" id="quiz-1">
                     <p>All staff must comply ___ the new safety rules.</p>
                     <button class="quiz-option" data-correct="true" data-explain="Comply with is the fixed pairing; the preposition is a matter of collocation, not of direction." onclick="checkQuiz('quiz-1', this)">with</button>
-                    <button class="quiz-option" data-correct="false" data-explain="Comply to is not standard English, even though you may comply with a rule issued by an authority you comply to in a different sense." onclick="checkQuiz('quiz-1', this)">to</button>
+                    <button class="quiz-option" data-correct="false" data-explain="Comply to is not standard English. A rule is something you comply with, whoever issued it." onclick="checkQuiz('quiz-1', this)">to</button>
                     <button class="quiz-option" data-correct="false" data-explain="Comply by appears only in the different phrase 'comply by doing something'; with a noun object it is comply with." onclick="checkQuiz('quiz-1', this)">by</button>
                     <div class="quiz-feedback"></div>
                 </div>

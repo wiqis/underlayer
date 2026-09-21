@@ -21,7 +21,7 @@ public func render_hat_data_sufficiency() : string {
 
             <div class="unit unit-why">
                 <h2>Why This Matters</h2>
-                <p>Because the HAT is aligned with the GRE family of tests, one of the most valuable habits it rewards is deciding whether a question <em>can</em> be answered at all. "Cannot be determined" is a real option, and it is the correct one whenever two different situations both satisfy everything you were told but give different answers.</p>
+                <p>One of the most valuable habits a reasoning paper rewards is deciding whether a question <em>can</em> be answered at all. "Cannot be determined" is a real option, and it is the correct one whenever two different situations both satisfy everything you were told but give different answers.</p>
                 <p>The habit pays twice. It wins the data-sufficiency items directly, and it protects you from inventing information in ordinary questions — assuming a rate is constant, assuming a total is 100, assuming a figure is drawn to scale.</p>
             </div>
 
@@ -140,7 +140,7 @@ public func render_hat_data_sufficiency() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>That completes the analytical families. The next lesson is a timed set that mixes them, exactly as the paper does, so that recognition — not just technique — gets trained under a clock.</p>
+                <p>Data sufficiency trains you to notice what is missing. The next lesson works with data that is fully present: tables, charts and graphs, where the task is to read the right number and resist the chart's attempts to mislead.</p>
             </div>
 
             <div class="lesson-footer">

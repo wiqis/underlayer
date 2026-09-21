@@ -109,7 +109,7 @@ public func render_hat_ratio_proportion() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Ratios compare quantities that are already known. The next technique, algebra, is what you reach for when one quantity is unknown and a condition links it to another. In the quantitative section, algebra is rarely abstract: it is a fast way to convert a sentence into a single equation and solve it in two lines.</p>
+                <p>Ratios compare quantities that are already known. The next lesson handles the summary of a group: the average, the weighted average, and the mixture. It is where ratio reasoning pays off directly, because a weighted mean is just a ratio in disguise.</p>
             </div>
 
             <div class="lesson-footer">

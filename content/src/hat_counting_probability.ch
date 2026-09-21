@@ -133,7 +133,7 @@ public func render_hat_counting_probability() : string {
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>You have now covered every quantitative family in this course. The next lesson stops teaching and starts training: a timed mixed set that forces you to choose the right technique under a clock, which is the only skill that matters on the day.</p>
+                <p>Counting and probability close the first pass over quantitative reasoning. The next lessons add the algebraic tools that many questions hide behind: powers and roots, then linear algebra and quadratics. The timed mixed drill comes later, once every technique is in place.</p>
             </div>
 
             <div class="lesson-footer">
