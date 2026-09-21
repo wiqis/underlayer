@@ -14,6 +14,10 @@ public func main() : int {
     fs::write_text_file("output/hat-weightage-strategy.html", html.data() as *u8, html.size())
     printf("  -> hat-weightage-strategy.html\n")
 
+    html = underlayer_content::render_hat_diagnostic_test()
+    fs::write_text_file("output/hat-diagnostic-test.html", html.data() as *u8, html.size())
+    printf("  -> hat-diagnostic-test.html\n")
+
     html = underlayer_content::render_hat_study_plan()
     fs::write_text_file("output/hat-study-plan.html", html.data() as *u8, html.size())
     printf("  -> hat-study-plan.html\n")
@@ -63,17 +67,49 @@ public func main() : int {
     fs::write_text_file("output/hat-counting-probability.html", html.data() as *u8, html.size())
     printf("  -> hat-counting-probability.html\n")
 
+    html = underlayer_content::render_hat_exponents_roots()
+    fs::write_text_file("output/hat-exponents-roots.html", html.data() as *u8, html.size())
+    printf("  -> hat-exponents-roots.html\n")
+
     html = underlayer_content::render_hat_algebra()
     fs::write_text_file("output/hat-algebra.html", html.data() as *u8, html.size())
     printf("  -> hat-algebra.html\n")
+
+    html = underlayer_content::render_hat_quadratic_equations()
+    fs::write_text_file("output/hat-quadratic-equations.html", html.data() as *u8, html.size())
+    printf("  -> hat-quadratic-equations.html\n")
+
+    html = underlayer_content::render_hat_sequences()
+    fs::write_text_file("output/hat-sequences.html", html.data() as *u8, html.size())
+    printf("  -> hat-sequences.html\n")
 
     html = underlayer_content::render_hat_geometry()
     fs::write_text_file("output/hat-geometry.html", html.data() as *u8, html.size())
     printf("  -> hat-geometry.html\n")
 
+    html = underlayer_content::render_hat_mensuration()
+    fs::write_text_file("output/hat-mensuration.html", html.data() as *u8, html.size())
+    printf("  -> hat-mensuration.html\n")
+
+    html = underlayer_content::render_hat_coordinate_geometry()
+    fs::write_text_file("output/hat-coordinate-geometry.html", html.data() as *u8, html.size())
+    printf("  -> hat-coordinate-geometry.html\n")
+
     html = underlayer_content::render_hat_data_probability()
     fs::write_text_file("output/hat-data-probability.html", html.data() as *u8, html.size())
     printf("  -> hat-data-probability.html\n")
+
+    html = underlayer_content::render_hat_word_problems()
+    fs::write_text_file("output/hat-word-problems.html", html.data() as *u8, html.size())
+    printf("  -> hat-word-problems.html\n")
+
+    html = underlayer_content::render_hat_profit_loss_discount()
+    fs::write_text_file("output/hat-profit-loss-discount.html", html.data() as *u8, html.size())
+    printf("  -> hat-profit-loss-discount.html\n")
+
+    html = underlayer_content::render_hat_interest()
+    fs::write_text_file("output/hat-interest.html", html.data() as *u8, html.size())
+    printf("  -> hat-interest.html\n")
 
     html = underlayer_content::render_hat_quant_drill()
     fs::write_text_file("output/hat-quant-drill.html", html.data() as *u8, html.size())
@@ -100,6 +136,10 @@ public func main() : int {
     fs::write_text_file("output/hat-paragraph-completion.html", html.data() as *u8, html.size())
     printf("  -> hat-paragraph-completion.html\n")
 
+    html = underlayer_content::render_hat_sentence_correction()
+    fs::write_text_file("output/hat-sentence-correction.html", html.data() as *u8, html.size())
+    printf("  -> hat-sentence-correction.html\n")
+
     html = underlayer_content::render_hat_grammar_errors()
     fs::write_text_file("output/hat-grammar-errors.html", html.data() as *u8, html.size())
     printf("  -> hat-grammar-errors.html\n")
@@ -107,6 +147,14 @@ public func main() : int {
     html = underlayer_content::render_hat_grammar_agreement()
     fs::write_text_file("output/hat-grammar-agreement.html", html.data() as *u8, html.size())
     printf("  -> hat-grammar-agreement.html\n")
+
+    html = underlayer_content::render_hat_grammar_tenses()
+    fs::write_text_file("output/hat-grammar-tenses.html", html.data() as *u8, html.size())
+    printf("  -> hat-grammar-tenses.html\n")
+
+    html = underlayer_content::render_hat_grammar_punctuation()
+    fs::write_text_file("output/hat-grammar-punctuation.html", html.data() as *u8, html.size())
+    printf("  -> hat-grammar-punctuation.html\n")
 
     html = underlayer_content::render_hat_prepositions_idioms()
     fs::write_text_file("output/hat-prepositions-idioms.html", html.data() as *u8, html.size())
@@ -116,6 +164,10 @@ public func main() : int {
     fs::write_text_file("output/hat-reading-comprehension.html", html.data() as *u8, html.size())
     printf("  -> hat-reading-comprehension.html\n")
 
+    html = underlayer_content::render_hat_critical_reading()
+    fs::write_text_file("output/hat-critical-reading.html", html.data() as *u8, html.size())
+    printf("  -> hat-critical-reading.html\n")
+
     html = underlayer_content::render_hat_verbal_drill()
     fs::write_text_file("output/hat-verbal-drill.html", html.data() as *u8, html.size())
     printf("  -> hat-verbal-drill.html\n")
@@ -124,6 +176,22 @@ public func main() : int {
     html = underlayer_content::render_hat_critical_reasoning()
     fs::write_text_file("output/hat-critical-reasoning.html", html.data() as *u8, html.size())
     printf("  -> hat-critical-reasoning.html\n")
+
+    html = underlayer_content::render_hat_statement_assumption()
+    fs::write_text_file("output/hat-statement-assumption.html", html.data() as *u8, html.size())
+    printf("  -> hat-statement-assumption.html\n")
+
+    html = underlayer_content::render_hat_statement_conclusion()
+    fs::write_text_file("output/hat-statement-conclusion.html", html.data() as *u8, html.size())
+    printf("  -> hat-statement-conclusion.html\n")
+
+    html = underlayer_content::render_hat_strong_weak_arguments()
+    fs::write_text_file("output/hat-strong-weak-arguments.html", html.data() as *u8, html.size())
+    printf("  -> hat-strong-weak-arguments.html\n")
+
+    html = underlayer_content::render_hat_course_of_action()
+    fs::write_text_file("output/hat-course-of-action.html", html.data() as *u8, html.size())
+    printf("  -> hat-course-of-action.html\n")
 
     html = underlayer_content::render_hat_cause_effect()
     fs::write_text_file("output/hat-cause-effect.html", html.data() as *u8, html.size())
@@ -141,9 +209,17 @@ public func main() : int {
     fs::write_text_file("output/hat-ordering-scheduling.html", html.data() as *u8, html.size())
     printf("  -> hat-ordering-scheduling.html\n")
 
+    html = underlayer_content::render_hat_grouping_puzzles()
+    fs::write_text_file("output/hat-grouping-puzzles.html", html.data() as *u8, html.size())
+    printf("  -> hat-grouping-puzzles.html\n")
+
     html = underlayer_content::render_hat_syllogisms()
     fs::write_text_file("output/hat-syllogisms.html", html.data() as *u8, html.size())
     printf("  -> hat-syllogisms.html\n")
+
+    html = underlayer_content::render_hat_sets_venn()
+    fs::write_text_file("output/hat-sets-venn.html", html.data() as *u8, html.size())
+    printf("  -> hat-sets-venn.html\n")
 
     html = underlayer_content::render_hat_relations_and_directions()
     fs::write_text_file("output/hat-relations-and-directions.html", html.data() as *u8, html.size())
@@ -178,9 +254,17 @@ public func main() : int {
     fs::write_text_file("output/hat-error-log.html", html.data() as *u8, html.size())
     printf("  -> hat-error-log.html\n")
 
+    html = underlayer_content::render_hat_review_method()
+    fs::write_text_file("output/hat-review-method.html", html.data() as *u8, html.size())
+    printf("  -> hat-review-method.html\n")
+
     html = underlayer_content::render_hat_score_targets()
     fs::write_text_file("output/hat-score-targets.html", html.data() as *u8, html.size())
     printf("  -> hat-score-targets.html\n")
+
+    html = underlayer_content::render_hat_energy_management()
+    fs::write_text_file("output/hat-energy-management.html", html.data() as *u8, html.size())
+    printf("  -> hat-energy-management.html\n")
 
     html = underlayer_content::render_hat_exam_day()
     fs::write_text_file("output/hat-exam-day.html", html.data() as *u8, html.size())
@@ -204,6 +288,6 @@ public func main() : int {
     fs::write_text_file("output/index.html", html.data() as *u8, html.size())
     printf("  -> index.html\n")
 
-    printf("HAT course: 47 concepts + landing page generated in output/\n")
+    printf("HAT course: 68 concepts + landing page generated in output/\n")
     return 0
 }

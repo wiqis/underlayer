@@ -138,7 +138,7 @@ public func render_hat_counting_probability() : string {
 
             <div class="lesson-footer">
                 <span><a href="/courses/hat/lessons/hat-work-rate">Previous: Work, Pipes and Rates</a></span>
-                <span><a href="/courses/hat/lessons/hat-algebra">Next: Algebra Without Fear</a></span>
+                <span><a href="/courses/hat/lessons/hat-exponents-roots">Next: Powers, Roots and Surds</a></span>
             </div>
         </div>
     }

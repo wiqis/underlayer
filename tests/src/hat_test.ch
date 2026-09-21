@@ -61,6 +61,12 @@ public func test_hat_course_api_lists_full_manifest(env : &mut TestEnv) {
     if(body.find(string_view("hat-cause-effect")) == std::NPOS) { env.error("manifest missing hat-cause-effect") }
     if(body.find(string_view("hat-exam-day")) == std::NPOS) { env.error("manifest missing hat-exam-day") }
     if(body.find(string_view("hat-digital-logic")) == std::NPOS) { env.error("manifest missing hat-digital-logic") }
+    if(body.find(string_view("hat-diagnostic-test")) == std::NPOS) { env.error("manifest missing hat-diagnostic-test") }
+    if(body.find(string_view("hat-word-problems")) == std::NPOS) { env.error("manifest missing hat-word-problems") }
+    if(body.find(string_view("hat-quadratic-equations")) == std::NPOS) { env.error("manifest missing hat-quadratic-equations") }
+    if(body.find(string_view("hat-sets-venn")) == std::NPOS) { env.error("manifest missing hat-sets-venn") }
+    if(body.find(string_view("hat-review-method")) == std::NPOS) { env.error("manifest missing hat-review-method") }
+    if(body.find(string_view("hat-energy-management")) == std::NPOS) { env.error("manifest missing hat-energy-management") }
 
     srv.shutdown()
     underlayer_db::close(&raw db)

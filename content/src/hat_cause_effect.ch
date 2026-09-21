@@ -123,7 +123,7 @@ public func render_hat_cause_effect() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-critical-reasoning">Previous: Assumptions, Conclusions and Arguments</a></span>
+                <span><a href="/courses/hat/lessons/hat-course-of-action">Previous: Course of Action</a></span>
                 <span><a href="/courses/hat/lessons/hat-logic-deduction">Next: Ordering, Grouping and Deduction</a></span>
             </div>
         </div>

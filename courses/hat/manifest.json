@@ -1056,6 +1056,468 @@
                                "explanation":  "A blank is certainly zero; a guessed answer keeps a chance of a mark at no cost.",
                                "hint1":  "Every question deserves an answer.",
                                "difficulty":  0.3
+                           },
+                           {
+                               "concept_id":  "hat-diagnostic-test",
+                               "type":  "multiple_choice",
+                               "question":  "Why sit a cold diagnostic before you begin studying?",
+                               "answer":  "To find which sections need the most work",
+                               "options":  "To score highly on the first attempt|To find which sections need the most work|To replace the rest of studying",
+                               "correct_index":  1,
+                               "explanation":  "A cold diagnostic is a measurement, not a performance; its value is telling you where to spend the next weeks.",
+                               "hint1":  "It is evidence for planning.",
+                               "difficulty":  0.3
+                           },
+                           {
+                               "concept_id":  "hat-diagnostic-test",
+                               "type":  "multiple_choice",
+                               "question":  "A candidate scores quantitative 22/40, verbal 18/30 and analytical 14/30. Which section should get the most work?",
+                               "answer":  "Analytical",
+                               "options":  "Quantitative|Verbal|Analytical",
+                               "correct_index":  2,
+                               "explanation":  "Analytical is furthest from its potential at 47%, so it has the most headroom.",
+                               "hint1":  "Compare each section\u0027s percentage.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-exponents-roots",
+                               "type":  "multiple_choice",
+                               "question":  "Simplify 2 to the power 5 times 2 to the power 3.",
+                               "answer":  "2 to the power 8",
+                               "options":  "2 to the power 8|2 to the power 15|4 to the power 8",
+                               "correct_index":  0,
+                               "explanation":  "Multiplying powers of the same base adds the indices: 5 + 3 = 8.",
+                               "hint1":  "Add the exponents when the bases match.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-exponents-roots",
+                               "type":  "multiple_choice",
+                               "question":  "Simplify the square root of 50 plus the square root of 18.",
+                               "answer":  "8 times the square root of 2",
+                               "options":  "8 times the square root of 2|the square root of 68|68",
+                               "correct_index":  0,
+                               "explanation":  "Root 50 is 5 root 2 and root 18 is 3 root 2, giving 8 root 2.",
+                               "hint1":  "Simplify each surd to a multiple of root 2 first.",
+                               "difficulty":  0.5
+                           },
+                           {
+                               "concept_id":  "hat-quadratic-equations",
+                               "type":  "multiple_choice",
+                               "question":  "What are the roots of x squared minus 5x plus 6 equals 0?",
+                               "answer":  "2 and 3",
+                               "options":  "2 and 3|minus 2 and minus 3|1 and 6",
+                               "correct_index":  0,
+                               "explanation":  "2 and 3 multiply to 6 and add to 5, matching the coefficients.",
+                               "hint1":  "Find two numbers that multiply to 6 and add to 5.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-quadratic-equations",
+                               "type":  "multiple_choice",
+                               "question":  "For a quadratic ax squared plus bx plus c equals 0, the sum of the roots is:",
+                               "answer":  "minus b over a",
+                               "options":  "b over a|minus b over a|c over a",
+                               "correct_index":  1,
+                               "explanation":  "The sum of the roots is minus b over a; their product is c over a.",
+                               "hint1":  "It is the negative of the x coefficient over the leading coefficient.",
+                               "difficulty":  0.5
+                           },
+                           {
+                               "concept_id":  "hat-sequences",
+                               "type":  "multiple_choice",
+                               "question":  "What is the 10th term of the arithmetic sequence 3, 7, 11, ...?",
+                               "answer":  "39",
+                               "options":  "39|40|43",
+                               "correct_index":  0,
+                               "explanation":  "The nth term is a plus (n minus 1)d: 3 plus 9 times 4 equals 39.",
+                               "hint1":  "Find the common difference first.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-sequences",
+                               "type":  "multiple_choice",
+                               "question":  "What comes next: 2, 6, 18, 54, ...?",
+                               "answer":  "162",
+                               "options":  "108|162|216",
+                               "correct_index":  1,
+                               "explanation":  "Each term is three times the previous one, so 54 times 3 is 162.",
+                               "hint1":  "Check the ratio, not the difference.",
+                               "difficulty":  0.3
+                           },
+                           {
+                               "concept_id":  "hat-mensuration",
+                               "type":  "multiple_choice",
+                               "question":  "What is the volume of a cylinder of radius 7 cm and height 10 cm, using pi equals 22 over 7?",
+                               "answer":  "1540 cubic cm",
+                               "options":  "1540 cubic cm|440 cubic cm|220 cubic cm",
+                               "correct_index":  0,
+                               "explanation":  "Volume is pi r squared h: 22/7 times 49 times 10 equals 1540.",
+                               "hint1":  "Area of the base times the height.",
+                               "difficulty":  0.5
+                           },
+                           {
+                               "concept_id":  "hat-mensuration",
+                               "type":  "multiple_choice",
+                               "question":  "What is the area of a circle of radius 7 cm, using pi equals 22 over 7?",
+                               "answer":  "154 square cm",
+                               "options":  "154 square cm|44 square cm|49 square cm",
+                               "correct_index":  0,
+                               "explanation":  "Area is pi r squared: 22/7 times 49 equals 154.",
+                               "hint1":  "Do not confuse area with circumference.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-coordinate-geometry",
+                               "type":  "multiple_choice",
+                               "question":  "What is the distance between the points (2,1) and (6,9)?",
+                               "answer":  "the square root of 80",
+                               "options":  "the square root of 80|the square root of 68|10",
+                               "correct_index":  0,
+                               "explanation":  "The differences are 4 and 8, and 16 plus 64 equals 80.",
+                               "hint1":  "Use the distance formula on the two coordinate differences.",
+                               "difficulty":  0.5
+                           },
+                           {
+                               "concept_id":  "hat-coordinate-geometry",
+                               "type":  "multiple_choice",
+                               "question":  "What is the slope of the line through (2,1) and (6,9)?",
+                               "answer":  "2",
+                               "options":  "2|one half|minus 2",
+                               "correct_index":  0,
+                               "explanation":  "Slope is the change in y over the change in x: 8 divided by 4 equals 2.",
+                               "hint1":  "Rise over run.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-word-problems",
+                               "type":  "multiple_choice",
+                               "question":  "A number increased by 30 percent of itself equals 91. What is the number?",
+                               "answer":  "70",
+                               "options":  "61|70|118",
+                               "correct_index":  1,
+                               "explanation":  "The number times 1.3 equals 91, so the number is 91 divided by 1.3, which is 70.",
+                               "hint1":  "Write the sentence as an equation before solving.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-word-problems",
+                               "type":  "multiple_choice",
+                               "question":  "In word problems, the word of usually signals:",
+                               "answer":  "multiplication",
+                               "options":  "addition|multiplication|division",
+                               "correct_index":  1,
+                               "explanation":  "Of means multiply: a fraction of a quantity is that fraction times the quantity.",
+                               "hint1":  "Think of one half of 10.",
+                               "difficulty":  0.3
+                           },
+                           {
+                               "concept_id":  "hat-profit-loss-discount",
+                               "type":  "multiple_choice",
+                               "question":  "An item costs Rs 800 and sells for Rs 1000. What is the profit percent?",
+                               "answer":  "25 percent",
+                               "options":  "20 percent|25 percent|80 percent",
+                               "correct_index":  1,
+                               "explanation":  "Profit is 200 on a cost of 800, so 200/800 equals 25 percent.",
+                               "hint1":  "Profit percent is on the cost price.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-profit-loss-discount",
+                               "type":  "multiple_choice",
+                               "question":  "Profit percent is always calculated on:",
+                               "answer":  "the cost price",
+                               "options":  "the selling price|the cost price|the marked price",
+                               "correct_index":  1,
+                               "explanation":  "Profit and loss percentages use the cost price as the base; discounts use the marked price.",
+                               "hint1":  "Identify the base before dividing.",
+                               "difficulty":  0.3
+                           },
+                           {
+                               "concept_id":  "hat-interest",
+                               "type":  "multiple_choice",
+                               "question":  "What is the simple interest on Rs 10,000 at 10 percent per year for 2 years?",
+                               "answer":  "Rs 2,000",
+                               "options":  "Rs 1,000|Rs 2,000|Rs 2,100",
+                               "correct_index":  1,
+                               "explanation":  "Simple interest is PRT/100: 10,000 times 10 times 2 divided by 100 equals 2,000.",
+                               "hint1":  "No compounding in simple interest.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-interest",
+                               "type":  "multiple_choice",
+                               "question":  "What is the compound interest on Rs 10,000 at 10 percent per year for 2 years?",
+                               "answer":  "Rs 2,100",
+                               "options":  "Rs 2,000|Rs 2,100|Rs 1,000",
+                               "correct_index":  1,
+                               "explanation":  "The amount is 10,000 times 1.1 squared, which is 12,100, so interest is 2,100.",
+                               "hint1":  "The second year earns interest on the first year\u0027s interest.",
+                               "difficulty":  0.5
+                           },
+                           {
+                               "concept_id":  "hat-sentence-correction",
+                               "type":  "multiple_choice",
+                               "question":  "Choose the correct completion: The committee reviewed the plan, approved the budget, and ___ the schedule.",
+                               "answer":  "adjusted",
+                               "options":  "adjusted|adjusting|to adjust",
+                               "correct_index":  0,
+                               "explanation":  "The list must be parallel, so all three verbs share the same past-tense form.",
+                               "hint1":  "Keep items in a list in the same grammatical form.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-sentence-correction",
+                               "type":  "multiple_choice",
+                               "question":  "In sentence correction, the option meaning no change is:",
+                               "answer":  "sometimes correct",
+                               "options":  "never correct|sometimes correct|always correct",
+                               "correct_index":  1,
+                               "explanation":  "A sentence may already be correct, so no change is a genuine possibility, though often a trap.",
+                               "hint1":  "Do not assume the sentence is faulty.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-critical-reading",
+                               "type":  "multiple_choice",
+                               "question":  "An inference in a reading passage must be:",
+                               "answer":  "supported by the passage",
+                               "options":  "true in real life|supported by the passage|the author\u0027s exact words",
+                               "correct_index":  1,
+                               "explanation":  "An inference is unstated but must be justified by the text, not by outside knowledge.",
+                               "hint1":  "Distinguish stated from implied.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-critical-reading",
+                               "type":  "multiple_choice",
+                               "question":  "The author\u0027s attitude is best judged from:",
+                               "answer":  "the tone words in the passage",
+                               "options":  "your own opinion|the tone words in the passage|the title alone",
+                               "correct_index":  1,
+                               "explanation":  "Tone is carried by the author\u0027s word choices, not by the reader\u0027s reaction.",
+                               "hint1":  "Look at how the author describes things.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-grammar-tenses",
+                               "type":  "multiple_choice",
+                               "question":  "Choose the correct form: She ___ here since 2019.",
+                               "answer":  "has worked",
+                               "options":  "works|has worked|worked",
+                               "correct_index":  1,
+                               "explanation":  "Since a point in the past with a present result takes the present perfect.",
+                               "hint1":  "Since pairs with the perfect tense.",
+                               "difficulty":  0.5
+                           },
+                           {
+                               "concept_id":  "hat-grammar-tenses",
+                               "type":  "multiple_choice",
+                               "question":  "Choose the correct form: If I ___ rich, I would travel.",
+                               "answer":  "were",
+                               "options":  "am|were|will be",
+                               "correct_index":  1,
+                               "explanation":  "The second conditional uses were for all persons: If I were rich, I would travel.",
+                               "hint1":  "It is a hypothetical, not a fact.",
+                               "difficulty":  0.5
+                           },
+                           {
+                               "concept_id":  "hat-grammar-punctuation",
+                               "type":  "multiple_choice",
+                               "question":  "Which punctuation correctly joins two independent clauses?",
+                               "answer":  "a semicolon",
+                               "options":  "a comma|a semicolon|nothing",
+                               "correct_index":  1,
+                               "explanation":  "A semicolon joins two independent clauses; a comma alone creates a comma splice.",
+                               "hint1":  "A comma is not strong enough on its own.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-grammar-punctuation",
+                               "type":  "multiple_choice",
+                               "question":  "Choose the correct possessive: The dog wagged ___ tail.",
+                               "answer":  "its",
+                               "options":  "it\u0027s|its|its\u0027",
+                               "correct_index":  1,
+                               "explanation":  "Its is the possessive; it\u0027s is only the contraction of it is.",
+                               "hint1":  "Test whether it is short for it is.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-statement-assumption",
+                               "type":  "multiple_choice",
+                               "question":  "An assumption in a statement is:",
+                               "answer":  "an unstated premise the statement depends on",
+                               "options":  "a stated fact|an unstated premise the statement depends on|the conclusion",
+                               "correct_index":  1,
+                               "explanation":  "An assumption is not written down but is required for the statement to make sense.",
+                               "hint1":  "It is hidden, not stated.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-statement-assumption",
+                               "type":  "multiple_choice",
+                               "question":  "The negation test for an assumption asks:",
+                               "answer":  "whether the statement fails if the assumption is false",
+                               "options":  "whether the assumption is popular|whether the statement fails if the assumption is false|whether the assumption is stated",
+                               "correct_index":  1,
+                               "explanation":  "If denying the assumption destroys the statement, the assumption was required.",
+                               "hint1":  "Deny it and see what happens.",
+                               "difficulty":  0.5
+                           },
+                           {
+                               "concept_id":  "hat-statement-conclusion",
+                               "type":  "multiple_choice",
+                               "question":  "A conclusion follows from the statements only if it is:",
+                               "answer":  "necessarily implied by the statements",
+                               "options":  "plausible in real life|necessarily implied by the statements|mentioned in the statements",
+                               "correct_index":  1,
+                               "explanation":  "The conclusion must be forced by the statements, not merely believable or restated.",
+                               "hint1":  "Follows means must follow.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-statement-conclusion",
+                               "type":  "multiple_choice",
+                               "question":  "How does must follow differ from might follow?",
+                               "answer":  "Must follow is guaranteed by the statements",
+                               "options":  "Must follow is merely more likely|Must follow is guaranteed by the statements|They are the same thing",
+                               "correct_index":  1,
+                               "explanation":  "Must follow holds in every case the statements allow; might follow only needs one case.",
+                               "hint1":  "Must is universal, might is existential.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-strong-weak-arguments",
+                               "type":  "multiple_choice",
+                               "question":  "A strong argument is one that is:",
+                               "answer":  "relevant and directly supports or attacks the proposal",
+                               "options":  "emotional and forceful|relevant and directly supports or attacks the proposal|long and detailed",
+                               "correct_index":  1,
+                               "explanation":  "Strength comes from relevance and direct bearing on the proposal, not from force or length.",
+                               "hint1":  "Judge the link to the proposal.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-strong-weak-arguments",
+                               "type":  "multiple_choice",
+                               "question":  "Which argument is weak?",
+                               "answer":  "Everyone knows the plan is bad.",
+                               "options":  "The plan costs more than the budget allows.|Everyone knows the plan is bad.|The plan would double capacity at the same cost.",
+                               "correct_index":  1,
+                               "explanation":  "An appeal to what everyone knows is vague and unsupported, so it is weak.",
+                               "hint1":  "Look for relevance and evidence.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-course-of-action",
+                               "type":  "multiple_choice",
+                               "question":  "A good course of action is:",
+                               "answer":  "feasible, relevant and proportionate",
+                               "options":  "extreme and decisive|feasible, relevant and proportionate|vague and general",
+                               "correct_index":  1,
+                               "explanation":  "An action must be practical, address the problem, and not overreach.",
+                               "hint1":  "Reject extremes and vague sentiments.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-course-of-action",
+                               "type":  "multiple_choice",
+                               "question":  "Which is the weakest course of action for rising accidents at a junction?",
+                               "answer":  "The authorities should do something about it.",
+                               "options":  "Install a speed camera at the junction.|The authorities should do something about it.|Retrain the traffic staff within three months.",
+                               "correct_index":  1,
+                               "explanation":  "The vague option names no concrete, checkable action.",
+                               "hint1":  "A course of action must be specific.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-grouping-puzzles",
+                               "type":  "multiple_choice",
+                               "question":  "If A is selected then B must be selected. Which statement is equivalent?",
+                               "answer":  "If B is not selected, then A is not selected",
+                               "options":  "If B is selected, then A must be selected|If B is not selected, then A is not selected|A and B can never both be selected",
+                               "correct_index":  1,
+                               "explanation":  "That is the contrapositive, which is logically equivalent to the original rule.",
+                               "hint1":  "Reverse and negate both parts.",
+                               "difficulty":  0.5
+                           },
+                           {
+                               "concept_id":  "hat-grouping-puzzles",
+                               "type":  "multiple_choice",
+                               "question":  "At least one of X and Y must be in the group means:",
+                               "answer":  "X or Y or both are in the group",
+                               "options":  "exactly one of X and Y is in|X or Y or both are in the group|neither X nor Y is in",
+                               "correct_index":  1,
+                               "explanation":  "At least one allows either one or both, unlike exactly one.",
+                               "hint1":  "At least one includes both.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-sets-venn",
+                               "type":  "multiple_choice",
+                               "question":  "For two sets, n of A union B equals:",
+                               "answer":  "n(A) plus n(B) minus n(A intersection B)",
+                               "options":  "n(A) plus n(B)|n(A) plus n(B) minus n(A intersection B)|n(A) times n(B)",
+                               "correct_index":  1,
+                               "explanation":  "The elements in both sets are counted twice, so the intersection is subtracted once.",
+                               "hint1":  "Correct for double counting.",
+                               "difficulty":  0.5
+                           },
+                           {
+                               "concept_id":  "hat-sets-venn",
+                               "type":  "multiple_choice",
+                               "question":  "In a class, 20 like tea, 15 like coffee and 8 like both. How many like at least one?",
+                               "answer":  "27",
+                               "options":  "27|35|43",
+                               "correct_index":  0,
+                               "explanation":  "20 plus 15 minus 8 equals 27 like at least one.",
+                               "hint1":  "Use inclusion-exclusion.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-review-method",
+                               "type":  "multiple_choice",
+                               "question":  "Which practice best supports long-term retention?",
+                               "answer":  "Testing yourself on the material",
+                               "options":  "Re-reading the notes|Testing yourself on the material|Highlighting the page",
+                               "correct_index":  1,
+                               "explanation":  "Retrieval practice strengthens memory far more than passive review.",
+                               "hint1":  "Recall beats recognition.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-review-method",
+                               "type":  "multiple_choice",
+                               "question":  "Spaced repetition means reviewing material:",
+                               "answer":  "just before you would forget it",
+                               "options":  "every day without exception|just before you would forget it|only in the week before the test",
+                               "correct_index":  1,
+                               "explanation":  "Reviewing at increasing intervals, timed to when recall is about to fade, is the most efficient schedule.",
+                               "hint1":  "Space the reviews out.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-energy-management",
+                               "type":  "multiple_choice",
+                               "question":  "How should sleep be treated during preparation?",
+                               "answer":  "As part of preparation, not lost study time",
+                               "options":  "As wasted study time|As part of preparation, not lost study time|As important only for children",
+                               "correct_index":  1,
+                               "explanation":  "Sleep consolidates memory and sustains accuracy, so it is a performance input, not a cost.",
+                               "hint1":  "Sleep is when learning is consolidated.",
+                               "difficulty":  0.4
+                           },
+                           {
+                               "concept_id":  "hat-energy-management",
+                               "type":  "multiple_choice",
+                               "question":  "The overactivity-underactivity cycle is:",
+                               "answer":  "studying intensely and then collapsing for days",
+                               "options":  "studying steadily every day|studying intensely and then collapsing for days|studying only at weekends",
+                               "correct_index":  1,
+                               "explanation":  "Bursts followed by burnout produce less total learning than a steady, sustainable schedule.",
+                               "hint1":  "Consistency beats bursts.",
+                               "difficulty":  0.4
                            }
                        ],
     "visualization_decls":  [
@@ -1066,16 +1528,17 @@
                         "badge_url":  "/badges/hat-complete.svg",
                         "title":  "HAT Preparation Complete",
                         "description":  "Completed the HAT preparation course",
-                        "criteria":  "Complete all 47 concepts with 80% quiz accuracy"
+                        "criteria":  "Complete all 68 concepts with 80% quiz accuracy"
                     },
     "modules":  [
                     {
                         "id":  "orientation",
                         "title":  "Know the Arena",
-                        "description":  "What HAT-1 is, how it is weighted and paced, and how to plan and execute eight weeks of preparation.",
+                        "description":  "What HAT-1 is, how it is weighted and paced, how to diagnose your baseline, and how to plan and execute eight weeks of preparation.",
                         "concepts":  [
                                          "hat-exam-overview",
                                          "hat-weightage-strategy",
+                                         "hat-diagnostic-test",
                                          "hat-study-plan",
                                          "hat-time-budget",
                                          "hat-triage-and-guessing"
@@ -1084,7 +1547,7 @@
                     {
                         "id":  "quantitative",
                         "title":  "Quantitative Reasoning",
-                        "description":  "Arithmetic and number sense, percentages, ratio and rate, algebra, geometry, statistics, counting and probability, with a timed drill.",
+                        "description":  "Arithmetic and number sense, percentages, ratio and rate, algebra, sequences, geometry and mensuration, coordinate geometry, statistics, counting and probability, word problems, finance arithmetic, with a timed drill.",
                         "concepts":  [
                                          "hat-arithmetic",
                                          "hat-number-properties",
@@ -1095,40 +1558,58 @@
                                          "hat-rates-speed-distance",
                                          "hat-work-rate",
                                          "hat-counting-probability",
+                                         "hat-exponents-roots",
                                          "hat-algebra",
+                                         "hat-quadratic-equations",
+                                         "hat-sequences",
                                          "hat-geometry",
+                                         "hat-mensuration",
+                                         "hat-coordinate-geometry",
                                          "hat-data-probability",
+                                         "hat-word-problems",
+                                         "hat-profit-loss-discount",
+                                         "hat-interest",
                                          "hat-quant-drill"
                                      ]
                     },
                     {
                         "id":  "verbal",
                         "title":  "Verbal Reasoning",
-                        "description":  "Vocabulary, synonyms and antonyms, analogies, sentence and paragraph completion, grammar, idioms, reading comprehension, and a timed drill.",
+                        "description":  "Vocabulary, synonyms and antonyms, analogies, sentence and paragraph completion, sentence correction, grammar and punctuation, idioms, reading comprehension, critical reading, and a timed drill.",
                         "concepts":  [
                                          "hat-vocabulary",
                                          "hat-synonyms-antonyms",
                                          "hat-analogies",
                                          "hat-sentence-completion",
                                          "hat-paragraph-completion",
+                                         "hat-sentence-correction",
                                          "hat-grammar-errors",
                                          "hat-grammar-agreement",
+                                         "hat-grammar-tenses",
+                                         "hat-grammar-punctuation",
                                          "hat-prepositions-idioms",
                                          "hat-reading-comprehension",
+                                         "hat-critical-reading",
                                          "hat-verbal-drill"
                                      ]
                     },
                     {
                         "id":  "analytical",
                         "title":  "Analytical Reasoning",
-                        "description":  "Critical reasoning and causation, deduction and puzzles, syllogisms, relations and directions, coding, data sufficiency and interpretation, series, and a timed drill.",
+                        "description":  "Critical reasoning, statement-based question types, deduction and puzzles, syllogisms and set logic, relations and directions, coding, data sufficiency and interpretation, series, and a timed drill.",
                         "concepts":  [
                                          "hat-critical-reasoning",
+                                         "hat-statement-assumption",
+                                         "hat-statement-conclusion",
+                                         "hat-strong-weak-arguments",
+                                         "hat-course-of-action",
                                          "hat-cause-effect",
                                          "hat-logic-deduction",
                                          "hat-seating-arrangements",
                                          "hat-ordering-scheduling",
+                                         "hat-grouping-puzzles",
                                          "hat-syllogisms",
+                                         "hat-sets-venn",
                                          "hat-relations-and-directions",
                                          "hat-coding-decoding",
                                          "hat-data-sufficiency",
@@ -1140,11 +1621,13 @@
                     {
                         "id":  "athletes-program",
                         "title":  "The Athlete\u0027s Program",
-                        "description":  "Turning knowledge into a score: mock-test protocol, the error log, score targets and exam-day execution.",
+                        "description":  "Turning knowledge into a score: mock-test protocol, the error log, how to review, score targets, energy management and exam-day execution.",
                         "concepts":  [
                                          "hat-mock-protocol",
                                          "hat-error-log",
+                                         "hat-review-method",
                                          "hat-score-targets",
+                                         "hat-energy-management",
                                          "hat-exam-day"
                                      ]
                     },
@@ -1175,6 +1658,15 @@
                          "module_id":  "orientation",
                          "description":  "The 40/30/30 split, where the marks are, and how to allocate study time.",
                          "estimated_minutes":  15,
+                         "difficulty":  "beginner",
+                         "importance":  "core"
+                     },
+                     {
+                         "id":  "hat-diagnostic-test",
+                         "title":  "Your Baseline Diagnostic: Start with Evidence",
+                         "module_id":  "orientation",
+                         "description":  "Sitting a cold diagnostic, scoring by section, and setting targets from evidence.",
+                         "estimated_minutes":  14,
                          "difficulty":  "beginner",
                          "importance":  "core"
                      },
@@ -1287,12 +1779,39 @@
                          "importance":  "core"
                      },
                      {
+                         "id":  "hat-exponents-roots",
+                         "title":  "Powers, Roots and Surds",
+                         "module_id":  "quantitative",
+                         "description":  "Laws of indices, negative and fractional powers, roots, surds and rationalising.",
+                         "estimated_minutes":  15,
+                         "difficulty":  "intermediate",
+                         "importance":  "core"
+                     },
+                     {
                          "id":  "hat-algebra",
                          "title":  "Algebra Without Fear",
                          "module_id":  "quantitative",
                          "description":  "Linear and simultaneous equations, factorisation, inequalities and word problems.",
                          "estimated_minutes":  16,
                          "difficulty":  "beginner",
+                         "importance":  "core"
+                     },
+                     {
+                         "id":  "hat-quadratic-equations",
+                         "title":  "Quadratic Equations",
+                         "module_id":  "quantitative",
+                         "description":  "Factoring, the quadratic formula, the discriminant and root-coefficient identities.",
+                         "estimated_minutes":  16,
+                         "difficulty":  "intermediate",
+                         "importance":  "core"
+                     },
+                     {
+                         "id":  "hat-sequences",
+                         "title":  "Sequences and Series",
+                         "module_id":  "quantitative",
+                         "description":  "Arithmetic and geometric sequences, nth terms and sums.",
+                         "estimated_minutes":  15,
+                         "difficulty":  "intermediate",
                          "importance":  "core"
                      },
                      {
@@ -1305,12 +1824,57 @@
                          "importance":  "core"
                      },
                      {
+                         "id":  "hat-mensuration",
+                         "title":  "Mensuration: Perimeter, Area and Volume",
+                         "module_id":  "quantitative",
+                         "description":  "Perimeter, area, surface area and volume of common shapes and solids.",
+                         "estimated_minutes":  16,
+                         "difficulty":  "intermediate",
+                         "importance":  "core"
+                     },
+                     {
+                         "id":  "hat-coordinate-geometry",
+                         "title":  "Coordinate Geometry",
+                         "module_id":  "quantitative",
+                         "description":  "Distance, midpoint, slope and the equation of a line.",
+                         "estimated_minutes":  15,
+                         "difficulty":  "intermediate",
+                         "importance":  "core"
+                     },
+                     {
                          "id":  "hat-data-probability",
                          "title":  "Data, Averages and Probability",
                          "module_id":  "quantitative",
                          "description":  "Reading data carefully, statistics, and basic probability.",
                          "estimated_minutes":  15,
                          "difficulty":  "beginner",
+                         "importance":  "core"
+                     },
+                     {
+                         "id":  "hat-word-problems",
+                         "title":  "Translating Word Problems",
+                         "module_id":  "quantitative",
+                         "description":  "Turning English into equations before solving, and checking by substitution.",
+                         "estimated_minutes":  16,
+                         "difficulty":  "beginner",
+                         "importance":  "core"
+                     },
+                     {
+                         "id":  "hat-profit-loss-discount",
+                         "title":  "Profit, Loss and Discount",
+                         "module_id":  "quantitative",
+                         "description":  "Cost, marked and selling price, profit and loss percentages, and successive discounts.",
+                         "estimated_minutes":  15,
+                         "difficulty":  "beginner",
+                         "importance":  "core"
+                     },
+                     {
+                         "id":  "hat-interest",
+                         "title":  "Simple and Compound Interest",
+                         "module_id":  "quantitative",
+                         "description":  "Simple and compound interest, the two-year difference, and growth and decay.",
+                         "estimated_minutes":  15,
+                         "difficulty":  "intermediate",
                          "importance":  "core"
                      },
                      {
@@ -1368,6 +1932,15 @@
                          "importance":  "core"
                      },
                      {
+                         "id":  "hat-sentence-correction",
+                         "title":  "Sentence Correction",
+                         "module_id":  "verbal",
+                         "description":  "Rewriting the faulty part of a sentence using the core grammar checks.",
+                         "estimated_minutes":  16,
+                         "difficulty":  "intermediate",
+                         "importance":  "core"
+                     },
+                     {
                          "id":  "hat-grammar-errors",
                          "title":  "Finding the Error: Grammar Rules",
                          "module_id":  "verbal",
@@ -1382,6 +1955,24 @@
                          "module_id":  "verbal",
                          "description":  "Subject-verb agreement, pronoun reference and misplaced modifiers.",
                          "estimated_minutes":  16,
+                         "difficulty":  "intermediate",
+                         "importance":  "core"
+                     },
+                     {
+                         "id":  "hat-grammar-tenses",
+                         "title":  "Tenses, Articles and Conditionals",
+                         "module_id":  "verbal",
+                         "description":  "Tense sequence, the four conditionals, and article usage.",
+                         "estimated_minutes":  16,
+                         "difficulty":  "intermediate",
+                         "importance":  "core"
+                     },
+                     {
+                         "id":  "hat-grammar-punctuation",
+                         "title":  "Punctuation and Sentence Boundaries",
+                         "module_id":  "verbal",
+                         "description":  "Commas, semicolons, colons, apostrophes, and avoiding comma splices and run-ons.",
+                         "estimated_minutes":  15,
                          "difficulty":  "intermediate",
                          "importance":  "core"
                      },
@@ -1404,6 +1995,15 @@
                          "importance":  "core"
                      },
                      {
+                         "id":  "hat-critical-reading",
+                         "title":  "Critical Reading: Tone, Purpose and Inference",
+                         "module_id":  "verbal",
+                         "description":  "Distinguishing stated from implied, reading tone and purpose, and disciplined inference.",
+                         "estimated_minutes":  18,
+                         "difficulty":  "intermediate",
+                         "importance":  "core"
+                     },
+                     {
                          "id":  "hat-verbal-drill",
                          "title":  "Verbal Drill: 30 Questions in 36 Minutes",
                          "module_id":  "verbal",
@@ -1418,6 +2018,42 @@
                          "module_id":  "analytical",
                          "description":  "Premises and conclusions, the negation test for assumptions, and common flaws.",
                          "estimated_minutes":  18,
+                         "difficulty":  "intermediate",
+                         "importance":  "core"
+                     },
+                     {
+                         "id":  "hat-statement-assumption",
+                         "title":  "Statement and Assumption",
+                         "module_id":  "analytical",
+                         "description":  "Finding the unstated premise and applying the negation test.",
+                         "estimated_minutes":  15,
+                         "difficulty":  "intermediate",
+                         "importance":  "core"
+                     },
+                     {
+                         "id":  "hat-statement-conclusion",
+                         "title":  "Statement and Conclusion",
+                         "module_id":  "analytical",
+                         "description":  "Deciding which conclusions follow necessarily from the given statements.",
+                         "estimated_minutes":  15,
+                         "difficulty":  "intermediate",
+                         "importance":  "core"
+                     },
+                     {
+                         "id":  "hat-strong-weak-arguments",
+                         "title":  "Strong and Weak Arguments",
+                         "module_id":  "analytical",
+                         "description":  "Judging whether an argument is relevant and directly bears on the proposal.",
+                         "estimated_minutes":  15,
+                         "difficulty":  "intermediate",
+                         "importance":  "core"
+                     },
+                     {
+                         "id":  "hat-course-of-action",
+                         "title":  "Course of Action",
+                         "module_id":  "analytical",
+                         "description":  "Choosing feasible, relevant and proportionate actions for a given problem.",
+                         "estimated_minutes":  15,
                          "difficulty":  "intermediate",
                          "importance":  "core"
                      },
@@ -1458,11 +2094,29 @@
                          "importance":  "core"
                      },
                      {
+                         "id":  "hat-grouping-puzzles",
+                         "title":  "Grouping and Selection Puzzles",
+                         "module_id":  "analytical",
+                         "description":  "Assigning items to groups under conditional and at-least constraints.",
+                         "estimated_minutes":  18,
+                         "difficulty":  "intermediate",
+                         "importance":  "core"
+                     },
+                     {
                          "id":  "hat-syllogisms",
                          "title":  "Syllogisms: What Follows Necessarily",
                          "module_id":  "analytical",
                          "description":  "Venn diagrams and validity, and separating must-follow from might-follow.",
                          "estimated_minutes":  16,
+                         "difficulty":  "intermediate",
+                         "importance":  "core"
+                     },
+                     {
+                         "id":  "hat-sets-venn",
+                         "title":  "Set-Based Deduction: Venn Diagrams",
+                         "module_id":  "analytical",
+                         "description":  "Union, intersection, inclusion-exclusion and Venn tests of syllogisms.",
+                         "estimated_minutes":  15,
                          "difficulty":  "intermediate",
                          "importance":  "core"
                      },
@@ -1539,12 +2193,30 @@
                          "importance":  "core"
                      },
                      {
+                         "id":  "hat-review-method",
+                         "title":  "How to Review So It Sticks",
+                         "module_id":  "athletes-program",
+                         "description":  "Retrieval practice, spaced repetition and interleaving for durable learning.",
+                         "estimated_minutes":  16,
+                         "difficulty":  "beginner",
+                         "importance":  "core"
+                     },
+                     {
                          "id":  "hat-score-targets",
                          "title":  "What Score Do You Need? Targets and Projection",
                          "module_id":  "athletes-program",
                          "description":  "Turning the weighted sections into a measurable target per section.",
                          "estimated_minutes":  15,
                          "difficulty":  "intermediate",
+                         "importance":  "core"
+                     },
+                     {
+                         "id":  "hat-energy-management",
+                         "title":  "Energy, Sleep and Stamina",
+                         "module_id":  "athletes-program",
+                         "description":  "Managing energy, sleep and focus so preparation survives to test day.",
+                         "estimated_minutes":  15,
+                         "difficulty":  "beginner",
                          "importance":  "core"
                      },
                      {

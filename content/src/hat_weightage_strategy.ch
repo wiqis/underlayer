@@ -145,7 +145,7 @@ public func render_hat_weightage_strategy() : string {
 
             <div class="lesson-footer">
                 <span><a href="/courses/hat/lessons/hat-exam-overview">Previous: Know the Arena</a></span>
-                <span><a href="/courses/hat/lessons/hat-study-plan">Next: The Eight-Week Program</a></span>
+                <span><a href="/courses/hat/lessons/hat-diagnostic-test">Next: Your Baseline Diagnostic</a></span>
             </div>
         </div>
     }

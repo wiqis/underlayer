@@ -123,8 +123,8 @@ public func render_hat_reading_comprehension() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-prepositions-idioms">Previous: Prepositions, Idioms and Confused Words</a></span>
-                <span><a href="/courses/hat/lessons/hat-verbal-drill">Next: Verbal Drill</a></span>
+                <span><a href="/courses/hat/lessons/hat-prepositions-idioms">Previous: Prepositions and Idioms</a></span>
+                <span><a href="/courses/hat/lessons/hat-critical-reading">Next: Critical Reading</a></span>
             </div>
         </div>
     }

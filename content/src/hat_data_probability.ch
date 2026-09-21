@@ -134,8 +134,8 @@ public func render_hat_data_probability() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-geometry">Previous: Geometry and Measurement</a></span>
-                <span><a href="/courses/hat/lessons/hat-quant-drill">Next: Quantitative Drill</a></span>
+                <span><a href="/courses/hat/lessons/hat-coordinate-geometry">Previous: Coordinate Geometry</a></span>
+                <span><a href="/courses/hat/lessons/hat-word-problems">Next: Translating Word Problems</a></span>
             </div>
         </div>
     }

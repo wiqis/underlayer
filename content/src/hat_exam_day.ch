@@ -128,7 +128,7 @@ public func render_hat_exam_day() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-score-targets">Previous: What Score Do You Need?</a></span>
+                <span><a href="/courses/hat/lessons/hat-energy-management">Previous: Energy, Sleep and Stamina</a></span>
                 <span><a href="/courses/hat/lessons/hat-physics-mechanics">Next: Physics and Mechanics</a></span>
             </div>
         </div>

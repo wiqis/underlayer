@@ -151,7 +151,7 @@ public func render_hat_grammar_agreement() : string {
 
             <div class="lesson-footer">
                 <span><a href="/courses/hat/lessons/hat-grammar-errors">Previous: Finding the Error: Grammar Rules</a></span>
-                <span><a href="/courses/hat/lessons/hat-prepositions-idioms">Next: Prepositions, Idioms and Confused Words</a></span>
+                <span><a href="/courses/hat/lessons/hat-grammar-tenses">Next: Tenses, Articles and Conditionals</a></span>
             </div>
         </div>
     }

@@ -117,8 +117,8 @@ f + 12 = 2(s + 12)</pre>
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-counting-probability">Previous: Counting and Probability</a></span>
-                <span><a href="/courses/hat/lessons/hat-geometry">Next: Geometry and Measurement</a></span>
+                <span><a href="/courses/hat/lessons/hat-exponents-roots">Previous: Powers, Roots and Surds</a></span>
+                <span><a href="/courses/hat/lessons/hat-quadratic-equations">Next: Quadratic Equations</a></span>
             </div>
         </div>
     }

@@ -109,6 +109,27 @@ public namespace underlayer_web {
         var physics_id = std::string("hat-physics-mechanics")
         var programming_id = std::string("hat-programming-fundamentals")
         var digital_id = std::string("hat-digital-logic")
+        var diagnostic_id = std::string("hat-diagnostic-test")
+        var exponents_id = std::string("hat-exponents-roots")
+        var quadratics_id = std::string("hat-quadratic-equations")
+        var sequences_id = std::string("hat-sequences")
+        var mensuration_id = std::string("hat-mensuration")
+        var coordinate_id = std::string("hat-coordinate-geometry")
+        var word_problems_id = std::string("hat-word-problems")
+        var profit_loss_id = std::string("hat-profit-loss-discount")
+        var interest_id = std::string("hat-interest")
+        var sentence_correction_id = std::string("hat-sentence-correction")
+        var critical_reading_id = std::string("hat-critical-reading")
+        var tenses_id = std::string("hat-grammar-tenses")
+        var punctuation_id = std::string("hat-grammar-punctuation")
+        var statement_assumption_id = std::string("hat-statement-assumption")
+        var statement_conclusion_id = std::string("hat-statement-conclusion")
+        var strong_weak_id = std::string("hat-strong-weak-arguments")
+        var course_of_action_id = std::string("hat-course-of-action")
+        var grouping_id = std::string("hat-grouping-puzzles")
+        var sets_venn_id = std::string("hat-sets-venn")
+        var review_method_id = std::string("hat-review-method")
+        var energy_id = std::string("hat-energy-management")
 
         if(cid.equals(&exam_overview_id)) { return underlayer_content::render_hat_exam_overview() }
         if(cid.equals(&weightage_id)) { return underlayer_content::render_hat_weightage_strategy() }
@@ -157,6 +178,27 @@ public namespace underlayer_web {
         if(cid.equals(&physics_id)) { return underlayer_content::render_hat_physics_mechanics() }
         if(cid.equals(&programming_id)) { return underlayer_content::render_hat_programming_fundamentals() }
         if(cid.equals(&digital_id)) { return underlayer_content::render_hat_digital_logic() }
+        if(cid.equals(&diagnostic_id)) { return underlayer_content::render_hat_diagnostic_test() }
+        if(cid.equals(&exponents_id)) { return underlayer_content::render_hat_exponents_roots() }
+        if(cid.equals(&quadratics_id)) { return underlayer_content::render_hat_quadratic_equations() }
+        if(cid.equals(&sequences_id)) { return underlayer_content::render_hat_sequences() }
+        if(cid.equals(&mensuration_id)) { return underlayer_content::render_hat_mensuration() }
+        if(cid.equals(&coordinate_id)) { return underlayer_content::render_hat_coordinate_geometry() }
+        if(cid.equals(&word_problems_id)) { return underlayer_content::render_hat_word_problems() }
+        if(cid.equals(&profit_loss_id)) { return underlayer_content::render_hat_profit_loss_discount() }
+        if(cid.equals(&interest_id)) { return underlayer_content::render_hat_interest() }
+        if(cid.equals(&sentence_correction_id)) { return underlayer_content::render_hat_sentence_correction() }
+        if(cid.equals(&critical_reading_id)) { return underlayer_content::render_hat_critical_reading() }
+        if(cid.equals(&tenses_id)) { return underlayer_content::render_hat_grammar_tenses() }
+        if(cid.equals(&punctuation_id)) { return underlayer_content::render_hat_grammar_punctuation() }
+        if(cid.equals(&statement_assumption_id)) { return underlayer_content::render_hat_statement_assumption() }
+        if(cid.equals(&statement_conclusion_id)) { return underlayer_content::render_hat_statement_conclusion() }
+        if(cid.equals(&strong_weak_id)) { return underlayer_content::render_hat_strong_weak_arguments() }
+        if(cid.equals(&course_of_action_id)) { return underlayer_content::render_hat_course_of_action() }
+        if(cid.equals(&grouping_id)) { return underlayer_content::render_hat_grouping_puzzles() }
+        if(cid.equals(&sets_venn_id)) { return underlayer_content::render_hat_sets_venn() }
+        if(cid.equals(&review_method_id)) { return underlayer_content::render_hat_review_method() }
+        if(cid.equals(&energy_id)) { return underlayer_content::render_hat_energy_management() }
         return string()
     }
 

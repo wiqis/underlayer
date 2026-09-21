@@ -159,8 +159,8 @@ public func render_hat_score_targets() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-error-log">Previous: The Error Log</a></span>
-                <span><a href="/courses/hat/lessons/hat-exam-day">Next: Exam Day</a></span>
+                <span><a href="/courses/hat/lessons/hat-review-method">Previous: How to Review So It Sticks</a></span>
+                <span><a href="/courses/hat/lessons/hat-energy-management">Next: Energy, Sleep and Stamina</a></span>
             </div>
         </div>
     }

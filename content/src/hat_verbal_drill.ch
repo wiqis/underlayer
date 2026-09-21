@@ -173,7 +173,7 @@ public func render_hat_verbal_drill() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-reading-comprehension">Previous: Reading Comprehension Under Time</a></span>
+                <span><a href="/courses/hat/lessons/hat-critical-reading">Previous: Critical Reading</a></span>
                 <span><a href="/courses/hat/lessons/hat-critical-reasoning">Next: Assumptions, Conclusions and Arguments</a></span>
             </div>
         </div>

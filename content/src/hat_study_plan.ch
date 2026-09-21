@@ -165,7 +165,7 @@ Retest: Tue  +  following Sat</pre>
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-weightage-strategy">Previous: Weightage and Study Strategy</a></span>
+                <span><a href="/courses/hat/lessons/hat-diagnostic-test">Previous: Your Baseline Diagnostic</a></span>
                 <span><a href="/courses/hat/lessons/hat-time-budget">Next: Your 120 Minutes</a></span>
             </div>
         </div>

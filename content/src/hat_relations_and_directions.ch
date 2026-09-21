@@ -148,7 +148,7 @@ public func render_hat_relations_and_directions() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-syllogisms">Previous: Syllogisms</a></span>
+                <span><a href="/courses/hat/lessons/hat-sets-venn">Previous: Set-Based Deduction</a></span>
                 <span><a href="/courses/hat/lessons/hat-coding-decoding">Next: Coding and Decoding</a></span>
             </div>
         </div>

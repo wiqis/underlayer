@@ -164,7 +164,7 @@ public func render_hat_ordering_scheduling() : string {
 
             <div class="lesson-footer">
                 <span><a href="/courses/hat/lessons/hat-seating-arrangements">Previous: Seating Arrangements</a></span>
-                <span><a href="/courses/hat/lessons/hat-syllogisms">Next: Syllogisms</a></span>
+                <span><a href="/courses/hat/lessons/hat-grouping-puzzles">Next: Grouping and Selection Puzzles</a></span>
             </div>
         </div>
     }

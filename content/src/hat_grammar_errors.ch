@@ -136,7 +136,7 @@ public func render_hat_grammar_errors() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-paragraph-completion">Previous: Paragraph Completion</a></span>
+                <span><a href="/courses/hat/lessons/hat-sentence-correction">Previous: Sentence Correction</a></span>
                 <span><a href="/courses/hat/lessons/hat-grammar-agreement">Next: Agreement, Pronouns and Modifiers</a></span>
             </div>
         </div>

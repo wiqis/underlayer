@@ -114,8 +114,8 @@ public func render_hat_geometry() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-algebra">Previous: Algebra Without Fear</a></span>
-                <span><a href="/courses/hat/lessons/hat-data-probability">Next: Data, Averages and Probability</a></span>
+                <span><a href="/courses/hat/lessons/hat-sequences">Previous: Sequences and Series</a></span>
+                <span><a href="/courses/hat/lessons/hat-mensuration">Next: Mensuration</a></span>
             </div>
         </div>
     }

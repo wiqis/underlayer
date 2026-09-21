@@ -126,7 +126,7 @@ public func render_hat_paragraph_completion() : string {
 
             <div class="lesson-footer">
                 <span><a href="/courses/hat/lessons/hat-sentence-completion">Previous: Sentence Completion and Signal Words</a></span>
-                <span><a href="/courses/hat/lessons/hat-grammar-errors">Next: Finding the Error: Grammar Rules</a></span>
+                <span><a href="/courses/hat/lessons/hat-sentence-correction">Next: Sentence Correction</a></span>
             </div>
         </div>
     }

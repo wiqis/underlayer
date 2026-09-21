@@ -161,7 +161,7 @@ public func render_hat_prepositions_idioms() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-grammar-agreement">Previous: Agreement, Pronouns and Modifiers</a></span>
+                <span><a href="/courses/hat/lessons/hat-grammar-punctuation">Previous: Punctuation</a></span>
                 <span><a href="/courses/hat/lessons/hat-reading-comprehension">Next: Reading Comprehension Under Time</a></span>
             </div>
         </div>
