@@ -784,6 +784,94 @@ For exercises that simulate running commands:
 </div>
 ```
 
+### Pattern: Embedded Interactive Assessment (client-side runner)
+
+Use this when a lesson needs a **long, multi-question, scored assessment** — a
+baseline diagnostic, a mock exam, a placement test — rather than one inline
+quiz. The reference implementation is the HAT course's baseline diagnostic
+(`content/src/hat_diagnostic_*.ch`), a 100-question / 120-minute mock.
+
+**Why it must be a client-side runner.** `#html` blocks cannot contain loops
+(`@{}` is broken — see `docs/implementation-gaps.md`), so you cannot server-loop
+100 questions into markup. The sanctioned pattern is a static shell plus JS that
+renders the questions and keeps state in `localStorage`, which also makes it work
+in both static and backend modes (golden rule: backend-optional).
+
+**File layout — split into three files (no file over 250 lines):**
+
+| File | Concern |
+|------|---------|
+| `<concept>.ch` | The lesson page. Static `#html` shell with a root div, plus calls to the two support render functions. |
+| `<concept>_bank.ch` | Question data as a `#js` array of objects. One question per line. |
+| `<concept>_runner.ch` | `#css` for the test UI + `#js` runner (start, timer, navigation, submit, scoring, report). |
+
+**Shell in the lesson file:**
+
+```chemical
+render_hat_lesson_css(&mut page)
+render_hat_diagnostic_css(&mut page)
+
+#html {
+    <div class="unit unit-diagnostic">
+        <h2>Take Your Baseline Diagnostic</h2>
+        <p>...instructions...</p>
+        <div id="hat-diag-root" class="hat-diag"><p>Loading the diagnostic&hellip;</p></div>
+        <noscript><p>The diagnostic needs JavaScript.</p></noscript>
+    </div>
+}
+
+render_hat_lesson_js(&mut page)
+render_hat_diagnostic_bank(&mut page)   // defines HAT_DIAG_QUANT / VERBAL / ANALYTICAL
+render_hat_diagnostic_js(&mut page)     // the runner
+```
+
+**Question data shape** (one line per question; `p` is an optional passage):
+
+```chemical
+#js {
+    var HAT_DIAG_QUANT = [
+        { q: "What is 15 percent of 240?", o: ["24", "36", "45", "16"], a: 1, e: "10 percent is 24 and 5 percent is 12." },
+        { q: "Solve for x: 3x + 7 = 22.", o: ["3", "5", "15", "9.67"], a: 1, e: "3x = 15, so x = 5." }
+    ];
+}
+```
+
+**Runner rules (all verified against the compiler):**
+
+1. **Build DOM with `createElement` + `textContent`, never HTML strings.** Golden
+   rule 7 forbids string-built HTML; the JS counterpart is to create nodes, not
+   `innerHTML += "<div>..."`.
+2. **Multiple `#css` / `#js` blocks concatenate** into one `<style>` / `<script>`
+   (`page.toString()` joins `pageCss` / `pageJs`), so one helper function per
+   concern is safe — call order is execution order.
+3. **No grouping parentheses in expressions.** The `#js` converter drops them in
+   non-JSX mode, so `(a + b) * c` emits as `a + b * c` and `"" + (i + 1)` emits
+   as `"" + i + 1`. Hoist: `var label = i + 1; ... "" + label`. Call parentheses
+   (`f(x, y)`) and object literals are preserved.
+4. **No regex literals** — the lexer mangles `/.../`. Use string methods.
+5. **Avoid closure-over-loop bugs.** `for` + `var` shares one binding; build a
+   handler factory (`function handler(idx) { return function() { ... }; }`).
+6. **Keep JS strings ASCII.** The converter escapes non-ASCII to `\u{...}`; use
+   `|` or `-` instead of `·`/`—`.
+7. **Persist to `localStorage` inside `try/catch`** so `file://` and private mode
+   fail silently. Save an in-progress record for resume, and clear it on submit.
+8. **Auto-submit on timeout** from the same tick that updates the countdown.
+
+**Scoring / report:** store the correct index (`a`) per question; compute a total
+and a per-section `{correct, wrong, blank}` breakdown; render a table and an
+interpretation band (e.g. below/above a pass line); persist the result under one
+key; offer a retake that clears the key.
+
+**Verify before shipping:**
+
+- Extract the served `<script>` and run `node --check` on it (catches converter
+  mangling).
+- Drive the runner with a stub DOM in Node: answer every question with the key
+  and assert `total === max`; answer none and assert 0; check resume and retake.
+- Add a `@test` that fetches the lesson and asserts the bank + runner markers are
+  present (see `tests/src/hat_test.ch`).
+- The concept linter skips `*_bank.ch` / `*_runner.ch` as support files.
+
 ---
 
 ## Error Recovery Patterns
@@ -950,6 +1038,19 @@ You might think the ELF header is just metadata you can skip.
 Actually, it's parsed FIRST — without it, the loader doesn't know
 how to read anything else in the file.
 ```
+
+### Pattern: Assessment as Data + Runner
+**Discovered:** A long scored assessment (baseline diagnostic, mock exam) is
+cleanest as two support files — a `#js` question bank and a `#js` runner — with
+the lesson holding only a static root div. Keeps each file small, keeps the
+questions reviewable one-per-line, and works offline via `localStorage`.
+**Works because:** `#html` cannot loop, so the list must be rendered client-side
+anyway; separating data from behaviour makes both testable. See
+"Embedded Interactive Assessment (client-side runner)" above.
+
+**Example (HAT baseline diagnostic):** `content/src/hat_diagnostic_test.ch` (shell)
++ `hat_diagnostic_bank.ch` (100 questions) + `hat_diagnostic_runner.ch` (timed
+runner + scoring + report).
 
 ---
 

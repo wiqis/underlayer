@@ -699,6 +699,9 @@ learners.push(underlayer_models::Learner {
 | Use `+` for string concatenation | No operator overload | Use `append_view()` or backtick templates |
 | Use `arr[i]` for vector access | No index operator | Use `arr.get(i)` or `arr.get_ptr(i)` |
 | **Use string appends for HTML/CSS/JS** | **FORBIDDEN** | **Use `#html`, `#css`, `#js` macros. Fix macro bugs in CBI plugins.** |
+| Build HTML strings in client JS (`innerHTML += "<div>"`) | Same golden rule, JS side | `document.createElement` + `textContent` |
+| Grouping parens in `#js`: `(a + b) * c` | Non-JSX converter drops them, giving `a + b * c` | Hoist: `var t = a + b; t * c` |
+| Regex literal in `#js`: `/pattern/` | Lexer mangles it | Use `indexOf` / `replace` |
 | Write `if(cond) { ... }` without else | Language requires else | Always add `else {}` |
 | Use `0.5` for float parameters | It's `double` | Use `0.5f` |
 | Split `#html` across blocks | Element must close in same block | Use `@{}` escape for dynamic content |
@@ -886,6 +889,29 @@ set_volume(0.5)     // TypeCheck error
     <div>{page::escape_html(user_input)}</div>
 }
 ```
+
+### `#js` Macro Quirks (client-side code)
+
+The plain `#js` macro runs the JS parser in **non-JSX mode**, which mangles a few
+constructs. Details in `docs/implementation-gaps.md`; the rules:
+
+- **Grouping parentheses are dropped.** `(a + b) * c` emits as `a + b * c`, and
+  `"" + (i + 1)` emits as `"" + i + 1` (wrong). Call parentheses (`f(x, y)`) and
+  object literals are preserved. **Fix:** hoist into a variable —
+  `var label = i + 1; ... "" + label`.
+- **Regex literals are mangled.** The lexer tokenizes `/.../` as operators.
+  **Fix:** use string methods (`indexOf`, `replace`), never `/pattern/`.
+- **Non-ASCII is escaped** to `\u{...}` by the converter. **Fix:** keep JS string
+  literals ASCII (use `|`/`-`, not `·`/`—`).
+- **Closures over loop variables share one binding** (`var`, not `let`).
+  **Fix:** a handler factory — `function handler(i) { return function() { ... }; }`.
+- **Multiple `#css` / `#js` blocks concatenate** into one `<style>` / `<script>`
+  in call order (`page.toString()` joins `pageCss` / `pageJs`), so you can split
+  helpers across files.
+
+A bare `%` in a JS string is fine (`pct + '%'` compiles). Build DOM with
+`document.createElement` + `textContent`, never string-concatenated HTML
+(golden rule 7).
 
 ### Interpreter Limitations
 
