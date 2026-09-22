@@ -452,6 +452,13 @@
 - [ ] P3 3.4.14 Accordions (expandable sections)
 - [ ] P3 3.4.15 Footnotes and citations
 
+### 3.5 Course Assessments
+
+- [x] P2 3.5.1 HAT baseline diagnostic: full 100-question mock embedded in the hat-diagnostic-test lesson (40 quantitative, 30 verbal, 30 analytical)
+- [x] P2 3.5.2 Diagnostic runner: 120-minute countdown, question palette, in-progress resume, auto-submit at time-up
+- [x] P2 3.5.3 Diagnostic scoring: sectional correct/wrong/blank breakdown, /100 total, qualifying-line interpretation, next-step links
+- [x] P2 3.5.4 Diagnostic score persistence in localStorage (works in static and backend modes)
+
 ---
 
 ## 4. Exercise System

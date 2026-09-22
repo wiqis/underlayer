@@ -167,6 +167,42 @@ public func test_hat_orientation_rejects_technical_section(env : &mut TestEnv) {
 }
 
 @test
+public func test_hat_diagnostic_test_has_interactive_bank(env : &mut TestEnv) {
+    var db = test_helpers::setup_test_db()
+    var courses_dir = string("./courses")
+    var cfg = server.ServerConfig()
+    cfg.addr = string("127.0.0.1:20116")
+    var srv = server.Server(cfg)
+    var course_id = string("hat")
+    var concept_id = string("hat-diagnostic-test")
+    srv.router.add("GET", "/api/courses/hat/lessons/hat-diagnostic-test", (|&courses_dir, &course_id, &concept_id|(req, res) => {
+        var ccv = course_id.to_view()
+        var tcv = concept_id.to_view()
+        underlayer_web::handle_lesson(courses_dir, &raw ccv, &raw tcv, &req, &raw mut res)
+    }))
+    srv.serve_async(20116u)
+    std::concurrent.sleep_ms(200u)
+
+    var client = http::Client()
+    var res = client.get("http://127.0.0.1:20116/api/courses/hat/lessons/hat-diagnostic-test")
+    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Ok(resp) = res else unreachable
+    if(resp.status != 200u) { env.error("expected status 200") }
+    var body_opt = resp.body.read_to_string()
+    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Some(body) = body_opt else unreachable
+    if(body.find(string_view("hat-diag-root")) == std::NPOS) { env.error("diagnostic missing its runner root") }
+    if(body.find(string_view("HAT_DIAG_QUANT")) == std::NPOS) { env.error("diagnostic missing the quantitative bank") }
+    if(body.find(string_view("HAT_DIAG_VERBAL")) == std::NPOS) { env.error("diagnostic missing the verbal bank") }
+    if(body.find(string_view("HAT_DIAG_ANALYTICAL")) == std::NPOS) { env.error("diagnostic missing the analytical bank") }
+    if(body.find(string_view("hatDiagSubmit")) == std::NPOS) { env.error("diagnostic missing the scoring runner") }
+    if(body.find(string_view("Take Your Baseline Diagnostic")) == std::NPOS) { env.error("diagnostic missing its section heading") }
+
+    srv.shutdown()
+    underlayer_db::close(&raw db)
+}
+
+@test
 public func test_hat_unknown_lesson_returns_404(env : &mut TestEnv) {
     var db = test_helpers::setup_test_db()
     var courses_dir = string("./courses")

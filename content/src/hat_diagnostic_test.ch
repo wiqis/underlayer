@@ -12,12 +12,13 @@ public func render_hat_diagnostic_test() : string {
     page.appendTitle(&title)
 
     render_hat_lesson_css(&mut page)
+    render_hat_diagnostic_css(&mut page)
 
     #html {
         <div class="lesson hat-lesson">
             <a href="/courses/hat" class="back-link">Back to course</a>
             <h1>Your Baseline Diagnostic: Start with Evidence</h1>
-            <div class="lesson-meta">14 min &middot; Module 1: Know the Arena &middot; Planning</div>
+            <div class="lesson-meta">14 min reading + a 120 min timed diagnostic &middot; Module 1: Know the Arena &middot; Planning</div>
 
             <div class="unit unit-why">
                 <h2>Why This Matters</h2>
@@ -145,6 +146,17 @@ public func render_hat_diagnostic_test() : string {
                 </details>
             </div>
 
+            <div class="unit unit-diagnostic">
+                <h2>Take Your Baseline Diagnostic</h2>
+                <p>The lesson above tells you how to sit a cold diagnostic. This is the paper itself: 100 HAT-1 style questions &mdash; 40 quantitative, 30 verbal and 30 analytical &mdash; against a 120-minute clock, marked by section the moment you submit. There is no negative marking, so answer every question. Sit it cold, in one sitting, without a calculator, and let the score tell you where the marks currently are.</p>
+                <div id="hat-diag-root" class="hat-diag">
+                    <p>Loading the diagnostic&hellip;</p>
+                </div>
+                <noscript>
+                    <p>The diagnostic needs JavaScript. Please enable it in your browser to sit the test.</p>
+                </noscript>
+            </div>
+
             <div class="unit unit-connect">
                 <h2>Connect</h2>
                 <p>You now hold evidence instead of a guess. The next lesson turns that evidence into a calendar: how to weight your hours to the sections that pay, and how to sequence the eight weeks so each block earns the next. See <a href="/courses/hat/lessons/hat-study-plan">The Eight-Week Program</a>.</p>
@@ -158,6 +170,8 @@ public func render_hat_diagnostic_test() : string {
     }
 
     render_hat_lesson_js(&mut page)
+    render_hat_diagnostic_bank(&mut page)
+    render_hat_diagnostic_js(&mut page)
 
     return page.toString()
 }

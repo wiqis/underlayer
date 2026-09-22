@@ -42,8 +42,10 @@ check_file() {
     local label="${basename%.ch}"
     local f=0 w=0
 
-    # Skip test files and shared helper/asset files (non-concept pages)
-    case "$basename" in *_test.ch|*_assets.ch|*helpers.ch) return ;; esac
+    # Skip test files and shared helper/asset files (non-concept pages).
+    # `*_bank.ch` / `*_runner.ch` are shared data + behaviour support files for a
+    # concept (e.g. the HAT baseline diagnostic), not lesson pages themselves.
+    case "$basename" in *_test.ch|*_assets.ch|*helpers.ch|*_bank.ch|*_runner.ch) return ;; esac
 
     local inside_html inside_js
     inside_html=$(grep -n '#html' "$file" | head -1 | cut -d: -f1)
