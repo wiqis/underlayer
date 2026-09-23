@@ -1,0 +1,452 @@
+{
+  "id": "pe",
+  "title": "Portable Executable Format",
+  "version": 1,
+  "description": "A deep dive into the Windows PE binary format — DOS and COFF headers, optional header, data directories, sections, imports, exports, relocations, resources, and how the Windows loader maps and runs an image.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "intermediate",
+  "importance": "core",
+  "completion_criteria": "all_concepts",
+  "min_platform_version": "1.0",
+  "navigation": "linear",
+  "branching": false,
+  "alternative_paths": [],
+  "bundles": [],
+  "assets": [],
+  "dependencies": ["elf"],
+  "review_item_decls": [],
+  "exercise_decls": [
+    {
+      "concept_id": "pe-intro",
+      "type": "multiple_choice",
+      "question": "What two bytes open every PE file, and what ASCII letters do they spell?",
+      "answer": "4d 5a, spelling MZ",
+      "options": "7f 45, spelling .ELF|4d 5a, spelling MZ|50 45, spelling PE",
+      "correct_index": 1,
+      "explanation": "Every PE file starts with the MS-DOS magic 4d 5a ('MZ') at offset 0. 50 45 ('PE') appears later, at the offset stored in e_lfanew. 7f 45 is the ELF magic, not PE.",
+      "hint1": "The DOS header comes first; the PE signature is found via a pointer inside it.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "pe-intro",
+      "type": "free_recall",
+      "question": "Roughly how many layers does a PE file have from byte 0 to section data?",
+      "answer": "DOS header, DOS stub, PE signature, COFF header, optional header, section table, sections",
+      "explanation": "The layered chain is: DOS header (with e_lfanew) → DOS stub → PE signature → COFF file header → optional header (incl. data directories) → section table → section data.",
+      "hint1": "Start at the MZ header and follow the pointer.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "pe-dos-header",
+      "type": "multiple_choice",
+      "question": "At which file offset does the DOS header store the offset of the PE signature?",
+      "answer": "0x3C",
+      "options": "0x00|0x04|0x3C",
+      "correct_index": 2,
+      "explanation": "The e_lfanew field sits at offset 0x3C (60) in IMAGE_DOS_HEADER and holds the file offset of the 'PE\\0\\0' signature.",
+      "hint1": "It is near the end of the 64-byte DOS header.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "pe-dos-header",
+      "type": "multiple_choice",
+      "question": "A file's bytes at 0x3C are 00 01 00 00 (little-endian). Where does its PE signature start?",
+      "answer": "At file offset 0x100 (256)",
+      "options": "At file offset 0x0001|At file offset 0x100 (256)|At file offset 0x3C",
+      "correct_index": 1,
+      "explanation": "Little-endian 00 01 00 00 = 0x00000100 = 256. e_lfanew is an absolute file offset, so 'PE\\0\\0' sits at byte 256.",
+      "hint1": "Decode the four bytes as a little-endian 32-bit integer.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "pe-signature-coff",
+      "type": "multiple_choice",
+      "question": "How many bytes is the IMAGE_FILE_HEADER (COFF header), excluding the 4-byte PE signature?",
+      "answer": "20 bytes",
+      "options": "20 bytes|24 bytes|64 bytes",
+      "correct_index": 0,
+      "explanation": "IMAGE_FILE_HEADER is 20 bytes: Machine(2) + NumberOfSections(2) + TimeDateStamp(4) + PointerToSymbolTable(4) + NumberOfSymbols(4) + SizeOfOptionalHeader(2) + Characteristics(2).",
+      "hint1": "Add up the field sizes: 2+2+4+4+4+2+2.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "pe-signature-coff",
+      "type": "multiple_choice",
+      "question": "A COFF header has Machine = 4c 01 (0x014C). What CPU does it target?",
+      "answer": "Intel 386 (x86, 32-bit)",
+      "options": "x64 (AMD64)|Intel 386 (x86, 32-bit)|ARM64",
+      "correct_index": 1,
+      "explanation": "IMAGE_FILE_MACHINE_I386 = 0x14C is Intel 386 and compatible 32-bit x86. x64 is 0x8664, ARM64 is 0xAA64.",
+      "hint1": "0x14C is the classic 32-bit x86 machine value.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "pe-optional-header",
+      "type": "multiple_choice",
+      "question": "What magic value identifies a PE32+ (64-bit) optional header?",
+      "answer": "0x20b",
+      "options": "0x10b|0x20b|0x8664",
+      "correct_index": 1,
+      "explanation": "Optional-header Magic 0x10b = PE32, 0x20b = PE32+, 0x107 = ROM image. 0x8664 is a Machine value in the COFF header, not the optional header.",
+      "hint1": "PE32 is 0x10b; adding 0x100 gives the 64-bit variant.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "pe-optional-header",
+      "type": "multiple_choice",
+      "question": "Which optional-header field is present in PE32 but absent in PE32+?",
+      "answer": "BaseOfData",
+      "options": "ImageBase|BaseOfData|AddressOfEntryPoint",
+      "correct_index": 1,
+      "explanation": "BaseOfData (offset 24, 4 bytes) exists only in PE32, right after BaseOfCode. In PE32+ ImageBase follows BaseOfCode directly and is 8 bytes wide.",
+      "hint1": "It is the extra standard field the spec lists for PE32 only.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "pe-data-directories",
+      "type": "multiple_choice",
+      "question": "How big is one data-directory entry, and what does it hold?",
+      "answer": "8 bytes: a 4-byte RVA plus a 4-byte size",
+      "options": "4 bytes: just an RVA|8 bytes: a 4-byte RVA plus a 4-byte size|16 bytes: two RVAs",
+      "correct_index": 1,
+      "explanation": "IMAGE_DATA_DIRECTORY = { DWORD VirtualAddress; DWORD Size; } = 8 bytes. The VirtualAddress is the table's RVA, Size its length in bytes.",
+      "hint1": "Two 32-bit fields make 8 bytes.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "pe-data-directories",
+      "type": "multiple_choice",
+      "question": "Why does the Certificate Table entry hold a file offset instead of an RVA?",
+      "answer": "Certificates are not mapped into memory with the image",
+      "options": "It is a bug in the spec|Certificates are not mapped into memory with the image|The loader needs it before mapping sections",
+      "correct_index": 1,
+      "explanation": "The spec says attribute certificates are not loaded into memory as part of the image, so this entry is a file pointer, not an RVA. Everything else in the directory array is an RVA.",
+      "hint1": "Think about what the loader maps into memory.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "pe-rva-conversion",
+      "type": "multiple_choice",
+      "question": "A table is at RVA 0x3A04. Its section (.rdata) has VirtualAddress 0x3000 and PointerToRawData 0x1C00. What is the file offset?",
+      "answer": "0x2604",
+      "options": "0x3A04|0x2604|0x4C04",
+      "correct_index": 1,
+      "explanation": "file = PointerToRawData + (RVA - VirtualAddress) = 0x1C00 + (0x3A04 - 0x3000) = 0x1C00 + 0xA04 = 0x2604.",
+      "hint1": "Subtract the section's virtual address, then add the raw file pointer.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "pe-section-table",
+      "type": "multiple_choice",
+      "question": "How many bytes is each IMAGE_SECTION_HEADER entry?",
+      "answer": "40 bytes",
+      "options": "20 bytes|40 bytes|64 bytes",
+      "correct_index": 1,
+      "explanation": "IMAGE_SECTION_HEADER is 40 bytes: Name(8) + VirtualSize(4) + VirtualAddress(4) + SizeOfRawData(4) + PointerToRawData(4) + 4 more pointer/count fields(10) + Characteristics(4).",
+      "hint1": "8 + 4+4+4+4 + 4+4+2+2 + 4.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "pe-alignment",
+      "type": "multiple_choice",
+      "question": "A section's VirtualSize is 0x17BC but SizeOfRawData is 0x1800. What fills the gap on disk and in memory?",
+      "answer": "Zeros",
+      "options": "The next section's data|Zeros|Nothing — the file is truncated",
+      "correct_index": 1,
+      "explanation": "SizeOfRawData is rounded up to FileAlignment (0x200 here: 0x17BC -> 0x1800). The spec says if SizeOfRawData exceeds VirtualSize the extra bytes are padding — zeros on disk, zero-fill in memory.",
+      "hint1": "SizeOfRawData is aligned up to FileAlignment; VirtualSize is the true length.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "pe-imports",
+      "type": "multiple_choice",
+      "question": "What single field in an IMAGE_IMPORT_DESCRIPTOR names the imported DLL?",
+      "answer": "Name (offset 12) — an RVA of an ASCII string",
+      "options": "FirstThunk|Name (offset 12) — an RVA of an ASCII string|TimeDateStamp",
+      "correct_index": 1,
+      "explanation": "The Name field at descriptor offset 12 is the RVA of a null-terminated ASCII DLL name (e.g. 'KERNEL32.dll'). FirstThunk points at the import address table, not the name.",
+      "hint1": "It is the fourth DWORD of the 20-byte descriptor.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "pe-imports",
+      "type": "multiple_choice",
+      "question": "What does the loader write into the Import Address Table during binding?",
+      "answer": "The actual memory addresses of the imported functions",
+      "options": "The DLL names|The actual memory addresses of the imported functions|The hint values",
+      "correct_index": 1,
+      "explanation": "Until binding, IAT entries copy the import lookup table (RVAs of hint/name entries). The loader overwrites each IAT slot with the function's real address — that is what makes calls work.",
+      "hint1": "The IAT becomes pointers after the loader resolves each import.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "pe-exports",
+      "type": "multiple_choice",
+      "question": "Which export table is sorted so it can be searched with a binary search?",
+      "answer": "The export name pointer table",
+      "options": "The export address table|The export name pointer table|The ordinal table",
+      "correct_index": 1,
+      "explanation": "AddressOfNames entries are ordered lexically to allow binary search. The ordinal table is a parallel array of 16-bit indexes; the address table is indexed directly by ordinal.",
+      "hint1": "Lookup by name starts with a search over that table.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "pe-base-relocations",
+      "type": "multiple_choice",
+      "question": "In a base-relocation entry, what do the high 4 bits and low 12 bits hold?",
+      "answer": "High 4 bits: relocation type; low 12 bits: page offset",
+      "options": "High 4 bits: page offset; low 12 bits: type|High 4 bits: relocation type; low 12 bits: page offset|High 8 bits: type; low 8 bits: offset",
+      "correct_index": 1,
+      "explanation": "Each 16-bit type/offset word packs a 4-bit type (e.g. DIR64 = 10) and a 12-bit offset within the block's 4K page (Page RVA).",
+      "hint1": "12 bits address up to 4096 bytes — one page.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "pe-execution",
+      "type": "free_recall",
+      "question": "What does AddressOfEntryPoint contain — an RVA or a VA, and relative to what?",
+      "answer": "An RVA — the entry point relative to ImageBase, not an absolute address and not inside main()",
+      "explanation": "The spec defines AddressOfEntryPoint as the address relative to the image base. The loader adds ImageBase (plus relocation delta) to get the final VA. It points at process/CRT startup code, not your main() function.",
+      "hint1": "'Relative to the image base' is the spec's wording.",
+      "difficulty": 0.4
+    }
+  ],
+  "visualization_decls": [],
+  "certificate": {
+    "template_id": "pe-completion",
+    "badge_url": "/badges/pe-complete.svg",
+    "title": "PE Format Mastery",
+    "description": "Completed the full Portable Executable format course",
+    "criteria": "Complete all 24 concepts with 80% quiz accuracy"
+  },
+  "modules": [
+    {
+      "id": "fundamentals",
+      "title": "Fundamentals",
+      "concepts": [
+        "pe-intro",
+        "pe-file-layout",
+        "pe-coff-basics"
+      ],
+      "description": "What PE is, how the file is layered, and its COFF heritage."
+    },
+    {
+      "id": "headers",
+      "title": "Headers",
+      "concepts": [
+        "pe-dos-header",
+        "pe-signature-coff",
+        "pe-optional-header"
+      ],
+      "description": "The DOS header, the PE signature with its COFF header, and the optional header."
+    },
+    {
+      "id": "addressing",
+      "title": "Addressing & Data Directories",
+      "concepts": [
+        "pe-data-directories",
+        "pe-addresses",
+        "pe-rva-conversion"
+      ],
+      "description": "The 16 data directories, the VA/RVA/file-offset model, and converting between them."
+    },
+    {
+      "id": "sections",
+      "title": "Sections",
+      "concepts": [
+        "pe-section-table",
+        "pe-common-sections",
+        "pe-alignment"
+      ],
+      "description": "The section table, the sections every PE has, and alignment rules."
+    },
+    {
+      "id": "imports-exports",
+      "title": "Imports & Exports",
+      "concepts": [
+        "pe-imports",
+        "pe-exports",
+        "pe-delay-loads"
+      ],
+      "description": "How an image consumes DLL functions, publishes its own, and defers loading."
+    },
+    {
+      "id": "relocations-hardening",
+      "title": "Relocations & Hardening",
+      "concepts": [
+        "pe-base-relocations",
+        "pe-security-flags",
+        "pe-load-config"
+      ],
+      "description": "Moving an image off its preferred base, and the flags and structures that harden it."
+    },
+    {
+      "id": "runtime-tables",
+      "title": "Resources & Runtime Tables",
+      "concepts": [
+        "pe-resources",
+        "pe-tls",
+        "pe-exceptions"
+      ],
+      "description": "Icons and strings in .rsrc, thread-local storage, and x64 exception tables."
+    },
+    {
+      "id": "loading-execution",
+      "title": "Loading & Execution",
+      "concepts": [
+        "pe-loader",
+        "pe-memory-layout",
+        "pe-execution"
+      ],
+      "description": "How Windows maps the image, what memory looks like, and how execution starts."
+    }
+  ],
+  "concepts": [
+    {
+      "id": "pe-intro",
+      "title": "Why the Portable Executable Format Exists",
+      "module_id": "fundamentals",
+      "description": "The MZ-PE chain and the course map."
+    },
+    {
+      "id": "pe-file-layout",
+      "title": "PE File Layout",
+      "module_id": "fundamentals",
+      "description": "Headers, section table, and section data, end to end."
+    },
+    {
+      "id": "pe-coff-basics",
+      "title": "The COFF Heritage",
+      "module_id": "fundamentals",
+      "description": "PE is a COFF image: object files vs images, machine types."
+    },
+    {
+      "id": "pe-dos-header",
+      "title": "The MS-DOS Header",
+      "module_id": "headers",
+      "description": "IMAGE_DOS_HEADER: e_magic and the e_lfanew pointer."
+    },
+    {
+      "id": "pe-signature-coff",
+      "title": "PE Signature and COFF Header",
+      "module_id": "headers",
+      "description": "PE\\0\\0 plus IMAGE_FILE_HEADER and its Characteristics flags."
+    },
+    {
+      "id": "pe-optional-header",
+      "title": "The Optional Header",
+      "module_id": "headers",
+      "description": "PE32 vs PE32+, standard fields, and Windows-specific fields."
+    },
+    {
+      "id": "pe-data-directories",
+      "title": "The Data Directories",
+      "module_id": "addressing",
+      "description": "Sixteen RVA+size slots that point at every special table."
+    },
+    {
+      "id": "pe-addresses",
+      "title": "VA, RVA, and File Offset",
+      "module_id": "addressing",
+      "description": "The three address spaces of a PE file and how they relate."
+    },
+    {
+      "id": "pe-rva-conversion",
+      "title": "Converting RVAs to File Offsets",
+      "module_id": "addressing",
+      "description": "The section-walk algorithm, with a verified worked example."
+    },
+    {
+      "id": "pe-section-table",
+      "title": "The Section Table",
+      "module_id": "sections",
+      "description": "IMAGE_SECTION_HEADER: 40 bytes per section."
+    },
+    {
+      "id": "pe-common-sections",
+      "title": "Common Sections",
+      "module_id": "sections",
+      "description": ".text, .rdata, .data, .pdata, .rsrc, and .reloc."
+    },
+    {
+      "id": "pe-alignment",
+      "title": "Alignment: FileAlignment vs SectionAlignment",
+      "module_id": "sections",
+      "description": "Why sizes differ on disk and in memory."
+    },
+    {
+      "id": "pe-imports",
+      "title": "The Import Tables",
+      "module_id": "imports-exports",
+      "description": "Descriptors, thunks, hint/name entries, and the IAT."
+    },
+    {
+      "id": "pe-exports",
+      "title": "The Export Tables",
+      "module_id": "imports-exports",
+      "description": "The export directory, ordinals, names, and forwarders."
+    },
+    {
+      "id": "pe-delay-loads",
+      "title": "Delay-Load Imports",
+      "module_id": "imports-exports",
+      "description": "Loading a DLL on first call instead of at process start."
+    },
+    {
+      "id": "pe-base-relocations",
+      "title": "Base Relocations",
+      "module_id": "relocations-hardening",
+      "description": "The .reloc blocks that let the image move."
+    },
+    {
+      "id": "pe-security-flags",
+      "title": "Security & Subsystem Flags",
+      "module_id": "relocations-hardening",
+      "description": "DllCharacteristics (ASLR, NX, CFG), subsystems, Authenticode."
+    },
+    {
+      "id": "pe-load-config",
+      "title": "The Load Configuration",
+      "module_id": "relocations-hardening",
+      "description": "Security cookies, SEH tables, and Control Flow Guard."
+    },
+    {
+      "id": "pe-resources",
+      "title": "The Resource Directory",
+      "module_id": "runtime-tables",
+      "description": "The three-level .rsrc tree: Type, Name, Language."
+    },
+    {
+      "id": "pe-tls",
+      "title": "Thread-Local Storage",
+      "module_id": "runtime-tables",
+      "description": "The TLS directory, templates, and callbacks."
+    },
+    {
+      "id": "pe-exceptions",
+      "title": "Exception Tables (.pdata)",
+      "module_id": "runtime-tables",
+      "description": "RUNTIME_FUNCTION entries that make x64 unwinding work."
+    },
+    {
+      "id": "pe-loader",
+      "title": "How the Windows Loader Maps a PE",
+      "module_id": "loading-execution",
+      "description": "From MZ probe to mapped sections and bound imports."
+    },
+    {
+      "id": "pe-memory-layout",
+      "title": "Process Memory Layout",
+      "module_id": "loading-execution",
+      "description": "ImageBase, sections in memory, heap, and stack."
+    },
+    {
+      "id": "pe-execution",
+      "title": "The Startup Sequence",
+      "module_id": "loading-execution",
+      "description": "Entry point to CRT initialization to main()."
+    }
+  ]
+}

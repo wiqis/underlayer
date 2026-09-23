@@ -195,56 +195,5 @@ public namespace underlayer_web {
         send_json_str(res, &raw body)
     }
 
-    // P2 7.1.10: Quick jump — all concepts + nav pages for the command palette.
-    // Concept IDs mirror render_concept() in helpers.ch (24 concepts).
-    public func handle_nav_search(req : &http::Request, res : *mut http::ResponseWriter) {
-        var body = string("{\"entries\":[")
-        body.append_view("{\"label\":\"Home\",\"url\":\"/\",\"kind\":\"page\"}")
-        body.append_view(",{\"label\":\"Dashboard\",\"url\":\"/dashboard\",\"kind\":\"page\"}")
-        body.append_view(",{\"label\":\"Review\",\"url\":\"/review\",\"kind\":\"page\"}")
-        body.append_view(",{\"label\":\"Progress\",\"url\":\"/progress\",\"kind\":\"page\"}")
-
-        // 24 concepts in course order
-        append_nav_entry(&raw body, string("Bytes and Binary"), string("bytes"), true)
-        append_nav_entry(&raw body, string("Binary Representation"), string("binary-representation"), true)
-        append_nav_entry(&raw body, string("File Layout"), string("file-layout"), true)
-        append_nav_entry(&raw body, string("ELF Identification"), string("elf-identification"), true)
-        append_nav_entry(&raw body, string("ELF Header Fields"), string("elf-header-fields"), true)
-        append_nav_entry(&raw body, string("Entry Point"), string("entry-point"), true)
-        append_nav_entry(&raw body, string("Program Header Table"), string("program-header-table"), true)
-        append_nav_entry(&raw body, string("Segment Types"), string("segment-types"), true)
-        append_nav_entry(&raw body, string("Memory Mapping"), string("memory-mapping"), true)
-        append_nav_entry(&raw body, string("Section Header Table"), string("section-header-table"), true)
-        append_nav_entry(&raw body, string("Common Sections"), string("common-sections"), true)
-        append_nav_entry(&raw body, string("Section vs Segment"), string("section-vs-segment"), true)
-        append_nav_entry(&raw body, string("Symbol Table"), string("symbol-table"), true)
-        append_nav_entry(&raw body, string("Symbol Binding"), string("binding"), true)
-        append_nav_entry(&raw body, string("Symbol Visibility"), string("visibility"), true)
-        append_nav_entry(&raw body, string("Relocation Entries"), string("relocation-entries"), true)
-        append_nav_entry(&raw body, string("Relocation Types"), string("relocation-types"), true)
-        append_nav_entry(&raw body, string("Dynamic Relocations"), string("dynamic-relocations"), true)
-        append_nav_entry(&raw body, string("Dynamic Section"), string("dynamic-section"), true)
-        append_nav_entry(&raw body, string("Shared Libraries"), string("shared-libraries"), true)
-        append_nav_entry(&raw body, string("The Dynamic Linker"), string("ld-so"), true)
-        append_nav_entry(&raw body, string("The Kernel Loader"), string("loader"), true)
-        append_nav_entry(&raw body, string("Process Memory Layout"), string("memory-layout"), true)
-        append_nav_entry(&raw body, string("The Startup Sequence"), string("execution"), true)
-
-        body.append_view("]}")
-        send_json_str(res, &raw body)
-    }
-
-    // Append one concept entry (adds comma before every entry).
-    func append_nav_entry(body : *string, label : string, concept_id : string, is_concept : bool) {
-        body.append_view(",\"label\":\"")
-        body.append_string(&label)
-        body.append_view("\",\"url\":\"/courses/elf/lessons/")
-        body.append_string(&concept_id)
-        if(is_concept) {
-            body.append_view("\",\"kind\":\"concept\"}")
-        } else {
-            body.append_view("\",\"kind\":\"page\"}")
-        }
-    }
 
 }

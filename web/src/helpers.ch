@@ -202,13 +202,72 @@ public namespace underlayer_web {
         return string()
     }
 
+    // PE course concept ids. Prefixed with `pe-` to stay unique across
+    // courses (same convention as the HAT `hat-` prefix).
+    public func render_pe_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var intro_id = std::string("pe-intro")
+        var layout_id = std::string("pe-file-layout")
+        var coff_id = std::string("pe-coff-basics")
+        var dos_id = std::string("pe-dos-header")
+        var sig_id = std::string("pe-signature-coff")
+        var opt_id = std::string("pe-optional-header")
+        var ddir_id = std::string("pe-data-directories")
+        var addr_id = std::string("pe-addresses")
+        var rva_id = std::string("pe-rva-conversion")
+        var sht_id = std::string("pe-section-table")
+        var csec_id = std::string("pe-common-sections")
+        var align_id = std::string("pe-alignment")
+        var imp_id = std::string("pe-imports")
+        var exp_id = std::string("pe-exports")
+        var delay_id = std::string("pe-delay-loads")
+        var reloc_id = std::string("pe-base-relocations")
+        var secflags_id = std::string("pe-security-flags")
+        var loadcfg_id = std::string("pe-load-config")
+        var rsrc_id = std::string("pe-resources")
+        var tls_id = std::string("pe-tls")
+        var except_id = std::string("pe-exceptions")
+        var loader_id = std::string("pe-loader")
+        var mem_id = std::string("pe-memory-layout")
+        var exec_id = std::string("pe-execution")
+
+        if(cid.equals(&intro_id)) { return underlayer_content::render_pe_intro() }
+        if(cid.equals(&layout_id)) { return underlayer_content::render_pe_file_layout() }
+        if(cid.equals(&coff_id)) { return underlayer_content::render_pe_coff_basics() }
+        if(cid.equals(&dos_id)) { return underlayer_content::render_pe_dos_header() }
+        if(cid.equals(&sig_id)) { return underlayer_content::render_pe_signature_coff() }
+        if(cid.equals(&opt_id)) { return underlayer_content::render_pe_optional_header() }
+        if(cid.equals(&ddir_id)) { return underlayer_content::render_pe_data_directories() }
+        if(cid.equals(&addr_id)) { return underlayer_content::render_pe_addresses() }
+        if(cid.equals(&rva_id)) { return underlayer_content::render_pe_rva_conversion() }
+        if(cid.equals(&sht_id)) { return underlayer_content::render_pe_section_table() }
+        if(cid.equals(&csec_id)) { return underlayer_content::render_pe_common_sections() }
+        if(cid.equals(&align_id)) { return underlayer_content::render_pe_alignment() }
+        if(cid.equals(&imp_id)) { return underlayer_content::render_pe_imports() }
+        if(cid.equals(&exp_id)) { return underlayer_content::render_pe_exports() }
+        if(cid.equals(&delay_id)) { return underlayer_content::render_pe_delay_loads() }
+        if(cid.equals(&reloc_id)) { return underlayer_content::render_pe_base_relocations() }
+        if(cid.equals(&secflags_id)) { return underlayer_content::render_pe_security_flags() }
+        if(cid.equals(&loadcfg_id)) { return underlayer_content::render_pe_load_config() }
+        if(cid.equals(&rsrc_id)) { return underlayer_content::render_pe_resources() }
+        if(cid.equals(&tls_id)) { return underlayer_content::render_pe_tls() }
+        if(cid.equals(&except_id)) { return underlayer_content::render_pe_exceptions() }
+        if(cid.equals(&loader_id)) { return underlayer_content::render_pe_loader() }
+        if(cid.equals(&mem_id)) { return underlayer_content::render_pe_memory_layout() }
+        if(cid.equals(&exec_id)) { return underlayer_content::render_pe_execution() }
+        return string()
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         // HAT concepts are resolved first; render_hat_concept returns an empty
         // string for ids it does not own, so unknown ids fall through to the
-        // ELF table below.
+        // PE table below.
         var hat_html = render_hat_concept(concept_id)
         if(hat_html.size() > 0) { return hat_html }
+        // PE concepts next; same fall-through contract as HAT.
+        var pe_html = render_pe_concept(concept_id)
+        if(pe_html.size() > 0) { return pe_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

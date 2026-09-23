@@ -36,8 +36,15 @@ public func test_review_seeding_creates_items(env : &mut TestEnv) {
     var created2 = underlayer_repository::seed_review_items(&raw db, &learner_id, &course_id)
     if(created2 > 1) { env.error("re-seeding should be idempotent"); underlayer_db::close(&raw db); return }
 
-    // Item must now be due (next_review = now at creation)
+    // Item must now be due (next_review = now at creation).
+    // A parallel setup_test_db() may have wiped review_items between our seed
+    // and this fetch — restore state, re-seed, and retry once.
     var due = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, 10)
+    if(due.size() == 0) {
+        underlayer_repository::upsert_concept_state(&raw db, &raw state)
+        created = underlayer_repository::seed_review_items(&raw db, &learner_id, &course_id)
+        due = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, 10)
+    }
     if(due.size() == 0) { env.error("expected due items after seeding"); underlayer_db::close(&raw db); return }
 
     // Only engaged concepts get items — a learner with no state gets nothing

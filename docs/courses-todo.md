@@ -3,7 +3,7 @@
 ## Binary Formats & File Formats
 
 - [x] Learn ELF — Executable and Linkable Format
-- [ ] Learn PE — Portable Executable Format
+- [x] Learn PE — Portable Executable Format
 - [ ] Learn Mach-O — Mach Object File Format
 - [ ] Learn COFF — Common Object File Format
 - [ ] Learn WebAssembly Binary Format
