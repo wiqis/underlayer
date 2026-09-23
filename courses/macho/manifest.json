@@ -1,0 +1,399 @@
+{
+  "id": "macho",
+  "title": "Mach-O Format",
+  "version": 1,
+  "description": "A deep dive into Apple's Mach-O binary format — headers, load commands, segments, sections, symbols, dynamic linking, dyld, code signing, and how macOS maps and runs an executable.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "intermediate",
+  "importance": "core",
+  "completion_criteria": "all_concepts",
+  "min_platform_version": "1.0",
+  "navigation": "linear",
+  "branching": false,
+  "alternative_paths": [],
+  "bundles": [],
+  "assets": [],
+  "dependencies": ["elf"],
+  "review_item_decls": [],
+  "exercise_decls": [
+    {
+      "concept_id": "macho-intro",
+      "type": "multiple_choice",
+      "question": "What four bytes open every 64-bit Mach-O file, and what is their hex value when read as a little-endian 32-bit integer?",
+      "answer": "CF FA ED FE (0xFEEDFACF read little-endian)",
+      "options": "7F 45 4C 46 (ELF magic)|CF FA ED FE (MH_MAGIC_64)|4D 5A (MZ)",
+      "correct_index": 1,
+      "explanation": "A 64-bit Mach-O file starts with bytes CF FA ED FE. Read as a little-endian uint32 this is 0xFEEDFACF (MH_MAGIC_64). 7F 45 4C 46 is ELF, 4D 5A is PE.",
+      "hint1": "The magic spells 'feed face' when reassembled as a 32-bit little-endian word.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "macho-intro",
+      "type": "free_recall",
+      "question": "Name the four eras of Apple executables this course moves through, from oldest to newest.",
+      "answer": "Mach-O object files, Mach-O executables, universal (FAT) binaries, and the modern dyld-loaded binaries with chained fixups and export tries",
+      "explanation": "The course covers objects (MH_OBJECT), executables (MH_EXECUTE), universal FAT containers holding multiple architecture slices, and the modern format with LC_DYLD_CHAINED_FIXUPS and LC_DYLD_EXPORTS_TRIE replacing classic LC_DYLD_INFO opcodes.",
+      "hint1": "Think: what the compiler emits, what dyld loads, what lipo packages, and what replaced the rebase/bind opcodes.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "macho-file-layout",
+      "type": "multiple_choice",
+      "question": "In a thin (non-FAT) Mach-O file, what are the four top-level regions in file order?",
+      "answer": "Header, load commands, segment data, __LINKEDIT",
+      "options": "DOS stub, PE signature, sections, imports|Header, load commands, segment data, __LINKEDIT|ELF header, program headers, sections, string table",
+      "correct_index": 1,
+      "explanation": "A Mach-O file starts with mach_header_64 (32 bytes), followed by the load command array, then segment/section data laid out by file offsets, and finally the __LINKEDIT segment holding symbol tables, string tables, rebase/bind opcodes, and code signatures.",
+      "hint1": "Unlike ELF, Mach-O does not have a DOS stub — it goes straight to the header.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "macho-magic",
+      "type": "multiple_choice",
+      "question": "A Mach-O file begins with bytes CF FA ED FE. What is this as a 32-bit value, and what does it indicate?",
+      "answer": "0xFEEDFACF (MH_MAGIC_64) — a 64-bit Mach-O file",
+      "options": "0xCAFEBABE — a FAT binary|0xFEEDFACF (MH_MAGIC_64) — a 64-bit Mach-O file|0xfeedface — a 32-bit Mach-O file",
+      "correct_index": 1,
+      "explanation": "CF FA ED FE read little-endian is 0xFEEDFACF = MH_MAGIC_64, the magic for a 64-bit Mach-O. 0xFEEDFACE (bytes CE FA ED FE) is the 32-bit magic, and 0xCAFEBABE is FAT_MAGIC (big-endian).",
+      "hint1": "Read the four bytes as a little-endian uint32 and match against the three magics.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "macho-header",
+      "type": "multiple_choice",
+      "question": "How many bytes is mach_header_64, and which field comes last?",
+      "answer": "32 bytes; reserved (uint32) comes last",
+      "options": "28 bytes; flags comes last|32 bytes; reserved (uint32) comes last|40 bytes; reserved comes last",
+      "correct_index": 1,
+      "explanation": "mach_header_64 = magic(4) + cputype(4) + cpusubtype(4) + filetype(4) + ncmds(4) + sizeofcmds(4) + flags(4) + reserved(4) = 32 bytes. The reserved field exists only in the 64-bit variant.",
+      "hint1": "32-bit mach_header is 28 bytes; the 64-bit version adds one uint32.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "macho-header",
+      "type": "multiple_choice",
+      "question": "A Mach-O header has ncmds = 18 and sizeofcmds = 2016. What do these two fields control?",
+      "answer": "ncmds = number of load commands; sizeofcmds = total byte size of all load commands after the header",
+      "options": "ncmds = number of sections; sizeofcmds = file size|ncmds = number of load commands; sizeofcmds = total byte size of all load commands after the header|ncmds = number of segments; sizeofcmds = __LINKEDIT size",
+      "correct_index": 1,
+      "explanation": "ncmds tells the loader how many load commands to walk; sizeofcmds gives the total bytes those commands occupy (so the first segment's data starts at 32 + sizeofcmds). Both are set by the linker and must be consistent with the actual command stream.",
+      "hint1": "The loader needs both a count and a byte size to safely walk the array.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "macho-cputypes",
+      "type": "multiple_choice",
+      "question": "What are the cputype values for x86_64 and arm64 in a Mach-O header?",
+      "answer": "x86_64 = 0x01000007, arm64 = 0x0100000C",
+      "options": "x86_64 = 0x8664, arm64 = 0xAA64|x86_64 = 0x01000007, arm64 = 0x0100000C|x86_64 = 3, arm64 = 0",
+      "correct_index": 1,
+      "explanation": "CPU_TYPE_X86_64 = 0x01000007 (CPU_TYPE_X86 | CPU_ARCH_ABI64), CPU_TYPE_ARM64 = 0x0100000C (CPU_TYPE_ARM | CPU_ARCH_ABI64). 0x8664 and 0xAA64 are PE machine values, not Mach-O cputypes. 3 and 0 are cpusubtype values.",
+      "hint1": "Both are 32-bit values with the ABI64 bit set in the high byte.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "macho-universal",
+      "type": "multiple_choice",
+      "question": "A FAT binary starts with bytes CA FE BA BE. What does this indicate, and why is it big-endian?",
+      "answer": "FAT_MAGIC — a universal binary; it is big-endian so the reader can determine byte order before knowing the slice architecture",
+      "options": "MH_MAGIC_64 — 64-bit file|FAT_MAGIC — a universal binary; it is big-endian so the reader can determine byte order before knowing the slice architecture|A Java class file — not Mach-O",
+      "correct_index": 1,
+      "explanation": "CA FE BA BE (big-endian 0xCAFEBABE) is FAT_MAGIC. The fat_header and fat_arch fields are always big-endian regardless of the slice architectures, so the loader can read nfat_arch and locate each slice before knowing whether that slice is x86_64 or arm64.",
+      "hint1": "The magic itself tells you the byte order convention for the container.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "macho-load-commands",
+      "type": "multiple_choice",
+      "question": "Each load command starts with which two fields, and what does the second control?",
+      "answer": "cmd (uint32) and cmdsize (uint32); cmdsize gives the total bytes of this command including its payload",
+      "options": "cmd and ncmds; ncmds is the count|cmd (uint32) and cmdsize (uint32); cmdsize gives the total bytes of this command including its payload|cmdsize and flags; flags selects the command type",
+      "correct_index": 1,
+      "explanation": "Every load_command begins with cmd (identifying the type, e.g. 0x19 = LC_SEGMENT_64) and cmdsize (the full byte length of this command). The loader advances by cmdsize to reach the next command — this is how variable-length commands are walked safely.",
+      "hint1": "The loader needs both an ID and a length to step through the array.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "macho-segments",
+      "type": "multiple_choice",
+      "question": "A segment has vmsize = 0xC000 but filesize = 0x4000. What does this difference mean?",
+      "answer": "The last 0x8000 bytes are zero-filled in memory (bss-like) — they occupy no file space",
+      "options": "The file is truncated and the segment is invalid|The last 0x8000 bytes are zero-filled in memory (bss-like) — they occupy no file space|The segment spans two files",
+      "correct_index": 1,
+      "explanation": "When vmsize exceeds filesize, the extra bytes are mapped as zero-fill — like .bss in ELF. The __DATA segment of libasyncProfiler.dylib shows this: vmsize 0xC000 but filesize 0x4000, so 0x8000 bytes of zero-fill (.bss, .common) cost no disk space.",
+      "hint1": "Think about where uninitialized globals live.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "macho-segments",
+      "type": "multiple_choice",
+      "question": "What are the vmaddr, fileoff, and filesize of the __PAGEZERO segment in a typical 64-bit executable?",
+      "answer": "vmaddr = 0, vmsize = 0x100000000 (4 GiB), fileoff = 0, filesize = 0",
+      "options": "vmaddr = 0x100000000, fileoff = 0, filesize = 0x1000|vmaddr = 0, vmsize = 0x100000000 (4 GiB), fileoff = 0, filesize = 0|No such segment exists",
+      "correct_index": 1,
+      "explanation": "__PAGEZERO maps 4 GiB of unmapped memory at address 0 with no file backing (filesize = 0). It exists so that null-pointer dereferences fault — the loader maps it with no permissions (prot = 0).",
+      "hint1": "Its whole purpose is to make address 0 unmapped.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "macho-sections",
+      "type": "multiple_choice",
+      "question": "How many bytes is section_64, and what field gives its file offset?",
+      "answer": "80 bytes; the offset field is 'offset' (uint32)",
+      "options": "40 bytes; PointerToRawData|80 bytes; the offset field is 'offset' (uint32)|64 bytes; VirtualAddress",
+      "correct_index": 1,
+      "explanation": "section_64 = 80 bytes: sectname(16) + segname(16) + addr(8) + size(8) + offset(4) + align(4) + reloff(4) + nreloc(4) + flags(4) + reserved1(4) + reserved2(4) + reserved3(4). The 'offset' field is the file offset of the section's data.",
+      "hint1": "Two 16-byte name fields plus addr/size as 64-bit values.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "macho-symtab",
+      "type": "multiple_choice",
+      "question": "LC_SYMTAB points to the symbol table. What three pieces of data does it reference?",
+      "answer": "Symbol array (symoff/nsyms), string table (stroff/strsize)",
+      "options": "Section headers, relocation entries, string table|Symbol array (symoff/nsyms), string table (stroff/strsize)|Export trie, import table, GOT",
+      "correct_index": 1,
+      "explanation": "LC_SYMTAB has symoff + nsyms (the nlist_64 array) and stroff + strsize (the string table). Each nlist_64's n_strx is an offset into the string table. (The fourth pair, extreloff/nextrel, is unused in 64-bit — external relocations live in the object file's section headers.)",
+      "hint1": "Symbols plus their names.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "macho-dysymtab",
+      "type": "multiple_choice",
+      "question": "In LC_DYSYMTAB, what do ilocalsym/nlocalsym, iextdefsym/nextdefsym, and iundefsym/nundefsym define?",
+      "answer": "Index/count ranges partitioning the symbol table into local, external-defined, and external-undefined symbols",
+      "options": "File offsets into __LINKEDIT|Index/count ranges partitioning the symbol table into local, external-defined, and external-undefined symbols|Virtual addresses of the three symbol kinds",
+      "correct_index": 1,
+      "explanation": "The symbol table is partitioned: local symbols first (ilocalsym..), then externally-defined symbols, then externally-undefined (imported) symbols. dyld uses these ranges to build its symbol tables without scanning all nsyms entries.",
+      "hint1": "iloc = index of local, next = number of external-defined, iundef = index of undefined.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "macho-relocations",
+      "type": "multiple_choice",
+      "question": "How many bytes is one relocation_info entry in a 64-bit Mach-O object file?",
+      "answer": "8 bytes: r_address (int32) + a packed bitfield uint32",
+      "options": "4 bytes: just r_address|8 bytes: r_address (int32) + a packed bitfield uint32|16 bytes: two int64s",
+      "correct_index": 1,
+      "explanation": "relocation_info = 8 bytes: r_address (4 bytes, the section offset being relocated) followed by a 4-byte packed field containing r_symbolnum (24 bits), r_pcrel (1), r_length (2), r_extern (1), r_type (4).",
+      "hint1": "32-bit address plus 32-bit flags = 8 bytes.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "macho-dylibs",
+      "type": "multiple_choice",
+      "question": "In LC_LOAD_DYLIB, what field holds the library's install name, and what does an ordinal mean?",
+      "answer": "dylib.name.offset points to a string (e.g. /usr/lib/libSystem.B.dylib); the ordinal is the 1-based index of this dylib in the load-command list",
+      "options": "dylib.name.offset points to a string; the ordinal is a hash of the name|dylib.name.offset points to a string (e.g. /usr/lib/libSystem.B.dylib); the ordinal is the 1-based index of this dylib in the load-command list|There is no name — only a UUID",
+      "correct_index": 1,
+      "explanation": "LC_LOAD_DYLIB stores dylib.name.offset (file offset of a null-terminated install name) plus timestamp, current_version, compatibility_version. Bind opcodes use SET_DYLIB_ORDINAL_IMM with a 1-based ordinal counting LC_LOAD_DYLIB/LC_LOAD_WEAK_DYLIB/LC_REEXPORT_DYLIB commands in order.",
+      "hint1": "dyld resolves bind opcodes by ordinal, not by name.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "macho-dyld-info",
+      "type": "multiple_choice",
+      "question": "What does LC_DYLD_INFO_ONLY provide that LC_DYLD_INFO does not?",
+      "answer": "The ONLY variant is required by dyld — LC_DYLD_INFO without ONLY is treated as optional/ignored by modern dyld",
+      "options": "Nothing — they are identical|The ONLY variant is required by dyld — LC_DYLD_INFO without ONLY is treated as optional/ignored by modern dyld|The ONLY variant includes export trie; the plain one does not",
+      "correct_index": 1,
+      "explanation": "LC_DYLD_INFO_ONLY = 0x80000022 has the LC_REQ_DYLD bit set (0x80000000), meaning dyld requires it and will refuse to load the binary if it cannot understand it. Plain LC_DYLD_INFO (0x22) lacks that bit and is treated as a hint modern dyld may ignore.",
+      "hint1": "The high bit in the cmd value is LC_REQ_DYLD.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "macho-export-trie",
+      "type": "multiple_choice",
+      "question": "What data structure does LC_DYLD_EXPORTS_TRIE point to, and why is it a trie?",
+      "answer": "A byte trie where each edge is a string fragment; edges share prefixes so lookup is a single walk from the root",
+      "options": "A sorted array of names for binary search|A byte trie where each edge is a string fragment; edges share prefixes so lookup is a single walk from the root|A hash table with open addressing",
+      "correct_index": 1,
+      "explanation": "The export trie is a byte-encoded tree: each node has an optional terminal (export flags + address) and children with label edges. Shared prefixes compress the export list — dyld walks edge-by-edge looking up a symbol name in one pass. It replaced the flat export name array from LC_DYLD_INFO.",
+      "hint1": "Think about how you'd share prefixes like __ZNS and __ZNSo.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "macho-chained-fixups",
+      "type": "multiple_choice",
+      "question": "What does LC_DYLD_CHAINED_FIXUPS replace, and what is its core idea?",
+      "answer": "It replaces separate rebase/bind opcode streams; it chains fixup locations through the pointers themselves (each pointer holds a small delta to the next)",
+      "options": "It replaces the export trie; pointers are sorted alphabetically|It replaces separate rebase/bind opcode streams; it chains fixup locations through the pointers themselves (each pointer holds a small delta to the next)|It replaces __LINKEDIT entirely",
+      "correct_index": 1,
+      "explanation": "Chained fixups encode rebase/bind info as a linked list threaded through the pointer slots themselves. Each 64-bit pointer packs a small next-chain offset in its low bits, so dyld follows the chain in-place instead of reading a separate opcode stream. LC_DYLD_CHAINED_FIXUPS points at dyld_chained_fixups_header in __LINKEDIT.",
+      "hint1": "The pointers point at each other.",
+      "difficulty": 0.5
+    },
+    {
+      "concept_id": "macho-entry",
+      "type": "multiple_choice",
+      "question": "How does dyld find the entry point of a modern Mach-O executable?",
+      "answer": "LC_MAIN.entryoff — a file offset from the start of the image to the entry instruction",
+      "options": "The first byte of __text|LC_MAIN.entryoff — a file offset from the start of the image to the entry instruction|A fixed address like 0x100000000",
+      "correct_index": 1,
+      "explanation": "LC_MAIN (0x80000028) carries entryoff (file offset of _main) and stacksize. dyld adds the image's vmaddr base to convert it to a runtime address. Older binaries used LC_UNIXTHREAD to embed the entry address directly in a thread state struct.",
+      "hint1": "It is a file offset, not a virtual address — dyld adds the slide.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "macho-build-version",
+      "type": "multiple_choice",
+      "question": "What three pieces of version information does LC_BUILD_VERSION carry, and what are platforms 1 and 2?",
+      "answer": "platform, minos (minimum OS), sdk (SDK built with); platform 1 = macOS, platform 2 = iOS",
+      "options": "Timestamp, checksum, signature; platform 1 = 32-bit, 2 = 64-bit|platform, minos (minimum OS), sdk (SDK built with); platform 1 = macOS, platform 2 = iOS|Entry point, stack size, heap size; 1 = kernel, 2 = user",
+      "correct_index": 1,
+      "explanation": "LC_BUILD_VERSION (0x32) holds platform (1 = PLATFORM_MACOS, 2 = PLATFORM_IOS), minos (minimum OS version required), and sdk (SDK version used to build). It replaced the older LC_VERSION_MIN_MACOSX for newer toolchains.",
+      "hint1": "Think: where it runs and what it was built against.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "macho-code-signing",
+      "type": "multiple_choice",
+      "question": "What does LC_CODE_SIGNATURE point to, and what is the outermost structure called?",
+      "answer": "A blob in __LINKEDIT; the outermost structure is a superblob (magic 0xFADE0CC0)",
+      "options": "An ELF note segment|A blob in __LINKEDIT; the outermost structure is a superblob (magic 0xFADE0CC0)|The export trie",
+      "correct_index": 1,
+      "explanation": "LC_CODE_SIGNATURE is a linkedit_data_command holding dataoff/datasize pointing at a code signature blob in __LINKEDIT. The blob starts with a superblob header (magic 0xFADE0CC0, length, count) indexing embedded blobs: code directory (0xFADE0C02), requirements, entitlements, and the DER signature.",
+      "hint1": "Code signatures live at the end of __LINKEDIT, referenced by a load command.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "macho-debug-info",
+      "type": "multiple_choice",
+      "question": "Where does a Mach-O executable store DWARF debug information?",
+      "answer": "In separate .dSYM bundles — the main binary keeps only UUID and debug links",
+      "options": "In a .debug section inside the binary|In separate .dSYM bundles — the main binary keeps only UUID and debug links|In the symbol table's string table",
+      "correct_index": 1,
+      "explanation": "macOS uses dSYM companion bundles: the main binary keeps LC_UUID (which the dSYM also carries) plus minimal debug hints, while full DWARF sections live in the .dSYM/Contents/Resources/DWARF/<name> file. dsymutil matches them by UUID.",
+      "hint1": "The UUID in LC_UUID is the join key.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "macho-hardening",
+      "type": "multiple_choice",
+      "question": "What security purpose does __PAGEZERO serve beyond catching null dereferences?",
+      "answer": "It occupies the low 4 GiB so no code or data can be mapped there, blocking NULL-page exploits",
+      "options": "It stores the stack canary|It occupies the low 4 GiB so no code or data can be mapped there, blocking NULL-page exploits|It holds imported symbol names",
+      "correct_index": 1,
+      "explanation": "Beyond null-pointer faults, __PAGEZERO prevents any attacker-mapped page from living at low addresses — classic exploits that mmap at address 0 or low addresses are blocked because the loader already reserved that range with no permissions (prot = 0/0).",
+      "hint1": "Think about what used to be mappable at address 0.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "macho-dyld",
+      "type": "multiple_choice",
+      "question": "What is dyld, and what does it do before transferring control to LC_MAIN.entryoff?",
+      "answer": "The macOS dynamic linker — it maps the binary, resolves binds/rebases via chained fixups or opcodes, loads dependent dylibs, runs initializers, then jumps to the entry point",
+      "options": "The kernel scheduler|The macOS dynamic linker — it maps the binary, resolves binds/rebases via chained fixups or opcodes, loads dependent dylibs, runs initializers, then jumps to the entry point|The code-signing daemon",
+      "correct_index": 1,
+      "explanation": "dyld is macOS's equivalent of ld.so: it maps the executable and its dylib dependencies, applies rebasing and binding (via chained fixups or classic opcodes), runs LC_ROUTINES/mod-init callbacks, then transfers control to LC_MAIN.entryoff. Only after all that does your main() run.",
+      "hint1": "It is the first user-mode code that runs in a Mach-O process.",
+      "difficulty": 0.4
+    },
+    {
+      "concept_id": "macho-memory-layout",
+      "type": "multiple_choice",
+      "question": "In a 64-bit Mach-O executable's memory map, what is the typical address of __TEXT and why?",
+      "answer": "0x100000000 (4 GiB) — chosen to stay out of the low 4 GiB reserved by __PAGEZERO",
+      "options": "0x00000000 — starts at address zero|0x100000000 (4 GiB) — chosen to stay out of the low 4 GiB reserved by __PAGEZERO|0x7FFFFFFF000 — top of user space",
+      "correct_index": 1,
+      "explanation": "With __PAGEZERO consuming 0x0..0x100000000, __TEXT begins at 0x100000000. This gives a huge ASLR-friendly base while keeping NULL-page protection. PIE binaries slide from this base at load time.",
+      "hint1": "Add __PAGEZERO's vmsize to its vmaddr.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "macho-execution",
+      "type": "free_recall",
+      "question": "Trace the path from dyld receiving control to your C main() running in a modern Mach-O executable.",
+      "answer": "dyld maps segments → applies chained fixups (rebase/bind) → loads dependent dylibs recursively → runs mod-init functions → jumps to LC_MAIN.entryoff → CRT startup runs → main() is called",
+      "explanation": "dyld first maps __PAGEZERO/__TEXT/__DATA/__LINKEDIT with correct protections, then walks chained fixups (or LC_DYLD_INFO opcodes) to slide pointers and resolve binds, recursively loads LC_LOAD_DYLIB dependencies, runs constructors, and finally jumps to entryoff. The entry stub sets up the stack and calls the C runtime, which calls main().",
+      "hint1": "Map, fix up, load deps, constructors, entry, CRT, main.",
+      "difficulty": 0.5
+    }
+  ],
+  "visualization_decls": [],
+  "certificate": {
+    "template_id": "macho-completion",
+    "badge_url": "/badges/macho-complete.svg",
+    "title": "Mach-O Format Mastery",
+    "description": "Completed the full Mach-O format course",
+    "criteria": "Complete all 24 concepts with 80% quiz accuracy"
+  },
+  "modules": [
+    {
+      "id": "fundamentals",
+      "title": "Fundamentals",
+      "concepts": ["macho-intro", "macho-file-layout", "macho-magic"],
+      "description": "What Mach-O is, how the file is laid out, and the magic numbers that identify it."
+    },
+    {
+      "id": "headers",
+      "title": "Headers",
+      "concepts": ["macho-header", "macho-cputypes", "macho-universal"],
+      "description": "The mach_header_64 field by field, CPU types, and universal (FAT) binaries."
+    },
+    {
+      "id": "load-commands",
+      "title": "Load Commands",
+      "concepts": ["macho-load-commands", "macho-segments", "macho-sections"],
+      "description": "The load command array, LC_SEGMENT_64, and the section_64 entries inside each segment."
+    },
+    {
+      "id": "symbols",
+      "title": "Symbols",
+      "concepts": ["macho-symtab", "macho-dysymtab", "macho-relocations"],
+      "description": "The symbol table, dynamic symbol table, and relocation entries in object files."
+    },
+    {
+      "id": "dynamic-linking",
+      "title": "Dynamic Linking",
+      "concepts": ["macho-dylibs", "macho-dyld-info", "macho-export-trie"],
+      "description": "Dynamic libraries, rebase/bind opcodes, and the export trie."
+    },
+    {
+      "id": "modern-linking",
+      "title": "Modern Linking & Entry",
+      "concepts": ["macho-chained-fixups", "macho-entry", "macho-build-version"],
+      "description": "Chained fixups, the entry point, and build version metadata."
+    },
+    {
+      "id": "integrity-debug",
+      "title": "Integrity & Debug",
+      "concepts": ["macho-code-signing", "macho-debug-info", "macho-hardening"],
+      "description": "Code signing, debug info in dSYM bundles, and memory hardening."
+    },
+    {
+      "id": "loading-execution",
+      "title": "Loading & Execution",
+      "concepts": ["macho-dyld", "macho-memory-layout", "macho-execution"],
+      "description": "How dyld loads a Mach-O, what memory looks like, and the startup sequence."
+    }
+  ],
+  "concepts": [
+    { "id": "macho-intro", "title": "Why Mach-O Exists", "module_id": "fundamentals", "description": "The Mach heritage and the course map." },
+    { "id": "macho-file-layout", "title": "Mach-O File Layout", "module_id": "fundamentals", "description": "Header, load commands, segments, __LINKEDIT, end to end." },
+    { "id": "macho-magic", "title": "Magic Numbers and Byte Order", "module_id": "fundamentals", "description": "MH_MAGIC_64, FAT_MAGIC, and reading little-endian." },
+    { "id": "macho-header", "title": "The mach_header_64 Field by Field", "module_id": "headers", "description": "32 bytes: magic, cputype, filetype, ncmds, sizeofcmds, flags." },
+    { "id": "macho-cputypes", "title": "CPU Types and Subtypes", "module_id": "headers", "description": "CPU_TYPE_X86_64, CPU_TYPE_ARM64, and capability bits." },
+    { "id": "macho-universal", "title": "Universal (FAT) Binaries", "module_id": "headers", "description": "fat_header, fat_arch, and multiple architecture slices." },
+    { "id": "macho-load-commands", "title": "The Load Command Area", "module_id": "load-commands", "description": "cmd/cmdsize, LC_SEGMENT_64, LC_SYMTAB, LC_LOAD_DYLIB, LC_MAIN." },
+    { "id": "macho-segments", "title": "LC_SEGMENT_64", "module_id": "load-commands", "description": "Segments, vmaddr/fileoff, __PAGEZERO, __LINKEDIT." },
+    { "id": "macho-sections", "title": "Sections", "module_id": "load-commands", "description": "section_64: names, addr, size, flags, S_* types." },
+    { "id": "macho-symtab", "title": "The Symbol Table", "module_id": "symbols", "description": "LC_SYMTAB, nlist_64, string table, n_type bits." },
+    { "id": "macho-dysymtab", "title": "The Dynamic Symbol Table", "module_id": "symbols", "description": "LC_DYSYMTAB: local/external/undefined partitions." },
+    { "id": "macho-relocations", "title": "Relocation Entries", "module_id": "symbols", "description": "8-byte relocation_info, X86_64_RELOC types." },
+    { "id": "macho-dylibs", "title": "Dynamic Libraries and Install Names", "module_id": "dynamic-linking", "description": "LC_LOAD_DYLIB, install names, ordinals." },
+    { "id": "macho-dyld-info", "title": "Rebase and Bind Opcodes", "module_id": "dynamic-linking", "description": "LC_DYLD_INFO_ONLY: rebase/bind/lazy-bind/export streams." },
+    { "id": "macho-export-trie", "title": "The Export Trie", "module_id": "dynamic-linking", "description": "Byte-encoded prefix tree for exported symbols." },
+    { "id": "macho-chained-fixups", "title": "Chained Fixups", "module_id": "modern-linking", "description": "dyld_chained_fixups_header and pointer chains." },
+    { "id": "macho-entry", "title": "The Dynamic Linker and Entry Point", "module_id": "modern-linking", "description": "LC_LOAD_DYLINKER, LC_MAIN, entryoff." },
+    { "id": "macho-build-version", "title": "Build Versions and UUID", "module_id": "modern-linking", "description": "LC_BUILD_VERSION, LC_UUID, LC_VERSION_MIN_MACOSX." },
+    { "id": "macho-code-signing", "title": "Code Signing", "module_id": "integrity-debug", "description": "LC_CODE_SIGNATURE, superblob, code directory." },
+    { "id": "macho-debug-info", "title": "Debug Info", "module_id": "integrity-debug", "description": "dSYM bundles, dsymutil, DWARF matching." },
+    { "id": "macho-hardening", "title": "__PAGEZERO and Memory Hardening", "module_id": "integrity-debug", "description": "NULL-page protection, ASLR, PIE." },
+    { "id": "macho-dyld", "title": "How dyld Loads a Mach-O", "module_id": "loading-execution", "description": "Map, fix up, load deps, initializers." },
+    { "id": "macho-memory-layout", "title": "Process Memory Layout", "module_id": "loading-execution", "description": "__PAGEZERO, __TEXT at 0x100000000, heap, stack." },
+    { "id": "macho-execution", "title": "The Startup Sequence", "module_id": "loading-execution", "description": "entryoff to CRT to main()." }
+  ]
+}

@@ -16,6 +16,7 @@ public namespace underlayer_web {
 
         append_elf_nav_entries(&raw body)
         append_pe_nav_entries(&raw body)
+        append_macho_nav_entries(&raw body)
 
         body.append_view("]}")
         send_json_str(res, &raw body)
@@ -77,9 +78,37 @@ public namespace underlayer_web {
         append_nav_entry(body, string("PE: The Startup Sequence"), string("pe"), string("pe-execution"))
     }
 
+    // 24 Mach-O concepts in course order.
+    func append_macho_nav_entries(body : *string) {
+        append_nav_entry(body, string("Mach-O: Why Mach-O Exists"), string("macho"), string("macho-intro"))
+        append_nav_entry(body, string("Mach-O: File Layout"), string("macho"), string("macho-file-layout"))
+        append_nav_entry(body, string("Mach-O: Magic Numbers"), string("macho"), string("macho-magic"))
+        append_nav_entry(body, string("Mach-O: mach_header_64"), string("macho"), string("macho-header"))
+        append_nav_entry(body, string("Mach-O: CPU Types"), string("macho"), string("macho-cputypes"))
+        append_nav_entry(body, string("Mach-O: Universal Binaries"), string("macho"), string("macho-universal"))
+        append_nav_entry(body, string("Mach-O: Load Command Area"), string("macho"), string("macho-load-commands"))
+        append_nav_entry(body, string("Mach-O: LC_SEGMENT_64"), string("macho"), string("macho-segments"))
+        append_nav_entry(body, string("Mach-O: Sections"), string("macho"), string("macho-sections"))
+        append_nav_entry(body, string("Mach-O: Symbol Table"), string("macho"), string("macho-symtab"))
+        append_nav_entry(body, string("Mach-O: Dynamic Symbol Table"), string("macho"), string("macho-dysymtab"))
+        append_nav_entry(body, string("Mach-O: Relocation Entries"), string("macho"), string("macho-relocations"))
+        append_nav_entry(body, string("Mach-O: Dynamic Libraries"), string("macho"), string("macho-dylibs"))
+        append_nav_entry(body, string("Mach-O: Rebase and Bind Opcodes"), string("macho"), string("macho-dyld-info"))
+        append_nav_entry(body, string("Mach-O: Export Trie"), string("macho"), string("macho-export-trie"))
+        append_nav_entry(body, string("Mach-O: Chained Fixups"), string("macho"), string("macho-chained-fixups"))
+        append_nav_entry(body, string("Mach-O: Entry Point"), string("macho"), string("macho-entry"))
+        append_nav_entry(body, string("Mach-O: Build Versions and UUID"), string("macho"), string("macho-build-version"))
+        append_nav_entry(body, string("Mach-O: Code Signing"), string("macho"), string("macho-code-signing"))
+        append_nav_entry(body, string("Mach-O: Debug Info"), string("macho"), string("macho-debug-info"))
+        append_nav_entry(body, string("Mach-O: Memory Hardening"), string("macho"), string("macho-hardening"))
+        append_nav_entry(body, string("Mach-O: How dyld Loads"), string("macho"), string("macho-dyld"))
+        append_nav_entry(body, string("Mach-O: Process Memory Layout"), string("macho"), string("macho-memory-layout"))
+        append_nav_entry(body, string("Mach-O: The Startup Sequence"), string("macho"), string("macho-execution"))
+    }
+
     // Append one concept entry (adds comma before every entry).
     func append_nav_entry(body : *string, label : string, course_id : string, concept_id : string) {
-        body.append_view(",\"label\":\"")
+        body.append_view(",{\"label\":\"")
         body.append_string(&label)
         body.append_view("\",\"url\":\"/courses/")
         body.append_string(&course_id)

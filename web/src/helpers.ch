@@ -258,6 +258,62 @@ public namespace underlayer_web {
         return string()
     }
 
+    // Mach-O course concept ids. Prefixed with `macho-` to stay unique across
+    // courses (same convention as the HAT `hat-` and PE `pe-` prefixes).
+    public func render_macho_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var intro_id = std::string("macho-intro")
+        var layout_id = std::string("macho-file-layout")
+        var magic_id = std::string("macho-magic")
+        var header_id = std::string("macho-header")
+        var cputypes_id = std::string("macho-cputypes")
+        var universal_id = std::string("macho-universal")
+        var loadcmds_id = std::string("macho-load-commands")
+        var segments_id = std::string("macho-segments")
+        var sections_id = std::string("macho-sections")
+        var symtab_id = std::string("macho-symtab")
+        var dysymtab_id = std::string("macho-dysymtab")
+        var relocations_id = std::string("macho-relocations")
+        var dylibs_id = std::string("macho-dylibs")
+        var dyldinfo_id = std::string("macho-dyld-info")
+        var exporttrie_id = std::string("macho-export-trie")
+        var chained_id = std::string("macho-chained-fixups")
+        var entry_id = std::string("macho-entry")
+        var buildver_id = std::string("macho-build-version")
+        var codesign_id = std::string("macho-code-signing")
+        var debuginfo_id = std::string("macho-debug-info")
+        var hardening_id = std::string("macho-hardening")
+        var dyld_id = std::string("macho-dyld")
+        var memlayout_id = std::string("macho-memory-layout")
+        var exec_id = std::string("macho-execution")
+
+        if(cid.equals(&intro_id)) { return underlayer_content::render_macho_intro() }
+        if(cid.equals(&layout_id)) { return underlayer_content::render_macho_file_layout() }
+        if(cid.equals(&magic_id)) { return underlayer_content::render_macho_magic() }
+        if(cid.equals(&header_id)) { return underlayer_content::render_macho_header() }
+        if(cid.equals(&cputypes_id)) { return underlayer_content::render_macho_cputypes() }
+        if(cid.equals(&universal_id)) { return underlayer_content::render_macho_universal() }
+        if(cid.equals(&loadcmds_id)) { return underlayer_content::render_macho_load_commands() }
+        if(cid.equals(&segments_id)) { return underlayer_content::render_macho_segments() }
+        if(cid.equals(&sections_id)) { return underlayer_content::render_macho_sections() }
+        if(cid.equals(&symtab_id)) { return underlayer_content::render_macho_symtab() }
+        if(cid.equals(&dysymtab_id)) { return underlayer_content::render_macho_dysymtab() }
+        if(cid.equals(&relocations_id)) { return underlayer_content::render_macho_relocations() }
+        if(cid.equals(&dylibs_id)) { return underlayer_content::render_macho_dylibs() }
+        if(cid.equals(&dyldinfo_id)) { return underlayer_content::render_macho_dyld_info() }
+        if(cid.equals(&exporttrie_id)) { return underlayer_content::render_macho_export_trie() }
+        if(cid.equals(&chained_id)) { return underlayer_content::render_macho_chained_fixups() }
+        if(cid.equals(&entry_id)) { return underlayer_content::render_macho_entry() }
+        if(cid.equals(&buildver_id)) { return underlayer_content::render_macho_build_version() }
+        if(cid.equals(&codesign_id)) { return underlayer_content::render_macho_code_signing() }
+        if(cid.equals(&debuginfo_id)) { return underlayer_content::render_macho_debug_info() }
+        if(cid.equals(&hardening_id)) { return underlayer_content::render_macho_hardening() }
+        if(cid.equals(&dyld_id)) { return underlayer_content::render_macho_dyld() }
+        if(cid.equals(&memlayout_id)) { return underlayer_content::render_macho_memory_layout() }
+        if(cid.equals(&exec_id)) { return underlayer_content::render_macho_execution() }
+        return string()
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         // HAT concepts are resolved first; render_hat_concept returns an empty
@@ -268,6 +324,9 @@ public namespace underlayer_web {
         // PE concepts next; same fall-through contract as HAT.
         var pe_html = render_pe_concept(concept_id)
         if(pe_html.size() > 0) { return pe_html }
+        // Mach-O concepts next; same fall-through contract.
+        var macho_html = render_macho_concept(concept_id)
+        if(macho_html.size() > 0) { return macho_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

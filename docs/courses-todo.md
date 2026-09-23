@@ -4,7 +4,7 @@
 
 - [x] Learn ELF — Executable and Linkable Format
 - [x] Learn PE — Portable Executable Format
-- [ ] Learn Mach-O — Mach Object File Format
+- [x] Learn Mach-O — Mach Object File Format
 - [ ] Learn COFF — Common Object File Format
 - [ ] Learn WebAssembly Binary Format
 - [ ] Learn JVM Class File Format
