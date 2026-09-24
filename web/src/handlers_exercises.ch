@@ -44,6 +44,48 @@ public namespace underlayer_web {
                 }
                 body.append_view("]")
             }
+            // 4.1.29: matching needs lefts (options) and rights for dropdowns.
+            // Rights come from the answer field (answer[i] pairs with options[i]).
+            // Reverse on the wire so right_options[i] is not the correct match
+            // for left_options[i] — the pairing stays server-side only.
+            if(ex.exercise_type.id.equals(string("matching"))) {
+                var rights = vector<string>()
+                var ai : size_t = 0
+                var cur = string()
+                while(ai <= ex.answer.size()) {
+                    if(ai == ex.answer.size() || ex.answer.get(ai) == '|') {
+                        rights.push(cur)
+                        cur = string()
+                    } else {
+                        cur.append(ex.answer.get(ai))
+                    }
+                    ai = ai + 1
+                }
+                body.append_view(",\"right_options\":[")
+                var ri : size_t = rights.size()
+                while(ri > 0) {
+                    ri = ri - 1
+                    if(ri < rights.size() - 1) { body.append_view(",") }
+                    body.append_view("\"")
+                    var r_ptr = rights.get_ptr(ri)
+                    var r_esc = underlayer_core::json_escape(&r_ptr.to_view())
+                    body.append_string(&r_esc)
+                    body.append_view("\"")
+                }
+                body.append_view("]")
+            }
+            // 4.1.29: labeling — number of blanks (pipe-separated answer parts)
+            // without revealing the answers themselves.
+            if(ex.exercise_type.id.equals(string("labeling"))) {
+                var blanks : i64 = 1
+                var li : size_t = 0
+                while(li < ex.answer.size()) {
+                    if(ex.answer.get(li) == '|') { blanks = blanks + 1 }
+                    li = li + 1
+                }
+                body.append_view(",\"blank_count\":")
+                body.append_string(&underlayer_core::int_to_string(blanks))
+            }
             body.append_view(",\"difficulty\":")
             var diff_str = underlayer_learning::f64_to_string(ex.difficulty as f64)
             body.append_string(&diff_str)
@@ -77,67 +119,8 @@ public namespace underlayer_web {
             return
         }
 
-        // 4.2.1: Immediate correctness feedback
-        var correct = false
-        if(ex.exercise_type.id.equals(string("recall")) || ex.exercise_type.id.equals(string("apply"))) {
-            // Free recall / cued recall: case-insensitive comparison
-            var user_lower = user_answer.to_view().to_string()
-            var ans_lower = ex.answer.to_view().to_string()
-            correct = user_lower.equals(&ans_lower)
-        } else if(ex.exercise_type.id.equals(string("multi_recognize"))) {
-            // 4.1.3: Multi-select — user submits comma-separated indices (e.g., "0,2,3")
-            // Parse user answer into vector of ints
-            var user_indices = vector<int>()
-            var ui_start : size_t = 0
-            var ui : size_t = 0
-            while(ui <= user_answer.size()) {
-                if(ui == user_answer.size() || user_answer.get(ui) == ',') {
-                    var num_str = string()
-                    var uj : size_t = ui_start
-                    while(uj < ui) {
-                        num_str.append(user_answer.get(uj))
-                        uj = uj + 1
-                    }
-                    if(num_str.size() > 0) {
-                        user_indices.push(parse_i64(num_str.to_view()) as int)
-                    }
-                    ui_start = ui + 1
-                }
-                ui = ui + 1
-            }
-            // Check: same count and all user indices are in correct_indices
-            if(user_indices.size() == ex.correct_indices.size()) {
-                correct = true
-                var uii : size_t = 0
-                while(uii < user_indices.size()) {
-                    var user_idx = user_indices.get(uii)
-                    var found = false
-                    var cii : size_t = 0
-                    while(cii < ex.correct_indices.size()) {
-                        if(ex.correct_indices.get(cii) == user_idx) { found = true }
-                        cii = cii + 1
-                    }
-                    if(!found) { correct = false }
-                    uii = uii + 1
-                }
-            }
-        } else {
-            // Multiple choice: compare by index or text
-            var ans_idx = -1
-            var ai : size_t = 0
-            while(ai < ex.options.size()) {
-                var opt_ptr = ex.options.get_ptr(ai)
-                if(opt_ptr.to_view().equals(&user_answer.to_view())) {
-                    ans_idx = ai as int
-                }
-                ai = ai + 1
-            }
-            if(ans_idx == ex.correct_index) { correct = true }
-            // Also allow direct answer text match
-            if(!correct) {
-                correct = user_answer.to_view().equals(&ex.answer.to_view())
-            }
-        }
+        // 4.2.1: Immediate correctness feedback — all 8 lesson UI types (4.1.29)
+        var correct = grade_exercise(&ex, &user_answer)
 
         var body = std::string("{\"correct\":")
         if(correct) { body.append_view("true") } else { body.append_view("false") }

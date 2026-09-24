@@ -25,7 +25,7 @@ public func render_hat_landing() : string {
             <a href="/" class="back-link">Back to Underlayer</a>
             <h1>HAT — Higher Education Aptitude Test</h1>
             <p class="course-description">A preparation course for the HEC Higher Education Aptitude Test, written for HAT-1 candidates in engineering, computing and the physical sciences: test structure and pacing, weighted study planning, the full quantitative, verbal and analytical syllabus, a timed-drill and mock programme, and an optional engineering background.</p>
-            <div class="lesson-meta">6 modules · 68 concepts · Beginner to intermediate · English</div>
+            <div class="lesson-meta">6 modules · 69 concepts · Beginner to intermediate · English</div>
 
             <div class="unit unit-why">
                 <h2>How to Use This Course</h2>
@@ -110,6 +110,7 @@ public func render_hat_landing() : string {
                         <li><a href="/courses/hat/lessons/hat-seating-arrangements">Seating Arrangements: Linear and Circular</a></li>
                         <li><a href="/courses/hat/lessons/hat-ordering-scheduling">Ordering, Grouping and Scheduling</a></li>
                         <li><a href="/courses/hat/lessons/hat-grouping-puzzles">Grouping and Selection Puzzles</a></li>
+                        <li><a href="/courses/hat/lessons/hat-network-routing">Network Routing Sets</a></li>
                         <li><a href="/courses/hat/lessons/hat-syllogisms">Syllogisms: What Follows Necessarily</a></li>
                         <li><a href="/courses/hat/lessons/hat-sets-venn">Set-Based Deduction: Venn Diagrams</a></li>
                         <li><a href="/courses/hat/lessons/hat-relations-and-directions">Relations and Directions</a></li>

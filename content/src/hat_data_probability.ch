@@ -40,6 +40,7 @@ public func render_hat_data_probability() : string {
                 <p><strong>Mean.</strong> Add the values and divide by how many there are. The mean of 4, 8, 10 and 14 is 36 / 4 = 9. Reversed, if the mean of five numbers is 12, their total is 12 x 5 = 60 — this reverse form answers many questions in one step.</p>
                 <p><strong>Median.</strong> Sort the values first, then take the middle one. For 3, 7, 9, 11 and 15 the median is 9. With an even count, average the two middle values: for 3, 7, 9 and 11, the median is (7 + 9) / 2 = 8. Sorting first is not optional — the median of an unsorted list is the single most common careless error in this topic.</p>
                 <p><strong>Mode and range.</strong> The mode is the most frequent value: in 2, 3, 3, 5, 7 it is 3. The range is the largest value minus the smallest: 15 - 3 = 12.</p>
+                <p><strong>Variance and standard deviation.</strong> These measure spread, not centre. Steps: find the mean, square each deviation from the mean, average those squares (divide by how many values there are), and — for standard deviation — take the square root. For 1, 3, 5, 7, 9 the mean is 5; the squared deviations are 16, 4, 0, 4, 16, summing to 40; the variance is 40/5 = <strong>8</strong>; the standard deviation is root 8, about 2.83. Variance is in square units of the data, SD is back in the original units — which is why SD is the one usually quoted.</p>
                 <p><strong>Reading tables and charts.</strong> Percentages from a table are computed against the correct total. If 40 of 200 respondents chose an option, that is 40 / 200 = 20 percent. Watch for tables whose final row is a total row, because including it in an average double-counts everything.</p>
                 <p><strong>Probability as a fraction.</strong> Work out the favourable outcomes and the total equally likely outcomes, then write the fraction.</p>
                 <table>
@@ -102,6 +103,13 @@ public func render_hat_data_probability() : string {
                     <button class="quiz-option" data-correct="true" data-explain="Mean times count gives the total: 12 x 5 = 60, so the sum of the five numbers is 60." onclick="checkQuiz('quiz-3', this)">The sum of the five numbers is 60</button>
                     <div class="quiz-feedback"></div>
                 </div>
+                <div class="quiz" id="quiz-4">
+                    <p>What is the variance of 1, 3, 5, 7, 9?</p>
+                    <button class="quiz-option" data-correct="false" data-explain="0 would mean no spread at all; these values sit around the mean 5 with real deviations." onclick="checkQuiz('quiz-4', this)">0</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Mean 5; squared deviations 16+4+0+4+16 = 40; variance 40/5 = 8." onclick="checkQuiz('quiz-4', this)">8</button>
+                    <button class="quiz-option" data-correct="false" data-explain="5 is the mean, not the variance; the question asks for the average squared deviation." onclick="checkQuiz('quiz-4', this)">5</button>
+                    <div class="quiz-feedback"></div>
+                </div>
             </div>
 
             <div class="unit unit-retrieve">
@@ -110,7 +118,7 @@ public func render_hat_data_probability() : string {
                 <p>The answer is: sort the list first, and for an even count average the two middle values. For "at least one", subtract the probability of none from 1.</p>
                 <p>Fill in the blanks from memory:</p>
                 <div id="fill-1">
-                    <p>The mean of 4, 8, 10 and 14 is <input type="text" class="fill-blank" data-answer="9" placeholder="?" aria-label="mean" />. If the mean of five numbers is 12, their total is <input type="text" class="fill-blank" data-answer="60" placeholder="?" aria-label="total" />. The probability of getting at least one head when two fair coins are tossed is <input type="text" class="fill-blank" data-answer="3/4" placeholder="?" aria-label="at least one head" />.</p>
+                    <p>The mean of 4, 8, 10 and 14 is <input type="text" class="fill-blank" data-answer="9" placeholder="?" aria-label="mean" />. If the mean of five numbers is 12, their total is <input type="text" class="fill-blank" data-answer="60" placeholder="?" aria-label="total" />. The probability of getting at least one head when two fair coins are tossed is <input type="text" class="fill-blank" data-answer="3/4" placeholder="?" aria-label="at least one head" />. The variance of 1, 3, 5, 7, 9 is <input type="text" class="fill-blank" data-answer="8" placeholder="?" aria-label="variance of one three five seven nine" />, and its standard deviation is the square root of that.</p>
                     <button class="fill-check-btn" onclick="checkFillBlanks('fill-1')">Check answers</button>
                     <div class="fill-feedback"></div>
                 </div>

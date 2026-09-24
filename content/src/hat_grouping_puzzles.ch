@@ -158,12 +158,12 @@ size     2     2      2
 
             <div class="unit unit-connect">
                 <h2>Connect</h2>
-                <p>Grouping is the family of puzzles where items must be sorted. The next lesson turns the same conditions into circles instead of grids, and shows how overlapping sets let you count the people who satisfy at least one, exactly one, or none of a list of properties.</p>
+                <p>Grouping is the family of puzzles where items must be sorted. The next lesson keeps the shared-setup habit but changes the picture: a network of one-way circuits and two-way radios, where every question asks for a path and an intermediary count.</p>
             </div>
 
             <div class="lesson-footer">
                 <span><a href="/courses/hat/lessons/hat-ordering-scheduling">Previous: Ordering, Grouping and Scheduling</a></span>
-                <span><a href="/courses/hat/lessons/hat-syllogisms">Next: Syllogisms</a></span>
+                <span><a href="/courses/hat/lessons/hat-network-routing">Next: Network Routing Sets</a></span>
             </div>
         </div>
     }

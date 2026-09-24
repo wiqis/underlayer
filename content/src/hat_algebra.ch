@@ -55,6 +55,8 @@ Check   4 - 10 + 6 = 0   and   9 - 15 + 6 = 0</pre>
                 <p><strong>Two equations, three shapes.</strong> (1) Coefficients line up — add or subtract to eliminate: x + y = 10 with x &minus; y = 4 gives 2x = 14, so x = 7, y = 3. (2) One variable is already isolated — substitute: y = 2x into x + y = 9 gives 3x = 9, so x = 3, y = 6. (3) Neither case — scale one equation so a coefficient matches, then subtract: 2x + 3y = 12 and x + y = 5; double the second to 2x + 2y = 10 and subtract to get y = 2, then x = 3. Always substitute the pair back into <em>both</em> original equations before accepting them.</p>
                 <p><strong>Inequalities.</strong> Solve exactly as an equation, with one exception: when you multiply or divide by a negative number, flip the direction of the inequality. From 2x + 3 &lt; 11, subtract 3 to get 2x &lt; 8, then divide by 2 (positive, so the sign stays) for x &lt; 4.</p>
                 <p><strong>Expanding and simplifying.</strong> 2(3x - 4) is 6x - 8. Do this before solving whenever brackets are present, because it removes a common source of sign errors.</p>
+                <p><strong>Degree of a polynomial.</strong> The degree is the largest total exponent on any single term after expanding — for several variables, add the exponents within that term. In x&sup5;yz&sup2; + x&sup4;y&sup3;z&sup2; + xyz + 10 the term degrees are 5+1+2 = 8, 4+3+2 = 9, 1+1+1 = 3 and 0, so the degree is <strong>9</strong>. Constants have degree 0; you never add degrees across different terms.</p>
+                <p><strong>Domain and range.</strong> Domain is the set of inputs the function accepts; range is the set of outputs it can produce. For a fraction, domain excludes values that make the denominator zero: f(x) = (3x &minus; 5) / (2x + 6) is undefined when 2x + 6 = 0, so the domain is all real numbers except <strong>&minus;3</strong>. Range is read after simplifying and tracking what the simplified form still cannot hit: (x&sup2; &minus; 25)/(x + 5) cancels to x &minus; 5 for x &ne; &minus;5, so outputs are all real numbers except &minus;5 &minus; 5 = <strong>&minus;10</strong>. Domain watches the denominator; range watches the cancelled-out input.</p>
                 <div class="callout callout-tip">
                     <strong>Answer the question that was asked.</strong> If the question asks for the larger of two numbers and you solved for the smaller, the answer is wrong even though the algebra was right. Underline the final request before you start solving.
                 </div>
@@ -96,6 +98,27 @@ f + 12 = 2(s + 12)</pre>
                     <button class="quiz-option" data-correct="false" data-explain="Substituting x = -2 gives 4 + 10 + 6, which is 20, not zero. The factors are (x - 2) and (x - 3), so both roots are positive." onclick="checkQuiz('quiz-3', this)">-2 and -3</button>
                     <div class="quiz-feedback"></div>
                 </div>
+                <div class="quiz" id="quiz-4">
+                    <p>What is the degree of f(x, y, z) = x&sup5;yz&sup2; + x&sup4;y&sup3;z&sup2; + xyz + 10?</p>
+                    <button class="quiz-option" data-correct="false" data-explain="8 is the degree of the first term (5+1+2); a later term is higher." onclick="checkQuiz('quiz-4', this)">8</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Term degrees: 5+1+2 = 8, 4+3+2 = 9, 1+1+1 = 3, constant 0. The largest is 9." onclick="checkQuiz('quiz-4', this)">9</button>
+                    <button class="quiz-option" data-correct="false" data-explain="3 is only the degree of xyz; degrees are not summed across terms, and the constant has degree 0." onclick="checkQuiz('quiz-4', this)">3</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+                <div class="quiz" id="quiz-5">
+                    <p>What is the domain of f(x) = (3x &minus; 5) / (2x + 6)?</p>
+                    <button class="quiz-option" data-correct="false" data-explain="5/3 makes the numerator zero (output 0), which is a perfectly valid output; the denominator is what can vanish." onclick="checkQuiz('quiz-5', this)">All reals except 5/3</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The denominator 2x + 6 is zero when x = &minus;3, so that single input is excluded; everything else is fine." onclick="checkQuiz('quiz-5', this)">All reals except &minus;3</button>
+                    <button class="quiz-option" data-correct="false" data-explain="There is no square root or other restriction; only the denominator matters, and it excludes &minus;3, not every real number." onclick="checkQuiz('quiz-5', this)">All real numbers</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+                <div class="quiz" id="quiz-6">
+                    <p>f(x) = (x&sup2; &minus; 25)/(x + 5). What is its range?</p>
+                    <button class="quiz-option" data-correct="false" data-explain="All reals would be right if the cancelled input &minus;5 were allowed; it is not, so one output is missing." onclick="checkQuiz('quiz-6', this)">All real numbers</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Cancel to x &minus; 5 with x &ne; &minus;5, so y = x &minus; 5 never equals &minus;10. Range is all reals except &minus;10." onclick="checkQuiz('quiz-6', this)">All reals except &minus;10</button>
+                    <button class="quiz-option" data-correct="false" data-explain="&minus;5 is the excluded input (domain hole), not an excluded output; plug it into x &minus; 5 to see the missing output is &minus;10." onclick="checkQuiz('quiz-6', this)">All reals except &minus;5</button>
+                    <div class="quiz-feedback"></div>
+                </div>
             </div>
 
             <div class="unit unit-retrieve">
@@ -104,7 +127,7 @@ f + 12 = 2(s + 12)</pre>
                 <p>The answer is: name the unknown explicitly first; two stated relationships become two equations, which you solve together by adding, or by substituting one into the other.</p>
                 <p>Fill in the blanks from memory:</p>
                 <div id="fill-1">
-                    <p>Solving 3x + 7 = 22 gives x = <input type="text" class="fill-blank" data-answer="5" placeholder="?" aria-label="value of x" />. Factorising x squared - 5x + 6 gives the roots <input type="text" class="fill-blank" data-answer="2" placeholder="?" aria-label="smaller root" /> and 3. If two numbers sum to 45 and differ by 13, the larger is <input type="text" class="fill-blank" data-answer="29" placeholder="?" aria-label="larger number" />.</p>
+                    <p>Solving 3x + 7 = 22 gives x = <input type="text" class="fill-blank" data-answer="5" placeholder="?" aria-label="value of x" />. Factorising x squared - 5x + 6 gives the roots <input type="text" class="fill-blank" data-answer="2" placeholder="?" aria-label="smaller root" /> and 3. If two numbers sum to 45 and differ by 13, the larger is <input type="text" class="fill-blank" data-answer="29" placeholder="?" aria-label="larger number" />. The degree of x&sup4;y&sup3;z&sup2; alone is <input type="text" class="fill-blank" data-answer="9" placeholder="?" aria-label="degree of x fourth y third z squared" />, and the degree of a constant such as 10 is <input type="text" class="fill-blank" data-answer="0" placeholder="?" aria-label="degree of a constant" />. The domain of (3x &minus; 5)/(2x + 6) excludes <input type="text" class="fill-blank" data-answer="-3" placeholder="?" aria-label="excluded domain value" />, and after cancelling (x&sup2; &minus; 25)/(x + 5) the range excludes <input type="text" class="fill-blank" data-answer="-10" placeholder="?" aria-label="excluded range value" />.</p>
                     <button class="fill-check-btn" onclick="checkFillBlanks('fill-1')">Check answers</button>
                     <div class="fill-feedback"></div>
                 </div>

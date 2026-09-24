@@ -58,6 +58,19 @@ public func render_hat_exponents_roots() : string {
                 <p><strong>Like surds add.</strong> root(50) plus root(18) simplifies to 5 root(2) plus 3 root(2), which is 8 root(2). Surds add only when the number under the root is the same.</p>
                 <p><strong>Rationalising a denominator.</strong> Multiply top and bottom by the root in the denominator. For 6 divided by root(3), multiply both by root(3) to get 6 root(3) divided by 3, which is 2 root(3).</p>
                 <p><strong>Comparing powers.</strong> Rewrite both sides with a common exponent or a common base. To compare 2 to the power 10 with 4 to the power 5, note that 4 is 2 squared and 4 to the power 5 becomes 2 to the power 10, so the two are equal.</p>
+                <p><strong>Logarithms are the inverse of powers.</strong> log<sub>b</sub> x answers "b raised to what power gives x?". So log<sub>3</sub> 27 = 3 because 3&sup3; = 27, and log<sub>2</sub> 32 = 5 because 2<sup>5</sup> = 32. Writing the definition once removes the mystery: b<sup>log<sub>b</sub> x</sup> = x and log<sub>b</sub>(b<sup>k</sup>) = k.</p>
+                <table>
+                    <thead>
+                        <tr><th scope="col">Rule</th><th scope="col">Statement</th><th scope="col">Example</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Product</td><td>log<sub>b</sub>(MN) = log<sub>b</sub> M + log<sub>b</sub> N</td><td>log<sub>2</sub> 8 + log<sub>2</sub> 4 = 3 + 2 = 5 = log<sub>2</sub> 32</td></tr>
+                        <tr><td>Quotient</td><td>log<sub>b</sub>(M/N) = log<sub>b</sub> M &minus; log<sub>b</sub> N</td><td>log<sub>10</sub> 1000 &minus; log<sub>10</sub> 10 = 3 &minus; 1 = 2</td></tr>
+                        <tr><td>Power</td><td>log<sub>b</sub>(M<sup>k</sup>) = k &times; log<sub>b</sub> M</td><td>log<sub>3</sub> 81 = log<sub>3</sub> 3<sup>4</sup> = 4</td></tr>
+                        <tr><td>Chain (telescoping)</td><td>log<sub>a</sub> b &times; log<sub>b</sub> c &times; ... = log<sub>a</sub> (last)</td><td>log<sub>a</sub> b &times; log<sub>b</sub> c &times; log<sub>c</sub> d = log<sub>a</sub> d</td></tr>
+                    </tbody>
+                </table>
+                <p>The chain rule is change of base written as a product: each fraction log x / log (base) cancels against its neighbour, leaving only the first base and the last argument. A product that loops back on itself — log<sub>a</sub> n &times; log<sub>n</sub> a — is just 1.</p>
                 <div class="callout callout-tip">
                     <strong>The rewrite habit:</strong> when two powers look hard to compare, find a common base or a common exponent and rewrite. Almost every comparison question is built so that one of the two is available.
                 </div>
@@ -74,6 +87,7 @@ public func render_hat_exponents_roots() : string {
                 <p>For the second part, multiply numerator and denominator by root(3) to clear the root from the denominator.</p>
                 <div class="formula">6 &divide; root(3) = (6 root(3)) &divide; 3 = 2 root(3)</div>
                 <p>Both answers are exact. A calculator gives root(50) plus root(18) as about 11.31, and 8 root(2) is also about 11.31, which confirms the simplification.</p>
+                <p><strong>Logs, worked.</strong> log<sub>3</sub> 27 is the power that turns 3 into 27, which is 3. The product log<sub>a</sub> b &times; log<sub>b</sub> c &times; log<sub>c</sub> d &times; log<sub>d</sub> e &times; log<sub>e</sub> f telescopes: every intermediate base cancels, leaving log<sub>a</sub> f. A product that returns to its start — log<sub>a</sub> n &times; log<sub>n</sub> a — multiplies to 1 for the same reason.</p>
             </div>
 
             <div class="unit unit-interact">
@@ -106,6 +120,20 @@ public func render_hat_exponents_roots() : string {
                     <button class="quiz-option" data-correct="false" data-explain="4 to the power 5 is 2 to the power 10, so it is not larger; rewriting the base shows they match exactly." onclick="checkQuiz('quiz-4', this)">4<sup>5</sup> is larger</button>
                     <div class="quiz-feedback"></div>
                 </div>
+                <div class="quiz" id="quiz-5">
+                    <p>What is log<sub>3</sub> 27?</p>
+                    <button class="quiz-option" data-correct="false" data-explain="9 is 3 squared times something else; log asks for the exponent, not a factor of the argument." onclick="checkQuiz('quiz-5', this)">9</button>
+                    <button class="quiz-option" data-correct="true" data-explain="3 to the power 3 is 27, so log base 3 of 27 is 3." onclick="checkQuiz('quiz-5', this)">3</button>
+                    <button class="quiz-option" data-correct="false" data-explain="27 would be the argument itself; the logarithm is the power you raise the base to." onclick="checkQuiz('quiz-5', this)">27</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+                <div class="quiz" id="quiz-6">
+                    <p>Simplify log<sub>a</sub> b &times; log<sub>b</sub> c &times; log<sub>c</sub> d.</p>
+                    <button class="quiz-option" data-correct="false" data-explain="The product of three logs is not their sum; the bases telescope instead." onclick="checkQuiz('quiz-6', this)">log<sub>a</sub> b + log<sub>b</sub> c + log<sub>c</sub> d</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Change of base turns each factor into (log of arg)/(log of base); every intermediate denominator cancels the previous numerator, leaving log<sub>a</sub> d." onclick="checkQuiz('quiz-6', this)">log<sub>a</sub> d</button>
+                    <button class="quiz-option" data-correct="false" data-explain="log<sub>d</sub> a is the reverse direction; the chain starts at base a and ends at argument d." onclick="checkQuiz('quiz-6', this)">log<sub>d</sub> a</button>
+                    <div class="quiz-feedback"></div>
+                </div>
             </div>
 
             <div class="unit unit-retrieve">
@@ -113,7 +141,7 @@ public func render_hat_exponents_roots() : string {
                 <p>Without looking back: state the product, quotient and power-of-a-power laws, and the value of any nonzero number raised to the power zero.</p>
                 <p>The answers: same base multiply means add the exponents, same base divide means subtract the exponents, a power of a power means multiply the exponents, and any nonzero base to the power zero is 1.</p>
                 <div id="fill-1">
-                    <p>For the same base, multiplying the powers means adding the exponents, so the new exponent is the <input type="text" class="fill-blank" data-answer="sum" placeholder="?" aria-label="product law exponent" /> of m and n. A power of a power <input type="text" class="fill-blank" data-answer="multiplies" placeholder="?" aria-label="power of a power rule" /> the exponents. Any nonzero base raised to the power zero equals <input type="text" class="fill-blank" data-answer="1" placeholder="?" aria-label="zero exponent value" />. The surds root(50) and root(18) simplify to 5 root(2) and 3 root(2), so their sum is 8 root(2), with 8 outside the root and <input type="text" class="fill-blank" data-answer="2" placeholder="?" aria-label="number under the root in the sum" /> inside it.</p>
+                    <p>For the same base, multiplying the powers means adding the exponents, so the new exponent is the <input type="text" class="fill-blank" data-answer="sum" placeholder="?" aria-label="product law exponent" /> of m and n. A power of a power <input type="text" class="fill-blank" data-answer="multiplies" placeholder="?" aria-label="power of a power rule" /> the exponents. Any nonzero base raised to the power zero equals <input type="text" class="fill-blank" data-answer="1" placeholder="?" aria-label="zero exponent value" />. The surds root(50) and root(18) simplify to 5 root(2) and 3 root(2), so their sum is 8 root(2), with 8 outside the root and <input type="text" class="fill-blank" data-answer="2" placeholder="?" aria-label="number under the root in the sum" /> inside it. log<sub>3</sub> 27 = <input type="text" class="fill-blank" data-answer="3" placeholder="?" aria-label="log base 3 of 27" /> because 3 cubed is 27. The chain log<sub>a</sub> b &times; log<sub>b</sub> c &times; log<sub>c</sub> d equals log<sub>a</sub> <input type="text" class="fill-blank" data-answer="d" placeholder="?" aria-label="telescoped log chain result" />.</p>
                     <button class="fill-check-btn" onclick="checkFillBlanks('fill-1')">Check answers</button>
                     <div class="fill-feedback"></div>
                 </div>

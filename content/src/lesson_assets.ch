@@ -76,6 +76,7 @@ public namespace underlayer_content {
                 .lesson-footer { flex-direction: column; }
             }
         }
+        render_exercise_css(page)
     }
 
     public func render_lesson_js(page : &mut HtmlPage) {
@@ -211,6 +212,8 @@ public namespace underlayer_content {
                 }
             }
         }
+        render_exercise_js(page)
+        render_exercise_build_js(page)
     }
 
 }

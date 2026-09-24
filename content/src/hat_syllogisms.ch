@@ -160,7 +160,7 @@ public func render_hat_syllogisms() : string {
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/hat/lessons/hat-grouping-puzzles">Previous: Grouping and Selection Puzzles</a></span>
+                <span><a href="/courses/hat/lessons/hat-network-routing">Previous: Network Routing Sets</a></span>
                 <span><a href="/courses/hat/lessons/hat-sets-venn">Next: Set-Based Deduction</a></span>
             </div>
         </div>

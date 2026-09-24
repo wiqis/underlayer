@@ -65,6 +65,7 @@ public func render_hat_sequences() : string {
                     </tbody>
                 </table>
                 <p>Notice the shared skeleton: both nth-term formulas use (n &minus; 1) steps from the first term, because the first term is already at n = 1.</p>
+                <p><strong>The inverse trick.</strong> When a question swaps the positions — "the pth term is q and the qth term is p" — do not find a and d by brute force. Subtract the two equations: a + (p &minus; 1)d = q and a + (q &minus; 1)d = p give (p &minus; q)d = q &minus; p, so d = &minus;1 whenever p &ne; q. Then a = q &minus; (p &minus; 1)d = p + q &minus; 1. The (p + q)th term collapses: a + (p + q &minus; 1)d = (p + q &minus; 1) &minus; (p + q &minus; 1) = <strong>0</strong>. The pattern is worth memorising: positions swap, difference is &minus;1, and the term at the sum of the positions is zero.</p>
                 <div class="callout callout-tip">
                     <strong>Identify before you compute.</strong> Write a, then d (or r), then n. Most mistakes happen because one of those three was read wrongly, not because the substitution was hard.
                 </div>
@@ -83,6 +84,8 @@ public func render_hat_sequences() : string {
                 <p>The sum of the first 6 terms is 3 &times; (2^6 &minus; 1) &divide; (2 &minus; 1) = 3 &times; 63 = <strong>189</strong>. Adding directly confirms it: 3 + 6 + 12 + 24 + 48 + 96 = 189.</p>
                 <h3>Infinite geometric: 8 + 4 + 2 + ...</h3>
                 <p>a = 8 and r = 1/2, and |r| &lt; 1, so the sum is 8 &divide; (1 &minus; 1/2) = 8 &divide; 0.5 = <strong>16</strong>.</p>
+                <h3>Inverse: pth term is q, qth term is p</h3>
+                <p>Write the two equations a + (p &minus; 1)d = q and a + (q &minus; 1)d = p, subtract to get d = &minus;1, then a = p + q &minus; 1. The (p + q)th term is a + (p + q &minus; 1)d = (p + q &minus; 1) &minus; (p + q &minus; 1) = <strong>0</strong>. No values of p or q are needed — the answer is always 0 when p &ne; q.</p>
             </div>
 
             <div class="unit unit-interact">
@@ -115,6 +118,13 @@ public func render_hat_sequences() : string {
                     <button class="quiz-option" data-correct="false" data-explain="36 would correspond to r = 2/3; here the ratio is one half, so the total is smaller." onclick="checkQuiz('quiz-4', this)">36</button>
                     <div class="quiz-feedback"></div>
                 </div>
+                <div class="quiz" id="quiz-5">
+                    <p>In an arithmetic progression the pth term is q and the qth term is p (p &ne; q). What is the (p + q)th term?</p>
+                    <button class="quiz-option" data-correct="true" data-explain="Subtracting the two equations gives d = &minus;1 and a = p + q &minus; 1, so the (p + q)th term is a + (p + q &minus; 1)(-1) = 0." onclick="checkQuiz('quiz-5', this)">0</button>
+                    <button class="quiz-option" data-correct="false" data-explain="q + p would be a itself (the first term), not the (p + q)th term; each step after the first subtracts 1." onclick="checkQuiz('quiz-5', this)">p + q</button>
+                    <button class="quiz-option" data-correct="false" data-explain="q &minus; p is the common difference with the opposite sign convention; here d = &minus;1, and the term at position p + q is 0 regardless of p and q." onclick="checkQuiz('quiz-5', this)">q &minus; p</button>
+                    <div class="quiz-feedback"></div>
+                </div>
             </div>
 
             <div class="unit unit-retrieve">
@@ -122,7 +132,7 @@ public func render_hat_sequences() : string {
                 <p>Without looking back: write the nth term of an arithmetic sequence and the condition under which a geometric series has a finite sum.</p>
                 <p>The nth term is a + (n &minus; 1)d; a geometric series converges to a finite sum only when |r| &lt; 1.</p>
                 <div id="fill-1">
-                    <p>In an arithmetic sequence the fixed step is called the common <input type="text" class="fill-blank" data-answer="difference" placeholder="?" aria-label="fixed step in an arithmetic sequence" />, and in a geometric sequence it is called the common <input type="text" class="fill-blank" data-answer="ratio" placeholder="?" aria-label="fixed step in a geometric sequence" />. A geometric series has a finite sum only when the absolute value of the ratio is less than <input type="text" class="fill-blank" data-answer="1" placeholder="?" aria-label="convergence bound on the ratio" />. For the arithmetic sequence 3, 7, 11, ... the 10th term is <input type="text" class="fill-blank" data-answer="39" placeholder="?" aria-label="tenth term of three seven eleven" />.</p>
+                    <p>In an arithmetic sequence the fixed step is called the common <input type="text" class="fill-blank" data-answer="difference" placeholder="?" aria-label="fixed step in an arithmetic sequence" />, and in a geometric sequence it is called the common <input type="text" class="fill-blank" data-answer="ratio" placeholder="?" aria-label="fixed step in a geometric sequence" />. A geometric series has a finite sum only when the absolute value of the ratio is less than <input type="text" class="fill-blank" data-answer="1" placeholder="?" aria-label="convergence bound on the ratio" />. For the arithmetic sequence 3, 7, 11, ... the 10th term is <input type="text" class="fill-blank" data-answer="39" placeholder="?" aria-label="tenth term of three seven eleven" />. If the pth term of an AP is q and the qth term is p, the common difference is <input type="text" class="fill-blank" data-answer="-1" placeholder="?" aria-label="common difference in the inverse trick" /> and the (p + q)th term is <input type="text" class="fill-blank" data-answer="0" placeholder="?" aria-label="p plus qth term" />.</p>
                     <button class="fill-check-btn" onclick="checkFillBlanks('fill-1')">Check answers</button>
                     <div class="fill-feedback"></div>
                 </div>

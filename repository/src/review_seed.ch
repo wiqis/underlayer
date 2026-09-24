@@ -151,16 +151,25 @@ public namespace underlayer_repository {
             }
 
             var type_str = json_get_str(decl_ptr, "type")
-            if(type_str.equals(string("multiple_choice"))) {
-                ex.exercise_type = underlayer_models::exercise_type_recognize()
-            } else if(type_str.equals(string("multi_recognize"))) {
-                ex.exercise_type = underlayer_models::exercise_type_multi_recognize()
-            } else if(type_str.equals(string("free_recall"))) {
-                ex.exercise_type = underlayer_models::exercise_type_recall()
-            } else if(type_str.equals(string("cued_recall"))) {
-                ex.exercise_type = underlayer_models::exercise_type_apply()
-            } else {
-                ex.exercise_type = underlayer_models::exercise_type_recognize()
+            ex.exercise_type = exercise_type_from_str(&type_str)
+
+            // multi_recognize: comma-separated correct option indices (e.g. "0,2")
+            var ci_str = json_get_str(decl_ptr, "correct_indices")
+            if(ci_str.size() > 0) {
+                var ci_start : size_t = 0
+                var cii : size_t = 0
+                while(cii <= ci_str.size()) {
+                    if(cii == ci_str.size() || ci_str.get(cii) == ',') {
+                        var num_str = string()
+                        var cj : size_t = ci_start
+                        while(cj < cii) { num_str.append(ci_str.get(cj)); cj = cj + 1 }
+                        if(num_str.size() > 0) {
+                            ex.correct_indices.push(parse_i64(num_str.to_view()) as int)
+                        }
+                        ci_start = cii + 1
+                    }
+                    cii = cii + 1
+                }
             }
 
             var options_str = json_get_str(decl_ptr, "options")

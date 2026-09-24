@@ -49,8 +49,11 @@ public func render_hat_sets_venn() : string {
                         <tr><td>A &cap; B</td><td>intersection</td><td>in A and in B together</td></tr>
                         <tr><td>A&prime;</td><td>complement</td><td>not in A</td></tr>
                         <tr><td>n(A)</td><td>cardinality</td><td>the number of items in A</td></tr>
+                        <tr><td>A &times; B</td><td>Cartesian product</td><td>all ordered pairs (a, b) with a in A and b in B</td></tr>
                     </tbody>
                 </table>
+                <h3>Cartesian product</h3>
+                <p>A &times; B is the set of ordered pairs, first element from A, second from B. Its size is the product of the sizes: n(A &times; B) = n(A) &times; n(B), because every element of A pairs with every element of B. With A = &#123;1, 2, 4&#125; and B = &#123;1, 3, 4, 5, 7&#125;, n(A &times; B) = 3 &times; 5 = <strong>15</strong>. Order matters — (1, 3) and (3, 1) are different pairs — so A &times; B and B &times; A are different sets whenever A &ne; B, even though they have the same size.</p>
                 <h3>Inclusion-exclusion</h3>
                 <div class="formula">n(A &cup; B) = n(A) + n(B) &minus; n(A &cap; B)</div>
                 <p>The subtraction is the whole idea: the items in both circles were counted once in A and once in B, so they must be removed once. For three sets the pattern alternates:</p>
@@ -131,6 +134,13 @@ public func render_hat_sets_venn() : string {
                     <button class="quiz-option" data-correct="false" data-explain="The part of B outside A may be large; only the A side is constrained." onclick="checkQuiz('quiz-4', this)">The part of B outside A</button>
                     <div class="quiz-feedback"></div>
                 </div>
+                <div class="quiz" id="quiz-5">
+                    <p>If A = &#123;1, 2, 4&#125; and B = &#123;1, 3, 4, 5, 7&#125;, how many ordered pairs are in A &times; B?</p>
+                    <button class="quiz-option" data-correct="false" data-explain="8 would be adding the sizes 3 + 5; the product counts every pairing, not a merge of the sets." onclick="checkQuiz('quiz-5', this)">8</button>
+                    <button class="quiz-option" data-correct="true" data-explain="n(A &times; B) = n(A) &times; n(B) = 3 &times; 5 = 15 ordered pairs." onclick="checkQuiz('quiz-5', this)">15</button>
+                    <button class="quiz-option" data-correct="false" data-explain="7 is close to |B| alone; the product multiplies both cardinalities." onclick="checkQuiz('quiz-5', this)">7</button>
+                    <div class="quiz-feedback"></div>
+                </div>
             </div>
 
             <div class="unit unit-retrieve">
@@ -138,7 +148,7 @@ public func render_hat_sets_venn() : string {
                 <p>Without looking back: what does the subtraction in inclusion-exclusion remove, and how do you count the people who play neither game?</p>
                 <p>The answer: it removes the double-counted overlap, and "neither" is the total minus the union.</p>
                 <div id="fill-1">
-                    <p>The items in both A and B form the <input type="text" class="fill-blank" data-answer="intersection" placeholder="?" aria-label="region shared by two sets" />. The formula for two sets is n(A) + n(B) &minus; n(A &cap; B), where the subtracted term removes the double-counted <input type="text" class="fill-blank" data-answer="overlap" placeholder="?" aria-label="what is subtracted" />. Everyone in at least one set forms the <input type="text" class="fill-blank" data-answer="union" placeholder="?" aria-label="region counting at least one" />, and the number in neither is the total minus that union, which for the class of 40 is <input type="text" class="fill-blank" data-answer="5" placeholder="?" aria-label="neither count" />.</p>
+                    <p>The items in both A and B form the <input type="text" class="fill-blank" data-answer="intersection" placeholder="?" aria-label="region shared by two sets" />. The formula for two sets is n(A) + n(B) &minus; n(A &cap; B), where the subtracted term removes the double-counted <input type="text" class="fill-blank" data-answer="overlap" placeholder="?" aria-label="what is subtracted" />. Everyone in at least one set forms the <input type="text" class="fill-blank" data-answer="union" placeholder="?" aria-label="region counting at least one" />, and the number in neither is the total minus that union, which for the class of 40 is <input type="text" class="fill-blank" data-answer="5" placeholder="?" aria-label="neither count" />. If A has 3 elements and B has 5, then A &times; B has <input type="text" class="fill-blank" data-answer="15" placeholder="?" aria-label="cartesian product size" /> ordered pairs.</p>
                     <button class="fill-check-btn" onclick="checkFillBlanks('fill-1')">Check answers</button>
                     <div class="fill-feedback"></div>
                 </div>

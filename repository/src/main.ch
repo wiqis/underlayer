@@ -9,6 +9,7 @@
 //   sessions.ch       — create_session, insert_session, finish_session, pause/resume/abort/undo/skip
 //   session_items.ch  — record_session_item, get_session_items, get_session_stats, get_learner_sessions
 //   exercises.ch      — get_exercises_for_concept, get_exercise, insert_exercise, count_exercises
+//   exercise_type_map.ch — exercise_type_from_str, exercise_type_to_str (8 lesson UI types)
 //   goals.ch          — get_learning_goal, set_learning_goal, delete_learning_goal
 //   profiles.ch       — get_profile, upsert_profile, is_username_available, get_profile_by_username
 //   settings.ch       — get_settings, upsert_settings, get_learning_preferences, upsert_learning_preferences

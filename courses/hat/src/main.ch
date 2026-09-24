@@ -213,6 +213,10 @@ public func main() : int {
     fs::write_text_file("output/hat-grouping-puzzles.html", html.data() as *u8, html.size())
     printf("  -> hat-grouping-puzzles.html\n")
 
+    html = underlayer_content::render_hat_network_routing()
+    fs::write_text_file("output/hat-network-routing.html", html.data() as *u8, html.size())
+    printf("  -> hat-network-routing.html\n")
+
     html = underlayer_content::render_hat_syllogisms()
     fs::write_text_file("output/hat-syllogisms.html", html.data() as *u8, html.size())
     printf("  -> hat-syllogisms.html\n")
@@ -288,6 +292,6 @@ public func main() : int {
     fs::write_text_file("output/index.html", html.data() as *u8, html.size())
     printf("  -> index.html\n")
 
-    printf("HAT course: 68 concepts + landing page generated in output/\n")
+    printf("HAT course: 69 concepts + landing page generated in output/\n")
     return 0
 }

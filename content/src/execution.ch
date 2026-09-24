@@ -179,76 +179,6 @@ gcc -o test test.c; LD_DEBUG=all ./test | grep -i init</pre></div>
     }
 
     #js {
-        // ---- 4.1.26: server-side exercises, loaded from /api/exercises ----
-        function __ul_load_exercises() {
-            var ctx = __ul_ctx();
-            if (!ctx) { return; }
-            var box = document.getElementById('api-exercises');
-            var list = document.getElementById('exercise-list');
-            if (!box || !list) { return; }
-            fetch('/api/exercises/' + encodeURIComponent(ctx.concept))
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
-                    if (!data.exercises || data.exercises.length === 0) { return; }
-                    box.style.display = '';
-                    for (var i = 0; i < data.exercises.length; i++) { list.appendChild(__ul_build_exercise(data.exercises[i])); }
-                })
-                .catch(function() {});
-        }
-        function __ul_build_exercise(ex) {
-            var card = document.createElement('div');
-            card.className = 'exercise-card';
-            var h = document.createElement('h4');
-            h.textContent = ex.question;
-            card.appendChild(h);
-            var fb = document.createElement('div');
-            fb.className = 'exercise-feedback';
-            if (ex.type === 'recognize' && ex.options && ex.options.length > 0) {
-                for (var j = 0; j < ex.options.length; j++) {
-                    (function(opt) {
-                        var b = document.createElement('button');
-                        b.className = 'exercise-option';
-                        b.textContent = opt;
-                        b.onclick = function() { __ul_submit_exercise(ex, opt, b, fb); };
-                        card.appendChild(b);
-                    })(ex.options[j]);
-                }
-            } else {
-                var wrap = document.createElement('div');
-                var inp = document.createElement('input');
-                inp.type = 'text';
-                inp.className = 'exercise-input';
-                inp.placeholder = 'Type your answer';
-                var btn = document.createElement('button');
-                btn.className = 'fill-check-btn';
-                btn.textContent = 'Check';
-                btn.onclick = function() { __ul_submit_exercise(ex, inp.value, btn, fb); };
-                wrap.appendChild(inp); wrap.appendChild(btn);
-                card.appendChild(wrap);
-            }
-            card.appendChild(fb);
-            return card;
-        }
-        function __ul_submit_exercise(ex, answer, el, fb) {
-            var url = '/api/exercises/submit?exercise_id=' + encodeURIComponent(ex.id) + '&answer=' + encodeURIComponent(answer);
-            fetch(url, { method: 'POST' })
-                .then(function(r) { return r.json(); })
-                .then(function(res) {
-                    var opts = el.parentNode.querySelectorAll('.exercise-option');
-                    for (var k = 0; k < opts.length; k++) { opts[k].disabled = true; }
-                    if (res.correct) {
-                        if (el.classList) { el.classList.add('correct'); }
-                        fb.className = 'exercise-feedback ok';
-                    } else {
-                        if (el.classList) { el.classList.add('wrong'); }
-                        fb.className = 'exercise-feedback err';
-                    }
-                    var text = (res.correct ? 'Correct! ' : 'Not quite. ') + (res.explanation || '');
-                    fb.textContent = text;
-                })
-                .catch(function() {});
-        }
-        document.addEventListener('DOMContentLoaded', function() { __ul_load_exercises(); });
         function __ul_ctx() {
             var parts = window.location.pathname.split('/').filter(function(p) { return p.length > 0; });
             if (parts.length >= 4) {
@@ -326,6 +256,9 @@ gcc -o test test.c; LD_DEBUG=all ./test | grep -i init</pre></div>
         }
     }
 
+    render_exercise_css(&mut page)
+    render_exercise_js(&mut page)
+    render_exercise_build_js(&mut page)
     return page.toString()
 }
 }

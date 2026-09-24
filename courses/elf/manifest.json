@@ -2,7 +2,7 @@
   "id": "elf",
   "title": "Executable and Linkable Format",
   "version": 1,
-  "description": "A deep dive into the ELF binary format — headers, sections, segments, symbols, relocations, and dynamic linking.",
+  "description": "A deep dive into the ELF binary format \u2014 headers, sections, segments, symbols, relocations, and dynamic linking.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",
@@ -88,7 +88,7 @@
       "answer": "At byte 0x3ff0",
       "options": "At byte 0x0040|At byte 0x0001|At byte 0x3ff0",
       "correct_index": 2,
-      "explanation": "e_shoff holds the file offset of the section header table — here 0x3ff0.",
+      "explanation": "e_shoff holds the file offset of the section header table \u2014 here 0x3ff0.",
       "hint1": "e_shoff is a byte offset from the start of the file.",
       "difficulty": 0.5
     },
@@ -155,6 +155,28 @@
       "explanation": ".dynsym is required by ld.so at runtime; .symtab is optional and usually stripped from release binaries.",
       "hint1": "One is needed at runtime, one is not.",
       "difficulty": 0.6
+    },
+    {
+      "concept_id": "bytes",
+      "type": "hex_inspect",
+      "question": "In the hex dump, what 8-bit value does byte 0x41 encode?",
+      "answer": "41",
+      "options": "",
+      "correct_index": 0,
+      "explanation": "0x41 is hex digits 4 and 1 (ASCII 'A', decimal 65). The grader accepts 41, 0x41, or 0X41.",
+      "hint1": "The high nibble is 4, the low nibble is 1.",
+      "difficulty": 0.3
+    },
+    {
+      "concept_id": "file-layout",
+      "type": "ordering",
+      "question": "Put these ELF file regions in address order (lowest first).",
+      "answer": "ELF header|Program headers|Sections",
+      "options": "Sections|ELF header|Program headers",
+      "correct_index": 0,
+      "explanation": "The ELF header is at offset 0, program headers follow, then section contents.",
+      "hint1": "Start from file offset zero.",
+      "difficulty": 0.4
     }
   ],
   "visualization_decls": [],

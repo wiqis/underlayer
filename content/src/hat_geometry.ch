@@ -39,6 +39,8 @@ public func render_hat_geometry() : string {
             <div class="unit unit-reality">
                 <h2>The Actual Detail</h2>
                 <p><strong>Angles.</strong> Angles on a straight line add to 180 degrees; around a point they add to 360 degrees; the three angles of any triangle add to 180 degrees. When a question gives angles as multiples of x, write the sum as an equation: if the angles are 3x, 2x and 4x, then 9x = 180, so x = 20 and the angles are 60, 40 and 80 degrees.</p>
+                <p><strong>Exterior angles.</strong> Walk around any convex polygon turning at each corner; you always make one full turn, so the exterior angles — one per vertex — sum to 360 degrees no matter how many sides the polygon has. A triangle is the special case where each exterior equals the sum of the two opposite interior angles. For a regular n-gon each exterior is 360/n: a regular hexagon turns 60 degrees at every vertex.</p>
+                <p><strong>Clock angles.</strong> Both hands move continuously, so the hour hand is never exactly on a number once minutes have passed. Put both hands in degrees from 12 o'clock (0 degrees, clockwise): minute hand = 6 &times; minutes; hour hand = 30 &times; hours + 0.5 &times; minutes. The angle between them is the absolute difference; if that exceeds 180, take 360 minus it (the smaller angle). At 2:25 the minute hand is at 150 and the hour hand at 60 + 12.5 = 72.5, so the gap is 77.5 degrees — the hour hand has already crawled past the 2.</p>
                 <p><strong>Triangles.</strong> Area is one half times base times height: for a base of 12 and a height of 5, the area is 30 square units. Note that the height must be perpendicular to the base, not one of the slanted sides.</p>
                 <p><strong>Pythagoras.</strong> In a right triangle, the square on the hypotenuse equals the sum of the squares on the other two sides. With legs 9 and 12: 81 + 144 = 225, so the hypotenuse is 15. The standard triples — 3, 4, 5 and its multiples 6, 8, 10 and 9, 12, 15 — appear constantly; recognising them saves the calculation.</p>
                 <p><strong>Rectangles and squares.</strong> For a rectangle 14 by 9, the area is 126 square units and the perimeter is 2 x (14 + 9) = 46 units. For a square, area is the side squared and perimeter is four times the side.</p>
@@ -49,7 +51,7 @@ public func render_hat_geometry() : string {
                     <strong>The diameter trap.</strong> Questions often give the diameter and ask for the area or circumference. Halve it first. A diameter of 14 is a radius of 7, and using 14 in pi r squared would quadruple the area.
                 </div>
                 <div class="callout callout-tip">
-                    <strong>Similar shapes scale by the square.</strong> If every length in a shape is multiplied by 3, the area is multiplied by 9 and the volume by 27. Recognising this turns some multi-step questions into a single multiplication.
+                    <strong>Similar shapes scale lengths by k, areas by k&sup2;, volumes by k&sup3;.</strong> If two similar triangles have areas in the ratio 9 : 16, their corresponding lengths (sides, altitudes, perimeters) are in the ratio &radic;9 : &radic;16 = 3 : 4 — never 9 : 16. The same square rule turns a length scale into an area scale in one step: multiply every length by 3 and the area grows by 9.
                 </div>
             </div>
 
@@ -59,6 +61,7 @@ public func render_hat_geometry() : string {
                 <p>Fencing is a perimeter, so one dimension: 2 x (40 + 30) = 140 metres.</p>
                 <p>The path is an area, so two dimensions. The inner rectangle, excluding the path, is 40 - 2 - 2 = 36 metres by 30 - 2 - 2 = 26 metres. Its area is 36 x 26 = 936 square metres, and the whole field is 40 x 30 = 1200 square metres. The path occupies 1200 - 936 = 264 square metres.</p>
                 <p>Two checks worth making. First, the units differ correctly between the two answers — metres for fencing, square metres for the path — which confirms both formulas were the right kind. Second, an estimate: the path is roughly a band of area (140 x 2) minus the four corner squares that get counted twice, which is 280 - 16 = 264. The estimate matches exactly, because it is the same computation arranged the other way.</p>
+                <p><strong>Clock and similarity, worked.</strong> At 25 minutes past 2: minute hand 6 &times; 25 = 150 degrees from 12; hour hand 30 &times; 2 + 0.5 &times; 25 = 72.5 degrees; difference 77.5 degrees. Two similar triangles with areas 9 and 16: length ratio is the square root of the area ratio, so altitudes are in 3 : 4. Both are the same habit — name which quantity scales linearly and which scales by the square before touching the numbers.</p>
             </div>
 
             <div class="unit unit-interact">
@@ -84,6 +87,27 @@ public func render_hat_geometry() : string {
                     <button class="quiz-option" data-correct="false" data-explain="100 comes from taking x = 25 rather than 20; 3x would then be 75, 2x would be 50 and 4x would be 100, summing to 225 instead of 180." onclick="checkQuiz('quiz-3', this)">100 degrees</button>
                     <div class="quiz-feedback"></div>
                 </div>
+                <div class="quiz" id="quiz-4">
+                    <p>The clock shows 25 minutes past 2. What is the angle between the hands?</p>
+                    <button class="quiz-option" data-correct="true" data-explain="Minute hand at 150; hour hand at 60 + 12.5 = 72.5. Difference is 77.5 degrees. The hour hand has moved past the 2, which is why the gap is not a round number." onclick="checkQuiz('quiz-4', this)">77.5 degrees</button>
+                    <button class="quiz-option" data-correct="false" data-explain="90 degrees would be the gap if the hour hand were still exactly on the 2 (60) while the minute hand is at 150 — that is 90 only if you forget the hour hand's crawl." onclick="checkQuiz('quiz-4', this)">90 degrees</button>
+                    <button class="quiz-option" data-correct="false" data-explain="88 degrees is not produced by either hand's true position; it is a distractor near the correct 77.5." onclick="checkQuiz('quiz-4', this)">88 degrees</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+                <div class="quiz" id="quiz-5">
+                    <p>Two similar triangles have areas in the ratio 9 : 16. What is the ratio of their corresponding altitudes?</p>
+                    <button class="quiz-option" data-correct="false" data-explain="Lengths do not scale with the area ratio; they scale with its square root." onclick="checkQuiz('quiz-5', this)">9 : 16</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Areas scale by the square of the length ratio, so lengths scale by the square root: &radic;9 : &radic;16 = 3 : 4." onclick="checkQuiz('quiz-5', this)">3 : 4</button>
+                    <button class="quiz-option" data-correct="false" data-explain="16 : 9 reverses the ratio; the smaller triangle has the smaller altitude." onclick="checkQuiz('quiz-5', this)">16 : 9</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+                <div class="quiz" id="quiz-6">
+                    <p>What is the sum of the exterior angles of any convex polygon (one at each vertex)?</p>
+                    <button class="quiz-option" data-correct="false" data-explain="180 is the sum of the interior angles of a triangle, not the exterior sum for a general polygon." onclick="checkQuiz('quiz-6', this)">180 degrees</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Walking once around any convex polygon is one full turn: the exterior angles always sum to 360 degrees." onclick="checkQuiz('quiz-6', this)">360 degrees</button>
+                    <button class="quiz-option" data-correct="false" data-explain="(n &minus; 2) &times; 180 is the interior-angle sum, which grows with n; the exterior sum is fixed." onclick="checkQuiz('quiz-6', this)">Depends on the number of sides</button>
+                    <div class="quiz-feedback"></div>
+                </div>
             </div>
 
             <div class="unit unit-retrieve">
@@ -92,7 +116,7 @@ public func render_hat_geometry() : string {
                 <p>The answer is: ask whether the answer should be in single units (a length, perimeter or circumference) or square units (an area). A right angle allows Pythagoras — or recognition of a 3, 4, 5 style triple.</p>
                 <p>Fill in the blanks from memory:</p>
                 <div id="fill-1">
-                    <p>A triangle with base 12 and perpendicular height 5 has area <input type="text" class="fill-blank" data-answer="30" placeholder="?" aria-label="triangle area" /> square units. A rectangle 14 by 9 has perimeter <input type="text" class="fill-blank" data-answer="46" placeholder="?" aria-label="perimeter" />. A cuboid measuring 2 by 3 by 5 has volume <input type="text" class="fill-blank" data-answer="30" placeholder="?" aria-label="volume" /> cubic units.</p>
+                    <p>A triangle with base 12 and perpendicular height 5 has area <input type="text" class="fill-blank" data-answer="30" placeholder="?" aria-label="triangle area" /> square units. A rectangle 14 by 9 has perimeter <input type="text" class="fill-blank" data-answer="46" placeholder="?" aria-label="perimeter" />. A cuboid measuring 2 by 3 by 5 has volume <input type="text" class="fill-blank" data-answer="30" placeholder="?" aria-label="volume" /> cubic units. For similar shapes, areas scale by the <input type="text" class="fill-blank" data-answer="square" placeholder="?" aria-label="how areas scale" /> of the length ratio. At 2:25 the angle between the clock hands is <input type="text" class="fill-blank" data-answer="77.5" placeholder="?" aria-label="clock angle at 2:25" /> degrees. The exterior angles of any convex polygon sum to <input type="text" class="fill-blank" data-answer="360" placeholder="?" aria-label="sum of exterior angles" /> degrees.</p>
                     <button class="fill-check-btn" onclick="checkFillBlanks('fill-1')">Check answers</button>
                     <div class="fill-feedback"></div>
                 </div>

@@ -127,6 +127,7 @@ public namespace underlayer_web {
         var strong_weak_id = std::string("hat-strong-weak-arguments")
         var course_of_action_id = std::string("hat-course-of-action")
         var grouping_id = std::string("hat-grouping-puzzles")
+        var network_id = std::string("hat-network-routing")
         var sets_venn_id = std::string("hat-sets-venn")
         var review_method_id = std::string("hat-review-method")
         var energy_id = std::string("hat-energy-management")
@@ -196,6 +197,7 @@ public namespace underlayer_web {
         if(cid.equals(&strong_weak_id)) { return underlayer_content::render_hat_strong_weak_arguments() }
         if(cid.equals(&course_of_action_id)) { return underlayer_content::render_hat_course_of_action() }
         if(cid.equals(&grouping_id)) { return underlayer_content::render_hat_grouping_puzzles() }
+        if(cid.equals(&network_id)) { return underlayer_content::render_hat_network_routing() }
         if(cid.equals(&sets_venn_id)) { return underlayer_content::render_hat_sets_venn() }
         if(cid.equals(&review_method_id)) { return underlayer_content::render_hat_review_method() }
         if(cid.equals(&energy_id)) { return underlayer_content::render_hat_energy_management() }

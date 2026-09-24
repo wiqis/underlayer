@@ -53,17 +53,7 @@ public namespace underlayer_web {
             ex.correct_index = json_get_int(item_ptr, "correct_index")
 
             var type_str = json_get_str(item_ptr, "type")
-            if(type_str.equals(string("multiple_choice"))) {
-                ex.exercise_type = underlayer_models::exercise_type_recognize()
-            } else if(type_str.equals(string("multi_recognize"))) {
-                ex.exercise_type = underlayer_models::exercise_type_multi_recognize()
-            } else if(type_str.equals(string("free_recall"))) {
-                ex.exercise_type = underlayer_models::exercise_type_recall()
-            } else if(type_str.equals(string("cued_recall"))) {
-                ex.exercise_type = underlayer_models::exercise_type_apply()
-            } else {
-                ex.exercise_type = underlayer_models::exercise_type_recognize()
-            }
+            ex.exercise_type = underlayer_repository::exercise_type_from_str(&type_str)
 
             var options_str = json_get_str(item_ptr, "options")
             if(options_str.size() > 0) {

@@ -36,17 +36,7 @@ public namespace underlayer_repository {
                 ex.id = row.vals.get_ptr(0).copy()
                 ex.concept_id = row.vals.get_ptr(1).copy()
                 var type_str = row.vals.get_ptr(2).copy()
-                if(type_str.equals(string("multiple_choice"))) {
-                    ex.exercise_type = underlayer_models::exercise_type_recognize()
-                } else if(type_str.equals(string("multi_recognize"))) {
-                    ex.exercise_type = underlayer_models::exercise_type_multi_recognize()
-                } else if(type_str.equals(string("free_recall"))) {
-                    ex.exercise_type = underlayer_models::exercise_type_recall()
-                } else if(type_str.equals(string("cued_recall"))) {
-                    ex.exercise_type = underlayer_models::exercise_type_apply()
-                } else {
-                    ex.exercise_type = underlayer_models::exercise_type_recognize()
-                }
+                ex.exercise_type = exercise_type_from_str(&type_str)
                 ex.question = row.vals.get_ptr(3).copy()
                 ex.answer = row.vals.get_ptr(4).copy()
                 // Parse options from pipe-separated string
@@ -118,15 +108,7 @@ public namespace underlayer_repository {
                 ex.id = row.vals.get_ptr(0).copy()
                 ex.concept_id = row.vals.get_ptr(1).copy()
                 var type_str = row.vals.get_ptr(2).copy()
-                if(type_str.equals(string("multiple_choice"))) {
-                    ex.exercise_type = underlayer_models::exercise_type_recognize()
-                } else if(type_str.equals(string("multi_recognize"))) {
-                    ex.exercise_type = underlayer_models::exercise_type_multi_recognize()
-                } else if(type_str.equals(string("free_recall"))) {
-                    ex.exercise_type = underlayer_models::exercise_type_recall()
-                } else {
-                    ex.exercise_type = underlayer_models::exercise_type_recognize()
-                }
+                ex.exercise_type = exercise_type_from_str(&type_str)
                 ex.question = row.vals.get_ptr(3).copy()
                 ex.answer = row.vals.get_ptr(4).copy()
                 var opts_str = row.vals.get_ptr(5).to_view()
@@ -188,11 +170,7 @@ public namespace underlayer_repository {
         sql.append_view("', '")
         sql.append_string(&ex.concept_id)
         sql.append_view("', '")
-        // Determine type string
-        var type_str = string("multiple_choice")
-        if(ex.exercise_type.id.equals(string("recall"))) { type_str = string("free_recall") }
-        if(ex.exercise_type.id.equals(string("apply"))) { type_str = string("cued_recall") }
-        if(ex.exercise_type.id.equals(string("multi_recognize"))) { type_str = string("multi_recognize") }
+        var type_str = exercise_type_to_str(&ex.exercise_type)
         sql.append_string(&type_str)
         sql.append_view("', '")
         var q_raw = sql_escape(&ex.question)

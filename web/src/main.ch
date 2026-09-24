@@ -8,6 +8,7 @@
 //   handlers_lessons.ch      — handle_lesson, handle_course_landing
 //   handlers_review.ch       — handle_review_start, submit, end, due (5.1.1-5.1.5 modes)
 //   handlers_exercises.ch    — handle_get_exercises, submit, hint (4.1.1-4.1.5, 4.2.1-4.2.5)
+//   exercise_grade.ch        — grade_exercise for all 8 lesson UI types (4.1.29)
 //   handlers_exercises_bulk.ch — handle_exercise_import, handle_exercise_seed, handle_exercise_stats
 //   handlers_progress.ch     — handle_progress, handle_course_progress
 //   handlers_analytics.ch    — handle_course_analytics, handle_difficulty_analytics, handle_error_analytics, handle_engagement_analytics, handle_velocity_analytics

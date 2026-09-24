@@ -261,6 +261,18 @@
 - [ ] P3 2.2.3 Concept file with #js macro for interactivity
 - [ ] P3 2.2.4 Concept file with #md macro for markdown content
 - [x] P3 2.2.5 Concept template: standard lesson layout
+- [x] P1 2.2.21 HAT lesson: network routing sets — one-way circuit vs two-way radio, exact intermediary count, shortest path, both-channel proof (hat-network-routing; sample-paper genre: 6 questions shared setup)
+- [x] P1 2.2.22 HAT lesson: multi-paragraph reading comprehension — paragraph-job labels, main idea as first+last across the arc, structure stems stay local, two multi-paragraph quizzes + retrieval blanks (official sample has multi-paragraph Jamestown passage; course passages were single-paragraph)
+- [x] P2 2.2.23 HAT lesson: clock-face angle between hands — minute 6m, hour 30h+0.5m, smaller angle (official sample: 25 past 2 = 77.5 degrees)
+- [x] P2 2.2.24 HAT lesson: similar-triangle area ratio equals square of scale factor — altitudes scale by square root (official sample: areas 9:16 → altitudes 3:4; taught in hat-geometry)
+- [x] P2 2.2.25 HAT lesson: AP inverse trick — identify the term given as p-th is q (official sample: (p+q)th term = 0; taught in hat-sequences)
+- [x] P3 2.2.26 HAT lesson: logarithms (exponent inverse; official samples: log3 27 = 3, telescoping log chain; taught in hat-exponents-roots)
+- [x] P3 2.2.27 HAT lesson: exterior angles of a triangle/polygon — sum always 360 degrees, regular n-gon exterior = 360/n (official sample: sum of exterior angles of any polygon; taught in hat-geometry)
+- [x] P3 2.2.28 HAT lesson: degree of a polynomial — max total exponent in one term, multivariable adds within term (official sample: x5yz2+x4y3z2+xyz+10 has degree 9; taught in hat-algebra)
+- [x] P3 2.2.29 HAT lesson: functions domain and range — domain excludes zero denominators, range tracks cancelled inputs (official samples: domain of (3x-5)/(2x+6) excludes -3; range of (x²-25)/(x+5) excludes -10; taught in hat-algebra)
+- [x] P3 2.2.30 HAT lesson: variance and standard deviation — mean, average squared deviation, sqrt for SD (official sample: variance of 1,3,5,7,9 = 8; taught in hat-data-probability)
+- [x] P3 2.2.31 HAT lesson: Cartesian product of sets — ordered pairs, n(A×B)=n(A)×n(B) (official sample: |{1,2,4}×{1,3,4,5,7}|=15; taught in hat-sets-venn; use &#123;/&#125; entities for braces inside #html)
+- [x] P3 2.2.32 HAT lesson: rational vs irrational numbers — p/q definition, perfect-square roots only (official samples: 3/4 rational, root 2 irrational; taught in hat-number-properties)
 - [x] P3 2.2.6 Concept template: exercise-focused layout
 - [x] P3 2.2.7 Concept template: visualization-focused layout
 - [x] P3 2.2.8 Concept template: mixed layout
@@ -494,7 +506,7 @@
 - [x] P1 4.1.26 Lesson pages render exercises from GET /api/exercises/:conceptId (no page currently consumes the exercise API — wiring gap)
 - [x] P1 4.1.27 Exercise seeding at startup or on first lesson request (DB starts empty; /api/exercises/seed exists but is manual-only)
 - [x] P1 4.1.28 Exercise submit updates concept_states and creates/updates review_items via FSRS (currently grades only — results never reach the learning loop)
-- [ ] P1 4.1.29 Exercise UI on lesson pages supports all 8 exercise types (multiple choice, multi-select, fill-blank, hex-inspect, ordering, matching, labeling, predict)
+- [x] P1 4.1.29 Exercise UI on lesson pages supports all 8 exercise types (multiple choice, multi-select, fill-blank, hex-inspect, ordering, matching, labeling, predict)
 - [ ] P2 4.1.30 Progressive hints UI wired to GET /api/exercises/hint (API exists, no frontend consumer)
 
 ### 4.2 Exercise Feedback
