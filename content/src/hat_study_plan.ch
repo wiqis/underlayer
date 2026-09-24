@@ -142,7 +142,7 @@ Retest: Tue  +  following Sat</pre>
                 <p>Without looking back: name the five phases of the weekly cycle and the two volume targets that make the plan concrete.</p>
                 <p>The answer: diagnose, build, drill, log, retest; about 1,500 to 2,000 attempted questions and six to eight full-length timed mocks.</p>
                 <div id="fill-1">
-                    <p>The five phases of the weekly cycle are diagnose, <input type="text" class="fill-blank" data-answer="build" placeholder="?" aria-label="second phase" />, drill, <input type="text" class="fill-blank" data-answer="log" placeholder="?" aria-label="fourth phase" /> and retest. A realistic question target is <input type="text" class="fill-blank" data-answer="1500" placeholder="?" aria-label="minimum questions" /> to 2,000 attempted questions, and the last week is a <input type="text" class="fill-blank" data-answer="taper" placeholder="?" aria-label="final week phase" />.</p>
+                    <p>The five phases of the weekly cycle are diagnose, <input type="text" class="fill-blank" data-answer="build" placeholder="?" aria-label="second phase" />, drill, <input type="text" class="fill-blank" data-answer="log" placeholder="?" aria-label="fourth phase" /> and retest. A realistic question target is <input type="text" class="fill-blank" data-answer="1,500" placeholder="?" aria-label="minimum questions" /> to 2,000 attempted questions, and the last week is a <input type="text" class="fill-blank" data-answer="taper" placeholder="?" aria-label="final week phase" />.</p>
                     <button class="fill-check-btn" onclick="checkFillBlanks('fill-1')">Check answers</button>
                     <div class="fill-feedback"></div>
                 </div>

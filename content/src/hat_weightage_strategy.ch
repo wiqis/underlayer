@@ -84,11 +84,11 @@ public func render_hat_weightage_strategy() : string {
                         <tr><th scope="col">Plan</th><th scope="col">Allocation</th><th scope="col">Assumed return</th><th scope="col">Projected total</th></tr>
                     </thead>
                     <tbody>
-                        <tr><td>A: quantitative only</td><td>30 h quantitative</td><td>0.5 marks/h early, 0.3 late, starting from 55%</td><td>37 + 12 + 8 = <strong>57</strong></td></tr>
+                        <tr><td>A: quantitative only</td><td>20 h at 0.5 marks/h, then 10 h at 0.3 marks/h</td><td>Starting Q = 55% of 40 = 22</td><td>22 + 10 + 3 = 35, then 35 + 12 + 8 = <strong>55</strong></td></tr>
                         <tr><td>B: gap-weighted</td><td>10 h per section</td><td>Q 0.5, V 0.9, A 0.6 marks/h</td><td>27 + 21 + 14 = <strong>62</strong></td></tr>
                     </tbody>
                 </table>
-                <p>Plan B wins despite the section weights, because Plan A poured its last ten hours into a section already near its ceiling. Weightage set the ceiling; the measured gap set the return. The correct plan protects the strong section with a short consolidation block and then spends everything else where the slope is steepest.</p>
+                <p>Plan B wins despite the section weights. Plan A spends all thirty hours on Quantitative, yet the returns decay: the first twenty hours buy 0.5 marks each, the last ten only 0.3, because the section is climbing towards its ceiling (22 &rarr; 35 of 40). Plan B leaves Quantitative at 27, lifts Verbal 12 &rarr; 21 and Analytical 8 &rarr; 14, and finishes seven marks ahead. Weightage set the ceiling; the measured gap set the return. The correct plan protects the strong section with a short consolidation block and then spends everything else where the slope is steepest.</p>
             </div>
 
             <div class="unit unit-interact">
@@ -132,9 +132,9 @@ public func render_hat_weightage_strategy() : string {
                 <p>You are registering for HAT-1 with 24 hours a week for three weeks. Your diagnostic: Quantitative 30/40 (fast but careless), Verbal 10/30 (grammar never studied), Analytical 9/30 (no idea how to draw a puzzle). Allocate the three weeks and justify the split.</p>
                 <details>
                     <summary>Show the reasoning</summary>
-                    <p>Quantitative is at 75%, so its remaining value is ten marks and the cheapest of those come from <em>carelessness</em>, not content: a two-hour block on unit checks, backsolving and estimation is enough. Take 3 hours.</p>
-                    <p>Verbal at 10/30 and Analytical at 9/30 are the money. Verbal's gap is rule-based — agreement, prepositions, vocabulary, sentence completion — and rule-based material holds its value, so it deserves steady daily repetition: 9 hours across three weeks, 30 minutes a day, with a timed drill each week. Analytical's gap is procedural: seating and ordering puzzles, syllogisms, series and data interpretation all have a written procedure, and three or four procedures cover most of the section: 12 hours, blocked by family, then mixed timed sets.</p>
-                    <p>That also fixes the ordering: learn the procedure, drill it blocked while it is fragile, then switch to mixed timed sets so the recognition itself gets trained. The final week is mocks and error repair, not new topics.</p>
+                    <p>Seventy-two hours total (24 h &times; 3 weeks). Quantitative is at 30/40 (75%), so it needs a floor and carelessness repair, not development: <strong>12 hours</strong> — a two-hour block on unit checks, backsolving and estimation, then ten hours of mixed timed sets to hold the level.</p>
+                    <p>Verbal at 10/30 and Analytical at 9/30 are the money. Verbal's gap is rule-based — agreement, prepositions, vocabulary, sentence completion — and rule-based material holds its value: <strong>24 hours</strong>, thirty to forty minutes a day, with a timed drill each week. Analytical's gap is procedural and the largest absolute shortfall (21 marks): seating and ordering puzzles, syllogisms, series and data interpretation all have a written procedure, and three or four procedures cover most of the section: <strong>36 hours</strong>, blocked by family, then mixed timed sets.</p>
+                    <p>12 + 24 + 36 = 72, so every hour is allocated. The ordering matters too: learn the procedure, drill it blocked while it is fragile, then switch to mixed timed sets so the recognition itself gets trained. The final week is mocks and error repair, not new topics.</p>
                 </details>
             </div>
 

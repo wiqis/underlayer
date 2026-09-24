@@ -41,12 +41,14 @@ public func render_hat_coordinate_geometry() : string {
                 <h2>The Actual Detail</h2>
                 <h3>Distance and midpoint</h3>
                 <div class="formula">distance = &radic;( (x2 &minus; x1)&sup2; + (y2 &minus; y1)&sup2; )</div>
+                <p>Mini-example: (1, 2) to (4, 6). Gaps are 4 &minus; 1 = 3 and 6 &minus; 2 = 4, so distance = &radic;(9 + 16) = &radic;25 = 5. The distance formula is Pythagoras with the horizontal and vertical gaps as the two short sides.</p>
                 <div class="formula">midpoint = ( (x1 + x2) &divide; 2 , (y1 + y2) &divide; 2 )</div>
-                <p>The distance formula is Pythagoras with the horizontal and vertical gaps as the two short sides. The midpoint is simply the average of the two x-values and the average of the two y-values.</p>
+                <p>Mini-example: (1, 2) and (4, 6) again. Midpoint = ( (1 + 4) &divide; 2 , (2 + 6) &divide; 2 ) = (2.5, 4). Each coordinate is the average of the two endpoints — never a difference.</p>
                 <h3>Slope and the equation of a line</h3>
                 <div class="formula">m = (y2 &minus; y1) &divide; (x2 &minus; x1)</div>
+                <p>Mini-example: (1, 2) to (4, 6). Rise is 6 &minus; 2 = 4, run is 4 &minus; 1 = 3, so m = 4/3. If the line falls left to right, m is negative — the sign is a free check.</p>
                 <div class="formula">y = m x + c &nbsp;&nbsp;&nbsp; or &nbsp;&nbsp;&nbsp; y &minus; y1 = m (x &minus; x1)</div>
-                <p>Use y = mx + c when you know the slope and want the intercept; use the point-slope form when you know the slope and one point. The y-intercept is c (set x = 0); the x-intercept is found by setting y = 0 and solving for x.</p>
+                <p>Mini-example with m = 4/3 through (1, 2): y &minus; 2 = (4/3)(x &minus; 1), so 3y &minus; 6 = 4x &minus; 4, giving 3y = 4x + 2 or y = (4/3)x + 2/3; the intercept c is 2/3. Use y = mx + c when you know the slope and want the intercept; use the point-slope form when you know the slope and one point. The y-intercept is c (set x = 0); the x-intercept is found by setting y = 0 and solving for x.</p>
                 <h3>Parallel and perpendicular lines</h3>
                 <table>
                     <thead>
@@ -62,8 +64,9 @@ public func render_hat_coordinate_geometry() : string {
                     <strong>Check a slope in one glance.</strong> If the line goes up from left to right, m is positive; down, negative. If your calculated m has the wrong sign, you subtracted the coordinates in an inconsistent order.
                 </div>
                 <div class="callout callout-warn">
-                    <strong>Traps.</strong> (1) Subtracting x in one order and y in the other. (2) Forgetting the square root in the distance formula. (3) Replying (x1 &minus; x2) instead of the average for a midpoint. (4) Treating a perpendicular slope as the negative of m rather than the negative reciprocal of m.
+                    <strong>Traps.</strong> (1) Subtracting x in one order and y in the other. (2) Forgetting the square root in the distance formula. (3) Writing (x1 &minus; x2) instead of the average ((x1 + x2) &divide; 2) for a midpoint. (4) Treating a perpendicular slope as the negative of m rather than the negative reciprocal of m.
                 </div>
+                <p>Each formula earns a thirty-second check before it is used. Distance: gaps first, then squares, then the root — if your answer is larger than both gaps by a lot, you probably added instead of taking the root. Midpoint: average, never difference; the result must sit halfway, so each coordinate of the midpoint lies between the two endpoints. Slope: rise over run in the same order top-to-bottom as right-to-left; the sign of m must match the visual direction of the line. Line equation: expand before simplifying, then verify by substituting the second point — one substitution catches almost every algebra slip.</p>
             </div>
 
             <div class="unit unit-example">

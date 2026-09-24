@@ -54,7 +54,20 @@ public func render_hat_energy_management() : string {
                 <div class="formula">daily deep work = blocks &times; block length, and the cap matters more than the total</div>
                 <p>Three or four true deep blocks a day is a realistic ceiling for most people. Beyond that, additional hours are spent re-reading and mis-answering, which looks like work and trains nothing.</p>
                 <h3>Avoid the overactivity-collapse cycle</h3>
-                <p>The common failure is a five-hour Saturday session followed by three blank days. Total hours look respectable, but the crash days waste more than the long session earned. A steady daily dose of two to three hours, held for weeks, beats spectacular weekends every time.</p>
+                <p>The common failure is a five-hour Saturday session followed by three blank days. Total hours look respectable, but the crash days waste more than the long session earned. A steady dose of about ninety minutes a day, held for weeks, beats spectacular weekends every time; on busier weeks drop to sixty minutes rather than skipping days entirely.</p>
+                <p>Stamina itself is trained the same way the paper demands it: progressive duration, not a single leap. Start timed work at the length you can already hold, then extend.</p>
+                <table>
+                    <thead>
+                        <tr><th scope="col">Week</th><th scope="col">Timed block</th><th scope="col">What it trains</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1-2</td><td>45 minutes</td><td>Focus that survives one block without drift</td></tr>
+                        <tr><td>3-4</td><td>60 minutes</td><td>Pacing across a longer stretch of questions</td></tr>
+                        <tr><td>5-6</td><td>90 minutes</td><td>Recovery mid-block: break, then resume at speed</td></tr>
+                        <tr><td>7-8</td><td>120 minutes (full mock)</td><td>The paper itself, under real conditions</td></tr>
+                    </tbody>
+                </table>
+                <p>Jumping straight to two-hour mocks in week one produces the same collapse as the five-hour Saturday: the effort looks serious and the next three days are lost.</p>
                 <div class="callout callout-tip">
                     <strong>Struggle is the signal, not the problem.</strong> When a topic feels hard and you are tempted to switch pages, that discomfort is the moment learning is happening. Name it, stay with the question for another minute, and only then take the break.
                 </div>

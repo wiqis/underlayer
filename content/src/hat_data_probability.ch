@@ -41,7 +41,6 @@ public func render_hat_data_probability() : string {
                 <p><strong>Median.</strong> Sort the values first, then take the middle one. For 3, 7, 9, 11 and 15 the median is 9. With an even count, average the two middle values: for 3, 7, 9 and 11, the median is (7 + 9) / 2 = 8. Sorting first is not optional — the median of an unsorted list is the single most common careless error in this topic.</p>
                 <p><strong>Mode and range.</strong> The mode is the most frequent value: in 2, 3, 3, 5, 7 it is 3. The range is the largest value minus the smallest: 15 - 3 = 12.</p>
                 <p><strong>Reading tables and charts.</strong> Percentages from a table are computed against the correct total. If 40 of 200 respondents chose an option, that is 40 / 200 = 20 percent. Watch for tables whose final row is a total row, because including it in an average double-counts everything.</p>
-                <p><strong>Simple interest.</strong> Interest equals principal times rate times time, with the rate written as a decimal. On 5,000 at 8 percent for 2 years: 5000 x 0.08 x 2 = 800 of interest, so the amount is 5,800.</p>
                 <p><strong>Probability as a fraction.</strong> Work out the favourable outcomes and the total equally likely outcomes, then write the fraction.</p>
                 <table>
                     <thead>
@@ -84,9 +83,9 @@ public func render_hat_data_probability() : string {
                 <h2>Try It</h2>
                 <div class="quiz" id="quiz-1">
                     <p>What is the median of 3, 7, 9 and 11?</p>
-                    <button class="quiz-option" data-correct="false" data-explain="9 is the mean of 3, 7, 9, 11 and 15. The median of 3, 7, 9 and 11 is the average of the two middle values." onclick="checkQuiz('quiz-1', this)">9</button>
-                    <button class="quiz-option" data-correct="true" data-explain="With an even count, average the two middle values: (7 + 9) / 2 = 8." onclick="checkQuiz('quiz-1', this)">8</button>
-                    <button class="quiz-option" data-correct="false" data-explain="7.5 is the mean of the list, not the median. The question asks for the middle value." onclick="checkQuiz('quiz-1', this)">7.5</button>
+                    <button class="quiz-option" data-correct="false" data-explain="With four values there is no single middle value: 9 is only the upper middle one, and taking it alone ignores 7. For an even count, average the two middle values." onclick="checkQuiz('quiz-1', this)">9</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Sort first (already sorted), then average the two middle values: (7 + 9) / 2 = 8." onclick="checkQuiz('quiz-1', this)">8</button>
+                    <button class="quiz-option" data-correct="false" data-explain="7.5 is the mean, (3 + 7 + 9 + 11) / 4 = 7.5, not the median. The question asks for the middle value of the sorted list." onclick="checkQuiz('quiz-1', this)">7.5</button>
                     <div class="quiz-feedback"></div>
                 </div>
                 <div class="quiz" id="quiz-2">
@@ -99,7 +98,7 @@ public func render_hat_data_probability() : string {
                 <div class="quiz" id="quiz-3">
                     <p>The mean of five numbers is 12. What can you say about them?</p>
                     <button class="quiz-option" data-correct="false" data-explain="60 is the total of the five numbers, not their mean. Divide by the count." onclick="checkQuiz('quiz-3', this)">60</button>
-                    <button class="quiz-option" data-correct="false" data-explain="15 is the range if the numbers span 3 to 15; the question gives a mean and a count, not a list." onclick="checkQuiz('quiz-3', this)">15</button>
+                    <button class="quiz-option" data-correct="false" data-explain="The mean is given as 12, not 15; 15 would be a guess about the largest value, which the question never states." onclick="checkQuiz('quiz-3', this)">15</button>
                     <button class="quiz-option" data-correct="true" data-explain="Mean times count gives the total: 12 x 5 = 60, so the sum of the five numbers is 60." onclick="checkQuiz('quiz-3', this)">The sum of the five numbers is 60</button>
                     <div class="quiz-feedback"></div>
                 </div>

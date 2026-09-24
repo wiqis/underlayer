@@ -55,13 +55,16 @@ public func render_hat_percentages() : string {
                 <div class="callout callout-warn">
                     <strong>The classic trap.</strong> "A number is increased by 20 percent and then decreased by 20 percent. What is the net change?" The distractors always include "no change". The correct answer is a fall of 4 percent, because the 20 percent decrease is taken from a larger base than the increase was.
                 </div>
+                <div class="callout callout-warn">
+                    <strong>Reverse percent is division, not subtraction.</strong> After a 30 percent discount a price reads 560. Subtracting 30 percent of 560 (168) gives 392, which is wrong: the discount was taken from the original price, not the reduced one. The multiplier after a 30 percent cut is 0.70, so the original is 560 / 0.70 = 800. Check forward: 30 percent of 800 is 240, and 800 &minus; 240 = 560. If the wording is "increased by 25 percent to 750", divide by 1.25 instead: 750 / 1.25 = 600.
+                </div>
             </div>
 
             <div class="unit unit-example">
                 <h2>A Real Example</h2>
                 <p><em>A shop's price for a tool is raised by 25 percent at the start of the season. At the end of the season the shop offers a 20 percent discount on the new price. A customer says the tool now costs exactly what it did before. Is the customer right?</em></p>
                 <p>Work with multipliers and no original price is needed. The rise gives a multiplier of 1.25; the discount gives a multiplier of 0.80. Their product is 1.25 x 0.80 = 1.00, so the final price equals the original price: the customer is right.</p>
-                <p>Now change one number and watch what happens. If the rise is 25 percent and the discount is 20 percent, the price returns to its original level. If the rise is 25 percent and the discount is 25 percent, the multiplier is 1.25 x 0.75 = 0.9375, a net fall of 6.25 percent. The relationship is asymmetric, which is exactly why the test keeps asking it.</p>
+                <p>Now change one number and watch what happens. Keep the discount at 20 percent but reduce the rise to 10 percent: 1.10 x 0.80 = 0.88, a net fall of 12 percent — larger than either individual change, because both now pull the price down from the higher intermediate base. Make the discount equal to the rise instead, 25 percent each way, and the multiplier is 1.25 x 0.75 = 0.9375, a net fall of 6.25 percent. The relationship is asymmetric, which is exactly why the test keeps asking it: only one pair of numbers (a rise of n percent followed by a discount of n/(1+n)) returns the price exactly home.</p>
             </div>
 
             <div class="unit unit-interact">

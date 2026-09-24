@@ -62,7 +62,7 @@ public func render_hat_triage_and_guessing() : string {
                     </thead>
                     <tbody>
                         <tr><td>Last-digit check</td><td>Any multiplication or power</td><td>148 &times; 27 must end in 6, which kills options ending 4 or 8</td></tr>
-                        <tr><td>Magnitude estimate</td><td>Arithmetic, percentages, rates</td><td>150 &times; 27 is about 4,050, so 39,960 is off by a factor of ten</td></tr>
+                        <tr><td>Magnitude estimate</td><td>Arithmetic, percentages, rates</td><td>A shirt at 1,480 with 27% off is about 1,080; an option of 10,800 is off by a factor of ten and dies on sight</td></tr>
                         <tr><td>Backsolve</td><td>Algebra, ages, percentages</td><td>Put each option into the original statement; the true one satisfies it exactly</td></tr>
                         <tr><td>Plug in a number</td><td>Variable expressions, ratios</td><td>Set x = 100 or x = 10 and test the options numerically</td></tr>
                         <tr><td>Direction check</td><td>Percentage change, averages</td><td>A price cut then rise cannot return to the original price, so "unchanged" is dead</td></tr>

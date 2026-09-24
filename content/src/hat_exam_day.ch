@@ -62,7 +62,7 @@ public func render_hat_exam_day() : string {
                 </ol>
                 <h3>The stuck-question rule</h3>
                 <div class="callout callout-tip">
-                    <strong>Ninety seconds, then move.</strong> If a question has not resolved after about ninety seconds, mark it, eliminate one or two options if you can, choose the best remaining, and leave it. The marks you lose by leaving three questions unread are larger than the mark you might gain by solving one slowly.
+                    <strong>Forty seconds to look; ninety seconds as the hard cap.</strong> On the first pass every question gets a 40-second look: if you can see the route, answer it (green); if you need a written step, mark it and return (yellow); if it is unfamiliar, guess provisionally and leave it (red). When you return to a yellow question, ninety seconds of total attention is the hard cap — mark it, eliminate one or two options if you can, choose the best remaining, and move on. The average budget is seventy-two seconds per question, so ninety seconds is already overspending; the cap exists to stop one item from eating several others. See <a href="/courses/hat/lessons/hat-time-budget">Your 120 Minutes</a> for the full checkpoint schedule.
                 </div>
                 <div class="callout callout-warn">
                     <strong>Three repeated mistakes.</strong> (1) Changing a correct first answer on a hunch with no new reason. (2) Spending the last ten minutes on one hard question instead of checking that every question has an answer. (3) Letting one unfamiliar question convince you the whole paper is beyond you — it is a standard paper with a few deliberately hard items.
@@ -72,7 +72,7 @@ public func render_hat_exam_day() : string {
             <div class="unit unit-example">
                 <h2>A Worked Scenario</h2>
                 <p>At minute 30 you are starting question 20, and the next item is a data-interpretation question that needs four percentage calculations. Your checkpoint says question 25 by minute 30. You are about five questions behind.</p>
-                <p>Do not speed up across the whole section, which raises errors everywhere. Instead, apply the rule locally: mark this question, make one elimination and guess, and use the regained ninety seconds to return to pace. Re-check the clock at the next question, not continuously; glancing at the clock every question costs both time and attention.</p>
+                <p>Do not speed up across the whole section, which raises errors everywhere. Instead, apply the rule locally: this is a yellow question on the first pass, so mark it, make one elimination and guess, and use the regained time to return to pace. Re-check the clock at the next question, not continuously; glancing at the clock every question costs both time and attention.</p>
                 <p>The reasoning is arithmetic, not willpower: a few questions behind is recoverable by guessing the items you would have solved slowly anyway, but it is not recoverable by trying to read faster.</p>
             </div>
 
@@ -93,9 +93,9 @@ public func render_hat_exam_day() : string {
                     <div class="quiz-feedback"></div>
                 </div>
                 <div class="quiz" id="quiz-3">
-                    <p>Why is the "ninety seconds then move" rule effective?</p>
+                    <p>Why is the "forty-second look, ninety-second cap" rule effective?</p>
                     <button class="quiz-option" data-correct="false" data-explain="It is not about difficulty; it is about protecting the time budget for the rest of the paper." onclick="checkQuiz('quiz-3', this)">It guarantees you solve the hard question later</button>
-                    <button class="quiz-option" data-correct="true" data-explain="It prevents one question from consuming time that belongs to several others, which is how total score is protected." onclick="checkQuiz('quiz-3', this)">It stops one question from starving the rest of the paper of time</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The 40-second look sorts green, yellow and red on sight; the 90-second cap on a return visit stops one question from starving the others, which is how total score is protected." onclick="checkQuiz('quiz-3', this)">It stops one question from starving the rest of the paper of time</button>
                     <button class="quiz-option" data-correct="false" data-explain="Skipping does not reduce difficulty; it manages the allocation of a fixed resource, time." onclick="checkQuiz('quiz-3', this)">It makes the remaining questions easier</button>
                     <div class="quiz-feedback"></div>
                 </div>

@@ -44,13 +44,22 @@ public func render_hat_algebra() : string {
 3x = 21
 x = 7</pre>
                 <p>Check by substitution: the left side is 5 x (7 - 3) = 20, and the right side is 2 x 7 + 6 = 20. Both sides agree, so x = 7 is correct.</p>
-                <p><strong>Two equations, two unknowns.</strong> Add them to remove one variable when the coefficients line up. If x + y = 10 and x - y = 4, adding gives 2x = 14, so x = 7, and then y = 10 - 7 = 3. Check the second equation: 7 - 3 = 4.</p>
-                <p>When the coefficients do not line up, multiply one equation first. For y = 2x and x + y = 9, substitute: x + 2x = 9, so 3x = 9, x = 3 and y = 6.</p>
-                <p><strong>Quadratics.</strong> The form that appears is almost always factorable with small integers. To solve x squared - 5x + 6 = 0, look for two numbers that multiply to +6 and add to -5: those are -2 and -3, so the equation factors as (x - 2)(x - 3) = 0 and x is 2 or 3. Check both: 4 - 10 + 6 = 0 and 9 - 15 + 6 = 0.</p>
-                <p><strong>Inequalities.</strong> Solve exactly as an equation, flipping the direction of the inequality when you multiply or divide by a negative number. From 2x + 3 less than 11, subtract 3 to get 2x less than 8, then divide by 2 for x less than 4.</p>
+                <p><strong>Quadratics.</strong> The form that appears is almost always factorable with small integers. Work the factorisation in three numbered steps rather than guessing:</p>
+                <pre>Step 1  x^2 - 5x + 6 = 0
+        numbers that multiply to +6: (1,6) (2,3) (-1,-6) (-2,-3)
+Step 2  keep the pair that ADDS to -5:  (-2) + (-3) = -5
+Step 3  write the factors and solve:
+        (x - 2)(x - 3) = 0  =>  x = 2  or  x = 3
+Check   4 - 10 + 6 = 0   and   9 - 15 + 6 = 0</pre>
+                <p>Both roots are positive because the constant is +6 and the middle coefficient is &minus;5: with a positive product the pair shares a sign, and the negative sum forces both to be negative before you flip them into (x &minus; 2) and (x &minus; 3).</p>
+                <p><strong>Two equations, three shapes.</strong> (1) Coefficients line up — add or subtract to eliminate: x + y = 10 with x &minus; y = 4 gives 2x = 14, so x = 7, y = 3. (2) One variable is already isolated — substitute: y = 2x into x + y = 9 gives 3x = 9, so x = 3, y = 6. (3) Neither case — scale one equation so a coefficient matches, then subtract: 2x + 3y = 12 and x + y = 5; double the second to 2x + 2y = 10 and subtract to get y = 2, then x = 3. Always substitute the pair back into <em>both</em> original equations before accepting them.</p>
+                <p><strong>Inequalities.</strong> Solve exactly as an equation, with one exception: when you multiply or divide by a negative number, flip the direction of the inequality. From 2x + 3 &lt; 11, subtract 3 to get 2x &lt; 8, then divide by 2 (positive, so the sign stays) for x &lt; 4.</p>
                 <p><strong>Expanding and simplifying.</strong> 2(3x - 4) is 6x - 8. Do this before solving whenever brackets are present, because it removes a common source of sign errors.</p>
                 <div class="callout callout-tip">
                     <strong>Answer the question that was asked.</strong> If the question asks for the larger of two numbers and you solved for the smaller, the answer is wrong even though the algebra was right. Underline the final request before you start solving.
+                </div>
+                <div class="callout callout-warn">
+                    <strong>The sign-flip rule.</strong> Multiplying or dividing an inequality by a negative number reverses it: from &minus;2x &lt; 6, divide by &minus;2 and the answer is x &gt; &minus;3, not x &lt; &minus;3. Adding or subtracting never flips the sign; only a negative multiply or divide does. Plot both forms on a number line if you doubt it: &minus;2x &lt; 6 is satisfied by x = 0 (0 &lt; 6, true), and 0 is greater than &minus;3, so x &gt; &minus;3 must be right. A flipped inequality still "looks solved", which is why it survives to the answer sheet.
                 </div>
             </div>
 

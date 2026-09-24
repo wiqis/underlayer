@@ -27,11 +27,16 @@ public func render_hat_digital_logic() : string {
 
             <div class="unit unit-model">
                 <h2>A Simple Model</h2>
-                <p>Work in truth tables for circuit questions and in algebraic identities for expression questions.</p>
+                <p>Two identities do most of the work in expression questions; meet them before the procedure uses them.</p>
+                <ul>
+                    <li><strong>De Morgan's laws</strong> push a NOT through a bracket and flip the gate: NOT(A AND B) becomes (NOT A) OR (NOT B), and NOT(A OR B) becomes (NOT A) AND (NOT B).</li>
+                    <li><strong>Absorption</strong> says A OR (A AND B) is just A, and the dual A AND (A OR B) is just A: if A already decides the result, the second term cannot change it.</li>
+                </ul>
+                <p>Work in truth tables for circuit questions and with those two identities for expression questions.</p>
                 <ol>
                     <li><strong>Count the inputs</strong> and write every combination: two inputs give four rows, three inputs give eight.</li>
                     <li><strong>Evaluate inner gates first</strong> and add one column per gate, left to right.</li>
-                    <li><strong>For expression questions,</strong> apply De Morgan's laws and absorption instead of drawing the circuit.</li>
+                    <li><strong>For expression questions,</strong> apply De Morgan's laws and absorption instead of drawing the circuit; fall back to the full truth table whenever the algebra stalls.</li>
                 </ol>
                 <p>Writing a column per gate is why these questions are reliable. Every column depends only on the columns to its left, so there is no point at which you are holding intermediate results in your head, and any error is visible on the page.</p>
             </div>
@@ -62,14 +67,27 @@ public func render_hat_digital_logic() : string {
                 <div class="callout callout-tip">
                     <strong>Check XOR against ordinary addition.</strong> In 1 + 1 the digit is 0 and 1 carries over, and XOR gives 0 for two equal inputs while the AND gives the carry. The two outputs together reproduce binary addition exactly, so if a question confuses the sum and carry rows, going back to 1 + 1 settles it in seconds.
                 </div>
+                <div class="callout callout-warn">
+                    <strong>Most common trap: flipping only one half of De Morgan.</strong> NOT(A AND B) is (NOT A) OR (NOT B) — the gate flips AND becomes OR <em>and</em> each input is negated. Writing (NOT A) AND (NOT B), or negating the inputs without flipping the gate, both fail on the row A = 0, B = 0 (correct output 1). Absorption has a twin trap: A OR (A AND B) collapses to A, but A OR (NOT A AND B) does not — absorption needs the repeated literal A to appear unchanged in both terms.
+                </div>
             </div>
 
             <div class="unit unit-example">
                 <h2>A Real Example</h2>
-                <p><em>Simplify: Y = A AND (NOT A OR B).</em></p>
-                <p>Distribute the AND over the OR: Y = (A AND NOT A) OR (A AND B). The first term is 0, because a value cannot be both true and false. So Y = 0 OR (A AND B), which is <strong>A AND B</strong>.</p>
-                <p>The truth table confirms it in four rows. With A = 0 the whole expression is 0 immediately, whatever B is, because the outer gate is AND. With A = 1 the bracket becomes 0 OR B, which is just B, so the output equals B. So the output is 1 only when A is 1 and B is 1 — which is exactly A AND B.</p>
-                <p>The second route is worth having because it is what a question is usually testing: the expression is written to look complicated, and the simplification is two lines. Note also that the truth table gave the same answer by a completely different method, which is the general safety net for this topic — if the algebra is not coming, four rows always work.</p>
+                <p><em>Build the truth table for Y = (A AND B) OR (NOT C), then simplify if you can.</em></p>
+                <p>Three inputs, eight rows. Evaluate the inner AND first (column AB), then NOT C, then the final OR:</p>
+                <pre>A B C | AB | !C | Y = AB OR !C
+0 0 0 |  0 |  1 | 1
+0 0 1 |  0 |  0 | 0
+0 1 0 |  0 |  1 | 1
+0 1 1 |  0 |  0 | 0
+1 0 0 |  0 |  1 | 1
+1 0 1 |  0 |  0 | 0
+1 1 0 |  1 |  1 | 1
+1 1 1 |  1 |  0 | 1</pre>
+                <p>Read the final column: Y is 0 only when C is 1 and the pair (A, B) is not both 1 — three of the eight rows. No single-gate form captures that pattern, so the table itself is the simplified answer.</p>
+                <p>Now simplify an expression instead: Y = A AND (NOT A OR B). Distribute the AND over the OR: Y = (A AND NOT A) OR (A AND B). The first term is 0, because a value cannot be both true and false. So Y = 0 OR (A AND B), which is <strong>A AND B</strong>.</p>
+                <p>The truth table confirms it in four rows. With A = 0 the whole expression is 0 immediately, whatever B is, because the outer gate is AND. With A = 1 the bracket becomes 0 OR B, which is just B, so the output equals B. So the output is 1 only when A is 1 and B is 1 — which is exactly A AND B. Two methods, one answer: if the algebra is not coming, four rows always work.</p>
             </div>
 
             <div class="unit unit-interact">
