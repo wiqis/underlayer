@@ -46,6 +46,10 @@ public namespace underlayer_web {
     }
 
     public func read_body(req : *mut http::Request) : string {
+        // Content-Length 0 (or absent) + not chunked = no body. The HTTP
+        // server leaves Body.remaining as -1 in that case, which would block
+        // forever on an empty POST (CL=0 is not treated as body_len > 0).
+        if(req.body_len == 0u && !req.body.is_chunked()) { return std::string() }
         var buf : [8192]u8
         var out = std::string()
         while(true) {

@@ -8,7 +8,7 @@ using underlayer_models::Exercise
 
 @test
 public func test_exercise_get_all_types_payload(env : &mut TestEnv) {
-    var db = test_helpers::setup_test_db()
+    var db = test_helpers::setup_test_db_path(&string("./test_ex_payload.db"))
 
     var ex_multi = Exercise::make()
     ex_multi.id = string("t_multi")
