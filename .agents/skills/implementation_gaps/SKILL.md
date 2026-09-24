@@ -700,7 +700,7 @@ learners.push(underlayer_models::Learner {
 | Use `arr[i]` for vector access | No index operator | Use `arr.get(i)` or `arr.get_ptr(i)` |
 | **Use string appends for HTML/CSS/JS** | **FORBIDDEN** | **Use `#html`, `#css`, `#js` macros. Fix macro bugs in CBI plugins.** |
 | Build HTML strings in Chemical source (server-side string appends) | Golden rule 7 | `#html` / `#css` / `#js` macros |
-| Interpolate API strings into `innerHTML` unescaped | XSS from course titles/descriptions (`Demo Course <&Test>`) | Char-loop `escapeHtml()` first — the shipped pattern for client-rendered lists (home grid, onboarding, cmdk) |
+| Interpolate API strings into `innerHTML` unescaped | XSS from hand-authored manifest strings (titles/descriptions) | Char-loop `escapeHtml()` first — the shipped pattern for client-rendered lists (home grid, onboarding, cmdk) |
 | Grouping parens in `#js`: `(a + b) * c` | Non-JSX converter drops them, giving `a + b * c` | Hoist: `var t = a + b; t * c` |
 | Regex literal in `#js`: `/pattern/` | Lexer mangles it | Use `indexOf` / `replace` / char loop |
 | Write `if(cond) { ... }` without else | Language requires else | Always add `else {}` |

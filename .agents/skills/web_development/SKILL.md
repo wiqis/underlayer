@@ -257,7 +257,7 @@ loadHomeCourses();
 
 Rules for the loader JS:
 
-1. **Escape every interpolated string** with a char-loop `escapeHtml` (`&`, `<`, `>`, `"`, `'`) — no regex literals in `#js` (lexer mangles them). API data (course titles like `Demo Course <&Test>`) is untrusted markup.
+1. **Escape every interpolated string** with a char-loop `escapeHtml` (`&`, `<`, `>`, `"`, `'`) — no regex literals in `#js` (lexer mangles them). Course titles/descriptions come from hand-authored `manifest.json` files and are untrusted markup.
 2. **Hoist arithmetic before concatenation** — `#js` drops grouping parens: `"" + (i + 1)` emits as `"" + i + 1`. Call parens are preserved (emitted callbacks look like `.then((function(r){…}))` — that double-wrapping is expected, not a bug).
 3. **`while` loops**, not `for`.
 4. **Render loading / empty / error states** into the same container; add a `<noscript>` fallback outside it.
