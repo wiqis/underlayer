@@ -1,6 +1,6 @@
 # API Reference — Underlayer
 
-Generated from the actual code (`app/main.ch`, `repository/src/schema.ch`, `web/src/`, `repository/src/`) on **2026-09-17**. When you add or change a route, table, or repository function, update this skill in the same commit.
+Generated from the actual code (`app/main.ch`, `repository/src/schema.ch`, `web/src/`, `repository/src/`) on **2026-09-17**; routes re-verified **2026-09-24** (no route changes). When you add or change a route, table, or repository function, update this skill in the same commit.
 
 ---
 
@@ -14,7 +14,7 @@ All routes are registered in `app/main.ch` (~1189 lines, ~175 routes). Path para
 
 | Method | Path | Handler | Purpose |
 |---|---|---|---|
-| GET | `/` | `handle_home` | Landing page with course grid |
+| GET | `/` | `handle_home` | Landing page; course grid is client-rendered from `GET /api/courses` (2.1.25 — CSS/JS in `web/src/home_assets.ch`, not hardcoded) |
 | GET | `/dashboard` | `handle_dashboard` | Stats, health score, due items |
 | GET | `/review` | `handle_review_page` | Review session UI (6 modes) |
 | GET | `/progress` | `handle_progress_page` | Progress + analytics UI |
@@ -43,7 +43,7 @@ All routes are registered in `app/main.ch` (~1189 lines, ~175 routes). Path para
 
 | Method | Path | Handler |
 |---|---|---|
-| GET | `/api/courses` | `handle_list_courses` |
+| GET | `/api/courses` | `handle_list_courses` — `{id,title,version,modules,concepts,difficulty,importance,description}`; feeds home grid + onboarding |
 | GET | `/api/courses/all` | `handle_filter_courses` (7.1.7) |
 | GET | `/api/courses/:courseId` | `handle_get_course` |
 | GET | `/api/courses/:courseId/lessons/:conceptId` | `handle_lesson` (API JSON/HTML) |

@@ -211,6 +211,84 @@ send_error(res, 404u, &raw err)   // status + {"error":"..."}
 
 Route lambdas in `app/main.ch` validate segment counts and write a minimal JSON error inline when short:
 
+## Pattern: Dynamic Lists (No Loops Inside `#html`)
+
+`@{}` statement blocks inside `#html` are broken (compiler bug — see `docs/implementation-gaps.md` and the `implementation_gaps` skill), and every element must open+close in the same `#html` block. Chemical therefore **cannot loop over data to emit repeated markup server-side.** The trusted workaround — used by the course landing, onboarding, and the home page course grid (2.1.25) — is a **static shell + client-side fetch**:
+
+```chemical
+#html {
+    <div class="course-grid" id="course-grid" aria-live="polite">
+        <div class="course-loading">Loading courses…</div>
+    </div>
+    <noscript>
+        <p class="course-loading">Enable JavaScript, or open <a href="/api/courses">/api/courses</a>.</p>
+    </noscript>
+}
+
+// in #js (or a *_assets.ch render function):
+function loadHomeCourses() {
+    var grid = document.getElementById('course-grid');
+    if(!grid) { return; }
+    fetch('/api/courses').then(function(r) { return r.json(); }).then(function(courses) {
+        if(!courses || courses.length === 0) {
+            grid.innerHTML = '<div class="course-loading">No courses available yet.</div>';
+            return;
+        }
+        var html = '';
+        var ci = 0;
+        while(ci < courses.length) {
+            var c = courses[ci];
+            var ctitle = escapeHtml(c.title || c.id);
+            var cdesc = escapeHtml(c.description || '');
+            html += '<div class="course-card">';
+            html += '<h3>' + ctitle + '</h3>';
+            html += '<p>' + cdesc + '</p>';
+            html += '<a href="/courses/' + encodeURIComponent(c.id) + '">…</a>';
+            html += '</div>';
+            ci = ci + 1;
+        }
+        grid.innerHTML = html;
+    }).catch(function() {
+        grid.innerHTML = '<div class="course-loading">Could not load courses. Refresh to retry.</div>';
+    });
+}
+loadHomeCourses();
+```
+
+Rules for the loader JS:
+
+1. **Escape every interpolated string** with a char-loop `escapeHtml` (`&`, `<`, `>`, `"`, `'`) — no regex literals in `#js` (lexer mangles them). API data (course titles like `Demo Course <&Test>`) is untrusted markup.
+2. **Hoist arithmetic before concatenation** — `#js` drops grouping parens: `"" + (i + 1)` emits as `"" + i + 1`. Call parens are preserved (emitted callbacks look like `.then((function(r){…}))` — that double-wrapping is expected, not a bug).
+3. **`while` loops**, not `for`.
+4. **Render loading / empty / error states** into the same container; add a `<noscript>` fallback outside it.
+
+References: `web/src/home_assets.ch::render_home_js`, `web/src/pages_onboarding.ch::loadCourses`, `content/src/course_landing.ch` + `course_landing_assets.ch`.
+
+## Pattern: Page Assets File (250-Line Rule)
+
+A page handler that would exceed 250 lines moves its `#css` and `#js` into a sibling `<page>_assets.ch` — same namespace, plain (private) functions taking `page : &mut HtmlPage`:
+
+```chemical
+// web/src/home_assets.ch
+public namespace underlayer_web {
+
+    func render_home_css(page : &mut HtmlPage) {
+        #css { /* all page styles */ }
+    }
+
+    func render_home_js(page : &mut HtmlPage) {
+        #js { /* all page JS incl. dynamic list loaders */ }
+    }
+}
+
+// in handlers_home.ch, after the #html block:
+render_home_css(&mut page)
+render_home_js(&mut page)
+send_page(res, &raw page)
+```
+
+Multiple `#css` / `#js` blocks concatenate into one `<style>` / `<script>` in call order, so extraction is behavior-preserving. `web/chemical.mod` uses `source "src"` — new files are picked up automatically, no manifest edit. References: `web/src/home_assets.ch` (extracted from `handlers_home.ch`, 309→139 lines), `content/src/course_landing_assets.ch`.
+
 ## Pattern for Concept Renderers (content/src/)
 
 Each concept is a render function compiled into the server:

@@ -59,10 +59,12 @@ underlayer/
 │       ├── health.ch         (knowledge health: depth, breadth, gaps, trends, projection)
 │       └── utils.ch          (f64_to_string)
 │
-├── web/                      (module underlayer_web — 55 files: handlers, pages, static serving)
+├── web/                      (module underlayer_web — 57 files: handlers, pages, assets, static serving)
 │   └── src/
 │       ├── main.ch, helpers.ch (send_page, send_json_str, send_error, sv_to_string, render_concept),
 │       │   json_helpers.ch, static.ch
+│       ├── home_assets.ch    (render_home_css / render_home_js — page assets pattern; home
+│       │                      course grid client-renders from GET /api/courses, feature 2.1.25)
 │       ├── handlers_auth.ch  (register/login/logout/me, password reset, email verify,
 │       │                      auth_get_learner_id — bearer token → learner_id)
 │       ├── Core learning: handlers_home, _courses, _lessons, _review, _review_page, _exercises,
@@ -77,10 +79,9 @@ underlayer/
 │           pages_help, pages_learning_path, pages_legal, pages_notes, pages_notifications,
 │           pages_streaks, pages_study_plans
 │
-├── content/                  (module underlayer_content — 30 source files)
-│   └── src/                  24 ELF concept renderers (bytes…execution), elf_landing.ch,
-│                              template_standard/mixed/visualization/exercise_focus.ch,
-│                              bytes_test.ch
+├── content/                  (module underlayer_content — 155 source files)
+│   └── src/                  ELF (24) + HAT + PE + Mach-O concept renderers, course_landing(+assets),
+│                             elf/hat/pe/macho_landing, lesson/hat assets, 4 layout templates
 │
 ├── courses/elf/              (chemical.mod, manifest.json; src/main.ch = build entry that calls
 │                              underlayer_content::render_*() and writes output/*.html —

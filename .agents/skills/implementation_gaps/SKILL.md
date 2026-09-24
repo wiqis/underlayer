@@ -699,12 +699,13 @@ learners.push(underlayer_models::Learner {
 | Use `+` for string concatenation | No operator overload | Use `append_view()` or backtick templates |
 | Use `arr[i]` for vector access | No index operator | Use `arr.get(i)` or `arr.get_ptr(i)` |
 | **Use string appends for HTML/CSS/JS** | **FORBIDDEN** | **Use `#html`, `#css`, `#js` macros. Fix macro bugs in CBI plugins.** |
-| Build HTML strings in client JS (`innerHTML += "<div>"`) | Same golden rule, JS side | `document.createElement` + `textContent` |
+| Build HTML strings in Chemical source (server-side string appends) | Golden rule 7 | `#html` / `#css` / `#js` macros |
+| Interpolate API strings into `innerHTML` unescaped | XSS from course titles/descriptions (`Demo Course <&Test>`) | Char-loop `escapeHtml()` first — the shipped pattern for client-rendered lists (home grid, onboarding, cmdk) |
 | Grouping parens in `#js`: `(a + b) * c` | Non-JSX converter drops them, giving `a + b * c` | Hoist: `var t = a + b; t * c` |
-| Regex literal in `#js`: `/pattern/` | Lexer mangles it | Use `indexOf` / `replace` |
+| Regex literal in `#js`: `/pattern/` | Lexer mangles it | Use `indexOf` / `replace` / char loop |
 | Write `if(cond) { ... }` without else | Language requires else | Always add `else {}` |
 | Use `0.5` for float parameters | It's `double` | Use `0.5f` |
-| Split `#html` across blocks | Element must close in same block | Use `@{}` escape for dynamic content |
+| Split `#html` across blocks, or loop inside `#html` | Element must close in same block; `@{}` statement blocks inside `#html` are broken (compiler bug) | Static shell (`id` container + loading state) + `#js` fetch — the home/onboarding dynamic-list pattern; see `web_development` skill |
 | Put non-ASCII in `page.ch` JS strings | Crashes `std::string::find` | Keep ASCII only |
 | Use `#css` inside `#universal` bodies | Server-only, can't appear there | Use `#css` at module level |
 | Use `.get(i)` on vectors with destructible types | Returns copy, causes double-free | Use `.get_ptr(i)` |
@@ -907,11 +908,17 @@ constructs. Details in `docs/implementation-gaps.md`; the rules:
   **Fix:** a handler factory — `function handler(i) { return function() { ... }; }`.
 - **Multiple `#css` / `#js` blocks concatenate** into one `<style>` / `<script>`
   in call order (`page.toString()` joins `pageCss` / `pageJs`), so you can split
-  helpers across files.
+  helpers across files — the `*_assets.ch` pattern (`render_*_css` /
+  `render_*_js(page : &mut HtmlPage)`; see `web/src/home_assets.ch`).
+- **Callbacks come out double-wrapped** — `fetch(u).then(function(r){…})` emits as
+  `.then((function(r){…}))`. That is valid JS and expected output, not a bug.
 
-A bare `%` in a JS string is fine (`pct + '%'` compiles). Build DOM with
-`document.createElement` + `textContent`, never string-concatenated HTML
-(golden rule 7).
+A bare `%` in a JS string is fine (`pct + '%'` compiles). Golden rule 7 governs
+**Chemical source**: never build page HTML with string appends in `.ch` files.
+Client-side dynamic lists (home grid, onboarding, cmdk) legitimately render with
+`escapeHtml()` + `innerHTML` — every interpolated value must pass through a
+char-loop `escapeHtml` first (no regex literals). `createElement` + `textContent`
+also works for single text nodes.
 
 ### Interpreter Limitations
 

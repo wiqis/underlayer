@@ -252,6 +252,7 @@
 - [x] P1 2.1.22 Multi-course exercise seeding at startup: loop all course directories (fs::read_dir scan, reference-capture lambda required)
 - [x] P1 2.1.23 Course JSON API includes module descriptions (feeds landing module list)
 - [x] P1 2.1.24 html_escape core helper: server-side escaping for course strings interpolated into #html blocks (html_cbi interpolation is raw)
+- [x] P1 2.1.25 Home page Available Courses grid loads every on-disk course client-side from GET /api/courses (was hardcoded to ELF + HAT; #html cannot loop; loading/error/noscript states; HTML-escaped titles/descriptions)
 
 ### 2.2 Concept Authoring
 

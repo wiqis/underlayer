@@ -3,6 +3,7 @@
 //   helpers.ch               — send_page, send_json_str, send_error, sv_to_string, render_concept
 //   json_helpers.ch          — json_get, json_str, json_get_str, json_int, json_get_int
 //   handlers_home.ch         — handle_health, handle_home
+//   home_assets.ch           — render_home_css, render_home_js (dynamic course grid loader)
 //   handlers_courses.ch      — handle_list_courses, handle_get_course
 //   handlers_lessons.ch      — handle_lesson, handle_course_landing
 //   handlers_review.ch       — handle_review_start, submit, end, due (5.1.1-5.1.5 modes)

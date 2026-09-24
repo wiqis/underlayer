@@ -2,11 +2,30 @@
 
 ## Overview
 
-The Underlayer platform has a master feature checklist at `docs/features-complete.md` (relative to the project root). This is the single source of truth for all platform features. Every feature is a numbered checkbox item — **1883 items across 27 sections**, tagged P0–P3.
+The Underlayer platform has a master feature checklist at `docs/features-complete.md` (relative to the project root). This is the single source of truth for all platform features. Every feature is a numbered checkbox item — **1919 items across 27 sections**, tagged P0–P3.
 
-**Current progress (verified 2026-09-17): 372 checked, 1511 unchecked.** All P0 and P1 items are done. Only **9 P2 items** remain (list below), then 1502 P3 items.
+**Current progress (verified 2026-09-24): 385 checked, 1534 unchecked — 0 P0, 15 P1, 17 P2, 1502 P3.**
 
-**The 9 remaining P2 items:** 7.1.14 unread indicator, 7.4.13 responsive visualizations, 7.5.4–7.5.11 input-method support (custom shortcuts, voice input, switch access, external keyboard, game controller, stylus, multi-touch). **Per the priority rule, the next feature to implement is P2 7.1.14.**
+**Per the priority rule, the next feature to implement is P1 4.1.29** (exercise UI on lesson pages supports all 8 exercise types).
+
+**The 15 remaining P1 items:**
+- 4.1.29 Exercise UI on lesson pages supports all 8 exercise types
+- 5.1.16 Review page mode selection renders session in-page (`startMode()` currently navigates to the raw JSON endpoint — broken)
+- 5.1.17 Review page calls POST /api/review/end on completion (sessions stay "active" forever)
+- 5.1.18 Review session controls UI: pause/resume/abort/undo/skip wired to /api/session/* (APIs exist, zero frontend consumers)
+- 5.1.19 Remove "demo" learner_id fallback on review submit/start (bearer token only)
+- 7.1.16 Prev/next lesson navigation wired to GET /api/navigation/:courseId/:conceptId
+- 7.1.17 Site navbar on concept pages (content/src pages are orphaned from site nav)
+- 7.1.18 Auth-aware navbar (Login/Register vs profile + Logout)
+- 7.1.19 401 handling: redirect to /login on expired session token
+- 7.1.20 Onboarding gate: route incomplete-onboarding users to /onboarding
+- 7.1.21 Replace hardcoded course_id=elf in review/progress/analytics page fetches
+- 7.1.22 Fix analytics page fetch of literal un-substituted '/api/progress/:courseId' URL
+- 7.1.23 Course landing Enroll button wired to POST /api/courses/:courseId/enroll
+- 11.2.16 Frontend auth session bootstrap: shared JS helper for session_token + Authorization headers
+- 11.2.17 Register/login redirect into the onboarding gate
+
+**The 17 remaining P2 items:** 2.4.22 seed review_item_decls from manifest; 4.1.30 progressive-hints UI; 4.2.19 real exercise streak in submit response; 5.1.20 review recommendations UI; 6.2.16 analytics pages consume extended endpoints; 6.2.17 auth bearer token on progress/analytics fetches; 7.1.14 unread indicator; 7.1.24 home "Continue learning" card + due badge; 7.1.25 dashboard login prompt when logged out; 7.4.13 responsive visualizations; 7.5.4, 7.5.6–7.5.11 input-method support (custom shortcuts, voice, switch, external keyboard, game controller, stylus, multi-touch).
 
 ## Rules
 
@@ -72,19 +91,19 @@ Note: the server renders concept pages via `content/src/*.ch` render functions (
 
 ## Sections
 
-| # | Section | Items | Notes on current state (2026-09-17) |
+| # | Section | Items | Notes on current state (2026-09-24) |
 |---|---------|-------|------------------------|
-| 1 | Learning Engine | FSRS, sessions, interleaving, weakness, health, pacing, patterns | Done (P0/P1) — incl. mistake patterns (`learning/src/mistakes.ch`) |
-| 2 | Course Authoring | Structure, concepts, assets, review items, testing | Done through P2 — `scripts/lint-concepts.sh` validates concepts |
-| 3 | Course Content & Visualizations | Hex viewer, diagrams, code examples, exercises, rich content | All 24 ELF concepts + landing render from `content/src/`; 4 layout templates |
-| 4 | Exercise System | Types, feedback, generation, analytics | Done — 8 exercise types + bulk import/seed/stats |
-| 5 | Review & Spaced Repetition | Session types, item types, scheduling, analytics | Done — 10 review modes |
-| 6 | Progress & Analytics | Learner progress, analytics, retention, engagement | Done through P1 — export/import, sharing, 12+ analytics endpoints |
-| 7 | User Experience | Navigation, components, theming, responsive, keyboard | **Remaining P2s live here (7.1.14, 7.4.13, 7.5.4–7.5.11)** |
-| 8 | Social & Community | Profiles, social, community content, mentorship, competitive | P0/P1 parts done — profiles, course reviews, achievements, streaks, certificates |
+| 1 | Learning Engine | FSRS, sessions, interleaving, weakness, health, pacing, patterns | P0/P1/P2 done — incl. mistake patterns (`learning/src/mistakes.ch`); energy check-in remains P3 |
+| 2 | Course Authoring | Structure, concepts, assets, review items, testing | 2.1.25 done (home grid dynamic); only P2 2.4.22 + P3 remain — `scripts/lint-concepts.sh` validates concepts |
+| 3 | Course Content & Visualizations | Hex viewer, diagrams, code examples, exercises, rich content | `content/src/` now has 155 files: ELF + HAT + PE + Mach-O renderers, 5 landings, 4 layout templates |
+| 4 | Exercise System | Types, feedback, generation, analytics | 8 exercise types + bulk import/seed/stats; **P1 4.1.29 (lesson-page exercise UI) is the next feature** |
+| 5 | Review & Spaced Repetition | Session types, item types, scheduling, analytics | 10 review modes; **P1 5.1.16–5.1.19 remain (review page frontend broken/missing)** |
+| 6 | Progress & Analytics | Learner progress, analytics, retention, engagement | Export/import, sharing, 12+ analytics endpoints; P2 6.2.16/6.2.17 remain |
+| 7 | User Experience | Navigation, components, theming, responsive, keyboard | **7 P1s (7.1.16–7.1.23) + 11 P2s (7.1.14/24/25, 7.4.13, 7.5.x) remain — largest gap** |
+| 8 | Social & Community | Profiles, social, community content, mentorship, competitive | Profiles, course reviews, achievements, streaks, certificates done |
 | 9 | Content Delivery | Static, dynamic, packaging, offline | Static file serving + pre-render flow done |
 | 10 | Admin & Management | Courses, users, moderation, configuration | Feedback moderation endpoints exist; rest P3 |
-| 11 | API & Integrations | REST, auth, integrations, export/import | Auth done (bearer + auth_sessions); API keys table exists |
+| 11 | API & Integrations | REST, auth, integrations, export/import | Auth done; **P1 11.2.16/11.2.17 (frontend auth bootstrap + onboarding redirect) remain** |
 | 12 | Accessibility | WCAG, visual, motor, cognitive | P2 accessibility items remain (7.5.x); rest P3 |
 | 13 | Security & Privacy | Data security, privacy, compliance | Auth + password hashing + audit_log + data export/deletion done; rest P3 |
 | 14 | Performance & Scalability | Performance, scalability, reliability | P3 |
@@ -105,6 +124,6 @@ Note: the server renders concept pages via `content/src/*.ch` render functions (
 ## Priority Workflow (MANDATORY)
 
 1. `grep -n "^- \[ \] P0" docs/features-complete.md` — if any P0 remains, take the first
-2. Same for P1, then P2, then P3. **As of 2026-09-17 the first unchecked item is P2 7.1.14.**
+2. Same for P1, then P2, then P3. **As of 2026-09-24 there are 15 unchecked P1 items; the first (numerical order) is P1 4.1.29.**
 3. Implement exactly that one feature
 4. Verify (Rule 2), check off (Rule 1), commit

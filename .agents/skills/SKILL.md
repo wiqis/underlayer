@@ -112,9 +112,9 @@ Comprehensive documentation for the Underlayer project (root `chemical.mod`, mod
 
 ## Project Stats
 
-- **Status:** Working platform — server builds, runs, and serves the ELF course; 372/1883 checklist items done (all P0 + P1 complete; 9 P2 remain)
+- **Status:** Working platform — server builds, runs, and serves the ELF course; 385/1919 checklist items done (all P0; 15 P1 remain — next is P1 4.1.29; 17 P2; 1502 P3)
 - **Language:** Chemical
-- **First course:** ELF — Executable and Linkable Format (24 concepts, 8 modules)
+- **Courses:** ELF (reference, 24 concepts), HAT, PE, Mach-O (+ `demo` test fixture) — home grid lists all five from `GET /api/courses`
 - **Target platforms:** Web + Android (offline)
 - **Database:** Dual-backend SQLite (local) + Turso HTTP (remote); ~35 tables
 - **Course format:** Chemical source files with #html/#css/#js macros → pre-rendered HTML/CSS/JS

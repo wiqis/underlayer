@@ -309,6 +309,8 @@ public func handle_something_page(db : &DbClient, courses_dir : &string, req : &
 
 All three setup calls are required on every page — handlers in this codebase call them in that order.
 
+If the handler file would exceed 250 lines, extract `#css` / `#js` into a sibling `<page>_assets.ch` with `render_*_css(page : &mut HtmlPage)` / `render_*_js(page : &mut HtmlPage)` called right after `#html` (blocks concatenate in call order). References: `web/src/home_assets.ch`, `content/src/course_landing_assets.ch` — see the `web_development` skill.
+
 ### Response Helpers (web/src/helpers.ch)
 
 ```chemical
