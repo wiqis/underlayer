@@ -592,9 +592,9 @@
 - [ ] P3 5.1.13 Spaced repetition only: only FSRS-scheduled items
 - [ ] P3 5.1.14 Manual review: no FSRS, just review on demand
 - [ ] P3 5.1.15 Exam preparation: focus on high-yield items
-- [ ] P1 5.1.16 Review page mode selection fetches POST-style /api/review/start JSON and renders the session in-page (currently `startMode()` navigates the browser to the raw JSON endpoint — broken flow)
-- [ ] P1 5.1.17 Review page calls POST /api/review/end on session completion (sessions currently stay "active" forever)
-- [ ] P1 5.1.18 Review session controls UI: pause/resume/abort/undo/skip buttons wired to /api/session/* (APIs exist, zero frontend consumers)
+- [x] P1 5.1.16 Review page mode selection fetches POST-style /api/review/start JSON and renders the session in-page (currently `startMode()` navigates the browser to the raw JSON endpoint — broken flow)
+- [x] P1 5.1.17 Review page calls POST /api/review/end on session completion (sessions currently stay "active" forever)
+- [x] P1 5.1.18 Review session controls UI: pause/resume/abort/undo/skip buttons wired to /api/session/* (APIs exist, zero frontend consumers)
 - [ ] P1 5.1.19 Review submit/start resolve learner via bearer token only — remove "demo" learner_id fallback that lets anonymous ratings pollute data
 - [ ] P2 5.1.20 Review recommendations surfaced in UI: /api/review/recommendations and /api/review/time-recommendation have no frontend consumer
 

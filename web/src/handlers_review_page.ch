@@ -72,6 +72,15 @@ public namespace underlayer_web {
                     <button class="btn btn-primary btn-large" id="btn-start" onclick="startReview()">Start Review</button>
                 </div>
 
+                <div class="session-controls hidden" id="session-controls" aria-label="Session controls">
+                    <button class="btn btn-control" id="btn-pause" onclick="pauseSession()">Pause</button>
+                    <button class="btn btn-control hidden" id="btn-resume" onclick="resumeSession()">Resume</button>
+                    <button class="btn btn-control" id="btn-undo" onclick="undoItem()">Undo</button>
+                    <button class="btn btn-control" id="btn-skip" onclick="skipItem()">Skip</button>
+                    <button class="btn btn-control btn-control-danger" id="btn-abort" onclick="abortSession()">Abort</button>
+                    <span class="session-state" id="session-state">Active</span>
+                </div>
+
                 <div class="review-mode-grid">
                     <h2>Review Modes</h2>
                     <div class="mode-grid">
@@ -140,6 +149,12 @@ public namespace underlayer_web {
             .card-concept-label { font-size: 0.85rem; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
             .card-prompt { font-size: 1.25rem; color: hsl(var(--foreground)); line-height: 1.6; max-width: 500px; }
             .review-actions { display: flex; justify-content: center; gap: 1rem; margin-bottom: 3rem; flex-wrap: wrap; }
+            .session-controls { display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin: -1.5rem 0 2.5rem; flex-wrap: wrap; }
+            .btn-control { background: hsl(var(--card)); color: hsl(var(--foreground)); border: 1px solid hsl(var(--border)); font-size: 0.85rem; padding: 0.5rem 1rem; }
+            .btn-control:hover { background: hsl(var(--accent)); }
+            .btn-control-danger { color: hsl(0 84% 45%); border-color: hsl(0 84% 60% / 40%); }
+            .btn-control-danger:hover { background: hsl(0 84% 60% / 10%); }
+            .session-state { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: hsl(var(--muted-foreground)); margin-left: 0.5rem; }
             .btn { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 10px; font-weight: 600; font-size: 0.95rem; cursor: pointer; border: none; transition: all 0.15s; }
             .btn-primary { background: hsl(217 91% 60%); color: white; }
             .btn-primary:hover { background: hsl(217 91% 50%); }
@@ -197,6 +212,21 @@ public namespace underlayer_web {
             var currentConceptId = "";
             var sessionActive = false;
             var dueItems = [];
+            var sessionId = "";
+            var currentMode = "due";
+            var sessionStartTime = 0;
+            var sessionPaused = false;
+
+            function setSessionState(state) {
+                var el = document.getElementById("session-state");
+                if(el) { el.textContent = state; }
+            }
+
+            function showSessionControls(show) {
+                var el = document.getElementById("session-controls");
+                if(!el) { return; }
+                if(show) { el.classList.remove("hidden"); } else { el.classList.add("hidden"); }
+            }
 
             function displayName(id) {
                 var result = "";
@@ -219,8 +249,39 @@ public namespace underlayer_web {
                 fetchDueItems();
             });
 
+            // 5.1.19: review APIs require a bearer token. Read it from
+            // localStorage (set at login) and attach it to every request.
+            function bearerValue() {
+                var token = localStorage.getItem("session_token");
+                if(!token) { return ""; }
+                return "Bearer " + token;
+            }
+
+            function authHeaders() {
+                var token = localStorage.getItem("session_token");
+                if(token) {
+                    return {"Authorization": bearerValue()};
+                }
+                return {};
+            }
+
+            function jsonAuthHeaders() {
+                return {"Content-Type": "application/json", "Authorization": bearerValue()};
+            }
+
+            function showAuthRequired() {
+                var concept = document.getElementById("card-concept");
+                var prompt = document.getElementById("card-prompt");
+                if(concept) { concept.textContent = "Sign in required"; }
+                if(prompt) { prompt.textContent = "Please log in to start a review session. Your progress is saved to your account."; }
+                var actions = document.getElementById("review-actions");
+                if(actions) {
+                    actions.innerHTML = '<a href="/login" class="btn btn-primary btn-large">Log in</a>';
+                }
+            }
+
             function fetchDueItems() {
-                fetch("/api/review/due?course_id=elf&limit=50")
+                fetch("/api/review/due?course_id=elf&limit=50", { headers: authHeaders() })
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         dueItems = data || [];
@@ -242,12 +303,47 @@ public namespace underlayer_web {
                 sessionActive = true;
                 currentIndex = 0;
                 reviewed = 0;
+                showSessionControls(true);
+                setSessionState("Active");
                 updateStats();
                 loadNextCard();
             }
 
             function startMode(mode) {
-                window.location.href = "/api/review/start?course_id=elf&mode=" + mode + "&count=10";
+                currentMode = mode;
+                var prompt = document.getElementById("card-prompt");
+                var concept = document.getElementById("card-concept");
+                concept.textContent = "Starting session";
+                prompt.textContent = "Loading your " + mode + " review session...";
+                fetch("/api/review/start?course_id=elf&mode=" + encodeURIComponent(mode) + "&count=10", { headers: authHeaders() })
+                    .then(function(r) {
+                        if(r.status === 401) { showAuthRequired(); return null; }
+                        return r.json();
+                    })
+                    .then(function(data) {
+                        if(!data) { return; }
+                        if(!data.items || data.items.length === 0) {
+                            concept.textContent = "Nothing to review";
+                            prompt.textContent = "No items available for the " + mode + " mode right now. Try another mode.";
+                            return;
+                        }
+                        sessionId = data.session_id || "";
+                        sessionStartTime = Date.now();
+                        dueItems = data.items;
+                        totalDue = dueItems.length;
+                        reviewed = 0;
+                        currentIndex = 0;
+                        sessionActive = true;
+                        document.getElementById("due-count").textContent = totalDue;
+                        showSessionControls(true);
+                        setSessionState("Active");
+                        updateStats();
+                        loadNextCard();
+                    })
+                    .catch(function() {
+                        concept.textContent = "Could not start";
+                        prompt.textContent = "We could not start the session. Please refresh and try again.";
+                    });
             }
 
             function loadNextCard() {
@@ -260,9 +356,14 @@ public namespace underlayer_web {
                     showComplete();
                     return;
                 }
-                currentConceptId = item.concept_id;
+                // /api/review/due uses "concept_id"; /api/review/start uses "concept".
+                currentConceptId = item.concept_id || item.concept || "";
                 document.getElementById("card-concept").textContent = displayName(currentConceptId);
-                document.getElementById("card-prompt").textContent = "Think about what you know about this concept, then rate your recall.";
+                if(item.front) {
+                    document.getElementById("card-prompt").textContent = item.front;
+                } else {
+                    document.getElementById("card-prompt").textContent = "Think about what you know about this concept, then rate your recall.";
+                }
                 document.getElementById("card-front").classList.remove("hidden");
                 showRatingButtons();
             }
@@ -293,13 +394,23 @@ public namespace underlayer_web {
             }
 
             function rateItem(rating) {
+                var elapsed = 5;
+                if(sessionStartTime > 0) {
+                    elapsed = Math.round((Date.now() - sessionStartTime) / 1000);
+                    if(elapsed < 0) { elapsed = 0; }
+                }
                 fetch("/api/review/submit", {
                     method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({concept_id: currentConceptId, rating: rating, course_id: "elf", time_spent: 5})
+                    headers: jsonAuthHeaders(),
+                    body: JSON.stringify({concept_id: currentConceptId, rating: rating, course_id: "elf", session_id: sessionId, time_spent: elapsed})
                 })
-                .then(function(r) { return r.json(); })
+                .then(function(r) {
+                    if(r.status === 401) { showAuthRequired(); return null; }
+                    return r.json();
+                })
                 .then(function(data) {
+                    if(!data) { return; }
+                    sessionStartTime = Date.now();
                     reviewed++;
                     currentIndex++;
                     updateStats();
@@ -319,11 +430,97 @@ public namespace underlayer_web {
                 });
             }
 
+            function endSession() {
+                if(!sessionId) { return; }
+                fetch("/api/review/end?session_id=" + encodeURIComponent(sessionId), {
+                    method: "POST",
+                    headers: jsonAuthHeaders()
+                })
+                .then(function(r) { return r.json(); })
+                .catch(function() { /* best effort — the session is finished locally */ });
+                sessionId = "";
+                sessionActive = false;
+            }
+
             function showComplete() {
+                endSession();
+                showSessionControls(false);
                 document.getElementById("card-prompt").textContent = "Review session complete! You reviewed " + reviewed + " concepts. Great work!";
                 document.getElementById("card-concept").textContent = "All Done";
                 var actions = document.getElementById("review-actions");
                 actions.innerHTML = '<a href="/dashboard" class="btn btn-primary btn-large">Back to Dashboard</a>';
+            }
+
+            // 5.1.18: session controls wired to /api/session/*.
+            function sessionPost(path, extra) {
+                if(!sessionId) { return Promise.resolve(null); }
+                var url = path + "?session_id=" + encodeURIComponent(sessionId);
+                if(extra) { url = url + extra; }
+                return fetch(url, {
+                    method: "POST",
+                    headers: jsonAuthHeaders()
+                }).then(function(r) { return r.json(); }).catch(function() { return null; });
+            }
+
+            function pauseSession() {
+                sessionPost("/api/session/pause", "").then(function() {
+                    sessionPaused = true;
+                    var pauseBtn = document.getElementById("btn-pause");
+                    var resumeBtn = document.getElementById("btn-resume");
+                    if(pauseBtn) { pauseBtn.classList.add("hidden"); }
+                    if(resumeBtn) { resumeBtn.classList.remove("hidden"); }
+                    setSessionState("Paused");
+                    document.getElementById("card-prompt").textContent = "Session paused. Resume when you are ready.";
+                });
+            }
+
+            function resumeSession() {
+                sessionPost("/api/session/resume", "").then(function() {
+                    sessionPaused = false;
+                    var pauseBtn = document.getElementById("btn-pause");
+                    var resumeBtn = document.getElementById("btn-resume");
+                    if(pauseBtn) { pauseBtn.classList.remove("hidden"); }
+                    if(resumeBtn) { resumeBtn.classList.add("hidden"); }
+                    setSessionState("Active");
+                    loadNextCard();
+                });
+            }
+
+            function undoItem() {
+                if(reviewed <= 0 || currentIndex <= 0) { return; }
+                sessionPost("/api/session/undo", "").then(function() {
+                    reviewed--;
+                    currentIndex--;
+                    updateStats();
+                    loadNextCard();
+                });
+            }
+
+            function skipItem() {
+                var item = dueItems[currentIndex];
+                var concept = item ? (item.concept_id || item.concept || "") : "";
+                var extra = concept ? "&concept_id=" + encodeURIComponent(concept) : "";
+                sessionPost("/api/session/skip", extra).then(function() {
+                    currentIndex++;
+                    updateStats();
+                    loadNextCard();
+                });
+            }
+
+            function abortSession() {
+                if(!sessionId) {
+                    showComplete();
+                    return;
+                }
+                sessionPost("/api/session/abort", "").then(function() {
+                    sessionId = "";
+                    sessionActive = false;
+                    showSessionControls(false);
+                    document.getElementById("card-concept").textContent = "Session aborted";
+                    document.getElementById("card-prompt").textContent = "This session was aborted. No further items will be recorded.";
+                    var actions = document.getElementById("review-actions");
+                    actions.innerHTML = '<a href="/dashboard" class="btn btn-primary btn-large">Back to Dashboard</a>';
+                });
             }
 
             function updateStats() {

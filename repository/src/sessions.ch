@@ -60,6 +60,18 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw sql)
     }
 
+    // Read a session's status ("active", "paused", "completed", or "" if absent).
+    public func get_session_status(db : *DbClient, session_id : &string) : string {
+        var sql = string("SELECT status FROM sessions WHERE id = '")
+        sql.append_string(session_id)
+        sql.append_view("' LIMIT 1")
+        var result = underlayer_db::query_sql(db, &raw sql)
+        if(result.rows.size() == 0) { return string() }
+        var row = result.rows.get_ptr(0)
+        if(row.vals.size() < 1) { return string() }
+        return row.vals.get_ptr(0).copy()
+    }
+
     // ---- Session Management (1.2.9-1.2.13) ----
 
     public func pause_session(db : *DbClient, session_id : *string) {

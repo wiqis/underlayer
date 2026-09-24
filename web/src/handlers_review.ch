@@ -12,8 +12,15 @@ public namespace underlayer_web {
     // 5.1.1-5.1.5: Review session types via mode parameter
     // mode=new (5.1.1), due (5.1.2), cram (5.1.3), targeted (5.1.4), weakness (5.1.5)
     public func handle_review_start(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+        // 5.1.19: resolve the learner from the bearer token only. No anonymous
+        // "demo" fallback — otherwise anonymous sessions and ratings would be
+        // written to a shared learner and pollute real progress data.
         var learner_id = auth_get_learner_id(&raw db, req)
-        if(learner_id.size() == 0) { learner_id = string("demo") }
+        if(learner_id.size() == 0) {
+            var err = string("unauthorized")
+            send_error(res, 401u, &err)
+            return
+        }
         var course_id = string("elf")
 
         // Check for mode parameter (5.1.1-5.1.5)
@@ -351,8 +358,14 @@ public namespace underlayer_web {
         var concept_id = sv_to_string(&raw cid_v)
         var course_id = sv_to_string(&raw crsid_v)
         var rating_str = sv_to_string(&raw rat_v)
+        // 5.1.19: resolve the learner from the bearer token only. No anonymous
+        // "demo" fallback — anonymous ratings must not pollute learner data.
         var learner_id = auth_get_learner_id(&raw db, &*req)
-        if(learner_id.size() == 0) { learner_id = string("demo") }
+        if(learner_id.size() == 0) {
+            var err = string("unauthorized")
+            send_error(res, 401u, &err)
+            return
+        }
 
         var rating : int = 3
         if(rating_str.equals(string("again")) || rating_str.equals(string("1"))) { rating = 1 }
