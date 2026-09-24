@@ -540,19 +540,41 @@
                                "hint1":  "Add the digits and test the sum.",
                                "difficulty":  0.4
                            },
-                           {
-                               "concept_id":  "hat-number-properties",
-                               "type":  "multiple_choice",
-                               "question":  "What is the units digit of 7 to the power 43?",
-                               "answer":  "3",
-                               "options":  "1|3|9",
-                               "correct_index":  1,
-                               "explanation":  "Powers of 7 cycle 7, 9, 3, 1 with length 4; 43 leaves remainder 3, so the units digit is the third element, 3.",
-                               "hint1":  "Find the exponent\u0027s position in the four-term cycle.",
-                               "difficulty":  0.5
-                           },
-                           {
-                               "concept_id":  "hat-fractions-decimals",
+                            {
+                                "concept_id":  "hat-number-properties",
+                                "type":  "multiple_choice",
+                                "question":  "What is the units digit of 7 to the power 43?",
+                                "answer":  "3",
+                                "options":  "1|3|9",
+                                "correct_index":  1,
+                                "explanation":  "Powers of 7 cycle 7, 9, 3, 1 with length 4; 43 leaves remainder 3, so the units digit is the third element, 3.",
+                                "hint1":  "Find the exponent's position in the four-term cycle.",
+                                "difficulty":  0.5
+                            },
+                            {
+                                "concept_id":  "hat-number-properties",
+                                "type":  "multiple_choice",
+                                "question":  "What is the HCF of 24 and 36?",
+                                "answer":  "12",
+                                "options":  "6|12|72",
+                                "correct_index":  1,
+                                "explanation":  "24 = 2 cubed x 3 and 36 = 2 squared x 3 squared. The HCF takes each shared prime to its lowest power: 2 squared x 3 = 12.",
+                                "hint1":  "Factor both numbers, then take the shared primes to their lowest powers.",
+                                "difficulty":  0.45
+                            },
+                            {
+                                "concept_id":  "hat-number-properties",
+                                "type":  "multiple_choice",
+                                "question":  "What is the LCM of 8 and 12?",
+                                "answer":  "24",
+                                "options":  "4|24|96",
+                                "correct_index":  1,
+                                "explanation":  "8 = 2 cubed and 12 = 2 squared x 3. The LCM takes every prime to its highest power: 2 cubed x 3 = 24. The product 96 double-counts the shared factors.",
+                                "hint1":  "Take every prime that appears in either number to its highest power.",
+                                "difficulty":  0.45
+                            },
+                            {
+                                "concept_id":  "hat-fractions-decimals",
                                "type":  "multiple_choice",
                                "question":  "What is 5/8 written as a decimal?",
                                "answer":  "0.625",

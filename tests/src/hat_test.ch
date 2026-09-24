@@ -98,6 +98,9 @@ public func test_hat_new_lesson_is_served(env : &mut TestEnv) {
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
     var Some(body) = body_opt else unreachable
     if(body.find(string_view("Number Properties")) == std::NPOS) { env.error("lesson missing its title") }
+    if(body.find(string_view("division (ladder) method")) == std::NPOS) { env.error("lesson missing the ladder method section") }
+    if(body.find(string_view("HCF of 24 and 36")) == std::NPOS) { env.error("lesson missing the HCF quiz") }
+    if(body.find(string_view("LCM of 8 and 12")) == std::NPOS) { env.error("lesson missing the LCM quiz") }
 
     srv.shutdown()
     underlayer_db::close(&raw db)

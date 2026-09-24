@@ -59,10 +59,49 @@ public func render_hat_number_properties() : string {
                 <h3>Primes and the numbers around them</h3>
                 <p>Primes below 50: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47. Two facts people lose marks on: <strong>1 is not prime</strong>, and <strong>2 is the only even prime</strong>.</p>
                 <p>Squares worth knowing cold: 11&sup2; = 121, 12&sup2; = 144, 13&sup2; = 169, 14&sup2; = 196, 15&sup2; = 225, 16&sup2; = 256, 17&sup2; = 289, 18&sup2; = 324, 19&sup2; = 361, 20&sup2; = 400, 21&sup2; = 441, 22&sup2; = 484, 23&sup2; = 529, 24&sup2; = 576, 25&sup2; = 625. Cubes: 3&sup3; = 27, 4&sup3; = 64, 5&sup3; = 125, 6&sup3; = 216, 7&sup3; = 343, 8&sup3; = 512, 9&sup3; = 729, 10&sup3; = 1000, 11&sup3; = 1331, 12&sup3; = 1728.</p>
-                <h3>HCF and LCM</h3>
-                <div class="formula">HCF &times; LCM = product of the two numbers &nbsp;(for any two positive integers)</div>
-                <p>Example: 84 = 2&sup2; &times; 3 &times; 7 and 126 = 2 &times; 3&sup2; &times; 7, so HCF = 2 &times; 3 &times; 7 = 42 and LCM = 2&sup2; &times; 3&sup2; &times; 7 = 252. Check with the identity: 42 &times; 252 = 10,584 and 84 &times; 126 = 10,584.</p>
-                <p>Useful consequences: if two numbers are coprime, their LCM is simply their product; and a number divisible by both 6 and 4 must be divisible by 12 (the LCM, not the product 24).</p>
+                <h3>HCF and LCM: the three methods</h3>
+                <p><strong>HCF</strong> (Highest Common Factor, also called GCD) is the largest number that divides both numbers exactly. <strong>LCM</strong> (Least Common Multiple) is the smallest number that both numbers divide into exactly. Read the wording first — it decides which one you need:</p>
+                <ul>
+                    <li>"greatest / largest number that divides..." &rarr; <strong>HCF</strong></li>
+                    <li>"smallest number divisible by..." or "when will they meet again?" &rarr; <strong>LCM</strong></li>
+                </ul>
+                <h4>Method 1 — Listing (best when the numbers are small)</h4>
+                <p><strong>HCF of 12 and 18.</strong> Factors of 12: 1, 2, 3, 4, 6, 12. Factors of 18: 1, 2, 3, 6, 9, 18. The largest number on both lists is <strong>6</strong>.</p>
+                <p><strong>LCM of 4 and 6.</strong> Multiples of 4: 4, 8, 12, 16, ... Multiples of 6: 6, 12, 18, ... The first number on both lists is <strong>12</strong>. Listing is also the fastest way to check an answer you got another way.</p>
+                <h4>Method 2 — Prime factorisation (the reliable workhorse)</h4>
+                <p>Step 1: factor both numbers into primes.</p>
+                <pre>84  = 2^2 x 3 x 7
+126 = 2   x 3^2 x 7</pre>
+                <p>Step 2: the <strong>HCF</strong> takes every prime that appears in <em>both</em> numbers, each to its <em>lowest</em> power. The <strong>LCM</strong> takes every prime that appears in <em>either</em> number, each to its <em>highest</em> power.</p>
+                <pre>HCF = 2^1 x 3^1 x 7^1 = 42
+LCM = 2^2 x 3^2 x 7^1 = 252</pre>
+                <p>Step 3 (two numbers only): check with the identity. HCF &times; LCM = 42 &times; 252 = 10,584 and 84 &times; 126 = 10,584. They match, so the answer is consistent.</p>
+                <div class="callout callout-warn">
+                    <strong>The identity is for two numbers only.</strong> For three or more numbers, HCF &times; LCM does not equal the product: HCF(4, 6, 10) = 2 and LCM(4, 6, 10) = 60, so 2 &times; 60 = 120, but 4 &times; 6 &times; 10 = 240. With three numbers, factorise and take lowest / highest powers — do not use the identity.
+                </div>
+                <h4>Method 3 — The division (ladder) method (fastest on paper for two numbers)</h4>
+                <p>Write both numbers in a row. Divide both by the smallest prime that divides both, and keep dividing the quotients the same way until the two results share no common factor. Then:</p>
+                <ul>
+                    <li><strong>HCF</strong> = the product of the divisors you wrote on the left</li>
+                    <li><strong>LCM</strong> = HCF &times; the two leftover numbers at the bottom</li>
+                </ul>
+                <pre>      84   126
+  2 | 42    63
+  3 | 14    21
+  7 |  2     3
+
+HCF = 2 x 3 x 7     = 42
+LCM = 42 x 2 x 3    = 252</pre>
+                <p>The last row (2 and 3) shares no factor, so you stop. The ladder produces both answers from one piece of work — no separate factor lists needed.</p>
+                <h4>Which method when?</h4>
+                <ul>
+                    <li>Numbers under about 30, or checking your work &rarr; <strong>listing</strong></li>
+                    <li>Three or more numbers, or any exam-sized numbers &rarr; <strong>prime factorisation</strong> (the identity check does not apply to three or more numbers)</li>
+                    <li>Exactly two numbers and you want speed on paper &rarr; <strong>division ladder</strong></li>
+                </ul>
+                <div class="callout callout-tip">
+                    <strong>Product is not LCM.</strong> A number divisible by both 6 and 4 must be divisible by their LCM 12 — not by the product 24. The two overlap at 2, and the product counts that 2 twice.
+                </div>
                 <h3>Remainders and units digits</h3>
                 <ul>
                     <li><strong>Counting multiples.</strong> Multiples of k from a to b: divide b by k, divide a &minus; 1 by k, subtract, and take the whole parts.</li>
@@ -86,7 +125,7 @@ public func render_hat_number_properties() : string {
                 <h3>3. How many multiples of 7 lie between 100 and 500?</h3>
                 <p>Whole part of 500 &divide; 7 is 71 (7 &times; 71 = 497). Whole part of 99 &divide; 7 is 14 (7 &times; 14 = 98). 71 &minus; 14 = <strong>57</strong>.</p>
                 <h3>4. Two bells ring every 84 seconds and every 126 seconds. They ring together; how long until they ring together again?</h3>
-                <p>This asks for the LCM: 252 seconds, which is 4 minutes 12 seconds. The distractor set will include 10,584 (the product) and 42 (the HCF).</p>
+                <p>This asks for the LCM — the smallest time that is a multiple of both intervals. From the ladder above: LCM = 42 &times; 2 &times; 3 = 252 seconds, which is 4 minutes 12 seconds. The distractor set will include 10,584 (the product) and 42 (the HCF).</p>
             </div>
 
             <div class="unit unit-interact">
@@ -119,6 +158,27 @@ public func render_hat_number_properties() : string {
                     <button class="quiz-option" data-correct="false" data-explain="6 would come from 3 &times; 2, which is unrelated; the square uses the remainder twice." onclick="checkQuiz('quiz-4', this)">6</button>
                     <div class="quiz-feedback"></div>
                 </div>
+                <div class="quiz" id="quiz-5">
+                    <p>What is the HCF of 24 and 36?</p>
+                    <button class="quiz-option" data-correct="false" data-explain="6 only takes one factor of 2 shared by both: 24 = 2&sup3; &times; 3 and 36 = 2&sup2; &times; 3&sup2;, so the shared part still has 2&sup2;. Take each shared prime to its lowest power: 4 &times; 3 = 12." onclick="checkQuiz('quiz-5', this)">6</button>
+                    <button class="quiz-option" data-correct="true" data-explain="24 = 2&sup3; &times; 3 and 36 = 2&sup2; &times; 3&sup2;. Shared primes to their lowest powers: 2&sup2; &times; 3 = 12." onclick="checkQuiz('quiz-5', this)">12</button>
+                    <button class="quiz-option" data-correct="false" data-explain="72 is the LCM (highest powers: 2&sup3; &times; 3&sup2;), not the HCF. The question asks for the greatest common divisor." onclick="checkQuiz('quiz-5', this)">72</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+                <div class="quiz" id="quiz-6">
+                    <p>What is the LCM of 8 and 12?</p>
+                    <button class="quiz-option" data-correct="false" data-explain="4 is the HCF (the largest number dividing both), not the LCM (the smallest number both divide into)." onclick="checkQuiz('quiz-6', this)">4</button>
+                    <button class="quiz-option" data-correct="true" data-explain="8 = 2&sup3; and 12 = 2&sup2; &times; 3. Take every prime to its highest power: 2&sup3; &times; 3 = 24." onclick="checkQuiz('quiz-6', this)">24</button>
+                    <button class="quiz-option" data-correct="false" data-explain="96 is the product 8 &times; 12, which double-counts the shared factors of 8 and 12. The LCM is smaller than the product whenever the numbers overlap." onclick="checkQuiz('quiz-6', this)">96</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+                <div class="quiz" id="quiz-7">
+                    <p>What is the greatest number that divides 24, 36 and 48 exactly?</p>
+                    <button class="quiz-option" data-correct="false" data-explain="6 divides all three, but it is not the greatest: 12 also divides 24, 36 and 48. 'Greatest number that divides' means the HCF." onclick="checkQuiz('quiz-7', this)">6</button>
+                    <button class="quiz-option" data-correct="true" data-explain="24 = 2&sup3; &times; 3, 36 = 2&sup2; &times; 3&sup2;, 48 = 2&sup4; &times; 3. The HCF takes shared primes to lowest powers: 2&sup2; &times; 3 = 12, and 24/12, 36/12, 48/12 are all whole." onclick="checkQuiz('quiz-7', this)">12</button>
+                    <button class="quiz-option" data-correct="false" data-explain="144 is the LCM — the smallest number all three divide into. The question asks for the greatest number that divides them, which is the HCF." onclick="checkQuiz('quiz-7', this)">144</button>
+                    <div class="quiz-feedback"></div>
+                </div>
             </div>
 
             <div class="unit unit-retrieve">
@@ -126,7 +186,7 @@ public func render_hat_number_properties() : string {
                 <p>Without looking back: state the divisibility test for 9, and the identity that connects HCF, LCM and the two numbers.</p>
                 <p>The answer: the digit sum must be a multiple of 9; and HCF &times; LCM equals the product of the two numbers.</p>
                 <div id="fill-1">
-                    <p>A number is divisible by 9 exactly when its <input type="text" class="fill-blank" data-answer="digit sum" placeholder="?" aria-label="divisibility test for nine" /> is a multiple of 9. For any two positive integers, HCF &times; LCM equals their <input type="text" class="fill-blank" data-answer="product" placeholder="?" aria-label="identity with HCF and LCM" />. The number 1 is <input type="text" class="fill-blank" data-answer="not" placeholder="?" aria-label="is one prime" /> prime, and the only even prime is <input type="text" class="fill-blank" data-answer="2" placeholder="?" aria-label="only even prime" />.</p>
+                    <p>A number is divisible by 9 exactly when its <input type="text" class="fill-blank" data-answer="digit sum" placeholder="?" aria-label="divisibility test for nine" /> is a multiple of 9. For any two positive integers, HCF &times; LCM equals their <input type="text" class="fill-blank" data-answer="product" placeholder="?" aria-label="identity with HCF and LCM" /> — but this identity fails for three or more numbers. The HCF of 84 and 126 is <input type="text" class="fill-blank" data-answer="42" placeholder="?" aria-label="HCF of 84 and 126" /> and their LCM is <input type="text" class="fill-blank" data-answer="252" placeholder="?" aria-label="LCM of 84 and 126" />. The number 1 is <input type="text" class="fill-blank" data-answer="not" placeholder="?" aria-label="is one prime" /> prime, and the only even prime is <input type="text" class="fill-blank" data-answer="2" placeholder="?" aria-label="only even prime" />. A "greatest number that divides" question asks for the <input type="text" class="fill-blank" data-answer="HCF" placeholder="?" aria-label="greatest number that divides means" />; a "smallest number divisible by" question asks for the <input type="text" class="fill-blank" data-answer="LCM" placeholder="?" aria-label="smallest number divisible by means" />.</p>
                     <button class="fill-check-btn" onclick="checkFillBlanks('fill-1')">Check answers</button>
                     <div class="fill-feedback"></div>
                 </div>
