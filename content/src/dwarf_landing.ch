@@ -33,10 +33,10 @@ public func render_dwarf_landing() : string {
                 <h1>DWARF &mdash; The Debugging Data Format</h1>
                 <p class="course-description">The file format that takes a program apart and puts the source back. DWARF is how a debugger turns the address <code>0x1154</code> into "line 15 of shape.c", and it is the companion to the ELF, PE and Mach-O courses you have already met: those teach you how a binary is loaded and run, this one teaches how it is read.</p>
                 <div class="course-meta">
-                    <span class="meta-item">3 modules</span>
-                    <span class="meta-item">15 concepts</span>
+                    <span class="meta-item">4 modules</span>
+                    <span class="meta-item">19 concepts</span>
                     <span class="meta-item">Intermediate</span>
-                    <span class="meta-item">~282 min</span>
+                    <span class="meta-item">~366 min</span>
                 </div>
             </div>
 
@@ -85,19 +85,21 @@ public func render_dwarf_landing() : string {
                     </ul>
                 </div>
 
-                <div class="module module-planned">
-                    <h2>Coming next</h2>
-                    <p>Three modules take a binary from its first byte to a working debugger: which section holds what, how an address becomes a line, and how a line becomes a type and a value. What remains is the edges.</p>
+                <div class="module">
+                    <h2>Module 4: Location Lists, Portability and Packages</h2>
+                    <p>Three tables the first three modules only implied, and the two questions that decide whether
+                    a reader works on anything but this machine. Where is a <em>value</em> in the code, and where is the
+                    <em>code</em> &mdash; both as lists of ranges. Then portability, measured rather than assumed: the same
+                    source built four ways. Then the package format, and an index that lets a debugger skip a hundred files.</p>
                     <ul class="concept-list">
-                        <li><code>.debug_rnglists</code> and the contents of <code>DW_AT_ranges</code></li>
-                        <li><code>.debug_loclists</code> &mdash; deliberately not taught, see the note below</li>
-                        <li><code>address_size</code> 4, and 32-bit producers</li>
-                        <li>Non-x86-64 producers, and macOS and Windows clang DWARF</li>
-                        <li>The pre-DWARF-5 string forms, and <code>DW_FORM_GNU_str_index</code></li>
-                        <li>The DWARF package format (<code>.dwp</code>)</li>
+                        <li><a href="/courses/dwarf/lessons/dwarf-loclists">Location Lists</a> <span class="concept-time">24 min</span></li>
+                        <li><a href="/courses/dwarf/lessons/dwarf-rnglists">Range Lists</a> <span class="concept-time">19 min</span></li>
+                        <li><a href="/courses/dwarf/lessons/dwarf-portability">Same Source, Different Target</a> <span class="concept-time">21 min</span></li>
+                        <li><a href="/courses/dwarf/lessons/dwarf-packages">Packages</a> <span class="concept-time">20 min</span></li>
                     </ul>
-                    <p class="module-note">Specified in <code>courses/dwarf/research.md</code> and not written. The <code>.debug_loclists</code> omission is a decision rather than an oversight: the two readers available here disagreed on how to decode its entry encoding, and rather than pick the reading that suited the lesson, the concept that needed it was replaced with location <em>expressions</em>, which is fully cross-checked. The research file records the disagreement.</p>
-                    <p class="module-note">These are planned, not written. The links are intentionally absent rather than pointing at 404s.</p>
+                    <p class="module-note">The <code>.debug_loclists</code> entry carries a warning worth reading first: the two
+                    reference readers on this machine disagree about that section's encoding, and the concept shows how the byte
+                    offsets settle it.</p>
                 </div>
             </div>
 

@@ -955,6 +955,18 @@ compiled on its own to establish whether it is actually a problem
   because the parser consumes everything up to the next `>` hunting for a tag
   name. **Fix:** when the reported column looks innocent, scan the line for the
   *first* unterminated tag rather than the character at the reported column.
+- **A bare `<` in element text aborts the parse**, whenever the next character
+  is not a letter, `/` or `!`. Three forms, all hit while writing Module 4
+  (2026-09-25): `<=` and `<` in pseudo-code (`if start_offset <= target < end`),
+  and `<--` as an arrow inside a `<pre>` hex dump. All report the same "tag
+  names must start with letters". **Fix:** `&lt;=` and `&lt;--`. This is the
+  same family as the `<`-then-digit case already known — the rule is simply
+  that a `<` which does not begin a real tag must be `&lt;`.
+- **A mismatched closing section tag aborts the parse** and reports
+  "expected correct identifier for ending tag" at a column *past the end of the
+  line*. `<tbody>` closed with `</thead>` is the shape. **Fix:** the reported
+  line is the line after the real problem; count `<thead>`/`<tbody>`/`<table>`
+  openers and closers.
 
 **Proven NOT to be problems.** Several plausible-looking suspects turned out to
 compile cleanly, and two of them had already been "fixed" in real content before

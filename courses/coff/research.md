@@ -454,3 +454,145 @@ address-to-source mapping.
    silently choosing one.
 7. Construct `lineno.obj` to verify the line-number field offsets, and
    construct a bigobj patch to demonstrate that it is rejected.
+
+---
+
+# Phase A record — Module 4: The Link
+
+The Module 3 record ended with the linker side listed as untestable. That
+turned out to be wrong, and this section records what changed.
+
+## The blocker was wrong
+
+The standing claim was "there is no COFF linker on this machine — no
+`lld-link`, no mingw, no `mold`". True of *Microsoft* linkers, and it was
+over-generalised. GNU `ld` is a multi-target linker whose emulation list
+includes `i386pe`:
+
+```
+$ ld -V | tr ' ' '\n' | grep -iE 'i386pe'
+i386pep
+i386pe
+```
+
+and with the output format forced explicitly it links real COFF objects into a
+real PE image:
+
+```
+$ ld --oformat pei-i386 -m i386pe link_prog.obj link_lib.obj -o link_prog.exe
+$ file link_prog.exe
+link_prog.exe: PE32 executable for MS Windows 4.00 (console), Intel i386, 4 sections
+```
+
+The two things needed, which I had not tried:
+
+- **`--oformat pei-i386`.** `ld -m i386pe` alone leaves the output emulation
+  at x86-64 and every i386 input is rejected as architecture-incompatible.
+  Forcing the output format separately is what makes it work. The first two
+  attempts failed for this reason and I had written the blocker up prematurely.
+- **Clang can emit i386 COFF for a Windows target**: `--target=i686-pc-windows-msvc`.
+  No MSVC toolchain required.
+
+So all three previously-blocked items became testable, and two of them
+(map files, the link step) became Module 4.
+
+## What is now verified, and how
+
+### The link step (`coff-linking`)
+
+| Claim | Evidence |
+|---|---|
+| Object `.text` has `VirtualAddress = 0` | `llvm-readobj --sections link_prog.obj` |
+| Two `IMAGE_REL_I386_REL32` fixups at `0xE` and `0x45` | `llvm-readobj --relocations` |
+| The four bytes at the fixup are zero in the object | raw section dump |
+| The linked image has `ImageBase 0x400000`, `SectionAlignment 4096` | `llvm-readobj --file-headers link_prog.exe` |
+| The `call` at `0x40100d` is `e8 0e 00 00 00` | `llvm-objdump -d` |
+| `0x0e == 0x401020 - (0x40100d + 5)` | hand arithmetic, matches the bytes |
+| The backward call at `0x401044` is `e8 b7 ff ff ff` | `llvm-objdump -d` |
+| `-0x49 == 0x401000 - 0x401049` | hand arithmetic, matches the bytes |
+| `.debug$S` has `MEM_DISCARDABLE` (`0x42300040`) | `coff_parse.py` flags |
+| The `/4` section has `LNK_REMOVE` (`0x00100800`) | `coff_parse.py` flags |
+| Both are absent from the image | `link_prog.map` discard list + image section table |
+
+### Map files (`coff-map-files`)
+
+`link_prog.map` is 343 lines. Three parts verified present and in this order:
+discarded input sections, memory configuration, linker script and memory map.
+
+The `*fill*` accounting in the concept was computed from the map's own rows
+(11 + 4 = 15 bytes of filler in 69 bytes of `.text`) and cross-checked against
+`comdat_linked.map`, where the same rows appear with the same sizes.
+
+The three-size observation is real and worth recording: the map says `.text` is
+`0x200`, `llvm-readobj` says `VirtualSize 0x61`, and the disassembly accounts
+for 69 bytes. All three correct, all answering different questions.
+
+### COMDAT deduplication (`coff-comdat-linking`)
+
+| Claim | Value |
+|---|---|
+| Each object has two `.text` sections | sec1 = 21 bytes `0x60500020`, sec4 = 12 bytes `0x60501020` |
+| The only characteristic difference is `LNK_COMDAT` (`0x1000`) | both values above |
+| The two COMDAT sections are byte-identical | `55 89 e5 8b 45 08 6b 45 08 03 5d c3` in both |
+| Both selections are `Any (0x2)` | `llvm-readobj --symbols` |
+| Both checksums are `0xF787F24A` | `llvm-readobj --symbols` |
+| The link discards `comdat_b.obj`'s copy | `comdat_linked.map` |
+| One `?shared@@YAHH@Z` survives, at `0x401020` | `llvm-objdump -d` |
+
+## The finding: a silent miscompilation, reproduced
+
+This is the most important thing in this record.
+
+Changing `v * 3` to `v * 4` in `comdat_b.cpp` only:
+
+```
+a.obj  sec4: 55 89 e5 8b 45 08 6b 45 08 03 5d c3   (v * 3, 12 bytes)
+b.obj  sec4: 55 89 e5 8b 45 08 8b 45 08 c1 e0 02 5d c3   (v * 4, 14 bytes)
+a.obj   Checksum: 0xF787F24A
+b.obj   Checksum: 0x3B2D87C1
+```
+
+Different size, different checksum, identical symbol name. **The linker
+discards `b.obj`'s copy anyway**, and both call sites bind to `a.obj`'s:
+
+```
+00401020 < ?shared@@YAHH@Z >:
+  401026: 6b 45 08 03   imull  $0x3, 0x8(%ebp), %eax
+00401030 < ?use_b@@YAHXZ >:
+  401034: c7 04 24 0b 00 00 00   movl  $0xb, (%esp)
+  40103b: e8 e0 ff ff ff         calll 0x401020 < ?shared@@YAHH@Z >
+```
+
+`use_b()` returns 33. The source says 44. No diagnostic, no warning, valid
+image, all tools read it cleanly.
+
+**Attribution, stated narrowly on purpose:**
+
+- GNU `ld` in PE emulation mode deduplicates on symbol name and does not
+  consult the COMDAT checksum. Reproduced from scratch, twice.
+- This is **not** a COFF defect. The format recorded the checksum, correctly,
+  and a conforming consumer has everything it needs.
+- MSVC's linker is **not** tested here and is not implicated.
+- A conforming consumer would decline the merge, producing a duplicate-symbol
+  error — which is the correct outcome, since C++ forbids two definitions of
+  one inline function.
+
+I had originally written this section claiming a duplicate-symbol error would
+be reported. That was an expectation, not an observation; running it produced
+the opposite. The concept now teaches what happened.
+
+## Still not taught, and why
+
+- **Import libraries and the short-import format.** No `dlltool`, no `gendef`,
+  and GNU ld's PE mode will not produce a DLL (`--dll` and `-shared` both reset
+  the output emulation to plain i386, so the link fails). Base relocations are
+  unreachable for the same reason, and are taught image-side in the PE course
+  instead.
+- **MSVC incremental linking and LTCG.** No MSVC toolchain. These are one
+  vendor's linker features, not the format.
+- **Archive members as link input.** Verified structurally in Module 3 (the two
+  symbol indexes decode correctly) but not behaviourally: GNU ld's PE mode does
+  not read `ar` archives, so a link against `demo.lib` fails with unresolved
+  externals.
+- **Reading a bigobj.** Still no implementation on this machine. Module 3's
+  position is unchanged and is not revisited here.

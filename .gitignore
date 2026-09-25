@@ -11,6 +11,11 @@ courses/*/output
 # lesson's DW_TAG_inlined_subroutine data was decoded from -- so it was never
 # committed while every other sample in both courses was.
 !courses/*/assets/samples/*.o
+# Same trap for the COFF link-stage samples: `*.exe` silently swallowed
+# link_prog.exe and comdat_linked.exe, the two linked images the Module 4
+# concepts disassemble and quote byte sequences from. Without them the link
+# concepts teach claims no reader can check.
+!courses/*/assets/samples/*.exe
 *.db
 *.db-shm
 *.db-wal

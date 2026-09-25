@@ -52,11 +52,25 @@ public func main() : int {
     fs::write_text_file("output/coff-line-numbers.html", html.data() as *u8, html.size())
     printf("  -> coff-line-numbers.html\n")
 
+
+    // Module 4: The Link
+    html = underlayer_content::render_coff_linking()
+    fs::write_text_file("output/coff-linking.html", html.data() as *u8, html.size())
+    printf("  -> coff-linking.html\n")
+
+    html = underlayer_content::render_coff_map_files()
+    fs::write_text_file("output/coff-map-files.html", html.data() as *u8, html.size())
+    printf("  -> coff-map-files.html\n")
+
+    html = underlayer_content::render_coff_comdat_linking()
+    fs::write_text_file("output/coff-comdat-linking.html", html.data() as *u8, html.size())
+    printf("  -> coff-comdat-linking.html\n")
+
     // Landing page
     html = underlayer_content::render_coff_landing()
     fs::write_text_file("output/index.html", html.data() as *u8, html.size())
     printf("  -> index.html\n")
 
-    printf("COFF course: 11 concepts + landing page generated in output/\n")
+    printf("COFF course: 14 concepts + landing page generated in output/\n")
     return 0
 }

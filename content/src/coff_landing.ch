@@ -33,10 +33,10 @@ public func render_coff_landing() : string {
                 <h1>COFF &mdash; Common Object File Format</h1>
                 <p class="course-description">The container a compiler hands the linker. COFF is why a function compiled in one file can be called from another: the compiler writes down the question instead of the answer, and the relocation table holds the questions. It is also, deliberately, not a format you can run &mdash; which is the one field that tells you so.</p>
                 <div class="course-meta">
-                    <span class="meta-item">3 modules</span>
-                    <span class="meta-item">11 concepts</span>
+                    <span class="meta-item">4 modules</span>
+                    <span class="meta-item">14 concepts</span>
                     <span class="meta-item">Intermediate</span>
-                    <span class="meta-item">~194 min</span>
+                    <span class="meta-item">~256 min</span>
                 </div>
             </div>
 
@@ -81,17 +81,16 @@ public func render_coff_landing() : string {
                     </ul>
                 </div>
 
-                <div class="module module-planned">
-                    <h2>Coming next</h2>
-                    <p>The object file and everything that contains it are complete. What remains needs a COFF <em>linker</em>, and there is none installed on the machine this course was written on.</p>
+                <div class="module">
+                    <h2>Module 4: The Link</h2>
+                    <p>What the linker does to an object, run for real. A <code>COFF</code> object has no addresses, and after a link
+                    it has nothing but addresses &mdash; so the relocations, the COMDAT contract and the section flags from the first
+                    three modules are all spent here, in that order. Three concepts, and one reproduced bug.</p>
                     <ul class="concept-list">
-                        <li>Linker map files, and reading a link that never happened here</li>
-                        <li>Function-level linking (<code>/Gy</code>) and COMDAT at scale</li>
-                        <li>Incremental linking and the <code>.ilk</code> sidecar</li>
-                        <li>Link-time code generation and its two-phase object format</li>
-                        <li>Import libraries and the short-import format</li>
+                        <li><a href="/courses/coff/lessons/coff-linking">The Link</a> <span class="concept-time">23 min</span></li>
+                        <li><a href="/courses/coff/lessons/coff-map-files">Map Files</a> <span class="concept-time">18 min</span></li>
+                        <li><a href="/courses/coff/lessons/coff-comdat-linking">COMDAT in the Linker</a> <span class="concept-time">21 min</span></li>
                     </ul>
-                    <p class="module-note">Specified in <code>courses/coff/research.md</code>, not written. The links are intentionally absent rather than pointing at 404s. Every claim in this course was checked against a file that exists on disk; a concept about what a linker <em>does</em> would be the first thing in either course that could not be, and it is worth waiting for a machine where it can be. The import and export directories of a linked image are covered by the PE course instead, since they are image-side structures.</p>
                 </div>
             </div>
 

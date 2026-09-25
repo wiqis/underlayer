@@ -1,5 +1,49 @@
 # Course Generation Skill
 
+## `docs/courses-todo.md` is a checklist. Only check and uncheck items.
+
+It is **not** a place to record progress, scope, blockers, verification notes, or
+module lists. One line per course, in the same plain style as its neighbours,
+and that is the whole of it:
+
+```
+- [x] Learn ELF — Executable and Linkable Format
+- [ ] Learn WebAssembly Binary Format
+```
+
+**The only permitted edits are changing `[ ]` to `[x]` and back.**
+
+Do not append a parenthetical, do not add a second line for a module or a
+sub-topic, do not add a "remaining work" line, and do not leave a note about
+what is blocked. A course that is not finished stays unchecked — that is what
+the unchecked box already means, and saying it in prose adds nothing but noise
+that later has to be unsaid.
+
+### One entry per course, not one per module
+
+A course gets **exactly one line**, checked off only when the whole course is
+done. Module 3 of a three-module course is not a separate course and does not
+get its own line. The same course must not appear twice, including once in a
+topical section and once in a format section.
+
+### Where that information belongs instead
+
+| Instead of writing it in courses-todo.md | Write it in |
+|---|---|
+| What a course covers, module by module | `courses/<name>/manifest.json` and the course landing page |
+| What was verified, and what could not be | `courses/<name>/research.md` |
+| Finished features, and their checklist IDs | `docs/features-complete.md` |
+| Remaining work on a course | the relevant `docs/features-complete.md` item, or a new `- [ ]` line there |
+| Tooling gaps and known limitations | `.agents/skills/implementation_gaps/SKILL.md` |
+| Working files produced while authoring | `tools/scratch/` (git-ignored) |
+
+`docs/features-complete.md` is a *feature* checklist with room for detail.
+`docs/courses-todo.md` is a *status* list of courses, and status is all it
+records. A paragraph in the status list does not make the status clearer; it
+makes the file impossible to scan and impossible to trust.
+
+## Where to put working files: `tools/scratch/`
+
 Load this skill when using AI to generate course content.
 
 > **Also load `course_writing`** for the practical, in-the-trenches guide to writing .ch files: common mistakes, Chemical syntax patterns, exercise patterns, and verification checklists. This skill covers *the 11-phase process*; `course_writing` covers *how to actually write each file*.

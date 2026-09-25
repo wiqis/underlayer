@@ -1,6 +1,6 @@
 {
   "id": "dwarf",
-  "title": "DWARF \u2014 The Debugging Data Format",
+  "title": "DWARF — The Debugging Data Format",
   "version": 1,
   "description": "The file format that turns an address back into a source line. DWARF is how a debugger knows that 0x1154 is line 15, and it is the companion to the ELF, PE and Mach-O courses: those explain how a binary is loaded and run, this one explains how it is read. Built entirely from a single 18-line C file compiled with gcc -gdwarf-5 -O0, with every offset decoded by an independent parser and checked against readelf.",
   "author": "Underlayer",
@@ -45,6 +45,16 @@
         "dwarf-frames",
         "dwarf-split",
         "dwarf-lookup"
+      ]
+    },
+    {
+      "id": "location-lists-portability-and-packages",
+      "title": "Location Lists, Portability and Packages",
+      "concepts": [
+        "dwarf-loclists",
+        "dwarf-rnglists",
+        "dwarf-portability",
+        "dwarf-packages"
       ]
     }
   ],
@@ -182,6 +192,42 @@
       "description": "The aranges and pubnames indexes: what each answers, why the aranges tuple table starts at 16 and not 12, and why an index is never the authority.",
       "estimated_minutes": 18,
       "difficulty": "intermediate",
+      "importance": "supporting"
+    },
+    {
+      "id": "dwarf-loclists",
+      "title": "Location Lists",
+      "module_id": "location-lists-portability-and-packages",
+      "description": "The .debug_loclists table, the DW_LLE opcodes, DW_OP_piece across registers, and a disagreement between readelf and llvm-dwarfdump that only the byte offsets settle.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "dwarf-rnglists",
+      "title": "Range Lists",
+      "module_id": "location-lists-portability-and-packages",
+      "description": "The .debug_rnglists table decoded walk by walk: three back-to-back lists in one section, two different opcode families, and why an address in a .o is a placeholder for a number.",
+      "estimated_minutes": 19,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "dwarf-portability",
+      "title": "Same Source, Different Target",
+      "module_id": "location-lists-portability-and-packages",
+      "description": "One file built four ways. Which quantities actually vary with the target, which with the version, and why a 32-bit and a 64-bit unit can be byte-for-byte the same length.",
+      "estimated_minutes": 21,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "dwarf-packages",
+      "title": "Packages",
+      "module_id": "location-lists-portability-and-packages",
+      "description": "The .dwp file and .debug_cu_index: how a debugger finds one unit among hundreds, and what the index is not.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
       "importance": "supporting"
     }
   ]

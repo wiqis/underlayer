@@ -68,11 +68,29 @@ public func main() : int {
     fs::write_text_file("output/dwarf-lookup.html", html.data() as *u8, html.size())
     printf("  -> dwarf-lookup.html\n")
 
+
+    // Module 4: Location Lists, Portability and Packages
+    html = underlayer_content::render_dwarf_loclists()
+    fs::write_text_file("output/dwarf-loclists.html", html.data() as *u8, html.size())
+    printf("  -> dwarf-loclists.html\n")
+
+    html = underlayer_content::render_dwarf_rnglists()
+    fs::write_text_file("output/dwarf-rnglists.html", html.data() as *u8, html.size())
+    printf("  -> dwarf-rnglists.html\n")
+
+    html = underlayer_content::render_dwarf_portability()
+    fs::write_text_file("output/dwarf-portability.html", html.data() as *u8, html.size())
+    printf("  -> dwarf-portability.html\n")
+
+    html = underlayer_content::render_dwarf_packages()
+    fs::write_text_file("output/dwarf-packages.html", html.data() as *u8, html.size())
+    printf("  -> dwarf-packages.html\n")
+
     // Landing page
     html = underlayer_content::render_dwarf_landing()
     fs::write_text_file("output/index.html", html.data() as *u8, html.size())
     printf("  -> index.html\n")
 
-    printf("DWARF course: 15 concepts + landing page generated in output/\n")
+    printf("DWARF course: 19 concepts + landing page generated in output/\n")
     return 0
 }

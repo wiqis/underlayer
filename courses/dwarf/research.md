@@ -812,3 +812,174 @@ Step 4 is where the value is. Four of the findings above (the aranges padding,
 the relative CIE pointer, the missing FDE header, the `sdata4` width) were
 found *because* an independent decoder disagreed with readelf, and each one
 produces confident, plausible, wrong output rather than an error.
+
+---
+
+# Phase A record — Module 4: Location Lists, Portability and Packages
+
+The Module 3 record closed with a list of items marked "blocked on tooling".
+Four of the six fell. This section records what changed and what did not.
+
+## Blockers that fell
+
+### 1. `address_size` 4 and 32-bit producers — SOLVED
+
+Not `-m32` (gcc here has no multilib), but clang targets directly:
+
+```
+$ clang --target=i386-linux-gnu -gdwarf-5 -c t.c -o types_i386.o
+$ readelf --debug-dump=info types_i386.o | grep 'Pointer Size'
+  Pointer Size:  4
+```
+
+The CU header is `a5 00 00 00 05 00 01 04 00 00 00 00 01 00`:
+`unit_length` 165, `version` 5, `unit_type` 1, **`address_size` 4**.
+
+### 2. Non-x86-64 producers — SOLVED
+
+```
+$ clang --target=aarch64-linux-gnu -gdwarf-5 -c t.c -o types_aarch64.o
+  Pointer Size:  8
+```
+
+### 3. `.debug_loclists` — SOLVED, and it resolves an open disagreement
+
+This is the item I previously refused to teach, because `readelf` and
+`llvm-dwarfdump` disagreed and I had only two readers. `llvm-dwarfdump` turned
+out to read the section, and it is the third reader the item was waiting for:
+
+```
+$ llvm-dwarfdump --debug-loclists types_O2
+locations list header: length = 0x5c, version = 5, addr_size = 8, offset_entry_count = 0
+0x0000000c: 0x0000000d: 0x0000000e: 0x0000000f:            (all empty)
+0x00000010: DW_LLE_offset_pair (0x40, 0x48): DW_OP_reg4 RSI
+            DW_LLE_offset_pair (0x48, 0x4e): DW_OP_entry_value(DW_OP_reg4 RSI), DW_OP_stack_value
+
+$ readelf --debug-dump=loc types_O2
+  0000000c  v0 v0  location view pair
+  0000000e  v0 v0  location view pair
+  00000010  views at 0000000c for: ...
+```
+
+**Adjudication by byte offsets**, which is the only way this can be settled:
+
+- Bytes at `0x0c` are `00 00 00 00`. `0x00` is `DW_LLE_end_of_list` in DWARF 5,
+  so the lists at `0x0c`, `0x0d`, `0x0e`, `0x0f` are each empty. That is
+  llvm's reading and it is what the bytes say.
+- "Location view pair" is a DWARF 4 `.debug_loc` concept. It has no meaning in
+  a `DW_LLE` stream. `readelf` is decoding a version-5 table with a version-4
+  grammar.
+- Every llvm offset is reachable by sequentially consuming the bytes it claims.
+  `readelf`'s `0x1d` "end of list" lands in the middle of llvm's `0x1e` entry.
+
+Both readers agree with each other, and with my decoder, on the thing that
+matters for a DIE: that `0x10`, `0x24` and `0x47` are loclist offsets.
+`0x10` and `0x24` are used in `dwarf-loclists` because they are both
+*referenced by a DIE* and *decoded at that same offset* — doubly verified.
+
+### 4. `.dwp` packages — SOLVED
+
+`llvm-dwp` exists, which I had not checked for:
+
+```
+$ llvm-dwp -e split_exe -o split.dwp
+$ readelf -S -W split.dwp | grep -oE '\.debug[a-zA-Z_.0-9]*'
+.debug_abbrev.dwo  .debug_cu_index  .debug_info.dwo
+.debug_line.dwo     .debug_str.dwo   .debug_str_offsets.dwo
+```
+
+`llvm-dwp` discovers the `.dwo` files by reading `DW_AT_dwo_name` from the
+executable's skeleton units, not by scanning the directory — confirmed by
+passing it a non-split object and getting
+`warning: executable file does not contain any references to dwo files`.
+
+`.debug_cu_index` header, all four fields 4 bytes wide:
+
+```
+0000: 05 00 00 00  version = 5
+0004: 04 00 00 00  section_count = 4
+0008: 02 00 00 00  unit_count = 2
+000c: 04 00 00 00  slot_count = 4
+```
+
+And both units' 64-bit `DWO_id`s appear verbatim at `0x20`, matching what
+`llvm-dwarfdump` prints from the units themselves:
+
+```
+index 0020: 3a c9 20 1a 41 2d e4 5c = 0x5ce42d411a20c93a
+index 0028: 0f b3 b9 69 1f 53 96 c2 = 0xc296531f69b9b30f
+```
+
+**The offset table's tail is not accounted for and is not taught.** The header
+plus the 4-slot hash table plus both signatures plus 4 sections x 2 units of
+offsets is 80 of 144 bytes. A 16-byte block is visibly duplicated at `0x60` and
+`0x70`, which no single-table reading explains. `0xb7` does appear there and
+does match the second unit's offset, which is suggestive but not a derivation.
+`dwarf-packages` states this explicitly rather than guessing, and gives the
+reader the evidence needed to finish the job.
+
+### 5. `.debug_rnglists` / `DW_AT_ranges` — SOLVED
+
+`inline_O2.o` has `.debug_rnglists` (78 bytes) and 8 relocations against it.
+`llvm-dwarfdump --debug-rnglists` reads it. `readelf --debug-dump=rnglists`
+prints **nothing** for this file — a second, separate readelf gap.
+
+Decoded by hand and by script, agreeing:
+
+```
+0x0c  DW_RLE_base_address  base = 0 (relocated)
+0x15  offset_pair (0, 18)
+0x18  offset_pair (18, 26)
+0x1b  offset_pair (34, 48)
+0x1e  offset_pair (56, 60)
+0x21  end_of_list
+0x22  [list 2] base_address, then 4 more offset_pairs, end_of_list at 0x37
+0x38  [list 3] start_length (start 0, len 137 = 89 01)
+0x43  start_length (start 0, len 10 = 0a)
+0x4d  end_of_list
+```
+
+Three lists in one section, and two different opcode families. My first
+hand-walk of this went wrong past `0x2f` because I reconstructed bytes instead
+of reading them; the dump above is from the file.
+
+## The portability finding worth keeping
+
+`types_i386.o` and `types_aarch64.o` both have `unit_length = 165`.
+Identical. One is 32-bit, one is 64-bit, and every address differs in width.
+
+The reason is `DW_FORM_addrx`: `DW_AT_low_pc` reads `(index: 0): 0`. Addresses
+are stored as indices into `.debug_addr`, so the target's address width never
+enters the DIE tree. The unit lengths are the same because the indices are the
+same size, not because the addresses are.
+
+Version 2 and 3 share an 11-byte header; version 5 inserts `unit_type` making
+it 12. The first DIE therefore sits at `0xb` or `0xc` depending only on the
+version, with nothing else in the file to indicate which.
+
+`.debug_line_str` exists only in the version 5 build. A version-5 reader can
+meet `DW_FORM_line_strp` whose target section does not exist.
+
+## Still not taught, and why
+
+- **The index forms** `DW_LLE_base_addressx`, `startx_endx`, `startx_length`
+  and their `DW_RLE` equivalents. They all require a non-zero
+  `offset_entry_count`, and no configuration on this machine produces one —
+  every section observed has it zero. The concepts say so and list them as the
+  untested set.
+- **`DW_RLE_start_end`** and **`DW_LLE_start_end` / `start_length` / `default_location`**
+  as such. `DW_RLE_start_length` *is* now covered (list 3 above), which the
+  concept states rather than leaving the whole family unwritten.
+- **Pre-DWARF-5 `.debug_ranges` and `.debug_loc`**, and
+  `DW_FORM_GNU_str_index`. The version 2 and 3 builds are decoded for their
+  headers and string forms, which is what `dwarf-portability` teaches; the
+  old list sections themselves are a separate comparison this course did not
+  make.
+- **DWARF64.** A 4 GB debug-info file is not producible here, so the
+  `0xffffffff` escape is taught as a documented branch that was never executed.
+  The concept says that explicitly.
+- **`.debug_rnglists` intervals on a linked binary.** The offsets are
+  verifiable from the object; the resolved addresses are not, because they come
+  from relocations. `dwarf-rnglists` makes that distinction explicit and tells
+  the reader to link the object rather than presenting the second while showing
+  evidence for the first.

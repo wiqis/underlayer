@@ -1,6 +1,6 @@
 {
   "id": "coff",
-  "title": "COFF \u2014 Common Object File Format",
+  "title": "COFF — Common Object File Format",
   "version": 1,
   "description": "The container a compiler hands the linker: a 20-byte header that says this is an object and not an image, 40-byte section headers where every address is zero, and the symbol and relocation tables that let the linker place code whose final address nobody knows yet. Every byte verified against real objects produced by clang for three targets (x64 MSVC, x64 GNU, i386 MSVC) and cross-checked by two independently written parsers.",
   "author": "Underlayer",
@@ -41,6 +41,15 @@
         "coff-bigobj",
         "coff-archives",
         "coff-line-numbers"
+      ]
+    },
+    {
+      "id": "the-link",
+      "title": "The Link",
+      "concepts": [
+        "coff-linking",
+        "coff-map-files",
+        "coff-comdat-linking"
       ]
     }
   ],
@@ -143,6 +152,33 @@
       "estimated_minutes": 16,
       "difficulty": "intermediate",
       "importance": "supporting"
+    },
+    {
+      "id": "coff-linking",
+      "title": "The Link",
+      "module_id": "the-link",
+      "description": "A real COFF-to-PE link, watched step by step: sections given addresses, four zero bytes becoming a displacement, and sections dropped by flags read out of the header.",
+      "estimated_minutes": 23,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "coff-map-files",
+      "title": "Map Files",
+      "module_id": "the-link",
+      "description": "The linker's plain-text transcript: the discard list, the memory configuration, the linker-defined symbols, and the *fill* rows that account for 15 of 69 bytes of .text.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "supporting"
+    },
+    {
+      "id": "coff-comdat-linking",
+      "title": "COMDAT in the Linker",
+      "module_id": "the-link",
+      "description": "COMDAT deduplication observed working end to end, and a reproduced silent miscompilation: two different function bodies, one checksum, and a linker that discarded the wrong one.",
+      "estimated_minutes": 21,
+      "difficulty": "advanced",
+      "importance": "core"
     }
   ]
 }
