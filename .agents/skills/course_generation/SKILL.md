@@ -89,6 +89,31 @@ Each phase produces artifacts. The next phase consumes them. No skipping.
 | No misconception targeting | Learners hit the same wall repeatedly | Always do Phase B |
 | Over-explaining | 500 words for a 100-word concept | Apply "Would I read this?" test |
 
+## Where to put working files: `tools/scratch/`
+
+Course authoring produces a lot of files that exist only to *make* the course
+and that no learner would ever want: throwaway corpora, scratch binaries,
+one-off analysis scripts, intermediate dumps, notes to yourself.
+
+**Put those in `tools/scratch/`, which is git-ignored.** Do not commit them.
+
+The only tracked file in that directory is its `README.md`, so a fresh clone
+still explains the convention rather than showing an unexplained missing
+directory. Read it before putting anything there — it also lists what looks
+like scratch but is load-bearing course content.
+
+The test is one question: **would a reader of the course ever want this?**
+
+| Goes in `tools/scratch/` | Stays committed |
+|---|---|
+| scratch binaries, while you are still choosing the sample to ship | `courses/<name>/assets/samples/*` — every hex dump in a lesson is decoded from one of these |
+| one-off analysis scripts, until you know they earned a permanent home | the verification harnesses (`coff_parse.py`, `dwarf_decode.py`, `crosscheck.py`, …) — they are the proof of the courses' central claim, and lesson text tells the reader to run them |
+| intermediate dumps, half-decoded tables, notes to yourself | `courses/<name>/research.md` — the record of what was verified and what was not, which lessons and the roadmap point at |
+
+If you are unsure, leave the file untracked until you are sure. An untracked
+file costs nothing; a committed one is forever, and removing it later means
+rewriting history on a shared branch.
+
 ## Phase A: Research
 
 ### Input

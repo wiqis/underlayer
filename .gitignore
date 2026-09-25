@@ -5,7 +5,31 @@ courses/*/output
 *.exe
 *.def
 *.o
+# ...but an object file under a course's samples directory is course content,
+# not build output. Without this, `*.o` silently swallowed
+# courses/dwarf/assets/samples/inline_O2.o -- the one sample the inlining
+# lesson's DW_TAG_inlined_subroutine data was decoded from -- so it was never
+# committed while every other sample in both courses was.
+!courses/*/assets/samples/*.o
 *.db
 *.db-shm
 *.db-wal
 *.log
+
+# Course authoring scratch space.
+#
+# Working files that exist only to PRODUCE a course and that no learner would
+# ever want: throwaway corpora, scratch binaries, one-off analysis scripts,
+# intermediate dumps. The test is "would a reader of the course want this?" --
+# if not, it belongs in tools/scratch/ rather than in git.
+#
+# The README is deliberately tracked, so a fresh clone still explains the
+# convention instead of showing an unexplained missing directory. Everything
+# else dropped in there is ignored by default.
+tools/scratch/*
+!tools/scratch/README.md
+
+# Python bytecode. Regenerated wherever the .py files live, so it is ignored
+# globally rather than parked in the scratch directory.
+__pycache__/
+*.py[cod]
