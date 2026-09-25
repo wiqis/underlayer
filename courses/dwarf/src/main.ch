@@ -39,11 +39,40 @@ public func main() : int {
     fs::write_text_file("output/dwarf-address-to-line.html", html.data() as *u8, html.size())
     printf("  -> dwarf-address-to-line.html\n")
 
+    // Module 3: DIEs, Types, Scopes, Locations and Frames
+    html = underlayer_content::render_dwarf_dies()
+    fs::write_text_file("output/dwarf-dies.html", html.data() as *u8, html.size())
+    printf("  -> dwarf-dies.html\n")
+
+    html = underlayer_content::render_dwarf_types()
+    fs::write_text_file("output/dwarf-types.html", html.data() as *u8, html.size())
+    printf("  -> dwarf-types.html\n")
+
+    html = underlayer_content::render_dwarf_scopes()
+    fs::write_text_file("output/dwarf-scopes.html", html.data() as *u8, html.size())
+    printf("  -> dwarf-scopes.html\n")
+
+    html = underlayer_content::render_dwarf_locations()
+    fs::write_text_file("output/dwarf-locations.html", html.data() as *u8, html.size())
+    printf("  -> dwarf-locations.html\n")
+
+    html = underlayer_content::render_dwarf_frames()
+    fs::write_text_file("output/dwarf-frames.html", html.data() as *u8, html.size())
+    printf("  -> dwarf-frames.html\n")
+
+    html = underlayer_content::render_dwarf_split()
+    fs::write_text_file("output/dwarf-split.html", html.data() as *u8, html.size())
+    printf("  -> dwarf-split.html\n")
+
+    html = underlayer_content::render_dwarf_lookup()
+    fs::write_text_file("output/dwarf-lookup.html", html.data() as *u8, html.size())
+    printf("  -> dwarf-lookup.html\n")
+
     // Landing page
     html = underlayer_content::render_dwarf_landing()
     fs::write_text_file("output/index.html", html.data() as *u8, html.size())
     printf("  -> index.html\n")
 
-    printf("DWARF course: 8 concepts + landing page generated in output/\n")
+    printf("DWARF course: 15 concepts + landing page generated in output/\n")
     return 0
 }

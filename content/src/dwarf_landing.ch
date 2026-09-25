@@ -33,10 +33,10 @@ public func render_dwarf_landing() : string {
                 <h1>DWARF &mdash; The Debugging Data Format</h1>
                 <p class="course-description">The file format that takes a program apart and puts the source back. DWARF is how a debugger turns the address <code>0x1154</code> into "line 15 of shape.c", and it is the companion to the ELF, PE and Mach-O courses you have already met: those teach you how a binary is loaded and run, this one teaches how it is read.</p>
                 <div class="course-meta">
-                    <span class="meta-item">2 modules</span>
-                    <span class="meta-item">8 concepts</span>
+                    <span class="meta-item">3 modules</span>
+                    <span class="meta-item">15 concepts</span>
                     <span class="meta-item">Intermediate</span>
-                    <span class="meta-item">~137 min</span>
+                    <span class="meta-item">~282 min</span>
                 </div>
             </div>
 
@@ -71,19 +71,32 @@ public func render_dwarf_landing() : string {
                     </ul>
                 </div>
 
+                <div class="module">
+                    <h2>Module 3: DIEs, Types, Scopes, Locations and Frames</h2>
+                    <p>The other half of DWARF: everything a debugger needs besides a line number. The tree that describes types, the types themselves, where variables live, how the stack is unwound, and the indexes that make finding any of it cheap.</p>
+                    <ul class="concept-list">
+                        <li><a href="/courses/dwarf/lessons/dwarf-dies">The DIE Tree</a> <span class="concept-time">20 min</span></li>
+                        <li><a href="/courses/dwarf/lessons/dwarf-types">Types and Type Chains</a> <span class="concept-time">22 min</span></li>
+                        <li><a href="/courses/dwarf/lessons/dwarf-scopes">Scopes and Inlining</a> <span class="concept-time">21 min</span></li>
+                        <li><a href="/courses/dwarf/lessons/dwarf-locations">Location Expressions</a> <span class="concept-time">21 min</span></li>
+                        <li><a href="/courses/dwarf/lessons/dwarf-frames">Call Frame Information</a> <span class="concept-time">22 min</span></li>
+                        <li><a href="/courses/dwarf/lessons/dwarf-split">Split DWARF</a> <span class="concept-time">19 min</span></li>
+                        <li><a href="/courses/dwarf/lessons/dwarf-lookup">Finding Things Without Reading Everything</a> <span class="concept-time">18 min</span></li>
+                    </ul>
+                </div>
+
                 <div class="module module-planned">
                     <h2>Coming next</h2>
-                    <p>The line-number half of DWARF is complete. The remaining half describes <em>types and variables</em> rather than lines, and it is where the abbreviation table's indirection finally earns its keep.</p>
+                    <p>Three modules take a binary from its first byte to a working debugger: which section holds what, how an address becomes a line, and how a line becomes a type and a value. What remains is the edges.</p>
                     <ul class="concept-list">
-                        <li>Debug Information DIEs and the compilation unit</li>
-                        <li>The Abbreviation Table and forms</li>
-                        <li>Reading a type: <code>DW_AT_type</code> references</li>
-                        <li>Location expressions and variable addresses</li>
-                        <li>Scopes, lexical blocks and inlining</li>
-                        <li>Call frame information: <code>.debug_frame</code> and <code>.eh_frame</code></li>
-                        <li>Split DWARF and the DWARF package format</li>
-                        <li>Debug info in Mach-O and PE compared</li>
+                        <li><code>.debug_rnglists</code> and the contents of <code>DW_AT_ranges</code></li>
+                        <li><code>.debug_loclists</code> &mdash; deliberately not taught, see the note below</li>
+                        <li><code>address_size</code> 4, and 32-bit producers</li>
+                        <li>Non-x86-64 producers, and macOS and Windows clang DWARF</li>
+                        <li>The pre-DWARF-5 string forms, and <code>DW_FORM_GNU_str_index</code></li>
+                        <li>The DWARF package format (<code>.dwp</code>)</li>
                     </ul>
+                    <p class="module-note">Specified in <code>courses/dwarf/research.md</code> and not written. The <code>.debug_loclists</code> omission is a decision rather than an oversight: the two readers available here disagreed on how to decode its entry encoding, and rather than pick the reading that suited the lesson, the concept that needed it was replaced with location <em>expressions</em>, which is fully cross-checked. The research file records the disagreement.</p>
                     <p class="module-note">These are planned, not written. The links are intentionally absent rather than pointing at 404s.</p>
                 </div>
             </div>

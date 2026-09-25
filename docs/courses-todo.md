@@ -5,13 +5,15 @@
 - [x] Learn ELF — Executable and Linkable Format
 - [x] Learn PE — Portable Executable Format
 - [x] Learn Mach-O — Mach Object File Format
-- [x] Learn DWARF — Debugging Data Format (Modules 1-2 shipped; 8 concepts. Module 3, Types & Variables, is specified but unwritten — see `courses/dwarf/research.md` for the full concept list and the verification method)
-- [ ] Learn COFF — Common Object File Format
+- [x] Learn DWARF — Debugging Data Format (3 modules, 15 concepts, complete as far as it can be verified here. Cross-checked by three independent readers — see `courses/dwarf/research.md`. Remaining gaps are listed there and are all blocked on missing tooling, not on missing work: `.debug_rnglists`, 32-bit producers, non-x86-64, pre-DWARF-5 string forms, `.dwp` packages, and `.debug_loclists`, which is deliberately excluded because the two available readers disagree on its encoding)
+- [x] Learn COFF — Common Object File Format (3 modules, 11 concepts, complete as far as it can be verified here. Cross-checked by two independent parsers — see `courses/coff/research.md`. The PE/COFF header the PE course already decodes, but on the object side: no optional header, no addresses, relocations instead)
+- [x] Learn COFF — bigobj, archives and line numbers (shipped as Module 3. bigobj is taught as a documented layout plus two verified observations — clang does not emit one at 70,017 symbols, and its 0x0000FFFF signature collides with short-import and defeats LLVM's reader — because no tool on this machine implements the format. The `.lib` archive and its two symbol indexes are fully decoded and verified)
+- [ ] Learn COFF — linker map files, incremental linking, LTCG and import libraries (BLOCKED, not unwritten: there is no COFF linker on this machine — no `lld-link`, no mingw, no `mold`. Everything in these three courses was verified against a file that exists on disk, and a concept about what a linker *does* would be the first claim in either course that could not be. Revisit on a machine with a COFF linker)
 - [ ] Learn WebAssembly Binary Format
 - [ ] Learn JVM Class File Format
 - [ ] Learn .NET Assembly Metadata and PE Format
-- [ ] Learn DWARF — Types, Variables and Location Expressions (Module 3: .debug_info DIEs, .debug_abbrev and forms, DW_AT_type references, location expressions, scopes and inlining, .debug_frame/.eh_frame, split DWARF, and how PE and Mach-O carry the same data)
-- [ ] Learn DWARF — Ranges, Line Tables v2-v5 comparison, and .debug_line across platforms
+- [x] Learn DWARF — Types, Variables and Location Expressions (shipped as Module 3: the DIE tree and abbreviation tables, DW_AT_type chains, scopes and inlining, location expressions, .eh_frame CFI, split DWARF, and the aranges/pubnames indexes)
+- [ ] Learn DWARF — Ranges, 32-bit producers, and .debug_line across platforms (BLOCKED on tooling: `.debug_rnglists` and `DW_AT_ranges` contents need a case this compiler does not emit here; `address_size` 4 needs `-m32`, which is unavailable; cross-platform line tables need macOS and Windows clang targets)
 - [ ] Learn PDB — Program Database Format
 - [ ] Learn PDF — Portable Document Format
 - [ ] Learn PostScript

@@ -409,3 +409,406 @@ default 5, so a learner can produce every version on demand.
 Step 4/5 is the important one: agreeing with readelf by eyeballing proves
 nothing. Every number in the tables above was produced by the independent
 parser and then required to match.
+
+---
+
+# Module 3 research: DIEs, types, scopes, locations, frames, split DWARF
+
+Added when Module 3 was written. The same discipline applies: a claim is only
+written down after an independent decoder, `llvm-dwarfdump` and `readelf` all
+agree on it.
+
+## Harness
+
+Three implementations, all shipped:
+
+| Role | Tool |
+|---|---|
+| Independent decoder | `assets/dwarf_decode.py`, written from the specification |
+| Section reader | `assets/dwarf_sections.py`, so the decoder does not lean on readelf |
+| Reference readers | `readelf --debug-dump=*` and `llvm-dwarfdump --debug-info` |
+| Comparison | `assets/crosscheck.py` |
+
+```
+$ python3 assets/crosscheck.py assets/samples/types_O0 assets/samples/types_O2 \
+      assets/samples/types_pub assets/samples/types_split \
+      assets/samples/types_split.dwo
+  types_O0         OK   (54 DIEs, 281 attributes, CFI ops agree)
+  types_O2         OK   (63 DIEs, 307 attributes, CFI ops agree)
+  types_pub        OK   (54 DIEs, 283 attributes, CFI ops agree)
+  types_split      OK   (2 skeleton units, 2 DW_AT_dwo_name)
+  types_split.dwo  OK   (39 DIEs in the .dwo, tags agree with llvm-dwarfdump)
+CROSS-CHECK: ALL READERS AGREE
+```
+
+The cross-check compares, per file: the number of abbreviation entries against
+readelf's table, every DIE's (depth, offset, abbrev code, tag), every
+attribute's (DIE, byte offset, name), the `.debug_aranges` unit headers and
+tuples, the `.eh_frame` FDE address ranges, and the CFI opcode sequence.
+
+## Corpus
+
+```c
+/* types.c */
+#include <stdint.h>
+typedef unsigned long  ulong_t;
+enum Color { RED = 1, GREEN, BLUE = 7 };
+struct Point { int x; int y; };
+struct Nest {
+    struct Point origin;
+    char        label[8];
+    uint32_t    flags;
+    struct Point *next;
+};
+union Variant { int i; double d; struct Point p; };
+static struct Nest  g_nest  = { {1, 2}, "hi", 0x30, 0 };
+static ulong_t       g_count = 7;
+static int           g_table[4] = {10, 20, 30, 40};
+int  sum_table(int idx)            { int local = g_table[idx];
+                                     return local + (int)g_count; }
+int  walk(struct Point *p)          { if (p == 0) { return 0; }
+                                     return p->x + p->y; }
+struct Point make_point(int x, int y){ struct Point out; out.x = x; out.y = y;
+                                     return out; }
+```
+
+| Binary | Command | What it is for |
+|---|---|---|
+| `types_O0` | `gcc -gdwarf-5 -O0 -o types_O0 types.c types_main.c` | the reference: full DIE tree, no location lists |
+| `types_O2` | `… -O2 …` | optimised; `.debug_loclists` appears |
+| `types_pub` | `… -gpubnames …` | adds `.debug_pubnames` and `.debug_pubtypes` |
+| `types_split` | `… -gsplit-dwarf …` | skeleton units plus a separate `.dwo` |
+| `inline_O2.o` | `gcc -gdwarf-5 -O2 -c inline.c` | forces real inlining |
+
+## Finding 1 — readelf applies relocations, so it disagrees with your hex dump
+
+Compiling to an object (`-c`) produces `.rela.debug_info`, and the string
+offsets in `.debug_info` are **zero in the file** until the linker fills them
+in. In `types_O0.o` (the unlinked form of the reference binary):
+
+```
+$ readelf -rW types_O0.o | grep -A2 debug_info
+000000000000000d  0000000a0000000a R_X86_64_32  .debug_str + 85
+$ xxd -s 0x10d -l 4 types_O0.o
+0000010d: 0000 0000
+```
+
+readelf reports `DW_AT_producer` at `.debug_str + 85`. The four bytes in the
+file are `00 00 00 00`. **readelf is not wrong — it applied the relocation** —
+but a learner who types `xxd` and then checks readelf's number will conclude
+that one of them is broken.
+
+Consequence for this course: **every byte-level lesson uses a linked
+executable.** In the linked `types_O0` there are zero relocations against
+`.debug_info`, and the raw bytes and readelf's output agree exactly:
+
+```
+$ readelf -rW types_O0 | grep -c debug_info
+0
+$ python3 assets/dwarf_sections.py assets/samples/types_O0 .debug_info
+  [30] .debug_info  off=0x0030e6 size=0x002e0
+raw producer strp at 0xd = 63 00 00 00      # 0x63, and readelf says 0x63
+```
+
+## Finding 2 — `.debug_abbrev` holds several tables, and reading past the terminator is silent
+
+`types_O0` has **two** abbreviation tables, and readelf lists codes 1-15
+twice:
+
+```
+$ readelf --debug-dump=abbrev assets/samples/types_O0 | grep -cE '^   [0-9]+ '
+30
+```
+
+An early version of the decoder collected every entry into one dict keyed by
+code. The second table reuses codes 1-15 for different tags, so it silently
+replaced the first. The symptom is unusually nasty: the byte walk stays
+perfectly in step, every DIE is still found at the right offset, and every
+attribute value is read with the right *form* — but the tag names and
+attribute lists are the wrong table's. There is no crash and no misalignment
+to detect.
+
+A table ends at a lone code `0`, so `read_abbrev()` must `break` there. Verified
+on all four abbrev-using files.
+
+## Finding 3 — one `.debug_info` holds one unit per compilation
+
+`types_O0` links two `.c` files, so it has two units:
+
+| Unit at | `unit_length` | `debug_abbrev_offset` | DIEs |
+|---|---|---|---|
+| 0x0 | 0x20b | 0x0 | 27 |
+| 0x20f | 0xcd | 0x100 | 27 |
+
+A decoder that reads only the first unit reports 27 DIEs against readelf's 54
+and never raises anything. Total across the corpus: 54 DIEs in `types_O0`, 63
+in `types_O2` (extra `DW_TAG_variable` DIEs for the temporaries the optimiser
+introduced).
+
+## Finding 4 — the `.debug_aranges` tuple table starts at 16, not 12
+
+`.debug_aranges` is DWARF **version 2** even under `-gdwarf-5`. Its header is
+`unit_length`, `version`(2), `debug_info_offset`(4), `address_size`(1),
+`segment_selector_size`(1) — eight bytes after the length. But the tuple
+table does not start at byte 12; it starts at byte **16**:
+
+```
+$ python3 assets/dwarf_sections.py assets/samples/types_O0 .debug_aranges
+  [16] .debug_aranges  off=0x00214a size=0x00060
+  0000: 2c 00 00 00 02 00 00 00 00 00 08 00 00 00 00 00
+  0010: 49 11 00 00 00 00 00 00 80 00 00 00 00 00 00 00
+        ^-- address 0x1149        ^-- length 0x80
+```
+
+Reading tuples at 12 decodes the first address as **0x114900000000** — a
+plausible 48-bit value that points nowhere, and that no sanity check catches.
+The second unit confirms the shape: header at 0x30, `debug_info_offset` 0x20f,
+table at 0x40, first tuple 0x11c9/0x69. readelf agrees on all of it.
+
+Only `address_size` 8 could be tested (no `-m32` here). For a 4-byte address
+byte 12 is already tuple-aligned, so the padding would be zero — **a prediction,
+not a measurement.**
+
+## Finding 5 — an FDE has no version and no augmentation
+
+`.eh_frame` records come in two shapes and they are not the same shape:
+
+```
+CIE:  length, CIE_id(=0), version(1), augmentation string,
+      [version 1: code_alignment_factor ULEB, data_alignment_factor SLEB,
+                 return_address_register ULEB]
+      [if augmentation starts with 'z': augmentation_data_length ULEB, then data]
+      initial instructions
+
+FDE:  length, CIE_pointer, initial_location, address_range, instructions
+```
+
+An FDE stops after `CIE_pointer` and goes straight to two encoded values. The
+first version of this decoder read a `version` byte for FDEs too, which ate
+the first byte of `initial_location` and turned every later field into noise.
+
+## Finding 6 — the `.eh_frame` CIE pointer is relative to its own field
+
+Both FDEs in the reference binary store a `CIE_pointer` **equal to the offset
+of the pointer field itself**:
+
+```
+00000018 0000000000000014 0000001c FDE cie=00000000
+00000030 0000000000000024 00000034 FDE cie=00000000
+```
+
+The CIE is at offset 0. Reading the field as an absolute offset looks for a
+CIE at 0x1c and 0x34 and finds none. In `.eh_frame` the value is
+`field_position - CIE_offset`; in `.debug_frame` the same field is absolute.
+Verified: subtracting the field's own position gives 0 for every FDE, and all
+eleven CFI rows then match readelf.
+
+## Finding 7 — `DW_EH_PE` 0x0b is `sdata4`, and `address_range` ignores `pcrel`
+
+The CIE sets `fde_encoding = 0x1b` = `DW_EH_PE_pcrel | DW_EH_PE_sdata4`.
+Two things follow that are easy to get wrong:
+
+- The **low nibble** is the format: `0x0b` is a 4-byte signed value. Reading
+  it as 8 bytes swallows the following four bytes, so the FDE's end address
+  came out as `0x10076478` instead of `0x1086`.
+- The **high nibble** (`0x10` = pcrel) applies to `initial_location`, whose
+  stored value is a displacement from the field's own *runtime* address. It
+  does **not** apply to `address_range`, which is a length: adding the section
+  base to it gave `0x20ac` where the real end is `0x1040`. `pcrel` also
+  requires the section's **virtual** address (`.eh_frame` is at 0x2050), not
+  its file offset, or every value is off by the difference.
+
+All eight FDE ranges now agree with readelf:
+
+```
+mine     0x1060..0x1086  0x1020..0x1040  0x1040..0x1050  0x1050..0x1060
+         0x1149..0x117e  0x117e..0x11a9  0x11a9..0x11c9  0x11c9..0x1232
+readelf  identical
+```
+
+Note there are **eight** FDEs for five functions: one function's unwind
+information is split across three adjacent FDEs (`0x1149..0x117e`,
+`0x117e..0x11a9`, `0x11a9..0x11c9`). "One FDE per function" is a reasonable
+first guess and is wrong often enough to matter.
+
+## Finding 8 — in split DWARF, `strx` resolution needs a base from the skeleton
+
+A `.dwo` resolves `DW_FORM_strx` through `.debug_str_offsets.dwo`, indexed
+from a base that is **not in the `.dwo`** — it is `DW_AT_str_offsets_base` on
+the skeleton unit, verified as 8. Ignoring it and using base 0 shifts every
+string by two entries, and the first attribute comes back as:
+
+```
+DW_AT_producer : unsigned int        <- with base 0
+DW_AT_producer : GNU C23 15.2.0 …    <- with base 8, matching llvm-dwarfdump
+```
+
+Both readers agree on the string once the base is right.
+
+## Finding 9 — the two readers disagree on an attribute's *name*
+
+`DW_AT_language` is followed in gcc's DWARF 5 output by two attributes the
+readers do not agree how to name:
+
+```
+readelf:          DW_AT_language_name  (0x90)   DW_AT_language_version (0x91)
+llvm-dwarfdump:   DW_AT_unknown_90              DW_AT_unknown_91
+```
+
+The *numbers* agree, and the values agree (3 = "C", 0x31647 = 202311). These
+are gcc extensions in the DWARF 5 range with no standard name, so the honest
+statement is the numeric one: **the attribute number is the truth; the name is
+a convention each tool picks.** The course prints the numbers and names both.
+
+## Finding 10 — `DW_AT_upper_bound` is inclusive
+
+From the reference tree, `struct Nest`'s `label` is declared `char label[8]`:
+
+```
+<1><f0> DW_TAG_array_type      DW_AT_type <0x77>          (char)
+ <2><f9> DW_TAG_subrange_type  DW_AT_type <0x48>  DW_AT_upper_bound : 7
+```
+
+`DW_AT_upper_bound` is **7**, not 8. It is an inclusive bound, so the element
+count is `upper_bound + 1`. A debugger or pretty-printer that uses the value
+directly prints seven elements for an eight-element array and never notices,
+because the value is in range and the type is otherwise valid.
+
+## Finding 11 — `implicit_const` puts values in the abbrev table, not the DIE
+
+`struct Point`'s members use `DW_AT_decl_file DW_FORM_implicit_const: 1` and
+`DW_AT_decl_line DW_FORM_implicit_const: 7`. Both values live in
+`.debug_abbrev`; `.debug_info` carries **no bytes at all** for them. A reader
+that expects every attribute to occupy space in the DIE desynchronises, and
+because `implicit_const` is usually paired with a `DW_FORM_data1` elsewhere in
+the same abbreviation the result is a plausible-looking wrong line number.
+
+## Finding 12 — readelf follows the `.dwo` and merges the trees
+
+`readelf --debug-dump=info types_split` prints 56 DIEs: the 2 skeleton DIEs
+**plus** the 54 DIEs it loaded from `types_split.dwo`, because it resolves
+`DW_AT_dwo_name` automatically. My decoder on the same file finds 2, which is
+correct. The two are only comparable if each is compared against readers
+looking at the same file, so the harness checks the `.o` for skeleton units
+and the `.dwo` for the real tree. Verified: 2 skeletons with 2
+`DW_AT_dwo_name`, 39 DIEs in the `.dwo`.
+
+## Verified type chains (the reference tree, `types_O0`)
+
+All offsets are `.debug_info`-relative and confirmed by both readers.
+
+```
+<0x5d> base_type  int                       byte_size 4
+<0x41> base_type  unsigned int               byte_size 4
+<0x48> base_type  long unsigned int          byte_size 8
+<0x77> base_type  char                       byte_size 1
+
+<0x64> typedef __uint32_t   -> <0x41> unsigned int
+<0x7e> typedef uint32_t      -> <0x64> __uint32_t          (two hops)
+<0x8a> typedef ulong_t       -> <0x48> long unsigned int
+
+<0x96> structure_type Point  byte_size 8
+  <0xa1> member x  -> <0x5d> int   data_member_location 0
+  <0xaa> member y  -> <0x5d> int   data_member_location 4
+
+<0xb4> structure_type Nest   byte_size 32
+  <0xbf> member origin -> <0x96> Point   offset 0
+  <0xcb> member label  -> <0xf0> array   offset 8
+  <0xd7> member flags  -> <0x7e> uint32_t offset 16
+  <0xe3> member next   -> <0x100> pointer offset 24
+
+<0xf0> array_type           -> <0x77> char
+  <0xf9> subrange_type      -> <0x48> long unsigned int, upper_bound 7
+
+<0x100> pointer_type        byte_size 8, -> <0x96> Point
+```
+
+`Nest` is 32 bytes and its members sit at 0, 8, 16, 24: `Point` is 8, then
+`char[8]`, then `uint32_t`, then a pointer, each naturally aligned. The
+`DW_AT_data_member_location` values in the table above are the ones the file
+actually contains.
+
+## Verified: scopes and locations at `-O0`
+
+`make_point`, at `<0x15c>`:
+
+```
+<1><15c> DW_TAG_subprogram
+  DW_AT_name make_point   DW_AT_type <0x96>   (returns Point)
+  DW_AT_low_pc 0x11a9     DW_AT_high_pc 0x20
+  DW_AT_frame_base : 1 byte block: 9c            (DW_OP_call_frame_cfa)
+ <2><17d> DW_TAG_formal_parameter x  DW_AT_location 91 5c  (DW_OP_fbreg -36)
+ <2><189> DW_TAG_formal_parameter y  DW_AT_location 91 58  (DW_OP_fbreg -40)
+ <2><195> DW_TAG_variable  out       DW_AT_location 91 68  (DW_OP_fbreg -24)
+```
+
+The three locations are displacements from the frame base, and the CIE says
+`DW_CFA_def_cfa reg=7 offset=8`, so the frame base is `rsp + 8` on entry. The
+parameters sit at negative offsets from it, which is what makes them
+recoverable after a `push` has moved rsp.
+
+## Verified: inlining at `-O2`
+
+`inline.c` with a `static` `dot()` called three times produces **three**
+`DW_TAG_inlined_subroutine` DIEs:
+
+```
+<2><ea>  DW_AT_abstract_origin <0x127>   DW_AT_entry_pc 0x16
+        DW_AT_call_file 1  DW_AT_call_line 6  DW_AT_call_column 12
+        DW_AT_low_pc 0x16  DW_AT_high_pc 0x14
+<2><172> DW_AT_abstract_origin <0x127>   DW_AT_entry_pc 0x52
+        DW_AT_call_file 1  DW_AT_call_line 9  DW_AT_call_column 12
+        DW_AT_ranges 0xc                       <- not low_pc/high_pc
+```
+
+`DW_AT_abstract_origin` points at a separate `DW_TAG_subprogram` DIE that
+describes the function as written, with no addresses. The instance DIE says
+where the call was and where the body landed. One instance uses
+`DW_AT_ranges` rather than a `low_pc`/`high_pc` pair, because that call's body
+is split into two address ranges — a `DW_AT_ranges` consumer must not assume a
+single contiguous range.
+
+## Verified: `.debug_pubnames`
+
+`types_pub`, `readelf --debug-dump=pubnames`:
+
+| Set | `debug_info` offset | size | entries |
+|---|---|---|---|
+| 1 | 0x0 | 527 | `0x10d g_nest`, `0x122 g_count`, `0x147 g_table`, `0x15c make_point`, `0x1a5 walk`, `0x1d3 sum_table` |
+| 2 | 0x20f | 209 | `0x5a walk`, `0x75 sum_table`, `0x8a make_point`, `0xa4 main` |
+
+Version 2, one set per unit, each `(Length, Version, Offset into .debug_info,
+Size of area)` then a NUL-terminated `(DIE offset, name)` list terminated by a
+zero offset. The two sets are in different orders, and the first includes
+`static` variables, so pubnames is not simply "the externals in link order".
+
+## Still unverified — do NOT teach
+
+- [ ] **`.debug_loclists` entry encoding.** Present in `types_O2` (96 bytes)
+      and `readelf --debug-dump=loc` prints "location view pair" rows whose
+      begin and end are both 0 at offsets where the bytes are `0x00`.
+      `llvm-dwarfdump` was not available to break the tie. Rather than pick
+      whichever reading suits the lesson, the entry encoding is **not taught**.
+      Location *expressions* (`DW_FORM_exprloc`) are fully cross-checked and
+      are taught instead.
+- [ ] `.debug_rnglists` / `DW_AT_ranges` contents — the attribute is verified
+      to exist, the list it points at is not decoded.
+- [ ] `address_size` 4 — no `-m32` on this machine.
+- [ ] Non-x86-64 producers, macOS/Windows clang DWARF.
+- [ ] `DW_LNE_define_file` — not emitted by this gcc.
+- [ ] `DW_FORM_GNU_str_index` and other pre-DWARF-5 string forms.
+
+## Method
+
+1. Write the source, compile at each interesting flag combination.
+2. Locate sections with `dwarf_sections.py`, not readelf.
+3. Decode with `dwarf_decode.py`, written from the specification.
+4. Require field-by-field agreement with `readelf` **and** `llvm-dwarfdump`.
+5. Where they disagreed, decode the bytes by hand, find the reading that is
+   self-consistent, and record it as a finding rather than quietly choosing one.
+6. Run `crosscheck.py`; a claim did not enter the course until it passed.
+
+Step 4 is where the value is. Four of the findings above (the aranges padding,
+the relative CIE pointer, the missing FDE header, the `sdata4` width) were
+found *because* an independent decoder disagreed with readelf, and each one
+produces confident, plausible, wrong output rather than an error.

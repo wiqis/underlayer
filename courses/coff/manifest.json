@@ -1,0 +1,148 @@
+{
+  "id": "coff",
+  "title": "COFF \u2014 Common Object File Format",
+  "version": 1,
+  "description": "The container a compiler hands the linker: a 20-byte header that says this is an object and not an image, 40-byte section headers where every address is zero, and the symbol and relocation tables that let the linker place code whose final address nobody knows yet. Every byte verified against real objects produced by clang for three targets (x64 MSVC, x64 GNU, i386 MSVC) and cross-checked by two independently written parsers.",
+  "author": "Underlayer",
+  "license": "CC BY-SA 4.0",
+  "language": "en",
+  "difficulty": "intermediate",
+  "importance": "core",
+  "completion_criteria": "Decode a COFF object file end to end, resolve every name through the string table, and explain what a relocation asks the linker to do.",
+  "min_score": 70,
+  "dependencies": [
+    "pe"
+  ],
+  "modules": [
+    {
+      "id": "relocatable-object",
+      "title": "The Relocatable Object",
+      "concepts": [
+        "coff-intro",
+        "coff-file-header",
+        "coff-section-table",
+        "coff-characteristics"
+      ]
+    },
+    {
+      "id": "symbols-and-relocations",
+      "title": "Symbols and Relocations",
+      "concepts": [
+        "coff-string-table",
+        "coff-symbol-table",
+        "coff-relocations",
+        "coff-comdat"
+      ]
+    },
+    {
+      "id": "containers-and-variants",
+      "title": "Containers and Variants",
+      "concepts": [
+        "coff-bigobj",
+        "coff-archives",
+        "coff-line-numbers"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "coff-intro",
+      "title": "Why COFF Exists",
+      "module_id": "relocatable-object",
+      "description": "The link step, what relocatable means, and why a COFF object cannot be executed.",
+      "estimated_minutes": 14,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "coff-file-header",
+      "title": "The File Header",
+      "module_id": "relocatable-object",
+      "description": "All seven fields of IMAGE_FILE_HEADER, and how Machine tells you the pointer width.",
+      "estimated_minutes": 16,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "coff-section-table",
+      "title": "The Section Header",
+      "module_id": "relocatable-object",
+      "description": "Ten fields in forty bytes, and the section that reserves four bytes it does not contain.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "coff-characteristics",
+      "title": "Section Characteristics",
+      "module_id": "relocatable-object",
+      "description": "The flags the linker obeys, and why alignment is a four-bit field that seven bitmask tests get wrong at once.",
+      "estimated_minutes": 17,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "coff-string-table",
+      "title": "The String Table",
+      "module_id": "symbols-and-relocations",
+      "description": "The pool every long name resolves through, and the three different encodings that can point into it.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "coff-symbol-table",
+      "title": "The Symbol Table",
+      "module_id": "symbols-and-relocations",
+      "description": "The 18-byte symbol, storage classes, and an aux record whose field order is not the documented one.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "coff-relocations",
+      "title": "Relocations",
+      "module_id": "symbols-and-relocations",
+      "description": "Ten bytes per unanswered question, the AMD64 type table, and the packed layout the compiler does not emit.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "coff-comdat",
+      "title": "COMDAT and Duplicate Sections",
+      "module_id": "symbols-and-relocations",
+      "description": "How a linker is told which of two identical sections to keep, why the checksum can differ, and how the dialects differ.",
+      "estimated_minutes": 19,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "coff-bigobj",
+      "title": "bigobj",
+      "module_id": "containers-and-variants",
+      "description": "The over-65,535 variant whose header relocates its fields rather than widening them, and the 0x0000FFFF signature it shares with short-import libraries.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "coff-archives",
+      "title": "The .lib Archive",
+      "module_id": "containers-and-variants",
+      "description": "The ar container a .lib is: the 8-byte magic, the 60-byte member header with its decimal size field, and the two symbol indexes that use different byte orders.",
+      "estimated_minutes": 19,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "coff-line-numbers",
+      "title": "Line Numbers",
+      "module_id": "containers-and-variants",
+      "description": "The two section-header fields that are always zero, the 6-byte record layout verified by construction, and why the values mean nothing before the link.",
+      "estimated_minutes": 16,
+      "difficulty": "intermediate",
+      "importance": "supporting"
+    }
+  ]
+}

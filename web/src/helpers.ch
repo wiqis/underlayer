@@ -277,6 +277,13 @@ public namespace underlayer_web {
         var stdopcodes_id = std::string("dwarf-standard-opcodes")
         var specopcodes_id = std::string("dwarf-special-opcodes")
         var addrtoline_id = std::string("dwarf-address-to-line")
+        var dies_id = std::string("dwarf-dies")
+        var types_id = std::string("dwarf-types")
+        var scopes_id = std::string("dwarf-scopes")
+        var locations_id = std::string("dwarf-locations")
+        var frames_id = std::string("dwarf-frames")
+        var split_id = std::string("dwarf-split")
+        var lookup_id = std::string("dwarf-lookup")
 
         if(cid.equals(&intro_id)) { return underlayer_content::render_dwarf_intro() }
         if(cid.equals(&sections_id)) { return underlayer_content::render_dwarf_sections() }
@@ -286,6 +293,44 @@ public namespace underlayer_web {
         if(cid.equals(&stdopcodes_id)) { return underlayer_content::render_dwarf_standard_opcodes() }
         if(cid.equals(&specopcodes_id)) { return underlayer_content::render_dwarf_special_opcodes() }
         if(cid.equals(&addrtoline_id)) { return underlayer_content::render_dwarf_address_to_line() }
+        if(cid.equals(&dies_id)) { return underlayer_content::render_dwarf_dies() }
+        if(cid.equals(&types_id)) { return underlayer_content::render_dwarf_types() }
+        if(cid.equals(&scopes_id)) { return underlayer_content::render_dwarf_scopes() }
+        if(cid.equals(&locations_id)) { return underlayer_content::render_dwarf_locations() }
+        if(cid.equals(&frames_id)) { return underlayer_content::render_dwarf_frames() }
+        if(cid.equals(&split_id)) { return underlayer_content::render_dwarf_split() }
+        if(cid.equals(&lookup_id)) { return underlayer_content::render_dwarf_lookup() }
+        return string()
+    }
+
+    // COFF course concept ids. Prefixed with `coff-` to stay unique across
+    // courses (same convention as the HAT `hat-`, PE `pe-`, Mach-O `macho-`
+    // and DWARF `dwarf-` prefixes).
+    public func render_coff_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var intro_id = std::string("coff-intro")
+        var fileheader_id = std::string("coff-file-header")
+        var sectiontable_id = std::string("coff-section-table")
+        var characteristics_id = std::string("coff-characteristics")
+        var strtable_id = std::string("coff-string-table")
+        var symtable_id = std::string("coff-symbol-table")
+        var relocs_id = std::string("coff-relocations")
+        var comdat_id = std::string("coff-comdat")
+        var bigobj_id = std::string("coff-bigobj")
+        var archives_id = std::string("coff-archives")
+        var linenumbers_id = std::string("coff-line-numbers")
+
+        if(cid.equals(&intro_id)) { return underlayer_content::render_coff_intro() }
+        if(cid.equals(&fileheader_id)) { return underlayer_content::render_coff_file_header() }
+        if(cid.equals(&sectiontable_id)) { return underlayer_content::render_coff_section_table() }
+        if(cid.equals(&characteristics_id)) { return underlayer_content::render_coff_characteristics() }
+        if(cid.equals(&strtable_id)) { return underlayer_content::render_coff_string_table() }
+        if(cid.equals(&symtable_id)) { return underlayer_content::render_coff_symbol_table() }
+        if(cid.equals(&relocs_id)) { return underlayer_content::render_coff_relocations() }
+        if(cid.equals(&comdat_id)) { return underlayer_content::render_coff_comdat() }
+        if(cid.equals(&bigobj_id)) { return underlayer_content::render_coff_bigobj() }
+        if(cid.equals(&archives_id)) { return underlayer_content::render_coff_archives() }
+        if(cid.equals(&linenumbers_id)) { return underlayer_content::render_coff_line_numbers() }
         return string()
     }
 
@@ -361,6 +406,9 @@ public namespace underlayer_web {
         // DWARF concepts next; same fall-through contract.
         var dwarf_html = render_dwarf_concept(concept_id)
         if(dwarf_html.size() > 0) { return dwarf_html }
+        // COFF concepts next; same fall-through contract.
+        var coff_html = render_coff_concept(concept_id)
+        if(coff_html.size() > 0) { return coff_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

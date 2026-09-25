@@ -1,6 +1,6 @@
 {
   "id": "dwarf",
-  "title": "DWARF — The Debugging Data Format",
+  "title": "DWARF \u2014 The Debugging Data Format",
   "version": 1,
   "description": "The file format that turns an address back into a source line. DWARF is how a debugger knows that 0x1154 is line 15, and it is the companion to the ELF, PE and Mach-O courses: those explain how a binary is loaded and run, this one explains how it is read. Built entirely from a single 18-line C file compiled with gcc -gdwarf-5 -O0, with every offset decoded by an independent parser and checked against readelf.",
   "author": "Underlayer",
@@ -10,17 +10,42 @@
   "importance": "core",
   "completion_criteria": "Decode a .debug_line header and reproduce every row of a real line-number program, and explain how a debugger maps an address to a file and line.",
   "min_score": 70,
-  "dependencies": ["elf"],
+  "dependencies": [
+    "elf"
+  ],
   "modules": [
     {
       "id": "why-debug-info-exists",
       "title": "Why Debug Info Exists",
-      "concepts": ["dwarf-intro", "dwarf-sections", "dwarf-versions"]
+      "concepts": [
+        "dwarf-intro",
+        "dwarf-sections",
+        "dwarf-versions"
+      ]
     },
     {
       "id": "line-number-program",
       "title": "The Line Number Program",
-      "concepts": ["dwarf-line-header", "dwarf-file-tables", "dwarf-standard-opcodes", "dwarf-special-opcodes", "dwarf-address-to-line"]
+      "concepts": [
+        "dwarf-line-header",
+        "dwarf-file-tables",
+        "dwarf-standard-opcodes",
+        "dwarf-special-opcodes",
+        "dwarf-address-to-line"
+      ]
+    },
+    {
+      "id": "dies-types-scopes-locations",
+      "title": "DIEs, Types, Scopes, Locations and Frames",
+      "concepts": [
+        "dwarf-dies",
+        "dwarf-types",
+        "dwarf-scopes",
+        "dwarf-locations",
+        "dwarf-frames",
+        "dwarf-split",
+        "dwarf-lookup"
+      ]
     }
   ],
   "concepts": [
@@ -95,6 +120,69 @@
       "estimated_minutes": 18,
       "difficulty": "intermediate",
       "importance": "core"
+    },
+    {
+      "id": "dwarf-dies",
+      "title": "The DIE Tree",
+      "module_id": "dies-types-scopes-locations",
+      "description": "The tree at the heart of .debug_info: abbreviations, has-children, one unit per compilation, and the multi-table trap that fails silently.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "dwarf-types",
+      "title": "Types and Type Chains",
+      "module_id": "dies-types-scopes-locations",
+      "description": "Following DW_AT_type through base types, typedefs, pointers, structs and arrays -- and the inclusive DW_AT_upper_bound that makes eight elements print as seven.",
+      "estimated_minutes": 22,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "dwarf-scopes",
+      "title": "Scopes and Inlining",
+      "module_id": "dies-types-scopes-locations",
+      "description": "Nesting is scope: subprogram, formal_parameter, variable, lexical_block, and how DW_AT_abstract_origin lets one inlined function be described once and instantiated many times.",
+      "estimated_minutes": 21,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "dwarf-locations",
+      "title": "Location Expressions",
+      "module_id": "dies-types-scopes-locations",
+      "description": "The tiny stack machine behind every value a debugger prints for a local: fbreg, breg, the signed LEB128 operand, and the two different opcodes for the same idea.",
+      "estimated_minutes": 21,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "dwarf-frames",
+      "title": "Call Frame Information",
+      "module_id": "dies-types-scopes-locations",
+      "description": "The CFA, CIE and FDE, why a push is a one-byte rule change, and the three encoding traps that make .eh_frame silently undecodable.",
+      "estimated_minutes": 22,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "dwarf-split",
+      "title": "Split DWARF",
+      "module_id": "dies-types-scopes-locations",
+      "description": "Skeleton units, the 8-byte dwo_id, and the str_offsets_base that lives in the executable and not the .dwo.",
+      "estimated_minutes": 19,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "dwarf-lookup",
+      "title": "Finding Things Without Reading Everything",
+      "module_id": "dies-types-scopes-locations",
+      "description": "The aranges and pubnames indexes: what each answers, why the aranges tuple table starts at 16 and not 12, and why an index is never the authority.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "supporting"
     }
   ]
 }

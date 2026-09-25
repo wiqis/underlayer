@@ -135,16 +135,40 @@ check_file() {
         fi
     done < <(grep -oE '"/?courses/elf/assets/[^"]+' "$file" 2>/dev/null || true)
 
-    # R5: lesson links must match known concept IDs (FAIL)
+    # R5: lesson links must resolve, in ANY course, against that course's own
+    # manifest.
+    #
+    # This used to scan only /courses/elf/lessons/, which meant every
+    # cross-course link was unvalidated -- and a link to
+    # /courses/pe/lessons/pe-import-directory (a concept that does not exist)
+    # passed the linter while 404ing at runtime.
+    #
+    # Resolving against the manifest rather than against the set of render
+    # functions is what makes it work for all six courses, and it still allows
+    # a deliberate cross-course link, because a real concept of another course
+    # is a real concept of the course it is linked from.
     while IFS= read -r m; do
         [ -z "$m" ] && continue
-        local cid
-        cid="$(echo "$m" | sed 's|.*/lessons/||; s|".*||')"
-        if ! echo "$KNOWN_IDS" | grep -qx "$cid"; then
-            echo "  FAIL R5 [$label] lesson link to unknown concept: $cid"
-            f=$((f+1))
+        local lcourse lcid
+        lcourse="$(echo "$m" | sed 's|.*/courses/||; s|/lessons/.*||')"
+        lcid="$(echo "$m" | sed 's|.*/lessons/||; s|".*||')"
+        local manifest="courses/$lcourse/manifest.json"
+        if [ ! -f "$manifest" ]; then
+            echo "  FAIL R5 [$label] link to unknown course: $lcourse"
+            f=$((f + 1))
+        elif ! LCOURSE="$lcourse" LCID="$lcid" MANIFEST="$manifest" python3 -c '
+import json, os, sys
+try:
+    m = json.load(open(os.environ["MANIFEST"]))
+except Exception:
+    sys.exit(2)
+sys.exit(0 if os.environ["LCID"] in
+         {c["id"] for c in m.get("concepts", [])} else 1)
+' 2>/dev/null; then
+            echo "  FAIL R5 [$label] link to unknown concept: $lcourse/$lcid"
+            f=$((f + 1))
         fi
-    done < <(grep -oE '"/courses/elf/lessons/[^"]+' "$file" 2>/dev/null || true)
+    done < <(grep -oE '"/courses/[a-z0-9_-]+/lessons/[^"]+' "$file" 2>/dev/null || true)
 
     # R6: accessibility (warn)
     if grep -qE '<img(?![^>]*alt=)' "$file" 2>/dev/null; then

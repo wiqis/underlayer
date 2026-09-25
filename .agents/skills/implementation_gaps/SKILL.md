@@ -935,22 +935,53 @@ also works for single text nodes.
 
 ### `#html` Macro Quirks
 
+Each construct below was isolated in a throwaway file under `content/src/` and
+compiled on its own to establish whether it is actually a problem
+(2026-09-25, while writing the DWARF and COFF courses). **Proven to break:**
+
 - **`{` and `}` are the interpolation sigil.** A literal brace inside `#html`
   aborts the parse — including a bare `}` on its own line, and one inline in
   `<code>}</code>`. **Fix:** use the `&#123;` / `&#125;` entities, which is the
   established convention in `macho_*.ch` and `hat_*.ch`.
-- **`@` is the macro/annotation sigil.** `row @ 0x1129` in prose aborts the
-  parse. **Fix:** write `row at 0x1129`. (`@media` inside `#css` is fine, and
-  `@{...}` is the intended interpolation form.)
-- **An HTML entity sandwiched between two hex values aborts the parse.**
+- **A raw `"` inside an HTML attribute value aborts the parse.** The attribute
+  ends at the first inner quote and the parser reads the rest as markup.
+  **Fix:** write `&quot;`. This bites `data-explain` most often, because
+  quoting a literal inside feedback text is natural.
+- **An HTML entity sandwiched between two digits aborts the parse.**
   `0x1f&ndash;0x20` fails where `0x1f-0x20` and `0x1f &ndash; 0x20` both
   compile. **Fix:** use a plain hyphen in offset ranges.
-- `%`, `[`, `]`, `<` and `>` are fine in `#html` text and attributes. `%` is
-  only a problem inside `#js`.
+- **A missing `>` on a closing tag aborts the parse**, and reports
+  "tag names must start with letters" at an unrelated column far to the right,
+  because the parser consumes everything up to the next `>` hunting for a tag
+  name. **Fix:** when the reported column looks innocent, scan the line for the
+  *first* unterminated tag rather than the character at the reported column.
 
-**When a lesson fails to parse, suspect this list before rewriting the content.**
-All three of these were hit while writing the DWARF course and each one costs a
-rebuild cycle to diagnose.
+**Proven NOT to be problems.** Several plausible-looking suspects turned out to
+compile cleanly, and two of them had already been "fixed" in real content before
+being tested. Do not spend a build cycle on them again:
+
+| Construct | Verdict |
+|---|---|
+| `@` anywhere in `#html` text, including bare in a `<td>` and inside `<code>` (e.g. a full MSVC-mangled `??_C@_03PLHFFLIH@ptr?$AA@`) | fine |
+| `C++` in `#html` text | fine |
+| a lone `/` as element text, e.g. `<code>/</code>` | fine |
+| `&#123;` `&#125;` `&#64;` `&#43;` numeric entities | all fine |
+
+`@` is only special as the interpolation sigil `@{ ... }`; `@media` inside
+`#css` is also fine.
+
+**The lesson that cost the most time:** an error column is a position where the
+parser *noticed* a problem, not where the problem *is*. Two of the constructs
+above were misdiagnosed by trusting the column, and both were only settled by
+compiling a four-function file that contained nothing but the suspects. When a
+`#html` error appears to blame ordinary prose, isolate it before rewriting the
+lesson.
+
+To isolate quickly, drop a temporary file into `content/src/` with one
+`#html { ... }` function per suspect. Note it must declare
+`public namespace ... { using std::string ... }` and must **not** repeat the
+`import` lines — the parent `chemical.mod` already supplies `page`, `html_cbi`,
+`css_cbi` and `js_cbi` to the content module.
 
 ### Interpreter Limitations
 
@@ -1085,3 +1116,52 @@ No document specifies how to verify the entire system works end-to-end.
 The 8-step pipeline says "No steps may be skipped" but doesn't specify failure handling.
 
 **Action needed**: Add error recovery to `ai-course-writing-constraints.md`.
+
+## No COFF linker on this machine
+
+There is no way to link COFF objects here, and every COFF claim in the course
+was therefore verified against a file that exists on disk rather than against a
+link that happened. Confirmed absent: `lld-link`, `ld.lld`, `lld`, `mold`,
+`ld.mold`, `x86_64-w64-mingw32-gcc`, `i686-w64-mingw32-gcc`. `clang -fuse-ld=lld`
+cannot substitute, because the `lld` binary is what is missing.
+
+Present and used instead: `clang` for producing objects (MSVC, GNU and i386
+targets), the full LLVM toolchain beside it for `llvm-readobj` / `llvm-objdump` /
+`llvm-ar` / `llvm-dwarfdump` / `llvm-lib`, and `file(1)`.
+
+Consequence: linker map files, incremental linking, LTCG and import libraries
+are **blocked, not unwritten**. Do not write them speculatively, and do not
+describe what a linker does from memory. Revisit on a machine with `lld-link`.
+
+## Linter rule R5 used to check only the ELF course
+
+`scripts/lint-concepts.sh` rule R5 scanned `/courses/elf/lessons/` only, so
+every cross-course link in the platform was unvalidated. A link to
+`/courses/pe/lessons/pe-import-directory` — a concept that does not exist —
+passed the linter and 404ed at runtime; it was caught only by an ad-hoc curl
+sweep.
+
+R5 now matches `/courses/<course>/lessons/<id>` for any course and resolves
+the id against that course's own `manifest.json`. That covers all six courses,
+and a deliberate cross-course link still passes because a real concept of
+another course really is in that course's manifest.
+
+**If you add a rule to this linter, check which course prefix it matches.** A
+rule that is correct for one course and silently narrow about the other five is
+worse than no rule, because it reports PASS.
+
+## Two more `#html` parse-failure modes, and two more false leads
+
+Both found while writing the DWARF Module 3 concepts:
+
+- **A `&lt;` immediately followed by a digit is read as a tag name.** Writing
+  `first DIE at <0><14>` inside a `<pre>` fails with "expected text or
+  element". **Fix:** `&lt;0&gt;&lt;14&gt;`, as the other hex-dump blocks in these
+  files already do. A scan for `<\d` inside `#html` catches all of them at once.
+- **Literal `{` and `}` still break `<pre><code>`** — the brace trap applies
+  inside a preformatted block too, not just in prose. C and C++ samples need
+  `&#123;` / `&#125;`.
+
+Still proven fine, so do not "fix" them: `C++` in `#html` text, a lone `/` as
+element text, and `@` anywhere including inside a `<code>` element (a full
+MSVC-mangled `??_C@_03PLHFFLIH@ptr?$AA@` name compiles unchanged).

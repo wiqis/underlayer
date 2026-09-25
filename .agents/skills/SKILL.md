@@ -112,9 +112,9 @@ Comprehensive documentation for the Underlayer project (root `chemical.mod`, mod
 
 ## Project Stats
 
-- **Status:** Working platform — server builds, runs, and serves all five courses; 392/1932 checklist items done (all P0; 21 P1 — 5 of them still open); linter PASS
+- **Status:** Working platform — server builds, runs, and serves all six courses; 421/1952 checklist items done (all P0; 12 P1 still open); linter PASS
 - **Language:** Chemical
-- **Courses:** ELF (24), HAT (69), DWARF (8), PE (24), Mach-O (24) — home grid lists all five from `GET /api/courses`
+- **Courses:** ELF (24), HAT (69), DWARF (15), COFF (11), PE (24), Mach-O (24) — home grid lists all six from `GET /api/courses`. DWARF and COFF are each 3 modules, complete as far as this machine's tooling allows
 - **Target platforms:** Web + Android (offline)
 - **Database:** Dual-backend SQLite (local) + Turso HTTP (remote); ~35 tables
 - **Course format:** Chemical source files with #html/#css/#js macros → pre-rendered HTML/CSS/JS
@@ -122,13 +122,29 @@ Comprehensive documentation for the Underlayer project (root `chemical.mod`, mod
 - **Total documents:** 29 docs + 20 skills + 1 AGENTS.md + 1 README
 - **AI course development:** 4 core skills (course_generation, course_writing, review_quality, technical_research) + 5 supporting docs
 
+### Verification harnesses that ship with the courses
+
+Every number in these two courses can be re-checked from inside the repo:
+
+| Course | How to re-verify it |
+|--------|---------------------|
+| DWARF | `gcc -gdwarf-{2,3,4,5} -O0`, slice the debug sections, decode with an independent parser, require agreement with `readelf` |
+| COFF | `clang --target={x86_64-pc-windows-msvc,x86_64-w64-windows-gnu,i686-pc-windows-msvc} -c`, then `python3 courses/coff/assets/samples/crosscheck.py` — compares two independently written parsers field by field and prints `TWO INDEPENDENT PARSERS AGREE ON EVERY FIELD` |
+
 ### Known open gaps (do not mistake these for done work)
 
 | Gap | Scale | Where it is tracked |
 |-----|-------|---------------------|
 | ELF per-option quiz feedback | 126 of 144 options still show the bare 'Correct!' / 'Not quite.' verdict | checklist 2.2.37 |
 | PE pacing is flat | every PE page declares 15 min, so all 24 concepts price identically in study plans | `docs/courses-todo.md` |
-| DWARF Module 3 | types/variables/`DW_AT_high_pc` forms/`op_index` on VLIW targets — specified in `courses/dwarf/research.md`, unwritten | checklist 2.1.26 |
+| DWARF `.debug_loclists` | deliberately NOT taught: the two readers disagree on the entry encoding and no third was available. Location *expressions* are taught and fully cross-checked | `courses/dwarf/research.md` |
+| DWARF `.debug_rnglists`, 32-bit | needs `-m32` or a case this compiler does not emit — blocked on tooling, not effort | `docs/courses-todo.md` |
+| COFF linker-side topics | map files, incremental linking, LTCG — **no COFF linker exists on this machine** (no `lld-link`, mingw or `mold`). Every claim in both courses was checked against a file on disk; a claim about what a linker *does* would be the first that could not be | `docs/courses-todo.md` |
+| Pre-existing test failures | 2 of 146 fail identically on a pristine checkout (`git stash` verified) — unrelated to course work | investigate 5.1.x |
+
+The 12 open P1 items are mostly auth/UX plumbing (navbar on lesson pages,
+URL-derived course context, the analytics page's unsubstituted route, the
+enroll button). `2.2.37` is content volume, not a bug.
 
 
 ## Keeping Skills Accurate
