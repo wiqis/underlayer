@@ -112,15 +112,24 @@ Comprehensive documentation for the Underlayer project (root `chemical.mod`, mod
 
 ## Project Stats
 
-- **Status:** Working platform — server builds, runs, and serves the ELF course; 385/1919 checklist items done (all P0; 15 P1 remain — next is P1 4.1.29; 17 P2; 1502 P3)
+- **Status:** Working platform — server builds, runs, and serves all five courses; 392/1932 checklist items done (all P0; 21 P1 — 5 of them still open); linter PASS
 - **Language:** Chemical
-- **Courses:** ELF (reference, 24 concepts), HAT, PE, Mach-O — home grid lists all four from `GET /api/courses`
+- **Courses:** ELF (24), HAT (69), DWARF (8), PE (24), Mach-O (24) — home grid lists all five from `GET /api/courses`
 - **Target platforms:** Web + Android (offline)
 - **Database:** Dual-backend SQLite (local) + Turso HTTP (remote); ~35 tables
 - **Course format:** Chemical source files with #html/#css/#js macros → pre-rendered HTML/CSS/JS
 - **Core features implemented:** FSRS v4, 10 review modes, exercise engine, weakness detection, knowledge health, mistake patterns, session management, goals, search, navigation, progress export/import/share, auth (bearer + hashed passwords), profiles, settings, onboarding, enrollments, learning paths, notifications, bookmarks, notes, achievements, streaks, certificates, study plans, course reviews, feedback/moderation, 12+ analytics endpoints
-- **Total documents:** 28 docs + 20 skills + 1 AGENTS.md + 1 README
+- **Total documents:** 29 docs + 20 skills + 1 AGENTS.md + 1 README
 - **AI course development:** 4 core skills (course_generation, course_writing, review_quality, technical_research) + 5 supporting docs
+
+### Known open gaps (do not mistake these for done work)
+
+| Gap | Scale | Where it is tracked |
+|-----|-------|---------------------|
+| ELF per-option quiz feedback | 126 of 144 options still show the bare 'Correct!' / 'Not quite.' verdict | checklist 2.2.37 |
+| PE pacing is flat | every PE page declares 15 min, so all 24 concepts price identically in study plans | `docs/courses-todo.md` |
+| DWARF Module 3 | types/variables/`DW_AT_high_pc` forms/`op_index` on VLIW targets — specified in `courses/dwarf/research.md`, unwritten | checklist 2.1.26 |
+
 
 ## Keeping Skills Accurate
 

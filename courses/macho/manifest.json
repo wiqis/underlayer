@@ -15,7 +15,9 @@
   "alternative_paths": [],
   "bundles": [],
   "assets": [],
-  "dependencies": ["elf"],
+  "dependencies": [
+    "elf"
+  ],
   "review_item_decls": [],
   "exercise_decls": [
     {
@@ -324,76 +326,300 @@
     {
       "id": "fundamentals",
       "title": "Fundamentals",
-      "concepts": ["macho-intro", "macho-file-layout", "macho-magic"],
+      "concepts": [
+        "macho-intro",
+        "macho-file-layout",
+        "macho-magic"
+      ],
       "description": "What Mach-O is, how the file is laid out, and the magic numbers that identify it."
     },
     {
       "id": "headers",
       "title": "Headers",
-      "concepts": ["macho-header", "macho-cputypes", "macho-universal"],
+      "concepts": [
+        "macho-header",
+        "macho-cputypes",
+        "macho-universal"
+      ],
       "description": "The mach_header_64 field by field, CPU types, and universal (FAT) binaries."
     },
     {
       "id": "load-commands",
       "title": "Load Commands",
-      "concepts": ["macho-load-commands", "macho-segments", "macho-sections"],
+      "concepts": [
+        "macho-load-commands",
+        "macho-segments",
+        "macho-sections"
+      ],
       "description": "The load command array, LC_SEGMENT_64, and the section_64 entries inside each segment."
     },
     {
       "id": "symbols",
       "title": "Symbols",
-      "concepts": ["macho-symtab", "macho-dysymtab", "macho-relocations"],
+      "concepts": [
+        "macho-symtab",
+        "macho-dysymtab",
+        "macho-relocations"
+      ],
       "description": "The symbol table, dynamic symbol table, and relocation entries in object files."
     },
     {
       "id": "dynamic-linking",
       "title": "Dynamic Linking",
-      "concepts": ["macho-dylibs", "macho-dyld-info", "macho-export-trie"],
+      "concepts": [
+        "macho-dylibs",
+        "macho-dyld-info",
+        "macho-export-trie"
+      ],
       "description": "Dynamic libraries, rebase/bind opcodes, and the export trie."
     },
     {
       "id": "modern-linking",
       "title": "Modern Linking & Entry",
-      "concepts": ["macho-chained-fixups", "macho-entry", "macho-build-version"],
+      "concepts": [
+        "macho-chained-fixups",
+        "macho-entry",
+        "macho-build-version"
+      ],
       "description": "Chained fixups, the entry point, and build version metadata."
     },
     {
       "id": "integrity-debug",
       "title": "Integrity & Debug",
-      "concepts": ["macho-code-signing", "macho-debug-info", "macho-hardening"],
+      "concepts": [
+        "macho-code-signing",
+        "macho-debug-info",
+        "macho-hardening"
+      ],
       "description": "Code signing, debug info in dSYM bundles, and memory hardening."
     },
     {
       "id": "loading-execution",
       "title": "Loading & Execution",
-      "concepts": ["macho-dyld", "macho-memory-layout", "macho-execution"],
+      "concepts": [
+        "macho-dyld",
+        "macho-memory-layout",
+        "macho-execution"
+      ],
       "description": "How dyld loads a Mach-O, what memory looks like, and the startup sequence."
     }
   ],
   "concepts": [
-    { "id": "macho-intro", "title": "Why Mach-O Exists", "module_id": "fundamentals", "description": "The Mach heritage and the course map." },
-    { "id": "macho-file-layout", "title": "Mach-O File Layout", "module_id": "fundamentals", "description": "Header, load commands, segments, __LINKEDIT, end to end." },
-    { "id": "macho-magic", "title": "Magic Numbers and Byte Order", "module_id": "fundamentals", "description": "MH_MAGIC_64, FAT_MAGIC, and reading little-endian." },
-    { "id": "macho-header", "title": "The mach_header_64 Field by Field", "module_id": "headers", "description": "32 bytes: magic, cputype, filetype, ncmds, sizeofcmds, flags." },
-    { "id": "macho-cputypes", "title": "CPU Types and Subtypes", "module_id": "headers", "description": "CPU_TYPE_X86_64, CPU_TYPE_ARM64, and capability bits." },
-    { "id": "macho-universal", "title": "Universal (FAT) Binaries", "module_id": "headers", "description": "fat_header, fat_arch, and multiple architecture slices." },
-    { "id": "macho-load-commands", "title": "The Load Command Area", "module_id": "load-commands", "description": "cmd/cmdsize, LC_SEGMENT_64, LC_SYMTAB, LC_LOAD_DYLIB, LC_MAIN." },
-    { "id": "macho-segments", "title": "LC_SEGMENT_64", "module_id": "load-commands", "description": "Segments, vmaddr/fileoff, __PAGEZERO, __LINKEDIT." },
-    { "id": "macho-sections", "title": "Sections", "module_id": "load-commands", "description": "section_64: names, addr, size, flags, S_* types." },
-    { "id": "macho-symtab", "title": "The Symbol Table", "module_id": "symbols", "description": "LC_SYMTAB, nlist_64, string table, n_type bits." },
-    { "id": "macho-dysymtab", "title": "The Dynamic Symbol Table", "module_id": "symbols", "description": "LC_DYSYMTAB: local/external/undefined partitions." },
-    { "id": "macho-relocations", "title": "Relocation Entries", "module_id": "symbols", "description": "8-byte relocation_info, X86_64_RELOC types." },
-    { "id": "macho-dylibs", "title": "Dynamic Libraries and Install Names", "module_id": "dynamic-linking", "description": "LC_LOAD_DYLIB, install names, ordinals." },
-    { "id": "macho-dyld-info", "title": "Rebase and Bind Opcodes", "module_id": "dynamic-linking", "description": "LC_DYLD_INFO_ONLY: rebase/bind/lazy-bind/export streams." },
-    { "id": "macho-export-trie", "title": "The Export Trie", "module_id": "dynamic-linking", "description": "Byte-encoded prefix tree for exported symbols." },
-    { "id": "macho-chained-fixups", "title": "Chained Fixups", "module_id": "modern-linking", "description": "dyld_chained_fixups_header and pointer chains." },
-    { "id": "macho-entry", "title": "The Dynamic Linker and Entry Point", "module_id": "modern-linking", "description": "LC_LOAD_DYLINKER, LC_MAIN, entryoff." },
-    { "id": "macho-build-version", "title": "Build Versions and UUID", "module_id": "modern-linking", "description": "LC_BUILD_VERSION, LC_UUID, LC_VERSION_MIN_MACOSX." },
-    { "id": "macho-code-signing", "title": "Code Signing", "module_id": "integrity-debug", "description": "LC_CODE_SIGNATURE, superblob, code directory." },
-    { "id": "macho-debug-info", "title": "Debug Info", "module_id": "integrity-debug", "description": "dSYM bundles, dsymutil, DWARF matching." },
-    { "id": "macho-hardening", "title": "__PAGEZERO and Memory Hardening", "module_id": "integrity-debug", "description": "NULL-page protection, ASLR, PIE." },
-    { "id": "macho-dyld", "title": "How dyld Loads a Mach-O", "module_id": "loading-execution", "description": "Map, fix up, load deps, initializers." },
-    { "id": "macho-memory-layout", "title": "Process Memory Layout", "module_id": "loading-execution", "description": "__PAGEZERO, __TEXT at 0x100000000, heap, stack." },
-    { "id": "macho-execution", "title": "The Startup Sequence", "module_id": "loading-execution", "description": "entryoff to CRT to main()." }
+    {
+      "id": "macho-intro",
+      "title": "Why Mach-O Exists",
+      "module_id": "fundamentals",
+      "description": "The Mach heritage and the course map.",
+      "estimated_minutes": 15,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "macho-file-layout",
+      "title": "Mach-O File Layout",
+      "module_id": "fundamentals",
+      "description": "Header, load commands, segments, __LINKEDIT, end to end.",
+      "estimated_minutes": 15,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "macho-magic",
+      "title": "Magic Numbers and Byte Order",
+      "module_id": "fundamentals",
+      "description": "MH_MAGIC_64, FAT_MAGIC, and reading little-endian.",
+      "estimated_minutes": 15,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "macho-header",
+      "title": "The mach_header_64 Field by Field",
+      "module_id": "headers",
+      "description": "32 bytes: magic, cputype, filetype, ncmds, sizeofcmds, flags.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "macho-cputypes",
+      "title": "CPU Types and Subtypes",
+      "module_id": "headers",
+      "description": "CPU_TYPE_X86_64, CPU_TYPE_ARM64, and capability bits.",
+      "estimated_minutes": 12,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "macho-universal",
+      "title": "Universal (FAT) Binaries",
+      "module_id": "headers",
+      "description": "fat_header, fat_arch, and multiple architecture slices.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "macho-load-commands",
+      "title": "The Load Command Area",
+      "module_id": "load-commands",
+      "description": "cmd/cmdsize, LC_SEGMENT_64, LC_SYMTAB, LC_LOAD_DYLIB, LC_MAIN.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "macho-segments",
+      "title": "LC_SEGMENT_64",
+      "module_id": "load-commands",
+      "description": "Segments, vmaddr/fileoff, __PAGEZERO, __LINKEDIT.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "macho-sections",
+      "title": "Sections",
+      "module_id": "load-commands",
+      "description": "section_64: names, addr, size, flags, S_* types.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "macho-symtab",
+      "title": "The Symbol Table",
+      "module_id": "symbols",
+      "description": "LC_SYMTAB, nlist_64, string table, n_type bits.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "macho-dysymtab",
+      "title": "The Dynamic Symbol Table",
+      "module_id": "symbols",
+      "description": "LC_DYSYMTAB: local/external/undefined partitions.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "macho-relocations",
+      "title": "Relocation Entries",
+      "module_id": "symbols",
+      "description": "8-byte relocation_info, X86_64_RELOC types.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "macho-dylibs",
+      "title": "Dynamic Libraries and Install Names",
+      "module_id": "dynamic-linking",
+      "description": "LC_LOAD_DYLIB, install names, ordinals.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "macho-dyld-info",
+      "title": "Rebase and Bind Opcodes",
+      "module_id": "dynamic-linking",
+      "description": "LC_DYLD_INFO_ONLY: rebase/bind/lazy-bind/export streams.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "macho-export-trie",
+      "title": "The Export Trie",
+      "module_id": "dynamic-linking",
+      "description": "Byte-encoded prefix tree for exported symbols.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "macho-chained-fixups",
+      "title": "Chained Fixups",
+      "module_id": "modern-linking",
+      "description": "dyld_chained_fixups_header and pointer chains.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "macho-entry",
+      "title": "The Dynamic Linker and Entry Point",
+      "module_id": "modern-linking",
+      "description": "LC_LOAD_DYLINKER, LC_MAIN, entryoff.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "macho-build-version",
+      "title": "Build Versions and UUID",
+      "module_id": "modern-linking",
+      "description": "LC_BUILD_VERSION, LC_UUID, LC_VERSION_MIN_MACOSX.",
+      "estimated_minutes": 12,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "macho-code-signing",
+      "title": "Code Signing",
+      "module_id": "integrity-debug",
+      "description": "LC_CODE_SIGNATURE, superblob, code directory.",
+      "estimated_minutes": 18,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "macho-debug-info",
+      "title": "Debug Info",
+      "module_id": "integrity-debug",
+      "description": "dSYM bundles, dsymutil, DWARF matching.",
+      "estimated_minutes": 15,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "macho-hardening",
+      "title": "__PAGEZERO and Memory Hardening",
+      "module_id": "integrity-debug",
+      "description": "NULL-page protection, ASLR, PIE.",
+      "estimated_minutes": 15,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "macho-dyld",
+      "title": "How dyld Loads a Mach-O",
+      "module_id": "loading-execution",
+      "description": "Map, fix up, load deps, initializers.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "macho-memory-layout",
+      "title": "Process Memory Layout",
+      "module_id": "loading-execution",
+      "description": "__PAGEZERO, __TEXT at 0x100000000, heap, stack.",
+      "estimated_minutes": 18,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "macho-execution",
+      "title": "The Startup Sequence",
+      "module_id": "loading-execution",
+      "description": "entryoff to CRT to main().",
+      "estimated_minutes": 15,
+      "difficulty": "advanced",
+      "importance": "core"
+    }
   ]
 }

@@ -323,11 +323,13 @@ public func render_segment_types() : string {
             for(var i = 0; i < options.length; i++) { options[i].disabled = true; }
             if(correct) {
                 btn.classList.add('correct');
-                feedback.textContent = 'Correct!';
+                var el = btn.getAttribute('data-explain');
+                feedback.textContent = el ? 'Correct. ' + el : 'Correct!';
                 feedback.style.color = 'rgb(5,150,105)';
             } else {
                 btn.classList.add('wrong');
-                feedback.textContent = 'Not quite.';
+                var el2 = btn.getAttribute('data-explain');
+                feedback.textContent = el2 ? 'Not quite. ' + el2 : 'Not quite. Try again next time.';
                 feedback.style.color = 'rgb(220,38,38)';
             }
         }

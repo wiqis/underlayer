@@ -1,0 +1,100 @@
+{
+  "id": "dwarf",
+  "title": "DWARF — The Debugging Data Format",
+  "version": 1,
+  "description": "The file format that turns an address back into a source line. DWARF is how a debugger knows that 0x1154 is line 15, and it is the companion to the ELF, PE and Mach-O courses: those explain how a binary is loaded and run, this one explains how it is read. Built entirely from a single 18-line C file compiled with gcc -gdwarf-5 -O0, with every offset decoded by an independent parser and checked against readelf.",
+  "author": "Underlayer",
+  "license": "CC BY-SA 4.0",
+  "language": "en",
+  "difficulty": "intermediate",
+  "importance": "core",
+  "completion_criteria": "Decode a .debug_line header and reproduce every row of a real line-number program, and explain how a debugger maps an address to a file and line.",
+  "min_score": 70,
+  "dependencies": ["elf"],
+  "modules": [
+    {
+      "id": "why-debug-info-exists",
+      "title": "Why Debug Info Exists",
+      "concepts": ["dwarf-intro", "dwarf-sections", "dwarf-versions"]
+    },
+    {
+      "id": "line-number-program",
+      "title": "The Line Number Program",
+      "concepts": ["dwarf-line-header", "dwarf-file-tables", "dwarf-standard-opcodes", "dwarf-special-opcodes", "dwarf-address-to-line"]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "dwarf-intro",
+      "title": "Why DWARF Exists",
+      "module_id": "why-debug-info-exists",
+      "description": "The address-to-source problem, and what objdump gains from 115 bytes of .debug_line.",
+      "estimated_minutes": 14,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "dwarf-sections",
+      "title": "The .debug_* Sections",
+      "module_id": "why-debug-info-exists",
+      "description": "Six sections, who reads each, the SHF_MERGE flag, and what strip actually removes.",
+      "estimated_minutes": 16,
+      "difficulty": "beginner",
+      "importance": "supporting"
+    },
+    {
+      "id": "dwarf-versions",
+      "title": "DWARF 2, 3, 4 and 5",
+      "module_id": "why-debug-info-exists",
+      "description": "What each version changed, and the two header layouts that silently break a reader.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "dwarf-line-header",
+      "title": "The .debug_line Header",
+      "module_id": "line-number-program",
+      "description": "All twelve fixed fields of the v5 header, decoded from the real bytes of shape_v5.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "dwarf-file-tables",
+      "title": "Directory and File Tables",
+      "module_id": "line-number-program",
+      "description": "How a line number becomes a filename, in the two incompatible v2-4 and v5 encodings.",
+      "estimated_minutes": 17,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "dwarf-standard-opcodes",
+      "title": "The Standard Opcodes",
+      "module_id": "line-number-program",
+      "description": "The twelve standard opcodes, the six registers they mutate, and the extended escape.",
+      "estimated_minutes": 16,
+      "difficulty": "intermediate",
+      "importance": "supporting"
+    },
+    {
+      "id": "dwarf-special-opcodes",
+      "title": "The Special Opcodes",
+      "module_id": "line-number-program",
+      "description": "The mixed-radix arithmetic that packs an address delta and a line delta into one byte, with every row of a real program worked out.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "dwarf-address-to-line",
+      "title": "From Rows to Source Lines",
+      "module_id": "line-number-program",
+      "description": "Sequences, the two-rule address lookup, and the DW_AT_high_pc address-versus-length trap.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
+    }
+  ]
+}

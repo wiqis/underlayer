@@ -253,6 +253,9 @@
 - [x] P1 2.1.23 Course JSON API includes module descriptions (feeds landing module list)
 - [x] P1 2.1.24 html_escape core helper: server-side escaping for course strings interpolated into #html blocks (html_cbi interpolation is raw)
 - [x] P1 2.1.25 Home page Available Courses grid loads every on-disk course client-side from GET /api/courses (was hardcoded to ELF + HAT; #html cannot loop; loading/error/noscript states; HTML-escaped titles/descriptions)
+- [x] P1 2.1.26 DWARF course: fifth course shipped (manifest.json, chemical.mod, src/main.ch, 2 modules, 8 concepts) — listed automatically by /api/courses; served via render_dwarf_concept() with the same empty-string fall-through contract as HAT/PE/Mach-O
+- [x] P1 2.1.27 Concept metadata backfill: all 72 ELF/PE/Mach-O concepts now carry estimated_minutes, difficulty and importance in their manifests (they previously fell through to the parser defaults of 10 min / intermediate / core, so study plans, time budgets and analytics mispriced every one of them). PE/Mach-O durations are read from each page's own lesson-meta line; ELF, whose pages declare no duration, uses a documented per-module rule. Generator: tools/backfill_concept_metadata.py
+- [x] P1 2.1.28 HAT timed drills are now scoreable: hat-quant-drill, hat-verbal-drill and hat-analytical-drill were paper-only, so the platform could never record a result and the concept linter failed them (R3). They now use a shared client-side runner — timer, auto-submit on timeout, per-section score, per-miss explanation, localStorage result and retake. Question text and answer keys are GENERATED from the printed paper by tools/hat_drill_extract.py so the runner and the printed key cannot disagree. Runner: content/src/hat_drill_runner.ch + three generated *_bank.ch files. Verified with node --check on the served script plus a stub-DOM run of 18 assertions per drill (all-correct, all-wrong, blanks, timeout auto-submit, progress cleared, result retained, retake clears).
 
 ### 2.2 Concept Authoring
 
@@ -288,6 +291,12 @@
 - [ ] P3 2.2.18 Concept diff: compare two versions of a concept
 - [ ] P3 2.2.19 Concept history: view all changes to a concept
 - [ ] P3 2.2.20 Concept rollback: revert to previous version
+- [x] P1 2.2.33 Concept linter: R1b no longer false-positives on `for (` / `if (` shown inside `<code>` or `<pre>` examples — a lesson that teaches code is not Chemical code. Markup is stripped before the scan, so genuine for-loops in Chemical (macho_dysymtab) are still reported. scripts/lint-concepts.sh
+- [x] P1 2.2.34 Concept linter: R3 accepts the client-side drill runner (`hat-drill-root`) as a valid exercise surface, not only inline `quiz-option` buttons — the timed HAT drills render their own options from a generated bank
+- [x] P1 2.2.35 Per-option quiz feedback plumbing for the ELF course: all 24 ELF concepts defined a local `checkQuiz(quizId, btn, correct)` that hardcoded its verdict to the strings 'Correct!' and 'Not quite. Try again next time.', so all 144 options in the flagship course gave the same two sentences and never explained why a wrong option was wrong. Rewritten to read `data-explain` off the button, matching PE/Mach-O/HAT/DWARF. Additive: options without an explanation keep today's behaviour. Generator: tools/elf_quiz_feedback.py
+- [x] P1 2.2.36 ELF per-option feedback: Module 1 (bytes, binary-representation, file-layout) fully authored — 18 of 144 options now explain the misconception behind every distractor. bytes and binary-representation answers independently re-derived (0x41 = 4*16+1 = 65; 48 65 6c 6c = "Hell"; 0x1a = 26)
+- [ ] P1 2.2.37 ELF per-option feedback: remaining 126 options across 21 concepts (elf-identification … execution). Module 1 sets the pattern; each answer must be re-verified against readelf/the gABI before its explanation is written
+- [x] P1 2.2.38 Exercise audit: no multiple-choice question in any of the five courses has two options with identical text. Caught one in binary-representation quiz-bin-2 (two options both "26", one marked correct and one not); replaced the duplicate with a distinct, plausible distractor. Re-run the duplicate-text scan after any exercise edit
 
 ### 2.3 Asset Management
 

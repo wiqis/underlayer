@@ -5,11 +5,13 @@
 - [x] Learn ELF — Executable and Linkable Format
 - [x] Learn PE — Portable Executable Format
 - [x] Learn Mach-O — Mach Object File Format
+- [x] Learn DWARF — Debugging Data Format (Modules 1-2 shipped; 8 concepts. Module 3, Types & Variables, is specified but unwritten — see `courses/dwarf/research.md` for the full concept list and the verification method)
 - [ ] Learn COFF — Common Object File Format
 - [ ] Learn WebAssembly Binary Format
 - [ ] Learn JVM Class File Format
 - [ ] Learn .NET Assembly Metadata and PE Format
-- [ ] Learn DWARF — Debugging Data Format
+- [ ] Learn DWARF — Types, Variables and Location Expressions (Module 3: .debug_info DIEs, .debug_abbrev and forms, DW_AT_type references, location expressions, scopes and inlining, .debug_frame/.eh_frame, split DWARF, and how PE and Mach-O carry the same data)
+- [ ] Learn DWARF — Ranges, Line Tables v2-v5 comparison, and .debug_line across platforms
 - [ ] Learn PDB — Program Database Format
 - [ ] Learn PDF — Portable Document Format
 - [ ] Learn PostScript

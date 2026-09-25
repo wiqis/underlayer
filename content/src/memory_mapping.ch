@@ -346,8 +346,10 @@ Offset  Section               VirtAddr  Section
             var options = quiz.querySelectorAll('.quiz-option');
             var feedback = quiz.querySelector('.quiz-feedback');
             for(var i = 0; i < options.length; i++) { options[i].disabled = true; }
-            if(correct) { btn.classList.add('correct'); feedback.textContent = 'Correct!'; feedback.style.color = 'rgb(5,150,105)'; }
-            else { btn.classList.add('wrong'); feedback.textContent = 'Not quite.'; feedback.style.color = 'rgb(220,38,38)'; }
+            if(correct) { btn.classList.add('correct'); var el = btn.getAttribute('data-explain');
+                feedback.textContent = el ? 'Correct. ' + el : 'Correct!'; feedback.style.color = 'rgb(5,150,105)'; }
+            else { btn.classList.add('wrong'); var el2 = btn.getAttribute('data-explain');
+                feedback.textContent = el2 ? 'Not quite. ' + el2 : 'Not quite. Try again next time.'; feedback.style.color = 'rgb(220,38,38)'; }
         }
 
         (function() {

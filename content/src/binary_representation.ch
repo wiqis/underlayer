@@ -95,9 +95,9 @@ public func render_binary_representation() : string {
                     <pre>00001010</pre>
                 </div>
                 <div class="quiz" id="quiz-bin-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-bin-1', this, false)" aria-label="Option: 2">2</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-bin-1', this, true)" aria-label="Option: 10">10</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-bin-1', this, false)" aria-label="Option: 1010">1010</button>
+                    <button class="quiz-option" data-explain="Counting the 1 bits in 00001010 gives two, but that is how many bits are set, not the value. The value is the sum of the place values: 8 + 2 = 10." onclick="checkQuiz('quiz-bin-1', this, false)" aria-label="Option: 2">2</button>
+                    <button class="quiz-option" data-explain="The two 1 bits sit in the 8's place and the 2's place, so 00001010 is 8 + 2 = 10. Each bit is worth twice the one to its right." onclick="checkQuiz('quiz-bin-1', this, true)" aria-label="Option: 10">10</button>
+                    <button class="quiz-option" data-explain="1010 is the same bit pattern with the leading zeros dropped, so it is the same number written in a different notation — not a different value. The question asked for decimal, and 00001010 in decimal is 10." onclick="checkQuiz('quiz-bin-1', this, false)" aria-label="Option: 1010">1010</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -106,9 +106,9 @@ public func render_binary_representation() : string {
                 <h2>Check Your Understanding</h2>
                 <p>What is the decimal value of the hex byte <code>0x1a</code>?</p>
                 <div class="quiz" id="quiz-bin-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-bin-2', this, false)" aria-label="Option: 10">10</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-bin-2', this, false)" aria-label="Option: 26">26</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-bin-2', this, true)" aria-label="Option: 26">26</button>
+                    <button class="quiz-option" data-explain="0x10 is 16, which is what you get by reading the leading 1 and stopping. The a is a full digit worth 10, not something to skip, so 0x1a is larger than 0x10." onclick="checkQuiz('quiz-bin-2', this, false)" aria-label="Option: 16">16</button>
+                    <button class="quiz-option" data-explain="10 is 0x0a on its own. That is the value of the second digit by itself, so it drops the leading 1 that contributes 16." onclick="checkQuiz('quiz-bin-2', this, false)" aria-label="Option: 10">10</button>
+                    <button class="quiz-option" data-explain="0x1a is 1*16 + 10 = 26. Each hex digit is worth sixteen times the one to its right, and a is the digit ten." onclick="checkQuiz('quiz-bin-2', this, true)" aria-label="Option: 26">26</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -311,11 +311,13 @@ public func render_binary_representation() : string {
             for(var i = 0; i < options.length; i++) { options[i].disabled = true; }
             if(correct) {
                 btn.classList.add('correct');
-                feedback.textContent = 'Correct!';
+                var el = btn.getAttribute('data-explain');
+                feedback.textContent = el ? 'Correct. ' + el : 'Correct!';
                 feedback.style.color = 'rgb(5,150,105)';
             } else {
                 btn.classList.add('wrong');
-                feedback.textContent = 'Not quite. Try again next time.';
+                var el2 = btn.getAttribute('data-explain');
+                feedback.textContent = el2 ? 'Not quite. ' + el2 : 'Not quite. Try again next time.';
                 feedback.style.color = 'rgb(220,38,38)';
             }
         }

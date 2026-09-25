@@ -904,6 +904,19 @@ constructs. Details in `docs/implementation-gaps.md`; the rules:
   **Fix:** use string methods (`indexOf`, `replace`), never `/pattern/`.
 - **Non-ASCII is escaped** to `\u{...}` by the converter. **Fix:** keep JS string
   literals ASCII (use `|`/`-`, not `·`/`—`).
+- **A bare `%` is a lexer token.** `20%` inside a `#js` string aborts the parse.
+  **Fix:** spell it out — `"20 percent"`. This is why
+  `hat_diagnostic_bank.ch` contains 28 occurrences of "percent".
+- **A backslash-escaped double quote is not supported.** `\"` inside a payload
+  aborts the parse. **Fix:** rewrite an embedded `"` as `'`, or normalise
+  unicode quotes to `'` before emitting.
+- **A trailing comma on the last array element is rejected.** `[{...},]` fails
+  where `[{...}]` compiles. **Fix:** emit commas *between* elements only. The
+  working `hat_diagnostic_bank.ch` has the same no-trailing-comma shape.
+- **`<sup>` / `<sub>` in HTML text are dropped, not rendered.** A question
+  written `2<sup>35</sup>` becomes the literal text `235`, which silently
+  changes the question. **Fix:** when converting lesson HTML into a `#js` data
+  bank, rewrite `<sup>x</sup>` to `^(x)` and `<sub>x</sub>` to `_(x)` first.
 - **Closures over loop variables share one binding** (`var`, not `let`).
   **Fix:** a handler factory — `function handler(i) { return function() { ... }; }`.
 - **Multiple `#css` / `#js` blocks concatenate** into one `<style>` / `<script>`
@@ -919,6 +932,25 @@ Client-side dynamic lists (home grid, onboarding, cmdk) legitimately render with
 `escapeHtml()` + `innerHTML` — every interpolated value must pass through a
 char-loop `escapeHtml` first (no regex literals). `createElement` + `textContent`
 also works for single text nodes.
+
+### `#html` Macro Quirks
+
+- **`{` and `}` are the interpolation sigil.** A literal brace inside `#html`
+  aborts the parse — including a bare `}` on its own line, and one inline in
+  `<code>}</code>`. **Fix:** use the `&#123;` / `&#125;` entities, which is the
+  established convention in `macho_*.ch` and `hat_*.ch`.
+- **`@` is the macro/annotation sigil.** `row @ 0x1129` in prose aborts the
+  parse. **Fix:** write `row at 0x1129`. (`@media` inside `#css` is fine, and
+  `@{...}` is the intended interpolation form.)
+- **An HTML entity sandwiched between two hex values aborts the parse.**
+  `0x1f&ndash;0x20` fails where `0x1f-0x20` and `0x1f &ndash; 0x20` both
+  compile. **Fix:** use a plain hyphen in offset ranges.
+- `%`, `[`, `]`, `<` and `>` are fine in `#html` text and attributes. `%` is
+  only a problem inside `#js`.
+
+**When a lesson fails to parse, suspect this list before rewriting the content.**
+All three of these were hit while writing the DWARF course and each one costs a
+rebuild cycle to diagnose.
 
 ### Interpreter Limitations
 

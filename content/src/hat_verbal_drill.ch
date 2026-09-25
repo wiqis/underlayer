@@ -12,6 +12,7 @@ public func render_hat_verbal_drill() : string {
     page.appendTitle(&title)
 
     render_hat_lesson_css(&mut page)
+    render_hat_drill_css(&mut page)
 
     #html {
         <div class="lesson hat-lesson">
@@ -34,6 +35,10 @@ public func render_hat_verbal_drill() : string {
                     <li><strong>Self-mark with the key</strong>, and write the cause of each miss in one line.</li>
                     <li><strong>Retake in 7 days.</strong> Target: 25 or more, with the passage answered in under 4 minutes.</li>
                 </ol>
+                <h3>Or take it timed, here in the browser</h3>
+                <p>Everything below is the same paper with the same answer key. The runner adds the clock, marks your answers, explains every miss, and keeps your result so the retake in seven days can be compared against this one. Nothing is sent anywhere; the score stays in this browser.</p>
+                <div id="hat-drill-root" class="hat-drill"><p>Loading the drill&hellip;</p></div>
+                <noscript><p>The timed runner needs JavaScript. The printed paper and the answer key above work without it.</p></noscript>
             </div>
 
             <div class="unit unit-reality">
@@ -180,6 +185,9 @@ public func render_hat_verbal_drill() : string {
     }
 
     render_hat_lesson_js(&mut page)
+    render_hat_verbal_drill_bank(&mut page)
+    render_hat_verbal_drill_config(&mut page)
+    render_hat_drill_js(&mut page)
 
     return page.toString()
 }

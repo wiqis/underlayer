@@ -105,9 +105,9 @@ public func render_bytes() : string {
                 <h2>Check Your Understanding</h2>
                 <p>Without looking back: what decimal value does the hex byte 0x41 represent?</p>
                 <div class="quiz" id="quiz-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-1', this, false)" aria-label="Option: 32">32</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-1', this, true)" aria-label="Option: 65">65</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-1', this, false)" aria-label="Option: 127">127</button>
+                    <button class="quiz-option" data-explain="0x41 is 4*16 + 1 = 65. 32 would be 0x20, which is the ASCII space character." onclick="checkQuiz('quiz-1', this, false)" aria-label="Option: 32">32</button>
+                    <button class="quiz-option" data-explain="0x41 is 4*16 + 1 = 65, and 0x41 is the ASCII code for A." onclick="checkQuiz('quiz-1', this, true)" aria-label="Option: 65">65</button>
+                    <button class="quiz-option" data-explain="127 is 0x7f, the last byte before the 0x80-0xff range that stops being ASCII. It is also 0x41 plus 62, not plus 1." onclick="checkQuiz('quiz-1', this, false)" aria-label="Option: 127">127</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -119,9 +119,9 @@ public func render_bytes() : string {
                     <pre>48 65 6c 6c</pre>
                 </div>
                 <div class="quiz" id="quiz-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-2', this, false)" aria-label="Option: ELF">ELF</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-2', this, true)" aria-label="Option: Hell">Hell</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-2', this, false)" aria-label="Option: Help">Help</button>
+                    <button class="quiz-option" data-explain="ELF needs an E, and E is 0x45. The dump starts 0x48, which is H, so the first three bytes are H-e-l and not E-l-f." onclick="checkQuiz('quiz-2', this, false)" aria-label="Option: ELF">ELF</button>
+                    <button class="quiz-option" data-explain="48 65 6c 6c is 0x48 0x65 0x6c 0x6c, which is H, e, l, l. Watch out for 0x48 and 0x65: 0x45 is E, but 0x48 is H." onclick="checkQuiz('quiz-2', this, true)" aria-label="Option: Hell">Hell</button>
+                    <button class="quiz-option" data-explain="Help needs H-e-l-p, so the last byte would have to be 0x70. It is 0x6c, which is the letter l a second time." onclick="checkQuiz('quiz-2', this, false)" aria-label="Option: Help">Help</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -367,11 +367,13 @@ public func render_bytes() : string {
             for(var i = 0; i < options.length; i++) { options[i].disabled = true; }
             if(correct) {
                 btn.classList.add('correct');
-                feedback.textContent = 'Correct!';
+                var el = btn.getAttribute('data-explain');
+                feedback.textContent = el ? 'Correct. ' + el : 'Correct!';
                 feedback.style.color = 'rgb(5,150,105)';
             } else {
                 btn.classList.add('wrong');
-                feedback.textContent = 'Not quite. Try again next time.';
+                var el2 = btn.getAttribute('data-explain');
+                feedback.textContent = el2 ? 'Not quite. ' + el2 : 'Not quite. Try again next time.';
                 feedback.style.color = 'rgb(220,38,38)';
             }
         }

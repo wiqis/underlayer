@@ -2,7 +2,7 @@
   "id": "elf",
   "title": "Executable and Linkable Format",
   "version": 1,
-  "description": "A deep dive into the ELF binary format \u2014 headers, sections, segments, symbols, relocations, and dynamic linking.",
+  "description": "A deep dive into the ELF binary format — headers, sections, segments, symbols, relocations, and dynamic linking.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",
@@ -88,7 +88,7 @@
       "answer": "At byte 0x3ff0",
       "options": "At byte 0x0040|At byte 0x0001|At byte 0x3ff0",
       "correct_index": 2,
-      "explanation": "e_shoff holds the file offset of the section header table \u2014 here 0x3ff0.",
+      "explanation": "e_shoff holds the file offset of the section header table — here 0x3ff0.",
       "hint1": "e_shoff is a byte offset from the start of the file.",
       "difficulty": 0.5
     },
@@ -274,145 +274,217 @@
       "id": "bytes",
       "title": "Bytes and Binary",
       "module_id": "fundamentals",
-      "description": "Understanding bytes."
+      "description": "Understanding bytes.",
+      "estimated_minutes": 12,
+      "difficulty": "beginner",
+      "importance": "core"
     },
     {
       "id": "binary-representation",
       "title": "Binary Representation",
       "module_id": "fundamentals",
-      "description": "How bytes encode numbers."
+      "description": "How bytes encode numbers.",
+      "estimated_minutes": 12,
+      "difficulty": "beginner",
+      "importance": "core"
     },
     {
       "id": "file-layout",
       "title": "File Layout",
       "module_id": "fundamentals",
-      "description": "How an ELF file is organized."
+      "description": "How an ELF file is organized.",
+      "estimated_minutes": 12,
+      "difficulty": "beginner",
+      "importance": "supporting"
     },
     {
       "id": "elf-identification",
       "title": "ELF Identification",
       "module_id": "elf-header",
-      "description": "The e_ident array."
+      "description": "The e_ident array.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "elf-header-fields",
       "title": "ELF Header Fields",
       "module_id": "elf-header",
-      "description": "Every field in the ELF header."
+      "description": "Every field in the ELF header.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "entry-point",
       "title": "Entry Point",
       "module_id": "elf-header",
-      "description": "Where execution begins."
+      "description": "Where execution begins.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "program-header-table",
       "title": "Program Header Table",
       "module_id": "program-headers",
-      "description": "How segments are loaded."
+      "description": "How segments are loaded.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "segment-types",
       "title": "Segment Types",
       "module_id": "program-headers",
-      "description": "PT_LOAD, PT_DYNAMIC, PT_INTERP."
+      "description": "PT_LOAD, PT_DYNAMIC, PT_INTERP.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "memory-mapping",
       "title": "Memory Mapping",
       "module_id": "program-headers",
-      "description": "File offsets to virtual addresses."
+      "description": "File offsets to virtual addresses.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "section-header-table",
       "title": "Section Header Table",
       "module_id": "sections",
-      "description": "The section descriptor table."
+      "description": "The section descriptor table.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "common-sections",
       "title": "Common Sections",
       "module_id": "sections",
-      "description": ".text, .data, .bss, .rodata."
+      "description": ".text, .data, .bss, .rodata.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "supporting"
     },
     {
       "id": "section-vs-segment",
       "title": "Section vs Segment",
       "module_id": "sections",
-      "description": "Why they are different."
+      "description": "Why they are different.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "symbol-table",
       "title": "Symbol Table",
       "module_id": "symbols",
-      "description": "The .symtab and .dynsym tables."
+      "description": "The .symtab and .dynsym tables.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "binding",
       "title": "Symbol Binding",
       "module_id": "symbols",
-      "description": "Local, global, and weak binding."
+      "description": "Local, global, and weak binding.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "visibility",
       "title": "Symbol Visibility",
       "module_id": "symbols",
-      "description": "Controlling dynamic linking exports."
+      "description": "Controlling dynamic linking exports.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "supporting"
     },
     {
       "id": "relocation-entries",
       "title": "Relocation Entries",
       "module_id": "relocations",
-      "description": "How the linker records patches."
+      "description": "How the linker records patches.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "relocation-types",
       "title": "Relocation Types",
       "module_id": "relocations",
-      "description": "R_X86_64_64, PC32, PLT32."
+      "description": "R_X86_64_64, PC32, PLT32.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "dynamic-relocations",
       "title": "Dynamic Relocations",
       "module_id": "relocations",
-      "description": "Load-time patches by ld.so."
+      "description": "Load-time patches by ld.so.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "dynamic-section",
       "title": "Dynamic Section",
       "module_id": "dynamic-linking",
-      "description": "The .dynamic section control structure."
+      "description": "The .dynamic section control structure.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "supporting"
     },
     {
       "id": "shared-libraries",
       "title": "Shared Libraries",
       "module_id": "dynamic-linking",
-      "description": "How .so files work."
+      "description": "How .so files work.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "core"
     },
     {
       "id": "ld-so",
       "title": "The Dynamic Linker",
       "module_id": "dynamic-linking",
-      "description": "ld.so and the resolution algorithm."
+      "description": "ld.so and the resolution algorithm.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "core"
     },
     {
       "id": "loader",
       "title": "The Kernel Loader",
       "module_id": "loading",
-      "description": "How the kernel maps ELF segments."
+      "description": "How the kernel maps ELF segments.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "core"
     },
     {
       "id": "memory-layout",
       "title": "Process Memory Layout",
       "module_id": "loading",
-      "description": "Where text, data, heap, and stack live."
+      "description": "Where text, data, heap, and stack live.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "core"
     },
     {
       "id": "execution",
       "title": "The Startup Sequence",
       "module_id": "loading",
-      "description": "From _start to main()."
+      "description": "From _start to main().",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "core"
     }
   ]
 }

@@ -1,0 +1,185 @@
+#!/usr/bin/env python3
+"""Extract HAT drill questions + answer keys from the lesson .ch files into
+`#js` bank arrays for the client-side drill runners.
+
+The three drill lessons (hat_quant_drill, hat_verbal_drill,
+hat_analytical_drill) already contain every question and its verified answer
+key as HTML. This script reads them and emits bank files, so the runner can
+never disagree with the printed answer key.
+
+Usage: python3 tools/hat_drill_extract.py <content_src_dir> <out_dir>
+"""
+import html
+import os
+import re
+import sys
+
+# lesson base -> (question list selector text, key table marker, minutes, pass)
+DRILLS = {
+    'hat_quant_drill': {
+        'minutes': 30,
+        'pass': 22,
+        'unit': 'Quantitative',
+    },
+    'hat_verbal_drill': {
+        'minutes': 30,
+        'pass': 22,
+        'unit': 'Verbal',
+    },
+    'hat_analytical_drill': {
+        'minutes': 24,
+        'pass': 15,
+        'unit': 'Analytical',
+    },
+}
+
+LI_RE = re.compile(
+    r'<li>\s*<strong>Q(\d+)\.</strong>\s*(.*?)<br\s*/?>(.*?)</li>', re.S)
+OPT_RE = re.compile(r'\(([a-e])\)\s*(.*?)(?=&nbsp;|\(|$)')
+KEY_RE = re.compile(
+    r'<tr><td>(\d+)</td><td>([^<]*)</td><td>\(([a-e])\)([^<]*)</td><td>([^<]*)</td>')
+
+
+def clean(s):
+    # Superscript / subscript carry meaning in maths questions
+    # (2<sup>35</sup> must not collapse to 235), so convert them to an
+    # explicit ASCII form instead of dropping the tag.
+    s = re.sub(r'<sup>(.*?)</sup>', r'^(\1)', s, flags=re.S)
+    s = re.sub(r'<sub>(.*?)</sub>', r'_(\1)', s, flags=re.S)
+    s = re.sub(r'<[^>]+>', '', s)
+    s = html.unescape(s)
+    s = s.replace('\xa0', ' ')
+    s = re.sub(r'\s+', ' ', s).strip()
+    return s
+
+
+def js_string(s):
+    """Escape for a double-quoted JS string literal inside a #js block.
+
+    Two characters are unusable in a `#js` payload and are rewritten rather
+    than escaped, because the macro's own lexer cannot handle them:
+      * `%`  - the #js macro has no bare % token (this is why the existing
+              hat_diagnostic_bank.ch spells out "percent")
+      * `"`  - an embedded double quote cannot be backslash-escaped inside the
+              macro, so it becomes a single quote
+    Everything is also forced to ASCII, because the converter escapes
+    non-ASCII to \\u{...}.
+    """
+    # normalise unicode typography to ASCII
+    s = (s.replace('—', '-').replace('–', '-').replace('·', '-')
+          .replace('‘', "'").replace('’', "'")
+          .replace('“', "'").replace('”', "'")
+          .replace('×', 'x').replace('÷', '/').replace('−', '-')
+          .replace('≤', '<=').replace('≥', '>=').replace('≠', '!=')
+          .replace('²', '^2').replace('³', '^3').replace('¹', '^1')
+          .replace('°', ' deg').replace('…', '...')
+          .replace('½', '1/2').replace('¼', '1/4').replace('¾', '3/4'))
+    # % is a macro token: spell it out. `\s*%` (not `%`) so that "20%." does
+    # not become "20 percent ." with a stray space before the full stop.
+    s = re.sub(r'\s*%', ' percent', s)
+    # a literal double quote becomes a single quote
+    s = s.replace('"', "'")
+    s = re.sub(r'\s+', ' ', s).strip()
+    s = s.encode('ascii', 'replace').decode('ascii')
+    return s
+
+
+def extract(path):
+    src = open(path, encoding='utf-8').read()
+    questions = {}
+    for m in LI_RE.finditer(src):
+        n = int(m.group(1))
+        text = clean(m.group(2))
+        opts_blob = m.group(3)
+        opts = []
+        for om in OPT_RE.finditer(opts_blob):
+            letter = om.group(1)
+            val = clean(om.group(2))
+            opts.append((letter, val))
+        if text and opts:
+            questions[n] = (text, opts)
+    keys = {}
+    explanations = {}
+    for m in KEY_RE.finditer(src):
+        n = int(m.group(1))
+        keys[n] = m.group(3)
+        explanations[n] = clean(m.group(5))
+    return questions, keys, explanations
+
+
+def main():
+    src_dir, out_dir = sys.argv[1], sys.argv[2]
+    os.makedirs(out_dir, exist_ok=True)
+    ok = True
+    for base, cfg in DRILLS.items():
+        path = os.path.join(src_dir, base.replace('-', '_') + '.ch')
+        if not os.path.exists(path):
+            print(f'MISSING source: {path}')
+            ok = False
+            continue
+        questions, keys, explanations = extract(path)
+        if not questions or not keys:
+            print(f'{base}: nothing extracted '
+                  f'(q={len(questions)} keys={len(keys)})')
+            ok = False
+            continue
+        missing_key = sorted(set(questions) - set(keys))
+        missing_q = sorted(set(keys) - set(questions))
+        if missing_key or missing_q:
+            print(f'{base}: MISMATCH questions={sorted(questions)} '
+                  f'keys={sorted(keys)}')
+            ok = False
+            continue
+        n = len(questions)
+        lines = []
+        lines.append('// HAT course - %s drill question bank.' % cfg['unit'])
+        lines.append('// GENERATED by tools/hat_drill_extract.py from')
+        lines.append('// content/src/%s.ch - do not hand-edit.'
+                     % base.replace('-', '_'))
+        lines.append('//')
+        lines.append('// The text and the answer key are lifted from the printed')
+        lines.append('// paper in the lesson, so the timed runner and the answer')
+        lines.append('// key can never disagree.')
+        lines.append('//')
+        lines.append('// Shape: { q, o, a, e }')
+        lines.append('//   q  question text')
+        lines.append('//   o  options in order')
+        lines.append('//   a  index of the correct option')
+        lines.append('//   e  why that option is right and the trap is wrong')
+        lines.append('public namespace underlayer_content {')
+        lines.append('')
+        lines.append('    public func render_%s_bank(page : &mut HtmlPage) {' % base)
+        lines.append('        #js {')
+        lines.append('            var %s_BANK = [' % base.upper())
+        for i in range(1, n + 1):
+            text, opts = questions[i]
+            key = keys[i]
+            letters = [l for l, _ in opts]
+            if key not in letters:
+                print(f'{base}: Q{i} key ({key}) not among options {letters}')
+                ok = False
+                break
+            ai = letters.index(key)
+            opt_str = ', '.join('"%s"' % js_string(v) for _, v in opts)
+            expl = js_string(explanations.get(i, ''))
+            # NOTE: no trailing comma on the last element. The #js macro's array
+            # parser rejects it, and the working hat_diagnostic_bank.ch has the
+            # same no-trailing-comma shape.
+            tail = '' if i == n else ','
+            lines.append('                { q: "%s", o: [%s], a: %d, e: "%s" }%s'
+                         % (js_string(text), opt_str, ai, expl, tail))
+        else:
+            lines.append('            ];')
+            lines.append('        }')
+            lines.append('    }')
+            lines.append('')
+            lines.append('}')
+            out = os.path.join(out_dir, base.replace('-', '_') + '_bank.ch')
+            with open(out, 'w', encoding='ascii') as f:
+                f.write('\n'.join(lines) + '\n')
+            print(f'OK  {base}: {n} questions -> {out}')
+    return 0 if ok else 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())

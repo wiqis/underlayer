@@ -115,9 +115,9 @@ $ readelf -l /bin/ls | head -10
                 <h2>Check Your Understanding</h2>
                 <p>Without looking back: what part of an ELF file does the runtime loader use to map segments into memory?</p>
                 <div class="quiz" id="quiz-fl-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-fl-1', this, false)" aria-label="Option: The ELF header">The ELF header</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-fl-1', this, true)" aria-label="Option: The program header table">The program header table</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-fl-1', this, false)" aria-label="Option: The section header table">The section header table</button>
+                    <button class="quiz-option" data-explain="The ELF header is read first, but all it does is point at the program header table. It carries no loadable content itself, so it cannot be what gets mapped into memory." onclick="checkQuiz('quiz-fl-1', this, false)" aria-label="Option: The ELF header">The ELF header</button>
+                    <button class="quiz-option" data-explain="Each program header describes a segment with a virtual address, a file offset and a size, and those are exactly the fields the loader needs to build the memory image. This is why section headers can be stripped from a running executable: the loader never reads them." onclick="checkQuiz('quiz-fl-1', this, true)" aria-label="Option: The program header table">The program header table</button>
+                    <button class="quiz-option" data-explain="Section headers describe sections, and sections are a linking and debugging convenience. The loader maps segments, and it does so from the program header table alone." onclick="checkQuiz('quiz-fl-1', this, false)" aria-label="Option: The section header table">The section header table</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -131,9 +131,9 @@ $ readelf -l /bin/ls | head -10
                     <li>e_shnum = 27</li>
                 </ul>
                 <div class="quiz" id="quiz-fl-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-fl-2', this, false)" aria-label="Option: At byte 0x0040">At byte 0x0040</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-fl-2', this, false)" aria-label="Option: At byte 0x0001">At byte 0x0001</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-fl-2', this, true)" aria-label="Option: At byte 0x3ff0">At byte 0x3ff0</button>
+                    <button class="quiz-option" data-explain="0x40 is 64, the size of an ELF64 header, not a file offset. It is the wrong unit: this question is asking where something starts, not how big something is." onclick="checkQuiz('quiz-fl-2', this, false)" aria-label="Option: At byte 0x0040">At byte 0x0040</button>
+                    <button class="quiz-option" data-explain="The ELF header starts at byte 0 and the program header table follows it, so byte 1 is inside the header itself. Offsets are measured in bytes from the start of the file, and nothing here is at offset 1." onclick="checkQuiz('quiz-fl-2', this, false)" aria-label="Option: At byte 0x0001">At byte 0x0001</button>
+                    <button class="quiz-option" data-explain="e_shoff is defined as the file offset of the section header table, so it is 0x3ff0 by definition. e_shnum and e_shentsize say how long the table is (27 entries of 64 bytes, so it runs to 0x46b0), not where it begins." onclick="checkQuiz('quiz-fl-2', this, true)" aria-label="Option: At byte 0x3ff0">At byte 0x3ff0</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -336,11 +336,13 @@ $ readelf -l /bin/ls | head -10
             for(var i = 0; i < options.length; i++) { options[i].disabled = true; }
             if(correct) {
                 btn.classList.add('correct');
-                feedback.textContent = 'Correct!';
+                var el = btn.getAttribute('data-explain');
+                feedback.textContent = el ? 'Correct. ' + el : 'Correct!';
                 feedback.style.color = 'rgb(5,150,105)';
             } else {
                 btn.classList.add('wrong');
-                feedback.textContent = 'Not quite. Try again next time.';
+                var el2 = btn.getAttribute('data-explain');
+                feedback.textContent = el2 ? 'Not quite. ' + el2 : 'Not quite. Try again next time.';
                 feedback.style.color = 'rgb(220,38,38)';
             }
         }

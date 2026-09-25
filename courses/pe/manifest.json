@@ -15,7 +15,9 @@
   "alternative_paths": [],
   "bundles": [],
   "assets": [],
-  "dependencies": ["elf"],
+  "dependencies": [
+    "elf"
+  ],
   "review_item_decls": [],
   "exercise_decls": [
     {
@@ -308,145 +310,217 @@
       "id": "pe-intro",
       "title": "Why the Portable Executable Format Exists",
       "module_id": "fundamentals",
-      "description": "The MZ-PE chain and the course map."
+      "description": "The MZ-PE chain and the course map.",
+      "estimated_minutes": 15,
+      "difficulty": "beginner",
+      "importance": "core"
     },
     {
       "id": "pe-file-layout",
       "title": "PE File Layout",
       "module_id": "fundamentals",
-      "description": "Headers, section table, and section data, end to end."
+      "description": "Headers, section table, and section data, end to end.",
+      "estimated_minutes": 15,
+      "difficulty": "beginner",
+      "importance": "core"
     },
     {
       "id": "pe-coff-basics",
       "title": "The COFF Heritage",
       "module_id": "fundamentals",
-      "description": "PE is a COFF image: object files vs images, machine types."
+      "description": "PE is a COFF image: object files vs images, machine types.",
+      "estimated_minutes": 15,
+      "difficulty": "beginner",
+      "importance": "core"
     },
     {
       "id": "pe-dos-header",
       "title": "The MS-DOS Header",
       "module_id": "headers",
-      "description": "IMAGE_DOS_HEADER: e_magic and the e_lfanew pointer."
+      "description": "IMAGE_DOS_HEADER: e_magic and the e_lfanew pointer.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "pe-signature-coff",
       "title": "PE Signature and COFF Header",
       "module_id": "headers",
-      "description": "PE\\0\\0 plus IMAGE_FILE_HEADER and its Characteristics flags."
+      "description": "PE\\0\\0 plus IMAGE_FILE_HEADER and its Characteristics flags.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "pe-optional-header",
       "title": "The Optional Header",
       "module_id": "headers",
-      "description": "PE32 vs PE32+, standard fields, and Windows-specific fields."
+      "description": "PE32 vs PE32+, standard fields, and Windows-specific fields.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "pe-data-directories",
       "title": "The Data Directories",
       "module_id": "addressing",
-      "description": "Sixteen RVA+size slots that point at every special table."
+      "description": "Sixteen RVA+size slots that point at every special table.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "pe-addresses",
       "title": "VA, RVA, and File Offset",
       "module_id": "addressing",
-      "description": "The three address spaces of a PE file and how they relate."
+      "description": "The three address spaces of a PE file and how they relate.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "pe-rva-conversion",
       "title": "Converting RVAs to File Offsets",
       "module_id": "addressing",
-      "description": "The section-walk algorithm, with a verified worked example."
+      "description": "The section-walk algorithm, with a verified worked example.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "pe-section-table",
       "title": "The Section Table",
       "module_id": "sections",
-      "description": "IMAGE_SECTION_HEADER: 40 bytes per section."
+      "description": "IMAGE_SECTION_HEADER: 40 bytes per section.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "pe-common-sections",
       "title": "Common Sections",
       "module_id": "sections",
-      "description": ".text, .rdata, .data, .pdata, .rsrc, and .reloc."
+      "description": ".text, .rdata, .data, .pdata, .rsrc, and .reloc.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "pe-alignment",
       "title": "Alignment: FileAlignment vs SectionAlignment",
       "module_id": "sections",
-      "description": "Why sizes differ on disk and in memory."
+      "description": "Why sizes differ on disk and in memory.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "pe-imports",
       "title": "The Import Tables",
       "module_id": "imports-exports",
-      "description": "Descriptors, thunks, hint/name entries, and the IAT."
+      "description": "Descriptors, thunks, hint/name entries, and the IAT.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "pe-exports",
       "title": "The Export Tables",
       "module_id": "imports-exports",
-      "description": "The export directory, ordinals, names, and forwarders."
+      "description": "The export directory, ordinals, names, and forwarders.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "pe-delay-loads",
       "title": "Delay-Load Imports",
       "module_id": "imports-exports",
-      "description": "Loading a DLL on first call instead of at process start."
+      "description": "Loading a DLL on first call instead of at process start.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "pe-base-relocations",
       "title": "Base Relocations",
       "module_id": "relocations-hardening",
-      "description": "The .reloc blocks that let the image move."
+      "description": "The .reloc blocks that let the image move.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "pe-security-flags",
       "title": "Security & Subsystem Flags",
       "module_id": "relocations-hardening",
-      "description": "DllCharacteristics (ASLR, NX, CFG), subsystems, Authenticode."
+      "description": "DllCharacteristics (ASLR, NX, CFG), subsystems, Authenticode.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "pe-load-config",
       "title": "The Load Configuration",
       "module_id": "relocations-hardening",
-      "description": "Security cookies, SEH tables, and Control Flow Guard."
+      "description": "Security cookies, SEH tables, and Control Flow Guard.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
     },
     {
       "id": "pe-resources",
       "title": "The Resource Directory",
       "module_id": "runtime-tables",
-      "description": "The three-level .rsrc tree: Type, Name, Language."
+      "description": "The three-level .rsrc tree: Type, Name, Language.",
+      "estimated_minutes": 15,
+      "difficulty": "advanced",
+      "importance": "core"
     },
     {
       "id": "pe-tls",
       "title": "Thread-Local Storage",
       "module_id": "runtime-tables",
-      "description": "The TLS directory, templates, and callbacks."
+      "description": "The TLS directory, templates, and callbacks.",
+      "estimated_minutes": 15,
+      "difficulty": "advanced",
+      "importance": "core"
     },
     {
       "id": "pe-exceptions",
       "title": "Exception Tables (.pdata)",
       "module_id": "runtime-tables",
-      "description": "RUNTIME_FUNCTION entries that make x64 unwinding work."
+      "description": "RUNTIME_FUNCTION entries that make x64 unwinding work.",
+      "estimated_minutes": 15,
+      "difficulty": "advanced",
+      "importance": "core"
     },
     {
       "id": "pe-loader",
       "title": "How the Windows Loader Maps a PE",
       "module_id": "loading-execution",
-      "description": "From MZ probe to mapped sections and bound imports."
+      "description": "From MZ probe to mapped sections and bound imports.",
+      "estimated_minutes": 15,
+      "difficulty": "advanced",
+      "importance": "core"
     },
     {
       "id": "pe-memory-layout",
       "title": "Process Memory Layout",
       "module_id": "loading-execution",
-      "description": "ImageBase, sections in memory, heap, and stack."
+      "description": "ImageBase, sections in memory, heap, and stack.",
+      "estimated_minutes": 15,
+      "difficulty": "advanced",
+      "importance": "core"
     },
     {
       "id": "pe-execution",
       "title": "The Startup Sequence",
       "module_id": "loading-execution",
-      "description": "Entry point to CRT initialization to main()."
+      "description": "Entry point to CRT initialization to main().",
+      "estimated_minutes": 15,
+      "difficulty": "advanced",
+      "importance": "core"
     }
   ]
 }

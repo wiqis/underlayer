@@ -60,16 +60,19 @@ check_file() {
     fi
 
     # R1b: for-loop inside #js is fine; in Chemical code it is a mistake (warn)
-    if [ -n "$inside_js" ]; then
-        if sed -n "1,${inside_js}p" "$file" | grep -qE '\bfor[[:space:]]*\('; then
-            echo "  warn R1 [$label] for-loop in Chemical code (use while)"
-            w=$((w+1))
-        fi
-    else
-        if grep -qE '\bfor[[:space:]]*\(' "$file"; then
-            echo "  warn R1 [$label] for-loop in Chemical code (use while)"
-            w=$((w+1))
-        fi
+    #      Code examples shown to the learner live inside <code> / <pre> blocks
+    #      and are NOT Chemical code, so they are blanked out before scanning.
+    #      Without this, any lesson that displays a `for (...)` loop is
+    #      reported as Chemical code.
+    local chem_end chem_body
+    chem_end="${inside_js:-$total_lines}"
+    chem_body=$(sed -n "1,${chem_end}p" "$file" \
+        | sed -e 's|<code>[^<]*</code>| |g' \
+              -e 's|<pre>.*</pre>| |g' \
+              -e 's|<[^>]*>||g')
+    if echo "$chem_body" | grep -qE '\bfor[[:space:]]*\('; then
+        echo "  warn R1 [$label] for-loop in Chemical code (use while)"
+        w=$((w+1))
     fi
 
     # R2: required sections.
@@ -106,12 +109,16 @@ check_file() {
             ;;
     esac
 
-    # R3: at least one quiz-option (skip landing pages)
+    # R3: at least one interactive exercise (skip landing pages)
+    #     Two patterns count as an exercise surface:
+    #       - quiz-option: the inline multiple-choice pattern
+    #       - hat-drill-root: the client-side timed drill runner, which renders
+    #         its own option buttons from a generated question bank
     case "$basename" in
         *_landing.ch) : ;;
         *)
-            if ! grep -q 'quiz-option' "$file"; then
-                echo "  FAIL R3 [$label] no exercises found (quiz-option)"
+            if ! grep -q 'quiz-option' "$file" && ! grep -q 'hat-drill-root' "$file"; then
+                echo "  FAIL R3 [$label] no exercises found (quiz-option or hat-drill-root)"
                 f=$((f+1))
             fi
             ;;

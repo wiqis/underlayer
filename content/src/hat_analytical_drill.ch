@@ -12,6 +12,7 @@ public func render_hat_analytical_drill() : string {
     page.appendTitle(&title)
 
     render_hat_lesson_css(&mut page)
+    render_hat_drill_css(&mut page)
 
     #html {
         <div class="lesson hat-lesson">
@@ -34,6 +35,10 @@ public func render_hat_analytical_drill() : string {
                     <li><strong>Answer all 20.</strong> No negative marking, so blanks are self-inflicted zeros.</li>
                     <li><strong>Self-mark, log causes, retake in 7 days.</strong> Target: 16 or more correct inside 24 minutes.</li>
                 </ol>
+                <h3>Or take it timed, here in the browser</h3>
+                <p>Everything below is the same paper with the same answer key. The runner adds the clock, marks your answers, explains every miss, and keeps your result so the retake in seven days can be compared against this one. Nothing is sent anywhere; the score stays in this browser.</p>
+                <div id="hat-drill-root" class="hat-drill"><p>Loading the drill&hellip;</p></div>
+                <noscript><p>The timed runner needs JavaScript. The printed paper and the answer key above work without it.</p></noscript>
             </div>
 
             <div class="unit unit-reality">
@@ -169,6 +174,9 @@ public func render_hat_analytical_drill() : string {
     }
 
     render_hat_lesson_js(&mut page)
+    render_hat_analytical_drill_bank(&mut page)
+    render_hat_analytical_drill_config(&mut page)
+    render_hat_drill_js(&mut page)
 
     return page.toString()
 }

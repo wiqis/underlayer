@@ -278,11 +278,13 @@ dpkg -S /lib/x86_64-linux-gnu/libc.so.6</pre></div>
             for(var i = 0; i < options.length; i++) { options[i].disabled = true; }
             if(correct) {
                 btn.classList.add('correct');
-                feedback.textContent = 'Correct!';
+                var el = btn.getAttribute('data-explain');
+                feedback.textContent = el ? 'Correct. ' + el : 'Correct!';
                 feedback.style.color = '#059669';
             } else {
                 btn.classList.add('wrong');
-                feedback.textContent = 'Not quite. Try again next time.';
+                var el2 = btn.getAttribute('data-explain');
+                feedback.textContent = el2 ? 'Not quite. ' + el2 : 'Not quite. Try again next time.';
                 feedback.style.color = '#dc2626';
             }
         }

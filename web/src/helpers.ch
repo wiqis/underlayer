@@ -264,6 +264,31 @@ public namespace underlayer_web {
         return string()
     }
 
+    // DWARF course concept ids. Prefixed with `dwarf-` to stay unique across
+    // courses (same convention as the HAT `hat-`, PE `pe-` and Mach-O
+    // `macho-` prefixes).
+    public func render_dwarf_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var intro_id = std::string("dwarf-intro")
+        var sections_id = std::string("dwarf-sections")
+        var versions_id = std::string("dwarf-versions")
+        var lineheader_id = std::string("dwarf-line-header")
+        var filetables_id = std::string("dwarf-file-tables")
+        var stdopcodes_id = std::string("dwarf-standard-opcodes")
+        var specopcodes_id = std::string("dwarf-special-opcodes")
+        var addrtoline_id = std::string("dwarf-address-to-line")
+
+        if(cid.equals(&intro_id)) { return underlayer_content::render_dwarf_intro() }
+        if(cid.equals(&sections_id)) { return underlayer_content::render_dwarf_sections() }
+        if(cid.equals(&versions_id)) { return underlayer_content::render_dwarf_versions() }
+        if(cid.equals(&lineheader_id)) { return underlayer_content::render_dwarf_line_header() }
+        if(cid.equals(&filetables_id)) { return underlayer_content::render_dwarf_file_tables() }
+        if(cid.equals(&stdopcodes_id)) { return underlayer_content::render_dwarf_standard_opcodes() }
+        if(cid.equals(&specopcodes_id)) { return underlayer_content::render_dwarf_special_opcodes() }
+        if(cid.equals(&addrtoline_id)) { return underlayer_content::render_dwarf_address_to_line() }
+        return string()
+    }
+
     // Mach-O course concept ids. Prefixed with `macho-` to stay unique across
     // courses (same convention as the HAT `hat-` and PE `pe-` prefixes).
     public func render_macho_concept(concept_id : *string) : string {
@@ -333,6 +358,9 @@ public namespace underlayer_web {
         // Mach-O concepts next; same fall-through contract.
         var macho_html = render_macho_concept(concept_id)
         if(macho_html.size() > 0) { return macho_html }
+        // DWARF concepts next; same fall-through contract.
+        var dwarf_html = render_dwarf_concept(concept_id)
+        if(dwarf_html.size() > 0) { return dwarf_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")
