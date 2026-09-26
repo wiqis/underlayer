@@ -456,6 +456,31 @@ public namespace underlayer_web {
         return string()
     }
 
+    // JVM class file course concept ids. Same `jvm-` prefix convention as the
+    // `wasm-`, `dwarf-`, `coff-` and `macho-` prefixes. Returns an empty
+    // string for ids it does not own so render_concept can fall through.
+    public func render_jvm_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var intro_id = std::string("jvm-intro")
+        var header_id = std::string("jvm-header")
+        var pool_id = std::string("jvm-constant-pool")
+        var strings_id = std::string("jvm-strings")
+        var members_id = std::string("jvm-members")
+        var code_id = std::string("jvm-code")
+        var branches_id = std::string("jvm-branches")
+        var stackmaps_id = std::string("jvm-stackmaps")
+
+        if(cid.equals(&intro_id)) { return underlayer_content::render_jvm_intro() }
+        if(cid.equals(&header_id)) { return underlayer_content::render_jvm_header() }
+        if(cid.equals(&pool_id)) { return underlayer_content::render_jvm_constant_pool() }
+        if(cid.equals(&strings_id)) { return underlayer_content::render_jvm_strings() }
+        if(cid.equals(&members_id)) { return underlayer_content::render_jvm_members() }
+        if(cid.equals(&code_id)) { return underlayer_content::render_jvm_code() }
+        if(cid.equals(&branches_id)) { return underlayer_content::render_jvm_branches() }
+        if(cid.equals(&stackmaps_id)) { return underlayer_content::render_jvm_stackmaps() }
+        return string()
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         // HAT concepts are resolved first; render_hat_concept returns an empty
@@ -478,6 +503,9 @@ public namespace underlayer_web {
         // WebAssembly concepts next; same fall-through contract.
         var wasm_html = render_wasm_concept(concept_id)
         if(wasm_html.size() > 0) { return wasm_html }
+        // JVM class file concepts next; same fall-through contract.
+        var jvm_html = render_jvm_concept(concept_id)
+        if(jvm_html.size() > 0) { return jvm_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

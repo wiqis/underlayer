@@ -1,0 +1,113 @@
+{
+  "id": "jvm",
+  "title": "JVM Class File Format",
+  "version": "0.1.0",
+  "description": "The file a compiler emits and a virtual machine refuses to guess about. A magic number, two versions, a constant pool that everything else points into, a string encoding that is not the one it is named after, and a verifier's opinion of the code baked into the file itself.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "Java",
+  "difficulty": "intermediate",
+  "importance": "core",
+  "completion_criteria": "Decode a real class file end to end: header, constant pool, members, the Code attribute, and the two different offset conventions inside it.",
+  "min_score": 70,
+  "dependencies": [
+    "elf",
+    "coff"
+  ],
+  "modules": [
+    {
+      "id": "the-container",
+      "title": "The Container",
+      "concepts": [
+        "jvm-intro",
+        "jvm-header",
+        "jvm-constant-pool",
+        "jvm-strings"
+      ]
+    },
+    {
+      "id": "members-and-code",
+      "title": "Members and Code",
+      "concepts": [
+        "jvm-members",
+        "jvm-code",
+        "jvm-branches",
+        "jvm-stackmaps"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "jvm-intro",
+      "title": "Why a Class File",
+      "module_id": "the-container",
+      "description": "What the format is for, and the four independent implementations every claim in this course is checked against.",
+      "estimated_minutes": 15,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "jvm-header",
+      "title": "The Header and the Fixed Order",
+      "module_id": "the-container",
+      "description": "Eight bytes, two versions, and a layout that is not the order the source was written in.",
+      "estimated_minutes": 18,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "jvm-constant-pool",
+      "title": "The Constant Pool",
+      "module_id": "the-container",
+      "description": "Twenty tags, one-based indexing, and the two-slot rule that makes some indices permanently unusable.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "jvm-strings",
+      "title": "Modified UTF-8",
+      "module_id": "the-container",
+      "description": "The encoding CONSTANT_Utf8 actually uses: a two-byte NUL and a six-byte emoji.",
+      "estimated_minutes": 21,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "jvm-members",
+      "title": "Fields, Methods and Descriptors",
+      "module_id": "members-and-code",
+      "description": "The descriptor grammar, three separate access-flag tables, and the local slots a long parameter quietly costs two of.",
+      "estimated_minutes": 22,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "jvm-code",
+      "title": "The Code Attribute",
+      "module_id": "members-and-code",
+      "description": "max_stack, max_locals, the instruction array, and the nested attributes a method carries inside its own body.",
+      "estimated_minutes": 21,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "jvm-branches",
+      "title": "Two Offset Conventions",
+      "module_id": "members-and-code",
+      "description": "Branch offsets are relative to the instruction; exception table offsets are absolute. Plus switch padding and the wide prefix.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "jvm-stackmaps",
+      "title": "The Verifier's Data",
+      "module_id": "members-and-code",
+      "description": "StackMapTable, why a type checker writes its conclusions into the file, and what the frame types compress.",
+      "estimated_minutes": 23,
+      "difficulty": "advanced",
+      "importance": "core"
+    }
+  ]
+}
