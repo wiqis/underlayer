@@ -420,6 +420,42 @@ public namespace underlayer_web {
         return string()
     }
 
+    // WebAssembly course concept ids. Prefixed with `wasm-` to stay unique
+    // across courses (same convention as the `dwarf-`, `coff-` and `macho-`
+    // prefixes). Returns an empty string for ids it does not own, so
+    // render_concept can fall through.
+    public func render_wasm_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var intro_id = std::string("wasm-intro")
+        var header_id = std::string("wasm-header")
+        var sections_id = std::string("wasm-sections")
+        var leb128_id = std::string("wasm-leb128")
+        var types_id = std::string("wasm-types")
+        var imports_id = std::string("wasm-imports")
+        var tables_id = std::string("wasm-tables-memories")
+        var globals_id = std::string("wasm-globals")
+        var code_id = std::string("wasm-code")
+        var instructions_id = std::string("wasm-instructions")
+        var elements_id = std::string("wasm-elements")
+        var data_id = std::string("wasm-data")
+        var objects_id = std::string("wasm-objects")
+
+        if(cid.equals(&intro_id)) { return underlayer_content::render_wasm_intro() }
+        if(cid.equals(&header_id)) { return underlayer_content::render_wasm_header() }
+        if(cid.equals(&sections_id)) { return underlayer_content::render_wasm_sections() }
+        if(cid.equals(&leb128_id)) { return underlayer_content::render_wasm_leb128() }
+        if(cid.equals(&types_id)) { return underlayer_content::render_wasm_types() }
+        if(cid.equals(&imports_id)) { return underlayer_content::render_wasm_imports() }
+        if(cid.equals(&tables_id)) { return underlayer_content::render_wasm_tables_memories() }
+        if(cid.equals(&globals_id)) { return underlayer_content::render_wasm_globals() }
+        if(cid.equals(&code_id)) { return underlayer_content::render_wasm_code() }
+        if(cid.equals(&instructions_id)) { return underlayer_content::render_wasm_instructions() }
+        if(cid.equals(&elements_id)) { return underlayer_content::render_wasm_elements() }
+        if(cid.equals(&data_id)) { return underlayer_content::render_wasm_data() }
+        if(cid.equals(&objects_id)) { return underlayer_content::render_wasm_objects() }
+        return string()
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         // HAT concepts are resolved first; render_hat_concept returns an empty
@@ -439,6 +475,9 @@ public namespace underlayer_web {
         // COFF concepts next; same fall-through contract.
         var coff_html = render_coff_concept(concept_id)
         if(coff_html.size() > 0) { return coff_html }
+        // WebAssembly concepts next; same fall-through contract.
+        var wasm_html = render_wasm_concept(concept_id)
+        if(wasm_html.size() > 0) { return wasm_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

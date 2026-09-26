@@ -967,6 +967,34 @@ compiled on its own to establish whether it is actually a problem
   line*. `<tbody>` closed with `</thead>` is the shape. **Fix:** the reported
   line is the line after the real problem; count `<thead>`/`<tbody>`/`<table>`
   openers and closers.
+ - **A bare `<` followed by a lowercase word aborts the parse**, even when the
+   word is not a real HTML tag. Hit four times writing the WebAssembly course
+   (2026-09-26) with specification metavariables: `ref.null <heaptype>`,
+   `ref.func <funcidx>` and `memory.init <segidx>` inside `<pre>` blocks. This
+   is the mirror image of the bare-`<` rule above -- that one is `<` followed by
+   a non-letter, this one is `<` followed by a letter that does not begin a real
+   tag. **Fix:** `&lt;heaptype>`. To find them all: extract every
+   `<[a-zA-Z][a-zA-Z0-9]*` from the file and subtract the set of real HTML tags;
+   anything left is a metavariable.
+ - **A `<div class="formula">` containing a `</pre>` with no `<pre>` aborts the
+   parse**, and the reported line is the *next* `</div>`, so it looks like a
+   mismatched-tag error. Hit three times in the WebAssembly objects concept. The
+   40 existing `formula` blocks in `elf_*.ch`, `coff_*.ch` and `dwarf_*.ch`
+   contain **no** `<pre>` at all, so the house style is a bare `formula` div.
+   **Fix:** either add the matching `<pre>` or drop the `</pre>`. Note that
+   `.formula` has no `white-space: pre` in `lesson_assets.ch` -- only
+   `.lesson pre` does -- so aligned art inside a `formula` div is *not*
+   whitespace-preserving. That is a pre-existing styling gap in those 40 blocks,
+   not something to fix while chasing a parse error.
+ - **An unclosed `<div>` aborts the parse** and reports "expected a `</` for
+   ending the element" at the **closing `}` of the `#html` macro** -- not at the
+   div. Hit once in the WebAssembly objects concept, where a `unit-example`
+   block was missing its closer. **Fix:** compare counts per file,
+   `grep -o '<div\b' | wc -l` against `grep -o '</div>' | wc -l`. A mismatch of
+   exactly one *with a correct-looking tail* means a mid-file block was never
+   closed, because the final `</div>` silently does the outer `.lesson` div's
+   job. Pairing the two lists in nesting order finds the unpaired opener
+   immediately.
 
 **Proven NOT to be problems.** Several plausible-looking suspects turned out to
 compile cleanly, and two of them had already been "fixed" in real content before
@@ -1177,3 +1205,37 @@ Both found while writing the DWARF Module 3 concepts:
 Still proven fine, so do not "fix" them: `C++` in `#html` text, a lone `/` as
 element text, and `@` anywhere including inside a `<code>` element (a full
 MSVC-mangled `??_C@_03PLHFFLIH@ptr?$AA@` name compiles unchanged).
+
+## No `wasm-ld` on this machine
+
+The WebAssembly course teaches the whole core format, and the object format's
+**input** side is fully verified: `linking`, `reloc.CODE`, `producers` and
+`target_features` all appear in files `clang --target=wasm32 -c` produces on this
+machine, and the `reloc.CODE` record is read in full. What is **blocked, not
+unwritten**, is the output side: what a linker *does* with those records.
+Confirmed absent: `wasm-ld`, `ld.lld`, `lld`, `wasm-ld` under any prefix, and
+`rust-lld`. `clang --target=wasm32 -fuse-ld=lld` cannot substitute, because the
+binary is what is missing.
+
+Present and used instead: `clang --target=wasm32` as the producer, wabt 1.0.36
+(`wat2wasm`, `wasm-objdump`, `wasm-validate`, `wasm2c`, `wasm2wat`) and the LLVM
+toolchain (`llvm-objdump`, `llvm-readobj`) as two independent readers, plus the
+course's own `wasm_decode.py`.
+
+Two consequences worth remembering:
+
+- **Four of the eight element forms and all three data forms had to be
+  hand-assembled**, because `wat2wasm` normalises the expression forms down to
+  the function-index forms. Confirming a hand-built file with `wasm-validate`
+  plus `wasm-objdump -x` is the substitute for a producer, and it is
+  sufficient — but say in the course that the bytes were hand-built.
+- **The data symbol record in the `linking` subsection was not fully
+  reconciled.** The framing, the five-byte LEB128 at both nesting levels, the
+  version, the subsection structure and the first symbol are verified; the
+  second symbol leaves two bytes unaccounted for. Recorded as
+  encountered-not-decoded in `courses/wasm/research.md`. Do not fill this in by
+  reasoning about the specification — the bytes on disk do not yet reconcile, and
+  the desync symptom (subsection ids reported as 2, 4, 3 where the bytes say 5)
+  is more useful in the course than a guess would be.
+
+Revisit on a machine with `wasm-ld`.

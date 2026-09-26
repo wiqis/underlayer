@@ -1,0 +1,181 @@
+{
+  "id": "wasm",
+  "title": "WebAssembly — The Binary Format",
+  "version": "1.0.0",
+  "description": "The container a compiler and a runtime agree on. Eight bytes of header, thirteen section kinds in a required order, one variable-width encoding governing almost every number in between, and the object format the core specification deliberately does not define.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "C",
+  "difficulty": "intermediate",
+  "importance": "core",
+  "completion_criteria": "Read the container framing end to end, explain why each field is the width it is, and decode every declaration section of a real module by hand.",
+  "min_score": 70,
+  "dependencies": [
+    "elf",
+    "coff"
+  ],
+  "modules": [
+    {
+      "id": "the-container",
+      "title": "The Container",
+      "concepts": [
+        "wasm-intro",
+        "wasm-header",
+        "wasm-sections",
+        "wasm-leb128"
+      ]
+    },
+    {
+      "id": "declarations",
+      "title": "Declarations",
+      "concepts": [
+        "wasm-types",
+        "wasm-imports",
+        "wasm-tables-memories",
+        "wasm-globals"
+      ]
+    },
+    {
+      "id": "the-body",
+      "title": "The Body",
+      "concepts": [
+        "wasm-code",
+        "wasm-instructions"
+      ]
+    },
+    {
+      "id": "data-placement",
+      "title": "Data Placement",
+      "concepts": [
+        "wasm-elements",
+        "wasm-data"
+      ]
+    },
+    {
+      "id": "objects",
+      "title": "Objects and Tooling",
+      "concepts": [
+        "wasm-objects"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "wasm-intro",
+      "title": "Why a Binary Format",
+      "module_id": "the-container",
+      "description": "What the format is for, and the three independent readers every claim in this course is cross-checked against.",
+      "estimated_minutes": 15,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "wasm-header",
+      "title": "The Eight-Byte Header",
+      "module_id": "the-container",
+      "description": "The only fixed-width integers in the framing: a magic compared byte by byte and a version read as a little-endian number.",
+      "estimated_minutes": 17,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "wasm-sections",
+      "title": "Sections",
+      "module_id": "the-container",
+      "description": "The framing, the fourteen identifiers, the ordering rule, and a place where two reference tools report different numbers for the same custom section.",
+      "estimated_minutes": 23,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "wasm-leb128",
+      "title": "LEB128",
+      "module_id": "the-container",
+      "description": "The encoding almost every number uses, and the signed/unsigned split that gives the same two bytes three different answers.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "wasm-types",
+      "title": "The Type Section",
+      "module_id": "declarations",
+      "description": "Five value types, one form tag, and why a signature's identity is a position rather than a name.",
+      "estimated_minutes": 20,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "wasm-imports",
+      "title": "Imports and Index Spaces",
+      "module_id": "declarations",
+      "description": "Per-kind import bodies, and the rule that puts imports first in all five index spaces.",
+      "estimated_minutes": 22,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "wasm-tables-memories",
+      "title": "Tables, Memories and Limits",
+      "module_id": "declarations",
+      "description": "One flag byte that is a length in disguise, shared by three proposals.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "wasm-globals",
+      "title": "Globals and Initialisers",
+      "module_id": "declarations",
+      "description": "Mutability as the module's whole safety story, and an initialiser that is an expression to be walked.",
+      "estimated_minutes": 19,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "wasm-code",
+      "title": "The Code Section",
+      "module_id": "the-body",
+      "description": "Body framing, run-length local declarations, and why the group count is not the number of locals.",
+      "estimated_minutes": 22,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "wasm-instructions",
+      "title": "Instruction Encoding",
+      "module_id": "the-body",
+      "description": "The one-byte opcode space, the reserved top four bits, and the immediates that hide in plain sight.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "wasm-elements",
+      "title": "The Element Section",
+      "module_id": "data-placement",
+      "description": "Eight encodings for one job, the flag byte, and the elemkind byte whose only legal value is zero.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "wasm-data",
+      "title": "The Data Section and DataCount",
+      "module_id": "data-placement",
+      "description": "Three data forms, and the four-byte section that exists only to let an earlier one be checked.",
+      "estimated_minutes": 21,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "wasm-objects",
+      "title": "Objects, Linking and Relocations",
+      "module_id": "objects",
+      "description": "Custom sections the core ignores, the five-byte LEB128 every real object uses, and a relocation that patches code.",
+      "estimated_minutes": 23,
+      "difficulty": "advanced",
+      "importance": "core"
+    }
+  ]
+}

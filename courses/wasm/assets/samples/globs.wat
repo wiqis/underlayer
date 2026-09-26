@@ -1,0 +1,10 @@
+(module
+  (global $a i32 (i32.const 0))
+  (global $b i32 (i32.const 42))
+  (global $c i32 (i32.const -1))
+  (global $d i32 (i32.const -1000000))
+  (global $e i32 (i32.const 2147483647))
+  (global $f i32 (i32.const -2147483648))
+  (global $g i64 (i64.const -1))
+  (global $h i64 (i64.const 9223372036854775807))
+)
