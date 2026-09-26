@@ -466,9 +466,13 @@ public namespace underlayer_web {
         var cid = concept_id.copy()
         var intro_id = std::string("obj-intro")
         var hole_id = std::string("obj-the-hole")
+        var triangulate_id = std::string("obj-triangulate")
+        var no_segments_id = std::string("obj-no-segments")
 
         if(cid.equals(&intro_id)) { return underlayer_content::render_obj_intro() }
         if(cid.equals(&hole_id)) { return underlayer_content::render_obj_the_hole() }
+        if(cid.equals(&triangulate_id)) { return underlayer_content::render_obj_triangulate() }
+        if(cid.equals(&no_segments_id)) { return underlayer_content::render_obj_no_segments() }
         return string()
     }
 

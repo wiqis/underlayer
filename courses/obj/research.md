@@ -312,3 +312,105 @@ operand is 7 bytes).
   and must state which entries are object-only versus executable-only.
 - **Archive (`ar`) specimens not yet staged.** Finding set covers `ar` as
   available, not as used.
+
+---
+
+## Module 1 findings (added while writing the first four concepts)
+
+### 14. The four holes land on the trailing disp32 of three different instruction lengths
+
+`llvm-objdump-21 -d --section=.text demo_elf.o`, real bytes:
+
+    0000 <compute>:
+       0: 01 ff                    addl %edi, %edi      2 bytes
+       2: 03 3d 00 00 00 00        addl (%rip), %edi    6 bytes
+       8: 8b 05 00 00 00 00        movl (%rip), %eax    6 bytes
+       e: 01 f8                    addl %edi, %eax      2 bytes
+      10: 83 c0 03                 addl $0x3, %eax      3 bytes
+      13: c3                       retq                 1 byte
+    0020 <call_out>:
+      20: e9 00 00 00 00           jmp 0x25             5 bytes
+    0030 <use_data>:
+      30: 48 8b 05 00 00 00 00     movq (%rip), %rax    7 bytes
+
+The relocation offsets are `0x04, 0x0a, 0x21, 0x33` and they are the trailing
+4-byte `disp32` of a **6-byte**, a **6-byte**, a **5-byte** and a **7-byte**
+encoding. So a relocation offset is *not* an instruction boundary, and three
+different instruction lengths share the same 4-byte field. `.text` is 62 bytes
+and `use_data` ends at 0x3e.
+
+**No relocation for `private_counter`.** It is a file-local `int` initialised to
+3, so clang folded it into the immediate `addl $0x3` at offset 0x10. Only a
+`static`'s value can be folded; a global's cannot, because another translation
+unit may change it. `global_counter` (7) is also global and is *not* folded.
+
+### 15. Zero program headers in all three objects, twelve in a linked ELF
+
+`readelf -lW demo_elf.o` prints, verbatim: **"There are no program headers in
+this file."** Checked across the set: ELF 0 program headers, COFF no base
+relocations and no directories, Mach-O no `LC_SEGMENT_64`. Three mechanisms,
+one shared refusal — and it is an impossibility rather than an omission, because
+every segment field depends on the final layout.
+
+The linked counterpart, built on this machine from `exe.c` + `other.c`:
+
+    size 1952 -> 16136      e_type REL -> DYN (PIE)      entry 0x0 -> 0x1040
+    sections 16 -> 31       program headers 0 -> 12
+
+    LOAD  offset 0x000000  vaddr 0x00000000  filesz 0x5e8  R    0x1000
+    LOAD  offset 0x001000  vaddr 0x00001000  filesz 0x181  R E  0x1000
+    LOAD  offset 0x002000  vaddr 0x00002000  filesz 0x160  R    0x1000
+    LOAD  offset 0x002e00  vaddr 0x00003e00  filesz 0x220  RW   0x1000
+                                        ^^^^^^^^
+    the RW segment's file offset and load address differ by exactly one page
+
+Sections went **up**, not down. The linker creates `.interp`, `.dynamic`,
+`.got`, `.plt`, `.rela.dyn`, `.rela.plt`, `.init_array`, `.fini_array` and the
+output's own `.symtab`/`.strtab`/`.shstrtab` — none of which any compiler
+emitted. **A linker generates structure, it does not only fill holes.**
+
+And the relocations change species: the object's four are symbol-relative and
+all unresolvable locally; in the executable there are **zero** against
+`external_fn` and what remains is `R_X86_64_RELATIVE` (add the load base to
+what is already here) and `R_X86_64_GLOB_DAT` (ask the dynamic linker).
+
+### 16. `nm` across the three formats, side by side
+
+    SYMBOL          ELF          COFF              Mach-O
+    compute         00000000 T   00000000 T        00000000 T _compute
+    call_out        00000020 T   00000020 T        00000020 T _call_out
+    use_data        00000030 T   00000030 T        00000030 T _use_data
+    global_counter  00000000 D   00000000 D        00000048 D _global_counter
+    message         00000008 D   00000008 D        00000050 D _message
+    message_bytes   00000000 R   00000000 R        0000005e S _message_bytes
+    uninitialised   00000000 B   00000000 B        000000f8 S _uninitialised
+    external_fn     undefined    undefined         undefined U _external_fn
+    literal         --           00000000 R ??_C@_05CJBACGMB@hello?$AA@
+    clang marker    --           00000000 a @feat.00   --
+
+- **Code offsets are byte-identical across all three** (0, 0x20, 0x30) because
+  `.text` comes first with nothing before it. A coincidence of ordering, not a
+  property of the formats.
+- **Data differs**: Mach-O reports real addresses (`0x48` = `__data`, `0x58` =
+  `__cstring`, `0x5e` = `__const`, `0xf8` = `__common`).
+- **Mach-O collapses `R` and `B` into `S`.** Not information loss in the file:
+  `__cstring` has `Offset: 792` (real bytes) and `__common` has `Offset: 0` (no
+  bytes). `nm` is what loses it.
+- **COFF has two extra symbols**: the MSVC-mangled string literal, and
+  `@feat.00`, a clang-internal marker letting C output be consumed by a C++
+  linker. ELF has 12 `.symtab` entries against COFF's 10 and Mach-O's 8: the
+  extras are one `STT_FILE` entry and `STT_SECTION` entries for **only**
+  `.text` and `.rodata.str1.1` — demand-driven, since only those two are the
+  target of a relocation. `.data` has a relocation and gets **no** section
+  symbol.
+
+### Module 1 harness state
+
+No automated crosscheck yet for the object course (recorded as a known gap in
+"Not established"). Everything above is from `llvm-readobj-21`,
+`llvm-objdump-21`, `llvm-nm-21`, `readelf` and hand-decoding, on files that are
+committed and byte-reproducible. One error was caught and corrected **during**
+writing: a plausible-looking x86-64 disassembly listing was written from memory
+into `obj-the-hole`, and replaced with the real bytes from `llvm-objdump-21`
+once finding 14 was measured. **That is the mission's rule working: the claim was
+checked, and the claim was wrong.**

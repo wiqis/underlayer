@@ -14,6 +14,14 @@ public func main() : int {
     fs::write_text_file("output/obj-the-hole.html", html.data() as *u8, html.size())
     printf("  -> obj-the-hole.html\n")
 
-    printf("Object Files: 2 of 18 concepts generated in output/\n")
+    html = underlayer_content::render_obj_triangulate()
+    fs::write_text_file("output/obj-triangulate.html", html.data() as *u8, html.size())
+    printf("  -> obj-triangulate.html\n")
+
+    html = underlayer_content::render_obj_no_segments()
+    fs::write_text_file("output/obj-no-segments.html", html.data() as *u8, html.size())
+    printf("  -> obj-no-segments.html\n")
+
+    printf("Object Files: 4 of 18 concepts generated in output/\n")
     return 0
 }
