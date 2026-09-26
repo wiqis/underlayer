@@ -983,3 +983,152 @@ meet `DW_FORM_line_strp` whose target section does not exist.
   from relocations. `dwarf-rnglists` makes that distinction explicit and tells
   the reader to link the object rather than presenting the second while showing
   evidence for the first.
+
+---
+
+# Phase A record — Module 5: The Format on Other Inputs
+
+Module 4's record left a list of gaps. This section records which of them were
+closed by Module 5, which were closed by a finding rather than a concept, and
+which remain blocked.
+
+## Closed
+
+| Gap from the Module 4 record | How |
+|---|---|
+| DWARF 4 never exercised | `gcc -gdwarf-4` and `clang -gdwarf-4` both work. Header decoded: 11 bytes, first DIE at `0xb`, confirming the prediction the portability concept made |
+| `.debug_frame` never decoded | `gcc -fno-asynchronous-unwind-tables` emits it and suppresses `.eh_frame` |
+| Type units | `gcc -fdebug-types-section`, at both `-gdwarf-4` and `-gdwarf-5` |
+| Call site information | `gcc -gdwarf-5 -O2` on a file with a loop and a tail call |
+| `.debug_addr` / `.debug_str_offsets` | clang emits both at `-gdwarf-5` |
+
+## The findings
+
+### 1. The type signature is 16 bytes and readelf shows you 8
+
+The strongest finding in the module, and the one the course is proudest of.
+
+DWARF 4 puts type units in `.debug_types`; DWARF 5 puts them in `.debug_info`
+with `unit_type = 2`. Both builds of the same type, from the same compiler:
+
+```
+v4, in .debug_types:  89 5c 02 be  e0 73 7e 69  1d 00 00 00  01 0c 00 00
+v5, in .debug_info :  89 5c 02 be  e0 73 7e 69  23 00 00 00  01 1d 03 47
+```
+
+`readelf` reports `Signature: 0x697e73e0be025c89` for **both**. But split into
+four 32-bit words:
+
+| Word | v4 | v5 | Same? |
+|---|---|---|---|
+| u32[0] | `0xbe025c89` | `0xbe025c89` | yes |
+| u32[1] | `0x697e73e0` | `0x697e73e0` | yes |
+| u32[2] | `0x0000001d` | `0x00000023` | **no** |
+| u32[3] | `0x00000c01` | `0x47031d01` | **no** |
+
+`readelf`'s printed value is u32[1]:u32[0], i.e. the first eight bytes only.
+
+**`u32[2]` is the unit's own `type_offset`.** `readelf` reports `Type Offset:
+0x1d` for v4 and `0x23` for v5, matching u32[2] exactly in both. So the field
+labelled a 16-byte *signature* contains a copy of a structural field, and
+`readelf` displays only the half that happens to be version-stable.
+
+**Established:** the structure above, from the bytes.
+**Not established:** why the offset is in the signature. A hash over a
+canonicalised type that happens to include the DIE's position would explain it,
+and would be a defect since a cross-compilation identifier should not depend on
+encoding. No second implementation on this machine reads the low half, so this
+is recorded as an open question rather than answered.
+
+### 2. `readelf` prints one third of the DWARF 4 abbreviation form set
+
+v4 and v5 side by side, from `readelf --debug-dump=abbrev`:
+
+```
+v4:  DW_FORM_sec_offset  DW_FORM_string  DW_FORM_strp
+v5:  DW_FORM_addrx       DW_FORM_sec_offset  DW_FORM_strx
+```
+
+And the v4 file has no `.debug_addr`, no `.debug_str_offsets` and no
+`.debug_line_str` at all. The sections are absent because the forms are absent.
+
+### 3. A tail call, verified field by field against three instructions
+
+`calls.c` at `-O2`. The debug info and the machine code agree on everything:
+
+| DWARF | Machine code |
+|---|---|
+| `DW_AT_high_pc : 0xe` (14 bytes) | last instruction ends at 9+5 = 14 |
+| `DW_AT_call_tail_call : 1` | `e9 00 00 00 00` — a `jmp`, not a `call` |
+| `DW_AT_call_origin : <0x80>` → `f` | the jump target |
+| `DW_AT_location : 55` = `DW_OP_reg5` = rdi | `bf 03 00 00 00  mov $0x3,%edi` |
+| `DW_AT_call_value : 33` = `DW_OP_lit3` | `mov $0x3` — the literal 3 |
+| `DW_AT_call_return_pc : 0xe` | the address just past the `jmp` |
+
+Nothing in that table needed to be taken on trust.
+
+### 4. `DW_AT_call_origin` names the callee, not the kind of call
+
+Two call sites, two very different origins:
+
+- In `main` (the tail call): `DW_AT_call_origin : <0x80>` → **`f`'s
+  definition**, plus `DW_AT_call_tail_call : 1`.
+- In `f` (an ordinary call): `DW_AT_call_origin : <0x2f>` → **`g`'s
+  declaration**, which has `DW_AT_declaration : 1` and no `DW_AT_low_pc`.
+
+So a subprogram origin does not mean "tail call". `DW_AT_call_tail_call` is the
+only field that answers that question. A reader that inspects the origin's
+contents misclassifies every ordinary call to a declared function.
+
+The second call site also has a computed argument: `DW_AT_call_value : 73 7f` =
+`DW_OP_breg3` with a one-byte SLEB128 `0x7f` = **-1**, so `rbx - 1`. Read
+unsigned it is 127, and the debugger is wrong on every call.
+
+### 5. `.debug_frame`'s CIE pointer is absolute; `.eh_frame`'s is pc-relative
+
+`frame.o`, 144 bytes, decoded by hand and agreeing with `readelf`:
+
+```
+0018: 24 00 00 00   FDE length 36
+001c: 00 00 00 00   CIE_pointer = 0     <- absolute; .eh_frame would be pcrel
+0020: 00 00 00 00 00 00 00 00   pc_begin = 0
+0028: 2a 00 00 00 00 00 00 00   range    = 42
+```
+
+The CIE marker differs too: `ff ff ff ff` in `.debug_frame`, `00 00 00 00` in
+`.eh_frame`. Same field, same four bytes, different meaning.
+
+**This particular file is the one case where the two readings agree** — the CIE
+is at offset 0 and the field value is 0. That is stated in the concept, because
+it is why the bug is easy to miss. An FDE at offset `0x30` in the same section
+would have exposed it immediately.
+
+## Encountered, not decoded: `.debug_macro`
+
+`gcc -g3 -gdwarf-5` emits `.debug_macro` (2524 bytes in a linked binary) and
+`clang -g3 -gdwarf-4 -fdebug-macro` emits `.debug_macinfo`. Both are real
+opcode tables like `.debug_line`.
+
+**Not taught.** The unit header could not be reconciled: the leading bytes are
+`05 00 02 00 00 00 00`, which read as a `unit_length` of 131077 in a 2524-byte
+section, and `readelf`'s own summary does not present them as a length either.
+Relocations did not resolve it — the linked binary shows the same bytes. Working
+out why would need more verification than the remaining budget justified, and
+the course's rule is not to teach what cannot be checked. Recorded here as
+encountered.
+
+## Still blocked
+
+Unchanged from the Module 4 record:
+
+- **The indexed list opcodes** (`DW_LLE_base_addressx`, `startx_endx`,
+  `startx_length`, and the `DW_RLE` equivalents). Every section on this machine
+  has `offset_entry_count = 0`, and all four need a non-zero count.
+- **DWARF64.** Needs 4 GB of debug information.
+- **The `.debug_cu_index` tail.** 64 of 144 bytes unaccounted for; a 16-byte
+  block is visibly duplicated at `0x60` and `0x70`. Not taught, not guessed.
+- **`.debug_rnglists` resolved addresses** on an object file — the offsets are
+  verifiable, the addresses come from relocations, so the linked binary is the
+  right place and the concept says so.
+- **Supplementary object files.** 0 mentions in the course. No producer on this
+  machine emits one, so there is no file to check a claim against.

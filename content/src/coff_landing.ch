@@ -33,10 +33,10 @@ public func render_coff_landing() : string {
                 <h1>COFF &mdash; Common Object File Format</h1>
                 <p class="course-description">The container a compiler hands the linker. COFF is why a function compiled in one file can be called from another: the compiler writes down the question instead of the answer, and the relocation table holds the questions. It is also, deliberately, not a format you can run &mdash; which is the one field that tells you so.</p>
                 <div class="course-meta">
-                    <span class="meta-item">4 modules</span>
-                    <span class="meta-item">14 concepts</span>
+                    <span class="meta-item">5 modules</span>
+                    <span class="meta-item">18 concepts</span>
                     <span class="meta-item">Intermediate</span>
-                    <span class="meta-item">~256 min</span>
+                    <span class="meta-item">~334 min</span>
                 </div>
             </div>
 
@@ -58,6 +58,23 @@ public func render_coff_landing() : string {
                         <li><a href="/courses/coff/lessons/coff-section-table">The Section Header</a> <span class="concept-time">18 min</span></li>
                         <li><a href="/courses/coff/lessons/coff-characteristics">Section Characteristics</a> <span class="concept-time">17 min</span></li>
                     </ul>
+
+                <div class="module">
+                    <h2>Module 5: Other Targets and Other Sections</h2>
+                    <p>Three targets and three sections, chosen because each one breaks an assumption the
+                    first four modules relied on. A different machine needs different relocations, and some of
+                    them are not self-contained. A thread-local has no single address. A reference is allowed
+                    to go unresolved. And one section's contents are not the program's contents at all.</p>
+                    <ul class="concept-list">
+                        <li><a href="/courses/coff/lessons/coff-arm64">ARM64 Relocations</a> <span class="concept-time">22 min</span></li>
+                        <li><a href="/courses/coff/lessons/coff-tls">Thread Local Storage</a> <span class="concept-time">19 min</span></li>
+                        <li><a href="/courses/coff/lessons/coff-weak-externals">Weak Externals</a> <span class="concept-time">19 min</span></li>
+                        <li><a href="/courses/coff/lessons/coff-drectve">Linker Directives in a Section</a> <span class="concept-time">18 min</span></li>
+                    </ul>
+                    <p class="module-note">All four were produced on this machine and read out of real files, with the
+                    one exception stated plainly in the TLS concept: GNU ld's PE mode has no TLS runtime, so that
+                    link cannot be completed here and the concept says so instead of guessing.</p>
+                </div>
                 </div>
 
                 <div class="module">

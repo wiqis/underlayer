@@ -33,10 +33,10 @@ public func render_dwarf_landing() : string {
                 <h1>DWARF &mdash; The Debugging Data Format</h1>
                 <p class="course-description">The file format that takes a program apart and puts the source back. DWARF is how a debugger turns the address <code>0x1154</code> into "line 15 of shape.c", and it is the companion to the ELF, PE and Mach-O courses you have already met: those teach you how a binary is loaded and run, this one teaches how it is read.</p>
                 <div class="course-meta">
-                    <span class="meta-item">4 modules</span>
-                    <span class="meta-item">19 concepts</span>
+                    <span class="meta-item">5 modules</span>
+                    <span class="meta-item">23 concepts</span>
                     <span class="meta-item">Intermediate</span>
-                    <span class="meta-item">~366 min</span>
+                    <span class="meta-item">~450 min</span>
                 </div>
             </div>
 
@@ -57,6 +57,25 @@ public func render_dwarf_landing() : string {
                         <li><a href="/courses/dwarf/lessons/dwarf-sections">The .debug_* Sections</a> <span class="concept-time">16 min</span></li>
                         <li><a href="/courses/dwarf/lessons/dwarf-versions">DWARF 2, 3, 4 and 5</a> <span class="concept-time">18 min</span></li>
                     </ul>
+
+                <div class="module">
+                    <h2>Module 5: The Format on Other Inputs</h2>
+                    <p>Everything before this module read one version of DWARF, from one toolchain, on one
+                    machine &mdash; which is the newest version rather than the most common one. This module
+                    produces the other configurations and puts them beside it: a version from before the
+                    version 5 restructure, a second kind of compilation unit, the parts of a DIE tree that
+                    describe calls that already returned, and the unwind section that is not the one the
+                    frames concept decoded.</p>
+                    <ul class="concept-list">
+                        <li><a href="/courses/dwarf/lessons/dwarf-v4">DWARF 4 in Practice</a> <span class="concept-time">20 min</span></li>
+                        <li><a href="/courses/dwarf/lessons/dwarf-type-units">Type Units</a> <span class="concept-time">21 min</span></li>
+                        <li><a href="/courses/dwarf/lessons/dwarf-call-sites">Call Sites</a> <span class="concept-time">22 min</span></li>
+                        <li><a href="/courses/dwarf/lessons/dwarf-frame">The Other Unwind Section</a> <span class="concept-time">21 min</span></li>
+                    </ul>
+                    <p class="module-note">The type-units concept contains a finding worth reading for even if you
+                    skip the rest: <code>readelf</code> prints only eight of a type signature's sixteen bytes, and
+                    the other eight are not all hash material.</p>
+                </div>
                 </div>
 
                 <div class="module">

@@ -66,11 +66,29 @@ public func main() : int {
     fs::write_text_file("output/coff-comdat-linking.html", html.data() as *u8, html.size())
     printf("  -> coff-comdat-linking.html\n")
 
+
+    // Module 5: Other Targets and Other Sections
+    html = underlayer_content::render_coff_arm64()
+    fs::write_text_file("output/coff-arm64.html", html.data() as *u8, html.size())
+    printf("  -> coff-arm64.html\n")
+
+    html = underlayer_content::render_coff_tls()
+    fs::write_text_file("output/coff-tls.html", html.data() as *u8, html.size())
+    printf("  -> coff-tls.html\n")
+
+    html = underlayer_content::render_coff_weak_externals()
+    fs::write_text_file("output/coff-weak-externals.html", html.data() as *u8, html.size())
+    printf("  -> coff-weak-externals.html\n")
+
+    html = underlayer_content::render_coff_drectve()
+    fs::write_text_file("output/coff-drectve.html", html.data() as *u8, html.size())
+    printf("  -> coff-drectve.html\n")
+
     // Landing page
     html = underlayer_content::render_coff_landing()
     fs::write_text_file("output/index.html", html.data() as *u8, html.size())
     printf("  -> index.html\n")
 
-    printf("COFF course: 14 concepts + landing page generated in output/\n")
+    printf("COFF course: 18 concepts + landing page generated in output/\n")
     return 0
 }

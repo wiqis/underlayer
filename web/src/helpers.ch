@@ -288,6 +288,10 @@ public namespace underlayer_web {
         var rnglists_id = std::string("dwarf-rnglists")
         var portability_id = std::string("dwarf-portability")
         var packages_id = std::string("dwarf-packages")
+        var v4_id = std::string("dwarf-v4")
+        var typeunits_id = std::string("dwarf-type-units")
+        var callsites_id = std::string("dwarf-call-sites")
+        var frame_id = std::string("dwarf-frame")
 
         if(cid.equals(&intro_id)) { return underlayer_content::render_dwarf_intro() }
         if(cid.equals(&sections_id)) { return underlayer_content::render_dwarf_sections() }
@@ -308,6 +312,10 @@ public namespace underlayer_web {
         if(cid.equals(&rnglists_id)) { return underlayer_content::render_dwarf_rnglists() }
         if(cid.equals(&portability_id)) { return underlayer_content::render_dwarf_portability() }
         if(cid.equals(&packages_id)) { return underlayer_content::render_dwarf_packages() }
+        if(cid.equals(&v4_id)) { return underlayer_content::render_dwarf_v4() }
+        if(cid.equals(&typeunits_id)) { return underlayer_content::render_dwarf_type_units() }
+        if(cid.equals(&callsites_id)) { return underlayer_content::render_dwarf_call_sites() }
+        if(cid.equals(&frame_id)) { return underlayer_content::render_dwarf_frame() }
         return string()
     }
 
@@ -330,6 +338,10 @@ public namespace underlayer_web {
         var linking_id = std::string("coff-linking")
         var mapfiles_id = std::string("coff-map-files")
         var comdatlinking_id = std::string("coff-comdat-linking")
+        var arm64_id = std::string("coff-arm64")
+        var tls_id = std::string("coff-tls")
+        var weak_id = std::string("coff-weak-externals")
+        var drectve_id = std::string("coff-drectve")
 
         if(cid.equals(&intro_id)) { return underlayer_content::render_coff_intro() }
         if(cid.equals(&fileheader_id)) { return underlayer_content::render_coff_file_header() }
@@ -345,6 +357,10 @@ public namespace underlayer_web {
         if(cid.equals(&linking_id)) { return underlayer_content::render_coff_linking() }
         if(cid.equals(&mapfiles_id)) { return underlayer_content::render_coff_map_files() }
         if(cid.equals(&comdatlinking_id)) { return underlayer_content::render_coff_comdat_linking() }
+        if(cid.equals(&arm64_id)) { return underlayer_content::render_coff_arm64() }
+        if(cid.equals(&tls_id)) { return underlayer_content::render_coff_tls() }
+        if(cid.equals(&weak_id)) { return underlayer_content::render_coff_weak_externals() }
+        if(cid.equals(&drectve_id)) { return underlayer_content::render_coff_drectve() }
         return string()
     }
 

@@ -596,3 +596,150 @@ the opposite. The concept now teaches what happened.
   externals.
 - **Reading a bigobj.** Still no implementation on this machine. Module 3's
   position is unchanged and is not revisited here.
+
+---
+
+# Phase A record — Module 5: Other Targets and Other Sections
+
+Module 4's record listed what was blocked. This section records Module 5's
+producibility sweep, because the method mattered: **every candidate gap was
+tested for producibility before anything was written**, and one candidate was
+dropped as a result.
+
+## The sweep, and what it changed
+
+| Candidate | Producible on this machine? | Outcome |
+|---|---|---|
+| ARM64 relocations | yes — `clang --target=aarch64-pc-windows-msvc` | written |
+| `.tls$` | yes — `__declspec(thread)` emits section 4 | written |
+| Weak externals | yes — both a weak definition and a weak extern | written |
+| `.drectve` | yes — `#pragma comment(linker, ...)` | written |
+| `.debug_frame` (DWARF side) | yes | written, in the DWARF course |
+| `.sxdata` | no | not written |
+| `LNK_NRELOC_OVFL` as a distinct flag | no | folded into `.drectve` |
+
+`clang --target=aarch64-pc-windows-msvc` works with no MSVC toolchain, exactly
+as `--target=i686-pc-windows-msvc` did for Module 1. The lesson from Module 4
+held: **check the toolchain before writing "blocked".**
+
+## Verified for Module 5
+
+### ARM64
+
+Five relocation types from a four-function file, and the offsets are the finding:
+
+```
+0x00 PAGEBASE_REL21  gvar      0x04 PAGEOFFSET_12L  gvar
+0x18 PAGEBASE_REL21  gvar      0x1C PAGEOFFSET_12L  gvar
+0x38 PAGEBASE_REL21  arr       0x3C PAGEOFFSET_12A  arr
+0x64 BRANCH26        rd        0x74 BRANCH26        wr
+```
+
+Three pairs four bytes apart naming the same symbol, then two lone branches.
+The `A`/`L` suffix is the only thing distinguishing the two page-offset
+relocations, and both fill a 12-bit field with the offset within the page — so
+misreading the suffix writes a *valid* value with the wrong meaning.
+
+`.text` characteristics differ by target: `0x60500020` on i386, `0x60300020` on
+ARM64. The difference is alignment only.
+
+**Linking ARM64 is impossible here**: `ld` supports `elf_x86_64 elf_i386
+elf32_x86_64 elf_iamcu i386pep i386pe` and no `aarch64pe`. So the relocation
+*table* is verified and the relocation *application* is not. The concept says so.
+
+### TLS
+
+`__declspec(thread) int counter = 5;` plus a thread-local array produces:
+
+```
+sec1  .text     char=0x60500020
+sec2  .data     char=0xc0300040
+sec3  .bss      char=0xc0300080
+sec4  .tls$     char=0xc0300040     <- byte-identical to .data
+sec5  .debug$S  char=0x42300040
+sec6  /4        char=0x00100800
+```
+
+**Section 4's characteristics equal section 2's exactly.** Nothing in the numeric
+fields marks it as thread-local; only the name does. Contents are the
+initial-value template, not addresses.
+
+**The link fails**, which is the honest boundary:
+
+```
+undefined reference to `_tls_index'
+undefined reference to `_tls_array'
+```
+
+GNU ld's PE mode reads the section and plans to place it as `.tls` — the map
+file it produced before failing contains a `.tls` row, which is direct evidence
+of the input/output rename — but has no PE TLS runtime, so it cannot complete.
+
+### Weak externals
+
+```
+Name: _other_fn
+Section: IMAGE_SYM_UNDEFINED (0)
+StorageClass: WeakExternal (0x69)     0x69 = 105
+AuxSymbolCount: 1
+AuxWeakExternal {
+  Linked: .weak._other_fn.default._call (17)
+  Search: Alias (0x3)
+}
+```
+
+The fallback is symbol 17, an **absolute** symbol at value 0 named
+`.weak._other_fn.default._call`. So the address of a missing function is the
+address of a name — which is why the caller must test the pointer, and why the
+generated code is a load/test/branch rather than a direct call:
+
+```
+0: 84 c0        test %eax,%eax
+2: 74 03        je 7
+4: ff d0        call *%eax
+6: c3           ret
+7: 31 c0        xor %eax,%eax
+9: c3           ret
+```
+
+**Unresolved disagreement, recorded rather than settled:** the file's
+`Characteristics` is `03`, which the specification defines as
+`IMAGE_WEAK_EXTERN_SEARCH_ANTI_DEPENDENCY`, but `llvm-readobj` prints
+`Search: Alias (0x3)` and `Alias` is the label for `02`. There is no second
+independent reader of this field on this machine. The concept states the value,
+states the specification's naming, and does not claim the tool is right.
+
+### `.drectve`
+
+23 bytes, produced by `#pragma comment(linker, "/alternatename:foo=bar")`:
+
+```
+20 2f 61 6c 74 65 72 6e 61 74 65 6e 61 6d 65 3a 66 6f 6f 3d 62 61 72
+" /alternatename:foo=bar"
+```
+
+Leading space, then space-separated `/`-prefixed options. Characteristics
+`0x00100a00`, which `coff_parse.py` decodes as `IMAGE_SCN_LNK_INFO` +
+`IMAGE_SCN_LNK_REMOVE`.
+
+**Discardal confirmed by controlled comparison**, not inference from a flag:
+
+```
+with the pragma:     .drectve  0x00000000  0x17  directive_used.obj
+without the pragma:  (no .drectve row at all)
+```
+
+Same compiler, same flags, same day. `0x17` = 23 = the section's size.
+
+## Still blocked
+
+Unchanged from the Module 4 record:
+
+- **Import libraries / short-import.** No `dlltool`, no `gendef`.
+- **Base relocations.** No DLL producible; GNU ld's PE mode will not produce one.
+- **Archives as link input.** GNU ld's PE mode does not read `ar` archives.
+- **Reading a bigobj.** No implementation anywhere on this machine.
+- **MSVC incremental linking (`.ilk`) and LTCG.** No MSVC toolchain.
+- **`.sxdata`.** Not producible with clang or gcc on any target tried.
+- **Linking ARM64.** `ld` has no `aarch64pe` emulation, so the relocation
+  application is unobservable even though the table is fully readable.

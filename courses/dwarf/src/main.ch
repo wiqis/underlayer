@@ -86,11 +86,29 @@ public func main() : int {
     fs::write_text_file("output/dwarf-packages.html", html.data() as *u8, html.size())
     printf("  -> dwarf-packages.html\n")
 
+
+    // Module 5: The Format on Other Inputs
+    html = underlayer_content::render_dwarf_v4()
+    fs::write_text_file("output/dwarf-v4.html", html.data() as *u8, html.size())
+    printf("  -> dwarf-v4.html\n")
+
+    html = underlayer_content::render_dwarf_type_units()
+    fs::write_text_file("output/dwarf-type-units.html", html.data() as *u8, html.size())
+    printf("  -> dwarf-type-units.html\n")
+
+    html = underlayer_content::render_dwarf_call_sites()
+    fs::write_text_file("output/dwarf-call-sites.html", html.data() as *u8, html.size())
+    printf("  -> dwarf-call-sites.html\n")
+
+    html = underlayer_content::render_dwarf_frame()
+    fs::write_text_file("output/dwarf-frame.html", html.data() as *u8, html.size())
+    printf("  -> dwarf-frame.html\n")
+
     // Landing page
     html = underlayer_content::render_dwarf_landing()
     fs::write_text_file("output/index.html", html.data() as *u8, html.size())
     printf("  -> index.html\n")
 
-    printf("DWARF course: 19 concepts + landing page generated in output/\n")
+    printf("DWARF course: 23 concepts + landing page generated in output/\n")
     return 0
 }

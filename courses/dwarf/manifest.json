@@ -56,6 +56,16 @@
         "dwarf-portability",
         "dwarf-packages"
       ]
+    },
+    {
+      "id": "format-on-other-inputs",
+      "title": "The Format on Other Inputs",
+      "concepts": [
+        "dwarf-v4",
+        "dwarf-type-units",
+        "dwarf-call-sites",
+        "dwarf-frame"
+      ]
     }
   ],
   "concepts": [
@@ -229,6 +239,42 @@
       "estimated_minutes": 20,
       "difficulty": "advanced",
       "importance": "supporting"
+    },
+    {
+      "id": "dwarf-v4",
+      "title": "DWARF 4 in Practice",
+      "module_id": "format-on-other-inputs",
+      "description": "The version before the version 5 restructure, compiled and decoded: the eleven-byte header, and the three sections that exist in version 5 and not here.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "dwarf-type-units",
+      "title": "Type Units",
+      "module_id": "format-on-other-inputs",
+      "description": "The second kind of compilation unit: where it lives in DWARF 4 versus 5, and what the sixteen bytes labelled a type signature actually contain.",
+      "estimated_minutes": 21,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "dwarf-call-sites",
+      "title": "Call Sites",
+      "module_id": "format-on-other-inputs",
+      "description": "What a call that already returned looked like: the call-site tree, a tail call verified field by field against three instructions, and a computed argument.",
+      "estimated_minutes": 22,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "dwarf-frame",
+      "title": "The Other Unwind Section",
+      "module_id": "format-on-other-inputs",
+      "description": ".debug_frame decoded beside .eh_frame, and the one four-byte field where the two sections mean different things.",
+      "estimated_minutes": 21,
+      "difficulty": "advanced",
+      "importance": "core"
     }
   ]
 }

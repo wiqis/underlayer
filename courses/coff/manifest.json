@@ -51,6 +51,16 @@
         "coff-map-files",
         "coff-comdat-linking"
       ]
+    },
+    {
+      "id": "other-targets-and-other-sections",
+      "title": "Other Targets and Other Sections",
+      "concepts": [
+        "coff-arm64",
+        "coff-tls",
+        "coff-weak-externals",
+        "coff-drectve"
+      ]
     }
   ],
   "concepts": [
@@ -179,6 +189,42 @@
       "estimated_minutes": 21,
       "difficulty": "advanced",
       "importance": "core"
+    },
+    {
+      "id": "coff-arm64",
+      "title": "ARM64 Relocations",
+      "module_id": "other-targets-and-other-sections",
+      "description": "A real ARM64 object: five relocation types from four functions, the two-instruction pairs that only make sense together, and a 26-bit branch field that must be range-checked.",
+      "estimated_minutes": 22,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "coff-tls",
+      "title": "Thread Local Storage",
+      "module_id": "other-targets-and-other-sections",
+      "description": "The .tls$ section: characteristics byte-identical to .data, contents that are a template rather than the variables, and a link that cannot be completed on this machine.",
+      "estimated_minutes": 19,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "coff-weak-externals",
+      "title": "Weak Externals",
+      "module_id": "other-targets-and-other-sections",
+      "description": "A third symbol state: storage class 105, the auxiliary record that names a fallback, and a branch in the generated code as the observable cost.",
+      "estimated_minutes": 19,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "coff-drectve",
+      "title": "Linker Directives in a Section",
+      "module_id": "other-targets-and-other-sections",
+      "description": "A section whose contents are instructions to the linker: 23 bytes decoded, and observed being discarded with a controlled comparison as the control.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "supporting"
     }
   ]
 }
