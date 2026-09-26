@@ -1,5 +1,13 @@
 # Course Generation Skill
 
+> **Before scoping or writing this course, read `course_mission`.** The
+> collection's goal is to teach the complete path from **parsing to a working
+> executable**, so a learner can build a compiler for any architecture and any OS
+> without depending on LLVM. A course is one link in that chain: it must neither
+> require a link the learner has not been given, nor re-teach a neighbour. Full
+> statement: `docs/course-mission.md`.
+
+
 ## `docs/courses-todo.md` is a checklist. Only check and uncheck items.
 
 It is **not** a place to record progress, scope, blockers, verification notes, or

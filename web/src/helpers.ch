@@ -459,6 +459,19 @@ public namespace underlayer_web {
     // JVM class file course concept ids. Same `jvm-` prefix convention as the
     // `wasm-`, `dwarf-`, `coff-` and `macho-` prefixes. Returns an empty
     // string for ids it does not own so render_concept can fall through.
+    // Object Files course concept ids. The `obj-` prefix, same convention as
+    // the `jvm-`, `wasm-`, `dwarf-`, `coff-` and `macho-` prefixes. Returns an
+    // empty string for ids it does not own so render_concept can fall through.
+    public func render_obj_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var intro_id = std::string("obj-intro")
+        var hole_id = std::string("obj-the-hole")
+
+        if(cid.equals(&intro_id)) { return underlayer_content::render_obj_intro() }
+        if(cid.equals(&hole_id)) { return underlayer_content::render_obj_the_hole() }
+        return string()
+    }
+
     public func render_jvm_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         var intro_id = std::string("jvm-intro")
@@ -524,6 +537,8 @@ public namespace underlayer_web {
         var wasm_html = render_wasm_concept(concept_id)
         if(wasm_html.size() > 0) { return wasm_html }
         // JVM class file concepts next; same fall-through contract.
+        var obj_html = render_obj_concept(concept_id)
+        if(obj_html.size() > 0) { return obj_html }
         var jvm_html = render_jvm_concept(concept_id)
         if(jvm_html.size() > 0) { return jvm_html }
         var bytes_id = std::string("bytes")

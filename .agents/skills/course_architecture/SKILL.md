@@ -1,5 +1,13 @@
 # Course Architecture Skill
 
+> **Before scoping or writing this course, read `course_mission`.** The
+> collection's goal is to teach the complete path from **parsing to a working
+> executable**, so a learner can build a compiler for any architecture and any OS
+> without depending on LLVM. A course is one link in that chain: it must neither
+> require a link the learner has not been given, nor re-teach a neighbour. Full
+> statement: `docs/course-mission.md`.
+
+
 Load this skill when structuring course content, concept dependencies, or lesson formats.
 
 > **Also load `engineering_patterns`** for content validation patterns (manifest validation, concept file validation, exercise verification). This skill covers *how courses are structured*; `engineering_patterns` covers *how to validate them*.

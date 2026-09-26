@@ -243,7 +243,83 @@ comparatively. The new courses must therefore **generalise, never repeat**:
 learner write a fourth format, or a linker. Today the collection can tell you
 what the Mach-O loader does but not how to build one.
 
+## The architecture half of the chain: 70 items -> 9 courses
+
+Also authorised 2026-09-26. `## CPU Architecture` held **30** items and
+duplicated the per-architecture sections three ways over. It collapsed to **6**,
+giving **9 courses** across the four architecture sections
+(`CPU Architecture` 30, `x86-64` 18, `ARM64` 13, `RISC-V` 9 = 70 items).
+
+The three per-architecture sections were already correctly shaped and are
+**unchanged**. The split that makes "every architecture" teachable:
+
+> **Neutral courses teach the principle and then contrast all three ISAs.
+> The per-architecture course teaches one in depth.**
+
+| # | Course | Absorbed from `CPU Architecture` | ~Concepts |
+|---|---|---|---|
+| 1 | **The Instruction Set Architecture** | CPU Architecture From First Principles, Instruction Sets, Machine Instructions, Registers, Flags and Condition Codes, CPU Addressing Modes, Instruction Decoding, Instruction Encoding | 20 |
+| 2 | **How a CPU Executes Instructions** | CPU Pipelines, Instruction-Level Parallelism, Out-of-Order Execution, Speculative Execution, Branch Prediction, Microcode, Store Buffers | 18 |
+| 3 | **The Memory Hierarchy** | CPU Caches, Cache Lines, Cache Coherence, TLBs, Memory Ordering | 18 |
+| 4 | **Exceptions, Privilege and Mode Changes** | CPU Exceptions, Hardware Interrupts, CPU Privilege Levels, Context Switching | 16 |
+| 5 | **Multiprocessor Architecture** | Multiprocessor Architecture, NUMA, CPU Virtualization, CPU Performance Counters | 16 |
+| 6 | **SIMD and Vector Processing** | SIMD, Vector Processing | 16 |
+| 7 | **x86-64** | the existing 18 items, unchanged | 22 |
+| 8 | **AArch64** | the existing 13 items, unchanged | 20 |
+| 9 | **RISC-V** | the existing 9 items, unchanged | 18 |
+
+8+7+5+4+4+2 = 30, and 18+13+9 = 40, so 70 items map onto 9 courses with
+**nothing dropped** -- every item becomes a named concept or module.
+
+### Duplication that had to be resolved
+
+| `CPU Architecture` item | Duplicated a per-arch item |
+|---|---|
+| Instruction Sets, Machine Instructions | all three "Assembly" |
+| Instruction Decoding, Instruction Encoding | all three "Instruction Encoding" |
+| Registers, Flags and Condition Codes | per-arch register and flag detail |
+| CPU Addressing Modes | per-arch operand forms |
+| CPU Exceptions, Hardware Interrupts | x86-64 "Interrupts and Exceptions", AArch64 "Exceptions" + "Interrupts", RISC-V "Interrupts" |
+| CPU Privilege Levels | x86-64 "Protection Rings", RISC-V "Privilege Specification" |
+| TLBs | all three "Paging" / "Page Tables" / "Virtual Memory" |
+| Memory Ordering | x86-64 and AArch64 "Memory Ordering" |
+| SIMD, Vector Processing | x86-64 SIMD/AVX/AVX-512, AArch64 NEON, RISC-V Vector |
+
+### The comparison is the payoff, and only the collapse makes it possible
+
+Three things a per-architecture course cannot teach and a neutral course can:
+
+- **RISC-V has no flags register and no condition codes.** x86-64 has `EFLAGS`,
+  AArch64 has `NZCV`, RISC-V has nothing -- so branches are the only conditional
+  thing, and that single absence explains why AArch64 needs `csel`/`cset` at all
+  and why a compiler emits a branch on one target and a `cmov` on another.
+- **Encoding is a spectrum, not three facts.** x86-64 is variable-length
+  (1-15 bytes), AArch64 is fixed 32-bit, RISC-V is 16/32-bit plus a 16-bit
+  compressed extension. This is the design axis behind the fact that an object
+  file's relocation record is architecture-specific -- which is the hinge
+  between this section and the *Object Files* course.
+- **Memory ordering differs in kind.** x86-64's `DIR` flag makes ordering
+  implicit and historically buggy; AArch64 and RISC-V require explicit barriers.
+  So does the object-file side: an x86-64 object needs no ordering metadata and
+  an AArch64 object may.
+
+### Why the three per-arch courses were NOT merged into one
+
+Each is 18-22 concepts of genuinely different material, and a learner usually
+needs one deeply rather than three shallowly. The comparison lives in the
+neutral courses; the depth lives in the per-arch ones. Merging would produce a
+course nobody finishes.
+
 ### Still outstanding
+
+`## Memory` (27 items) overlaps *The Memory Hierarchy* almost entirely and the
+two should be folded together rather than left as competing structures.
+`## Compilers` (31) needs the same treatment. Neither restructured yet.
+Naming unsettled: the section is `ARM64` but its items say `AArch64`.
+
+### Previously outstanding
+
+
 
 `## CPU Architecture` has the same disease — 15+ items (Instruction Sets,
 Machine Instructions, Registers, Flags, Decoding, Encoding, Addressing Modes,

@@ -2,10 +2,35 @@
 
 Comprehensive documentation for the Underlayer project (root `chemical.mod`, modules under `core/`, `database/`, `models/`, `repository/`, `learning/`, `web/`, `content/`). Load the relevant skill before working on a particular area.
 
+## Read this first: the mission
+
+**Every course in this collection exists to serve one goal -- teach the complete
+path from parsing to a working executable, so a learner can build a compiler that
+supports any architecture and any OS, without depending on LLVM or any other
+backend.**
+
+Load **`course_mission`** before any course work. It is short, and it settles
+scope questions nothing else can.
+
+| Rule | In practice |
+|---|---|
+| From scratch, not by delegation | Teach it, then rebuild it. Tools make specimens and act as oracles; the format is the subject |
+| Every instruction, every architecture | Including AArch64, because someone always needs it. Say what is deferred -- silence is the failure mode |
+| Practical, not textbook | Real files, real problems, named traps. Not a CS curriculum's treatment |
+| Every single thing in detail | The test: could a learner implement from this text alone and get it right? |
+| Learn by doing, improve forever | Now: something deployed per course. Then: revise forever |
+
+A course is a link in one chain -- lexing -> parsing -> IR -> codegen ->
+**object files** -> **linking** -> **executable** -> **loading** -- and must not
+require a link the learner has not been given, nor re-teach a neighbour.
+
+Authoritative statement: `docs/course-mission.md`.
+
 ## Quick Start: I Need To...
 
 | I need to... | Load this skill | Then this |
 |--------------|----------------|-----------|
+| **Plan or scope any course** | **`course_mission`** | `course_architecture` |
 | Write a .ch course file | `course_writing` | `implementation_gaps` |
 | Generate a full concept | `course_generation` | `course_writing` |
 | Review someone's content | `review_quality` | `course_writing` |
@@ -25,6 +50,7 @@ Comprehensive documentation for the Underlayer project (root `chemical.mod`, mod
 
 | Skill | File | Description |
 |-------|------|-------------|
+| **Course Mission** | `course_mission/SKILL.md` | **The goal every course serves: parsing -> executable, from scratch, any architecture, no LLVM dependency. Load first** |
 | **Product Architecture** | `product_architecture/SKILL.md` | System design, module structure, data flow, technology decisions |
 | **API Reference** | `api_reference/SKILL.md` | Every HTTP route, DB table, repository function, and handler file — generated from the actual code |
 | **Learning Design** | `learning_design/SKILL.md` | How concepts are taught, FSRS, retrieval practice, interleaving, anxiety-friendly design |
@@ -48,6 +74,7 @@ Comprehensive documentation for the Underlayer project (root `chemical.mod`, mod
 
 | Task | Load | Why |
 |------|------|-----|
+| **Decide what a course should cover** | **`course_mission`** | **The chain, the five rules, and the decision checklist** |
 | Generate a new course from scratch | `course_generation` | 11-phase iterative cycle |
 | Generate a single concept | `course_generation` + `course_writing` | Process + code patterns |
 | Write a .ch course file | `course_writing` | Chemical syntax, patterns, exercises |
@@ -86,6 +113,7 @@ Comprehensive documentation for the Underlayer project (root `chemical.mod`, mod
 
 | Document | File | Description |
 |---|---|---|
+| **Course Mission** | `docs/course-mission.md` | **The goal the collection serves: parsing -> executable, from scratch, any architecture, no LLVM dependency** |
 | **Implementation Details** | `docs/implementation-details.md` | Concrete code patterns: chemical.mod, module wiring, database, FSRS, web routes, course .ch files, universal components |
 | **User Flows** | `docs/user-flows.md` | Every screen, action, and data flow: onboarding, course browsing, learning sessions, review, dashboard, adaptation, settings |
 | **Reusable Components** | `docs/reusable-components.md` | Guide to building and using universal components: Button, Card, Input, Badge, Typography, course-specific components, theme |

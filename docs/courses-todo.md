@@ -65,37 +65,12 @@
 
 ## CPU Architecture
 
-- [ ] Learn CPU Architecture From First Principles
-- [ ] Learn Instruction Sets
-- [ ] Learn Machine Instructions
-- [ ] Learn Registers
-- [ ] Learn Flags and Condition Codes
-- [ ] Learn Instruction Decoding
-- [ ] Learn Instruction Encoding
-- [ ] Learn CPU Addressing Modes
-- [ ] Learn CPU Pipelines
-- [ ] Learn Instruction-Level Parallelism
-- [ ] Learn Out-of-Order Execution
-- [ ] Learn Speculative Execution
-- [ ] Learn Branch Prediction
-- [ ] Learn CPU Caches
-- [ ] Learn Cache Lines
-- [ ] Learn Cache Coherence
-- [ ] Learn Memory Ordering
-- [ ] Learn Store Buffers
-- [ ] Learn TLBs — Translation Lookaside Buffers
-- [ ] Learn CPU Exceptions
-- [ ] Learn Hardware Interrupts
-- [ ] Learn CPU Privilege Levels
-- [ ] Learn Context Switching
-- [ ] Learn SIMD
-- [ ] Learn Vector Processing
-- [ ] Learn CPU Performance Counters
-- [ ] Learn Microcode
-- [ ] Learn CPU Virtualization
-- [ ] Learn NUMA
+- [ ] Learn The Instruction Set Architecture
+- [ ] Learn How a CPU Executes Instructions
+- [ ] Learn The Memory Hierarchy
+- [ ] Learn Exceptions, Privilege and Mode Changes
 - [ ] Learn Multiprocessor Architecture
-
+- [ ] Learn SIMD and Vector Processing
 
 ## x86-64
 

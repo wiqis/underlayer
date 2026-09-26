@@ -1,0 +1,232 @@
+{
+  "id": "obj",
+  "title": "Object Files",
+  "version": 1,
+  "description": "The intermediate artefact every compiler emits and no programmer ever sees. One C file compiled three ways, and the holes left behind for a linker to fill. The fixup record, the three symbol table designs, COMMON and its ABI break, COMDAT, archives, and the whole business of emitting an object file that a linker will actually accept.",
+  "author": "Waqas Tahir",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "intermediate",
+  "importance": "core",
+  "completion_criteria": "Read ELF, COFF and Mach-O object files with no tools but your own code, explain every field as an answer to 'what does the linker need this for', and emit an object file that a real linker accepts -- without using LLVM or any other backend to do it.",
+  "min_score": 70,
+  "dependencies": [
+    "elf",
+    "coff",
+    "macho"
+  ],
+  "modules": [
+    {
+      "id": "why",
+      "title": "Why Object Files Exist",
+      "concepts": [
+        "obj-intro",
+        "obj-the-hole",
+        "obj-triangulate",
+        "obj-no-segments"
+      ]
+    },
+    {
+      "id": "anatomy",
+      "title": "Anatomy, Compared",
+      "concepts": [
+        "obj-sections",
+        "obj-symbols",
+        "obj-strings",
+        "obj-bss-common"
+      ]
+    },
+    {
+      "id": "fixup",
+      "title": "The Fixup",
+      "concepts": [
+        "obj-relocations",
+        "obj-addends",
+        "obj-pic",
+        "obj-reloc-tables"
+      ]
+    },
+    {
+      "id": "merging",
+      "title": "Merging and Selection",
+      "concepts": [
+        "obj-comdat-group",
+        "obj-archives",
+        "obj-weak-undef"
+      ]
+    },
+    {
+      "id": "emitting",
+      "title": "Emitting One",
+      "concepts": [
+        "obj-emit",
+        "obj-arch-table",
+        "obj-verify"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "obj-intro",
+      "title": "The Middle of Every Build",
+      "module_id": "why",
+      "description": "Why a separate format exists between a compiler and a linker, and what relocatable actually means.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "obj-the-hole",
+      "title": "A Hole and a Record",
+      "module_id": "why",
+      "description": "The one mechanism the whole format exists for: an unresolved reference left in the bytes, plus the instruction for filling it.",
+      "estimated_minutes": 20,
+      "difficulty": "foundations",
+      "importance": "core"
+    },
+    {
+      "id": "obj-triangulate",
+      "title": "One Source, Three Formats",
+      "module_id": "why",
+      "description": "The same 30 lines compiled to ELF, COFF and Mach-O -- what stays constant, what changes, and what that tells you about which parts are essential.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "obj-no-segments",
+      "title": "No Segments, and Why",
+      "module_id": "why",
+      "description": "An object file has one table where an executable has two. The missing table is not an oversight; mapping is a loader decision.",
+      "estimated_minutes": 16,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "obj-sections",
+      "title": "Sections, Compared",
+      "module_id": "anatomy",
+      "description": "Three section models, three ways to store a section name, and two incompatible ways to store an alignment.",
+      "estimated_minutes": 21,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "obj-symbols",
+      "title": "Symbol Tables, Compared",
+      "module_id": "anatomy",
+      "description": "Three symbol table designs, one of which mangles string literals into the symbol name.",
+      "estimated_minutes": 22,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "obj-strings",
+      "title": "Where Names Live",
+      "module_id": "anatomy",
+      "description": "Three strategies for storing a name, and the two string tables ELF needs that the others do not.",
+      "estimated_minutes": 17,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "obj-bss-common",
+      "title": "COMMON and the ABI Break",
+      "module_id": "anatomy",
+      "description": "Uninitialised data, tentative definitions, three encodings of one C rule, and the GCC 9 to 10 break that broke every Linux package.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "obj-relocations",
+      "title": "The Fixup Record",
+      "module_id": "fixup",
+      "description": "The relocation entry, field by field, written from the linker's point of view: what each field is for and what breaks without it.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "obj-addends",
+      "title": "The Addend Lives in the Bytes",
+      "module_id": "fixup",
+      "description": "Implicit versus explicit addends, why the disassembler prints symbol-minus-4, and the three things that all look like the value.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "obj-pic",
+      "title": "Position Independence",
+      "module_id": "fixup",
+      "description": "PC-relative addressing, the GOT, and why the same source needs twice the fixups on AArch64. PIC is a choice of relocation set.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "obj-reloc-tables",
+      "title": "The Object Relocation Sets",
+      "module_id": "fixup",
+      "description": "The complete per-architecture object relocation tables, what each means, and which are object-only.",
+      "estimated_minutes": 22,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "obj-comdat-group",
+      "title": "COMDAT, GROUP, linkonce",
+      "module_id": "merging",
+      "description": "One idea, three names, invented independently in three formats -- and what happens when two bodies disagree.",
+      "estimated_minutes": 19,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "obj-archives",
+      "title": "The Archive",
+      "module_id": "merging",
+      "description": "The ar container, its symbol index, and why a linker reads archives backwards.",
+      "estimated_minutes": 19,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "obj-weak-undef",
+      "title": "Weak and Undefined-Weak",
+      "module_id": "merging",
+      "description": "The may-be-zero contract, tentative definitions, and the rules that decide who wins.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "obj-emit",
+      "title": "Writing One From Scratch",
+      "module_id": "emitting",
+      "description": "Build a minimal valid object file by hand: the sections, the symbol table, the string table, one relocation. No libraries.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "obj-arch-table",
+      "title": "The Encodings That Set Relocation Size",
+      "module_id": "emitting",
+      "description": "The x86-64 and AArch64 instruction forms a fixup must patch, and why a 4-byte displacement cannot be patched into a 1-byte field.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "obj-verify",
+      "title": "Proving Your Object File Is Right",
+      "module_id": "emitting",
+      "description": "The oracle loop: three independent readers, byte-exact comparison, and how to know your emitter is wrong rather than the tool.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
+    }
+  ]
+}

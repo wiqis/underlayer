@@ -2,6 +2,29 @@
 
 Read this before touching any code or content. Also load the relevant skill from `.agents/skills/`.
 
+## The Mission — read before any course work
+
+**Every course in this collection exists to teach one path: parsing → a working
+executable.** The goal is a learner who can then build a compiler that supports
+**any architecture** and **any operating system** and emits **executables and
+shared libraries**, **without depending on LLVM or any other backend**. LLVM is
+taught as a thing to understand and eventually replace.
+
+| Rule | In practice |
+|---|---|
+| **From scratch, not by delegation** | Teach it, then rebuild it. `gcc`/`clang` may produce specimens and act as oracles; the format is the subject, and the learner must be shown how to read the file without the tool |
+| **Every instruction, every architecture** | Including AArch64, because someone always needs it. Where a set is too large, teach a complete reference with depth where it matters — and **say what is deferred**. Silence about coverage is the failure mode |
+| **Practical, not textbook** | Real files, real problems, named traps, historical accidents that explain a field. Not a CS curriculum's treatment. End with something buildable |
+| **Every single thing in detail** | The test: could a learner implement from this text alone and get it right? Shallowness disguised as clarity is the enemy |
+| **Learn by doing, improve forever** | Now: something deployed per course. Then: revise each course again and again |
+
+A course is one link in a chain — **lexing → parsing → IR → codegen → object
+files → linking → executable → loading** — and must neither require a link the
+learner has not been given, nor re-teach a neighbour.
+
+Load the `course_mission` skill before scoping or writing any course.
+Authoritative statement: `docs/course-mission.md`.
+
 ## Golden Rules
 
 1. **Learning is the product.** Every decision must answer: "Does this help someone understand something deeply?"
@@ -491,6 +514,7 @@ Load the relevant skill before working on a particular area:
 
 | Skill | Use When |
 |---|---|
+| `course_mission` | **MANDATORY before any course work.** The goal every course serves: parsing → executable, from scratch, any architecture, no LLVM dependency |
 | `features_checklist` | **MANDATORY before any work.** Master feature checklist (1919 items) with priority tags (P0-P3). **Always work on lowest P number first.** Check off after implementation. |
 | `api_reference` | Adding/modifying HTTP routes, DB tables, or repository functions — generated from actual code (routes, schema, function catalogs) |
 | `web_development` | Writing web handlers or HTML pages — #html/#css/#js macro rules, page setup pattern, handler conventions |
@@ -516,6 +540,7 @@ Load the relevant skill before working on a particular area:
 
 | Document | When to Read |
 |---|---|
+| `docs/course-mission.md` | **Before scoping or writing any course.** The parsing→executable goal, the five rules, the chain, and what a course must inherit from its neighbours |
 | `docs/features-complete.md` | **MANDATORY.** Master feature checklist (1919 items). Every feature has a priority tag (P0/P1/P2/P3). **Always work on lowest P number first.** Check off after implementation. |
 | `docs/plan.md` | Before starting work — 6-phase roadmap, available libraries, database strategy |
 | `docs/implementation-details.md` | Before writing code — concrete code patterns, library usage, module wiring |
