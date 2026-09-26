@@ -55,31 +55,12 @@
 ## Executables, Linking & Loading
 
 - [ ] Learn Object Files
-- [ ] Learn Static Linking
-- [ ] Learn Dynamic Linking
-- [ ] Learn Linkers
-- [ ] Learn Relocations
-- [ ] Learn Symbol Tables
-- [ ] Learn Symbol Resolution
-- [ ] Learn Weak Symbols
-- [ ] Learn Position-Independent Code
-- [ ] Learn Position-Independent Executables
-- [ ] Learn Shared Libraries
-- [ ] Learn Dynamic Loaders
-- [ ] Learn Executable Loaders
-- [ ] Learn Runtime Linking
-- [ ] Learn Procedure Linkage Tables
-- [ ] Learn Global Offset Tables
-- [ ] Learn Thread-Local Storage
-- [ ] Learn Lazy Symbol Binding
-- [ ] Learn Linker Scripts
-- [ ] Learn Link-Time Optimization
-- [ ] Learn Binary Relocation Processing
-- [ ] Learn Address Space Layout Randomization
-- [ ] Learn Executable Format Security
-- [ ] Learn How Linux Loads an ELF Executable
-- [ ] Learn How Windows Loads a PE Executable
-- [ ] Learn How macOS Loads a Mach-O Executable
+- [ ] Learn Symbol Resolution and Symbol Tables
+- [ ] Learn Relocations, PIC and PIE
+- [ ] Learn Static Linking and Linker Scripts
+- [ ] Learn Dynamic Linking and Shared Libraries
+- [ ] Learn Executable Images and OS Loading
+- [ ] Learn Executable Security and Hardening
 
 
 ## CPU Architecture
