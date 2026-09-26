@@ -518,3 +518,79 @@ sections flat. So Mach-O objects carry a segment command that is a placeholder
 with the right shape, and a reader must know not to treat it as a mapping plan.
 The lesson stands (an object's addresses are unknowable) but the mechanism is
 nuanced rather than absent, and the concept was corrected before shipping.
+
+### 24. `st_value` is an alignment for a COMMON symbol — the only symbol whose Value is not a value
+
+Source (5 builds on this machine):
+
+    int tentative;            /* tentative definition */
+    int initialised = 5;      /* real definition       */
+    int main(void) { return tentative + initialised; }
+
+| build | `tentative` Ndx | Val | Size | Type | `initialised` |
+|---|---|---|---|---|---|
+| clang `-fno-common` | **5** (a real section) | 0 | 4 | `B` (.bss) | 4, 0, `D` |
+| clang `-fcommon` | **COM** | **4** | 4 | **`C`** | 4, 0, `D` |
+| gcc (default) | 5 | 0 | 4 | `B` | 4, 0, `D` |
+| COFF | — | 0 | 4 | `B` | 4, 0, `D` |
+| Mach-O | 0x60 | — | 4 | `S` (`__common`) | 0x1c, `D` |
+
+**`st_value = 4` in the COMMON case is the required alignment, not an address.**
+A COMMON symbol is in no section and has no position, so ELF repurposes the
+field for alignment and puts the size in `st_size`. A reader that adds a section
+base to it produces a plausible, meaningless number. `st_shndx` is the only
+thing that distinguishes the two meanings — a three-level dependency
+(`st_value` depends on `st_shndx`, whose reserved value is the special case).
+
+### 25. With `-fcommon` there is no `.bss` section, and the file is 72 bytes smaller
+
+    clang -fno-common:  1312 bytes, 11 sections, .bss PRESENT
+    clang -fcommon:     1240 bytes, 10 sections, .bss ABSENT
+
+The saving is exactly the section header. A COMMON symbol needs no section to
+live in, so none is created; the linker invents the zero-fill region in the
+output after merging every COMMON symbol by name — **largest size, strictest
+alignment, one allocation, all references pointed at it.**
+
+### 26. Three encodings of one C rule
+
+- **ELF `SHN_COMMON`** — no section at all; `st_value` = alignment,
+  `st_size` = size. Cheapest in the file, most expensive in the reader.
+- **Mach-O `__common`** — a real section, `flags = 0x1` (`S_ZEROFILL`),
+  `size 4`, `offset 0`, `addr 0x60`. Most expensive in the file, cheapest in
+  the reader: a symbol in a section means what it always means.
+- **COFF** — a storage class rather than a special section index, inheriting the
+  same one-field-two-jobs problem as the symbol table.
+
+All three converge on the *same* linker algorithm. The difference is purely how
+much the file has to say about it.
+
+### 27. The GCC 9 → 10 ABI break, and why it was not a bug
+
+`-fcommon` was GCC's default through GCC 9; `-fno-common` became the default in
+GCC 10. A library built with GCC 9 has COMMON symbols; an application built with
+GCC 10 has `.bss` tentative definitions; linking them gives a duplicate-symbol
+error. Every prebuilt C library on a Linux distribution, and every application
+linking against one, broke.
+
+**Neither behaviour is non-conforming.** C permits a translation unit to treat a
+tentative definition as a definition, *and* permits merging them — the standard
+arguably leaves the question open, and the two flags answer it differently. So
+this was not a compiler bug: it was two toolchains answering an underspecified
+question differently, and **the format had no way to make them interoperate
+because it faithfully recorded a decision each side made locally.**
+
+The design lesson: *when two correct producers disagree, a format must give them
+a way to record the disagreement, not just agreement.* ELF's answer is
+`SHN_COMMON` plus the `.gnu.linkonce` section-group mechanism — and the break
+happened anyway, because nothing in the format says `.bss` and COMMON mean
+incompatible things. Same shape as the JVM attribute mechanism's safety property:
+letting a reader *skip* is safer than letting it *misread*.
+
+### Not yet done
+
+`obj-strings` is still unwritten even though its material is largely covered by
+findings 18, 19 and the sections/symbols concepts — the three name-storage
+strategies, ELF's two string tables, and COFF's single table serving both
+`/NNN` section-name escapes and long symbol names. It should be written as a
+short synthesis rather than re-measured.

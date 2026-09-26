@@ -31,6 +31,10 @@ public func main() : int {
     fs::write_text_file("output/obj-symbols.html", html.data() as *u8, html.size())
     printf("  -> obj-symbols.html\n")
 
-    printf("Object Files: 6 of 18 concepts generated in output/\n")
+    html = underlayer_content::render_obj_bss_common()
+    fs::write_text_file("output/obj-bss-common.html", html.data() as *u8, html.size())
+    printf("  -> obj-bss-common.html\n")
+
+    printf("Object Files: 7 of 18 concepts generated in output/\n")
     return 0
 }
