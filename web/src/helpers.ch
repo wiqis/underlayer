@@ -469,6 +469,16 @@ public namespace underlayer_web {
         var code_id = std::string("jvm-code")
         var branches_id = std::string("jvm-branches")
         var stackmaps_id = std::string("jvm-stackmaps")
+        var attributes_id = std::string("jvm-attributes")
+        var inner_classes_id = std::string("jvm-inner-classes")
+        var signatures_id = std::string("jvm-signatures")
+        var annotations_id = std::string("jvm-annotations")
+        var records_id = std::string("jvm-records")
+        var sealed_id = std::string("jvm-sealed")
+        var enums_id = std::string("jvm-enums")
+        var indy_id = std::string("jvm-invokedynamic")
+        var modules_id = std::string("jvm-modules")
+        var versions_id = std::string("jvm-versions")
 
         if(cid.equals(&intro_id)) { return underlayer_content::render_jvm_intro() }
         if(cid.equals(&header_id)) { return underlayer_content::render_jvm_header() }
@@ -478,6 +488,16 @@ public namespace underlayer_web {
         if(cid.equals(&code_id)) { return underlayer_content::render_jvm_code() }
         if(cid.equals(&branches_id)) { return underlayer_content::render_jvm_branches() }
         if(cid.equals(&stackmaps_id)) { return underlayer_content::render_jvm_stackmaps() }
+        if(cid.equals(&attributes_id)) { return underlayer_content::render_jvm_attributes() }
+        if(cid.equals(&inner_classes_id)) { return underlayer_content::render_jvm_inner_classes() }
+        if(cid.equals(&signatures_id)) { return underlayer_content::render_jvm_signatures() }
+        if(cid.equals(&annotations_id)) { return underlayer_content::render_jvm_annotations() }
+        if(cid.equals(&records_id)) { return underlayer_content::render_jvm_records() }
+        if(cid.equals(&sealed_id)) { return underlayer_content::render_jvm_sealed() }
+        if(cid.equals(&enums_id)) { return underlayer_content::render_jvm_enums() }
+        if(cid.equals(&indy_id)) { return underlayer_content::render_jvm_invokedynamic() }
+        if(cid.equals(&modules_id)) { return underlayer_content::render_jvm_modules() }
+        if(cid.equals(&versions_id)) { return underlayer_content::render_jvm_versions() }
         return string()
     }
 

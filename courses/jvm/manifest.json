@@ -2,13 +2,13 @@
   "id": "jvm",
   "title": "JVM Class File Format",
   "version": "0.1.0",
-  "description": "The file a compiler emits and a virtual machine refuses to guess about. A magic number, two versions, a constant pool that everything else points into, a string encoding that is not the one it is named after, and a verifier's opinion of the code baked into the file itself.",
+  "description": "The file a compiler emits and a virtual machine refuses to guess about. A magic number, two versions, a constant pool that everything else points into, a string encoding that is not the one it is named after, two offset conventions, a verifier's conclusions written into the file, and an open-ended attribute mechanism that absorbed twenty years of new language features.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "Java",
   "difficulty": "intermediate",
   "importance": "core",
-  "completion_criteria": "Decode a real class file end to end: header, constant pool, members, the Code attribute, and the two different offset conventions inside it.",
+  "completion_criteria": "Decode a real class file end to end -- header, constant pool, members, code, offsets, stack maps, attributes -- and explain why a format with no section table never needed a new file layout.",
   "min_score": 70,
   "dependencies": [
     "elf",
@@ -33,6 +33,34 @@
         "jvm-code",
         "jvm-branches",
         "jvm-stackmaps"
+      ]
+    },
+    {
+      "id": "attributes",
+      "title": "The Attribute Mechanism",
+      "concepts": [
+        "jvm-attributes",
+        "jvm-inner-classes",
+        "jvm-signatures",
+        "jvm-annotations"
+      ]
+    },
+    {
+      "id": "object-shapes",
+      "title": "Object Shapes",
+      "concepts": [
+        "jvm-records",
+        "jvm-sealed",
+        "jvm-enums"
+      ]
+    },
+    {
+      "id": "linking",
+      "title": "Linking and Versioning",
+      "concepts": [
+        "jvm-invokedynamic",
+        "jvm-modules",
+        "jvm-versions"
       ]
     }
   ],
@@ -107,6 +135,96 @@
       "description": "StackMapTable, why a type checker writes its conclusions into the file, and what the frame types compress.",
       "estimated_minutes": 23,
       "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "jvm-attributes",
+      "title": "The Escape Hatch",
+      "module_id": "attributes",
+      "description": "One generic attribute shape, twenty years of features, and why the file is closed while the attributes are open.",
+      "estimated_minutes": 21,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "jvm-inner-classes",
+      "title": "Inner Classes and Nests",
+      "module_id": "attributes",
+      "description": "The InnerClasses attribute, NestHost and NestMembers, and why the $ in a name is not what it looks like.",
+      "estimated_minutes": 22,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "jvm-signatures",
+      "title": "The Signature Attribute",
+      "module_id": "attributes",
+      "description": "Generics as a second, richer type language layered on the erased descriptor.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "jvm-annotations",
+      "title": "Annotations",
+      "module_id": "attributes",
+      "description": "Character-literal type tags, and why every annotation constant is a constant pool index.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "jvm-records",
+      "title": "Records",
+      "module_id": "object-shapes",
+      "description": "The Record attribute and everything the compiler synthesised that the source did not say.",
+      "estimated_minutes": 19,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "jvm-sealed",
+      "title": "Sealed Types",
+      "module_id": "object-shapes",
+      "description": "PermittedSubclasses, and the simplest attribute in the format.",
+      "estimated_minutes": 16,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "jvm-enums",
+      "title": "Enums",
+      "module_id": "object-shapes",
+      "description": "ACC_ENUM in two flag tables at once, a synthetic field, and two methods nobody wrote.",
+      "estimated_minutes": 19,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "jvm-invokedynamic",
+      "title": "invokedynamic and Bootstraps",
+      "module_id": "linking",
+      "description": "Lambdas as a runtime link, the metafactory, and the instruction that also implements string concatenation.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "jvm-modules",
+      "title": "Modules",
+      "module_id": "linking",
+      "description": "The Module attribute, CONSTANT_Module, and the two pool tags javap still calls Unknown.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "jvm-versions",
+      "title": "Version History",
+      "module_id": "linking",
+      "description": "What each major version added, and the pattern behind thirty years of additions.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
       "importance": "core"
     }
   ]

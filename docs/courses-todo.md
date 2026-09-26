@@ -8,7 +8,7 @@
 - [x] Learn DWARF — Debugging Data Format
 - [x] Learn COFF — Common Object File Format
 - [x] Learn WebAssembly Binary Format
-- [ ] Learn JVM Class File Format
+- [x] Learn JVM Class File Format
 - [ ] Learn .NET Assembly Metadata and PE Format
 - [ ] Learn PDB — Program Database Format
 - [ ] Learn PDF — Portable Document Format

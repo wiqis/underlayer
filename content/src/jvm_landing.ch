@@ -48,10 +48,10 @@ public func render_jvm_landing() : string {
                 refuse. This course takes that file apart, one field at a time, with three
                 independent implementations agreeing on every byte.</p>
                 <div class="course-meta">
-                    <span class="meta-item">2 modules</span>
-                    <span class="meta-item">8 concepts</span>
+                    <span class="meta-item">5 modules</span>
+                    <span class="meta-item">18 concepts</span>
                     <span class="meta-item">Intermediate</span>
-                    <span class="meta-item">~168 min</span>
+                    <span class="meta-item">~369 min</span>
                 </div>
             </div>
 
@@ -121,22 +121,107 @@ public func render_jvm_landing() : string {
                     <code>StackMapTable</code> exists because a compiler writes down the result
                     of a type analysis so the verifier can check it instead of redoing it.</p>
                 </div>
+
+                <div class="module">
+                    <h2>Module 3: The Attribute Mechanism</h2>
+                    <p>The question the first module raised and could not answer: the file is
+                    closed, so where did twenty years of features go? This module is the answer
+                    &mdash; one eight-byte header, repeated everywhere, that a reader is allowed to
+                    skip &mdash; and the four attributes that show what it can carry.</p>
+                    <ul class="concept-list">
+                        <li><a href="/courses/jvm/lessons/jvm-attributes">The Escape Hatch</a> <span class="concept-time">21 min</span></li>
+                        <li><a href="/courses/jvm/lessons/jvm-inner-classes">Inner Classes and Nests</a> <span class="concept-time">22 min</span></li>
+                        <li><a href="/courses/jvm/lessons/jvm-signatures">The Signature Attribute</a> <span class="concept-time">20 min</span></li>
+                        <li><a href="/courses/jvm/lessons/jvm-annotations">Annotations</a> <span class="concept-time">20 min</span></li>
+                    </ul>
+                    <p class="module-note">Five findings here justify the module.
+                    <strong>There is no common attribute body shape</strong> &mdash; <code>SourceFile</code>
+                    and <code>NestHost</code> are a bare index with no count, while
+                    <code>PermittedSubclasses</code> and <code>NestMembers</code> are byte-identical
+                    counted lists meaning different things, and only the name tells them apart.
+                    <code>InnerClasses</code> uses the <strong>member</strong> flag table rather than
+                    the class one, so <code>0x0008</code> is a real <code>ACC_STATIC</code> on a
+                    nested enum and an undefined bit on a top-level class. A record's
+                    <code>Signature</code> holds wildcards as <strong>one prefix byte</strong> &mdash;
+                    <code>+</code> for <code>extends</code>, <code>-</code> for <code>super</code> &mdash;
+                    where the descriptor has no way to write them at all. And an annotation's type tag
+                    <strong>is the character itself</strong>, with <code>s</code> lowercase for String
+                    among eight uppercase primitives.</p>
+                </div>
+
+                <div class="module">
+                    <h2>Module 4: Object Shapes</h2>
+                    <p>The three class shapes the language has added most recently, and the three
+                    answers to a single question: how does the machine learn what a type contains?
+                    On one spectrum, from most explicit to least.</p>
+                    <ul class="concept-list">
+                        <li><a href="/courses/jvm/lessons/jvm-records">Records</a> <span class="concept-time">19 min</span></li>
+                        <li><a href="/courses/jvm/lessons/jvm-sealed">Sealed Types</a> <span class="concept-time">16 min</span></li>
+                        <li><a href="/courses/jvm/lessons/jvm-enums">Enums</a> <span class="concept-time">19 min</span></li>
+                    </ul>
+                    <p class="module-note">The spectrum is the point. A record's components are
+                    <strong>a declared list</strong> &mdash; the attribute <em>is</em> the declaration,
+                    and deleting it leaves a class with all nine right methods that is not a record.
+                    A sealed class's permitted subclasses are <strong>a checked list</strong>, and the
+                    one here is six bytes: the shortest meaningful attribute in the format, whose
+                    <em>presence</em> is the declaration and whose content may legally be empty.
+                    An enum's constants are <strong>a derived list</strong> &mdash; no attribute at
+                    all, just <code>ACC_ENUM</code> on the class and on each field, recovered at run
+                    time by a reflective scan in <code>java.lang.Enum</code>. The finding that
+                    survives a glance: <code>values()</code> and <code>valueOf()</code> are
+                    <strong>not</strong> marked synthetic, because source calls them by name, while
+                    the cached array and its bridge are.</p>
+                </div>
+
+                <div class="module">
+                    <h2>Module 5: Linking and Versioning</h2>
+                    <p>Where the class file stops being a description of code and becomes a program
+                    for producing code at load time &mdash; and then the whole thirty years put in
+                    order, with one file compiled at four release levels as the evidence.</p>
+                    <ul class="concept-list">
+                        <li><a href="/courses/jvm/lessons/jvm-invokedynamic">invokedynamic and Bootstraps</a> <span class="concept-time">24 min</span></li>
+                        <li><a href="/courses/jvm/lessons/jvm-modules">Modules</a> <span class="concept-time">20 min</span></li>
+                        <li><a href="/courses/jvm/lessons/jvm-versions">Version History</a> <span class="concept-time">20 min</span></li>
+                    </ul>
+                    <p class="module-note">A bootstrap method reference is
+                    <strong>one <code>u2</code></strong>, not two, because it names a
+                    <code>CONSTANT_MethodHandle</code> rather than a method reference &mdash; and
+                    reading two desynchronises the whole attribute, which is how this course's own
+                    decoder produced a plausible-looking argument count of 134 in an 84-byte
+                    attribute. <strong>Two pool tags in this course's 370-byte
+                    <code>module-info.class</code> are printed as <code>Unknown</code> by
+                    <code>javap</code></strong>, in JDK 26, thirty years after the format shipped.
+                    And compiling one file at <code>--release 8</code> and <code>--release 11</code>
+                    makes the newer file <strong>198 bytes larger</strong>, because the
+                    <code>StringBuilder</code> chain became an <code>invokedynamic</code> &mdash; a
+                    change that bought uniformity and cost bytes, since the old form was never a
+                    run-time cost either.</p>
+                </div>
             </div>
 
             <div class="course-footer-note">
-                <p>Modules 3 onward &mdash; the long tail of attributes that has no section table to
-                live in: <code>InnerClasses</code> and the <code>$1</code> numbering,
-                <code>Signature</code> for generics, annotations, records, sealed classes, and
-                modules &mdash; are specified in <code>courses/jvm/research.md</code> and not yet
-                written. The question they raise is how a format with no extensibility
-                mechanism at the top level accommodated twenty years of new features, and the
-                attribute is the answer.</p>
+                <p>Read end to end, the course is an argument about one design decision. The
+                class file shipped in 1995 and <strong>has never changed shape</strong> &mdash; no
+                new section, no new index, no new top-level block &mdash; and in that time it
+                absorbed generics, lambdas, enums, annotations, records, sealed types, modules and
+                nest access. There are only two reasons that was possible, and the whole course is
+                really about them: an <strong>attribute</strong>, which is a name and a length that
+                a reader may skip, and an <strong><code>invokedynamic</code> bootstrap</strong>,
+                which is a method run once to compute a call target. Everything else added in thirty
+                years is a flag bit, a pool tag, or a use of one of those two. The
+                <a href="/courses/jvm/lessons/jvm-versions">last concept</a> puts the evidence
+                side by side, and the honest gap in it: the <code>Module</code> attribute is the one
+                major feature that used neither, and adding a sixth kind of directive to it would
+                need a new version rather than an attribute.</p>
                 <p>The section-framing idea this format shares with the others is covered from the
                 other side in the <a href="/courses/elf">ELF</a> and
-                <a href="/courses/coff">COFF</a> courses. And the format that has the most in common
-                with this one &mdash; a big-endian, index-everything, length-prefixed container with
+                <a href="/courses/coff">COFF</a> courses &mdash; both of which grew new fields into
+                a version-gated structure, which is the more common way to survive thirty years and
+                the one this format avoided. And the format that has the most in common with this
+                one &mdash; a big-endian, index-everything, length-prefixed container with
                 a no-partial-compatibility rule &mdash; is
-                <a href="/courses/wasm">WebAssembly</a>.</p>
+                <a href="/courses/wasm">WebAssembly</a>, whose custom sections are this course's
+                escape hatch with a different payload.</p>
             </div>
         </div>
     }

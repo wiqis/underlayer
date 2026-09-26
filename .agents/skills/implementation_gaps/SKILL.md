@@ -1202,6 +1202,57 @@ Both found while writing the DWARF Module 3 concepts:
   inside a preformatted block too, not just in prose. C and C++ samples need
   `&#123;` / `&#125;`.
 
+## The brace trap is worse than documented: it is anywhere in `#html`
+
+Found while writing the JVM course's 10 concepts, and it contradicts the scoping
+above. A literal `{` or `}` breaks the macro **anywhere inside the `#html`
+block, including inside a `<code>` element in ordinary prose** — it is not
+confined to preformatted blocks. Every one of these failed to parse:
+
+    <p>So <code>record R(long a) {}</code> has a component with ...</p>
+    <li><code>sealed interface S permits Impl {}</code> and dump ...</li>
+    <p>Six source words &mdash; <code>enum E { A, B }</code> &mdash; produce ...</p>
+    <code>void use() { class Local {} new Local(); }</code>
+
+**Prefer removing the braces over escaping them.** Escaping works, but the
+surrounding sentence is usually prose about source code, and a declaration reads
+fine without its body:
+
+    <code>record R(long a)</code> with an empty body has a component ...
+
+For a listing that genuinely needs braces, `&#123;` / `&#125;` is the fallback
+as above. But the real lesson is about *checking*, not about which escape to
+reach for — see the scan below.
+
+### The scan that would have caught all of these in one pass
+
+Every trap above is greppable, and a `<div>`-balance check is not enough. All of
+these found real bugs in files that a div-balance check called clean:
+
+    # 1. tag balance across ALL tags, not just div -- found `<em>superclass*`
+    #    where a `*` had been typed instead of `</em>`
+    # 2. a bare `<` not followed by [a-zA-Z!/]  -> escape as &lt;
+    #    found `<-` arrow annotations in listings
+    # 3. a literal { or } anywhere in the block  -> rewrite
+    # 4. a backtick inside <pre>                  -> use no backtick
+    # 5. the manifest's estimated_minutes must equal the number in the
+    #    page's own "NN min" meta line
+
+Two ways to get the block boundaries right, and the second one matters:
+
+    WRONG   h1 = s.index('\n    }', h0)      # matches an inner '    }' first
+
+    RIGHT   h1 = h0 + list(re.finditer(r'\n    \}', s[h0:]))[-1].start()
+
+**The wrong version silently scans a truncated block and reports PASS.** It is
+how four brace bugs in `jvm_inner_classes.ch`, `jvm_records.ch` and
+`jvm_sealed.ch` survived a first cleaning pass that claimed to be complete.
+
+**Generalise the lesson past this repo:** a structural linter that checks one
+container proves only that one container is balanced. A page is also correct
+only if every element, every escape, and every duplicated number agrees — and
+each of those is a separate check with its own failure mode.
+
 Still proven fine, so do not "fix" them: `C++` in `#html` text, a lone `/` as
 element text, and `@` anywhere including inside a `<code>` element (a full
 MSVC-mangled `??_C@_03PLHFFLIH@ptr?$AA@` name compiles unchanged).
