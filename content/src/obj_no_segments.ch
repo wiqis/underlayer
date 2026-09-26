@@ -149,10 +149,13 @@ public func render_obj_no_segments() : string {
                 <div class="hex-dump">
                     <pre>  demo_elf.o    ELF program headers:  0
   demo_coff.o   COFF: no base relocations, no directories
-  demo_macho.o   Mach-O: no LC_SEGMENT_64 command
+  demo_macho.o   Mach-O: ONE LC_SEGMENT_64 -- and its
+                 segname field is 16 zero bytes. Unnamed.
+                 vmaddr 0x0, vmsize 252, holding all 6
+                 sections flat.
 </pre>
                 </div>
-                <p>COFF's spelling is different &mdash; a PE has no segment table at all, because a PE is always a mapped image and its sections carry the virtual addresses directly &mdash; and Mach-O's is <code>LC_SEGMENT_64</code> rather than a table. <strong>Three mechanisms, one shared refusal.</strong></p>
+                <p>COFF's spelling is different &mdash; a PE has no segment table at all, because a PE is always a mapped image and its sections carry the virtual addresses directly &mdash; and <strong>Mach-O's is the interesting one, because Mach-O objects <em>do</em> carry an <code>LC_SEGMENT_64</code> command and it is still not a mapping plan.</strong> That command exists, its size is 72 bytes, and its <code>segname</code> field is sixteen zero bytes: one unnamed segment holding all six sections flat, with <code>vmaddr 0x0</code> and <code>vmsize 252</code>. The per-section <code>segname</code> fields still say <code>__TEXT</code> and <code>__DATA</code>, so the section table retains the grouping while the segment command declines to express it. <strong>It is a placeholder with the right shape, and a reader must know not to treat it as one.</strong></p>
             </div>
 
             <div class="unit unit-example">

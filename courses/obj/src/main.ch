@@ -22,6 +22,15 @@ public func main() : int {
     fs::write_text_file("output/obj-no-segments.html", html.data() as *u8, html.size())
     printf("  -> obj-no-segments.html\n")
 
-    printf("Object Files: 4 of 18 concepts generated in output/\n")
+    // Module 2: Anatomy, Compared
+    html = underlayer_content::render_obj_sections()
+    fs::write_text_file("output/obj-sections.html", html.data() as *u8, html.size())
+    printf("  -> obj-sections.html\n")
+
+    html = underlayer_content::render_obj_symbols()
+    fs::write_text_file("output/obj-symbols.html", html.data() as *u8, html.size())
+    printf("  -> obj-symbols.html\n")
+
+    printf("Object Files: 6 of 18 concepts generated in output/\n")
     return 0
 }

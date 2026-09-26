@@ -348,8 +348,12 @@ unit may change it. `global_counter` (7) is also global and is *not* folded.
 
 `readelf -lW demo_elf.o` prints, verbatim: **"There are no program headers in
 this file."** Checked across the set: ELF 0 program headers, COFF no base
-relocations and no directories, Mach-O no `LC_SEGMENT_64`. Three mechanisms,
-one shared refusal — and it is an impossibility rather than an omission, because
+relocations and no directories. **Mach-O objects _do_ carry an
+`LC_SEGMENT_64` command** and it is still not a mapping plan: its `segname`
+is sixteen zero bytes, one unnamed segment with `vmaddr 0x0` holding all six
+sections flat. A claim written here that Mach-O objects have no segment command
+was **wrong** and was caught by re-measuring after the concept was drafted.
+Three mechanisms, one shared refusal — and it is an impossibility rather than an omission, because
 every segment field depends on the final layout.
 
 The linked counterpart, built on this machine from `exe.c` + `other.c`:
@@ -414,3 +418,103 @@ writing: a plausible-looking x86-64 disassembly listing was written from memory
 into `obj-the-hole`, and replaced with the real bytes from `llvm-objdump-21`
 once finding 14 was measured. **That is the mission's rule working: the claim was
 checked, and the claim was wrong.**
+
+### 17. COFF hides half its symbol table inside the symbol table
+
+`demo_coff.o`: `PointerToSymbolTable = 0x211`, `NumberOfSymbols = 26`, so the
+string table is at `0x211 + 26*18 = 0x3e5` and the records are **18 bytes** with
+an **8-byte** name field (not 4 — 8+4+2+2+1+1 = 18).
+
+Decoding all 26 records: **only 14 are symbols.** Twelve are auxiliary records,
+each immediately following a section symbol whose `NumberOfAuxSymbols = 1`, and
+each with a garbage `Value` (`0x672d789d`, `0xd04b58a`, `0x7831d036`, …) and
+`StorageClass = 0`. A reader that does not honour `NumberOfAuxSymbols` prints
+twelve nonsense symbols with nonsense addresses and **nothing looks wrong**.
+
+The cross-check that catches it: each aux record carries the section's size and
+relocation count, and `demo_coff.o` also has both in the 40-byte section
+headers. **The same facts twice in COFF** — so comparing them is a one-line
+validation of a COFF reader.
+
+### 18. COFF's 8-byte name field is a union, and both halves appear
+
+    inline:  the 8 bytes ARE the name, NUL-padded
+             b'.text\x00\x00\x00'   b'@feat.00'   b'compute'
+             b'.debug$S'  is exactly 8 with NO NUL
+
+    strtab:  first 4 bytes ZERO, last 4 are a DECIMAL offset
+             into the string table at 0x3e5
+             strtab+4  -> message_bytes     strtab+18 -> global_counter
+             strtab+33 -> external_fn       strtab+45 -> .llvm_addrsig
+             strtab+59 -> uninitialised    strtab+73 -> ??_C@_05CJBACGMB@hello?$AA@
+
+`strtab+45` is the same string the section-name `/45` escape resolves to — one
+string table, two uses. (Verified: the `/45` offset is **decimal 45**, and
+hex 0x45 = 69 lands in the symbol names instead. Getting this wrong on the first
+attempt is the normal experience.)
+
+### 19. Section 0 does not mean undefined in COFF, and `ABS` is a third thing
+
+    [20] external_fn   sect=UNDEF(0)  class=EXTERNAL(2)   a real want
+    [25] demo.c        sect=UNDEF(0)  class=0             NOT a want
+    [15] @feat.00      sect=ABS(-1)   class=STATIC(3)     an absolute constant
+    [24] .file         sect=DEBUG(-2) class=103           the source filename
+
+**`SectionNumber == 0` is necessary but not sufficient.** COFF reuses one byte
+(`StorageClass`) for both "am I defined" and "how visible am I"; ELF splits them
+into `st_shndx` and `st_info`'s binding nibble. A COFF reader testing only the
+section number treats `demo.c` as an unresolved symbol.
+
+`ABS` is a genuinely distinct concept: the `Value` is a constant, not an address
+or an offset. Adding a section base to it produces a pointer, which is not what
+it meant.
+
+### 20. Section symbol counts differ by policy, not by format defect
+
+COFF emitted **7** section symbols (one per section). ELF emitted **2**
+(`STT_SECTION` for `.text` and `.rodata.str1.1` only) — and **not** for `.data`,
+which has a relocation against it, because that relocation targets the variable
+`message` by name and so nothing needs a section symbol. Mach-O emitted 0.
+
+**Demand-driven:** a section symbol exists because something *named that
+section*. Neither format is wrong, and both counts occur in files from the two
+most common toolchains. A tool assuming "every section has a symbol"
+over-allocates; a tool assuming one-to-one correspondence breaks on ELF.
+
+### 21. COFF's Type field packs a base type in its high nibble
+
+`compute`, `call_out` and `use_data` all have `Type = 0x20`, which is
+`0x2 << 4` — base type 2, *function*. Every data symbol has `Type = 0`. So COFF
+distinguishes code from data in exactly one place, and ELF does it with
+`STT_FUNC` vs `STT_OBJECT` and Mach-O with an `N_TYPE` mask. Three
+vocabularies for the same question.
+
+### 22. Section record sizes: 40 / 64 / 80 bytes, and Mach-O's alignment is a log
+
+    COFF    40-byte records, 7 sections
+    ELF     64-byte Elf64_Shdr, 16 entries in demo_elf.o
+    Mach-O  80-byte section_64, 6 sections
+
+Mach-O's extra 16 bytes per section are a second name field (the segment name),
+and every section declares `__TEXT` or `__DATA` there — inert in an object,
+because the single `LC_SEGMENT_64` is unnamed.
+
+    ELF AddressAlignment   Mach-O align
+    16                     4     (2^4 = 16 bytes)
+     8                     3     (2^3 =  8 bytes)
+
+**ELF stores a byte count, Mach-O stores a logarithm.** Both wrong readings are
+plausible powers of two, and the failure is a section placed at an address
+satisfying the wrong constraint — which links cleanly and faults at run time
+only when an aligned SSE/AVX operand (`movaps`) meets it.
+
+### 23. Correction: Mach-O objects DO have an LC_SEGMENT_64
+
+An earlier draft of this record claimed Mach-O objects have no segment command.
+**That was wrong.** Re-measured: `demo_macho.o` has `ncmds = 4`, one of which is
+`LC_SEGMENT_64` — 72 bytes, `vmaddr 0x0`, `vmsize 252`, `nsects 6`, and its
+`segname` field is **sixteen zero bytes**. One unnamed segment holding all six
+sections flat. So Mach-O objects carry a segment command that is a placeholder
+with the right shape, and a reader must know not to treat it as a mapping plan.
+The lesson stands (an object's addresses are unknowable) but the mechanism is
+nuanced rather than absent, and the concept was corrected before shipping.

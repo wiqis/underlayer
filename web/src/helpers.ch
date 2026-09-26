@@ -468,11 +468,15 @@ public namespace underlayer_web {
         var hole_id = std::string("obj-the-hole")
         var triangulate_id = std::string("obj-triangulate")
         var no_segments_id = std::string("obj-no-segments")
+        var sections_id = std::string("obj-sections")
+        var symbols_id = std::string("obj-symbols")
 
         if(cid.equals(&intro_id)) { return underlayer_content::render_obj_intro() }
         if(cid.equals(&hole_id)) { return underlayer_content::render_obj_the_hole() }
         if(cid.equals(&triangulate_id)) { return underlayer_content::render_obj_triangulate() }
         if(cid.equals(&no_segments_id)) { return underlayer_content::render_obj_no_segments() }
+        if(cid.equals(&sections_id)) { return underlayer_content::render_obj_sections() }
+        if(cid.equals(&symbols_id)) { return underlayer_content::render_obj_symbols() }
         return string()
     }
 
