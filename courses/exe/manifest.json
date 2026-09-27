@@ -1,0 +1,100 @@
+{
+  "id": "exe",
+  "title": "How a CPU Executes Instructions",
+  "version": "1.0.0",
+  "description": "What the hardware does with the bytes the ISA course decoded: dependencies, execution width, branch prediction and speculation -- measured with an instrument that was validated before it was trusted.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 6 concepts, reproduce the 37 measured checks in courses/exe/assets/samples/crosscheck.py, and add a measurement of your own that survives the noise floor",
+  "min_score": 70,
+  "dependencies": [
+    "isa",
+    "sec",
+    "img"
+  ],
+  "modules": [
+    {
+      "id": "instr",
+      "title": "The Instrument",
+      "concepts": [
+        "exe-instrument",
+        "exe-latency"
+      ]
+    },
+    {
+      "id": "deps",
+      "title": "Dependencies and the Front End",
+      "concepts": [
+        "exe-deps",
+        "exe-frontend"
+      ]
+    },
+    {
+      "id": "spec",
+      "title": "Speculation and Its Limits",
+      "concepts": [
+        "exe-speculate",
+        "exe-verify"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "exe-instrument",
+      "title": "Measure the Instrument First",
+      "module_id": "instr",
+      "description": "A TSC tick is not a cycle, the fences are not optional, and the noise floor decides what may be claimed.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "exe-latency",
+      "title": "Latency and Throughput",
+      "module_id": "instr",
+      "description": "A dependent chain costs 2.7x an independent operation, and the ratio is the execution width made visible.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "exe-deps",
+      "title": "A Dependency Is a Constraint, Not a Cost",
+      "module_id": "deps",
+      "description": "What a loop-carried chain is, why the loop hid the first measurement, and how far an address constrains the front end.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "exe-frontend",
+      "title": "The Front End and the Branch Predictor",
+      "module_id": "deps",
+      "description": "A branch whose direction repeats with period 1, 4, 16 or 64 costs the same as one that is never taken.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "exe-speculate",
+      "title": "Speculation, and What Could Not Be Measured",
+      "module_id": "spec",
+      "description": "No mispredict penalty was observed at any pattern period, and without a PMU that is a limit rather than a result.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "exe-verify",
+      "title": "The Instrument and the Oracle Loop",
+      "module_id": "spec",
+      "description": "What the harness asserts, why it asserts shapes rather than values, and how to break a checker on purpose.",
+      "estimated_minutes": 27,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}

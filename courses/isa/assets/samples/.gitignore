@@ -1,0 +1,9 @@
+# Build products. build_samples.sh writes every .c file, every binary, and
+# the five embedded python helpers (modrm.py, opmap.py, cc.py, lengths.py,
+# agree.py) via heredocs -- nothing here is hand-edited except the three
+# .py files and this script. See research.md.
+*
+!.gitignore
+!build_samples.sh
+!crosscheck.py
+!x86dec.py

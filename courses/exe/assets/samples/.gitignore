@@ -1,0 +1,9 @@
+# Build products: the compiled instrument and the temporary binaries the
+# scripts build while checking claims. build_samples.sh writes the .c files
+# it needs; the two tracked .c files are cycbench.c (the artifact) and
+# nothing else. See research.md.
+*
+!.gitignore
+!build_samples.sh
+!crosscheck.py
+!cycbench.c

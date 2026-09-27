@@ -708,6 +708,48 @@ public namespace underlayer_web {
         return string()
     }
 
+    // Instruction set architecture. Same fall-through contract: empty string
+    // for anything else. `isa-` is a prefix no other course uses.
+    public func render_isa_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var modes_id = std::string("isa-modes")
+        var opcodes_id = std::string("isa-opcodes")
+        var rex_id = std::string("isa-rex")
+        var modrm_id = std::string("isa-modrm")
+        var sib_id = std::string("isa-sib")
+        var length_id = std::string("isa-length")
+        var decode_id = std::string("isa-decode")
+
+        if(cid.equals(&modes_id)) { return underlayer_content::render_isa_modes() }
+        if(cid.equals(&opcodes_id)) { return underlayer_content::render_isa_opcodes() }
+        if(cid.equals(&rex_id)) { return underlayer_content::render_isa_rex() }
+        if(cid.equals(&modrm_id)) { return underlayer_content::render_isa_modrm() }
+        if(cid.equals(&sib_id)) { return underlayer_content::render_isa_sib() }
+        if(cid.equals(&length_id)) { return underlayer_content::render_isa_length() }
+        if(cid.equals(&decode_id)) { return underlayer_content::render_isa_decode() }
+        return string()
+    }
+
+    // CPU execution and microarchitecture. Same fall-through contract:
+    // empty string for anything else. `exe-` is a prefix no other course uses.
+    public func render_exe_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var inst_id = std::string("exe-instrument")
+        var lat_id = std::string("exe-latency")
+        var deps_id = std::string("exe-deps")
+        var front_id = std::string("exe-frontend")
+        var spec_id = std::string("exe-speculate")
+        var ver_id = std::string("exe-verify")
+
+        if(cid.equals(&inst_id)) { return underlayer_content::render_exe_instrument() }
+        if(cid.equals(&lat_id)) { return underlayer_content::render_exe_latency() }
+        if(cid.equals(&deps_id)) { return underlayer_content::render_exe_deps() }
+        if(cid.equals(&front_id)) { return underlayer_content::render_exe_frontend() }
+        if(cid.equals(&spec_id)) { return underlayer_content::render_exe_speculate() }
+        if(cid.equals(&ver_id)) { return underlayer_content::render_exe_verify() }
+        return string()
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         // HAT concepts are resolved first; render_hat_concept returns an empty
@@ -753,6 +795,12 @@ public namespace underlayer_web {
         // Security / hardening concepts; same fall-through contract.
         var sec_html = render_sec_concept(concept_id)
         if(sec_html.size() > 0) { return sec_html }
+        // Instruction set concepts; same fall-through contract.
+        var isa_html = render_isa_concept(concept_id)
+        if(isa_html.size() > 0) { return isa_html }
+        // CPU execution concepts; same fall-through contract.
+        var exe_html = render_exe_concept(concept_id)
+        if(exe_html.size() > 0) { return exe_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

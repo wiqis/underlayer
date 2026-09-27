@@ -1,0 +1,116 @@
+{
+  "id": "isa",
+  "title": "The Instruction Set Architecture",
+  "version": "1.0.0",
+  "description": "How x86-64 turns bytes into instructions: the mode, the opcode map, the prefix layers, ModRM and SIB, and the length arithmetic a linker needs.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 7 concepts, reproduce the 118 measured checks in courses/isa/assets/samples/crosscheck.py, and decode a code section of a real binary with courses/isa/assets/samples/x86dec.py",
+  "min_score": 70,
+  "dependencies": [
+    "obj",
+    "elf",
+    "sec"
+  ],
+  "modules": [
+    {
+      "id": "bytes",
+      "title": "What the Bytes Are",
+      "concepts": [
+        "isa-modes",
+        "isa-opcodes"
+      ]
+    },
+    {
+      "id": "prefix",
+      "title": "The Prefix Layers",
+      "concepts": [
+        "isa-rex",
+        "isa-modrm"
+      ]
+    },
+    {
+      "id": "addr",
+      "title": "Addressing",
+      "concepts": [
+        "isa-sib",
+        "isa-length"
+      ]
+    },
+    {
+      "id": "decode",
+      "title": "Decode It Yourself",
+      "concepts": [
+        "isa-decode"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "isa-modes",
+      "title": "One Byte Stream, Two Meanings",
+      "module_id": "bytes",
+      "description": "0x40 is INC in one mode and REX in another, so three bytes have two correct readings.",
+      "estimated_minutes": 23,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "isa-opcodes",
+      "title": "The Opcode Map and Its Holes",
+      "module_id": "bytes",
+      "description": "228 of 256 byte values are instructions, 27 are prefixes, and the escape has a deliberately undefined member.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "isa-rex",
+      "title": "REX: Four Bits That Add Eight",
+      "module_id": "prefix",
+      "description": "The extension rule that makes R=1 mean r8, and the order rule that makes it the last prefix.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "isa-modrm",
+      "title": "ModRM: The Two Fields That Decide the Length",
+      "module_id": "prefix",
+      "description": "All 256 combinations, the four mod classes, and the answer to the linker's standing question.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "isa-sib",
+      "title": "SIB: The Byte That Exists Because rsp Is Special",
+      "module_id": "addr",
+      "description": "Scale, index and base, the two field values with special meanings, and a byte order nobody guesses.",
+      "estimated_minutes": 23,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "isa-length",
+      "title": "The Length Arithmetic",
+      "module_id": "addr",
+      "description": "One formula, fourteen specimens, and the chain property that makes a boundary check strong.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "isa-decode",
+      "title": "Decode It Yourself",
+      "module_id": "decode",
+      "description": "An instruction decoder that shows its work, and the table audit that finds what examples miss.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}
