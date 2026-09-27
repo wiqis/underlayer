@@ -939,10 +939,12 @@ Each construct below was isolated in a throwaway file under `content/src/` and
 compiled on its own to establish whether it is actually a problem
 (2026-09-25, while writing the DWARF and COFF courses). **Proven to break:**
 
-- **`{` and `}` are the interpolation sigil.** A literal brace inside `#html`
-  aborts the parse — including a bare `}` on its own line, and one inline in
-  `<code>}</code>`. **Fix:** use the `&#123;` / `&#125;` entities, which is the
-  established convention in `macho_*.ch` and `hat_*.ch`.
+- **`{` and `}` are the interpolation sigil outside `<pre>`.** A literal brace
+  in ordinary prose aborts the parse — including a bare `}` on its own line, and
+  one inline in `<code>}</code>`. `<pre>` is now exempt (see below), but
+  `<code>` in prose is not. **Fix:** use the `&#123;` / `&#125;` entities, which
+  is the established convention in `macho_*.ch` and `hat_*.ch`, or drop the
+  braces from the declaration.
 - **A raw `"` inside an HTML attribute value aborts the parse.** The attribute
   ends at the first inner quote and the parser reads the rest as markup.
   **Fix:** write `&quot;`. This bites `data-explain` most often, because
@@ -955,13 +957,14 @@ compiled on its own to establish whether it is actually a problem
   because the parser consumes everything up to the next `>` hunting for a tag
   name. **Fix:** when the reported column looks innocent, scan the line for the
   *first* unterminated tag rather than the character at the reported column.
-- **A bare `<` in element text aborts the parse**, whenever the next character
-  is not a letter, `/` or `!`. Three forms, all hit while writing Module 4
+- **A bare `<` in element text, when the next character is not a letter, `/`
+  or `!`, used to abort the parse.** Three forms, all hit while writing Module 4
   (2026-09-25): `<=` and `<` in pseudo-code (`if start_offset <= target < end`),
-  and `<--` as an arrow inside a `<pre>` hex dump. All report the same "tag
-  names must start with letters". **Fix:** `&lt;=` and `&lt;--`. This is the
-  same family as the `<`-then-digit case already known — the rule is simply
-  that a `<` which does not begin a real tag must be `&lt;`.
+  and `<--` as an arrow inside a `<pre>` hex dump. All reported the same "tag
+  names must start with letters". **Now fixed in the lexer**: it implements the
+  HTML "tag open" state, so a `<` before anything other than a letter, `/` or
+  `!` is text. `<=`, `1 < 2` and `<--` all compile now, with no escaping.
+  The `<`-then-letter case below is *not* fixed and still needs `&lt;`.
 - **A mismatched closing section tag aborts the parse** and reports
   "expected correct identifier for ending tag" at a column *past the end of the
   line*. `<tbody>` closed with `</thead>` is the shape. **Fix:** the reported
@@ -1194,25 +1197,32 @@ worse than no rule, because it reports PASS.
 
 Both found while writing the DWARF Module 3 concepts:
 
-- **A `&lt;` immediately followed by a digit is read as a tag name.** Writing
-  `first DIE at <0><14>` inside a `<pre>` fails with "expected text or
-  element". **Fix:** `&lt;0&gt;&lt;14&gt;`, as the other hex-dump blocks in these
-  files already do. A scan for `<\d` inside `#html` catches all of them at once.
-- **Literal `{` and `}` still break `<pre><code>`** — the brace trap applies
-  inside a preformatted block too, not just in prose. C and C++ samples need
-  `&#123;` / `&#125;`.
+- **A `&lt;` immediately followed by a digit used to be read as a tag name.**
+  Writing `first DIE at <0><14>` inside a `<pre>` failed with "expected text or
+  element". **Now fixed by the tag-open rule above** — `<0><14>` compiles. The
+  other hex-dump blocks in these files were already written `&lt;0&gt;&lt;14&gt;`,
+  which is still correct and still renders the same, so leave them.
+- **Literal `{` and `}` inside `<pre>` used to break the macro.** **Now fixed:**
+  a bare brace in `<pre>` is a literal character, the way a browser treats it.
+  C and C++ samples need no escaping there. Inside `<pre>` a value is written
+  `@(expr)` instead of `{expr}`, e.g. `<pre>x = @(x0);</pre>`; `@( )` also works
+  outside `<pre>`, and `@{ ... }` statements and `@if`/`@else` are unchanged.
 
-## The brace trap is worse than documented: it is anywhere in `#html`
+## The brace trap outside `<pre>`: it reaches prose, not just code blocks
 
-Found while writing the JVM course's 10 concepts, and it contradicts the scoping
-above. A literal `{` or `}` breaks the macro **anywhere inside the `#html`
-block, including inside a `<code>` element in ordinary prose** — it is not
-confined to preformatted blocks. Every one of these failed to parse:
+Found while writing the JVM course's 10 concepts. A literal `{` or `}` breaks
+the macro **anywhere inside the `#html` block except inside `<pre>`** — so it
+is not confined to preformatted blocks, and `<code>` in an ordinary sentence is
+still affected. Every one of these failed to parse:
 
     <p>So <code>record R(long a) {}</code> has a component with ...</p>
     <li><code>sealed interface S permits Impl {}</code> and dump ...</li>
     <p>Six source words &mdash; <code>enum E { A, B }</code> &mdash; produce ...</p>
     <code>void use() { class Local {} new Local(); }</code>
+
+Inside `<pre>` this is no longer true — a bare brace there is a literal
+character, matching browser behaviour. The examples above are all `<code>` in
+prose, so they stand.
 
 **Prefer removing the braces over escaping them.** Escaping works, but the
 surrounding sentence is usually prose about source code, and a declaration reads
@@ -1231,12 +1241,29 @@ these found real bugs in files that a div-balance check called clean:
 
     # 1. tag balance across ALL tags, not just div -- found `<em>superclass*`
     #    where a `*` had been typed instead of `</em>`
-    # 2. a bare `<` not followed by [a-zA-Z!/]  -> escape as &lt;
-    #    found `<-` arrow annotations in listings
-    # 3. a literal { or } anywhere in the block  -> rewrite
+    # 2. a bare `<` followed by a LETTER that is not a real tag
+    #    -> escape as &lt;    (found `ref.null <heaptype>`)
+    #    NOTE: a `<` followed by a non-letter is now legal text; the lexer
+    #    implements the html tag-open state. Do not "fix" `<=`.
+    # 3. a literal { or } outside <pre>              -> rewrite or escape
+    #    NOTE: inside <pre> braces are legal characters now.
     # 4. a backtick inside <pre>                  -> use no backtick
     # 5. the manifest's estimated_minutes must equal the number in the
     #    page's own "NN min" meta line
+    # 6. a closing tag whose `>` is missing -- this one is not greppable by
+    #    shape, and the compiler reports it at an unrelated line hundreds of
+    #    lines later, so it needs a real structural check
+
+**Items 1-6 are implemented in `tools/html_balance.py`.** Run it before
+building any course:
+
+    python3 tools/html_balance.py --check content/src/<course>_*.ch
+
+It implements the all-tag balance check, the bare-`<` check, the brace check
+(needs re-scoping to skip `<pre>` now that braces are legal there), unclosed
+tags of any name, and item 6. Prefer `--check`; the write mode is for
+bulk-fixing and has assertions against dropping whole functions, but it should
+not be run on a file whose structure you have not verified.
 
 Two ways to get the block boundaries right, and the second one matters:
 

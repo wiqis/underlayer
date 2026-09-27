@@ -16,42 +16,57 @@ CLOSE = re.compile(r'</(div|pre)>')
 ANY_TAG = re.compile(r'<(/?)([a-zA-Z][a-zA-Z0-9]*)')
 VOID = {'br', 'hr', 'img', 'input', 'meta', 'link'}
 
+# Tags the lesson markup actually uses. A '<' followed by one of these is a real
+# tag; a '<' followed by any other word is a metavariable such as <heaptype>
+# and must be written &lt;heaptype>.
+REAL_TAGS = {
+    'a', 'abbr', 'b', 'blockquote', 'br', 'button', 'caption', 'code', 'col',
+    'dd', 'details', 'div', 'dl', 'dt', 'em', 'figcaption', 'figure', 'h1',
+    'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'i', 'img', 'input', 'kbd', 'li',
+    'link', 'meta', 'ol', 'p', 'pre', 's', 'small', 'span', 'strong',
+    'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead',
+    'tr', 'u', 'ul',
+}
+
 
 def macro_hazards(path):
-    """Characters inside a verbatim block that break the #html macro.
+    """Characters that break the #html macro, given the current lexer rules.
 
-    The html_cbi lexer has no <pre> guard: a literal `{` or a bare `<` inside
-    a #html block is read as the start of a Chemical expression or a tag, and
-    the rest of the file falls out of the macro. `pre` and `formula` are the
-    two verbatim block types the lesson markup uses.
+    Rules as implemented in html_cbi/html_parser (verified by the compiler's
+    own tests in lang/tests/compiler_plugins/html/src/pre_verbatim.ch):
+
+      * inside <pre> a bare `{` and `}` are LITERAL CHARACTERS. A brace there
+        is no longer a hazard, so this check no longer fires on <pre> content.
+        A value inside <pre> is written `@(expr)`.
+      * a `<` is a tag only before `!`, `/` or an ASCII letter (the html
+        "tag open" state), so a `<` before anything else is text and is legal.
+        Only a `<` before a letter needs checking.
+      * OUTSIDE <pre> a bare `{` or `}` is still the interpolation sigil and
+        still aborts the macro, so that case is still reported.
     """
     src = open(path).read()
     _s, _e, block = block_of(src)
     out = []
-    for m in re.finditer(
-            r'<pre>(.*?)</pre>|<div class="formula">(.*?)</div>',
-            block, re.S):
-        body = m.group(1) if m.group(1) is not None else m.group(2)
-        for line in body.split('\n'):
-            if re.search(r'[{}]', line):
-                out.append('brace in a verbatim block: %s'
-                           % line.strip()[:64])
-            if re.search(r'<(?![a-zA-Z/!])', line):
-                out.append('bare "<" in a verbatim block: %s'
-                           % line.strip()[:64])
-    # A brace ANYWHERE else in the block is the same hazard, because the
-    # concept pages carry no Chemical logic: every brace the lexer sees is
-    # spurious. Checked separately so a real @{...} expression can be
+    for m in re.finditer(r'<pre>(.*?)</pre>', block, re.S):
+        for line in m.group(1).split('\n'):
+            for bad in re.findall(r'<([a-zA-Z][a-zA-Z0-9]*)', m.group(1)):
+                if bad.lower() not in REAL_TAGS:
+                    out.append('"<%s>" inside <pre> is not a real tag -- it '
+                               'will be lexed as one; write &lt;%s>'
+                               % (bad, bad))
+                    break
+    # Outside <pre> a brace is the interpolation sigil and aborts the macro.
+    # The concept pages carry no Chemical logic, so every brace seen here is
+    # spurious. Checked separately so a real @{...} or @(...) expression can be
     # allow-listed by editing this line rather than by accident.
-    rest = re.sub(r'<pre>.*?</pre>|<div class="formula">.*?</div>', '',
-                  block, flags=re.S)
+    rest = re.sub(r'<pre>.*?</pre>', '', block, flags=re.S)
     rest = rest.replace('#html {', '', 1).rstrip()
     if rest.endswith('}'):
         rest = rest[:-1]
-    for m in re.finditer(r'[{}]', rest):
+    for m in re.finditer(r'(?<![@(])[{}]', rest):
         line = rest[:m.start()].count('\n') + 1
         ctx = rest[max(0, m.start() - 40):m.start() + 40].replace('\n', ' ')
-        out.append('brace outside a verbatim block (block line ~%d): ...%s...'
+        out.append('brace outside <pre> (block line ~%d): ...%s...'
                    % (line, ctx.strip()))
     return out
 

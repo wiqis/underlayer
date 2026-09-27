@@ -267,51 +267,60 @@ The following do NOT work in interpretation mode (comptime):
 
 **Rule**: Avoid comptime string manipulation. Use compiled mode for course generation.
 
-### `#html` Has No `<pre>` Guard: A Literal `{` Breaks the Macro
+### `#html` Brace Handling — RESOLVED (was: "no `<pre>` guard")
 
-`html_cbi`'s lexer enters Chemical mode on **any** `{` inside a `#html`
-block. There is no `<pre>` exemption, even though the same lexer *does* have
-a `pre_depth` guard for whitespace (`nextToken.ch`, the `' '` case). So a
-function body in a hex dump stops the macro:
+**Status: fixed in `html_cbi` / `html_parser`.** Recorded here because the
+workaround below is still in force and because the previous behaviour was
+severe enough to be worth remembering.
+
+`html_cbi`'s lexer used to enter Chemical mode on **any** `{` inside a
+`#html` block, with no `<pre>` exemption, so a function body in a hex dump
+stopped the macro:
 
 ```
-    <pre>  int f(int x) { return x; }     <- `{` opens a Chemical expression
+    <pre>  int f(int x) { return x; }     <- `{` opened a Chemical expression
 </pre>
 ```
 
-and the compiler reports `expected a rbrace after the chemical value`, then
+The compiler reported `expected a rbrace after the chemical value`, then
 `expected a rbrace for ending the html macro`, and **everything after the
-brace falls out of the macro** and is parsed as Chemical. A bare `<` in a
-verbatim block fails the same way, with `tag names must start with letters`.
+brace fell out of the macro** and was parsed as Chemical. A `}` on its own was
+worse: at brace depth 1 it *was* the macro's own closing brace, so the rest of
+the file silently vanished. A bare `<` before a non-letter failed the same way,
+with `tag names must start with letters`.
 
-**This is a macro bug, not a content rule.** Per golden rule 7 the fix belongs
-in the plugin, and it is a one-line change mirroring the guard that already
-exists for whitespace:
+**The rules now, and why each one exists:**
 
-```
-    '{' => {
-        if(html.lb_count >= 1 && !html.expecting_html_block
-           && html.pre_depth == 0) {      // <-- the missing condition
-            html.other_mode = true;
-            html.chemical_mode = true;
-            html.chem_start_lb = html.lb_count;
-        }
-```
+- **`<pre>`: a bare `{` and `}` are literal characters.** A browser renders a
+  brace in `<pre>` as a character, and so does this lexer. This is what makes
+  real code samples writable with no escaping at all.
+- **`<pre>`: `@(expr)` is a chemical value.** Since `{` is text there, values
+  need an explicit form. `@(expr)` is accepted *everywhere* in the macro, not
+  just in `<pre>`, so there is one rule rather than one rule per context. The
+  sigil is `@` followed by `(` — a pair no programming language contains
+  (every annotation syntax requires a name after `@`).
+- **`<pre>`: `@{ ... }` statements and `@if`/`@else` still work**, unchanged.
+- **A `<` is a tag only before `!`, `/`, or an ASCII letter.** This is the
+  HTML "tag open" state, so `<=`, `1 < 2` and `<--` are now text. A `<` before
+  a *letter* is still a tag, exactly as in a browser, so `ref.null <heaptype>`
+  still needs `&lt;heaptype>`.
+- **Outside `<pre>`, `{` still means a chemical expression.** `<code>` in
+  prose is not `<pre>`, so `<code>record R(long a) {}</code>` still fails and
+  still needs `&#123;` / `&#125;`, or the braces dropped.
 
-Until that lands, **course content must avoid literal braces inside a
-`#html` block**, which is why the C and C++ samples in `obj-comdat-group`,
-`obj-weak-undef` and `obj-emit` are shown brace-free with a note saying so.
-Every course in this repository already works within the constraint, which is
-why it has gone unnoticed until a concept needed to show a real function
-body.
+Tests: `lang/tests/compiler_plugins/html/src/pre_verbatim.ch` and
+`paren_value.ch`, plus `html_runtime/src/` for the runtime parser.
 
-**Workaround in force:** `tools/html_balance.py` flags braces and bare `<`
-anywhere in a `#html` block, flags unclosed tags of any name, and flags a
-closing tag whose `>` is missing -- the last of which produces a lexer error
-reported at a completely unrelated line several hundred lines later. Run it
-over any `.ch` before building:
+**Workaround still in force for content:** `tools/html_balance.py` flags
+braces **outside** `<pre>` and bare `<` anywhere, flags unclosed tags of any
+name, and flags a closing tag whose `>` is missing — the last of which
+produces a lexer error reported at a completely unrelated line several hundred
+lines later. Run it over any `.ch` before building:
 
-    python3 tools/html_balance.py content/src/<course>_*.ch
+    python3 tools/html_balance.py --check content/src/<course>_*.ch
+
+It also needs updating for the new rules: it currently flags braces inside
+`<pre>`, which are now legal.
 
 ## Important: Missing Infrastructure
 

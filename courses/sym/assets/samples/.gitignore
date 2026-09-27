@@ -1,0 +1,39 @@
+# build_samples.sh is the single source of truth for every specimen. It writes
+# the .c files itself, so they are build products, not sources -- keeping copies
+# here would only create a chance for them to drift apart.
+#
+#   ./build_samples.sh     # writes the .c files, compiles, prints each finding
+#   python3 crosscheck.py  # asserts all 84 load-bearing claims
+#
+# Tracked: build_samples.sh, crosscheck.py, symtables.py, ver/vmap*
+__pycache__/
+
+# generated C sources
+*.c
+
+# version scripts are inputs to findings 13-15, so they are tracked
+!ver/vmap
+!ver/vmap_at
+!ver/vmap_dup
+
+# build output
+*.o
+*.a
+*.so
+*.so.*
+*.map
+
+# extensionless executables
+hs_sysv
+hs_gnu
+hs_both
+lt_lazy
+lt_now
+own_pie
+own_nopie
+lddef
+segmark
+ord_ok
+ord_bad
+ord_grp
+tent_com

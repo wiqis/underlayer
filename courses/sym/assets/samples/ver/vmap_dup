@@ -1,0 +1,3 @@
+V1 { global: compute; local: *; };
+V2 { global: added_in_v2; } V1;
+V3 { global: compute; removed_in_v3; vtag; } V2;
