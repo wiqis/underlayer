@@ -1,0 +1,135 @@
+{
+  "id": "reloc",
+  "title": "Relocations, PIC and PIE",
+  "version": "1.0.0",
+  "description": "Why a linker needs a different relocation for every kind of reference, what position independence actually costs, and the two ways it fails.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 9 concepts and reproduce the 61 measured checks in courses/reloc/assets/samples/crosscheck.py",
+  "min_score": 70,
+  "dependencies": [
+    "obj",
+    "sym"
+  ],
+  "modules": [
+    {
+      "id": "vocabulary",
+      "title": "The Vocabulary",
+      "concepts": [
+        "reloc-arch-contrast",
+        "reloc-why-so-many",
+        "reloc-encoding-limits"
+      ]
+    },
+    {
+      "id": "pie",
+      "title": "Position Independent Executables",
+      "concepts": [
+        "pie-flags",
+        "pie-randomize",
+        "pie-cost"
+      ]
+    },
+    {
+      "id": "failure",
+      "title": "How It Fails",
+      "concepts": [
+        "pic-violation",
+        "tls-model"
+      ]
+    },
+    {
+      "id": "build",
+      "title": "Applying One",
+      "concepts": [
+        "reloc-apply"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "reloc-arch-contrast",
+      "title": "One Relocation, or Two",
+      "module_id": "vocabulary",
+      "description": "The same source, two architectures, and a relocation count that follows from the instruction encoding.",
+      "estimated_minutes": 22,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "reloc-why-so-many",
+      "title": "Why There Are So Many Kinds",
+      "module_id": "vocabulary",
+      "description": "The x86-64 relocation set grouped by what it computes, and the encoding limits that created it.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "high"
+    },
+    {
+      "id": "reloc-encoding-limits",
+      "title": "The Limits That Shaped the Table",
+      "module_id": "vocabulary",
+      "description": "Reach, overflow and a zero displacement: the three encoding facts behind the vocabulary.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "high"
+    },
+    {
+      "id": "pie-flags",
+      "title": "The Flags, and Which One Is Which Kind",
+      "module_id": "pie",
+      "description": "-fPIC against -pie, and the binary that is neither because the two disagreed.",
+      "estimated_minutes": 19,
+      "difficulty": "intermediate",
+      "importance": "critical"
+    },
+    {
+      "id": "pie-randomize",
+      "title": "Does the Executable Actually Move?",
+      "module_id": "pie",
+      "description": "Six runs, two builds, and the difference between a random base and a random address.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "high"
+    },
+    {
+      "id": "pie-cost",
+      "title": "What Position Independence Costs",
+      "module_id": "pie",
+      "description": "Nine instructions against seventeen, byte by byte, for the same eight additions.",
+      "estimated_minutes": 21,
+      "difficulty": "advanced",
+      "importance": "high"
+    },
+    {
+      "id": "pic-violation",
+      "title": "The Relocation That Cannot Be Fixed",
+      "module_id": "failure",
+      "description": "A failure class only PIC has, and a diagnostic that names both the type and the flag.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "high"
+    },
+    {
+      "id": "tls-model",
+      "title": "The One Relocation That Calls the Loader",
+      "module_id": "failure",
+      "description": "Four thread-local models, and the one case where resolving a symbol means running code.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "high"
+    },
+    {
+      "id": "reloc-apply",
+      "title": "Applying Them Yourself",
+      "module_id": "build",
+      "description": "Read a real object file, apply its relocations at a chosen address, and run the result.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}

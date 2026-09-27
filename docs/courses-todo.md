@@ -56,7 +56,7 @@
 
 - [x] Learn Object Files
 - [x] Learn Symbol Resolution and Symbol Tables
-- [ ] Learn Relocations, PIC and PIE
+- [x] Learn Relocations, PIC and PIE
 - [ ] Learn Static Linking and Linker Scripts
 - [ ] Learn Dynamic Linking and Shared Libraries
 - [ ] Learn Executable Images and OS Loading

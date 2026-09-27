@@ -578,6 +578,34 @@ public namespace underlayer_web {
         return string()
     }
 
+    // Relocations, PIC and PIE. Owns the 9 ids below; returns an empty string
+    // for anything else so the fall-through chain keeps working. Only the
+    // vocabulary module is prefixed `reloc-`, because `pie-`, `pic-` and
+    // `tls-` are the other concepts' prefixes.
+    public func render_reloc_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var arch_id = std::string("reloc-arch-contrast")
+        var why_id = std::string("reloc-why-so-many")
+        var limits_id = std::string("reloc-encoding-limits")
+        var pie_flags_id = std::string("pie-flags")
+        var pie_rand_id = std::string("pie-randomize")
+        var pie_cost_id = std::string("pie-cost")
+        var pic_violation_id = std::string("pic-violation")
+        var tls_id = std::string("tls-model")
+        var apply_id = std::string("reloc-apply")
+
+        if(cid.equals(&arch_id)) { return underlayer_content::render_reloc_arch_contrast() }
+        if(cid.equals(&why_id)) { return underlayer_content::render_reloc_why_so_many() }
+        if(cid.equals(&limits_id)) { return underlayer_content::render_reloc_encoding_limits() }
+        if(cid.equals(&pie_flags_id)) { return underlayer_content::render_pie_flags() }
+        if(cid.equals(&pie_rand_id)) { return underlayer_content::render_pie_randomize() }
+        if(cid.equals(&pie_cost_id)) { return underlayer_content::render_pie_cost() }
+        if(cid.equals(&pic_violation_id)) { return underlayer_content::render_pic_violation() }
+        if(cid.equals(&tls_id)) { return underlayer_content::render_tls_model() }
+        if(cid.equals(&apply_id)) { return underlayer_content::render_reloc_apply() }
+        return string()
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         // HAT concepts are resolved first; render_hat_concept returns an empty
@@ -608,6 +636,9 @@ public namespace underlayer_web {
         // Symbol Resolution concepts; same fall-through contract.
         var sym_html = render_sym_concept(concept_id)
         if(sym_html.size() > 0) { return sym_html }
+        // Relocations/PIC/PIE concepts; same fall-through contract.
+        var reloc_html = render_reloc_concept(concept_id)
+        if(reloc_html.size() > 0) { return reloc_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

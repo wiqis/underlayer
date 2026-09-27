@@ -1,0 +1,36 @@
+# build_samples.sh is the single source of truth. It writes the .c files itself,
+# so they are build products, not sources -- keeping copies would only let them
+# drift from the script that generates them.
+#
+#   ./build_samples.sh     # writes the .c files, compiles, prints each finding
+#   python3 crosscheck.py  # asserts all 61 load-bearing claims
+#
+# Tracked: build_samples.sh, crosscheck.py
+__pycache__/
+
+# generated C sources
+*.c
+
+# build output
+*.o
+*.a
+*.so
+*.so.*
+*.map
+zz.so
+zz2.so
+z_pic.o
+z_pie.o
+z_ld.o
+z_ie.o
+t.o
+x.o
+
+# extensionless executables
+p_nopie
+p_halfpie
+p_halfpie2
+p_pie
+p_picso
+w_pie
+w_nopie
