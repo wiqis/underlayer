@@ -546,6 +546,38 @@ public namespace underlayer_web {
         return string()
     }
 
+    // Symbol Resolution and Symbol Tables. Owns the 12 `sym-*` ids; returns an
+    // empty string for anything else so the fall-through chain keeps working.
+    public func render_sym_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var intro_id = std::string("sym-intro")
+        var binding_id = std::string("sym-binding")
+        var visibility_id = std::string("sym-visibility")
+        var algorithm_id = std::string("sym-algorithm")
+        var order_id = std::string("sym-order")
+        var duplicate_id = std::string("sym-duplicate")
+        var hash_id = std::string("sym-hash")
+        var plt_id = std::string("sym-plt")
+        var binding_time_id = std::string("sym-binding-time")
+        var copy_reloc_id = std::string("sym-copy-reloc")
+        var version_id = std::string("sym-version")
+        var linker_defined_id = std::string("sym-linker-defined")
+
+        if(cid.equals(&intro_id)) { return underlayer_content::render_sym_intro() }
+        if(cid.equals(&binding_id)) { return underlayer_content::render_sym_binding() }
+        if(cid.equals(&visibility_id)) { return underlayer_content::render_sym_visibility() }
+        if(cid.equals(&algorithm_id)) { return underlayer_content::render_sym_algorithm() }
+        if(cid.equals(&order_id)) { return underlayer_content::render_sym_order() }
+        if(cid.equals(&duplicate_id)) { return underlayer_content::render_sym_duplicate() }
+        if(cid.equals(&hash_id)) { return underlayer_content::render_sym_hash() }
+        if(cid.equals(&plt_id)) { return underlayer_content::render_sym_plt() }
+        if(cid.equals(&binding_time_id)) { return underlayer_content::render_sym_binding_time() }
+        if(cid.equals(&copy_reloc_id)) { return underlayer_content::render_sym_copy_reloc() }
+        if(cid.equals(&version_id)) { return underlayer_content::render_sym_version() }
+        if(cid.equals(&linker_defined_id)) { return underlayer_content::render_sym_linker_defined() }
+        return string()
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         // HAT concepts are resolved first; render_hat_concept returns an empty
@@ -573,6 +605,9 @@ public namespace underlayer_web {
         if(obj_html.size() > 0) { return obj_html }
         var jvm_html = render_jvm_concept(concept_id)
         if(jvm_html.size() > 0) { return jvm_html }
+        // Symbol Resolution concepts; same fall-through contract.
+        var sym_html = render_sym_concept(concept_id)
+        if(sym_html.size() > 0) { return sym_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

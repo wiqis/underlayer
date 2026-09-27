@@ -55,7 +55,7 @@
 ## Executables, Linking & Loading
 
 - [x] Learn Object Files
-- [ ] Learn Symbol Resolution and Symbol Tables
+- [x] Learn Symbol Resolution and Symbol Tables
 - [ ] Learn Relocations, PIC and PIE
 - [ ] Learn Static Linking and Linker Scripts
 - [ ] Learn Dynamic Linking and Shared Libraries

@@ -1,0 +1,146 @@
+{
+  "id": "sym",
+  "title": "Symbol Resolution and Symbol Tables",
+  "version": "1.0.0",
+  "description": "How a linker decides what a name means. Binding and visibility, the extraction algorithm, the loader's lookup tables, symbol versioning, and the symbols the linker invents for you.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 12 concepts and reproduce the 84 measured checks in courses/sym/assets/samples/crosscheck.py",
+  "min_score": 70,
+  "dependencies": ["obj"],
+  "modules": [
+    {
+      "id": "identity",
+      "title": "What a Symbol Is",
+      "concepts": ["sym-intro", "sym-binding", "sym-visibility"]
+    },
+    {
+      "id": "algorithm",
+      "title": "The Resolution Algorithm",
+      "concepts": ["sym-algorithm", "sym-order", "sym-duplicate"]
+    },
+    {
+      "id": "runtime",
+      "title": "Resolution at Runtime",
+      "concepts": ["sym-hash", "sym-plt", "sym-binding-time", "sym-copy-reloc"]
+    },
+    {
+      "id": "versioning",
+      "title": "Versions and Invented Symbols",
+      "concepts": ["sym-version", "sym-linker-defined"]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "sym-intro",
+      "title": "A Name Is Not a Symbol",
+      "module_id": "identity",
+      "description": "The linker is asked one question over and over, and the question is not about names.",
+      "estimated_minutes": 16,
+      "difficulty": "beginner",
+      "importance": "high"
+    },
+    {
+      "id": "sym-binding",
+      "title": "Binding, and the Two Tables",
+      "module_id": "identity",
+      "description": "LOCAL, GLOBAL and WEAK, and why an object file carries two symbol tables instead of one.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "high"
+    },
+    {
+      "id": "sym-visibility",
+      "title": "Visibility Is Not Binding",
+      "module_id": "identity",
+      "description": "Four visibility values, and the measured fact that two of them are not stored in the visibility field at all.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "high"
+    },
+    {
+      "id": "sym-algorithm",
+      "title": "The Algorithm, Measured",
+      "module_id": "algorithm",
+      "description": "What a linker actually does, left to right, driven by demand rather than by the order you wrote the files.",
+      "estimated_minutes": 22,
+      "difficulty": "intermediate",
+      "importance": "critical"
+    },
+    {
+      "id": "sym-order",
+      "title": "Order, Archives and the Map File",
+      "module_id": "algorithm",
+      "description": "Why the order of two archives on the command line can decide whether your program links at all.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "high"
+    },
+    {
+      "id": "sym-duplicate",
+      "title": "Two Definitions and One Tentative",
+      "module_id": "algorithm",
+      "description": "Multiple definition, and the storage class that made the same source legal for thirty years.",
+      "estimated_minutes": 21,
+      "difficulty": "intermediate",
+      "importance": "high"
+    },
+    {
+      "id": "sym-hash",
+      "title": "Two Hash Tables, One Job",
+      "module_id": "runtime",
+      "description": "How the loader finds a name in constant time, and the counter-intuitive layout of the GNU table.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "high"
+    },
+    {
+      "id": "sym-plt",
+      "title": "The PLT and the GOT",
+      "module_id": "runtime",
+      "description": "Six instructions that turn a call into a lookup, read one instruction at a time.",
+      "estimated_minutes": 22,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "sym-binding-time",
+      "title": "Lazy, Eager, and the Flag That Does Nothing",
+      "module_id": "runtime",
+      "description": "A dynamic-section flag, a symbol that is never called, and the experiment that separates the two binding times.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "high"
+    },
+    {
+      "id": "sym-copy-reloc",
+      "title": "Who Owns the Storage",
+      "module_id": "runtime",
+      "description": "GLOB_DAT and COPY, and the code-model flag that silently decides which of them you get.",
+      "estimated_minutes": 21,
+      "difficulty": "advanced",
+      "importance": "high"
+    },
+    {
+      "id": "sym-version",
+      "title": "Versioned Symbols",
+      "module_id": "versioning",
+      "description": "Three tables, a parent chain, and a hash that is the same hash as the symbol table's.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "high"
+    },
+    {
+      "id": "sym-linker-defined",
+      "title": "Symbols the Linker Invents",
+      "module_id": "versioning",
+      "description": "The four boundary symbols, the section markers, and writing a resolver that agrees with ld.",
+      "estimated_minutes": 23,
+      "difficulty": "advanced",
+      "importance": "medium"
+    }
+  ]
+}
