@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""verify_link.py -- assert the course is internally consistent:
+"""verify_sec.py -- assert the course is internally consistent:
 
   * every manifest concept has a live route that renders its own title
   * the page's stated minutes match the manifest
@@ -16,7 +16,7 @@ import subprocess
 import sys
 
 BASE = 'http://localhost:9000'
-COURSE = "link"
+COURSE = "sec"
 
 m = json.load(open('courses/%s/manifest.json' % COURSE))
 
@@ -111,6 +111,19 @@ for l in real:
     code = get(l)
     if code != '200':
         bad.append('link %s -> %s' % (l, code))
+
+# the course's own claims, re-derived
+import os
+_samples = os.path.join('courses', COURSE, 'assets', 'samples')
+if os.path.isdir(_samples):
+    _cc = subprocess.run([sys.executable, os.path.join(_samples, 'crosscheck.py')],
+                         capture_output=True, text=True)
+    _m = re.search(r'(\d+)/(\d+) checks passed', _cc.stdout)
+    if _cc.returncode != 0 or not _m or _m.group(1) != _m.group(2):
+        bad.append('crosscheck.py: %s' % (_cc.stdout.strip().splitlines()[-1]
+                                          if _cc.stdout else _cc.stderr[:60]))
+    else:
+        print('\ncrosscheck.py: %s/%s measured claims still hold' % _m.groups())
 
 print('\n' + '=' * 70)
 if bad:

@@ -60,7 +60,7 @@
 - [x] Learn Static Linking and Linker Scripts
 - [x] Learn Dynamic Linking and Shared Libraries
 - [x] Learn Executable Images and OS Loading
-- [ ] Learn Executable Security and Hardening
+- [x] Learn Executable Security and Hardening
 
 
 ## CPU Architecture

@@ -686,6 +686,28 @@ public namespace underlayer_web {
         return string()
     }
 
+    // Executable security and hardening. Same fall-through contract: empty
+    // string for anything else. `sec-` is a prefix no other course uses.
+    public func render_sec_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var defaults_id = std::string("sec-defaults")
+        var canary_id = std::string("sec-canary")
+        var relro_id = std::string("sec-relro")
+        var fortify_id = std::string("sec-fortify")
+        var wx_id = std::string("sec-wx")
+        var cet_id = std::string("sec-cet")
+        var posture_id = std::string("sec-posture")
+
+        if(cid.equals(&defaults_id)) { return underlayer_content::render_sec_defaults() }
+        if(cid.equals(&canary_id)) { return underlayer_content::render_sec_canary() }
+        if(cid.equals(&relro_id)) { return underlayer_content::render_sec_relro() }
+        if(cid.equals(&fortify_id)) { return underlayer_content::render_sec_fortify() }
+        if(cid.equals(&wx_id)) { return underlayer_content::render_sec_wx() }
+        if(cid.equals(&cet_id)) { return underlayer_content::render_sec_cet() }
+        if(cid.equals(&posture_id)) { return underlayer_content::render_sec_posture() }
+        return string()
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         // HAT concepts are resolved first; render_hat_concept returns an empty
@@ -728,6 +750,9 @@ public namespace underlayer_web {
         // Executable images / OS loading concepts; same fall-through contract.
         var img_html = render_img_concept(concept_id)
         if(img_html.size() > 0) { return img_html }
+        // Security / hardening concepts; same fall-through contract.
+        var sec_html = render_sec_concept(concept_id)
+        if(sec_html.size() > 0) { return sec_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

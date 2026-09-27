@@ -1,0 +1,119 @@
+{
+  "id": "sec",
+  "title": "Executable Security and Hardening",
+  "version": "1.0.0",
+  "description": "What each hardening flag does to the bytes, and the three layers -- codegen, linker, driver -- where the defaults are decided.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 7 concepts, reproduce the 60 measured checks in courses/sec/assets/samples/crosscheck.py, and run courses/sec/assets/samples/harden.py on a binary you did not build",
+  "min_score": 70,
+  "dependencies": [
+    "obj",
+    "sym",
+    "reloc",
+    "link",
+    "dyn",
+    "img"
+  ],
+  "modules": [
+    {
+      "id": "defaults",
+      "title": "The Defaults",
+      "concepts": [
+        "sec-defaults",
+        "sec-canary"
+      ]
+    },
+    {
+      "id": "got",
+      "title": "The GOT",
+      "concepts": [
+        "sec-relro",
+        "sec-fortify"
+      ]
+    },
+    {
+      "id": "perms",
+      "title": "Permissions",
+      "concepts": [
+        "sec-wx",
+        "sec-cet"
+      ]
+    },
+    {
+      "id": "read",
+      "title": "Read It Yourself",
+      "concepts": [
+        "sec-posture"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "sec-defaults",
+      "title": "Three Layers, Two Answers",
+      "module_id": "defaults",
+      "description": "Codegen, linker, and driver decide hardening separately, and the two compilers disagree on all three.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "sec-canary",
+      "title": "The Canary and Its Limits",
+      "module_id": "defaults",
+      "description": "%fs:0x28, three instructions, and the one kind of overflow it structurally cannot see.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "sec-relro",
+      "title": "The Two Tiers of RELRO",
+      "module_id": "got",
+      "description": "The page arithmetic that leaves eight bytes of the GOT writable, and why -z now is what makes sealing possible.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "sec-fortify",
+      "title": "FORTIFY Leaves a Trace",
+      "module_id": "got",
+      "description": "A compile-time fact turned into a runtime argument, visible in the imports -- and a retraction.",
+      "estimated_minutes": 23,
+      "difficulty": "advanced",
+      "importance": "high"
+    },
+    {
+      "id": "sec-wx",
+      "title": "W^X, and Why TEXTREL Died",
+      "module_id": "perms",
+      "description": "The stack's execute bit, and the section that made writable text segments unnecessary.",
+      "estimated_minutes": 23,
+      "difficulty": "advanced",
+      "importance": "high"
+    },
+    {
+      "id": "sec-cet",
+      "title": "CET: The Instructions Are Not the Request",
+      "module_id": "perms",
+      "description": "endbr64 is present whether or not the binary asks for enforcement, and the note is what counts.",
+      "estimated_minutes": 23,
+      "difficulty": "advanced",
+      "importance": "high"
+    },
+    {
+      "id": "sec-posture",
+      "title": "Reading a Binary's Posture",
+      "module_id": "read",
+      "description": "Parse every feature out of the file with no toolchain, and know which source each check read.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}

@@ -10,6 +10,7 @@
 Run with the server up on :9000.
 """
 import collections
+import html
 import json
 import re
 import subprocess
@@ -64,8 +65,14 @@ for i, cid in enumerate(order):
                                                    by_id[cid]['estimated_minutes']))
     if not title:
         prob.append('no h1')
-    elif title.group(1) != by_id[cid]['title']:
-        prob.append('title %r != manifest %r' % (title.group(1), by_id[cid]['title']))
+    elif html.unescape(title.group(1)) != by_id[cid]['title']:
+        # The #html macro escapes a literal apostrophe to &#39; on output, so
+        # the raw markup and the manifest string differ for a title that
+        # contains one. Compare the DECODED text, which is what the browser
+        # shows and what the manifest means. jvm/lessons/jvm-stackmaps has
+        # this exact situation and no verifier, so it was never caught.
+        prob.append('title %r != manifest %r'
+                    % (html.unescape(title.group(1)), by_id[cid]['title']))
     if units != 6:
         prob.append('%d units, expected 6' % units)
 
