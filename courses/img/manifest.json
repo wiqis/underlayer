@@ -1,0 +1,108 @@
+{
+  "id": "img",
+  "title": "Executable Images and OS Loading",
+  "version": "1.0.0",
+  "description": "What the kernel builds before your first instruction runs: the auxiliary vector nobody exposes, the initial stack decoded by hand, and the addresses chosen for you.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 6 concepts, reproduce the 41 measured checks in courses/img/assets/samples/crosscheck.py, and run courses/img/assets/samples/stackwalk.py",
+  "min_score": 70,
+  "dependencies": [
+    "obj",
+    "sym",
+    "reloc",
+    "link",
+    "dyn"
+  ],
+  "modules": [
+    {
+      "id": "handoff",
+      "title": "The Handoff",
+      "concepts": [
+        "img-auxv",
+        "img-stack"
+      ]
+    },
+    {
+      "id": "read",
+      "title": "Reading the Values",
+      "concepts": [
+        "img-entries",
+        "img-vdso"
+      ]
+    },
+    {
+      "id": "place",
+      "title": "The Layout",
+      "concepts": [
+        "img-place"
+      ]
+    },
+    {
+      "id": "build",
+      "title": "Rebuild It",
+      "concepts": [
+        "img-walk"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "img-auxv",
+      "title": "The Auxiliary Vector",
+      "module_id": "handoff",
+      "description": "The third array on the initial stack, the one no C library function will give you.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "img-stack",
+      "title": "Reading the Initial Stack by Hand",
+      "module_id": "handoff",
+      "description": "argc, argv, envp, auxv as raw bytes, and the off-by-one that segfaults.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "img-entries",
+      "title": "What Each Entry Is For",
+      "module_id": "read",
+      "description": "The three that matter, the arithmetic that ties them to the file, and the pointer-versus-size trap.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "img-vdso",
+      "title": "The vDSO: An ELF File With No File",
+      "module_id": "read",
+      "description": "A shared library the kernel synthesises, maps into every process, and backs with nothing.",
+      "estimated_minutes": 23,
+      "difficulty": "advanced",
+      "importance": "high"
+    },
+    {
+      "id": "img-place",
+      "title": "Where the Kernel Put Everything",
+      "module_id": "place",
+      "description": "The process map, the 64 KB floor, and why a hint is not a request.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "img-walk",
+      "title": "Rebuilding the Image Reader",
+      "module_id": "build",
+      "description": "Read the raw stack, decode it with no libc, and check every value against the file and against procfs.",
+      "estimated_minutes": 27,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}

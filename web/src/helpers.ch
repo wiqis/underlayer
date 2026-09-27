@@ -666,6 +666,26 @@ public namespace underlayer_web {
         return string()
     }
 
+    // Executable images and OS loading. Same fall-through contract: empty
+    // string for anything else. `img-` is a prefix no other course uses.
+    public func render_img_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var auxv_id = std::string("img-auxv")
+        var stack_id = std::string("img-stack")
+        var entries_id = std::string("img-entries")
+        var vdso_id = std::string("img-vdso")
+        var place_id = std::string("img-place")
+        var walk_id = std::string("img-walk")
+
+        if(cid.equals(&auxv_id)) { return underlayer_content::render_img_auxv() }
+        if(cid.equals(&stack_id)) { return underlayer_content::render_img_stack() }
+        if(cid.equals(&entries_id)) { return underlayer_content::render_img_entries() }
+        if(cid.equals(&vdso_id)) { return underlayer_content::render_img_vdso() }
+        if(cid.equals(&place_id)) { return underlayer_content::render_img_place() }
+        if(cid.equals(&walk_id)) { return underlayer_content::render_img_walk() }
+        return string()
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         // HAT concepts are resolved first; render_hat_concept returns an empty
@@ -705,6 +725,9 @@ public namespace underlayer_web {
         // Dynamic linking / shared library concepts; same fall-through contract.
         var dyn_html = render_dyn_concept(concept_id)
         if(dyn_html.size() > 0) { return dyn_html }
+        // Executable images / OS loading concepts; same fall-through contract.
+        var img_html = render_img_concept(concept_id)
+        if(img_html.size() > 0) { return img_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

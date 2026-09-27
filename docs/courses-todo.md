@@ -59,7 +59,7 @@
 - [x] Learn Relocations, PIC and PIE
 - [x] Learn Static Linking and Linker Scripts
 - [x] Learn Dynamic Linking and Shared Libraries
-- [ ] Learn Executable Images and OS Loading
+- [x] Learn Executable Images and OS Loading
 - [ ] Learn Executable Security and Hardening
 
 

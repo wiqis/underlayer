@@ -1,0 +1,8 @@
+# Build products. build_samples.sh writes every .c file and every binary;
+# nothing in this directory is edited by hand except the three .py files and
+# this script. See research.md.
+*
+!.gitignore
+!build_samples.sh
+!stackwalk.py
+!crosscheck.py
