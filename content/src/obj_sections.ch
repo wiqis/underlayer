@@ -41,7 +41,8 @@ public func render_obj_sections() : string {
     what must its start align  an ALIGNMENT
     what may be done to it     FLAGS  (writable? executable?)
 
-  ELF      64-byte Elf64_Shdr,  name = u32 OFFSET into .shstrtab
+  ELF      64-byte Elf64_Shdr,  name = u32 OFFSET into the table
+                              e_shstrndx names
   COFF     40-byte,             name = 8 bytes INLINE
   Mach-O   80-byte section_64,  name = 16 bytes INLINE
 </div>
@@ -116,8 +117,10 @@ public func render_obj_sections() : string {
                 <div class="hex-dump">
                     <pre>  ELF     the name is a NUMBER. demo_elf.o's section
           header for .text stores sh_name = 6, and byte 6 of
-          .shstrtab is where the string "text" begins. Nothing
-          in the section header is a name.
+          the table at e_shstrndx is where "text" begins.
+          Nothing in the section header is a name.
+          (That table is also .symtab's sh_link, and it is
+          named .strtab -- see the REALITY unit.)
 
   COFF    8 bytes inline:      b'.text\x00\x00\x00'
                              b'.rdata\x00\x00'
@@ -130,7 +133,11 @@ public func render_obj_sections() : string {
 </pre>
                 </div>
                 <p><strong>Mach-O stores two names per section, 32 bytes, and uses one of them for something the other two formats have no concept of.</strong> Every Mach-O section declares which segment it belongs to &mdash; <code>__text</code> says <code>__TEXT</code>, <code>__data</code> says <code>__DATA</code> &mdash; and in an object that grouping is inert, because the single segment command is unnamed. In a linked binary it is the whole point. <strong>A Mach-O section header reserves 16 bytes for a fact that is always meaningless in the file type where you are most likely to be reading it.</strong></p>
-                <p>And the reason ELF needs a second string table, which is a question everyone asks eventually. <strong>ELF has one table for symbol names (<code>.strtab</code>) and a separate one for section names (<code>.shstrtab</code>)</strong> &mdash; <code>demo_elf.o</code> has both. A section header and a symbol are read at different times by different tools, and making either depend on the other would mean you cannot walk one table without first walking the other. <strong>Two tables, two independent walks, no ordering requirement.</strong> COFF and Mach-O need only one string table each, and pay for it in fixed-size fields and an escape hatch.</p>
+                <p>And the question everyone asks eventually: does ELF need a second string table? <strong>The answer is that it has two <em>slots</em> and does not necessarily have two <em>tables</em> &mdash; and the specimen in this course proves it.</strong> Read the section header table of <code>demo_elf.o</code> and you will find <code>e_shstrndx = 1</code>. Read the symbol table's header and you will find <code>sh_link = 1</code>. <strong>Both point at the same section, and that section is named <code>.strtab</code>. There is no <code>.shstrtab</code> in the file at all.</strong></p>
+                <p>The convention is real &mdash; GCC's build of the same source does have both, with <code>e_shstrndx = 16</code> and <code>sh_link = 15</code> &mdash; and the merged table is legal, because the specification says section names come from &ldquo;the string table named by <code>e_shstrndx</code>&rdquo; and says nothing about that table having to be distinct from <code>.strtab</code> or having to be called <code>.shstrtab</code>. The contents of the merged table make the reason obvious: it holds section names <em>and</em> symbol names interleaved &mdash; <code>.rela.text</code>, <code>call_out</code>, <code>comment</code>, <code>bss</code>, <code>message_bytes</code>, <code>global_counter</code> &mdash; and nothing about the file suggests which category any given string belongs to.</p>
+                <div class="callout callout-warn">
+                    <strong>So the rule to take away is not a name, it is an index.</strong> <code>e_shstrndx</code> names the string table for section names; <code>sh_link</code> of a symbol table names the one for symbol names. <strong>They are usually different and they are not required to be, so a reader that looks for a section called <code>.shstrtab</code> works on GCC output and fails on clang output.</strong> A tool that assumes two tables by name will work on one of the two most common producers on Earth and break on the other, in a way that produces empty symbol names rather than an error. COFF and Mach-O, by contrast, need only one string table each and pay for it in fixed-size fields and an escape hatch.
+                </div>
             </div>
 
             <div class="unit unit-example">
@@ -139,8 +146,8 @@ public func render_obj_sections() : string {
                 <div class="formula">
   1. GROUP      concatenate same-named sections from every
                input. Needs: the name.
-               ELF reads .shstrtab. COFF compares 8 bytes or
-               follows /NNN. Mach-O compares 16.
+               ELF follows e_shstrndx. COFF compares 8 bytes
+               or follows /NNN. Mach-O compares 16.
 
   2. ORDER      place them. Needs: nothing -- the linker
                chooses, using alignment and its own policy.
@@ -183,7 +190,7 @@ $ llvm-objdump-21 -h demo_macho.o</code></pre>
                     <li><strong>Write the name-keyed dictionary and lose a section.</strong> Build a map from section name to record for <code>demo_coff.o</code> and print its size. <strong>It will hold six entries for seven sections</strong>, and printing the surviving <code>.rdata</code>'s offset tells you which literal you kept. This is a five-line bug that a real linker has shipped.</li>
                     <li><strong>Find a <code>.bss</code>-shaped section in all three.</strong> COFF <code>.bss</code> at <code>rawoff=0x0</code> with <code>rawsize=4</code>; Mach-O <code>__common</code> at <code>offset=0</code> with <code>size=4</code>. <strong>Add a third uninitialised variable to <code>demo.c</code>, rebuild, and watch the size change while the offset stays zero.</strong> Then ask your reader what it should copy &mdash; the answer is nothing, and getting that wrong writes four bytes of zeros over something else.</li>
                     <li><strong>Count the bytes a section name costs.</strong> ELF 4, COFF 8, Mach-O 16 (plus 16 more for the segment name). <strong>Multiply by the section count in a large real object</strong> and compare against the file size. The format with the most generous name field is spending a measurable fraction of the file on names, and it is buying the absence of a string-table walk.</li>
-                    <li><strong>Walk <code>.shstrtab</code> by hand.</strong> Take the <code>.text</code> entry's <code>sh_name</code> value (6), follow that byte offset into <code>.shstrtab</code>, read to the NUL. <strong>Then do the same for <code>.strtab</code> and a symbol name</strong>, and confirm you needed two different tables. ELF's design only makes sense once you have done both walks separately.</li>
+                    <li><strong>Walk the string tables by hand, using the <em>indexes</em> and not the names.</strong> Read <code>e_shstrndx</code> out of the ELF header &mdash; for <code>demo_elf.o</code> it is <strong>1</strong> &mdash; and notice that section 1 is named <code>.strtab</code>, not <code>.shstrtab</code>. Then read the <code>.symtab</code> header's <code>sh_link</code> and confirm it is <strong>also 1</strong>. <strong>Both walks land in the same table.</strong> Now repeat the whole thing on <code>demo_elfgcc.o</code>, where the two indexes are 15 and 16 and the tables really are separate. <strong>A reader that follows the indexes works on both; one that looks for <code>.shstrtab</code> by name works on exactly one of the two most common producers on Earth, and fails by printing empty names rather than by erroring.</strong></li>
                 </ul>
             </div>
 
@@ -212,14 +219,14 @@ $ llvm-objdump-21 -h demo_macho.o</code></pre>
                 <h2>Connect</h2>
                 <p>This concept is the ELF course's <a href="/courses/elf/lessons/section-header-table">section header table</a> and the PE course's <a href="/courses/pe/lessons/pe-section-table">section table</a> compared against each other and against a third, which is the only way the accidental parts become visible. The <a href="/courses/coff">COFF course</a> is closest to this material &mdash; its first module is "The Relocatable Object" &mdash; so if you have read it, the job here is the part it cannot do alone: showing that a decision COFF made for its own reasons is a decision, and that two other teams made the opposite one.</p>
                 <p>The alignment-units trap has a direct counterpart in the architecture section, and it is the same lesson wearing different clothes. <a href="/courses/obj">The Memory Hierarchy</a> course in the collapsed architecture roadmap is where a page is 4096 bytes and an L1 cache line is 64, and where a field that says &quot;alignment 4&quot; is ambiguous between the two unless the specification says which. <strong>Mach-O's <code>align</code> is a logarithm for the same reason a memory-ordering constant is named for what it prevents rather than what it does: a number in a header needs a unit, and the unit is the specification's job to state.</strong> A field whose meaning depends on a convention outside the file is a field a reader cannot check.</p>
-                <p>The two-string-tables decision is the same shape as the JVM course's finding that <code>CONSTANT_Utf8</code> is not UTF-8, and for the same underlying reason: <strong>a named encoding in a format is a claim about the bytes, and the claim can be false or can be one of several things.</strong> Here the claim is &quot;this 4-byte number is a name&quot;, and it is true only because a specification says <code>.shstrtab</code> exists at a known offset. A reader that guesses &quot;the name is inline&quot; because COFF does it that way will read ELF's <code>sh_name = 6</code> as the six bytes of a name and get <code>&quot;\x2e\x74\x65\x78\x74\x00&quot;</code> &mdash; which is <code>.text</code> by accident, for the first section, and then garbage for every one after it.</p>
+                <p>The string-table decision is the same shape as the JVM course's finding that <code>CONSTANT_Utf8</code> is not UTF-8, and for the same underlying reason: <strong>a named encoding in a format is a claim about the bytes, and the claim can be false or can be one of several things.</strong> Here the claim is &quot;this 4-byte number is a name&quot;, and it is true only because a specification says a string table exists at a known <em>index</em>. <strong>The name of that table is the part that is not guaranteed</strong>, and the file in this course proves it: clang calls it <code>.strtab</code> and points <code>e_shstrndx</code> at it, while GCC calls it <code>.shstrtab</code> and points <code>e_shstrndx</code> at that instead. <strong>Same specification, same source, two different answers &mdash; which is the strongest possible form of the lesson, because it is not one producer being wrong.</strong> A reader that infers a table from its name rather than from the index it was given will work on one of them and fail on the other.</p>
                 <p>And the <code>.bss</code>-shaped sections &mdash; nonzero size, zero offset &mdash; connect to <a href="/courses/elf/lessons/common-sections">ELF's common sections</a> and to the tentative-definition machinery that <code>obj-bss-common</code> covers. The important thing to carry from here is the general form: <strong>a section can have a size and occupy no file bytes</strong>, because the size describes memory and the offset describes the file, and for zero-fill data those are different quantities. A reader that copies <code>size</code> bytes from <code>offset</code> is correct for every section except that one, and the exception is the one that appears in almost every object file ever produced.</p>
                 <p>One last connection, and it is the one that matters for the mission. <strong>A code generator chooses section names, and section names are how a linker grants permissions.</strong> Put a writable object in a section a reader expects to be read-only and you have changed the security properties of the output; put code in a section named like data and the linker may place it in a data segment and the program will fault on execution. That is not a hypothetical class of bug &mdash; it is why the <a href="/courses/obj">Position-Independent Code</a> and hardening courses exist, and it is why a compiler author has to understand the section table as a <em>contract with the linker</em> rather than as a filing system.</p>
             </div>
 
             <div class="lesson-footer">
                 <span><a href="/courses/obj/lessons/obj-no-segments">Previous: No Segments, and Why</a></span>
-                <span>Next: Symbol Tables, Compared</span>
+                <span><a href="/courses/obj/lessons/obj-symbols">Next: Symbol Tables, Compared</a></span>
             </div>
         </div>
     }

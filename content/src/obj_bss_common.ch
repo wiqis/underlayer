@@ -206,8 +206,8 @@ $ readelf -sW b.o | grep tentative</code></pre>
             </div>
 
             <div class="lesson-footer">
-                <span><a href="/courses/obj/lessons/obj-symbols">Previous: Symbol Tables, Compared</a></span>
-                <span>Next: Module 3: The Fixup</span>
+                <span><a href="/courses/obj/lessons/obj-strings">Previous: Where Names Live</a></span>
+                <span>Next: The Fixup Record</span>
             </div>
         </div>
     }

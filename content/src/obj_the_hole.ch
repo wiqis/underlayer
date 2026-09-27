@@ -252,7 +252,7 @@ $ llvm-objdump-21 -r -d courses/obj/assets/samples/demo_arm64elf.o</code></pre>
 
             <div class="lesson-footer">
                 <span><a href="/courses/obj/lessons/obj-intro">Previous: The Middle of Every Build</a></span>
-                <span>Next: One Source, Three Formats</span>
+                <span><a href="/courses/obj/lessons/obj-triangulate">Next: One Source, Three Formats</a></span>
             </div>
         </div>
     }

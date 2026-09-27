@@ -42,8 +42,8 @@
       "concepts": [
         "obj-relocations",
         "obj-addends",
-        "obj-pic",
-        "obj-reloc-tables"
+        "obj-reloc-tables",
+        "obj-pic"
       ]
     },
     {
@@ -157,20 +157,20 @@
       "importance": "core"
     },
     {
-      "id": "obj-pic",
-      "title": "Position Independence",
-      "module_id": "fixup",
-      "description": "PC-relative addressing, the GOT, and why the same source needs twice the fixups on AArch64. PIC is a choice of relocation set.",
-      "estimated_minutes": 24,
-      "difficulty": "advanced",
-      "importance": "core"
-    },
-    {
       "id": "obj-reloc-tables",
       "title": "The Object Relocation Sets",
       "module_id": "fixup",
       "description": "The complete per-architecture object relocation tables, what each means, and which are object-only.",
       "estimated_minutes": 22,
+      "difficulty": "advanced",
+      "importance": "core"
+    },
+    {
+      "id": "obj-pic",
+      "title": "Position Independence",
+      "module_id": "fixup",
+      "description": "PC-relative addressing, the GOT, and why the same source needs twice the fixups on AArch64. PIC is a choice of relocation set.",
+      "estimated_minutes": 24,
       "difficulty": "advanced",
       "importance": "core"
     },

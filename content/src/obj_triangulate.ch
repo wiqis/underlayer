@@ -241,7 +241,7 @@ $ llvm-readobj-21 --sections courses/obj/assets/samples/demo_coff.o</code></pre>
 
             <div class="lesson-footer">
                 <span><a href="/courses/obj/lessons/obj-the-hole">Previous: A Hole and a Record</a></span>
-                <span>Next: No Segments, and Why</span>
+                <span><a href="/courses/obj/lessons/obj-no-segments">Next: No Segments, and Why</a></span>
             </div>
         </div>
     }

@@ -233,7 +233,7 @@ $ llvm-nm-21 demo_macho.o</code></pre>
 
             <div class="lesson-footer">
                 <span><a href="/courses/obj/lessons/obj-sections">Previous: Sections, Compared</a></span>
-                <span>Next: Where Names Live</span>
+                <span><a href="/courses/obj/lessons/obj-strings">Next: Where Names Live</a></span>
             </div>
         </div>
     }

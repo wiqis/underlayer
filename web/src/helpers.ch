@@ -471,6 +471,17 @@ public namespace underlayer_web {
         var sections_id = std::string("obj-sections")
         var symbols_id = std::string("obj-symbols")
         var bss_common_id = std::string("obj-bss-common")
+        var strings_id = std::string("obj-strings")
+        var relocations_id = std::string("obj-relocations")
+        var addends_id = std::string("obj-addends")
+        var reloc_tables_id = std::string("obj-reloc-tables")
+        var pic_id = std::string("obj-pic")
+        var comdat_group_id = std::string("obj-comdat-group")
+        var archives_id = std::string("obj-archives")
+        var weak_undef_id = std::string("obj-weak-undef")
+        var emit_id = std::string("obj-emit")
+        var arch_table_id = std::string("obj-arch-table")
+        var verify_id = std::string("obj-verify")
 
         if(cid.equals(&intro_id)) { return underlayer_content::render_obj_intro() }
         if(cid.equals(&hole_id)) { return underlayer_content::render_obj_the_hole() }
@@ -479,6 +490,17 @@ public namespace underlayer_web {
         if(cid.equals(&sections_id)) { return underlayer_content::render_obj_sections() }
         if(cid.equals(&symbols_id)) { return underlayer_content::render_obj_symbols() }
         if(cid.equals(&bss_common_id)) { return underlayer_content::render_obj_bss_common() }
+        if(cid.equals(&strings_id)) { return underlayer_content::render_obj_strings() }
+        if(cid.equals(&relocations_id)) { return underlayer_content::render_obj_relocations() }
+        if(cid.equals(&addends_id)) { return underlayer_content::render_obj_addends() }
+        if(cid.equals(&reloc_tables_id)) { return underlayer_content::render_obj_reloc_tables() }
+        if(cid.equals(&pic_id)) { return underlayer_content::render_obj_pic() }
+        if(cid.equals(&comdat_group_id)) { return underlayer_content::render_obj_comdat_group() }
+        if(cid.equals(&archives_id)) { return underlayer_content::render_obj_archives() }
+        if(cid.equals(&weak_undef_id)) { return underlayer_content::render_obj_weak_undef() }
+        if(cid.equals(&emit_id)) { return underlayer_content::render_obj_emit() }
+        if(cid.equals(&arch_table_id)) { return underlayer_content::render_obj_arch_table() }
+        if(cid.equals(&verify_id)) { return underlayer_content::render_obj_verify() }
         return string()
     }
 

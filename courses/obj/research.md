@@ -5,8 +5,10 @@
 > point of view, because the mission's outcome is a learner who can build a
 > linker.
 >
-> Status: research complete, specimens staged, manifest drafted. Concepts not
-> yet written. See "Course plan" at the end.
+> Status: **complete.** All 18 concepts written and verified, all five modules
+> shipped, landing page and static output generated. See "Course plan" at the
+> end, and findings 36-46 below for what the writing itself turned up --
+> including three corrections to earlier findings in this record.
 
 ## Why this course is cross-format, and not a fifth format course
 
@@ -594,3 +596,594 @@ findings 18, 19 and the sections/symbols concepts — the three name-storage
 strategies, ELF's two string tables, and COFF's single table serving both
 `/NNN` section-name escapes and long symbol names. It should be written as a
 short synthesis rather than re-measured.
+
+### 28. The relocation tables are a classification, not a list
+
+Two authoritative sources on this machine, and they answer different questions:
+
+| Source | What it gives | Count |
+|---|---|---|
+| `/usr/include/elf.h` | names and numbers only, plain enum | 44 `R_X86_64_` |
+| `/usr/lib/llvm-21/include/llvm/BinaryFormat/ELFRelocs/X86_64.def` | names **plus per-entry property flags** | 44 |
+| `.../AArch64.def` | same | **233** |
+
+**AArch64's 233 is two ABIs in one table:** 147 `LP64` plus **86 `R_AARCH64_P32_*`**
+(ILP32). The headline number is 233; the useful number is 147. Always check for
+a second ABI before concluding anything from a count.
+
+| Arch | Total | PC-relative | TLS |
+|---|---|---|---|
+| x86-64 | 44 | 18 | 18 |
+| AArch64 (LP64) | 147 | 71 | 53 |
+
+LLVM's classification flags, decoded:
+
+| Flag | Bit | Meaning |
+|---|---|---|
+| `REL` | 0x1 | divide by field width — the stored value is an offset |
+| `SYM` | 0x2 | plain symbol address, not divided |
+| `PC` | 0x4 | subtract the patch address |
+| `TYPE` | 0x8 | the field holds an address — **overflow must fail the link** |
+| `SIZE` | 0x10 | needs **twice** the field space; a second quantity is packed alongside |
+| `TLS` | 0x20 | thread-local |
+| `IREL` | 0x40 | resolver address, patched at load time |
+
+**A linker implements ~9 cases (absolute, PC-relative, GOT-relative, PLT/call,
+overflow check, paired entries, TLS, IRELATIVE, NONE) and derives the rest,
+which are width and sign variants.** 147 entries collapse to nine behaviours.
+
+### 29. The AArch64 pairing is a bit in the table, not just a convention
+
+Every AArch64 relocation participating in an ADRP/LO12 pair carries **`SIZE`**:
+
+    R_AARCH64_ADR_PREL_PG_HI21      275  SIZE+SYM+REL
+    R_AARCH64_ADR_PREL_PG_HI21_NC   276  SIZE+PC
+    R_AARCH64_LDST32_ABS_LO12_NC    285  SIZE+TYPE+PC+REL
+    R_AARCH64_LDST64_ABS_LO12_NC    286  SIZE+TYPE+PC+SYM
+
+`SIZE` means "not independent — needs extra space because a second quantity is
+encoded alongside". So **the machine-checked form of finding 1 is a bit saying
+this relocation has a partner.** A linker that processes records independently
+links cleanly and faults at run time, because nothing in the file is malformed:
+each record is valid alone, and the pairing is a relationship the file cannot
+mark as violated.
+
+### 30. `R_X86_64_PC32` is flagged `SYM`; `R_X86_64_PLT32` is flagged `PC`
+
+This closes the second concept's open question. The two perform **identical
+arithmetic**; the only difference is the PLT hint — and the hint **is the `PC`
+flag**. The name describes the *field* (`PC32` = 32-bit PC-relative displacement)
+while the flags describe the *relocation's behaviour*. Reading both gives the
+whole type; reading either alone gives half of it and a plausible wrong answer.
+
+### 31. TLS is where relocation tables actually grow
+
+18 of x86-64's 44 and 53 of AArch64's 147 entries are TLS. A thread-local address
+has several components (thread pointer, TLS-block offset, module offset, symbol
+offset) and each instruction form combines a different subset — roughly a dozen
+types per architecture. **Relocation table size tracks instruction-set complexity
+in the area being addressed, not the number of addressing modes**, and the growth
+clusters where new capabilities arrived rather than spreading evenly. This is the
+same additive-growth pattern as the JVM attribute mechanism and ELF section types.
+
+The table is **not partitioned by file type** — the same `R_X86_64_PC32` appears in
+an object and an executable, and `R_X86_64_32` is normal in an object and
+forbidden in a PIE. The *compiler's choices* pick the subset, so a linker must
+handle the union and a PIE-aware linker must reject the wide one deliberately.
+
+### Not yet done
+
+`obj-relocations`, `obj-addends` and `obj-pic` remain in Module 3. Their
+material is largely measured (findings 1, 4, 14, 29, 30), but `obj-pic` needs a
+GOT-relative specimen built with `-fPIC` and the non-PIC/PIE comparison
+measured rather than described. `obj-emit` still has no hand-built object file,
+which is the mission's "from scratch" test.
+
+### 32. `-fPIE` produces IDENTICAL relocations to no flag; only `-fPIC` changes them
+
+Same `demo.c`, same machine, `llvm-objdump-21 -r`, three builds:
+
+| `.text` reloc | no flag | `-fPIC` | `-fPIE` |
+|---|---|---|---|
+| data ref 1 | `PC32` @0x04 | **`REX_GOTPCRELX` @0x05** | `PC32` @0x04 |
+| data ref 2 | `PC32` @0x0a | **`REX_GOTPCRELX` @0x0e** | `PC32` @0x0a |
+| the call | `PLT32` @0x21 | `PLT32` @0x21 | `PLT32` @0x21 |
+| data ref 3 | `PC32` @0x33 | **`REX_GOTPCRELX` @0x33** | `PC32` @0x33 |
+| `.data` → literal | `64` | `64` | `64` |
+| internal calls | `PC32` ×3 | `PC32` ×3 | `PC32` ×3 |
+
+**Two findings, both counter-intuitive:**
+
+1. **`-fPIE` and no flag are byte-identical in their relocation sets.** A PIE
+   executable is loaded near its link address, so it does not need GOT
+   indirection for its own data. Only `-fPIC` — a shared library, which can be
+   loaded anywhere — pays for the GOT.
+2. **The offsets shift by one byte under `-fPIC`** (0x04→0x05, 0x0a→0x0e). The
+   instruction got *longer*: `REX_GOTPCRELX` requires a REX prefix byte that the
+   plain RIP-relative form does not. **Changing the relocation type changes the
+   instruction encoding, which changes every subsequent offset in the section.**
+   A tool that assumes relocation offsets are independent of relocation types will
+   be wrong on every `-fPIC` object.
+
+Note also that the *call* is `PLT32` in all three — the call path is already
+indirection-based, so PIC does not change it. Only the **data** references move to
+the GOT, and that is the whole design.
+
+### 33. C's plain `inline` provides no external definition — so no COMDAT group appears
+
+Tested at both `-O1` and `-O0`, three formats:
+
+    inline int shared_inline(int x) { return x + 1; }
+    int a(int v) { return shared_inline(v); }
+
+    ELF    readelf -g: "There are no section groups in this file."
+           llvm-nm:  U shared_inline        <- UNDEFINED, no definition
+    COFF   two .text sections (indexes 0 and 4); the second has
+           Characteristics 0x60501020 vs the first's 0x60500020 --
+           the difference is 0x1000 = IMAGE_SCN_LNK_COMDAT
+    Mach-O llvm-nm: U _shared_inline          <- UNDEFINED
+
+**C99's `inline` alone does not create an external definition** — that is the
+"inline vs extern inline vs static inline" rule, and it means there is nothing
+in the object for a group to own. COFF emitted a COMDAT section anyway; ELF and
+Mach-O emitted no group and no `linkonce`. Linking the two objects produced **no
+collision**, because there was nothing to collide.
+
+**To exercise the COMDAT path, the specimen needs `static inline` (which does
+create a definition) or a C++-style inline with external linkage.** This is
+recorded as an open measurement, not a conclusion: the three formats disagreed
+and the next session must establish which of them is right and why before
+`obj-comdat-group` claims anything.
+
+### 34. A weak definition in COFF gets a section named after its *referrer*
+
+From a three-format build of:
+
+    __attribute__((weak)) int maybe(int x) { return x - 1; }
+    int uses_weak(int a) { return maybe(a); }
+
+    ELF    W maybe
+    COFF   W maybe   AND  a .weak.maybe.default.caller   section
+    Mach-O _maybe
+
+**COFF's extra section embeds the referencing function's name** — `.weak.maybe
+.default.caller` — because COFF has no per-symbol COMDAT. Its mechanism is to put
+the definition in a section whose *name* is unique to the definition, and that
+name happens to be built from the symbol plus the function that triggered the
+emission. That is a real and undocumented-looking design divergence worth a
+concept, and it is the sort of thing that only shows up when you look at
+`llvm-readobj --sections` rather than at `nm`.
+
+### Not yet done — 9 concepts
+
+Module 3: `obj-relocations`, `obj-addends`, `obj-pic`
+Module 4: `obj-comdat-group`, `obj-archives`, `obj-weak-undef`
+Module 5: `obj-emit`, `obj-arch-table`, `obj-verify`
+
+`obj-pic` has everything it needs (finding 32). `obj-addends` and
+`obj-relocations` have findings 1, 4, 14, 29, 30. `obj-comdat-group` and
+`obj-weak-undef` have finding 34 but finding 33 is an **open question that must
+be resolved before writing** — the three formats disagreed on whether a COMDAT
+section appears, and the mission's rule is that a claim needs agreement.
+
+`obj-emit` still has no hand-built object file, which is the mission's
+"from scratch" test.
+
+### 35. RESOLVED: why C's `inline` never produces a COMDAT group, and C++'s does
+
+Finding 33 was left open because the three formats appeared to disagree. They
+do not — the specimen was wrong. Measured properly, three formats, C and C++:
+
+| source | definition? | ELF group | COFF COMDAT | Mach-O |
+|---|---|---|---|---|
+| `inline int f()` (C99) | **none** — undefined symbol | no | no | no |
+| `static inline int f()` | file-local, private linkage | no | no | no |
+| `inline int f()` (C++) | **yes**, external linkage | **yes** | **yes** (`0x1000`) | yes |
+
+**The rule: a COMDAT group exists only for a symbol with external linkage that
+more than one translation unit might define.** C's plain `inline` provides no
+external definition (the C99 inline/extern-inline/static-inline rule), so there
+is nothing to group. C's `static inline` is private to one file, so there is
+nothing to merge. **C++'s `inline` does have an external definition and may
+appear in any number of translation units — which is exactly the situation a
+group exists to resolve.**
+
+And the ELF group, decoded, shows all three mechanisms keying on the *mangled
+name*:
+
+    COMDAT group section [4] `.group' [_Z10cxx_inlinei] contains 1 sections:
+       [Index]    Name
+       [    5]   .text._Z10cxx_inlinei
+
+The group's **signature is `_Z10cxx_inlinei`**, and the member section is
+**named after the signature too**. Two objects each defining `cxx_inline` link
+with **no duplicate-symbol error** — verified: `ld -r t1.o t2.o` is silent, where
+without the group it would be a hard error.
+
+COFF's variant, from finding 34, embeds the *referrer* instead:
+`.weak.maybe.default.caller`. **Same concept, different key.** Mach-O uses a
+`linkonce` section type; `nm` shows `_Z10cxx_inlinei` as `T` in both, with the
+merge decided by the section rather than the symbol.
+
+**So the three mechanisms, correctly:**
+- **ELF** `SHT_GROUP` — a named group section; the signature is the symbol name
+- **COFF** `IMAGE_SCN_LNK_COMDAT` (0x1000) — a flag on the section itself, with a
+  unique section name
+- **Mach-O** a `linkonce` section type — carried in the section flags
+
+Three teams, one problem, three places to put the answer: a group table, a
+section flag, and a section type. **This is the clearest case in the course of an
+essential idea being reinvented independently three times** — the test the
+triangulation concept proposed for telling essential from accidental.
+
+---
+
+## Module 3 findings (added while writing obj-relocations, obj-addends, obj-reloc-tables, obj-pic)
+
+### 36. CORRECTION to finding 4: the addend is in the RECORD, not in the bytes
+
+Finding 4 said the `-0x4` in a relocation listing "is the *implicit* addend,
+which lives in the four bytes of `.text` at offset 4". **That is wrong for
+`demo_elf.o`, and the correction is the whole subject of `obj-addends`.**
+
+    $ xxd -s 0x40  -l 8  demo_elf.o        # .text + 4:  03 3d 00 00 00 00
+                                              #              ^^^^^^ ALL ZERO
+    $ xxd -s 0x250 -l 8  demo_elf.o        # r_addend:  fc ff ff ff ff ff ff ff
+
+x86-64 is **RELA**. The `-4` is an explicit signed `i64` in the relocation
+record and the four bytes in the section are zero, because a relocatable
+object has no addresses to put there.
+
+Proved by building the 32-bit counterpart of the same 30 lines, which uses
+**REL** and therefore has no addend field at all:
+
+    $ clang -target i386-pc-linux-gnu -O1 -fno-pic -c demo.c -o demo_i386_nopic.o
+    $ xxd -s 0x60 -l 6 demo_i386_nopic.o
+    00000060: e9fc ffff ff66                 e9 = jmp rel32 at text offset 0x20
+                                            fc ff ff ff = the -4, at 0x21
+
+Same source, same machine, two answers -- and the only variable is whether the
+record type is REL or RELA.
+
+### 37. COFF's PC bias is in the TYPE's definition, and linking proves it
+
+`demo_coff.o`'s `.text` at offset 4 is `00 00 00 00` and its record is
+`04 00 00 00 | 11 00 00 00 | 04 00` -- three fields, **no addend**. So where
+is the `-4`? In the specification of `IMAGE_REL_AMD64_REL32`, which defines
+the value as the displacement from the byte *following* the field.
+
+Verified by linking, which is the only way to see a value the input never
+contained:
+
+    $ clang -target i386-pc-windows-msvc -O1 -c demo.c -o a.obj
+    $ ld -m i386pe --oformat pei-i386 -o out.exe a.obj b.obj
+    $ llvm-objdump-21 -d out.exe
+    00401020 <_call_out>:
+      401020: e9 1b 00 00 00    jmp 0x401040 <_external_fn>
+
+    S = 0x401040   P = 0x401021   bias = 4
+    0x401040 - (0x401021 + 4) = 0x401025 -> 0x1b
+
+**The `-4` is in the linker's code and in no input file.** So the addend is
+*data* in ELF-RELA and *code* in COFF, and a tool holding a COFF object can
+never recover the bias from it.
+
+### 38. CORRECTION to finding 2: "COFF has no PLT variant" is per-TARGET, not per-format
+
+    x86-64 COFF:  0x4 IMAGE_REL_AMD64_REL32  x4   (call and data refs alike)
+    i386   COFF:  0x14 IMAGE_REL_I386_REL32   (the call)
+                  0x6 IMAGE_REL_I386_DIR32  x3   (the data refs)
+
+Different types, same format. The claim only holds for x86-64, which sharpens
+finding 2's real point: a linker implements a vocabulary per **target**.
+
+### 39. The three relocation records, field by field, all measured
+
+| | ELF64-RELA | ELF32-REL | COFF x64 | Mach-O x64 |
+|---|---|---|---|---|
+| size | 24 | 8 | 10 | 8 |
+| offset | `r_offset` u64 | `r_offset` u32 | `VirtualAddress` u32 | `r_address` **i32** |
+| sym+type | packed: `(sym<<32)\|type` | packed: `(sym<<8)\|type` | **separate** u32 + u16 | 6 bitfields in one u32 |
+| addend | `r_addend` i64 | (none -- in the bytes) | (none -- in the bytes) | (none -- in the bytes) |
+| links to its section | `sh_info` in the reloc's header | same | positional (`relptr`) | positional (`reloff`) |
+| order in file | ascending | ascending | ascending | **descending** |
+
+The Mach-O `0x1d000003` unpacked and checked by hand against the bytes:
+`type=1, extern=1, length=2, pcrel=1, symnum=3 (_message)`.
+
+## Module 4 findings (obj-comdat-group, obj-archives, obj-weak-undef)
+
+### 40. CORRECTION to finding 35: Mach-O has NO linkonce section
+
+Finding 35 said Mach-O "uses a `linkonce` section type". **Modern clang does
+not emit one, and the term is not in the format definitions at all:**
+
+    $ grep -i linkonce /usr/lib/llvm-21/include/llvm/BinaryFormat/MachO.h
+    (no output)
+
+    $ llvm-objdump-21 --section-table ca_macho.o
+      __text      addr=0x0000 size=0x0019 flags=0x80000400
+      __eh_frame  addr=0x0020 size=0x0068 flags=0x6800000b
+    # two sections. No member section, no group.
+
+    # the whole mechanism, decoded from the nlist_64 entries:
+    __Z13shared_inlinei  n_type=0x0f  sect=1  n_desc=0x0080  N_WEAK_DEF
+
+So the three mechanisms are:
+
+| | where the answer lives | cost | can it detect disagreement |
+|---|---|---|---|
+| ELF | a whole `SHT_GROUP` section | +1 section, +1 symbol | no |
+| COFF | a `0x1000` bit + a `Selection`/checksum in the aux record | +1 section, +1 aux | yes, advisory |
+| Mach-O | **one bit in a symbol** | 0 | no |
+
+The replacement is a better lesson than the original: two formats put the
+answer in a section and the third puts it in a symbol.
+
+### 41. COFF's COMDAT has a policy and a checksum; the other two have neither
+
+Both COFF specimens carry `Checksum = 0x751D2B5A`, `Selection = 2`
+(`IMAGE_COMDAT_SELECT_ANY`), and byte-identical bodies (`8d 41 01 c3`).
+`SELECT_NODUPLICATES` and `SELECT_ASSOCIATIVE` also exist and are the only
+per-definition merge policies in any of the three formats.
+
+### 42. The C counterexample: COMDAT is a C++ requirement and C never got one
+
+Four spellings of one function, three formats, measured:
+
+| source | `nm` | group? | two TUs link? |
+|---|---|---|---|
+| C `inline` | `U f` (UNDEFINED) | no | n/a -- nothing exists |
+| C `static inline` | `t f` (local) | no | n/a -- private |
+| C `inline` + `extern` decl | `T f` (global) | **no** | **FAILS**: `multiple definition of 'f'` |
+| C++ `inline` | `T f` + WEAK + group | yes | links silently |
+
+The rule: **a group exists only for a symbol with external linkage that more
+than one translation unit is licensed to define.** C's `static inline` is
+private; C's plain `inline` emits no definition at all; C's `inline`+`extern`
+has a definition but C does not license the duplication.
+
+### 43. COFF has no weak flag -- the name IS the mechanism
+
+    w_coff.o:     .weak.maybe.default.uses_weak      Section .text (1), EXTERNAL
+    uw_coff.o:    .weak.optional_hook.default.probe  Section ABSOLUTE(-1), Value 0
+
+No bit, no storage class, no aux field. The referrer's name is embedded
+because COFF has no per-symbol COMDAT and needs a name unique per
+(definition, referrer) pair -- so two TUs with the same weak symbol and
+different callers produce different names, do not merge, and coexist.
+
+The undefined-weak case is the elegant one: `Section = IMAGE_SYM_ABSOLUTE`
+with `Value = 0` **reuses the category that already means "constant"** to say
+"the address zero". No new field.
+
+### 44. Weak defeat removes the SYMBOL and keeps the BYTES
+
+    $ ld -r w_elf.o w2_elf.o -o rw.o        # silent
+    $ readelf -sW rw.o | grep maybe
+      8: 0000000000000020  4 FUNC  GLOBAL DEFAULT 1  maybe   # promoted, points at 0x20
+
+    $ llvm-objdump-21 -d rw.o
+      0: 8d 47 ff   leal -0x1(%rdi),%eax    <-- the WEAK body, still here
+      3: c3
+     20: 8d 47 64   leal  0x64(%rdi),%eax   <-- the STRONG body, where `maybe` points
+
+Input `.text` sizes 21 and 22; merged `.text` is **54**. 5 of the extra 11
+bytes are the dead weak body and the rest is padding. **No tool reports
+anything.** The only way to reclaim it is to have put the definition in its own
+section -- i.e. a COMDAT group.
+
+### 45. Archive resolution is a fixed point, not a backwards scan
+
+The common claim ("linkers read archives backwards") is false, and the way to
+settle it is to build an archive where a backwards pass also fails:
+
+    $ ar rcs libfwd.a l2.o l1.o l3.o
+    $ ld -o fwd -Map=fwd.map main.o libfwd.a     # SUCCEEDS
+
+* forward: `l2` is passed before anything wants `level2` -> fail
+* backward: `l1` is reached while `l2` is still ahead of the cursor -> fail
+
+Both single passes fail and the link works, so GNU ld repeats the scan until a
+pass loads nothing new. The map file is the evidence:
+
+    Archive member included to satisfy reference by file (symbol)
+    libfwd.a(l1.o)  main.o (level1)
+    libfwd.a(l2.o)  libfwd.a(l1.o) (level2)
+    libfwd.a(l3.o)  libfwd.a(l2.o) (level3)
+
+And `libdemo.a`'s map lists only `mathlib.o` and `strlib.o`. `unused.o` is
+**not mentioned anywhere** -- not included, not discarded, not at all.
+
+## Module 5 findings (obj-emit, obj-arch-table, obj-verify)
+
+### 46. The from-scratch object file, and the four bugs that got past every tool
+
+`emit_elf.py` writes a 936-byte ELF64 x86-64 relocatable object using nothing
+but `struct`. GNU `ld` merges it with compiler-produced objects and the
+resulting program prints the right answers.
+
+    $ ./app
+    start(5)      = 11
+    answer        = 41
+    *answer_ptr   = 41   (answer_ptr == &answer: yes)
+
+The linker's arithmetic, checked by hand:
+
+    start  at 0x1140:  e8 01 00 00 00   0x1144 + 5 + 1  = 0x114a = compute
+    compute at 0x114a: e8 0d 00 00 00   0x114e + 5 + 0x0d = 0x1160 = helper
+    .data: answer = 0x29 = 41 at 0x4010; answer_ptr = 0x4010 at 0x4014
+
+**Four bugs, and every one produced a file that `readelf`,
+`llvm-readobj-21` and `llvm-objdump-21` read without a warning:**
+
+1. `e_shoff` hardcoded to 64 -- the header pointed the section table at
+   `.text`. `readelf` errored. Loud, and the lucky case.
+2. `sh_link`/`sh_info` on the relocation sections pointing at the wrong
+   indices. The file *parsed*; every symbol name came out empty.
+3. `answer` and `answer_ptr` both at offset 0 of an 8-byte `.data` -- they
+   **overlapped**. Legal ELF. Linked, ran, printed an address where 41 was
+   expected. **No tool reported anything.**
+4. `addl $1` emitted *before* the call instead of after, so `compute` was
+   `helper(x+1)`. Plausible disassembly, wrong program.
+
+Only bug 3 is instructive, and it is the argument for `obj-verify`: an object
+file has **no internal consistency check on symbol placement**.
+
+### 47. The AArch64 relocation field is a BIT RANGE, verified positively
+
+`enc_a64_nopic.o` at `-fno-pic`, one reference to `g32`:
+
+    0: 90000008   adrp x8, #0    R_AARCH64_ADR_PREL_PG_HI21  g32
+    4: b9400100   ldr  w0, [x8]  R_AARCH64_LDST32_ABS_LO12_NC g32
+    8: d65f03c0   ret
+
+Decoded by hand from the little-endian word `0x90000008`:
+
+    bit 31      op      = 1            (ADRP, not ADR)
+    bits 30:29  immlo   = 0            2 of the 21 bits
+    bits 28:24  fixed   = 10000        must be exactly this
+    bits 23:5   immhi   = 0            the other 19 bits
+    bits 4:0    Rd      = x8
+    -> 21-bit signed page delta = (immhi << 2) | immlo
+
+and the LDR word `0xb9400100`: `size=2, imm12 = bits 21:10 = 0, Rn = x8, Rt = w0`.
+
+**Verified positively, not by reading zeros.** `aarch64_enc.py` encodes a
+chosen page delta, the words are placed with `.inst`, and an independent
+disassembler reads back what was encoded:
+
+    $ python3 aarch64_enc.py --build 3    ->  0xf0000008
+    $ llvm-objdump-21 -d adrp_test.o
+      0: f0000008   adrp x8, 0x3000                     = +3 pages
+      4: f0ffffc8   adrp x8, 0xffffffffffffb000         = -5 pages
+     20: 90000008   adrp x8, 0x0
+
+So the 21 bits are split 2 + 19 and sign-extended, and a linker must
+**read-modify-write** -- a plain four-byte overwrite destroys the destination
+register. There is no AArch64 linker on this machine, so the pair was verified
+by construction and read-back rather than by linking, and the concept says so.
+
+### 48. x86-64 field offsets vary with the instruction's prefixes
+
+All from `enc_nopic.o` (`-O0 -fno-pic`):
+
+    bytes                     len  field at   instruction
+    e8 00 00 00 00             5     +1       call rel32
+    0f 84 00 00 00 00          6     +2       jz   rel32
+    8b 05 00 00 00 00          6     +2       movl (%rip), %eax
+    8b 04 25 00 00 00 00       6     +3       movl 0x0, %eax
+    48 8b 05 00 00 00 00       7     +3       movq (%rip), %rax
+    48 8b 04 25 00 00 00 00    7     +4       movq 0x0, %rax
+    c7 04 25 <disp32> <imm32> 10     +3       movl $1, 0x0
+
+**The field offset is not derivable from the relocation type** -- the same
+type appears at +3 and +4 depending on a REX prefix. And the last row is why
+"the field is the last four bytes" is a trap: it has an immediate after it.
+
+## Harness state
+
+`assets/samples/crosscheck.py` runs **95 checks, 0 failures**, in three tiers
+that are ordered by independence rather than by count:
+
+* **Tier 3** -- the file disagrees with itself. COFF's aux records repeat each
+  section's size and relocation count, so a reader that mis-parses them
+  disagrees with the section header with no oracle at all. ELF's symtab
+  `sh_info` must be the index of the first GLOBAL and everything before it
+  LOCAL. This tier is the cheapest and catches the most.
+* **Tier 2** -- this decoder, written from the specifications, diffed field by
+  field against `readelf` and `llvm-readobj-21`. ELF and COFF have two
+  independent toolchains on this machine; **Mach-O has one**, and the concepts
+  say so rather than implying parity.
+* **Tier 1** -- the emitter vs a reference producer. Listed last deliberately:
+  a reference producer is an oracle for *a* file, not for *your* file, and a
+  whole-file byte diff has a signal-to-noise ratio bad enough that people
+  learn to ignore it.
+
+Tier 1 as a *byte* comparison is worthless and is **not** done. The acceptance
+test for `hand.o` is instead: GNU `ld` accepts it, it links with
+clang-produced objects, and the program prints the right numbers.
+
+`assets/samples/ardec.py` decodes `libdemo.a` field by field from the format
+description and cross-checks the index against each member's own symbol table
+-- two independent records of the same fact, so the index is auditable.
+
+`assets/samples/build_samples.sh` rebuilds every specimen and ends with a
+`cmp` proving `demo_elf.o` is byte-reproducible, which is what lets the course
+say "these exact bytes are these exact claims".
+
+## Three corrections, and why they are recorded rather than quietly fixed
+
+Findings 4, 35 and 8 were wrong in the same way: **each was a plausible
+reading of a specification that had been consulted rather than a file that had
+been opened.** Finding 8's claim that "ELF needs two string tables ...
+`demo_elf.o` has both" is false of the very file the course ships -- see 49.
+
+### 49. CORRECTION: `demo_elf.o` has ONE string table, not two
+
+    e_shstrndx = 1
+    .symtab sh_link = 1
+    section 1 is named .strtab
+
+There is no `.shstrtab` section header in the file at all, and the single
+table's contents interleave section names and symbol names with nothing to
+distinguish them:
+
+    b'\x00.rela.text\x00call_out\x00.comment\x00.bss\x00message_bytes\x00
+      global_counter\x00external_fn\x00...'
+
+GCC's build of the same 30 lines **does** have two, with `e_shstrndx = 16` and
+`sh_link = 15`. Both are conforming: the specification says section names come
+from the table named by `e_shstrndx` and never says that table must be
+distinct from `.strtab` or be called `.shstrtab`.
+
+**So the rule is an index, not a name** -- and a reader that looks for
+`.shstrtab` works on one of the two most common producers on Earth and fails on
+the other, with empty names rather than an error. `obj-sections` and
+`obj-strings` were corrected to teach this, and the exercise each one built on
+the false claim was rewritten, because the original could not be completed.
+
+Also corrected in passing: finding 22's "16 entries in demo_elf.o" (it is 15,
+and the last is `.symtab`; `.shstrtab` simply has no section header of its
+own).
+
+## Not established, still
+
+- **No three-format crosscheck harness in the COFF/JVM sense.** What exists is
+  `crosscheck.py`, which is stronger in one way (three tiers, and Tier 3 needs
+  no second implementation) and weaker in another (it covers this course's
+  specimens, not the whole format). Recorded rather than implied.
+- **No Mach-O linker and no AArch64 linker on this machine.** Mach-O claims
+  rest on LLVM 21 plus hand-decoding; the AArch64 pairing was verified by
+  encoding a value and having an independent disassembler read it back, not by
+  linking. Both concepts state which is which.
+- **No independent AArch64 producer.** The AArch64 findings rest on clang
+  alone, unchanged from the original research.
+- **`hand.o` is x86-64 only.** The header and every table are architecture
+  independent, and `e_machine` is a single field, but the four `.text` bytes
+  and the three relocations are not, and nothing here has been linked on
+  AArch64 because there is no linker here to link with.
+
+### 50. `demo_coff.o` is not byte-reproducible, and the reason is one field
+
+`build_samples.sh` ends with a `cmp` proving `demo_elf.o` rebuilds
+byte-identically, which is what lets the course say "these exact bytes are
+these exact claims". **COFF cannot do that, and the reason is a single 4-byte
+field: the file header's `TimeDateStamp` at offset 4.**
+
+Measured: a rebuild changes **3 bytes**, all inside that field
+(`0x6ab7c0eb` -> `0x6ab81f5b`). Every structural field is identical --
+`Machine = 0x8664`, `NumberOfSections = 7`, `PointerToSymbolTable = 0x211`,
+`NumberOfSymbols = 26`, `OptionalHeaderSize = 0`.
+
+No claim is affected, and it is worth being precise about why rather than
+asserting it: the concepts quote the `.text` data at `0x12c`, the `.text`
+relocations at `0x16a`, and the symbol table at `0x211`, and **none of those
+is the timestamp.** So the course is safe, and the reproducibility claim is
+weakened for COFF in a specific, checkable way rather than globally.
+
+This is a good illustration of the general rule the course teaches: a
+"byte-exact" claim is only as good as knowing **which** bytes the claim is
+about. A harness that compared whole files would report a false failure here,
+and a reader who assumed reproducibility would assume the wrong thing in the
+other direction.

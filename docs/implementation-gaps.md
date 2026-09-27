@@ -267,6 +267,52 @@ The following do NOT work in interpretation mode (comptime):
 
 **Rule**: Avoid comptime string manipulation. Use compiled mode for course generation.
 
+### `#html` Has No `<pre>` Guard: A Literal `{` Breaks the Macro
+
+`html_cbi`'s lexer enters Chemical mode on **any** `{` inside a `#html`
+block. There is no `<pre>` exemption, even though the same lexer *does* have
+a `pre_depth` guard for whitespace (`nextToken.ch`, the `' '` case). So a
+function body in a hex dump stops the macro:
+
+```
+    <pre>  int f(int x) { return x; }     <- `{` opens a Chemical expression
+</pre>
+```
+
+and the compiler reports `expected a rbrace after the chemical value`, then
+`expected a rbrace for ending the html macro`, and **everything after the
+brace falls out of the macro** and is parsed as Chemical. A bare `<` in a
+verbatim block fails the same way, with `tag names must start with letters`.
+
+**This is a macro bug, not a content rule.** Per golden rule 7 the fix belongs
+in the plugin, and it is a one-line change mirroring the guard that already
+exists for whitespace:
+
+```
+    '{' => {
+        if(html.lb_count >= 1 && !html.expecting_html_block
+           && html.pre_depth == 0) {      // <-- the missing condition
+            html.other_mode = true;
+            html.chemical_mode = true;
+            html.chem_start_lb = html.lb_count;
+        }
+```
+
+Until that lands, **course content must avoid literal braces inside a
+`#html` block**, which is why the C and C++ samples in `obj-comdat-group`,
+`obj-weak-undef` and `obj-emit` are shown brace-free with a note saying so.
+Every course in this repository already works within the constraint, which is
+why it has gone unnoticed until a concept needed to show a real function
+body.
+
+**Workaround in force:** `tools/html_balance.py` flags braces and bare `<`
+anywhere in a `#html` block, flags unclosed tags of any name, and flags a
+closing tag whose `>` is missing -- the last of which produces a lexer error
+reported at a completely unrelated line several hundred lines later. Run it
+over any `.ch` before building:
+
+    python3 tools/html_balance.py content/src/<course>_*.ch
+
 ## Important: Missing Infrastructure
 
 ### No Centralized Binary Format Library

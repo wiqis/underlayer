@@ -243,7 +243,7 @@ $ readelf -lW exe | grep -A1 LOAD</code></pre>
 
             <div class="lesson-footer">
                 <span><a href="/courses/obj/lessons/obj-triangulate">Previous: One Source, Three Formats</a></span>
-                <span>Next: Module 2: Anatomy, Compared</span>
+                <span><a href="/courses/obj/lessons/obj-sections">Next: Sections, Compared</a></span>
             </div>
         </div>
     }
