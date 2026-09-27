@@ -636,6 +636,36 @@ public namespace underlayer_web {
         return string()
     }
 
+    // Dynamic Linking and Shared Libraries. Owns the 10 ids below; returns an
+    // empty string for anything else so the fall-through chain keeps working.
+    // Only the scope module is prefixed `dyn-`, because `pie-`, `pic-` and
+    // `tls-` are other concepts' prefixes.
+    public func render_dyn_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var scope_id = std::string("dyn-scope")
+        var interpose_id = std::string("dyn-interpose")
+        var order_id = std::string("dyn-order-runtime")
+        var build_so_id = std::string("dyn-build-so")
+        var export_id = std::string("dyn-export")
+        var symbolic_id = std::string("dyn-symbolic")
+        var dlopen_id = std::string("dyn-dlopen")
+        var bind_time_id = std::string("dyn-bind-time")
+        var tls_block_id = std::string("dyn-tls-block")
+        var resolve_id = std::string("dyn-resolve")
+
+        if(cid.equals(&scope_id)) { return underlayer_content::render_dyn_scope() }
+        if(cid.equals(&interpose_id)) { return underlayer_content::render_dyn_interpose() }
+        if(cid.equals(&order_id)) { return underlayer_content::render_dyn_order_runtime() }
+        if(cid.equals(&build_so_id)) { return underlayer_content::render_dyn_build_so() }
+        if(cid.equals(&export_id)) { return underlayer_content::render_dyn_export() }
+        if(cid.equals(&symbolic_id)) { return underlayer_content::render_dyn_symbolic() }
+        if(cid.equals(&dlopen_id)) { return underlayer_content::render_dyn_dlopen() }
+        if(cid.equals(&bind_time_id)) { return underlayer_content::render_dyn_bind_time() }
+        if(cid.equals(&tls_block_id)) { return underlayer_content::render_dyn_tls_block() }
+        if(cid.equals(&resolve_id)) { return underlayer_content::render_dyn_resolve() }
+        return string()
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         // HAT concepts are resolved first; render_hat_concept returns an empty
@@ -672,6 +702,9 @@ public namespace underlayer_web {
         // Static linking / linker script concepts; same fall-through contract.
         var link_html = render_link_concept(concept_id)
         if(link_html.size() > 0) { return link_html }
+        // Dynamic linking / shared library concepts; same fall-through contract.
+        var dyn_html = render_dyn_concept(concept_id)
+        if(dyn_html.size() > 0) { return dyn_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

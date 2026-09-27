@@ -1,0 +1,147 @@
+{
+  "id": "dyn",
+  "title": "Dynamic Linking and Shared Libraries",
+  "version": "1.0.0",
+  "description": "The ordered list every undefined symbol is answered from, what ends up in a shared library's .dynsym, and loading a library at run time.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 10 concepts, reproduce the 85 measured checks in courses/dyn/assets/samples/crosscheck.py, and run courses/dyn/assets/samples/dynscope.py tour",
+  "min_score": 70,
+  "dependencies": [
+    "obj",
+    "sym",
+    "reloc",
+    "link"
+  ],
+  "modules": [
+    {
+      "id": "scope",
+      "title": "The Scope",
+      "concepts": [
+        "dyn-scope",
+        "dyn-interpose",
+        "dyn-order-runtime"
+      ]
+    },
+    {
+      "id": "build",
+      "title": "Building a Library",
+      "concepts": [
+        "dyn-build-so",
+        "dyn-export",
+        "dyn-symbolic"
+      ]
+    },
+    {
+      "id": "load",
+      "title": "Loading at Run Time",
+      "concepts": [
+        "dyn-dlopen",
+        "dyn-bind-time",
+        "dyn-tls-block"
+      ]
+    },
+    {
+      "id": "build2",
+      "title": "Rebuild It",
+      "concepts": [
+        "dyn-resolve"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "dyn-scope",
+      "title": "The Global Scope",
+      "module_id": "scope",
+      "description": "The ordered list every undefined symbol is answered from, and how the loader builds it.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "dyn-interpose",
+      "title": "Interposition",
+      "module_id": "scope",
+      "description": "The executable's definition wins, including inside libraries that did nothing unusual.",
+      "estimated_minutes": 23,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "dyn-order-runtime",
+      "title": "Breadth-First, and Why It Matters",
+      "module_id": "scope",
+      "description": "Level-by-level or branch-by-branch, measured from the loader's own load order.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "high"
+    },
+    {
+      "id": "dyn-build-so",
+      "title": "Building a Library",
+      "module_id": "build",
+      "description": "What ends up in .dynsym, and the four commands that decide it.",
+      "estimated_minutes": 22,
+      "difficulty": "intermediate",
+      "importance": "critical"
+    },
+    {
+      "id": "dyn-export",
+      "title": "Hiding Things, and the Trap",
+      "module_id": "build",
+      "description": "-fvisibility=hidden, version scripts, and the flag that breaks every caller.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "dyn-symbolic",
+      "title": "One Instruction Called -Bsymbolic",
+      "module_id": "build",
+      "description": "What it binds, what it does not, and the precise thing its name hides.",
+      "estimated_minutes": 21,
+      "difficulty": "advanced",
+      "importance": "high"
+    },
+    {
+      "id": "dyn-dlopen",
+      "title": "dlopen, dlsym, and the Mode Bits",
+      "module_id": "load",
+      "description": "Loading a library at run time, and why RTLD_LOCAL is 0.",
+      "estimated_minutes": 23,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "dyn-bind-time",
+      "title": "Lazy, Eager, and What Actually Differs",
+      "module_id": "load",
+      "description": "One binding either way, and the .got.plt section that disappears.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "high"
+    },
+    {
+      "id": "dyn-tls-block",
+      "title": "Where the Thread Blocks Come From",
+      "module_id": "load",
+      "description": "The loader allocating storage the linker could not, completing the TLS story.",
+      "estimated_minutes": 21,
+      "difficulty": "advanced",
+      "importance": "high"
+    },
+    {
+      "id": "dyn-resolve",
+      "title": "Rebuilding the Scope Yourself",
+      "module_id": "build",
+      "description": "Read DT_NEEDED, walk it breadth-first, resolve a symbol, and check against the real loader.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}

@@ -58,7 +58,7 @@
 - [x] Learn Symbol Resolution and Symbol Tables
 - [x] Learn Relocations, PIC and PIE
 - [x] Learn Static Linking and Linker Scripts
-- [ ] Learn Dynamic Linking and Shared Libraries
+- [x] Learn Dynamic Linking and Shared Libraries
 - [ ] Learn Executable Images and OS Loading
 - [ ] Learn Executable Security and Hardening
 
