@@ -1,0 +1,128 @@
+{
+  "id": "link",
+  "title": "Static Linking and Linker Scripts",
+  "version": "1.0.0",
+  "description": "The 276-line program that places every binary you have ever linked, read from top to bottom, then two sections the script alone controls.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 10 concepts, reproduce the 116 measured checks in courses/link/assets/samples/crosscheck.py, and run courses/link/assets/samples/linklab.py tour",
+  "min_score": 70,
+  "dependencies": ["obj", "sym", "reloc"],
+  "modules": [
+    {
+      "id": "script",
+      "title": "The Script You Already Use",
+      "concepts": ["link-default-script", "link-script-language", "link-order"]
+    },
+    {
+      "id": "placement",
+      "title": "Placing Things",
+      "concepts": ["link-location-counter", "link-memory-regions", "link-phdrs"]
+    },
+    {
+      "id": "selection",
+      "title": "Roots and Selection",
+      "concepts": ["link-keep-gc", "link-orphans"]
+    },
+    {
+      "id": "static",
+      "title": "Static, and Build One",
+      "concepts": ["link-static-real", "link-write-script"]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "link-default-script",
+      "title": "The Program That Placed Your Binary",
+      "module_id": "script",
+      "description": "ld will print the exact script it is using, and what it does and does not decide.",
+      "estimated_minutes": 22,
+      "difficulty": "intermediate",
+      "importance": "critical"
+    },
+    {
+      "id": "link-script-language",
+      "title": "The Language, in the Order It Runs",
+      "module_id": "script",
+      "description": "OUTPUT_FORMAT, ENTRY, SEARCH_DIR, SECTIONS, and the five operators inside a rule.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "link-order",
+      "title": "Which Rule Wins",
+      "module_id": "script",
+      "description": "First-match-wins, proven in four cells, and the hot/cold partition it exists for.",
+      "estimated_minutes": 21,
+      "difficulty": "intermediate",
+      "importance": "high"
+    },
+    {
+      "id": "link-location-counter",
+      "title": "The Location Counter",
+      "module_id": "placement",
+      "description": "The dot, ALIGN, SIZEOF, and one number that moves the whole binary.",
+      "estimated_minutes": 23,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "link-memory-regions",
+      "title": "MEMORY Is a Budget",
+      "module_id": "placement",
+      "description": "Regions, origins, lengths, and turning a silent overlap into a link error.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "high"
+    },
+    {
+      "id": "link-phdrs",
+      "title": "PHDRS and the -T Surprise",
+      "module_id": "placement",
+      "description": "Writing program headers by hand, and the flag that silently changes your output type.",
+      "estimated_minutes": 22,
+      "difficulty": "advanced",
+      "importance": "high"
+    },
+    {
+      "id": "link-keep-gc",
+      "title": "Reachability, and Who the Roots Are",
+      "module_id": "selection",
+      "description": "--gc-sections as a graph walk, rooted at ENTRY and KEEP, and why inlining changes the answer.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "link-orphans",
+      "title": "The Sections the Script Forgot",
+      "module_id": "selection",
+      "description": "Orphan placement, and the five sections even the default script guesses at.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "high"
+    },
+    {
+      "id": "link-static-real",
+      "title": "What -static Actually Does",
+      "module_id": "static",
+      "description": "52x the size, one fewer program header, and an e_type the script followed.",
+      "estimated_minutes": 20,
+      "difficulty": "intermediate",
+      "importance": "high"
+    },
+    {
+      "id": "link-write-script",
+      "title": "Writing One Yourself",
+      "module_id": "static",
+      "description": "Generate a script, place the binary, and verify the result by running it.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}

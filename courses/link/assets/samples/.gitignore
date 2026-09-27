@@ -1,0 +1,79 @@
+# build_samples.sh is the single source of truth. It writes the .c files itself
+# and generates every .ld variant it needs, so they are build products.
+#
+#   ./build_samples.sh     # writes the specimens, compiles, prints each finding
+#   python3 crosscheck.py  # asserts all 116 load-bearing claims
+#   python3 linklab.py     # the buildable artifact
+#
+# Tracked: build_samples.sh, crosscheck.py, linklab.py
+__pycache__/
+
+# generated C sources
+*.c
+
+# generated linker scripts -- every one is derived from the ld --verbose dump
+# by a patch inside build_samples.sh, including the /DISCARD/ order cells
+*.ld
+
+# objects
+*.o
+
+# executables produced by the script, and by linklab.py.
+# They have no extension, so they need naming here. Anything matching is
+# disposable: ./build_samples.sh recreates all of it from an empty directory,
+# which is asserted by the reproducibility check.
+moved_*
+s_dyn
+s_static
+hello_default
+hello_script
+rt.out
+rt_pie.out
+rt_exec.out
+rts.out
+rts_pie.out
+rts_exec.out
+probe.out
+stripped.out
+nostack*
+ns.out
+hot
+gc*
+ctor.*
+mem.out
+tm*.out
+bm*.out
+ph.out
+moved*
+cell_[abcd]
+bt_*
+o_*
+orph.*
+linklab_*
+
+# binaries and files that crosscheck.py itself builds while running.
+# It links the attribute and orphan specimens under its own names, so
+# these have to be listed even though build_samples.sh does not make them.
+a_w.out
+a_rx.out
+attr_w.out
+attr_rx.out
+err_attr_w.txt
+err_attr_rx.txt
+orph_none.out
+orph_w.out
+pie.out
+lab_*
+
+# binaries and files that crosscheck.py itself builds while running.
+# It links the attribute and orphan specimens under its own names, so
+# these have to be listed even though build_samples.sh does not make them.
+a_w.out
+a_rx.out
+attr_w.out
+attr_rx.out
+err_attr_w.txt
+err_attr_rx.txt
+orph_none.out
+orph_w.out
+pie.out

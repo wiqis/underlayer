@@ -606,6 +606,36 @@ public namespace underlayer_web {
         return string()
     }
 
+    // Static Linking and Linker Scripts. Owns the 10 ids below; returns an empty
+    // string for anything else so the fall-through chain keeps working. Only
+    // the script module is prefixed `link-`, because `pie-`, `pic-` and `tls-`
+    // are the other concepts' prefixes.
+    public func render_link_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var default_script_id = std::string("link-default-script")
+        var language_id = std::string("link-script-language")
+        var order_id = std::string("link-order")
+        var counter_id = std::string("link-location-counter")
+        var memory_id = std::string("link-memory-regions")
+        var phdrs_id = std::string("link-phdrs")
+        var keep_gc_id = std::string("link-keep-gc")
+        var orphans_id = std::string("link-orphans")
+        var static_id = std::string("link-static-real")
+        var write_id = std::string("link-write-script")
+
+        if(cid.equals(&default_script_id)) { return underlayer_content::render_link_default_script() }
+        if(cid.equals(&language_id)) { return underlayer_content::render_link_script_language() }
+        if(cid.equals(&order_id)) { return underlayer_content::render_link_order() }
+        if(cid.equals(&counter_id)) { return underlayer_content::render_link_location_counter() }
+        if(cid.equals(&memory_id)) { return underlayer_content::render_link_memory_regions() }
+        if(cid.equals(&phdrs_id)) { return underlayer_content::render_link_phdrs() }
+        if(cid.equals(&keep_gc_id)) { return underlayer_content::render_link_keep_gc() }
+        if(cid.equals(&orphans_id)) { return underlayer_content::render_link_orphans() }
+        if(cid.equals(&static_id)) { return underlayer_content::render_link_static_real() }
+        if(cid.equals(&write_id)) { return underlayer_content::render_link_write_script() }
+        return string()
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         // HAT concepts are resolved first; render_hat_concept returns an empty
@@ -639,6 +669,9 @@ public namespace underlayer_web {
         // Relocations/PIC/PIE concepts; same fall-through contract.
         var reloc_html = render_reloc_concept(concept_id)
         if(reloc_html.size() > 0) { return reloc_html }
+        // Static linking / linker script concepts; same fall-through contract.
+        var link_html = render_link_concept(concept_id)
+        if(link_html.size() > 0) { return link_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")
