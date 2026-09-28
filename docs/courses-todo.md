@@ -69,7 +69,7 @@
 - [x] Learn How a CPU Executes Instructions
 - [x] Learn The Memory Hierarchy
 - [x] Learn Exceptions, Privilege and Mode Changes
-- [ ] Learn Multiprocessor Architecture
+- [x] Learn Multiprocessor Architecture
 - [ ] Learn SIMD and Vector Processing
 
 ## x86-64

@@ -798,6 +798,28 @@ public namespace underlayer_web {
         return string()
     }
 
+    // Multiprocessor architecture. Same fall-through contract: empty string
+    // for anything else. `smp-` is a prefix no other course uses.
+    public func render_smp_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var topology_id = std::string("smp-topology")
+        var sharing_id = std::string("smp-sharing")
+        var atomic_id = std::string("smp-atomic")
+        var ordering_id = std::string("smp-ordering")
+        var numa_id = std::string("smp-numa")
+        var three_id = std::string("smp-three")
+        var harness_id = std::string("smp-harness")
+
+        if(cid.equals(&topology_id)) { return underlayer_content::render_smp_topology() }
+        if(cid.equals(&sharing_id)) { return underlayer_content::render_smp_sharing() }
+        if(cid.equals(&atomic_id)) { return underlayer_content::render_smp_atomic() }
+        if(cid.equals(&ordering_id)) { return underlayer_content::render_smp_ordering() }
+        if(cid.equals(&numa_id)) { return underlayer_content::render_smp_numa() }
+        if(cid.equals(&three_id)) { return underlayer_content::render_smp_three() }
+        if(cid.equals(&harness_id)) { return underlayer_content::render_smp_harness() }
+        return string()
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         // HAT concepts are resolved first; render_hat_concept returns an empty
@@ -855,6 +877,9 @@ public namespace underlayer_web {
         // Exceptions/privilege/mode-change concepts; same fall-through contract.
         var priv_html = render_priv_concept(concept_id)
         if(priv_html.size() > 0) { return priv_html }
+        // Multiprocessor-architecture concepts; same fall-through contract.
+        var smp_html = render_smp_concept(concept_id)
+        if(smp_html.size() > 0) { return smp_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

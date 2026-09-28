@@ -1,0 +1,117 @@
+{
+  "id": "smp",
+  "title": "Multiprocessor Architecture",
+  "version": "1.0.0",
+  "description": "True sharing and false sharing cost the same to within 20%, because the cost is in the cache line and not in the data; a lock prefix costs nearly twice a plain store with nothing to lock against; and the row that was supposed to show a ping-pong did not, because the store buffer absorbed it.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 7 concepts, reproduce the 73 checks in courses/smp/assets/samples/crosscheck.py, and then remove the 64-byte stride from the private-line rows and make group C fail by name",
+  "min_score": 70,
+  "dependencies": [
+    "mem",
+    "exe",
+    "isa",
+    "priv"
+  ],
+  "modules": [
+    {
+      "id": "machine",
+      "title": "The Machine You Are Measuring",
+      "concepts": [
+        "smp-topology",
+        "smp-sharing"
+      ]
+    },
+    {
+      "id": "instruction",
+      "title": "The Instruction That Costs",
+      "concepts": [
+        "smp-atomic",
+        "smp-ordering"
+      ]
+    },
+    {
+      "id": "scale",
+      "title": "Scale, and the Other Architectures",
+      "concepts": [
+        "smp-numa",
+        "smp-three"
+      ]
+    },
+    {
+      "id": "artifact",
+      "title": "The Artifact",
+      "concepts": [
+        "smp-harness"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "smp-topology",
+      "title": "A Claim About a Pair",
+      "module_id": "machine",
+      "description": "Six cores, twelve CPUs, and every number in the course is a claim about which pair -- read out of /sys and cross-checked between two kernel files that had better agree.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "smp-sharing",
+      "title": "Three Things Called Contention",
+      "module_id": "machine",
+      "description": "The same instruction, the same line, the same second: true sharing costs 13.05x the floor and false sharing costs 10.92x, and the 1.19x between them is the whole course -- the cost is in the line and not in the data.",
+      "estimated_minutes": 29,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "smp-atomic",
+      "title": "A Lock With Nothing to Lock Against",
+      "module_id": "instruction",
+      "description": "2.54x a plain store on one thread with no other thread running, and 7.33x that again once two of them share a line -- and the difference between the two is a subtraction worth more than either number.",
+      "estimated_minutes": 27,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "smp-ordering",
+      "title": "A Duration Is Not a Guarantee",
+      "module_id": "instruction",
+      "description": "An explicit fence costs 25.86x and cannot change the answer on x86-64, and the reason a timing measurement cannot tell you whether an ordering is correct is worth a whole section.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "smp-numa",
+      "title": "The Thing This Machine Cannot Do",
+      "module_id": "scale",
+      "description": "One node, one memory domain, and the distinction still measurable because coherence and NUMA are two different questions and only one of them needs two caches.",
+      "estimated_minutes": 22,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "smp-three",
+      "title": "Three Answers to Two Questions",
+      "module_id": "scale",
+      "description": "The unit of sharing, the state machine and the snoop have been identical for thirty years; the atomic update and the ordering are where the architectures genuinely differ, and they are exactly the two rows that decide whether a lock-free algorithm ports.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "smp-harness",
+      "title": "The Harness, and the Six That Refused to Go Quietly",
+      "module_id": "artifact",
+      "description": "73 checks that assert the B/C result as a shape and the topology as an exact fact, three of the four harness checks that broke were found by running it, and the one row that did not reproduce its expected shape is reported as the finding it is.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+# Build products.  Tracked: build_samples.sh, smpbench.c, crosscheck.py,
+# smpbench.out, run1-2.txt.
+smpbench
+*.o
+__pycache__/

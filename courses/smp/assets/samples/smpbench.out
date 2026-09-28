@@ -1,0 +1,500 @@
+=====================================================================
+ smpbench -- Multiprocessor Architecture
+=====================================================================
+
+0. THE INSTRUMENT
+   Everything below is measured before any claim about the machine is made.
+
+   TSC rate, busy          2.2957 GHz
+   TSC rate, across sleep  2.2957 GHz
+   drift                   0.001%   <-- invariant, so a tick is TIME
+   estimator = min-of-3, 11 of them: spread  82.5%
+   (sink=66000000)
+   The body is a volatile increment, so this floor INCLUDES the core
+   clock: an arithmetic loop is bounded by the frequency and the TSC
+   is fixed-rate.  Every ratio in section 2 has the same clock on both
+   sides, so the clock cancels -- but the floor here is an upper bound
+
+   Performance counters:
+      perf_event_paranoid    4
+      no PMU, so no miss, no fill, no snoop and no line transfer can
+      be COUNTED here.  Every number in section 2 is a DURATION, and
+      a duration is a LOWER BOUND on a count, never a measurement of
+      one.  That is the difference between this course and the memory
+      course, which could at least bound a miss count from two sides.
+
+1. THE TOPOLOGY
+   Every number in section 2 is a claim about a PAIR of cores, and a
+   pair of cores means nothing until you can say which pair.
+
+   12 online CPUs: 0 1 2 3 4 5 6 7 8 9 10 11
+
+   core_id, package, and the other half of each core:
+      cpu0   core_id=0  package=0  sibling of cpu0 is cpu1
+      cpu1   core_id=0  package=0  sibling of cpu1 is cpu0
+      cpu2   core_id=1  package=0  sibling of cpu2 is cpu3
+      cpu3   core_id=1  package=0  sibling of cpu3 is cpu2
+      cpu4   core_id=2  package=0  sibling of cpu4 is cpu5
+      cpu5   core_id=2  package=0  sibling of cpu5 is cpu4
+      cpu6   core_id=3  package=0  sibling of cpu6 is cpu7
+      cpu7   core_id=3  package=0  sibling of cpu7 is cpu6
+      cpu8   core_id=4  package=0  sibling of cpu8 is cpu9
+      cpu9   core_id=4  package=0  sibling of cpu9 is cpu8
+      cpu10  core_id=5  package=0  sibling of cpu10 is cpu11
+      cpu11  core_id=5  package=0  sibling of cpu11 is cpu10
+   => 6 distinct physical cores, 2 logical CPUs per core
+
+   the caches, and which CPUs share each one:
+      L1 data          32 KiB  shared by [0-1]
+      L1 names [0-1] = 2 CPU(s); the topology puts 2 of
+         them in one core_id group.  AGREE
+      L1 instruction   32 KiB  shared by [0-1]
+      L1 names [0-1] = 2 CPU(s); the topology puts 2 of
+         them in one core_id group.  AGREE
+      L2 unified      512 KiB  shared by [0-1]
+      L2 names [0-1] = 2 CPU(s); the topology puts 2 of
+         them in one core_id group.  AGREE
+      L3 unified     16384 KiB  shared by [0-11]
+
+   cross-check: the cache sharing lists and the topology's own
+      thread_siblings_list AGREE (3 of 3 levels agreed)
+   Two independent kernel files, one fact.  That is what makes this a
+   check rather than an echo -- and it is why the harness can assert it
+
+   THE DEBT THIS COURSE IS PAYING:
+   The memory course measured false sharing at 61.9x, and it EXCLUDED
+   every row where both threads landed on the same physical core,
+   giving as its reason that "two SMT siblings share L1 and L2 and are
+   a different measurement".  It used the term four times and never
+   once defined it.  The rows above are the definition: the L1 and L2
+   shared_cpu_lists contain exactly one pair each, and those pairs are
+   exactly the pairs of CPUs the topology calls siblings.
+
+2. FOUR PLACEMENTS
+   One program, four placements, and exactly one thing changed per row.
+   Same source.  Same iteration count.  Same machine, interleaved.
+
+   Rows A, B and C use the IDENTICAL instruction on the IDENTICAL
+   machine.  Only the memory address changes.  That is what makes them
+   a controlled experiment rather than three benchmarks -- and the
+   first version of this table did not have that property: row A used a
+   plain store and row B used a locked one, so B/A measured the cost of
+   the instruction AND the cost of sharing, and the two could not be
+   told apart.  The number looked fine.  It meant nothing.
+
+   pinning to cpu2 and cpu4 (different cores), and to cpu2 and cpu3 (siblings)
+
+  A  one private line each, 2 cores                3.66 ticks/op
+  B  ONE shared line,        2 cores              47.76 ticks/op
+  C  8 bytes apart, one line, 2 cores             39.98 ticks/op
+  D  one private line each, 2 SMT sibs             3.93 ticks/op
+  E  one private line each, 1 core                 6.73 ticks/op
+  F  each opaque-loads the peer's line             2.33 ticks/op
+  G  one private line each, 2 cores                3.00 ticks/op
+
+   what each row isolates, and WHY these six and not six others:
+      A  THE FLOOR.  The same locked instruction on a line nobody
+         shares.  There is no coherence traffic here by construction,
+         so this is what the instruction costs on its own -- and it is
+         not free, which is section 3's whole subject.
+      B  TRUE SHARING.  The same instruction, the same line, but the
+         two workers are updating the SAME long.  The line has to
+         change hands on every operation.  This is the cost of the
+         DATA STRUCTURE, and no amount of padding removes it.
+      C  FALSE SHARING.  The same instruction, the same line, two longs
+         8 bytes apart.  Nobody reads anybody's value, and the line is
+         handed anyway.  This is the memory course's 61.9x and it is a
+         BUG, and B/C is the number that says so: the cost of B is
+         paid for a line, not for the data on it.
+      D  SMT.  Two threads, one core, ONE L1.  There is no second cache
+         to be coherent with, so this is not a cheaper B -- it is a
+         different experiment, which is precisely what the memory
+         course said when it discarded these rows without defining the
+         term.
+
+         AND THE MEASUREMENT REFUSED TO CONFIRM THE OBVIOUS STORY.
+         A first draft of this section said SMT costs a modest penalty
+         here, because the shared L1 serialises.  Measured, D came out
+         INDISTINGUISHABLE from row A -- two SMT siblings running a body
+         that shares nothing cost the same as two cores running it.
+         So the shared L1 is not what SMT charges you for.
+
+         What SMT does charge you for is the shared ISSUE PORTS, and a
+         latency-bound body like this one does not saturate them.  The
+         honest conclusion is narrower than the obvious one: SMT is not
+         free, and THIS EXPERIMENT DOES NOT SHOW WHAT IT COSTS.  Row E,
+         which puts two threads on one core on purpose, is the one that
+         does show a cost, and it shows a big one.
+      E  oversubscription, which is what D becomes on a machine with
+         the SMT switched off.  Two threads, one core, pinned there on
+         purpose -- the only row here where the two workers were
+         ASKED to be on the same core rather than merely landing there.
+      F  THE ROW THAT IS SUPPOSED TO BE THE SLOW ONE, AND IS NOT.
+         Each worker stores to its own line and then opaque-loads the
+         line the other one owns.  Written naively that is a ping-pong:
+         two lines, two owners, a transfer every iteration.  Measured,
+         it is NOT dramatically more than row A, and the reason is the
+         store buffer.
+
+         A store does not invalidate the other core's copy WHEN IT
+         EXECUTES.  It goes into the store buffer and the other core's
+         copy stays valid until the store RETIRES.  Two threads in a
+         tight loop with no synchronisation therefore do not take turns:
+         each runs ahead, each load often finds the peer's line still
+         valid and shared, and the transfers that do happen are spread
+         out rather than serialised.
+
+         This is why a data race is hard to find, and it is worth more
+         than the number it produced: THE FAST PATH AND THE SLOW PATH
+         LOOK THE SAME ON AVERAGE.  A program with a race usually runs
+         at full speed and gives the wrong answer once in a million
+         times, which is exactly the profile of a heisenbug.
+
+         The artifact CANNOT count the transfers to prove this, because
+         there is no PMU.  What it can say is that F is not
+         dramatically above A, and that a measurement which does not
+         reproduce the expected shape is reporting something.  See the
+         limits block: no count of coherence traffic is available here.
+      G  the plain-store floor.  A is the SAME body with a `lock` on
+         it, and in THIS table the two are indistinguishable -- which
+         is not a contradiction of section 3, where the uncontended
+         lock is clearly more expensive.  Seven interleaved arms on a
+         busy guest add more between-run noise than the lock costs, so
+         section 3 measures that difference on its own with nothing else
+         in the run.  THE COST OF A LOCK IS NOT A PROPERTY OF THE LOCK;
+         IT IS A PROPERTY OF THE NOISE FLOOR OF WHICHEVER TABLE YOU
+         MEASURED IT IN.  That is why the two sections are separate.
+
+   the ratios, and only the ratios, because the floor is large:
+      B / A   one shared line, true sharing        13.05x
+      C / A   8 bytes apart, false sharing        10.92x
+      D / A   SMT siblings                        1.07x
+      E / A   both threads on one core            1.84x
+      F / A   peer's line, no lock at all         0.64x
+      G / A   plain store, nothing shared         0.82x
+
+      and the one that matters:  B / C = 1.19x
+
+   READ B AGAINST C, because that pair is the entire course in two
+   numbers.  Same instruction, same line, same core pair, same iteration
+   count, same machine, same second.  The ONLY difference is whether the
+   two workers are updating the same long or two longs 8 bytes apart.
+
+   If B and C are close, the cost of true sharing is NOT in the data --
+   it is in the CACHE LINE, and every byte of B is a byte that padding
+   could have bought back.  That is why a per-thread counter in a
+   shared struct is padded, why `__attribute__((aligned(64)))` appears
+   in real concurrent code, and why the memory course could measure a
+   61.9x for a program in which NO VALUE was ever shared.
+
+   If B and C differ a lot, the opposite: most of B's cost is the data
+   structure's and padding would not help.  The artifact prints which
+   of the two shapes it measured rather than asserting one, because
+   which one you get depends on the body, the width and the clock, and
+   that is exactly the kind of claim the harness refuses to freeze.
+
+3. THE INSTRUCTION THAT COSTS
+   Everything so far was two threads fighting.  This section is ONE
+   thread, and it is the only place in this course where the hardware
+   imposes a cost that has nothing to do with another thread.
+
+   two threads, TWO SEPARATE lines -- nothing shared at all:
+      plain store            1.04 ticks/op   <- the floor
+      lock xadd              2.64 ticks/op     2.54x the plain store
+      lock cmpxchg loop      2.99 ticks/op     2.88x the plain store
+
+   the SAME bodies, both threads on ONE line:
+      plain store            1.08 ticks/op     1.04x the floor
+      lock xadd             22.03 ticks/op    21.20x the floor
+      lock cmpxchg loop     22.31 ticks/op    21.47x the floor
+
+   The first table is the interesting one and it is the one people do
+   not expect.  A `lock` prefix on a machine with nothing to be locked
+   against is NOT free: it costs several times a plain store, on ONE
+   thread, with NO other thread running.  That is not a coherence
+   cost -- there is no coherence traffic, nothing to be coherent with.
+   It is the instruction's own guarantee, and on x86 the guarantee is
+   a FULL memory barrier: loads before it cannot move after it, stores
+   before it cannot be delayed past it, and both are ordered against
+   every other core.  You pay for that whether or not anyone is there.
+
+   THE MOST IMPORTANT NUMBER IN THIS SECTION, and it is a subtraction:
+      lock xadd,   one line     22.03
+      lock xadd,   own line       2.64
+      the cost of CONTENTION     19.39 ticks  = 7.33x the uncontended cost
+
+   A contended atomic is not twice an uncontended one because the
+   hardware is twice as busy.  It is expensive because ONE core OWNS
+   the line and the other must take it, and the ownership has to move
+   back and forth, and each move is a round trip neither side can
+   overlap with its own work.  This is why a contended counter is a
+   queue and not a fast counter, and why the fix is never a better CPU.
+
+   the CAS loop, against the xadd, on the same two configurations:
+      separate lines        2.99 against     2.64     1.13x
+      one shared line      22.31 against    22.03     1.01x
+
+   Read those two ratios AGAINST EACH OTHER rather than separately,
+   because the difference between them is the finding.  A CAS is the
+   general form and a fetch-and-add is the special case that cannot
+   fail, so on SEPARATE lines the retry structure is visible and it
+   costs something.  On a SHARED line the two become indistinguishable,
+   because when the line is changing hands on every operation the
+   transfer dominates everything the instruction does around it.
+
+   That is the general shape of a contended measurement: the LOWER
+   bound on what you are timing is not the thing you meant to time, and
+   the only honest report is the two numbers side by side.  A draft of
+   this section said the CAS loop 'costs more on a shared line because
+   the retry rate is the contention'.  It does not.  It costs the SAME,
+   and the sentence was a story about a number that contradicted it.
+
+4. WHAT ORDERING COSTS, AND WHAT IT CANNOT BE MEASURED AS
+   The instruction above promises atomicity and, on x86, also promises
+   ordering.  This section separates the two promises and is honest
+   about how little of the second one can be shown from user mode.
+
+   2000000 iterations, store data / store flag / load flag:
+      no fence           1.3 ns/iter
+      mfence            34.3 ns/iter    25.86x
+
+   The two loops COMPUTE THE SAME ANSWER.  The fence cannot change
+   what this program computes on x86-64, and it is not cheap.  That is
+   not an argument against the fence: it is an argument for knowing WHY
+   you have one.  x86-64's memory model is already strong enough that
+   an ordinary store then an ordinary load cannot be reordered past
+   each other.  A weaker architecture -- and a compiler that does not
+   know which architecture it is generating for -- needs the fence to
+   make that true, and the SAME SOURCE needs it on one and not on the
+   other.  That is why the fence is in the source and the cost is not.
+
+   What CANNOT be measured here, and this is the whole limit:
+     * That a fence is CORRECT.  Correctness of an ordering guarantee is
+       not a duration.  A loop that runs in the same number of
+       nanoseconds with and without the fence is the OBSERVABLE RESULT
+       of both being correct, and it is also what you would see if the
+       fence were a no-op.  This measurement cannot tell those apart,
+       and neither can any timing measurement on any machine.
+     * That the compiler did not reorder the stores anyway.  The
+       `volatile` and the memory clobber above make the question moot
+       here, but a fence in C source says nothing to a compiler that
+       is compiling for a machine with a weaker model unless the
+       fence is an intrinsic with the right semantics for THAT target.
+     * How many fences were ACTUALLY executed.  A compiler is allowed
+       to delete a redundant one, and on x86 it usually does.  The
+       number above is an upper bound on what the source asked for.
+     * The order in which two CORES observed anything.  That is a
+       property of a program the user cannot write, and this course
+       does not attempt it.
+
+   A course that cannot measure the second most important thing in
+   concurrent programming should say so here rather than quoting the
+   architecture's ordering table as though it were a result.  The
+   ordering table is in the ISA course's future and in the privileged
+   specification; it is a CONTRACT, and this is an observation.
+
+5. NUMA, WHICH IS ABSENT HERE
+   Memory Non-Uniform Access is the case where the answer to "how far
+   is memory?" depends on WHICH processor asked.  This machine has one
+   socket and one memory controller group, so the phenomenon cannot
+   occur -- and its absence is a measurement, not a gap.
+
+   /sys/devices/system/node/online  "0"  -> 1 node(s)
+   node0 cpulist                    "0-11"
+
+   So: ONE memory domain.  Every core on this machine is the same
+   distance from every address, and the number in section 2 is a
+   statement about CACHE COHERENCE and not about distance.
+
+   What that means for the claims in this course, stated precisely:
+     * every ratio in section 2 is a COHERENCE ratio.  None of them is
+       a NUMA ratio, and none of them would survive a machine with two
+       nodes, where the remote case would be a DIFFERENT experiment
+       rather than a bigger number.
+     * the pinning in section 2 chooses between CORES, not between
+       nodes.  On a two-socket machine the same code and the same
+       pinning routine would measure remote memory if the second core
+       were on the other socket, and the harness would still go green,
+       because nothing in it checks the node.  THAT IS A REAL GAP IN
+       THIS HARNESS and it is named here rather than left.
+     * a reader on a multi-socket machine should extend the topology
+       section to read physical_package_id -- which this file already
+       reads, prints, and does not yet act on -- and add a row per
+       (core, node) pair rather than per core pair.
+
+   The portable content is the DISTINCTION, which is the reason this
+   section exists rather than being deleted as unmeasurable:
+      cache coherence  a question between two CACHES.  One line, one
+                      owner at a time.  Solved by a protocol, and the
+                      cost is a line transfer.  THIS is what section 2
+                      measured.
+      NUMA             a question between a CORE and a MEMORY CONTROLLER.
+                      Nothing is shared and nothing is owned; the address
+                      just decodes differently.  The cost is latency and
+                      bandwidth, not ownership transfer.
+   They are confused constantly, and the confusion has a name: "the
+   memory is remote".  On a one-node machine that sentence is
+   meaningless, which is why this course can make the distinction
+   without measuring the second half of it.
+
+6. THE SAME QUESTIONS, THREE ANSWERS
+   QUOTED, NOT MEASURED.  This machine is x86-64 and there is no other
+   architecture in the room; every claim below is a manual claim with a
+   document, and the artifact's limits block says so.
+
+   x86-64
+      the protocol        MESI, on a modified 64-byte line.  Four states:
+                         M exclusive-modified, E exclusive, S shared, I
+                         invalid.  E exists so that a core that KNOWS it
+                         is the only reader can answer a read without
+                         invalidating -- it is an optimisation, and its
+                         cost is a state the others do not have.
+      the snoop          every cache watches the shared bus.  A core that
+                         wants a line it does not have issues a request,
+                         and every other cache checks its own tags for a
+                         copy it would have to invalidate.
+      the ordered atomic a `lock` prefix.  On x86 it implies a full
+                         barrier, which is why an uncontended atomic still
+                         costs several times a plain store -- SECTION 3.
+      the order           the model is STRONG: loads and stores are not
+                         reordered with other loads and stores, so an
+                         ordinary fence is redundant on this machine and
+                         the same source needs one elsewhere.
+      what is hardware    the line and the atomic instruction.  The
+                         PROTOCOL is microcode, not an instruction anyone
+                         can execute.
+
+   AArch64
+      the protocol        The same MESI idea, and the tagged accesses are
+                         an INSTRUCTION: LDAR, STLR, LDAXR/STLXR.  The
+                         acquire and release are things you WRITE, which
+                         is a different design from a prefix.
+      the cost            an acquire load costs what a plain load costs
+                         plus the wait; the barrier is not a separate
+                         instruction you sprinkle, it is a mode the
+                         access itself has.  On x86 the same guarantee is
+                         attached to every locked instruction whether you
+                         wanted it or not.
+      the order           WEAK by default.  Two cores may observe stores
+                         in different orders.  THIS is the real reason the
+                         fence in section 4 is not redundant in general --
+                         it is redundant HERE, and the source has to say
+                         so with an intrinsic, not by leaving it out.
+      the difference      a program that is correct on x86-64 by accident
+                         is a program that is wrong on AArch64.  The one
+                         that is correct on both used to have fences it
+                         did not need on Intel.
+
+   RISC-V
+      the protocol        MESI again, and the RVWMO model is WEAK, with
+                         the fences being FENCE instructions whose
+                         operands say which edges you want: FENCE rw,rw
+                         orders reads before writes, FENCE w,r does the
+                         other pair.  A single FENCE orders everything.
+      the atomics         LR/SC.  The load-reserved does not lock the line
+                         and the store-exclusive only succeeds if nothing
+                         else wrote in between, so a CONTENDED atomic is
+                         a RETRY LOOP by construction rather than by
+                         accident.  This is the opposite trade from
+                         x86's: no unconditional line acquisition, and
+                         unbounded retries under contention.
+      the cost            an LR/SC pair is two instructions where x86
+                         spends one.  The win is that the uncontended case
+                         touches nothing it does not need to.
+      the difference      a fair queue is one line of assembly on RISC-V
+                         and a data structure on x86.
+
+   THE PORTABLE CONTENT, which is the same five-part shape the
+   privilege course found, and it is worth noticing that it recurs:
+      1. a unit of sharing          a cache line / a cache line / a location
+      2. a state machine            MESI / MESI / MESI
+      3. a way to notice a change   a snoop / a snoop / a snoop
+      4. an atomic update           LOCK / LDAR-STLR / LR-SC
+      5. a way to order it          a prefix / an access mode / a FENCE
+
+   Rows 1 to 3 have been the same on every desktop CPU for thirty
+   years, which is why "cache coherence" feels like one thing.  Rows 4
+   and 5 are where the architectures genuinely differ, and they are
+   exactly the two rows that determine whether a LOCK-FREE ALGORITHM
+   written on one of them is correct on another.  See R5.
+
+7. RETRACTIONS AND LIMITS
+   Printed here so they cannot be quietly dropped, and asserted by
+   crosscheck.py so they cannot be DELETED either.
+
+   R1. "The plain-store arm measured 1.75 ticks per operation."
+       It MEASURED NOTHING.  Written in C as a relaxed atomic store to
+       a variable nothing ever read, the compiler proved the entire
+       four-million-iteration loop dead and removed it, and the result
+       was a plausible-looking number for four million operations that
+       did not happen.  An `asm volatile` store has no such door.  This
+       is the third course in a row to hit the same bug, in the same
+       form, and the rule is now written into rule 2 of the header.
+       The general form: WHEN TWO THINGS MEASURE AS SIMILAR, THE FIRST
+       HYPOTHESIS IS THAT YOUR OPTIMISER DELETED THE DIFFERENCE.
+
+   R2. "Two threads on unspecified CPUs is a measurement."  NO, and
+       the memory course already knew it -- that is why it discarded
+       rows where both threads landed on one core.  The difference here
+       is that the check is the MECHANISM rather than a filter: every
+       worker calls sched_getcpu() and the repetition is discarded if
+       either thread is anywhere but where it was pinned.  Rows that
+       fail this are counted and printed, not quietly dropped.
+
+   R3. "False sharing is a 61.9x effect."  The number is the memory
+       course's and it is correct THERE.  It is not restated as a
+       property of this machine's coherence protocol here, because the
+       ratio in section 2 depends on the body, the width and the clock,
+       and re-publishing it as a fixed number would be the remembered-
+       number mistake the harness exists to prevent.
+
+   R4. "An uncontended lock is expensive because of coherence."
+       RETRACTED TO THE WRONG REASON.  It is expensive, and the
+       measurement in section 3 separates the two, but the cost is NOT
+       coherence -- there is no other thread and nothing to be coherent
+       with.  It is the barrier the prefix implies, paid by a thread
+       that had no reason to pay it.  See R5.
+
+   R5. "`lock` is one idea that could have been three."  The x86-64
+       design ties ATOMICITY and ORDERING to one prefix, so every
+       atomic operation is also a full barrier.  AArch64 makes them
+       separate instructions and RISC-V makes them a fence with chosen
+       edges.  A lock-free algorithm written on x86-64 is therefore
+       correct partly BY ACCIDENT: it relies on an ordering guarantee it
+       never asked for, because the hardware supplied it for free.  Port
+       that algorithm to a weakly-ordered machine and it is wrong, and
+       the tests that passed on the first machine will not find it.
+
+   R6. "A placement check is a filter you apply afterwards."  NO.
+       Applied afterwards, it cannot tell you WHY a thread was in the
+       wrong place, and on a loaded machine it silently converts every
+       row into a discarded row while the run still looks like it
+       worked.  Reading sched_getcpu() from inside the worker is the
+       only version that reports the number of discards.
+
+   LIMITS -- what this artifact cannot tell you, printed not footnoted:
+     * ANY COUNT of coherence traffic.  There is no PMU here: no miss, no
+       snoop, no line transfer, no directory notification can be
+       counted.  Every number is a DURATION, and a duration bounds a
+       count without measuring it.  Section 2's ratios are ratios of
+       durations and nothing more.
+     * WHETHER THE PROTOCOL IS MESI.  MESI is what the manuals say and
+       what the state names in every profiler ever written imply.  No
+       user-space experiment distinguishes MESI from MOESI from a
+       directory protocol, and this artifact does not claim to.
+     * ANYTHING about NUMA.  One node, one domain.  See section 5, which
+       explains why that makes the DISTINCTION measurable even though
+       the second half of it is not.
+     * THE MEMORY ORDERING RULES.  Section 4 measures a fence's DURATION
+       and explicitly not its CORRECTNESS, and says why a timing
+       measurement cannot: a loop that runs the same either way is also
+       what you would see if the fence were a no-op.
+     * THE OTHER TWO ARCHITECTURES.  Section 6 is quoted, not run.
+     * ANYTHING PAST TWO THREADS.  Every experiment here is a pair,
+       because a pair is the smallest thing that has a coherence cost
+       at all and a measurement of N>2 on this machine would be a
+       measurement of the OTHER ELEVEN THREADS.
+     * WHETHER THE COMPILER INSERTED A FENCE.  Section 4 counts what
+       the source asked for, which is an upper bound.
+
+=====================================================================
