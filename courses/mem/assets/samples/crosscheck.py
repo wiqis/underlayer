@@ -25,8 +25,14 @@ particular it asserts the presence of every retraction, so a claim that was
 taken back cannot be dropped without the harness failing.
 
 Usage:  python3 crosscheck.py [path/to/membench.out]
+
+The default is resolved relative to THIS FILE, not to the current directory,
+so the harness runs the same from courses/mem/assets/samples/ and from the
+repository root -- tools/verify_mem.py invokes it from there, and a harness
+that only works from one directory is a harness that silently stops being run.
 """
 
+import os
 import re
 import sys
 
@@ -80,8 +86,19 @@ def table_rows(text, header_first_col):
     return rows
 
 
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def default_output():
+    """The recorded run, shipped with the course so the harness is runnable
+    before membench is ever built.  A course that can only be verified by
+    first rebuilding its own samples is a course whose claims are only
+    verifiable on the machine that wrote them."""
+    return os.path.join(HERE, "membench.out")
+
+
 def main():
-    path = sys.argv[1] if len(sys.argv) > 1 else "membench.out"
+    path = sys.argv[1] if len(sys.argv) > 1 else default_output()
     T = load(path)
 
     print("crosscheck: %s\n" % path)
