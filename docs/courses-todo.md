@@ -68,7 +68,7 @@
 - [x] Learn The Instruction Set Architecture
 - [x] Learn How a CPU Executes Instructions
 - [x] Learn The Memory Hierarchy
-- [ ] Learn Exceptions, Privilege and Mode Changes
+- [x] Learn Exceptions, Privilege and Mode Changes
 - [ ] Learn Multiprocessor Architecture
 - [ ] Learn SIMD and Vector Processing
 

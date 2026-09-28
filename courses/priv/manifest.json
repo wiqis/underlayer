@@ -1,0 +1,127 @@
+{
+  "id": "priv",
+  "title": "Exceptions, Privilege and Mode Changes",
+  "version": "1.0.0",
+  "description": "What happens between asking for something you cannot do yourself and getting it: a gate table a user process can locate and not read, three ways in of which only two go through a gate, a boundary that is 2^47 minus the width of the access, and a vendor disagreement about one instruction that is documented on both sides and is not an erratum.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 8 concepts, reproduce the 88 checks in courses/priv/assets/samples/crosscheck.py, and then break the pseudo-descriptor read on purpose to make group B fail by name",
+  "min_score": 70,
+  "dependencies": [
+    "isa",
+    "exe",
+    "img",
+    "sec"
+  ],
+  "modules": [
+    {
+      "id": "table",
+      "title": "The Table and the Numbers",
+      "concepts": [
+        "priv-table",
+        "priv-vectors"
+      ]
+    },
+    {
+      "id": "doors",
+      "title": "Getting In",
+      "concepts": [
+        "priv-doors",
+        "priv-convention"
+      ]
+    },
+    {
+      "id": "checks",
+      "title": "What Mode 3 Is Made Of",
+      "concepts": [
+        "priv-canonical",
+        "priv-errorcode",
+        "priv-three"
+      ]
+    },
+    {
+      "id": "artifact",
+      "title": "The Artifact",
+      "concepts": [
+        "priv-harness"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "priv-table",
+      "title": "A Table You Can Locate and Not Read",
+      "module_id": "table",
+      "description": "SIDT returns a base of 0xffffffff00000000 and a limit of 65535, and reading one byte of the table it points at kills a forked child with SIGSEGV -- and the field order is base-first, so getting it backwards returns a plausible base and a limit of zero rather than a fault.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "priv-vectors",
+      "title": "Numbers, and the Ones That Are Not Numbers",
+      "module_id": "table",
+      "description": "Thirty-two of them, eight of which the two vendors disagree about, and a class column that decides whether the saved instruction pointer is the one that failed or the one after it.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "priv-doors",
+      "title": "Four Ways In, and One of Them Is Not a Door",
+      "module_id": "doors",
+      "description": "Crossing the privilege boundary costs 25x for clock_gettime, everything else held constant; and SYSENTER is a working fast path on one vendor and an illegal instruction on the other, with both manuals correct.",
+      "estimated_minutes": 27,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "priv-convention",
+      "title": "The Convention, in the Kernel's Own Bytes",
+      "module_id": "doors",
+      "description": "Five SYSCALL instructions in the vDSO, three decoded, a number read out of the kernel's own encoding -- and a symbol called __ehdr_start that points at the wrong image entirely.",
+      "estimated_minutes": 23,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "priv-canonical",
+      "title": "The Hole Has No Fixed Address",
+      "module_id": "checks",
+      "description": "The first rejected address is 2^47 minus the access width minus one, measured three ways, because the CPU checks the whole byte range of an operand and not its first byte.",
+      "estimated_minutes": 28,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "priv-errorcode",
+      "title": "Three Error Codes and None of Them Visible",
+      "module_id": "checks",
+      "description": "A write, an execute and a read of the same protected page are indistinguishable from ring 3, which is exactly the two bits a demand-paging system needs and exactly the two a process cannot see.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "priv-three",
+      "title": "The Same Idea Under Three Architectures",
+      "module_id": "checks",
+      "description": "Rings, exception levels, and a mandatory mode below user mode: the numbers change and the five-part shape does not, including a RISC-V that makes the delegation a writable field.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "priv-harness",
+      "title": "The Harness, and the Eight Things It Refuses to Let Go",
+      "module_id": "artifact",
+      "description": "88 checks that assert the canonical-access matrix exactly and the timings only as orderings, and eight retractions that are printed by the artifact and asserted as text so that neither can be dropped quietly nor deleted.",
+      "estimated_minutes": 27,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}

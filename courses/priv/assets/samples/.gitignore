@@ -1,0 +1,5 @@
+# Build products.  Tracked: build_samples.sh, privbench.c, crosscheck.py,
+# privbench.out (the recorded reference run), run1-2.txt.
+privbench
+*.o
+__pycache__/

@@ -1,0 +1,523 @@
+=====================================================================
+ privbench -- Exceptions, Privilege and Mode Changes
+=====================================================================
+
+0. THE INSTRUMENT
+   Everything below is measured before any claim about the machine
+   is made, because a claim whose noise floor is unknown is not a claim.
+
+   /proc/cpuinfo 'cpu MHz'  2395.217  (ORIENTATION ONLY -- refreshed far slower than a measurement)
+
+   TSC rate, busy         2.2957 GHz
+   TSC rate, across sleep 2.2957 GHz
+   TSC drift busy vs idle -0.000%   <-- invariant, so a TSC tick is TIME
+   estimator = min-of-3, 15 of them, over a 256 KiB pointer chase
+   spread  55.9%   <-- the floor every ratio in section 3 must clear
+   The body is a chase and not an arithmetic loop ON PURPOSE.  An
+   arithmetic loop is bounded by the core clock, the TSC is fixed-rate,
+   and a frequency ramp therefore reads as 80% 'noise' that is really
+   the clock.  A chase waits on a load, so the clock is not in the
+   measurement at all.  What a benchmark's noise is usually tells you
+   which part of the machine the benchmark is really measuring.
+
+   vendor "AuthenticAMD"
+   CPUID.01H:EAX = 0x00a50f00   (signature)
+   EAX[11:8] family field = 0xf    EAX[27:20] extended = 0xa
+   EAX[7:4]  model field  = 0x0    EAX[19:16] extended = 0x5
+   -> family 0x19 (25)  model 0x50 (80)  stepping 0x0
+   Read the wrong four bits and you get a family of 0, which is not a
+   family any x86 part has ever had.
+   CPUID.(EAX=7,ECX=0):EBX[7]  SMEP supported = 1
+   CPUID.(EAX=7,ECX=0):EBX[20] SMAP supported = 1
+   ...but CR4.SMEP is bit 20 and CR4.SMAP is bit 21.  The two
+      numbering schemes disagree, and the CPUID one is the trap.
+
+   arch_prctl(ARCH_GET_XCOMP_PERM) rc=0  perms=0x207
+      bit0 SMEP=1  bit1 SMAP=1  bit2 SHSTK=1   (the KERNEL's report)
+   /sys/.../vulnerabilities/mds  "Not affected"
+   NOTE: ring 3 cannot verify SMEP/SMAP BEHAVIOUR.  The CR4 bits are
+      privileged, so there is no independent check.  This is a report.
+
+1. THE GATE TABLE
+   The one structure the CPU consults on every change of mode.
+
+   the ten bytes SIDT actually wrote: 00 00 00 00 ff ff ff ff ff ff 
+   SIDT  base  = 0xffffffff00000000
+   SIDT  limit = 65535  ->  4096 entries of 16 bytes
+
+   read the other way round -- limit first, then base:
+      base  = 0xffffffffffff0000   limit = 0
+      No fault.  No obviously impossible value.  A tool written that way
+      reports a limit of 0 and a base in the middle of nowhere, and a
+      limit of 0 is INDISTINGUISHABLE from a kernel that installed an
+      empty IDT.  This is the worst kind of wrong: it is not loud.
+
+   And what the base IS, rather than what a manual says:
+      0xffffffff00000000 is 4294967296 bytes below the top of a 48-bit space,
+      i.e. exactly 2^32.  It is the address the x86-64 architecture
+      itself uses for the IDT, not a kernel allocation.  A kernel MAY
+      choose another, and this one did not -- and this file does not
+      ASSUME it: it prints what it read, then checks the shape.
+      measured base == the architectural address: yes
+
+   4096 entries is not a claim that 4096 interrupts exist.  It is a limit:
+      the largest vector the hardware will even look up is limit/16.
+      A kernel sets this to 4096 so that `int 0xNN` with any byte is a
+      bounds check rather than a wild read.  It is a hardened default,
+      and it is why a user `int 0x80` is a memory-safety question.
+   4096 entries is not a claim that 4096 interrupts exist.  It is a limit:
+      the largest vector the hardware will even look up is (limit)/16-1.
+
+   Reading the first 8 bytes of the IDT from ring 3: FAULTED
+      the child died of signal 11 (SIGSEGV)
+   The register is readable; the TABLE is not.  SIDT tells a process where
+   the gates are, and gives it no way to read one.  That asymmetry is the
+   whole privilege story in one line, and it cost a fork to establish.
+
+   A 64-bit gate is 16 bytes:
+      0..1   offset 15:0 of the handler
+      2..3   segment selector
+      4..5   offset 31:16, and in the same word:
+               bits 4:0  IST index
+               bits 11:8 type   (0xE interrupt gate, 0xF trap gate)
+               bit  12   P, present
+               bits 14:13 DPL, the descriptor privilege level
+      8..11  offset 63:32 of the handler
+      12..15 reserved
+   The IDT is indexed by VECTOR NUMBER, not by selector, so this entry
+   has no RPL and the MAX(CPL,RPL)<=DPL rule that every textbook quotes
+   for 'gates' is the CALL-GATE rule.  For an interrupt gate it is:
+      IF gate.DPL < CPL THEN #GP(vector,1,0)
+   Intel states it that way; AMD adds the reason: "no RPL comparison
+   takes place... a vector number has no RPL field".
+
+2. THE VECTORS
+   Numbers 0-31, and then the ones we can actually make happen.
+
+   vec   name  cls  errcode  note
+   0     #DE   F    no       divide error
+   1     #DB   T    no       debug; class depends on the cause
+   2     NMI   I    no       not an exception
+   3     #BP   T    no       INT3; RIP points at the NEXT instruction
+   4     #OF   T    no       INTO; RIP points at the NEXT instruction
+   5     #BR   F    no       BOUND
+   6     #UD   F    no       invalid opcode; RIP points at the FAULTING instruction
+   7     #NM   F    no       device not available
+   8     #DF   A    yes      abort; the saved RIP is UNDEFINED
+   9     -     -    no       coprocessor segment overrun; RESERVED
+   10    #TS   F    yes      invalid TSS
+   11    #NP   F    yes      segment not present
+   12    #SS   F    yes      stack-segment fault
+   13    #GP   F    yes      general protection
+   14    #PF   F    yes      page fault; error code has its OWN format
+   15    -     -    no       RESERVED
+   16    #MF   F    no       x87; saved RIP is the NEXT DEFERRED point, not the fault
+   17    #AC   F    yes      alignment check
+   18    #MC   A    no       machine check; abort
+   19    #XM   F    no       SIMD FP; AMD calls it #XF
+   20    #VE   F    no       virtualization: Intel DEFINES IT, AMD says RESERVED
+   21    #CP   F    yes      control protection; a THIRD error-code format
+   22    -     -    no       RESERVED
+   23    -     -    no       RESERVED
+   24    -     -    no       RESERVED
+   25    -     -    no       RESERVED
+   26    -     -    no       RESERVED
+   27    -     -    no       RESERVED
+   28    -     -    no       RESERVED on Intel; AMD calls it #HV
+   29    #VC   F    no       VMM communication; Intel's Table 7-1 wrongly says reserved
+   30    #SX   A    no       security; Intel's Table 7-1 wrongly says reserved
+   31    -     -    no       RESERVED
+   cls: F fault (RIP = faulting)  T trap (RIP = next)  A abort  I interrupt
+        - reserved.  The class is the ONLY reason the saved RIP differs.
+
+   How many of 0-31 does each vendor actually define?
+      defined on both: 21    Intel only: 1 (#20)    AMD only: 1 (#28)
+      A kernel that assumes #20 is a virtualization fault breaks on AMD,
+      and a kernel that assumes 0-31 are Intel's is wrong twice over.
+
+   Now raise some of them for real.  These are ACTUAL faults on THIS cpu:
+   divq by zero            (#DE 0)    SIGFPE   si_code=1    (0x01)
+   idivq by zero           (#DE 0)    SIGFPE   si_code=1    (0x01)
+   ud2                     (#UD 6)    SIGILL   si_code=2    (0x02)
+   int3                    (#BP 3)    SIGTRAP  si_code=128  (0x80)
+   int $0x80               (vector 128) no fault
+   int $0x28               (vector 40) SIGSEGV  si_code=128  (0x80)
+   `int $0x80` did NOT fault: vector 128 is inside 32-255, which is the
+   user-defined range, and this kernel owns vector 128 for the i386 ABI.
+   A user process does not get to choose where vector 128 GOES; it only
+   gets to choose that the gate has DPL 3 so the CPU will enter it.
+
+3. FOUR WAYS IN, AND ONE OF THEM IS NOT A DOOR
+   Three of these change privilege level.  The fourth does not, and
+   that is the one an operating system actually wants you to use.
+
+   best of 9 x 20000, arms interleaved, in TSC ticks.  Rule 1: these
+   are NOT cycles.  Rule 3: the minimum, because the floor is large.
+
+      SYSCALL, getpid               1152.1
+      int $0x80, getpid             6738.9
+      libc getpid()                 1234.2
+
+      SYSCALL, clock_gettime        1748.0
+      vDSO  clock_gettime             70.5
+
+      int80 / syscall                 5.85x
+      syscall-clock / vdso-clock     24.80x
+
+   The second pair is the important one.  Same function, same answer,
+   same argument, and the ONLY difference is whether the CPU changed
+   privilege level on the way.  That ratio IS the cost of a mode change,
+   measured, with everything else held constant.  It is the number the
+   vDSO exists to remove, and it is why clock_gettime in a real program
+   costs tens of nanoseconds while a naive syscall costs hundreds.
+
+   What the first pair does NOT prove, which this file is careful about:
+   It is tempting to say `int $0x80 is slower because it does one I/O
+   port access per argument`.  That is TRUE of the Linux i386 entry stub
+   -- but the port accesses are executed by the KERNEL'S HANDLER, not by
+   the INT instruction.  So this measurement cannot separate the cost of
+   the hardware entry from the cost of two different kernel stubs.  The
+   honest claim is the ordering and the ratio; the mechanism is named as a
+   hypothesis and NOT as a finding.  See section 8, R1.
+
+   The third instruction:
+   sysenter                (the #UD)  SIGILL   si_code=2    (0x02)
+
+   This is the course's sharpest portable result and it is NOT a bug.
+   Intel SDM Vol 2B lists SYSENTER as VALID in 64-bit mode: "When
+   executed in IA-32e mode, the SYSENTER instruction transitions the
+   logical processor to 64-bit mode", with 64-bit-mode exceptions
+   "same as in protected mode".  AMD64 APM Vol 2 sec 6.1.2 says the
+   opposite: these instructions are ILLEGAL IN LONG MODE and result in
+   an invalid opcode exception (#UD).  Both manuals are correct.  They
+   disagree.  Linux encodes the split in arch/x86/kvm/emulate.c and
+   QEMU commit c046a42c does the same.
+
+   So a program that reaches for SYSENTER as its fast path is correct on
+   one vendor and takes SIGILL on the other, and there is no erratum to
+   file against either company.  A build-time CPUID check is the only
+   defence, which is what every serious code that cares does.
+
+   And what SYSENTER does NOT do: there is no CPL check anywhere in it.
+   It is unprivileged BY DESIGN -- running it from ring 3 is the whole
+   point of a fast system call.  The folklore "SYSENTER from ring 3
+   raises #GP(0)" is false on both vendors.  See section 8, R2.
+
+4. THE CONVENTION, IN THE KERNEL'S OWN BYTES
+   The vDSO is a real ELF image the kernel maps into every process and
+   hands us a pointer to in the auxiliary vector.  The Executable Images
+   course already read its header; this course reads its CODE.
+
+   where does the vDSO pointer come from?
+      __ehdr_start (the MAIN EXECUTABLE) 0x00005f58dd7b3000  e_phnum=14
+      AT_SYSINFO_EHDR (the vDSO)          0x00007ab367c4f000
+      Two different images, and the one with the obvious name is not
+      the one this section is about.  Print both or you will debug the
+      wrong header, which is what this file did first.
+
+   vDSO e_ident  7f 45 4c 46   class=2 data=1
+   vDSO e_type=3 (ET_DYN)  e_machine=62 (EM_X86_64)  e_phnum=6
+   vDSO e_phoff=0x40  e_shoff=0x1ad8  e_shnum=17
+
+   1 executable PT_LOAD segment(s); vaddr 0x0, 6667 bytes of code
+
+   Scanning the executable segment for 0f 05, the SYSCALL opcode:
+
+      vaddr 0x0ab2   b8 e4 00 00 00 0f 05
+                  .......
+      `mov $228, %eax ; syscall`  ->  clock_gettime
+
+      vaddr 0x1031   b8 60 00 00 00 0f 05
+                  .`.....
+      `mov $96, %eax ; syscall`  ->  gettimeofday
+
+      vaddr 0x12f5   b8 e5 00 00 00 0f 05
+                  .......
+      `mov $229, %eax ; syscall`  ->  clock_gettime64
+
+      vaddr 0x15c3   00 00 4c 89 ce 0f 05
+                  ..L....
+
+      vaddr 0x1600   00 00 00 31 d2 0f 05
+                  ...1...
+
+      5 SYSCALL instruction(s) in 6667 bytes of vDSO code, 3 decoded
+      No sigreturn trampoline in this build: Linux removed the vDSO
+      sigreturn path, and a decoder that printed 15 here anyway,
+      from a pattern that merely happened to be nearby, is a decoder
+      that lies.  This file reports the absence instead.
+
+   What that is worth.  The register convention -- RAX = number, the
+   arguments in RDI/RSI/RDX/R10/R8/R9, the answer in RAX -- is LINUX,
+   not Intel.  Grep the SDM for "system call number": it is not there.
+   Only TWO facts above are architecture: RCX receives the return RIP
+   and R11 receives RFLAGS.  Those two are WHY the fourth argument is R10
+   and not RCX -- the SysV C calling convention already gave RCX to the
+   caller's fourth integer argument, so the kernel had to route around it.
+   And on x86-64 the kernel returns a NEGATIVE ERRNO in RAX and does NOT
+   set CF; the clear-carry-on-error convention is i386 only.
+
+5. THE HOLE, AND THE FACT THAT IT HAS NO FIXED ADDRESS
+   A canonical 48-bit address has bit 47 EQUAL to bit 63.  The space
+   between the two halves is not an address at all: the CPU rejects it
+   while generating the effective address, before the MMU is consulted.
+
+   The obvious probe is one 4-byte read either side of 2^47:
+      0x00007fffffffffff  canonical     si_code=128
+      0x0000800000000000  NON-canonical si_code=128
+   On the face of it the boundary is 2^47.  It is not, and the way to
+   find out is to ask the same question with different access widths.
+
+      1 = SEGV_MAPERR (a real address, not mapped)
+    128 = SI_KERNEL    (not an address at all)
+
+   address                    1 byte   4 byte   8 byte  
+   2^47 -10 0x00007ffffffffff6       1        1        1       
+   2^47  -9 0x00007ffffffffff7       1        1        1       
+   2^47  -8 0x00007ffffffffff8       1        1        1       
+   2^47  -7 0x00007ffffffffff9       1        1        128     
+   2^47  -6 0x00007ffffffffffa       1        1        128     
+   2^47  -5 0x00007ffffffffffb       1        1        128     
+   2^47  -4 0x00007ffffffffffc       1        1        128     
+   2^47  -3 0x00007ffffffffffd       1        128      128     
+   2^47  -2 0x00007ffffffffffe       1        128      128     
+   2^47  -1 0x00007fffffffffff       1        128      128     
+   2^47  +0 0x0000800000000000 noncanon  128      128      128     
+   2^47  +1 0x0000800000000001 noncanon  128      128      128     
+
+   Bisecting separately for each width -- where does the KIND of fault
+   change, per access size?
+      1-byte  first rejected address 0x0000800000000000   2^47 minus it = 0
+      4-byte  first rejected address 0x00007ffffffffffd   2^47 minus it = 3
+      8-byte  first rejected address 0x00007ffffffffff9   2^47 minus it = 7
+
+   THE RULE, and it is the whole concept:
+      the first rejected address is 2^47 MINUS (access size - 1)
+      derived, holds on this machine: yes
+
+   The boundary is a property of the ACCESS, not of the address space.
+   A read that STARTS below 2^47 still fails if it REACHES 2^47, because
+   the CPU checks the whole byte range of the operand, not the first
+   byte.  That is why an 8-byte read fails seven bytes before 2^47 while
+   a 1-byte read succeeds right up to it.
+
+   And that is WHY a non-canonical access is not a page fault.  It never
+   becomes an address: there is no page-table entry to look up, no
+   present bit to clear, and no si_addr to report.  The kernel hands the
+   process SIGSEGV with si_code 128 and an address of 0, and the ONLY
+   thing that distinguishes it from an ordinary unmapped read is that
+   one number.  A fault handler that treats si_code 1 as "not mapped"
+   and every other value as "something worse" gets this right; one that
+   reads si_addr without checking si_code first gets a NULL back and
+   concludes the process dereferenced a null pointer.
+
+   The 53% of the space ring 3 cannot name is not a permission and not a
+   protection bit.  It is a hole in the number system, enforced before
+   the MMU exists.
+
+6. THE FAULT RECORD
+   One address, several ways of touching it, several different answers.
+   read  a PROT_READ page         no fault
+   write a PROT_READ page         si_code=2    SEGV_ACCERR  mapped, access not permitted     addr=0x511000
+   exec  a PROT_READ page         si_code=2    SEGV_ACCERR  mapped, access not permitted     addr=0x512000
+   read  a PROT_NONE page         si_code=2    SEGV_ACCERR  mapped, access not permitted     addr=0x513000
+   write a PROT_NONE page         si_code=2    SEGV_ACCERR  mapped, access not permitted     addr=0x514000
+   read  an UNMAPPED page         si_code=1    SEGV_MAPERR  nothing mapped here              addr=0x7ab367c46000
+
+   READ THE TABLE, NOT THE PROSE.  Two things in it are the finding:
+
+   (a) Row 1 does not fault.  PROT_READ means readable, and the read
+       succeeds.  Rows 2 and 3 DO fault, with the SAME si_code as each
+       other: si_code 2, and both with the right address.  So a page
+       that is readable is not writable and not executable -- the W^X
+       rule is enforced in hardware, from ring 3, and the address in the
+       signal is exact to the page.
+
+   (b) Rows 2, 3, 4 and 5 are four DIFFERENT events -- a write to a
+       read-only page, an execute of a non-executable page, a read of a
+       PROT_NONE page, a write of a PROT_NONE page -- and from ring 3
+       si_code CANNOT TELL ANY OF THEM APART.  All four are 2.
+
+   That is the point of the section, and it is a measurement rather than
+   a quotation.  Bits 1 (W/R) and 4 (I/D) of the #PF error code are
+   exactly the bits a demand-paging system needs: W/R decides whether a
+   not-present page is mapped read-only (for a copy-on-write fault) or
+   read-write, and I/D decides whether it is mapped executable.  The
+   kernel sees both.  A process does not.
+
+   On x86-64 there are THREE different error-code formats, and the SDM
+   says so twice.  #PF pushes a packed word:
+      bit 0 P     not-present          bit 4 I/D  instruction fetch
+      bit 1 W/R   write                bit 5 PK   protection key
+      bit 2 U/S   user-mode access     bit 6 SS   shadow stack
+      bit 3 RSVD  a reserved bit in a PAGING ENTRY, not in the instruction
+   #GP/#NP/#SS push something that RESEMBLES a selector:
+      bit 0 EXT   bit 1 IDT   bit 2 TI   bits 15:3 the index
+   #CP pushes a CPEC code and an ENCL bit: a third format, unrelated.
+   Learn one and apply it to the other two and you are wrong in a way
+   that costs a debugging session rather than a compile error.
+
+   And #PF delivers a second thing, in CR2: the linear address.  The SDM
+   warns that a SECOND page fault overwrites CR2, including one that
+   happens while the first is still being delivered.  A fault handler
+   must read CR2 before doing anything that could fault again -- which is
+   why the vector-8 double-fault machinery exists at all.
+
+   None of the eight bits is visible from ring 3 as a number.  A user
+   process gets the kernel's TRANSLATION of them: one signal and one
+   si_code.  That is a limit of this course and it is stated as a limit.
+
+7. THE SAME IDEA UNDER THREE ARCHITECTURES
+   Ring 0 is a vendor spelling.  This is the shape underneath it.
+
+   x86-64
+      rings            0..3, only 0 and 3 are used by an OS today
+      the gate table    IDT, 16 bytes per entry, indexed by vector<<4
+      the check         gate.DPL < CPL  ->  #GP(vector,1,0)
+      the drop          SYSCALL, from any CPL, unconditionally to CPL 0
+      the return        SYSRET, which is #GP(0) at CPL != 0
+      why 3 is special   canonical addressing: a non-canonical address is
+                         rejected before the page tables, so mode 3 cannot
+                         even NAME the top half of the space (section 5)
+
+   AArch64
+      levels            EL0..EL3, MORE levels than x86 has rings
+      the gate table    VBAR_ELx, a vector table per level
+      the check         PSTATE.PAN: with PAN=1, EL1+ cannot touch EL0 memory
+                         -- structurally the same job as SMAP
+      the drop          SVC #imm16, an ordinary instruction at any EL
+      the return        ERET, and the saved state is in SPSR_ELx
+      the trap record   ESR_ELx (syndrome), FAR_ELx (faulting address),
+                         ELR_ELx (return address) -- THREE CSRs, where
+                         x86 squeezes the same three things into a stack
+                         frame plus CR2
+      the important bit the address is not canonical in the same place:
+                         AArch64 uses 48 or 52 implemented VA bits, and the
+                         top half is a special device region (DVM), not a hole
+
+   RISC-V
+      modes             M, S, U -- and this is the one that differs most
+      M is MANDATORY.  Every RISC-V hart implements machine mode, so
+                         there is a mode below user mode by construction.
+      the gate table    mtvec, stvec, utvec -- ONE per mode
+      the delegation    medeleg and mideleg say, per cause, which of S or
+                         U handles it.  x86 hardwires the split at CPL 0
+                         and AArch64 hardwires it at EL2/EL3; RISC-V makes
+                         it a field the firmware writes
+      the trap record   mcause (the reason, an enum), mtval (the bad value,
+                         optional per cause), mepc (where to come back to)
+      the return        mret, which restores privilege from mstatus.MPP
+      the trap CSR you cannot skip   mstatus itself: MPP records the
+                         privilege to return to, and the trap handler has
+                         to save it before it does anything else
+
+   The three shapes, side by side:
+      x86-64   rings are a NUMBER in CS, compared against a DPL in a table
+      AArch64  levels are a NUMBER in the current EL, compared against VBAR_ELx
+      RISC-V   modes are a PAIR OF BITS in mstatus, delegable per cause
+
+   The portable content is the LIST, not the number: every one of these
+   machines has (a) a table the kernel owns and the user cannot read,
+   (b) a per-cause reason code, (c) a rule that decides who handles it,
+   (d) a way to get back, and (e) a way for the kernel to prove it came
+   from user mode.  Change the number, keep the five.
+
+8. RETRACTIONS AND LIMITS
+   Printed here so they cannot be quietly dropped, and asserted by
+   crosscheck.py so they cannot be DELETED either.
+
+   R1. "The argument count explains the SYSCALL/int 0x80 gap."
+       NEVER CLAIMED, and the reason is worth keeping.  The first draft
+       of section 3 measured the same syscall with 0 arguments and with
+       6, expecting int $0x80 to get worse -- and it cannot, because the
+       port accesses happen in the KERNEL'S i386 entry STUB, not in the
+       INT instruction.  The number of ports is decided by the kernel's
+       knowledge of the syscall's declared arity, which a caller cannot
+       vary.  The experiment was removed rather than reported, because an
+       experiment that cannot answer its question is not data.
+       What replaced it is the vDSO arm, which holds everything else
+       constant and so measures the thing we actually wanted: the cost of
+       changing privilege level at all.
+
+   R2. "SYSENTER from ring 3 raises #GP(0)."  NEVER TRUE, on either
+       vendor.  SYSENTER has NO CPL CHECK AT ALL; it is unprivileged by
+       design and running it from ring 3 is its entire purpose.  Intel's
+       only #GP(0) is a null IA32_SYSENTER_CS.  The course author wrote
+       this belief into a draft, measured #UD, and nearly published a
+       story in which the two cancelled out.  They did not: the #UD is
+       AMD having removed SYSENTER from long mode, which has nothing to
+       do with privilege.  Two wrong beliefs producing a right
+       observation is not evidence, and it is worth saying so.
+
+   R3. "The IDT has 4096 entries so there are 4096 interrupts."  NO.
+       The limit is a BOUND, set to 4096 so that `int 0xNN` with any
+       byte is a bounds check and not a wild read.
+
+   R4. "si_addr is the address the CPU faulted on."  It is the address
+       the KERNEL chose to report.  For a non-canonical access there is
+       none, and the kernel reports 0.  Section 5 shows that 0 doing real
+       work, and section 5 also shows that a handler which reads si_addr
+       before checking si_code concludes the process dereferenced NULL.
+
+   R5. "SIDT writes the limit first and the base second."  NO, AND IT
+       DOES NOT TELL YOU.  The 10-byte pseudo-descriptor is BASE FIRST at
+       offset 0 and LIMIT SECOND at offset 8.  The first version of this
+       file used a struct { uint16_t limit; uint64_t base; } packed, and
+       reported base 0xffffffffffff0000 and limit 0 -- a plausible base,
+       an impossible limit, and no fault.  A limit of 0 is
+       INDISTINGUISHABLE from a kernel that installed an empty IDT, so
+       the wrong reading is not merely wrong, it is unfalsifiable.  See
+       section 1, which now prints both readings side by side.
+
+   R6. "memset on a struct a signal handler writes is fine."  NO.
+       memset takes `void *`, so its writes to a volatile object are not
+       volatile-qualified and the compiler may elide or reorder them.  The
+       handler's record then held values from a PREVIOUS probe, and the
+       bisection in section 5 converged on a boundary INSIDE A SINGLE
+       PAGE, which is impossible, and printed it with total confidence.
+       The fix is explicit volatile writes in a clear_trap() function, and
+       the lesson is wider than volatile: a measurement harness whose
+       intermediate state is not volatile will hand you a plausible
+       wrong answer rather than a warning.
+
+   R7. "__ehdr_start is the vDSO."  NO.  It is a glibc symbol holding
+       the base of the ELF header of the MAIN EXECUTABLE.  This file read
+       it, printed fourteen program headers and an e_shoff past the end
+       of the text, and reported all of it as vDSO facts -- and every one
+       of them was true of the wrong image.  The vDSO pointer is the
+       auxiliary vector entry AT_SYSINFO_EHDR and nothing else.  Section 4
+       now prints both addresses side by side so the confusion cannot
+       recur silently.  A PIE main executable and a vDSO are both ET_DYN,
+       both EM_X86_64, and both have a plausible program header table,
+       which is exactly why the mistake was easy to make.
+
+   R8. "The canonical boundary is the address 2^47."  NOT AS A
+       STATEMENT ABOUT AN ACCESS.  It is 2^47 minus (access size - 1),
+       because the CPU validates the whole byte range of the operand.  An
+       8-byte read fails seven bytes below 2^47 and a 1-byte read
+       succeeds at 2^47 - 1.  Measured as a 12x3 matrix and confirmed by
+       three independent bisections.  See section 5, which is the whole
+       reason that section exists.
+
+   LIMITS -- what this artifact cannot tell you, printed not footnoted:
+     * The CLASS of each exception (fault vs trap vs abort) is READ FROM
+       THE MANUAL, not measured.  Deciding it needs the saved RIP, and a
+       ring 3 process never sees one.  Section 2 marks those rows.
+     * The error code the CPU pushed.  A ring 3 process gets si_code, which
+       is the kernel's translation, not the 32-bit word the CPU pushed.
+       Section 6 shows what survives that gap (the direction of the access)
+       and says what does not (the other five bits).
+     * Whether SMEP and SMAP are ON, as opposed to being REPORTED on.
+       The CR4 bits are privileged.  There is no user-mode experiment.
+     * The IA32_STAR, IA32_LSTAR and IA32_SFMASK values this kernel uses.
+       /dev/cpu/0/msr is root-only.  Section 4 gets the convention from
+       the vDSO's bytes instead, which is a different and weaker source.
+     * Anything about AArch64 or RISC-V.  Section 7 is quoted, not run,
+       and every claim in it is a manual claim.  Read it as the shape to
+       look for on a machine you have.
+     * INT 0x80 is the i386 COMPAT path.  It is on here because this is a
+       virtualised guest that keeps compat enabled; a bare-metal kernel or
+       one with CONFIG_IA32_EMULATION=n would #UD it.  It is measured as a
+       mechanism, not as a claim about what every machine does.
+
+=====================================================================

@@ -774,6 +774,30 @@ public namespace underlayer_web {
         return string()
     }
 
+    // Exceptions, privilege and mode changes. Same fall-through contract:
+    // empty string for anything else. `priv-` is a prefix no other course uses.
+    public func render_priv_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var table_id = std::string("priv-table")
+        var vectors_id = std::string("priv-vectors")
+        var doors_id = std::string("priv-doors")
+        var convention_id = std::string("priv-convention")
+        var canonical_id = std::string("priv-canonical")
+        var errorcode_id = std::string("priv-errorcode")
+        var three_id = std::string("priv-three")
+        var harness_id = std::string("priv-harness")
+
+        if(cid.equals(&table_id)) { return underlayer_content::render_priv_table() }
+        if(cid.equals(&vectors_id)) { return underlayer_content::render_priv_vectors() }
+        if(cid.equals(&doors_id)) { return underlayer_content::render_priv_doors() }
+        if(cid.equals(&convention_id)) { return underlayer_content::render_priv_convention() }
+        if(cid.equals(&canonical_id)) { return underlayer_content::render_priv_canonical() }
+        if(cid.equals(&errorcode_id)) { return underlayer_content::render_priv_errorcode() }
+        if(cid.equals(&three_id)) { return underlayer_content::render_priv_three() }
+        if(cid.equals(&harness_id)) { return underlayer_content::render_priv_harness() }
+        return string()
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         // HAT concepts are resolved first; render_hat_concept returns an empty
@@ -828,6 +852,9 @@ public namespace underlayer_web {
         // Memory hierarchy concepts; same fall-through contract.
         var mem_html = render_mem_concept(concept_id)
         if(mem_html.size() > 0) { return mem_html }
+        // Exceptions/privilege/mode-change concepts; same fall-through contract.
+        var priv_html = render_priv_concept(concept_id)
+        if(priv_html.size() > 0) { return priv_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")
