@@ -750,6 +750,30 @@ public namespace underlayer_web {
         return string()
     }
 
+    // The memory hierarchy. Same fall-through contract: empty string for
+    // anything else. `mem-` is a prefix no other course uses.
+    public func render_mem_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var inst_id = std::string("mem-instrument")
+        var lat_id = std::string("mem-latency")
+        var hier_id = std::string("mem-hierarchy")
+        var assoc_id = std::string("mem-associativity")
+        var transl_id = std::string("mem-translation")
+        var writes_id = std::string("mem-writes")
+        var sharing_id = std::string("mem-sharing")
+        var verify_id = std::string("mem-verify")
+
+        if(cid.equals(&inst_id)) { return underlayer_content::render_mem_instrument() }
+        if(cid.equals(&lat_id)) { return underlayer_content::render_mem_latency() }
+        if(cid.equals(&hier_id)) { return underlayer_content::render_mem_hierarchy() }
+        if(cid.equals(&assoc_id)) { return underlayer_content::render_mem_associativity() }
+        if(cid.equals(&transl_id)) { return underlayer_content::render_mem_translation() }
+        if(cid.equals(&writes_id)) { return underlayer_content::render_mem_writes() }
+        if(cid.equals(&sharing_id)) { return underlayer_content::render_mem_sharing() }
+        if(cid.equals(&verify_id)) { return underlayer_content::render_mem_verify() }
+        return string()
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         // HAT concepts are resolved first; render_hat_concept returns an empty
@@ -801,6 +825,9 @@ public namespace underlayer_web {
         // CPU execution concepts; same fall-through contract.
         var exe_html = render_exe_concept(concept_id)
         if(exe_html.size() > 0) { return exe_html }
+        // Memory hierarchy concepts; same fall-through contract.
+        var mem_html = render_mem_concept(concept_id)
+        if(mem_html.size() > 0) { return mem_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

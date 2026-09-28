@@ -1,0 +1,558 @@
+  ============================================================
+   membench -- the memory hierarchy, measured from both ends
+  ============================================================
+
+  0. THE MACHINE, read rather than assumed
+  ------------------------------------------
+     TSC rate, across a 200 ms sleep   2.2960 GHz
+     TSC rate, across a 200 ms BUSY loop 2.2957 GHz
+     the two disagree by 0.009% -- the TSC really is invariant
+     ns per TSC tick                  0.4356
+     iterations per measurement        4000000
+
+     the cache geometry, straight out of /sys:
+       L1 Data        32 KiB   8 ways      64 sets   64 B line  shared
+       L1 Instruction       32 KiB   8 ways      64 sets   64 B line  shared
+       L2 Unified      512 KiB   8 ways    1024 sets   64 B line  shared
+       L3 Unified    16384 KiB  16 ways   16384 sets   64 B line  shared
+     => the L1d aliasing stride is sets x line = 64 x 64 = 4096 bytes
+        and one L1d set holds ways x line = 512 bytes
+
+     no performance counters: a forked child executed RDPMC and
+     died of signal 11 (SIGSEGV: the kernel delivers #GP as a fault).  The instruction decoded, the CPU
+     executed it, and the kernel killed the process anyway.
+     So no miss, no fill, no walk and no stall can be COUNTED
+     here.  Every number below is bounded by timing instead.
+
+  --- group A: the machine agrees with itself
+      [PASS] TSC rate is the same idle and busy             2.2960 vs 2.2957 GHz
+      [PASS] ways x sets x line == size, for every level    the geometry in /sys is self-consistent, in bytes
+      [PASS] an L1d aliasing stride exists to predict       L1d aliasing stride = 4096 bytes
+      [PASS] RDPMC is not readable in this guest            no PMU: counts are unavailable, only timing
+
+  1. THE INSTRUMENT, and the two kinds of memory measurement
+  ------------------------------------------------------
+     The core clock, sampled from /proc/cpuinfo six times over
+     this section, ranged 1111 to 2458 MHz -- a 121% swing.
+     An L1 hit costs a fixed number of CORE CYCLES, so its cost
+     in NANOSECONDS moves with that clock, and the absolute
+     spread below is mostly the clock rather than the memory.
+     (A SAMPLE, not a live reading -- the previous course lost a
+     factor of three by treating it as one.)
+
+     The noise floor is the spread of the ESTIMATOR: the whole
+     min-of-3 procedure, repeated 14 times, on the same 64-line
+     chase.  This is the quantity every tolerance below is
+     applied to, so this is the quantity worth measuring.
+
+       14 min-of-3 values, 1.654 to 1.846 ns, mean 1.740
+       spread about the mean:  11.0%   <-- the noise floor
+
+     For contrast, the 42 INDIVIDUAL runs behind those minima
+     run from 1.654 to 2.058 ns, a spread of 22.3% -- 2.0x
+     worse.  Quoting that larger number is the mistake this
+     section exists to correct, and it is a mistake the previous
+     course made: it reported 15% for a quantity that is really
+     this one, and then had to loosen tolerances by hand.
+
+     Every load-bearing number in this program is a RATIO, so
+     what constrains them is the spread of a RATIO.  Two arms
+     differing by a known large factor, 12 rounds, 3 samples
+     per round, the two arms measured back to back:
+
+       estimator                           low       high   spread
+       arm A alone (L1, ns)              1.660      1.781     7.0%
+       arm B alone (L2, ns)             19.980     21.507     7.2%
+       min(B)/min(A)                    11.656     12.866    10.0%
+       min of PAIRED ratios             10.507     12.142    14.3%
+
+     A REFUTED HYPOTHESIS, kept because it is the reason the
+     estimator is the one below.  Ratios are supposed to cancel
+     common-mode error, so a ratio ought to be steadier than its
+     operands.  min(B)/min(A) is not: 10.0% here, against the L1
+     arm's own 7.0%, and the gap widens when the clock is moving
+     faster -- an earlier run of this same section had a core clock
+     swinging 149% and gave 24.0% for the ratio against 17.0% for
+     the arm.  The reason is structural, not accidental: one
+     minimum is taken at one moment and the other at a different
+     one, so the drift between them multiplies into the quotient
+     instead of cancelling.
+
+     The PAIRED estimator removes the reason rather than the
+     symptom: divide inside the iteration, before the clock has
+     moved on, and only then take a minimum.  14.3%, which is
+     1.4x WORSE than the ratio of minima.
+
+     And HERE THAT WORD IS NOT GUARANTEED.  Across the runs
+     this section has been through, the paired estimator was
+     steadier about twenty times out of twenty-four, and worse
+     the other four.  The ordering is a property of how hard the
+     clock happened to be moving during a given run, not of the
+     estimator: pairing is right by construction, because the
+     division is the only place the two arms' clock drift can
+     still cancel, but on a quiet run there is little drift left
+     to cancel and the two estimators come out the same.  So a
+     harness that asserted the ordering would fail on the quiet
+     runs, and one that asserted the opposite would fail on the
+     other twenty.  Assert the REASON, not the ordering.
+
+     That is the number the tolerances below come from, and it is
+     why every table in this program carries a ratio column and
+     why no absolute latency is claimed anywhere.
+     The tolerances use the WIDEST of the three spreads, 14.3%, 
+     rather than one of them by name.  This run's three are
+     7.2% for the noisier arm, 10.0% for the ratio of minima
+     and 14.3% for the paired one; the steadiest of them here
+     is the L1 arm.  Which one that is MOVES between runs
+     -- the paired estimator was steadier in about twenty runs
+     out of twenty-four and worse in the other four, and that
+     is a property of how hard the clock was moving rather
+     than of the estimator -- so a sentence naming one of them
+     is false on the next run, and a check asserting the
+     ordering fails on a quiet clock.  Take the widest, and
+     assert the reason rather than the ordering.
+
+     A pointer chase and a sequential walk look like two ways of
+     doing the same thing.  They are not, and the difference is
+     the whole subject of section 3:
+
+       chase: the next address is READ FROM MEMORY, so it cannot
+              be known until the previous load has returned
+              -- this measures LATENCY
+
+       sweep: the next address is base + i*64, computable long
+              before the load issues
+              -- this measures BANDWIDTH
+
+     A benchmark that is one and not the other measures the wrong
+     one, and nothing in the output says which it did.
+
+  --- group B: the instrument is the instrument
+      [PASS] a chase function is 64-byte aligned            2.7x for byte-identical code at another address, in the last course: removed, not tolerated
+      [PASS] the loop cannot be hoisted out of a chase      the address is a data dependency, in inline asm, so the optimiser cannot delete it
+      [PASS] a 64-line chase at stride 64 closes its cycle  the permutation is a cycle, so repeated measurement is stable
+      [PASS] every layout touches exactly the lines it names counted by walking the cycle, not assumed
+      [PASS] the 4096-byte-stride layout really does collide in one set one line per 4096 bytes is the L1 aliasing stride; that is the experiment in section 4, not an accident
+
+  2. THE HIERARCHY, one footprint at a time
+  -------------------------------------
+     N lines of 64 bytes, one per line, visited in a random
+     permutation cycle so no prefetcher can help.  ns per access.
+
+            bytes      lines         ns   vs L1ref
+              128          2      1.626      1.00x
+              512          8      1.771      1.09x
+             2048         32      1.653      1.02x
+             4096         64      1.772      1.09x
+             8192        128      1.657      1.02x
+            16384        256      1.658      1.02x
+            32768        512      1.724      1.06x
+            65536       1024      5.111      3.14x
+           131072       2048      4.897      3.01x
+           262144       4096      5.508      3.39x
+           524288       8192      9.043      5.56x
+          1048576      16384     18.515     11.39x
+          2097152      32768     20.978     12.90x
+          4194304      65536     22.280     13.71x
+          8388608     131072     24.378     15.00x
+         16777216     262144     67.937     41.79x
+         33554432     524288    115.841     71.26x
+         67108864    1048576    132.586     81.56x
+        134217728    2097152    142.791     87.84x
+        268435456    4194304    149.642     92.05x
+     the L1 reference is 1.626 ns: the fastest of the 512 rows at
+     or below the 512-line L1d.  The FIRST row is not used as
+     the reference, because it is an ordinary measurement taken
+     at an ordinary moment and the core clock moves underneath
+     it -- in the run that produced the table above, dividing by
+     the first row made the 8-line row read as 0.58x.
+
+     /sys said L1d is 32 KiB, L2 is 512 KiB, L3 is 16384 KiB.
+     Those are 512, 8192 and 262144 lines.  Compare them with the
+     rows above: the measured step lands within a factor of
+     two of the size, which is the only agreement a cache size
+     can have, since the last line of a level is always a miss.
+     The measured plateau is not one number, it is a BAND, and
+     the band widens with the footprint: 1.6 ns at 128 bytes,
+     4.9 ns across L2, 24.4 ns across L3, 115.8 ns at 32 MiB and
+     149.6 ns at 256 MiB.  A single number called "the L3
+     latency" would be wrong by a factor of 5.5 depending on
+     where in L3 you happened to ask.
+     Note the first column of that sentence is the 128-BYTE
+     footprint, which is a two-line chase: it is at the mercy of
+     the clock like every other row, and the ratio column is the
+     one to read.
+
+  3. LINE GRANULARITY, AND THE PREFETCHER AS A DIFFERENCE
+  ----------------------------------------------------
+     Same footprint, same machine, two addresses:
+
+     A 64 MiB working set, 1,048,576 lines, entirely outside
+     every level of the cache:
+
+     pointer chase, random order           133.637 ns     0.479 GB/s
+     sequential sweep, +64 each time         3.469 ns    18.448 GB/s
+     the prefetcher, by subtraction         38.52x
+
+     The two move the same 64 bytes per line, touch the same
+     64 MiB, and hit the same DRAM.  They differ in exactly one
+     respect: whether the address of the next access can be
+     computed before the current one has returned.  The 38.5x
+     between them IS the prefetcher, and there is no way to see
+     it directly without a PMU -- you can only subtract it.
+
+     This is the single most useful number in the course and
+     it is the reason a random walk over 64 MiB costs 134 ns a
+     step while a sequential read of the same 64 MiB costs 3.47
+     ns a line.  Same memory. Same machine. Different addresses.
+
+     And what a line buys, at strides from one 4-byte element
+     per 4096-byte page up to a full line per element:
+
+       stride     elements     ns/element      useful GB/s      line GB/s
+            4      4194304         0.4518             8.85           8.85
+            8      2097152         0.5664             7.06          14.12
+           16      1048576         0.6366             6.28          25.13
+           32       524288         0.9189             4.35          34.82
+           64       262144         1.8742             2.13          34.15
+          128       131072         2.2784             1.76          28.09
+          256        65536         2.4831             1.61          25.77
+         1024        16384         4.7210             0.85          13.56
+         4096         4096         8.9248             0.45           7.17
+
+     'useful GB/s' counts the 4 bytes each element really
+     wanted.  'line GB/s' counts the 64-byte lines the memory
+     system had to move to supply them.  At a 4096-byte
+     stride the system moved 256 KiB of lines to deliver
+     16 KiB of wanted data -- 16 to 1 -- and every one of
+     those lines was in a different 4 KiB page as well.
+
+     The useful rate collapses across the range, 8.85 down to
+     0.45 GB/s, so the sparsest row is 20 times slower than
+     the densest even though both are reading the same
+     16 MiB -- and it is NOT monotonic row by row.  At the
+     dense end that is the LOOP rather than the memory:
+     strides 4 and 8 both use every byte of every line they
+     fetch, so their two rows differ only in the loop's own
+     per-element overhead, and they swap order between runs.
+     The line rate is not monotonic either, for a different
+     reason -- it peaks in the middle -- which is the first
+     sign that the two columns are different quantities and
+     must not be compared with each other.
+
+     Across the DENSE range the LINE rate rises 3.9x, from 8.85 GB/s
+     at stride 4 to 34.15 at stride 64, because a dense walk
+     fetches the same 16 MiB of lines whatever the stride and
+     uses more of each one as the stride grows.  It is not
+     monotone at every step either -- the peak is at stride 32
+     or 64 depending on the run, which is the loop floor again --
+     and the useful column falls, so the gap between the two is
+     the 16 to 1 above.  They are different quantities and
+     neither is a bandwidth.
+
+  4. ASSOCIATIVITY: a number from /sys, a number measured
+  ---------------------------------------------------
+     /sys says: L1d is 8 ways, 64 sets, 64 B line.
+     therefore lines a multiple of 4096 bytes apart share an
+     L1d set, and 9 of them cannot coexist in 8 ways.
+
+     PREDICTION, before the measurement: the cost must rise
+     between 8 and 9 lines at stride 4096, and must NOT
+     rise at stride 4160, which spreads them over distinct sets.
+
+     lines      aliased       spread     ratio
+         4        1.596        1.587     1.01x
+         6        0.937        1.679     0.56x
+         7        1.772        1.773     1.00x
+         8        1.739        1.714     1.01x
+         9        7.680        1.583     4.85x
+        10        6.571        1.645     3.99x
+        12        6.408        1.615     3.97x
+        16        6.496        1.772     3.67x
+        24        6.291        1.502     4.19x
+        32        6.267        1.656     3.78x
+
+     32 lines at stride 4096 and 32 at stride 4160 span the
+     same 131072 bytes and hold the same number of lines.  The only
+     difference is WHICH SET each lands in.
+     at exactly 8 lines the aliased layout costs 1.739 ns
+     against 1.714 ns for the spread layout, a ratio of 1.01x.
+     At 9 lines it costs 7.680 ns against 1.583 ns, a ratio of
+     4.85x.  A working set of 576 BYTES is now costing L2
+     latency, and it would fit in the L1d 56 times over.
+
+     The worst row in the aliased column is 9 lines, at
+     7.680 ns -- worse than the 32-line row.  /sys publishes capacity and
+     not policy, so the replacement policy cannot be read off
+     from it, and the shape INSIDE the thrashing regime is not
+     explained here.  That is a limit, not a result.
+
+  --- group C: the associativity predicted from /sys
+      [PASS] at `ways` lines the aliased layout is not slow yet a working set that fits the ways costs L1
+      [PASS] at ways+1 lines the aliased layout IS slow     the onset is where /sys says it must be
+      [PASS] the spread layout never slows down at these counts by construction it never puts two lines in one set
+      [PASS] the step is a step, not a ramp                 one extra line is enough; there is no gradual onset
+
+  5. ADDRESS TRANSLATION, and the 512x a huge page buys
+  ---------------------------------------------------
+     Two layouts with the SAME number of lines, the same
+     footprint, the same access order, and the same L1 set for
+     every line.  The only difference is how many PAGES they
+     are spread over -- so their difference is the cost of
+     translating.
+
+      lines      pages     packed     spread    ratio   +2M page
+          8          8      1.517      1.660    1.09x      1.541
+         32         32      1.523      1.669    1.10x      1.735
+         48         48      1.527      1.191    0.78x      1.744
+         56         56      1.570      1.555    0.99x      1.653
+         64         64      1.525      1.670    1.10x      1.774
+         72         72      1.661      4.638    2.79x      4.874
+         96         96      1.772      4.875    2.75x      4.401
+        128        128      1.547      4.696    3.04x      4.641
+        256        256      1.758      4.880    2.78x      4.655
+        512        512      1.800      4.770    2.65x      4.553
+
+     AnonHugePages on the madvised mapping, read from
+     /proc/self/smaps RIGHT NOW: 0 KiB.  Without that line the
+     hugepage column is a claim about a mapping that may or may
+     not have collapsed.
+     THE MAPPING DID NOT COLLAPSE.  khugepaged is asynchronous
+     and a host may disable THP entirely, so the madvised column
+     is a SECOND 4 KiB MAPPING and the huge-page claim is NOT MADE
+     in this run.  It is reported rather than averaged over,
+     because a mapping that did not collapse looks
+     exactly like one that did to every other number here.
+
+     Both arms are 512 lines, which is 32768 bytes of data.
+     The packed layout needs 8 translations.  The spread one
+     needs 512.  The madvised one needs as many as the spread one.
+
+     The spread layout costs up to 3.04x the packed one.  At the
+     deepest footprint -- 512 lines, 512 pages -- the same layout
+     on the madvised mapping costs 2.53x the packed one.
+     And the two arms agree, which is the whole evidence that
+     no huge page was involved: identical layouts, identical
+     footprints, identical sets, and the madvised one pays the
+     full 2.53x.  The 2.04x that is left is what the
+     translations cost when there is nothing to translate
+     with.
+
+  --- group D: the translation cost is a translation cost
+      [PASS] spreading the same lines over more pages costs more a page is a unit of translation, not of storage
+      [PASS] with no collapse the madvised arm is a second 4 KiB arm the madvised arm reads 2.53x packed against the spread arm's 2.65x, so it bought nothing: no collapse happened
+      [PASS] the penalty does not vanish again as pages grow it is a per-access cost, not a one-off fault
+
+  6. WRITES: what a store to a line you do not hold costs
+  -------------------------------------------------
+     Sequential sweep, addresses known in advance, 4 lines per
+     iteration so the loop is not the bottleneck.  ns per LINE.
+     'st64' writes 64 bytes of each line, 'st4' writes 4.
+
+          KiB      read      st64       st4    NTfull    NTpart   st64/rd    st4/rd
+           16     0.274     0.509     0.509    17.062     4.148     1.86x     1.86x
+           64     0.880     0.969     0.978    17.170     4.266     1.10x     1.11x
+          256     0.900     0.986     0.988    17.172     4.285     1.10x     1.10x
+         1024     1.005     1.300     1.302    17.183     4.286     1.29x     1.30x
+         4096     1.053     0.877     0.872    12.767     4.291     0.83x     0.83x
+        16384     2.197     2.931     2.350    11.289     3.103     1.33x     1.07x
+        32768     3.358     6.446     6.808    16.454     3.421     1.92x     2.03x
+        65536     3.517     8.747     8.965    15.797     3.588     2.49x     2.55x
+
+     A store to a line the CPU does not hold has to bring the
+     line in first, or the bytes it is not writing would be
+     lost.  That is write-allocate, and it predicts a store-only
+     sweep must move TWICE the traffic of a read-only sweep.
+     Below the 16 MiB last-level cache the ratio peaks at
+     1.33x, over the sizes from 256 KiB up to the cache: both
+     arms are running out of CACHE there, not out of bandwidth.
+     Above it, 2.49x, and the step happens at the size of the
+     last level of the hierarchy, which is where it has to.
+     The two SMALLEST footprints are excluded from the band
+     because their ratio is the LOOP's and not the memory's --
+     at 16 KiB a read sweep finishes a line in under a fifth of
+     a nanosecond, which is the loop and not a memory access,
+     and no store can match that for reasons that have nothing
+     to do with DRAM.  Including them made the band 1.80x on a
+     run whose step was 2.38x, and a check about a step then
+     failed on a step that was plainly there.
+
+     st4 and st64 are the same to within the noise at every
+     size.  Writing 4 bytes to a line costs what writing 64
+     does, because the transaction is the LINE: you are charged
+     for fetching all 64 bytes and writing all 64 bytes back
+     whatever you used.
+
+     The two NT columns are the interesting ones.  A
+     non-temporal store does not allocate, so it should be
+     EXPENSIVE at a small footprint -- every store is a trip to
+     DRAM -- and cheap at a large one.  Measured: expensive at
+     all of them, and flat.  16 KiB, entirely inside the L3,
+     costs 17.062 ns per line.  65536 KiB, four times the L3, costs
+     15.797.  The smaller footprint is not cheaper.  The flatness is
+     the proof of non-allocation: nothing on that path consults
+     the cache, so no footprint can help it -- and the folklore
+     advice to use non-temporal stores for streaming writes does
+     not hold on this machine.
+
+  --- group E: write-allocate, measured at the level boundary
+      [PASS] a store costs more than a read above the LLC   the line must be fetched first; the step must exceed 21%, one and a half times the measured ratio spread
+      [PASS] st4 and st64 are the same cost                 the granularity of the transaction is the line
+      [PASS] a non-temporal store ignores the cache hierarchy flat from inside the L3 out to 64 MiB: it never allocates
+
+  7. SHARING: two threads, two counters, one line
+  -------------------------------------------
+     Each thread stores to its OWN counter, 5000000 times.
+     The only difference between the two runs is whether those
+     two counters are 8 bytes apart or 64 bytes apart.
+
+        run   8 B apart ns       cpus  64 B apart ns       cpus      ratio
+          0         40.824    0,4             0.627   10,4        65.11x
+          1         40.703    5,1             0.455    0,7        89.46x
+          2         45.525    0,5             0.445    0,6       102.32x
+          3         40.879    0,4             0.466    4,0        87.72x
+          4         44.472   11,0             0.445    4,1        99.90x
+          5         43.930   10,1             0.475    6,0        92.40x
+          6         48.280    4,0             0.620    4,6        77.87x
+
+     A row marked * put the two threads on the SAME physical
+     core, checked against core_id in /sys.  That is a different
+     measurement -- two SMT siblings, not two cores -- so those
+     rows are EXCLUDED from the summary below, and the harness
+     excludes them too.  0 of the 7 rows are marked.
+
+     Every run put the two threads on different physical
+     cores, so no row needed excluding.
+
+     And over the 7 verified runs: 40.703 ns versus 0.445 ns,
+     a factor of 91.5.  The WORST of the verified runs is 65.1x,
+     so the claim does not rest on a lucky minimum.
+
+  --- group F: false sharing is not a data race
+      [PASS] the two counters' lines matter enormously      no data is shared; only the line is
+      [PASS] the summary rests only on runs verified to be on two cores 7 of 7 runs verified against core_id in /sys; the worst of those is 65.1x
+
+  8. WHAT WAS RETRACTED
+  ---------------------
+     1. "The L1d aliasing stride is 4096 bytes, so 256 lines at
+        4096 bytes will show a 5.28x TLB cost."  The 5.28x was real
+        and the interpretation was wrong: the layout put those
+        lines at offsets 64*(i mod 8), so 256 lines shared 8 SETS
+        of an 8-way cache.  It was the section-4 conflict miss,
+        measured a page at a time.
+
+     2. "There is a TLB cliff at 32 pages."  Also wrong, same
+        cause: one line per 4096-byte page is exactly the aliasing
+        stride, so every page's line was in L1 set 0.  The cliff
+        disappeared when the offset spread over all 64 sets, and
+        the real cliff is at 64 pages, found by bisection in
+        section 5.
+     3. "Sequential reads sustain 64 GB/s."  The units were
+        wrong AND the loop was the bottleneck: the first version
+        measured 3.30 ns per line at EVERY footprint from 256 KiB
+        to 64 MiB, and a rate that is the same for L2-resident and
+        for DRAM data is the rate of a loop, not of a memory.
+        With four lines per iteration: 1.159 ns per line over a
+        4 MiB L2-resident region and 4.022 ns over 64 MiB of DRAM,
+        i.e. 55.2 and 15.9 GB/s.  THE SWEEP SATURATES, and this is
+        the honest limit of the measurement rather than a property
+        worth teaching as one: at 3 ns for four 16-byte loads the
+        loop is a real part of the cost, so this instrument cannot
+        report the bandwidth of an L2-resident region.  The DRAM
+        figure it does report is 15.9 GB/s, and the cache-resident
+        figure comes from section 6's smallest row instead.
+     4. "A non-temporal store is 16.4 ns per 16 bytes."  That was
+        real, and it was a bug: the navigation load and the NT
+        store shared a cache line, so the load allocated the very
+        line the NT store was supposed to bypass.  The target moved
+        2 MiB away and the number stayed high -- for a different
+        reason, which is the flat line in section 6.
+     5. "False sharing has no effect here."  The two threads
+        were reading one counter, and then two barriers of count
+        two with one waiter each DEADLOCKED the benchmark.  Fixed
+        twice; the result is the factor of 91.5 in section 7.
+     6. Three separate benchmark segfaults, all from writing past
+        a mapping: an element at i*4096 + 64*(i mod 512) runs off
+        the end of the last page, and a size loop that computed
+        reps = MAXL/lines with lines > MAXL produced reps = 0 and
+        an infinite loop that walked forward until it faulted.
+     7. rdpmc does not exist as a thing you can just call.  The
+        first version of section 0 executed it and killed the
+        benchmark, taking every measurement with it.  It now runs
+        in a forked child and reports the signal.
+     8. "The 256 MiB row measures 8 ns."  Physically absurd,
+        and the reason was an OFFSET: the layout added
+        64*(i mod 64) bytes to line i, which is 128i for i < 64, so
+        line 32 landed on line 64's address and line 64 on line
+        128's.  A 256 MiB layout really touched a few megabytes.  The
+        permutation still visited every INDEX, so every self-check
+        passed and the table was nonsense.  The check that catches it
+        is in group B: walk the cycle and COUNT the distinct
+        addresses instead of trusting the index count.  The same
+        bug then reappeared as 4096*(i mod 64), a stray * 64 in the
+        same expression, and produced a TLB table whose cost was
+        HIGH for 32 pages and LOW for 72 -- the exact inverse of the
+        truth.  A non-monotonic table is not noise.  It is a signal
+        that the layout is not what the caption says it is.
+
+     9. A register named in an asm template is NOT a
+        scratch register.  "movl (...), eax" was, and it
+        is whatever the register allocator gave to an operand, and
+        here it gave %rax to the loop counter, so the generated code
+        was
+            mov -0x18(%rbp),%rax   <- the counter, 4194304
+            mov (%rdx),%eax        <- CLOBBERS the counter
+            dec %rax
+        and the walk ran until some 4-byte word happened to be zero.
+        Two earlier "fixes" made it worse: an earlyclobber marker
+        on p moved the collision instead of removing it, and a
+        literal-immediate stride removed one hazard and left this
+        one.  The rule, learned in three attempts: every register an
+        asm template NAMES must be a declared operand or a declared
+        clobber, and there is no third case.
+
+
+  9. THE VERDICT
+  --------------
+     21 checks, 21 passed, 0 failed.
+     Not one of them asserts a bare number.  Each asserts a shape
+     or an agreement with a prediction read out of /sys, because a
+     11% spread on an absolute time can verify a shape and not a
+     value.  The claims above are built on ratios instead, and this
+     run's ratio spread is 14% -- NOT narrower than the absolute one, which is what section 1
+     spends a page on: the estimator is right about the REASON
+     and not about a number, and the ordering between estimators
+     moves with the clock rather than with the estimator.
+
+     Both of those spreads are in section 1, measured here on this
+     run, and both are why every claim above is a ratio or a shape
+     and none of them is a latency.
+
+     What this course claims, all measured above:
+       L1 1.6 ns   L2 4.9 ns   L3 24.4 ns   DRAM 149.6 ns
+       the L1d holds 8 ways, and 9 lines sharing one set cost
+         4.9x the same number of lines spread over distinct sets
+       the TLB covers 64 four-kilobyte pages; a 2 MiB page covers
+         512 times as much address space for the same walk
+       a store to an uncached line costs 2.49x a read to it, and
+         only above the last-level cache
+       two counters in one line cost 91x the same two counters
+         in two lines, with nothing shared between them
+
+     What it does NOT claim, because this machine cannot:
+       how many lines were missed, or filled, or walked
+       what the replacement policy is -- /sys gives capacity, not
+         policy -- and the shape inside the thrashing regime is
+         not explained here
+       why the L3 band widens from 21.0 to 24.4 ns as the footprint
+         grows inside it, nor why the row at exactly the L3 size is
+         the least stable number in the whole of section 2
+       any absolute cycle count at all, for the reason the previous
+         course spent a concept on
+       what a 2 MiB page removes: the madvised mapping did NOT
+         collapse in this run, so there is no huge-page arm and
+         the claim is withdrawn rather than reported
+
+  ============================================================
+   end.  21/21 checks passed.
+  ============================================================

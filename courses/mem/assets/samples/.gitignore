@@ -1,0 +1,7 @@
+membench
+membench.out
+membenchg
+*.o
+core
+core.*
+__pycache__/

@@ -1,0 +1,125 @@
+{
+  "id": "mem",
+  "title": "The Memory Hierarchy",
+  "version": "1.0.0",
+  "description": "What the machine does between a load and its value: a chase and a sweep measure different things and differ by 38x, a cache size is a band and not a number, and the claim a huge page buys has to be withdrawn when the mapping does not collapse.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 8 concepts, reproduce the 109 checks in courses/mem/assets/samples/crosscheck.py, and break the layout on purpose to make the one check that catches it fail by name",
+  "min_score": 70,
+  "dependencies": [
+    "isa",
+    "exe"
+  ],
+  "modules": [
+    {
+      "id": "instrument",
+      "title": "The Instrument",
+      "concepts": [
+        "mem-instrument",
+        "mem-latency"
+      ]
+    },
+    {
+      "id": "hierarchy",
+      "title": "The Hierarchy",
+      "concepts": [
+        "mem-hierarchy",
+        "mem-associativity"
+      ]
+    },
+    {
+      "id": "cost",
+      "title": "What a Page and a Store Cost",
+      "concepts": [
+        "mem-translation",
+        "mem-writes"
+      ]
+    },
+    {
+      "id": "sharing",
+      "title": "Sharing, and Verification",
+      "concepts": [
+        "mem-sharing",
+        "mem-verify"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "mem-instrument",
+      "title": "Measure the Instrument, Then the Memory",
+      "module_id": "instrument",
+      "description": "The noise floor is the spread of the estimator, not of a run, and at 14% it decides that every number here is a ratio.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "mem-latency",
+      "title": "A Chase and a Sweep Are Different Questions",
+      "module_id": "instrument",
+      "description": "Over the same 64 MiB a random walk costs 132 ns a line and a sequential one costs 3.5, and the 38x is the prefetcher.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "mem-hierarchy",
+      "title": "A Band, Not Four Numbers",
+      "module_id": "hierarchy",
+      "description": "From 1.6 ns to 150 ns in one table, a step within a factor of two of every size /sys reports, and a plateau five times wide.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "mem-associativity",
+      "title": "A Number From /sys, a Number Measured",
+      "module_id": "hierarchy",
+      "description": "Eight ways means nine lines that share a set cannot coexist, and 576 bytes of working set cost L2 latency.",
+      "estimated_minutes": 23,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "mem-translation",
+      "title": "Translation, and the 512x a Huge Page Buys",
+      "module_id": "cost",
+      "description": "Same lines, same footprint, same sets, one difference: how many pages. A cliff at 64 pages, and a claim that is withdrawn when the mapping does not collapse.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "mem-writes",
+      "title": "What a Store Costs",
+      "module_id": "cost",
+      "description": "A store to a line you do not hold costs 2.4x a read, writing 4 bytes costs what writing 64 does, and a non-temporal store never allocates at all.",
+      "estimated_minutes": 23,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "mem-sharing",
+      "title": "Two Threads, One Line",
+      "module_id": "sharing",
+      "description": "Nothing shared, 8 bytes apart or 64, and a factor of at least 60 -- with every run checked against core_id so the claim rests on two cores.",
+      "estimated_minutes": 22,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "mem-verify",
+      "title": "The Harness, and the Claim It Refuses to Make",
+      "module_id": "sharing",
+      "description": "109 checks, none of which asserts a bare number, and one group whose assertions depend on a measurement the machine may not provide.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}
