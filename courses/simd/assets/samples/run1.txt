@@ -1,0 +1,784 @@
+=====================================================================
+ simdbench -- SIMD and Vector Processing
+=====================================================================
+
+0. THE INSTRUMENT
+   Everything below is measured before any claim about the machine is
+   made, including the machine's own opinion of what it can do.
+
+   TSC rate, busy          2.2957 GHz
+   TSC rate, across sleep  2.2957 GHz
+   drift                   -0.001%   <-- invariant, so a tick is TIME
+   rate USED for every ns figure below: 2.2957 GHz (measured, not typed in)
+   pinned to cpu4: yes (sched_getcpu says cpu4)
+   estimator = min-of-3, 11 of them: spread  33.5%  (11.03 ns/iter)
+   The body is the section 2 loop.  This number is the reason the
+   crosscheck asserts SHAPES and not values: a tolerance that wide can
+   verify that 4 lanes beat 1 lane and cannot verify by how much.
+
+   brand            AMD Ryzen 5 7430U with Radeon Graphics         
+   family 0x19, model 0x50
+   x86-64 flags:    sse2=1 avx=1 fma=1 avx2=1 bmi2=1
+   avx512f=0 avx512dq=0 avx512cd=0 avx512bw=0 avx512vl=0
+   => THERE IS NO AVX-512 ON THIS MACHINE, and that is a checked fact and
+      not a gap: five CPUID leaves, all zero.  Every claim about a 512-bit
+      register or a k0-k7 mask register in this artifact is QUOTED from the
+      manuals, and nothing about one is measured here.  See the limits.
+
+   the caches, and which CPUs share each one:
+      L1 Data           32K KiB  shared by [0-1]
+      L1 Instruction    32K KiB  shared by [0-1]
+      L2 Unified       512K KiB  shared by [0-1]
+      L3 Unified     16384K KiB  shared by [0-11]
+   Section 3 sweeps the working set across every one of these sizes, which
+   is the whole reason the sweep is the course and the lane count is not.
+
+   performance counters:
+      perf_event_paranoid    4
+      no PMU, so no instruction, uop, cycle, load, store or cache-line
+      split can be COUNTED here.  Every number in sections 2 to 6 is a
+      DURATION, and a duration is a LOWER BOUND on a count, never a
+      measurement of one.  The mechanism column of every table in this
+      artifact is therefore marked INFERRED, and no table below claims a
+      count of anything.
+
+1. WHAT A VECTOR REGISTER IS
+   A vector register is a fixed number of BYTES.  Everything else -- the
+   lane count, what a lane holds, whether there is a mask -- follows from
+   that one number divided by the size of an element.  The table below is
+   COMPUTED from sizeof() at run time and not quoted from a manual, so it
+   is a fact about this build rather than a fact about a document.
+
+   register   bytes    64-bit double   32-bit float   32-bit int   8-bit int   16-bit int
+   XMM          16           2               4              4            16             8
+   YMM          32           4               8              8            32            16
+   ZMM          64           8              16             16            64            32   <- not in this CPU
+   k0-k7         64 bits, one per lane of a ZMM.  64 of them per ZMM, 512 per
+           architectural ZMM.  Not in this CPU.
+
+   THREE THINGS THAT TABLE DOES NOT SAY, and each of them is a trap:
+     1. The lane count is not a speedup.  It is a statement about how
+        many elements ONE instruction touches.  How much time that buys
+        depends on what else the loop does per element, and section 3
+        measures a 4-wide arm going from 3.3x to 1.2x by changing NOTHING
+        except how much memory it touches.
+     2. A 512-bit register is not four times a 128-bit one IN PRACTICE.
+        On every x86 CPU since 2013 the upper halves of a ZMM are ALIASED
+        onto the YMM, and on the 256-bit-and-down parts a VEX-encoded
+        instruction zeroes the upper bits of the destination.  The manuals
+        call this the upper-ZMM state.  This artifact cannot measure it
+        because there is no AVX-512 here.
+     3. A mask register is a THIRD operand, not a modifier.  k0-k7 each
+        hold 64 bits; a masked load uses a bit to say which lanes to
+        take, and a masked store uses it to say which lanes to KEEP.  That
+        is why AVX-512 has no tail handling problem worth the name, and
+        section 6 measures the tail this machine has to do by hand.
+
+   THE LINE THE EXECUTION COURSE LEFT UNPAID.  exe_deps.ch says a
+   loop unrolls into "multiples of the SIMD width" and exe_latency.ch
+   says the same work is done "in SIMD".  Both use the word as a known
+   quantity.  This table is the definition neither of them gave: a lane
+   is one element of a vector register, the width is the register's size
+   in BYTES, and a 4-wide AVX double loop is four 8-byte lanes, sixteen
+   iterations of it covering 64 doubles in 512 bytes, and that is ALL it
+   covers.  How many of those iterations a second is a different question
+   and it is the subject of sections 2 and 3.
+
+2. THE TABLE: SIX ARMS, ONE LOOP
+   One statement -- A[i] = A[i]*B[i] + C[i] -- over 64 doubles, 20000
+   times, pinned to one CPU, arms INTERLEAVED and each the minimum of 7.
+   B is the floor.  Every ratio is to B, and no absolute number here is
+   worth carrying to another machine.
+
+   arm                                                     ns/iter ns/element    speedup
+   A  scalar C, -O2, the compiler vectorised it              11.02      0.172      3.84x
+   B  scalar C, no-tree-vectorize            <- the floor      42.34      0.662      1.00x
+   C  SSE2, 2 doubles per instruction                        21.45      0.335      1.97x
+   D  AVX, 4 doubles, mul then add                           11.02      0.172      3.84x
+   E  AVX2+FMA, 4 doubles, one arithmetic instruction        11.02      0.172      3.84x
+   F  AVX2+FMA, 4 doubles, A as a memory operand             12.35      0.193      3.43x
+
+   CHECKSUM  A[0]+..+A[63] must be 32.000000 in EVERY arm: yes, all six agree
+   A=32.000000 B=32.000000 C=32.000000 D=32.000000 E=32.000000 F=32.000000 
+   B = 0.5, C = 0.25 makes A = A*B + C a FIXED POINT at 0.5 after 53
+   iterations, in exact binary arithmetic, and 64 copies of 0.5 sum
+   exactly.  So the checksum is a bit-for-bit test, not a tolerance --
+   which is the only reason it caught the operand-order bug in arm F.
+
+   WHAT EACH ROW IS, and what it is NOT:
+      A  the compiler's own answer, and it is not a separate kind of
+         thing.  It is the SAME loop, and the fact that it is competitive
+         with a hand-written 4-wide loop is the result of this section.
+      B  the floor.  One element per instruction, and nothing else changed.
+      C  TWO lanes.  Doubles are 8 bytes and an XMM is 16, so 2 is not a
+         choice anybody made; it is 16/8.
+      D  FOUR lanes, because 32/8 = 4.  Two arithmetic instructions.
+      E  FOUR lanes, ONE arithmetic instruction.  FMA is the reason the
+         instruction count went down by a third and the time did not go
+         down at all.  An extra instruction you did not need costs a
+         fetch and a decode slot, and on a loop that is not short of
+         either, removing one buys nothing.
+      F  FOUR lanes, and ONE of the three loads is gone -- the A operand
+         is a memory operand of the FMA, which is the same shape gcc emits
+         for arm A.  It comes out SLOWER than the three-load version, and
+         the row is worth more than the one it replaced: an instruction
+         with a memory operand must WAIT for that load to land before it
+         can multiply, so the load latency moves from "overlapped with
+         other work" to "on the critical path of the arithmetic".  Fewer
+         memory OPERATIONS, worse dependency structure.  This is the row
+         that killed the "one fewer load is the whole gap" story.
+
+   THE COMPARISON, as SPEEDUPS over the floor B (higher is faster):
+      2 lanes (C) / 1 lane (B)                    1.97x
+      4 lanes (D) / 1 lane (B)                    3.84x   <- the lane count is 4
+      4 lanes with FMA (E) / 4 lanes without (D)   1.00x   <- FMA's contribution
+      the hand-written 4-wide (E) / the compiler (A)   1.00x
+      one fewer memory op (F) / three loads (E)     1.12x   <- SLOWER, and that
+         is the finding: a memory operand buys a shorter instruction and
+         costs a longer dependency.  Instruction COUNT is not the cost.
+
+   AND THE FINDING, which is NOT the one this section was drafted for:
+   The 4-wide arm (D) is 3.84x the scalar floor at 1536 bytes.  Close to
+   four, and that is the story you would tell by default: four lanes,
+   four times.  It is also the story this course was NOT drafted around --
+   the first draft asserted a 2.2x and called it a lesson about the memory
+   system, and that number did not reproduce (see R3).  What reproduces is
+   that on L1-resident data the lane count is very nearly the whole answer,
+   because 3 loads and 1 store per 4 elements really do get ~4x cheaper.
+   Section 3 then takes the SAME arm, changes NOTHING but how much memory
+   it touches, and the answer stops being the lane count: the same 4-wide
+   arm falls to about 1.2x once the data is bigger than the L3.  So the
+   lesson is not "lanes are not the speedup" -- it is "the speedup is the
+   ratio of what the width DIVIDES, and once the division stops being the
+   bottleneck the lanes buy you almost nothing."
+
+3. THE CEILING: THE SAME 4-WIDE ARM AT FIVE SIZES
+   Identical statement, identical arms, identical estimator.  One thing
+   changes per row: how much memory the working set is.  1536 bytes of
+   arrays live in the 32 KiB L1; 24 MiB does not, and the L3 above it is
+   16 MiB and shared with all twelve logical CPUs.
+
+   working set          per array   all three   scalar      2-wide      4-wide    4-wide/scalar  auto-vec/scalar  via POINTERS/scalar
+   L1                         0 KiB        2 KiB     0.674      0.338      0.173         3.91x           3.91x              0.11x
+   L1 -> L2                  32 KiB       96 KiB     0.739      0.425      0.333         2.22x           2.28x              0.12x
+   beyond L2                256 KiB      768 KiB     0.693      0.430      0.377         1.84x           1.95x              0.12x
+   beyond L2, inside L3    2048 KiB     6144 KiB     0.556      0.363      0.347         1.60x           1.49x              0.10x
+   beyond L3               8192 KiB    24576 KiB     1.483      1.358      1.292         1.15x           1.12x              0.26x
+   (ns per ELEMENT, so the rows are comparable; minimum of 5 interleaved, SIX arms)
+   The last two columns are the SAME SOURCE reached two ways: one through
+   three named arrays, one through three double * globals.  In ns per
+   element the named form costs 0.173 and the pointer form 6.237 at 2 KiB,
+   and 1.292 and 5.737 at 24 MiB -- a gap of 36.1x and 4.3x, and the
+   disassembly at the end of this file says why.  Read the two columns
+   together or neither one of them means much.
+
+   CHECKSUM  all FOUR bodies must produce the SAME sum at every size:
+      n=64        4-wide=32.0000  scalar=32.0000  auto-vec=32.0000  via-pointers=32.0000   agree
+      n=4096      4-wide=2048.0000  scalar=2048.0000  auto-vec=2048.0000  via-pointers=2048.0000   agree
+      n=32768     4-wide=16384.0000  scalar=16384.0000  auto-vec=16384.0000  via-pointers=16384.0000   agree
+      n=262144    4-wide=131072.0000  scalar=131072.0000  auto-vec=131072.0000  via-pointers=131072.0000   agree
+      n=1048576   4-wide=524287.7500  scalar=524287.7500  auto-vec=524287.7500  via-pointers=524287.7500   agree
+      => all four bodies agree at all five sizes
+      The via-pointers column is the control arm and it agrees too, which is
+      the point: whatever the compiler did with it, it computed the same
+      number.  A body that stops being vectorised and a body that was never
+      vectorised must both leave the same checksum, and this one does.
+      (at the top size the value is 0.5*n minus about 0.2, because the
+       SEQUENTIAL scalar accumulator loses low bits summing a million
+       numbers.  All three arms lose exactly the same bits, which is
+       the point: they are the same recurrence written three ways.)
+
+   THE RESULT, and it is a single line:
+      4-wide vs the scalar arm:     3.91x  at      2 KiB (inside L1)
+                                     1.15x  at  24576 KiB (inside L3)
+
+   The lane count did not change between those two rows.  It is four in
+   both.  The only thing that changed is where the bytes come from, and
+   the speedup fell from 3.91x to 1.15x -- a factor of 3.40 -- while the
+   SCALAR arm barely moved at all: 0.674 ns/element at 2 KiB and 1.483 at
+   24 MiB, a factor of 2.20.  The 4-wide arm went from 0.173 to 1.292, a
+   factor of 7.49.
+
+   READ THAT AS A SENTENCE: THE VECTOR ARM'S COST WENT UP BY SIX AND THE
+   SCALAR ARM'S WENT UP BY TWO, AND THE DIFFERENCE IS THE SPEEDUP.  A
+   4-wide loop does not do less work than a scalar loop; it does the same
+   work in a quarter of the instructions, which is worth nothing once the
+   bottleneck is the bandwidth rather than the instruction rate.  That is
+   what "vectorise the hot loop" means and when it stops meaning that.
+
+      and the 2-wide arm, for contrast:   2.00x inside L1,   1.09x inside L3.
+      It loses LESS than the 4-wide arm does, which is the opposite of the
+      story you would tell if the lane count were the cause.
+
+   AND THE COMPILER, which is the other half of section 2's finding, and
+   which is where this section was WRONG THE FIRST TIME.  The first draft
+   reached the three arrays through three `double *` globals, measured the
+   auto-vectorised arm tracking the scalar arm, and concluded that gcc's
+   -O2 vectoriser "declines when it cannot prove the trip count large".
+   That was an inference from a number, and it was wrong.
+
+   What the sweep actually shows, with the pointer form kept as a control:
+      auto-vectorised, NAMED arrays:   3.91x  2.28x  1.95x  1.49x  1.12x
+      the SAME SOURCE via pointers:    0.11x  0.12x  0.12x  0.10x  0.26x
+
+   So the compiler DOES vectorise the auto arm, and it lands essentially on
+   the hand-written 4-wide one -- which is the finding, and the same one
+   section 2 found on L1-resident data, now confirmed at every size.  And
+   the pointer form is catastrophically worse, because:
+
+      The cause is ALIASING, and it is worth being precise about the word:
+      ALIASING here does not mean the pointers are equal -- it means the
+      compiler cannot prove they are NOT.  A store to A[j] might
+      change what B[j+4] holds, and if it might then the loads of the next
+      vector cannot be hoisted above this vector's store, and the whole
+      reorder into a vector loop is unsafe.  With three NAMED arrays the
+      three streams are three distinct objects and the question does not
+      arise.  One line of `restrict`, or one array instead of three, is the
+      difference between the two columns.
+
+
+      AND THE CONTROL IS SLOWER THAN THE SCALAR FLOOR, not equal to it, and
+      that is not a second finding: the control reaches its three pointers
+      through noinline accessors so that the compiler cannot see through
+      them, and that puts THREE CALLS in the inner loop.  The gap between the
+      two columns is therefore larger than the pure vectorisation effect,
+      and the honest reading is CATASTROPHICALLY WORSE, not a clean
+      factor.  A control that could not fail was the first version of this
+      one; see R8.
+
+   THE TRIP COUNT IS A DIFFERENT THING AND WAS CONFLATED WITH IT.  What a
+   runtime trip count actually costs the vectoriser is a SCALAR EPILOGUE for
+   the n mod 4 remainder -- which is precisely the tail that section 6c
+   measures as free.  So the two effects are: the trip count buys an
+   epilogue (cheap), and the pointer indirection buys NO VECTOR LOOP AT ALL
+   (catastrophic).  The first draft attributed the second to the first.
+
+   None of this is an assertion about gcc.  build_samples.sh compiles all
+   FOUR forms -- named/constant, named/variable, pointer/constant,
+   pointer/variable -- and appends their mnemonics to this output in the
+   VERIFY block at the end, because a claim about what a compiler did is a
+   claim about BYTES and the only way to check it is to read the bytes.
+   The general form, which is R7: AN INFERENCE FROM A TIMING IS NOT A
+   MEASUREMENT OF A COMPILER, AND THE TWO DISAGREE OFTEN ENOUGH TO CHECK.
+
+4. THE INSTRUCTIONS ARE ELEMENTWISE, AND INDEPENDENCE IS A PROPERTY
+   Every arithmetic instruction in this section writes each lane from
+   the same lane of its inputs and READS NOTHING FROM ANY OTHER LANE.
+   That is not a stylistic note: it is the only reason a vector loop can
+   go faster than a scalar one, and it is also why the ONE instruction
+   that does read across lanes -- the horizontal add -- is the subject of
+   section 5 and the only place in this course where a 4-wide loop LOSES.
+
+   body                                                    ns/iter   vs copy   checksum
+   load, store                       (ZERO arithmetic instructions)       4.61     1.00x   32.000000
+   load, ADD, store                  (one add)                5.19     1.12x   640016.000000
+   load, MUL, store                  (one multiply)           4.92     1.07x   0.000000
+   load, FMA, store                  (one multiply-add, one instruction)       7.21     1.56x   32.000000
+
+   READ THE THREE ARITHMETIC ROWS AGAINST EACH OTHER FIRST.  One add and
+   one multiply are within a percent of each other, which is the shape of a
+   loop that is not waiting for the arithmetic.  Their bodies differ by one
+   instruction and a multiply is no dearer than an add, because both of
+   them hide inside what the two loads and the one store already cost.
+   That is the mechanism behind section 2's FMA row, seen from this side.
+
+      copy   1.00x  (2 loads, 1 store, ZERO arithmetic)     the memory floor
+      add    1.12x  (2 loads, 1 add, 1 store)   -> the arithmetic is ~13%
+      mul    1.07x  (2 loads, 1 mul, 1 store)   -> identical to the add
+      fma    1.56x  (3 loads, 1 fma, 1 store)  -> ONE MORE LOAD, and that
+                                           is what it bought
+
+   THE FMA ROW IS NOT COMPARABLE WITH THE TWO ABOVE IT, and reading it as
+   though it were is how "FMA costs 1.5x a multiply" gets written.  The fma
+   body reads THREE arrays and the other two read TWO, so the row with
+   FEWER INSTRUCTIONS has MORE MEMORY OPERATIONS and costs more.  This is
+   the SAME confound that section 2's arm F exists to remove, seen once
+   more: to compare two bodies honestly they have to do the same loads.
+
+   THE CHECKSUM COLUMN IS THE POINT, not an afterthought.  A copy, an add,
+   a multiply and a multiply-add leave FOUR DIFFERENT numbers in X, and
+   only the fma row is the fixed point section 2 uses.  That is why the
+   checksums are printed rather than asserted equal, and why an arm that
+   silently computes the wrong thing shows up here as a wrong number
+
+   same arithmetic, different independence                 ns/iter   speedup   checksum
+   ONE accumulator, 4-wide FMA, 16 iterations                28.20     1.00x   15.000000
+   FOUR accumulators, 4-wide FMA, 4x4 iterations              7.05     4.00x   12.000000
+
+   Same instruction.  Same width.  Same number of them -- sixteen in
+   both.  One is faster, and the only difference is whether the second FMA
+   needs the answer to the first.  INDEPENDENCE IS A PROPERTY OF THE DATA,
+   NOT OF THE INSTRUCTION, and it is the same fact the execution course
+   teaches about a scalar loop, carried one register over.  Neither checksum
+   is 32.0 and neither should be: these two bodies do not compute the same
+   recurrence as section 2 and the checksum proves they did the work.
+   the four-chain arm is 4.00x FASTER than the one-chain arm
+   and the two checksums DIFFER, which is how you can tell at a glance that
+   they are not secretly the same loop.
+
+5. GOING BACK TO ONE SCALAR: THE REDUCTION
+   Every arm below sums the squares of the same 65536 doubles.  What
+   differs is WHEN the 4 lanes are folded back into one number, and HOW.
+
+   arm                                                        ns per 4 elem  vs arm A value produced
+   4-wide accumulate, reduce ONCE at the very end                   1.325     1.00x       1.644919
+   4-wide accumulate, TREE horizontal add every group               1.937     1.46x   26948.077729
+   4-wide accumulate, EXTRACT 4 lanes and add to a scalar every group       1.965     1.48x   26948.077729
+   4-wide accumulate, VHADDPD every group                           1.912     1.44x   26948.077729
+   scalar loop, no vector at all                                    5.291     3.99x       1.644919
+
+   THE FIRST AND THE LAST ROW ARE THE ONLY TWO THAT COMPUTE THE SAME
+   NUMBER, and they do: a 4-wide loop with ONE reduction at the end is
+   3.99x the scalar loop on this body.  That is the shape to write.
+   THE THREE MIDDLE ROWS DO NOT COMPUTE THE SAME NUMBER and are not meant
+   to.  Each folds the accumulator into a running scalar on EVERY group, so
+   what each one produces is a sum of running totals -- a different
+   quantity, and the reason their value column is not the same number.  This
+   is stated in the artifact because the first version of this section
+   compared four arms that were each summing something different, and the
+   ratio it reported was a ratio of two different computations.  See R5.
+
+      tree every group    1.46x the correct version
+      extract every group  1.48x the correct version
+      vhaddpd every group  1.44x the correct version
+
+   So a horizontal add of FOUR doubles costs about as much as the vector
+   operation that produced them, and there is no formulation of a
+   reduction that avoids paying it -- only formulations that pay it ONCE.
+   The vhaddpd row is the interesting one, because vhaddpd is the
+   instruction whose NAME says exactly what you want and which does
+   something else: it adds corresponding lanes of two sources inside each
+   128-bit half, so vhaddpd(v,v) DOUBLES v rather than pairing it.  You
+   must swap the halves first, and the artifact prints both facts because
+   getting the second one wrong produces exactly twice the true answer.
+
+   WHY TREE ORDER, since the three shapes cost about the same per GROUP:
+   because a reduction is a DEPENDENCY CHAIN and the shape of a tree is the
+   depth of that chain.  Four lanes fold in depth two.  A million lanes
+   folded one at a time have a dependency chain a million long; folded as a
+   tree they have depth twenty.  The tree is the same number of adds and a
+   logarithmic chain, and that is the whole of the argument.  It also
+   reassociates the additions, which changes the result in floating point
+   -- so a tree reduction is a DIFFERENT SUM, and if your answer must be
+   bit-identical to the sequential one you cannot have it.
+
+6. WHERE THE WIDTH GETS SPENT
+   Three things cost more per element than a 4-wide add does, and all
+   three are about the ADDRESSES rather than the arithmetic.
+
+6a. ALIGNMENT: IS AN UNALIGNED VECTOR LOAD SLOW, OR DOES IT FAULT?
+
+   arm                                                               ns/iter  vs arm 1
+   _mm256_load_pd   (DEMANDS 32B) on a 32-byte aligned address          7.49     1.00x
+   _mm256_loadu_pd  (demands nothing) on a 32-byte aligned address       7.08     0.94x
+   _mm256_loadu_pd  (demands nothing) on a +8 MISALIGNED address        7.49     1.00x
+
+      unaligned instruction, aligned address / aligned instruction   0.94x
+      MISALIGNED address / aligned address                           1.00x
+
+   THE MEASURED RESULT, and it is the opposite of the folk one: on this
+   machine an unaligned 32-byte vector load of L1-resident data is FREE.
+   Not cheaper than aligned, not more expensive -- indistinguishable, arm
+   1 and arm 3 differing by less than the estimator's own spread.
+
+   So WHY DOES _mm256_load_pd EXIST?  Because the requirement is a FAULT
+   requirement, not a speed requirement.  The fourth arm below is not a
+   timing measurement at all: it calls _mm256_load_pd on a +8 address and
+   the program catches the signal.  An aligned load is a smaller DECODER
+   case than an unaligned one, which is why a code generator that knows
+   the address is aligned will emit it -- not because it is faster here,
+   but because it is one fewer thing to have to be right about, and on some
+   other microarchitecture it is also faster.
+
+      _mm256_load_pd on a +8 address, in a child process: raised SIGSEGV (signal 11)
+      So the two instructions differ in a way this table CANNOT time:
+      one of them is a legal program and the other is not.  A table of
+      durations is the wrong instrument for that difference, and the
+      only way to see it is to run it and catch what comes back.
+
+   And at 2 MiB per stream, past the L2, the same comparison:
+      _mm256_load_pd  on a 32-byte aligned address       56405.6 ns/iter
+      _mm256_loadu_pd on a +8 misaligned address         73040.7 ns/iter    1.29x
+      Still nothing.  This artifact therefore does NOT claim that an
+      unaligned vector load is slower on this machine, because it
+      measured that it is not, at two working-set sizes.  What it does
+      claim is the fault, which is real and is above.
+
+6b. GATHER: THE INSTRUCTION DESIGNED FOR THE JOB, AGAINST NOT USING IT
+
+   arm                                                               ns/iter  vs arm 1
+   four SEQUENTIAL addresses: 3 loads, 1 store, 1 fma per 4 elements       8.66     1.00x
+   hand gather: FOUR SCALAR LOADS, then build the vector, then 1 fma      17.81     2.06x
+   hardware gather: vpgatherdd, one instruction for the same four loads      54.52     6.29x
+
+      the hand gather, against the SEQUENTIAL loop it replaces    2.06x
+      vpgatherdd, against the same sequential loop                   6.29x
+      vpgatherdd, against FOUR ORDINARY SCALAR LOADS                  3.06x
+
+   THAT LAST NUMBER IS THE ONE TO CARRY AWAY, and it is the same finding
+   as section 2's FMA row with a bigger multiplier.  A gather is not one
+   instruction that does four things at once; it is one instruction that
+   does four INDEPENDENT LOADS SERIALLY, because the four addresses are
+   unrelated and the memory system has no way to overlap them.  The
+   instruction saves the register moves and pays a decode penalty for
+   them.  On THIS machine, doing it by hand in four scalar loads and
+   assembling the vector afterwards is nearly twice as fast as using the
+   instruction, and that is not a compiler artefact -- both arms are
+   intrinsics in the same translation unit.
+
+   THE GENERAL FORM, and it is the reason compilers do this on their own:
+   A WIDE INSTRUCTION IS WORTH WHAT THE ADDRESSES ALLOW.  When the four
+   addresses are CONSECUTIVE the vector form is right.  When they are not,
+   the vector form buys arithmetic you could have had anyway, and charges
+   you for the memory independence you just lost.  A permuted access is a
+   SCATTER, a GATHER, a TRANSPOSE or a SHUFFLE, and on every one of those
+   the width is a cost until proven otherwise.
+
+6c. THE TAIL: 66 ELEMENTS AND A 4-WIDE INSTRUCTION, WITH NO MASK REGISTER
+   This machine has no AVX-512, so there is no k register to say "only
+   two of these four lanes".  Three strategies, and two of them are wrong:
+
+   arm                                                                 ns/iter  vs arm 1
+   64 elements, 4-wide, NO TAIL at all                (the reference)      11.94     1.00x
+   66 elements, 4-wide + a SCALAR remainder of 2                         12.93     1.08x
+   66 elements, 4-wide + one OVERLAPPING iteration, 2 valid lanes stored      22.52     1.89x
+   68 elements, plain 4-wide: WRITES 2 ELEMENTS PAST THE END OF THE ARRAY      13.90     1.16x
+   CONTROL: a FULL 32-byte overlap (load exactly what was stored)        13.97     1.17x
+   CONTROL: a PARTIAL overlap load, only 1 lane stored back              16.51     1.38x
+
+   CHECKSUM  T[0], T[63], T[64], T[65] must all be 0.5 after the scalar
+   remainder arm: 0.5 0.5 0.5 0.5
+
+   THREE FINDINGS, IN ORDER OF HOW SURPRISING THEY ARE:
+      1. the SCALAR REMAINDER IS FREE: 1.08x the no-tail arm, for two
+         elements.  Two elements out of 66 is 3% of the work and it
+         costs 8%.  This is the right answer and it is not a trick.
+      2. the OVERLAPPING last iteration is 1.89x -- the WORST arm in the
+         table, and the one that is supposed to be the clever one.
+
+      3. and the two controls say why, which the overlapping arm on its own
+         does not.  A FULL 32-byte overlap costs 1.17x and a PARTIAL
+         overlap LOAD costs 1.38x.  So the cost is not "doing the tail", it
+         is the load at +62: it OVERLAPS the 32-byte store at +60 by half,
+         and a load that overlaps a recent store only partly cannot be
+         FORWARDED from the store buffer -- it has to wait for the store to
+         reach the cache.  The overlapping trick reads back the very line it
+         has just written, half-aligned, and that is the slowest thing in
+         the table.
+
+      The MECHANISM is INFERRED.  There is no PMU here and nothing above is a
+      count of anything, so "cannot be forwarded" is the best explanation
+      the two controls support rather than something that was measured.
+
+      4. arm 4 is CHEAP (1.16x) and it is the one that silently corrupts
+         whatever follows the array.  The array here is declared with 8
+         spare doubles, which is why it does not crash and why it is a bug
+         rather than an accident.  A vector loop that over-reads and
+         over-writes its tail is a portable program that gets 1.0x faster
+         by writing to memory it does not own.  THIS is what a mask
+         register is for, and it is the whole reason AVX-512 has one.
+
+      THE ORDERING, then, is the thing to remember: on a machine without a
+      mask, write the tail SCALAR.  It is free, it is correct, and the
+      clever alternative is the most expensive row in the table.
+
+7. THE SAME SHAPE ON THREE ARCHITECTURES
+   QUOTED, NOT MEASURED.  This machine is x86-64 and there is no other
+   architecture in the room.  Every claim below is a manual claim with a
+   document, and the limits block says so a second time.
+
+   x86-64  (measured in sections 2 to 6)
+      the register   128-bit XMM, 256-bit YMM, 512-bit ZMM.  The width is a
+                     PROPERTY OF THE INSTRUCTION'S ENCODING: VEX encodes
+                     128 or 256, EVEX encodes 512 and adds the mask, the
+                     broadcast and the embedded-rounding fields.
+      the load       vmovapd DEMANDS 32-byte alignment and faults without
+                     it; vmovupd does not and is free here.  Measured in 6a.
+      the gather     AVX2 added vpgatherdd/vpgatherqd.  Measured in 6b and
+                     it is SLOWER than four scalar loads on this machine.
+      the mask       k0-k7, 64 bits each, one bit per lane of a 512-bit
+                     register.  AVX-512 ONLY -- absent here, proved in 0.
+      the tail       there is none.  A 4-wide loop over n elements handles
+                     n mod 4 elements scalar, and 6c measures that as free.
+
+   AArch64  (quoted)
+      the register   128 bits, Q registers, 16 of them per bank.  ONE SIZE.
+                     There is no 256- and no 512-bit general-purpose SIMD
+                     register in the base architecture at all: NEON is
+                     128 bits and that is the end of it.  This is a
+                     STRUCTURAL difference from x86 and it is why a 4-wide
+                     double loop is the widest loop you can write in
+                     portable AArch64 NEON -- 2 doubles, not 4.
+      the load       ldr q0, [x0] is unaligned-tolerant by default.  There
+                     is no aligned variant of the SIMD load at all.
+      the gather     NO gather instruction exists in NEON.  An indirect
+                     load is a plain ldr into a D register, so the cost of a
+                     gather is the cost of four scalar loads -- which is
+                     what 6b measured as the FAST option on x86.  The
+                     architecture with no gather instruction is the one
+                     where the hand-written gather is not merely better but
+                     the ONLY thing there is.
+      the mask       none.  Same tail problem, same answer: peel it scalar.
+      SVE            the scalable extension, and the opposite design.  The
+                     register size is a PROGRAMMABLE property, up to 2048
+                     bits, so a loop written once runs at whatever width
+                     the implementation chooses.  It also has PREDICATION:
+                     a sequence of predicated instructions, so a tail is a
+                     predicate, not a branch and not a scalar epilogue.  It
+                     is the direct answer to the thing 6c measures.
+
+   RISC-V  (quoted)
+      the register   the V extension has named VLEN-BIT register groups,
+                     ELEN bytes wide, currently VLEN >= 128.  Like SVE the
+                     width is a property the implementation chooses.
+      the mask       v0 IS the mask register: one bit per element, and
+                     v0.t4 selects four 32-bit lanes.  The mask is part of
+                     the register file rather than a separate operand, and
+                     a masked instruction reads vl ELEMENTS and ignores the
+                     rest.  This is the design AVX-512 was reaching toward.
+      the tail       setting vl to the remainder and running the same
+                     instruction.  No epilogue, no branch, no scalar code.
+      the gather     vrgather.vv and vrgatherei16.vv exist, and a segment
+                     load (vlseg) can fetch a strided run into a vector in
+                     ONE instruction -- which is the operation the x86 gather
+                     is trying to be, done by a different instruction for a
+                     regular pattern rather than an arbitrary index list.
+
+   THE PORTABLE SHAPE, and it is the same five rows the three courses
+   before this one each found, which is worth noticing:
+
+      1. how many elements   the width of the register, which is FIXED on
+
+                             x86-64 and PROGRAMMABLE on SVE and RISC-V V
+
+      2. how they are loaded  a consecutive load, and on x86 sometimes a
+
+                             gather, which 6b measured as a cost
+
+      3. what the operation  ELEMENTWISE and INDEPENDENT, on all three --
+
+         does to them        section 4, and this is the part that ports
+
+      4. how they are       N INDEPENDENT LANES, ONE INSTRUCTION, WITH A
+
+         reduced                REDUCTION AT THE END.  Section 5, and it is
+
+                             the same sentence on all three architectures.
+
+      5. what the tail is   a mask on two of them, a scalar epilogue on
+
+                             one.  Section 6c measured the epilogue and it is
+
+                             free, so the portable answer is the epilogue.
+
+
+   Rows 1 and 2 are where the architectures differ and where a benchmark
+   ported between them stops meaning the same thing.  Rows 3, 4 and 5 are
+   the same everywhere, and row 4 is the only one anybody needs in order
+   to write a loop that gets faster on all three.
+
+8. RETRACTIONS AND LIMITS
+   Printed here so they cannot be quietly dropped, and asserted by
+   crosscheck.py so they cannot be DELETED either.
+
+   R1. "The memory-operand arm measured 3.3 and so the FMA memory form
+       is broken."  The arm was wrong, and the CHECKSUM is what said so.
+       The first version used vfmadd231pd, which computes B*C+A rather than
+       A*B+C.  The table was entirely readable, the ratio was entirely
+       plausible, and the only thing on the page that objected was the
+       checksum line reading 3.3 where every other arm read 32.0.  vfmadd132pd
+       with the memory operand as the DESTINATION is the form that
+       computes A*B+C, and that is what arm F now uses.
+       THE GENERAL FORM, WHICH HAS NOW RECURRED FOUR COURSES IN A ROW:
+       AN EXPERIMENT THAT CAN SILENTLY COMPUTE THE WRONG THING MUST
+       PRINT WHAT IT COMPUTED, OR IT IS NOT AN EXPERIMENT.
+
+   R2. "The absolute nanosecond figures are the result."  They are not.
+       The first version of this file divided ticks by a HARDCODED TSC
+       rate.  Section 0 now measures the rate twice per run, once busy and
+       once across a sleep, and uses the mean.  And even with that, the
+       absolute ns/iter for the SAME body moved by a factor of 1.7 BETWEEN
+       RUNS on the recorded day, because this is a virtualised guest with
+       twelve logical CPUs and other tenants.  Every ratio in sections 2 to
+       6 moved by less than 10% across four runs while the absolute numbers
+       moved by 70%.  THIS IS THE MOST IMPORTANT SENTENCE IN THE FILE and it
+       is why crosscheck.py asserts shapes.
+
+   R3. "Four lanes is 2.2x, not 4x, because the loop is memory bound"
+       -- the story this course was drafted around.  NOT REPRODUCED.
+       At 1536 bytes the 4-wide arm is close to 4x the scalar arm, because
+       3 loads and 1 store per 4 elements really are 4x cheaper when the
+       load ports are the bottleneck.  The claim turned out to be TRUE OF A
+       DIFFERENT WORKLOAD, and section 3 is the corrected version of it:
+       hold the lane count at four and grow the working set, and the same
+       arm falls from about four times the scalar to barely more than one.
+       The lesson survived; the sentence did not, and the difference between
+       the two is that the lesson has to name the workload.
+
+   R4. "vhaddpd adds adjacent lanes."  IT DOES NOT.  VHADDPD adds the
+       CORRESPONDING lanes of its TWO SOURCES within each 128-bit half, so
+       vhaddpd(v,v) DOUBLES v instead of pairing it.  The first version of
+       the reduction section called it without swapping the halves and
+       reported EXACTLY TWICE the true sum, to the last bit.  The checksum
+       caught it for the same reason it caught R1.  A mnemonic that says
+       what you want is not a definition of what it does, and the only check
+       that survives is the one that looks at the answer.
+       A SECOND BUG WAS HIDDEN BEHIND IT: the first version's "tree"
+       reduction added the two 128-bit halves of an already-paired register,
+       so both 64-bit lanes held the total and it was added to itself.  Also
+       exactly twice.  Two different bugs, one symptom, one line of output.
+
+   R5. "The reduction table compares four ways of summing."  Three of
+       the five arms were not summing.  An arm that folds the accumulator
+       into a running scalar EVERY group computes a sum of running totals,
+       which is a different quantity, and the first version reported ratios
+       between different quantities as though they were costs of the same
+       thing.  The arms are still all here, and the artifact now PRINTS the
+       value each one produced so the difference is visible rather than
+       assumed.  Rule 5 of the header is about memory operations; the same
+       rule is about the ANSWER, and it was learned twice in one file.
+
+   R6. "An unaligned vector load is slow."  NOT ON THIS MACHINE.  Measured
+       at 1536 bytes and again at 2 MiB per stream, _mm256_loadu_pd on a
+       +8 address was indistinguishable from _mm256_load_pd on a 32-byte
+       aligned one.  The requirement that is REAL is not a speed
+       requirement at all: _mm256_load_pd on a misaligned address raises a
+       signal, and section 6a forks to measure that.  A duration table is
+       the wrong instrument for a correctness requirement, and the general
+       form is: CHECK WHETHER THE THING FAULTS BEFORE ASKING HOW SLOW IT IS.
+
+   R7. "The compiler declined to vectorise because the trip count is a
+       runtime variable."  WRONG, AND IT WAS AN INFERENCE FROM A TIMING.
+       Section 3 reached the three arrays through three `double *` globals,
+       the auto-vectorised arm came out at the scalar floor, and the first
+       draft wrote the tidy explanation.  The VERIFY block at the end of
+       this output compiles all four forms of the loop and counts their
+       mnemonics, and the trip count turns out to have almost nothing to do
+       with it: the NAMED-array form vectorises at BOTH trip counts, and the
+       POINTER form vectorises at NEITHER.
+
+       What the trip count costs is a SCALAR EPILOGUE for n mod 4, which is
+       the tail section 6c measures as free.  What the pointers cost is
+       the VECTOR LOOP ITSELF, because gcc cannot prove that a store to
+       A[j] does not change what B[j+4] holds.  Two different mechanisms,
+       one of them catastrophic and one of them free, told as one story.
+
+       AN INFERENCE FROM A TIMING IS NOT A MEASUREMENT OF A COMPILER.  A
+       number going the right way is not evidence about bytes, and the
+       whole discipline of this collection -- exact for structure, shapes
+       for timing -- has a third clause that this course had to learn:
+       FOR A CLAIM ABOUT WHAT A COMPILER DID, THE ONLY EVIDENCE IS THE
+       DISASSEMBLY, AND THE FIRST DRAFT HAD NONE.
+
+       A SECOND ERROR ATTACHED TO THE SAME SENTENCE, and it is the one this
+       course was really about: "the compiler beats intrinsics because it
+       hoists the loop-invariant loads of B and C".  The disassembly shows
+       B and C loaded INSIDE the inner loop on all sixteen iterations.  They
+       are not hoisted.  What the compiler does is put A into the FMA as a
+       memory operand -- which is arm F, and section 2 MEASURED arm F and
+       it is SLOWER than the three-load form.  So the tidy story is wrong
+       twice over: the mechanism is not hoisting, and the mechanism it gets
+       confused with is not free.  A, D and E landing within a few percent
+       of each other is a fact about the LOOP, not about either codegen
+       path being clever.
+
+   R8. "The control arm came out at 3.91x, so aliasing is not what"
+       stopped the compiler."  THE CONTROL WAS NOT A CONTROL.  It was
+       written as `static double *gA = bA, *gB = bB, *gC = bC;` -- the same
+       three arrays wearing a pointer costume.  gcc folded the static
+       initialisers away, proved the three streams distinct again, and
+       vectorised it.  The control measured exactly what the arm it was
+       supposed to contradict measured, which is what a broken control
+       always looks like.  The fix is to ASSIGN the pointers in main() and
+       reach them through noinline accessors, so the compiler cannot see
+       through them; the arm then emits one scalar FMA and no vector one.
+       A CONTROL THAT CANNOT FAIL IS NOT A CONTROL, and a check that
+       passes on an artefact that was not built is worse than no check,
+       because it is counted.  THE DISCIPLINE: BEFORE BELIEVING THAT A
+       CONTROL CONFIRMS SOMETHING, MAKE IT FAIL ON PURPOSE AND CONFIRM
+       THAT IT DOES.
+
+   LIMITS -- what this artifact cannot tell you, printed not footnoted:
+     * ANY COUNT.  perf_event_paranoid is 4 on this machine: no instruction,
+       uop, cycle, load, store, L1 access or cache-line split can be counted.
+       Every number in sections 2 to 6 is a DURATION.  A duration bounds a
+       count without measuring it, and every mechanism in every table above
+       is therefore marked INFERRED.  Section 4's independence result, for
+       instance, is a duration and the store-forwarding explanation in 6c is
+       a mechanism with two controls supporting it, not a count.
+     * ANYTHING ABOUT AVX-512.  Five CPUID bits, all zero, printed in section
+       0.  What a ZMM is and what a k0-k7 mask register is comes from the
+       manuals.  NOTHING about a 512-bit register is measured here, and in
+       particular the claim that a 512-bit register gives you 8 doubles in
+       one instruction is a claim about the ENCODING and not about how fast
+       anything is.
+     * WHETHER THE UPPER ZMM STATE COSTS ANYTHING.  The manuals describe
+       the upper-half aliasing and the VEX zeroing behaviour.  Measuring it
+       needs a 512-bit machine and a register this CPU does not have.
+     * A CROSS-CHECK OF THE ARITHMETIC AGAINST A SECOND IMPLEMENTATION.
+       The checksums prove every arm agrees with every other arm.  They do
+       not prove any of them agrees with a C compiler, because the only
+       independent oracle available here would be a second build of the
+       same source.  The first version of arm F computed B*C+A and every
+       arm agreed with every OTHER arm that was wrong the same way would
+       have -- except that it did not, and that is luck, not a method.
+     * THE OTHER TWO ARCHITECTURES.  Section 7 is quoted, not run.  There
+       is no AArch64 and no RISC-V machine in the room, and a quoted claim
+       about SVE's predication is a manual claim with a document.
+     * WHETHER THE COMPILER VECTORISED.  Section 3 quotes a ratio for the
+       auto-vectorised arm, which is indirect evidence and could be a loop
+       that got faster for another reason.  The direct evidence is a
+       DISASSEMBLY, and build_samples.sh runs objdump and appends the
+       result, so the claim about what the compiler emitted is checked
+       against the bytes the compiler emitted rather than against a
+       number that went the right way.
+     * ANYTHING ABOUT FLOATING-POINT CORRECTNESS.  The fixed point in
+       sections 2 and 4 is exact by construction -- 0.25, 0.5 and 0.25 are
+       all powers of two -- so a checksum of 32.0 tests that the right
+       NUMBER of operations happened.  It does not test that a vector sum
+       equals a scalar sum, and section 5 says in the body that a tree
+       reduction reassociates and therefore gives a different answer.
+
+=====================================================================
+
+=====================================================================
+ VERIFY: what the compiler actually emitted
+=====================================================================
+
+   A claim about what a compiler did is a claim about bytes, and a
+   timing is not evidence for one.  These are FOUR forms of the same
+   statement, compiled with the same flags, crossing two variables:
+   whether the trip count is a compile-time constant, and whether the
+   three streams are named arrays or reached through double * globals.
+
+   named_const:
+              1 vfmadd132pd
+        => VECTORISED: 1 packed-double, 0 scalar
+   named_var:
+              1 vfmadd132pd
+              1 vfmadd132sd
+        => VECTORISED: 1 packed-double, 1 scalar
+   ptr_const:
+              1 vfmadd132sd
+        => NOT VECTORISED: 0 packed-double, 1 scalar
+   ptr_var:
+              1 vfmadd132sd
+        => NOT VECTORISED: 0 packed-double, 1 scalar
+
+   compiler: cc (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+   flags:    -O2 -Wall -mavx2 -mfma
+
+   READ THE FOUR LINES AS A 2x2 AND THE CORNER THAT MATTERS APPEARS:
+   the NAMED forms vectorise at both trip counts and the POINTER forms
+   vectorise at neither.  The trip count decides only whether a SCALAR
+   EPILOGUE for the n mod 4 remainder is emitted -- named_var has one
+   packed-double and one scalar instruction, named_const has one
+   packed-double and no scalar one -- and that epilogue is the tail that
+   section 6c measures as free.  What the pointers remove is the vector
+   loop ITSELF, because the compiler cannot prove that a store to A[j]
+   does not change what B[j+4] holds.
+
+   This block is here because the first version of this artifact
+   concluded the opposite from a TIMING, attributed it to the trip
+   count, and was wrong on both counts.  An inference from a speedup is
+   not a measurement of a compiler.  See R7.

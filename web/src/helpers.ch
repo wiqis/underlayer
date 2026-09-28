@@ -820,6 +820,28 @@ public namespace underlayer_web {
         return string()
     }
 
+    // SIMD and vector processing. Same fall-through contract: empty string
+    // for anything else. `simd-` is a prefix no other course uses.
+    public func render_simd_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var width_id = std::string("simd-width")
+        var compiler_id = std::string("simd-compiler")
+        var shapes_id = std::string("simd-shapes")
+        var reduce_id = std::string("simd-reduce")
+        var boundaries_id = std::string("simd-boundaries")
+        var three_id = std::string("simd-three")
+        var harness_id = std::string("simd-harness")
+
+        if(cid.equals(&width_id)) { return underlayer_content::render_simd_width() }
+        if(cid.equals(&compiler_id)) { return underlayer_content::render_simd_compiler() }
+        if(cid.equals(&shapes_id)) { return underlayer_content::render_simd_shapes() }
+        if(cid.equals(&reduce_id)) { return underlayer_content::render_simd_reduce() }
+        if(cid.equals(&boundaries_id)) { return underlayer_content::render_simd_boundaries() }
+        if(cid.equals(&three_id)) { return underlayer_content::render_simd_three() }
+        if(cid.equals(&harness_id)) { return underlayer_content::render_simd_harness() }
+        return string()
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         // HAT concepts are resolved first; render_hat_concept returns an empty
@@ -880,6 +902,9 @@ public namespace underlayer_web {
         // Multiprocessor-architecture concepts; same fall-through contract.
         var smp_html = render_smp_concept(concept_id)
         if(smp_html.size() > 0) { return smp_html }
+        // SIMD/vector concepts; same fall-through contract.
+        var simd_html = render_simd_concept(concept_id)
+        if(simd_html.size() > 0) { return simd_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

@@ -70,7 +70,7 @@
 - [x] Learn The Memory Hierarchy
 - [x] Learn Exceptions, Privilege and Mode Changes
 - [x] Learn Multiprocessor Architecture
-- [ ] Learn SIMD and Vector Processing
+- [x] Learn SIMD and Vector Processing
 
 ## x86-64
 

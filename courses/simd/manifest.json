@@ -1,0 +1,118 @@
+{
+  "id": "simd",
+  "title": "SIMD and Vector Processing",
+  "version": "1.0.0",
+  "description": "A 4-wide loop is 3.89x the scalar one on L1-resident data and 1.14x on the same data once it is 24 MiB, and the lane count did not change between those two numbers; the gather instruction is 2.6x slower than four ordinary scalar loads; and the compiler declines to vectorise a loop that reaches its three streams through pointers, which has nothing to do with the trip count.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 7 concepts, reproduce the 131 checks in courses/simd/assets/samples/crosscheck.py, and then restore the static initialisers on the control arm's three pointers in courses/simd/assets/samples/simdbench.c and watch the control come back to 3.90x and group D fail by name",
+  "min_score": 70,
+  "dependencies": [
+    "mem",
+    "exe",
+    "isa",
+    "priv",
+    "smp"
+  ],
+  "modules": [
+    {
+      "id": "lane",
+      "title": "The Lane",
+      "concepts": [
+        "simd-width",
+        "simd-compiler"
+      ]
+    },
+    {
+      "id": "shapes",
+      "title": "What the Instructions Do",
+      "concepts": [
+        "simd-shapes",
+        "simd-reduce"
+      ]
+    },
+    {
+      "id": "cost",
+      "title": "Where It Costs",
+      "concepts": [
+        "simd-boundaries",
+        "simd-three"
+      ]
+    },
+    {
+      "id": "artifact",
+      "title": "The Artifact",
+      "concepts": [
+        "simd-harness"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "simd-width",
+      "title": "A Register With Lanes In It",
+      "module_id": "lane",
+      "description": "A vector register is a number of BYTES and a lane is a division, so the whole lane table follows from 16/32/64 divided by the element size -- and the table that says 4 lanes is 3.89x is not the table that says 4 lanes is 4x.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "simd-compiler",
+      "title": "The Compiler, the Intrinsics, and a Control That Lied",
+      "module_id": "lane",
+      "description": "The auto-vectorised arm matches the hand-written 4-wide one to within a percent -- and the same source through three double * globals is 35x worse, because ALIASING and not the trip count decides whether there is a vector loop at all.",
+      "estimated_minutes": 29,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "simd-shapes",
+      "title": "Elementwise, and Independent",
+      "module_id": "shapes",
+      "description": "An add and a multiply cost the same to within 7% because the loop is not waiting for the arithmetic, and the same 4-wide FMA is 4.00x faster with four accumulators than with one, on identical instructions.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "simd-reduce",
+      "title": "Going Back to One Scalar",
+      "module_id": "shapes",
+      "description": "A horizontal add of four doubles costs about as much as the vector operation that produced them, so reducing every group costs 1.45x and reducing once costs nothing extra -- and vhaddpd, whose name says exactly what you want, adds corresponding lanes and gives you exactly twice the answer.",
+      "estimated_minutes": 28,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "simd-boundaries",
+      "title": "Alignment, the Gather, and the Tail",
+      "module_id": "cost",
+      "description": "An unaligned vector load is free at two working-set sizes and the aligned one FAULTS on the same address, vpgatherdd is 2.6x slower than four ordinary scalar loads, and the clever overlapping tail is the most expensive row in its own table.",
+      "estimated_minutes": 27,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "simd-three",
+      "title": "Three Answers to One Shape",
+      "module_id": "cost",
+      "description": "x86-64 has a fixed width and a gather; AArch64 NEON has a fixed width, NO gather, and no mask; RISC-V V has a chosen width, v0 as the mask, and a segment load. The portable shape is the five-row list and only three of its rows are the same everywhere.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "simd-harness",
+      "title": "The Harness, and the Eight",
+      "module_id": "artifact",
+      "description": "131 checks that assert the collapse as a SHAPE and the lane table as exact integers, five of the eight retractions found by running this artifact, and a control arm that could not fail until it was made to.",
+      "estimated_minutes": 27,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}

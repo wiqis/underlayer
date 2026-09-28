@@ -1,0 +1,5 @@
+# Build products.  Tracked: build_samples.sh, verify_codegen.sh, simdbench.c,
+# crosscheck.py, simdbench.out, run1-2.txt.
+simdbench
+*.o
+__pycache__/
