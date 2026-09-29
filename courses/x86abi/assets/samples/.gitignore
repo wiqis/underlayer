@@ -1,0 +1,22 @@
+# Build products.  The RECORDED outputs ship: abidump.out, run1.txt, run2.txt,
+# abi_dis.txt, abi_cfi.txt, abi_libc.txt and abi_control.txt, so that every
+# claim in the course is checkable on a machine that never ran the benchmark.
+# The BINARIES do not, because a committed executable is a file nobody can
+# review and one that is wrong on the next binutils.
+abidump
+uwprobe_yes
+uwprobe_no
+control.o
+abis.o
+*.o
+_stubs.c
+_c0.o
+_c1.o
+_c2.o
+_cs.o
+_x0
+_x1
+_x2
+_xs
+_cfi.s
+_eh.o

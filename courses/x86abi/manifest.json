@@ -1,0 +1,97 @@
+{
+  "id": "x86abi",
+  "title": "The x86-64 ABI",
+  "version": "1.0.0",
+  "description": "The fourth argument of a function call is in rcx, and the reason the fourth argument of a SYSTEM call is in r10 is one instruction: syscall writes the return RIP into rcx, and call pushes it onto the stack instead. Both are measured, and the draft that welded them together is retracted in public.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 6 concepts, reproduce the 126 checks in courses/x86abi/assets/samples/crosscheck.py, then break the positive control on purpose -- delete the `pushq %rbx` from control.s -- and make group H2 fail by name",
+  "min_score": 70,
+  "dependencies": [
+    "x86asm",
+    "isa",
+    "exe",
+    "sec",
+    "dyn",
+    "simd"
+  ],
+  "modules": [
+    {
+      "id": "frame",
+      "title": "The Frame: What a Call Owes Whom",
+      "concepts": [
+        "x86-calling",
+        "x86-frame",
+        "x86-saved",
+        "x86-varargs"
+      ]
+    },
+    {
+      "id": "unwind",
+      "title": "The Second Description: Unwinding and the Audit",
+      "concepts": [
+        "x86-unwind",
+        "x86-verify"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "x86-calling",
+      "title": "The Calling Convention, and the Register That Wasn't",
+      "module_id": "frame",
+      "description": "Six argument registers and their NUMBERS, audited by name against a written specification at four optimisation levels -- and the fourth argument is rcx, not r10, because a bare syscall instruction writes the return RIP into rcx and a call pushes it onto the stack instead. Both halves measured, in one section.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-frame",
+      "title": "The Stack Frame, the Red Zone, and Two Rules",
+      "module_id": "frame",
+      "description": "The 128-byte red zone, and the measurement that shows why it is for LEAF functions only: the first eight bytes of it are the return-address slot and `call` writes them. And the alignment rule is TWO rules, because a call and a tail jmp want opposite adjustments.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-saved",
+      "title": "Callee-Saved and Caller-Saved, by Experiment",
+      "module_id": "frame",
+      "description": "Not a table: a callee that tramples r12 and a conforming one, and which of the caller's values survive. Then the two floating-point control registers, which point in OPPOSITE directions, and a linter that read 4,561 glibc functions and needed a positive control to prove it was looking at anything.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-varargs",
+      "title": "The One Place the ABI Describes Itself",
+      "module_id": "frame",
+      "description": "A 176-byte register save area, and a caller that lies about %al: the arguments are not corrupted in transit, they are never looked at, and the consumer gets the PREVIOUS call's floating-point numbers back -- bit for bit, and through glibc's printf as well as through its own.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-unwind",
+      "title": "Unwinding, and the Second Language",
+      "module_id": "unwind",
+      "description": "The .cfi_* directives are a second, independent description of the same frame, and a program compiled with -fno-asynchronous-unwind-tables returns ONE frame from backtrace() where it returns seven without it: not a wrong answer, no answer.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-verify",
+      "title": "Read the ABI Out of the Disassembly",
+      "module_id": "unwind",
+      "description": "The artifact, and the audit: 64 of 64 callers match a written specification at four optimisation levels, 4,561 functions of glibc are read for callee-saved violations, and the checker that found nothing in 9,255 functions had a ternary the wrong way round and had never once recognised a callee-saved register.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}

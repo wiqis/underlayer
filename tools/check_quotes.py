@@ -28,7 +28,30 @@ import sys
 
 COURSE = sys.argv[1] if len(sys.argv) > 1 else "x86asm"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = os.path.join(ROOT, "courses", COURSE, "assets", "samples", "x86dec.out")
+
+# The two courses in the x86-64 section share a file-name prefix: the
+# assembly course owns `x86_*.ch` and the ABI course owns both `x86_*.ch`
+# (x86_calling, x86_frame, ...) and `x86abi_landing.ch`, so a single
+# `COURSE[:3]` prefix check silently put the ABI course's pages into the
+# ASSEMBLY course's audit and vice versa.  The prefixes and the recorded
+# output file are therefore named per course, and a course that is not in
+# the table falls back to the old behaviour.
+PREFIXES = {
+    "x86asm": ("x86_asm.ch", "x86_integers.ch", "x86_flags.ch", "x86_vex.ch",
+               "x86_map.ch", "x86asm_landing.ch"),
+    "x86abi": ("x86_calling.ch", "x86_frame.ch", "x86_saved.ch",
+               "x86_varargs.ch", "x86_unwind.ch", "x86_verify.ch",
+               "x86abi_landing.ch"),
+}
+OUTPUTS = {
+    "x86asm": "x86dec.out",
+    "x86abi": "abidump.out",
+}
+PREF = PREFIXES.get(COURSE, (COURSE[:3],))
+if not isinstance(PREF, tuple):
+    PREF = (PREF,)
+OUT = os.path.join(ROOT, "courses", COURSE, "assets", "samples",
+                   OUTPUTS.get(COURSE, "x86dec.out"))
 
 # Numbers a page quotes on purpose that are NOT in the artifact, with the
 # reason.  Adding to this list is a decision, not a convenience.
@@ -49,7 +72,9 @@ fails = 0
 checked = 0
 
 for name in sorted(os.listdir(os.path.join(ROOT, "content", "src"))):
-    if not name.startswith(COURSE[:3]) or not name.endswith(".ch"):
+    if not name.endswith(".ch"):
+        continue
+    if name not in PREF:
         continue
     path = os.path.join(ROOT, "content", "src", name)
     body = open(path, errors="replace").read()

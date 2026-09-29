@@ -1,0 +1,597 @@
+=======================================================================
+abidump -- the artifact for "The x86-64 ABI"
+AMD Ryzen 5 7430U, family 0x19 model 0x50 (Zen 3).  12 logical CPUs.
+Every number below is a FAULT, a BIT PATTERN read on this machine, a
+word read out of a disassembled object, or a DURATION.  Nothing is
+quoted from a manual except section 1B, which is the oracle.
+=======================================================================
+
+  inputs: abi_dis.txt     loaded
+          abi_cfi.txt     loaded
+          abi_libc.txt    loaded
+          abi_control.txt loaded
+  and each of the four is OPTIONAL: a section whose input is missing
+  says so and is not run, rather than printing an empty table that
+  reads like a result.
+
+1.  THE INSTRUMENT.  Nothing in this section is a claim.
+
+  TSC rate, busy                    2.2957 GHz
+  TSC rate, across a 300 ms sleep   2.2957 GHz
+  drift                             -0.0004 %
+  pinned to cpu3, and the cpu that answered is 3  (VERIFIED -- the rows below are a controlled experiment)
+  POINTER CHASE, 64 KiB of nodes    9.373 ticks/op
+  ARITHMETIC increment loop         1.198 ticks/op
+  the floor used for every band in this file is the POINTER CHASE,
+  because the increment loop is printed too and is the CLOCK rather
+  than noise: 7.82x apart.
+
+  RDPMC in a forked child: KILLED by a signal
+    signal 11  (4 is SIGILL, which is what a machine with no
+    readable performance counters gives you)
+  /proc/sys/kernel/perf_event_paranoid = 4
+
+  CONSEQUENCE, and it governs every duration in this file:
+    there is NO event counter.  Nothing here counts instructions,
+    cycles, branches or mispredictions.  Every number is a
+    DURATION, and a duration bounds a count without measuring it.
+
+1B. THE SPECIFICATION, PRINTED AS THE ORACLE AND NOT MEASURED.
+    This is the only table in this file that is quoted.  Every
+    other number below came out of this machine.
+
+  integer argument registers   rdi rsi rdx rcx r8 r9
+  their register numbers        7   6   2   1   8   9
+  SSE argument registers       xmm0 .. xmm7, and NO others
+  the two sequences            INDEPENDENT: the nth integer is the
+                               nth integer however many SSE went first
+  the return value             rax; rdx for a second integer; xmm0
+                               for a double; xmm0:xmm1 for a long double
+  the stack alignment constant 16 bytes
+  %rsp at a callee's entry     8 (mod 16), because `call` pushed 8
+  the red zone                 128 bytes below %rsp, LEAF functions
+  the varargs save area        176 bytes = 48 integer + 128 SSE
+  the initial gp_offset        8
+  the initial fp_offset        48
+  the vector count in %al      0 .. 8
+  callee-saved GPRs            rbx rbp r12 r13 r14 r15
+  caller-saved GPRs            rax rcx rdx rsi rdi r8 r9 r10 r11
+
+2.  THE AUDIT, PER OPTIMISATION LEVEL
+
+  level   callers audited   match the specification   differ
+  -O0                 16                       16         0
+  -O1                 16                       16         0
+  -O2                 16                       16         0
+  -Os                 16                       16         0
+
+  64 of 64 callers at EVERY ONE of the four levels, and the mapping
+  recovered is which SOURCE went into which REGISTER, by name,
+  read out of the disassembly.  A census would have told you six
+  registers were occupied; an audit tells you which argument is
+  in which one, and the specification is the oracle it is
+  checked against.
+
+  THE CALLEE SIDE at -O2: the order in which each callee first READS
+  its arguments, which is the order they were declared in.
+    CALLEE | O2 | f0 | (none) | stack=none
+    CALLEE | O2 | f1 | (none) | stack=none
+    CALLEE | O2 | f2 | rdi rsi | stack=none
+    CALLEE | O2 | f3 | rdi rsi rdx | stack=none
+    CALLEE | O2 | f4 | rdi rsi rdx rcx | stack=none
+    CALLEE | O2 | f5 | rdi rsi rdx rcx r8 | stack=none
+    CALLEE | O2 | f6 | rdi rsi rdx rcx r8 r9 | stack=none
+    CALLEE | O2 | f7 | rdi rsi rdx rcx r8 r9 | stack=0x10
+    CALLEE | O2 | f8 | rdi rsi rdx rcx r8 r9 | stack=0x18
+    CALLEE | O2 | g1 | (none) | stack=none
+    CALLEE | O2 | g2 | xmm0 xmm1 | stack=none
+    CALLEE | O2 | g8 | xmm0 xmm1 xmm2 xmm3 xmm4 xmm5 xmm6 xmm7 | stack=none
+    CALLEE | O2 | g9 | xmm0 xmm1 xmm2 xmm3 xmm4 xmm5 xmm6 xmm7 | stack=0x10
+    CALLEE | O2 | mx | rsi rdx rcx rdi xmm0 xmm1 xmm2 xmm3 | stack=none
+    CALLEE | O2 | r2 | rdi rsi | stack=none
+    CALLEE | O2 | r2d | xmm0 xmm1 | stack=none
+
+  READ THE TWO ROWS THAT ARE THE WHOLE OF TWO CONCEPTS:
+    f7  six registers and then stack=0x10 -- the SEVENTH argument is
+        at [rsp+0x10], which is the caller's [rsp] plus the 8 the
+        `call` pushed plus the 8 of outgoing area.  Same address.
+    mx  rsi rdx rcx rdi xmm0 xmm1 xmm2 xmm3 -- four doubles went
+        FIRST and the integers still began at rdi, which is the
+        independence of the two sequences, measured by name.
+
+3.  WHERE THE RETURN ADDRESS ACTUALLY IS
+
+  %rsp mod 16 at a callee's FIRST instruction
+    reached by a `call` that kept %rsp 16-byte aligned    8
+    reached by a `call` with the `subq $8,%rsp` deleted  0
+    %rsp at that point                               0x00007ffe83c7b0d8  (a STACK address)
+    0(%rsp) at that point                             0x000057ef589a3b5a  (a TEXT address)
+    and the two are not within a few bytes of each other, which is the
+    point: the word AT %rsp is not part of the stack.  It is the
+    address `ret` will pop and jump to, and the control is that this
+    function returned to its own caller rather than anywhere else.
+    BOTH READINGS COME FROM ONE CALL, which is the only way a
+    comparison between two readings of a register means anything.
+
+  THE RETURN ADDRESS IS ON THE STACK.  `call` PUSHES it and `ret`
+  POPS it, and nothing in the instruction needs a register for it.
+  This is the measurement that decides a claim, and the claim it
+  decides against is this course's own first draft.
+
+3B. THE ONE INSTRUCTION THAT DOES TAKE A REGISTER: `syscall`.
+
+  getpid() through libc                  = 1009652
+  %rax after the bare `syscall`          = 1009652   match ? YES
+  the instruction right after it         = 0x000057ef589a3c35
+  %rcx BEFORE the syscall                = 0x00007d8b0eeff70b
+  %rcx AFTER  the syscall                = 0x000057ef589a3c35
+  %rcx == the address of the NEXT INSTRUCTION ?   YES
+  %r11 after it, the RFLAGS `syscall` saved = 0x0000000000000202
+  %r10 after it, my own marker              = 0xfeedfacecafebeef  survived ? YES
+
+  SO HERE IS THE WHOLE OF IT, and it is two conventions and not one:
+
+    an ordinary FUNCTION CALL passes its fourth integer argument
+    in %rcx -- measured in section 2, 16 of 16 callers at four
+    optimisation levels, v14=rcx in every one of them -- and it puts
+    the return address ON THE STACK, as the table above shows.
+
+    a SYSTEM CALL passes its fourth argument in %r10, because the
+    `syscall` instruction itself writes the return RIP into %rcx,
+    and the two measurements above are the proof: %rcx came back
+    holding the address of the instruction that follows the syscall,
+    bit for bit, and %r10 came back untouched.
+
+  CAVEAT, and it is the whole limit of this section: this measures
+  the INSTRUCTION.  Why Linux chose to renumber its argument list
+  rather than save and restore %rcx is a decision recorded in the
+  kernel, and this file cannot observe a decision.
+
+4.  THE ALIGNMENT FAULT
+
+  %rsp mod 16 at a callee's first instruction, four ways in:
+    a `call`, %rsp 16-aligned at the call (the rule)         8
+    a `call`, the `subq $8,%rsp` deleted                      0
+    a TAIL `jmp`, no adjustment at all                       8
+    a tail `jmp` after `subq $8,%rsp`                        0
+    and that adjustment, left in place, kills the process: KILLED by a signal, because the return address is not where `ret` looks for it
+
+  THE RULE IS TWO RULES AND NOT ONE.  A `call` pushes 8, so the
+  caller's %rsp must be 16-ALIGNED at the call.  A tail `jmp` pushes
+  nothing, so the jmpping function's %rsp must be 8 mod 16, which
+  for a function entered at 8 mod 16 means NO ADJUSTMENT AT ALL.  A
+  PLT stub is `endbr64; jmp *GOT(%rip)` and nothing else, and it is
+  right for the same reason.
+
+  one callee, three arms.  It is EXACTLY the prologue gcc -O0 emits:
+  `pushq %rbp; movq %rsp,%rbp; subq $32,%rsp` and a 16-byte
+  vector local at -16(%rbp), which is 16-byte aligned iff %rbp is,
+  and %rbp is the CALLER's %rsp minus 8.
+
+    movaps 16-byte store, CONFORMING call  -> returned, and the value read back was 0x3ff8000000000000
+    movaps 16-byte store, VIOLATING call   -> KILLED by a signal
+      signal 11, and 11 is SIGSEGV
+    movups 16-byte store, VIOLATING call   -> returned, and the value read back was 0x3ff8000000000000
+
+  THIS IS NOT A TIMING.  A misaligned 16-byte vector store on this
+  machine is not slow, it is a FAULT, and the identical store in the
+  unaligned-tolerant form goes through the same call untouched.  The
+  rule exists because the fault exists, and the earlier course that
+  measured unaligned loads found them FREE here, so the reason the
+  rule was written cannot have been a penalty on this silicon.
+
+  CAVEAT: what this cannot show is WHY the psABI says 16 and not 8.
+  The 1997 drafts argued from SSE2's 16-byte moves, and this file has
+  no way to observe a drafting argument.
+
+5.  THE RED ZONE, MEASURED
+
+  a leaf that writes 8 bytes at -8(%rsp) and 8 at -128(%rsp) and
+  never touches %rsp at all.  The sum below is 0 only if BOTH
+  words came back unchanged, so it is the checksum and the result
+  in one number.
+
+    leaf, no call, 2 slots written      every slot intact: YES -- both survived
+    the same leaf, plus ONE `call`      every slot intact: NO -- at least one destroyed
+    the same, plus a FRAMED callee      every slot intact: NO -- and this arm writes FOUR slots, not two
+
+    The flag is 1 only if EVERY slot came back with the magic word,
+    so a 0 is a measurement of destruction and not a measurement of
+    silence, and the next block shows WHAT is in the first slot now.
+
+  AND THE MECHANISM, PROVED RATHER THAN ASSERTED.  The leaf stores a
+  magic word at its own -8(%rsp) and then calls a function that
+  reports two numbers: its own %rsp, and 0(%rsp).
+    the callee saw %rsp = 0x00007ffe83c7b0e0
+    the callee's 0(%rsp)   = 0x000057ef589a7071
+    and 0x00007ffe83c7b0e0 is 8 BELOW the caller's own %rsp, which is where
+    the leaf had put its data.  So:
+
+      THE FIRST EIGHT BYTES OF THE RED ZONE ARE THE
+      RETURN-ADDRESS SLOT, AND `call` WRITES THEM.
+
+  That is the whole of the LEAF restriction, and it is not about
+  128 bytes being tidy.  A function that uses the red zone and then
+  makes a call has had the return address written over its own
+  variable, and a function whose callee builds any frame at all has
+  had its whole 128 bytes used as the callee's scratch space.
+
+  CAVEAT, and it is the reason the psABI gives, which NOTHING HERE
+  CAN MEASURE: the 128 bytes exist so that a leaf can be interrupted
+  by a signal handler that uses the stack without the leaf having
+  built a frame.  Whether a handler on this machine respects that
+  reservation is a kernel property, and this process cannot find out.
+
+6.  CALLEE-SAVED, BY EXPERIMENT
+
+  ARM 1  a callee that tramples rbx r12 r13 r14 r15 and nothing
+         else.  The caller put 0x0202020202020202 in %r12.
+         the caller's %r12 after the call = 0x2222222222222222   CLOBBERED
+         and the callee put 0x2222222222222222 there instead.
+  ARM 2  a CONFORMING callee that tramples all nine caller-saved
+         registers and uses %rbx.  The caller put 0x0b0b0b0b0b0b0b0b
+         in %r12; after the call %r12 = 0x0b0b0b0b0b0b0b0b   SURVIVED
+  ARM 3  a conforming callee that USES %rbx: pushq, movq, addq, popq
+         0x100 + 0x9999999999999999 = 0x9999999999999a99   EXACT
+  ARM 4  the same for %r12                             = 0x9999999999999a99   EXACT
+  ARM 5  THE DIRECTION FLAG.  %rflags inside a conforming callee
+         0x0000000000000000, and bit 10 (DF) = 0
+         %rflags left behind by a NON-conforming callee
+         0x0000000000000646, and bit 10 (DF) = 1
+         The ABI makes DF the CALLER's problem: it must be 0 on
+         entry and on exit to any function.  Which is why this
+         file CLEARS it again on the very next line: the callee
+         it just called was non-conforming, the caller is THIS
+         PROCESS, and with DF set every `rep`-based string
+         routine in the C library scans backwards.  The first
+         version of this artifact did not clear it, and then hung
+         in section 9 with no diagnostic, no signal and no
+         output, twenty-five minutes after the violation.
+         DF after the `cld`                0x0000000000000246, bit 10 = 0
+  ARM 6  %rbp, the sixth callee-saved register, which is a special
+         case: a caller built with a frame pointer ends in `leave`,
+         which is `movq %rbp,%rsp; popq %rbp`.
+         a callee that clobbered %rbp     -> KILLED by a signal 7  (7 is SIGBUS)
+         a conforming callee              -> returned normally
+
+6B. WHERE THE DIRECTION IS REVERSED, AND IT IS MEASURED.
+
+      MXCSR before the call   0x00001fa0  rounding control 0
+      MXCSR after  the call   0x00006000  rounding control 3
+      MXCSR after  a clean one 0x00006000  rounding control 3
+      x87 control word before 0x037f  PC 63, RC 0
+      x87 control word after  0x0250  PC 16, RC 0
+
+      MXCSR after the CALLER restored it  0x00001fa0  rounding control 0
+
+  Note the field masks, because getting one wrong is how this file's
+  first attempt at this experiment changed the ROUNDING mode while
+  claiming to change the PRECISION mode, and why the x87 control word
+  read back 0x0250 rather than the 0x0210 that was loaded: bit 9 is
+  RESERVED and reads as 1 whatever you write.  The PC field is bit 8
+  together with bits 0-5 -- and ONLY bit 8, so the mask is 0x0100 and
+  not 0x0f00 -- and the RC field is bits 11-12.
+
+  MXCSR's CONTROL BITS ARE CALLER-SAVED: a callee may change them and
+  need not put them back, which is the OPPOSITE of the direction every
+  general register obeys and the same direction the x87 control word
+  obeys.  Two floating-point control registers, two directions, one
+  ISA, and the difference is three instructions of setup.
+
+  CAVEAT: what this cannot show is the COST of the reversal, and there
+  is a real one: a function that rounds differently from its caller
+  and does not say so is a wrong answer, not a slow one.
+
+7.  THE VARARGS REGISTER SAVE AREA
+
+  A fixed-arity function has nothing to describe: the callee KNOWS
+  the types.  A variadic one does not, so the ABI has to describe
+  itself, and the description is a 176-byte block of stack plus one
+  integer in a register.
+
+  The caller claims a number of vector registers in %al.  It claims
+  honestly twice, so that the save area holds a KNOWN pair of values,
+  and then it lies.
+
+  honest, arm 1: 1.5 and 2.5
+    al=2  a=0x3ff8000000000000 (1.500000)  b=0x4004000000000000 (2.500000)
+  honest, arm 2: 101.25 and 202.5 -- these are now what the save
+                area holds, and arm 3 is where it stops mattering
+                what the caller put in xmm0 and xmm1.
+    al=2  a=0x4059500000000000 (101.250000)  b=0x4069500000000000 (202.500000)
+  LYING, arm 3: the caller puts 3.5 and 4.5 in xmm0 and xmm1 and
+               then says it used NO vector registers:
+    al=0  a=0x4059500000000000 (101.250000)  b=0x000000000000000a (0.000000)
+               the FIRST of those, 0x4059500000000000, is 101.250000 -- bit
+               for bit what arm 2 passed and NOT what this arm passed.
+               The caller's values were not corrupted in transit; they
+               were never looked at.  The consumer read the register
+               save area, and the save area still held the last HONEST
+               call.  The second slot is whatever was on the stack, and
+               the al=1 arm below is the control: one is enough for gcc.
+  al=1, arm 4: the same lie, understated rather than zero:
+    al=1  a=0x400c000000000000 (3.500000)  b=0x4012000000000000 (4.500000)
+
+  AND THE SAME FAILURE THROUGH THE C LIBRARY, because glibc's printf
+  is a variadic consumer too and it obeys the same rule.  The caller
+  here is hand-written assembly (abi_libc_printf) rather than inline
+  asm, because the point is to put a CHOSEN value in %al, and because
+  an inline-asm `call` inherits whatever %rsp the compiler had: the
+  first version of this arm entered printf misaligned, and the
+  symptom was fragments of other lines and then a crash rather than
+  a diagnostic.  Section 4 is the same fault with a better witness.
+
+glibc printf, al=2: 1.500000 2.500000
+glibc printf, al=2: 101.250000 202.500000
+  and now the same call with al=0, having been passed 3.5 and 4.5:
+glibc printf, al=0: 101.250000 0.000000
+
+  A number nobody passed, printed as though somebody had.  That is not
+  a slow path and not a portability warning: it is a wrong answer,
+  produced by a caller that broke one instruction's contract.
+
+  CAVEAT: the psABI says %al is the NUMBER of vector registers used.
+  gcc TESTS it for zero and spills all EIGHT when it is non-zero, so
+  the al=1 arm above recovers both values and would still be a lie
+  under the stricter reading.  A self-describing convention is still
+  a convention: the description is there, and nothing checks it.
+
+8.  WHAT A PROFILER CAN AND CANNOT SEE
+
+  DIRECTIVE | cfi_startproc | 33
+  DIRECTIVE | cfi_endproc | 33
+  DIRECTIVE | cfi_def_cfa_offset | 71
+  DIRECTIVE | cfi_def_cfa_register | 0
+  DIRECTIVE | cfi_offset | 5
+  DIRECTIVE | total | 142
+  FDE | with | 33
+  FDE | without | 0
+  FDE | fp_omitted | 33
+  FDE | fp_kept | 33
+  EHSIZE | with | 358
+  EHSIZE | without | 
+  EHSIZE | fp_omitted | 358
+  EHSIZE | fp_kept | 428
+
+  THE INSTRUMENT IS A REAL UNWINDER.  backtrace() from glibc's
+  execinfo, which is what gdb, perf and every crash reporter on
+  this machine use, run from three nested noinline functions, in a
+  program built TWICE: once normally and once with
+  -fno-asynchronous-unwind-tables.
+
+    uwprobe, unwind tables present:      FRAMES 7, stack depth 9
+    uwprobe, unwind tables REMOVED:     FRAMES 1, stack depth 0
+    both produced by glibc's own unwinder and recorded by
+    build_samples.sh, which is why they are read from a file here
+    rather than measured a second time.
+
+  ONE FRAME.  The call chain is real, the functions are real, and the
+  unwinder stopped at the frame it was called from, because there was
+  nothing telling it where the CFA is.  That is what a profiler does
+  when the second description of the frame is absent, and the number
+  1 is the whole of the answer.
+
+  CAVEAT: nothing here says a frame without CFI is unwound WRONG.  It
+  says it is not unwound AT ALL, and a program that only sometimes
+  describes its frames is a program whose profile has holes in it in
+  exactly the places that are hardest to look at.
+
+  WHAT A FRAME DESCRIPTION COSTS, IN BYTES, AND ONE ESTIMATE
+  THAT WAS WRONG.  The same 33 functions, compiled three ways,
+  and the .eh_frame section measured by readelf -S:
+
+    -O2 (the default)                358 bytes  33 FDEs
+    -O2 -fomit-frame-pointer         358 bytes  33 FDEs
+    -O2 -fno-omit-frame-pointer      428 bytes  33 FDEs
+
+    the first two rows are BYTE-IDENTICAL, which is not a coincidence: gcc
+    omits frame pointers at -O2 by default, so asking for them
+    explicitly confirms a default rather than changing it.  The
+    third row is the only one that differs, and it is the answer
+    to a question the first draft of this course answered with an
+    estimate.
+
+    RETRACTED: "a frame description costs about ELEVEN bytes
+    when the function has no frame pointer and about FORTY when
+    it does."  The first half was measured and is 10.8 bytes
+    per function.  The second half was never measured at all,
+    and the measurement is 13.0 bytes per function -- 19.6%
+    MORE than the frame-pointer-less build, which is 70 bytes in
+    total: a frame pointer costs about two bytes of table, not
+    thirty.  The estimate was high by a factor of about 3.1, and
+    it was
+    written into a page as a number before anything had been
+    compiled to find out.  Kept here because the whole point of
+    this file is that a number with no instrument behind it is a
+    claim, and this one was a claim for exactly as long as it
+    took to run the compiler three times.
+
+9.  THE AUDIT OF A REAL LIBRARY
+
+  LIBRARY | libc.a | 6238972 bytes
+  FUNCTIONS | 4561 functions, and the register census is:
+  CENSUS | rbx | 1670 | 1598
+  CENSUS | rbp | 2555 | 2503
+  CENSUS | r12 | 1242 | 1193
+  CENSUS | r13 | 981 | 945
+  CENSUS | r14 | 885 | 850
+  CENSUS | r15 | 627 | 600
+  CLOBBERFLAGS | 271 | 94 functions
+  CLOBBERKIND | leaf | 26 | nonleaf | 245
+  CLAPPERCONTEXT | 97 | 174
+  CLAPPERBOTH | 3 | 151 unclassified after both exemptions
+  ALIGNCALLS | 9980 | 775
+  ALIGNJMP | 10500 | 8180
+  UNMODELLED | 213
+
+  THE CENSUS COLUMN IS THE POINT.  A checker that reports no
+  violations and a checker that examines nothing produce the same
+  line, and the second column is what tells them apart: this is
+  how many functions actually WRITE each register, and how many of
+  them save it first.  A zero in a violation column is only
+  meaningful next to a non-zero in a census column.
+
+  AND THE FLAGS ARE NOT ALL VIOLATIONS.  A function whose contract
+  is to install a previously saved register context -- setjmp's
+  family, backtrace, swapcontext -- is REQUIRED to destroy those
+  registers, and a mechanical rule cannot know that.  A LEAF that
+  clobbers a callee-saved register without saving it is legal only
+  if the compiler knows no caller had a live value there, which is
+  a fact about the CALLERS and not about this function.  Both
+  exemptions are in the psABI and neither is checkable from inside
+  one function, which is the honest limit of an ABI linter.
+
+  AND THE TWO EXEMPTIONS OVERLAP, WHICH IS WHY THE REMAINDER IS
+  COUNTED RATHER THAN SUBTRACTED.  A function can be a leaf AND a
+  context-restorer -- setjmp is both -- so "the flags that are
+  neither" is not flags - leaves - context.  The CLAPPERBOTH row
+  above reports the overlap and the true remainder, and on this
+  library the overlap is NON-ZERO -- which is a fact about glibc and
+  not an arithmetic identity.
+
+  It is zero on this library by luck, and a page that said
+  "the other 148" without this row would have been right
+  for the wrong reason.  A number that comes out right by
+  coincidence is the one number worth re-deriving.
+
+  THE POSITIVE CONTROL, without which every zero above is hollow:
+
+    FLAGGED  ct_clobber_r12 
+    FLAGGED  ct_clobber_r13 
+    FLAGGED  ct_clobber_rbx 
+    CLOBBERFLAGS | 3 | 3 functions
+    ALIGNCALLS | 5 | 1   <- and the one intended alignment violation
+    ct_ok_leaf and ct_ok_leaf4 are conforming and are NOT in that
+    list, which is the other half of the control: a linter that
+    flags everything is caught as loudly as one that flags nothing.
+
+10. RETRACTIONS.  Every one of these was asserted in a draft of this
+    course, and every one is retracted here rather than softened.
+
+   R1. "The fourth argument of a function call goes in %r10, because
+        the hardware took %rcx for the return RIP."  RETRACTED, and
+        the sentence is TWO errors welded together.  The fourth
+        integer argument of an ordinary call goes in %rcx, measured
+        16 of 16 callers at four optimisation levels.  And the return
+        RIP is not in %rcx: `call` PUSHES it onto the stack, which
+        section 3 reads out of a register.  What IS true is that a
+        `syscall` instruction writes the return RIP into %rcx, and
+        THAT is why the SYSTEM CALL convention renumbers its fourth
+        argument to %r10.  Both halves measured, both halves in the
+        same section, and the correct statement is the difference
+        between two conventions rather than one fact.
+
+   R2. "The red zone is 128 bytes of free scratch that a function can
+        use like any other."  RETRACTED as stated.  It can use it and
+        then it cannot make a call: the first eight bytes of the red
+        zone are the return-address slot, `call` writes them, and
+        section 5 proves it by reading the word back.  128 is a real
+        number and the LEAF restriction is the whole of the content.
+
+   R3. "The red zone costs nothing because it is 128 bytes of memory
+        that was going to be cache lines anyway."  NOT CLAIMED.  This
+        file does not time the red zone against a built frame, so it
+        does not know, and the concept says so.
+
+   R4. "The stack must be 16-byte aligned at every control transfer,
+        including a tail call."  RETRACTED.  A `call` and a tail `jmp`
+        want OPPOSITE adjustments, because a `call` pushes 8 and a
+        `jmp` pushes nothing, and section 4 measures both.  A PLT stub
+        is the proof: it is `endbr64; jmp *GOT(%rip)` and nothing else.
+
+   R5. "%al holds the number of vector registers used, so a variadic
+        callee reads exactly that many."  HALF TRUE AND THE WRONG
+        HALF IS THE INTERESTING ONE.  gcc TESTS %al for zero and
+        spills all eight when it is non-zero, so al=1 recovers a value
+        that was passed in xmm1, as section 7 shows.  The convention
+        is self-describing and the description is not enforced.
+
+   R6. "glibc keeps %rsp 16-byte aligned at 99.2% of its call
+        sites, so the remaining 0.8% is a list of bugs."  RETRACTED,
+        and the number is a fact about the CHECKER rather than about
+        glibc.  abilint.py loses track of %rsp at `pushfq`, at
+        `enter`, and at any write it does not model, and a checker
+        that cannot account for a mismatch is not evidence of a
+        mismatch.  The alignment half of the linter is in this file
+        and it is labelled unreliable where it is printed.
+
+   R7. "A conforming C program cannot be miscompiled by a wrong
+        calling convention, because the compiler and the ABI were
+        written by the same people."  NOT A CLAIM AND NOT REFUTED.
+        What section 2 establishes is narrower and is worth having:
+        the emitted code matches a written specification at four
+        optimisation levels, which is a check anybody can now repeat.
+
+   R8. "The audit found no violations in a real library, so the
+        library is conformant."  RETRACTED, because the first
+        version of the linter reported ZERO violations across 9,255
+        functions of five libraries and a ternary in its register
+        normaliser was the wrong way round, so it had never once
+        recognised a callee-saved register.  control.s exists because
+        of that, and a linter without a positive control is a linter
+        that has never been shown to look at anything.
+
+   R9. "A frame description costs about ELEVEN bytes without a
+        frame pointer and about FORTY with one."  HALF MEASURED,
+        HALF GUESSED, AND THE GUESS IS RETRACTED.  Section 8
+        compiles the same 33 functions three ways: 358 bytes at
+        -O2, 358 again with -fomit-frame-pointer (BYTE-IDENTICAL,
+        because gcc omits frame pointers at -O2 anyway), and 428
+        with -fno-omit-frame-pointer.  So the cost of a frame
+        pointer is about TWO bytes of table and not thirty, and the
+        estimate was high by a factor of about three.  The first
+        half of the sentence was measured before it was written and
+        the second half was not, and the difference between those
+        two facts is the whole reason this file exists.
+
+   R10. "The other 148 flags are unclassified."  RETRACTED AS
+        ARITHMETIC.  271 minus 26 minus 97 is 148 only if the two
+        exemptions do not overlap, and section 9 measures the
+        overlap rather than assuming it: 3 of the flags are BOTH a
+        leaf and a context-restorer, so the true remainder is 151,
+        not 148.  The two lines of the concept page that subtracted
+        were wrong by 3, out of 271, and would have been wrong in
+        a way no reader could see: it understated the number.
+
+LIMITS, and each one names the thing that would settle it:
+
+   ANY CYCLE COUNT.  There is no PMU on this machine, proved above by
+      a child that ran RDPMC and died.  Every number in this file is
+      a DURATION, and a duration bounds a count without measuring it.
+   THE COST OF A VIOLATION.  The alignment rule is demonstrated with a
+      FAULT, which is the right instrument, and the cost of merely
+      misaligning something that does not fault is not measured here.
+   WHETHER A SIGNAL RESPECTOR RESPECTS THE RED ZONE RESERVATION,
+      which is the psABI's stated reason the red zone exists.  A
+      kernel property, and this process cannot observe it.
+   WHETHER GCC INTENDED ANY OF IT.  The corpus is real compiled code
+      and the register assignments are real, but a claim about why
+      the bytes are the bytes is not a claim about bytes.
+   WHY THE psABI SAYS 16 AND NOT 8.  A drafting argument, and this
+      file has no instrument for a drafting argument.
+   WINDOWS x64, AND EVERY OTHER ABI.  Four integer registers instead
+      of six, a 32-byte SHADOW SPACE the caller must allocate for the
+      register arguments it is not using, and a different return
+      convention.  QUOTED, NOT MEASURED.  There is no such machine in
+      the room, and the next course in this section is about the
+      x86-64 machine rather than about the other two architectures.
+
+VERDICT.  What this artifact can support:
+   - that the emitted argument assignment matches a written
+     specification, by name, at four optimisation levels;
+   - that the return address is on the stack and that `syscall`
+     puts one in %rcx, which is why the two conventions differ;
+   - that the alignment rule exists because a misaligned 16-byte
+     vector store FAULTS, and that a call and a tail jmp want
+     opposite adjustments;
+   - that the red zone's first eight bytes are the return-address
+     slot, and that a caller that lies about %al gets the previous
+     call's floating-point arguments back;
+   - that a function compiled without asynchronous unwind tables
+     is invisible to a real unwinder, and what that costs a profile.
+What it cannot support: any statement about a machine that is not this
+one, any statement about cycles, and any statement about what the
+compiler or the specification's authors were thinking.
+
+checksums folded in: 0x60eabd81f2c51a03   pinned cpu observed: 3
+rows measured: 86

@@ -76,9 +76,9 @@
 
 - [x] Learn x86-64 Assembly
 - [x] Learn x86-64 Instruction Encoding
-- [ ] Learn x86-64 Calling Conventions
-- [ ] Learn x86-64 Stack Frames
-- [ ] Learn x86-64 ABI
+- [x] Learn x86-64 Calling Conventions
+- [x] Learn x86-64 Stack Frames
+- [x] Learn x86-64 ABI
 - [ ] Learn x86-64 System Calls
 - [ ] Learn x86-64 Interrupts and Exceptions
 - [ ] Learn x86-64 SIMD Instructions

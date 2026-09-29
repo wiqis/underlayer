@@ -842,6 +842,31 @@ public namespace underlayer_web {
         return string()
     }
 
+    // The x86-64 ABI. Same fall-through contract: empty string for anything
+    // else.  `x86-calling` and its five siblings continue the `x86-` prefix
+    // the assembly course already owns, and they are deliberately NOT
+    // `isa-`: the instruction-set course owns how to read an encoding and
+    // this one owns the contract two compilers agree on, which is a different
+    // subject with a different kind of evidence -- faults and bit patterns
+    // rather than decodes.
+    public func render_x86abi_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var calling_id = std::string("x86-calling")
+        var frame_id = std::string("x86-frame")
+        var saved_id = std::string("x86-saved")
+        var varargs_id = std::string("x86-varargs")
+        var unwind_id = std::string("x86-unwind")
+        var verify_id = std::string("x86-verify")
+
+        if(cid.equals(&calling_id)) { return underlayer_content::render_x86_calling() }
+        if(cid.equals(&frame_id)) { return underlayer_content::render_x86_frame() }
+        if(cid.equals(&saved_id)) { return underlayer_content::render_x86_saved() }
+        if(cid.equals(&varargs_id)) { return underlayer_content::render_x86_varargs() }
+        if(cid.equals(&unwind_id)) { return underlayer_content::render_x86_unwind() }
+        if(cid.equals(&verify_id)) { return underlayer_content::render_x86_verify() }
+        return string()
+    }
+
     // SIMD and vector processing. Same fall-through contract: empty string
     // for anything else. `simd-` is a prefix no other course uses.
     public func render_simd_concept(concept_id : *string) : string {
@@ -930,6 +955,9 @@ public namespace underlayer_web {
         // x86-64 assembly/encoding concepts; same fall-through contract.
         var x86asm_html = render_x86asm_concept(concept_id)
         if(x86asm_html.size() > 0) { return x86asm_html }
+        // x86-64 ABI concepts; same fall-through contract.
+        var x86abi_html = render_x86abi_concept(concept_id)
+        if(x86abi_html.size() > 0) { return x86abi_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")
