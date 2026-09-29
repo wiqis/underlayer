@@ -896,6 +896,31 @@ public namespace underlayer_web {
         return string()
     }
 
+    // The x86-64 data path: the vector registers, the atomic set, and
+    // memory ordering.  Same fall-through contract: empty string for
+    // anything else.  The six ids are all names of things -- sse, avx,
+    // avx512, atomics, order, bytes -- and none of them is a word another
+    // x86 course needed, which is not an accident: a concept id is
+    // resolved GLOBALLY by render_concept() with no course in the key, so
+    // the only ids that survive are the ones nobody thought of first.
+    public func render_x86simd_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var sse_id = std::string("x86-sse")
+        var avx_id = std::string("x86-avx")
+        var avx512_id = std::string("x86-avx512")
+        var atomics_id = std::string("x86-atomics")
+        var order_id = std::string("x86-order")
+        var bytes_id = std::string("x86-bytes")
+
+        if(cid.equals(&sse_id)) { return underlayer_content::render_x86_sse() }
+        if(cid.equals(&avx_id)) { return underlayer_content::render_x86_avx() }
+        if(cid.equals(&avx512_id)) { return underlayer_content::render_x86_avx512() }
+        if(cid.equals(&atomics_id)) { return underlayer_content::render_x86_atomics() }
+        if(cid.equals(&order_id)) { return underlayer_content::render_x86_order() }
+        if(cid.equals(&bytes_id)) { return underlayer_content::render_x86_bytes() }
+        return string()
+    }
+
     // SIMD and vector processing. Same fall-through contract: empty string
     // for anything else. `simd-` is a prefix no other course uses.
     public func render_simd_concept(concept_id : *string) : string {
@@ -997,6 +1022,16 @@ public namespace underlayer_web {
         // takes the name of the thing it measures.
         var x86sys_html = render_x86sys_concept(concept_id)
         if(x86sys_html.size() > 0) { return x86sys_html }
+        // The x86-64 data path: vectors, atomics and ordering.  Same
+        // fall-through contract, and the same collision: the section plan
+        // gives this course's artifact concept the id `x86-verify` as
+        // well, and x86abi took it first.  This one is `x86-bytes`,
+        // because what the artifact does is encode thirty instructions
+        // and decode them back, and because the previous course's
+        // artifact is `x86-verify` for a reason that is about as clear as
+        // a concept id gets.
+        var x86simd_html = render_x86simd_concept(concept_id)
+        if(x86simd_html.size() > 0) { return x86simd_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

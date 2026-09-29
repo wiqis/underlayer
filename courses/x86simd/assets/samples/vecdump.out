@@ -1,0 +1,1438 @@
+1.  THE INSTRUMENT.  Nothing in this section is a claim.
+
+  TSC rate, busy                    2.2957 GHz
+  TSC rate, across a 300 ms sleep   2.2957 GHz
+  drift                             -0.0005 %
+  a tick is TIME, not cycles, so every cost in this file is a
+  RATIO and no absolute nanosecond figure is claimed anywhere.
+
+  pinned to cpu3, and the cpu that answered is 3  (VERIFIED -- the rows below are a controlled experiment)
+  POINTER CHASE, 64 KiB of nodes    6.636 ticks/op
+  ARITHMETIC increment loop         1.011 ticks/op
+  the floor used for every band in this file is the POINTER
+  CHASE, because the increment loop is printed too and is the
+  CLOCK rather than noise: 6.56x apart.
+
+  vendor "AuthenticAMD"   max basic leaf 0x00000010
+  max extended leaf                 0x80000023
+  brand string                      'AMD Ryzen 5 7430U with Radeon Graphics         '
+  CPUID.1:ECX SSE2 1 SSSE3 1 SSE4.1 1 SSE4.2 1 AVX 1 FMA 1
+  CPUID.7.0:EBX AVX2 1  BMI1 1  BMI2 1  F16C 1
+  CPUID.7.0:EBX AVX512F 0 DQ 0 CD 0 BW 0 VL 0
+  CR4.OSXSAVE (bit 18) = ?   (a direct CR4 read faulted here,
+  so it is INFERRED from the XGETBV below: XGETBV is #UD
+  without OSXSAVE, and XGETBV returns, so it is set.)
+  XCR0 0x0000000000000207  (1 x87, 2 SSE, 5 opmask, 6 zmm_hi256, 7 hi16_zmm)
+  XCR0 opmask 0  zmm_hi256 0  hi16_zmm 0
+
+  XCR0 IS A LIST OF WHAT THE OS HAS AGREED TO SAVE, and
+  that is why the three AVX-512 bits are the ones to read.
+  NOT ONE of the instructions this file executes is a 512-bit
+  one, and NOT ONE of them needs bit 5, 6 or 7 to be set: they
+  are all xmm and ymm work, which lives in bit 1 and bit 2 and
+  both of those ARE set.  An EVEX-encoded instruction with its
+  own bit clear does not run slowly, it does not run at all,
+  it raises #UD -- which is a different failure from the #GP
+  in section 2, and the kernel turns it into SIGILL rather than
+  SIGSEGV.  So the two things CPUID reports are NOT the same
+  thing: CPUID is what the SILICON has, and XCR0 is what the
+  OS has agreed to preserve, and a machine can have the first
+  without the second.  That is a fact about the OS, and it is
+  why a 2015 kernel will run AVX-512 code on a 2017 CPU and
+  the same code on a 2013 kernel will not run at all.
+
+  CPUID.80000001:ECX LZCNT 1 ABM 1 SSE4a 1
+  CPUID.80000008:EAX[21] LA57 = 0, :EBX bit 6 core-PMU = 1, bit 15 L3-PMU = 1
+  CPUID.80000008:EAX[11:8] 0  -- and the field is NOT a count
+  of address bits; the x86sys course measured that.
+  /proc/sys/kernel/perf_event_paranoid = 4
+
+  CONSEQUENCE, and it governs every duration in this file:
+    there is NO event counter this process can open.  Nothing
+    here counts instructions, cycles, uops or cache lines.  A
+    duration BOUNDS a count without measuring it, and every
+    mechanism named in this file is therefore marked INFERRED
+    unless it is a fault or a bit pattern.
+
+2.  ALIGNMENT IS A FAULT REQUIREMENT, NOT A SPEED ONE.
+
+  Sixteen probes, each ONE instruction, each in a FORKED CHILD
+  so that a fault is a signal number rather than a dead artifact.
+  The buffer is mmap'd: the compiler knows nothing about its
+  contents and therefore cannot fold the load into a constant.
+
+  buffer 0x79f87816c000, 32-byte aligned: yes,  8-byte offset from that: NO
+
+  ALIGN | vmovapd load   | aligned: returned  | +8 bytes: SIGSEGV   | legacy encoding
+  ALIGN | vmovupd load   | aligned: returned  | +8 bytes: returned  | legacy encoding
+  ALIGN | vmovapd store  | aligned: returned  | +8 bytes: SIGSEGV   | legacy encoding
+  ALIGN | vmovupd store  | aligned: returned  | +8 bytes: returned  | legacy encoding
+  ALIGN | vmovdqa load   | aligned: returned  | +8 bytes: SIGSEGV   | legacy encoding
+  ALIGN | vmovdqu load   | aligned: returned  | +8 bytes: returned  | legacy encoding
+  ALIGN | movaps load    | aligned: returned  | +8 bytes: SIGSEGV   | legacy encoding
+  ALIGN | movups load    | aligned: returned  | +8 bytes: returned  | legacy encoding
+  ALIGN | vmovaps load   | aligned: returned  | +8 bytes: SIGSEGV   | VEX encoding
+  ALIGN | vmovdqa load   | aligned: returned  | +8 bytes: SIGSEGV   | VEX encoding
+
+  THE RESULT, and it is not a timing table at all:
+    Every ALIGNED form faults at +8 bytes and every unaligned
+    form returns -- LEGACY AND VEX ALIKE.  The fault is the
+    ONLY thing the 'a' in movaps names, and a duration table
+    is the wrong instrument for a correctness requirement.
+
+  AND THE DRAFT CLAIM ABOUT THE VEX PREFIX WAS WRONG, and the
+  two VEX rows are what caught it.  This section was written
+  asserting that the VEX encoding REMOVED the alignment
+  requirement -- which is what the VEX prefix's own Wikipedia
+  article says.  Measured, `vmovaps` and `vmovdqa` fault on
+  exactly the same addresses their legacy twins do, and the SDM
+  says so in as many words: the memory operand 'must be
+  aligned on a 16-byte (128-bit version), 32-byte (VEX.256)
+  or 64-byte (EVEX.512) boundary or a #GP will be generated'.
+  R15.
+
+  WHAT AVX ACTUALLY RELAXED is narrower and is worth stating
+  precisely, because the wrong version of it is the version
+  everybody repeats: the memory operands of instructions that
+  are NOT a load or a store -- `vpaddd ymm, ymm, [rbx]` and
+  every other VEX arithmetic instruction -- need not be
+  aligned.  Under the legacy encoding the same instruction
+  would have needed 16-byte alignment.  So the relaxation is
+  about FUSED memory operands, and the move instructions were
+  never part of it.  That is a smaller claim than the one the
+  draft made and a more useful one, because it tells you
+  exactly which instructions a compiler may emit for an
+  unaligned buffer.
+
+  WHAT THIS SECTION CANNOT SHOW: whether the aligned form is
+  FASTER when it succeeds.  The SIMD course measured that on
+  its own corpus and got no consistent direction across three
+  runs, which is what no effect looks like when the loop is
+  bandwidth-bound anyway.  This file does not repeat it, and it
+  says so rather than quoting a number it has not taken.
+
+  LIMITS OF THIS PROBE, and they are worth naming:
+    * ONE misalignment was measured: 8 bytes.  A load that is
+      8-byte aligned but not 16-byte aligned is the case that
+      matters and it is the case that was run; nothing here
+      says what happens at +4 or +20.
+    * The child's exit status is the instrument.  A probe that
+      was DELETED by the compiler would also report 'returned',
+      and the first version of this file did exactly that --
+      which is R11.  The build script therefore disassembles
+      these eight bodies and the harness asserts the mnemonics
+      are in the binary.
+    * Whether the kernel's SIGSEGV carries si_code 128 is the
+      x86sys course's measurement and it is not repeated here.
+
+  the instructions the arms BELIEVE they are measuring:
+    vmovapd load   x1
+    vmovupd load   x1
+    vmovapd store  x1
+    vmovupd store  x1
+    vmovdqa load   x2
+    vmovdqu load   x1
+    movaps load    x1
+    movups load    x1
+    vmovaps load   x1
+  9 distinct instruction bodies recorded.  The authority on
+  whether they are really there is objdump on this binary, and
+  section 1B prints that count.
+
+1B.  THE ORACLE.  The reference tables, printed and NOT
+     MEASURED.  They are here so that every later section has
+     something to be checked against, and SEPARATE from every
+     measurement so that the two can never be confused.  A bit
+     position is exact; a duration is not; the label on every
+     table below is the difference.
+
+1B1. THE SSE AND SSE2 MOVES, AND THE ALIGNMENT SPLIT.
+     PRINTED AND NOT MEASURED.  The fault half of this table IS
+     measured, in section 2, one forked child per row.
+
+  MOVE | op   | pfx | ALIGNED | what the ALIGNED form faults on
+  MOVAPS| 28  | none| 16 byte | #GP if the address is not 16-aligned
+  MOVUPS| 10  | none| none   | nothing; the unaligned form
+  MOVDQA| 6F  | 66  | 16 byte | #GP; the integer twin of MOVAPS
+  MOVDQU| 6F  | F3  | none   | nothing
+  MOVSS | 11  | F3  |  4 byte | #GP if not 4-aligned
+  MOVSD | 11  | F2  |  8 byte | #GP if not 8-aligned
+  MOVLPD| 13  | 66  |  8 byte | #GP if not 8-aligned
+  LDDQU | F0  | F2  | none   | a LOAD that explicitly never faults
+
+  THE NAMING IS NOT DECORATIVE.  'aps' and 'dqa' mean ALIGNED
+  PACKED SINGLE / DOUBLE QUADWORD ALIGNED, and the fault is the
+  ONLY reason a reader has to know the rule.  'ups' and 'dqu'
+  are the same instructions with the requirement removed, and
+  the ONLY difference between them is the one byte of opcode.
+
+  AND THE VEX VERSIONS DROPPED THE REQUIREMENT ENTIRELY, which
+  is a source-level property of the ENCODING and not of the
+  instruction: vmovaps will take a misaligned address.  Section
+  2 measures the fault of the legacy form and the RETURN of the
+  VEX form on the same address.
+
+1B2. THE TWO VEX SHAPES AND THE EVEX ONE.  NOT MEASURED.
+
+  VEX2  C5  R~ v~3 v~2 v~1 v~0 L p1 p0          + opcode + ModRM
+  VEX3  C4  R~ X~ B~ m4 m3 m2 m1 m0
+            W v~3 v~2 v~1 v~0 L p1 p0          + opcode + ModRM
+  EVEX  62  R~ X~ B~ R~' 0 m2 m1 m0
+            W v~3 v~2 v~1 v~0 1 p1 p0
+            z L' L b V~' a2 a1 a0                + opcode + ModRM
+
+  VEX2 IS AN ABBREVIATION, and the omitted fields are the ones
+  that are ALWAYS the same when it may be used: W=0, B~=1,
+  X~=1, and the map is 00001 (the 0F escape).  There is NO MAP
+  FIELD in the two-byte form at all -- the choice of 0xC5 over
+  0xC4 IS the map.  The first encoder in this course put X~ and
+  B~ where v~3 and v~2 belong, round-tripped perfectly against
+  ITSELF, and emitted bytes binutils reads as a different
+  instruction.  R9 is that.
+
+  THE OPERAND MAP, which is not in any of the tables above and
+  which this file established by assembling three distinct
+  registers and reading which field each landed in:
+      Intel 'vaddps DEST, SRC1, SRC2'
+        ModRM.reg = DEST   vvvv = SRC1   ModRM.rm = SRC2
+  A reader who assumes the GPR convention -- r/m is always the
+  destination -- will mis-decode every three-operand instruction
+  in the set.  R10 is that mistake, caught by the assembler.
+
+  L, AND WHY AVX-512 NEEDS TWO BITS FOR IT:
+    L=0  128 bit (xmm)      L=1  256 bit (ymm)
+    EVEX only: L'L = 10 is 128 and 11 is 512, with L' encoding
+    ROUNDING CONTROL when the instruction has no vector length.
+    A decoder that reads one bit reports every 512-bit
+    instruction as 256-bit, which is a claim about hardware
+    that is wrong and that binutils catches in one command.
+
+1B3. THE LOCK LIST, AND WHO IMPLIES IT.  NOT MEASURED.
+
+  The SDM names EIGHTEEN instructions that accept a LOCK prefix:
+    ADD ADC AND BTC BTR BTS CMPXCHG CMPXCHG8B CMPXCHG16B
+    DEC INC NEG NOT OR SBB SUB XOR XADD XCHG
+  and says of XCHG, in so many words:
+    'If a memory operand is referenced, the processor's locking
+     protocol is automatically implemented for the duration of
+     the exchange operation, REGARDLESS of the presence or
+     absence of the LOCK prefix.'
+  That sentence is the whole of the implicit set, and section 4
+  measures which of them actually behave atomically here.
+
+  THE INSTRUCTION WITH NO LOCK IS 'BT'.  BTC, BTR and BTS are on
+  the list; BT is not, because BT does not write.  A read-modify-
+  write a reader builds out of BT and a store is therefore two
+  instructions and no encoding can make it atomic, which is a
+  fact about the INSTRUCTION SET rather than about a prefix.
+
+  AND THE LOCK PREFIX IS NOT A PIN.  On every processor since the
+  P6, a locked instruction whose line is already in the local
+  cache does not assert LOCK# on the bus at all; only the cache
+  is locked.  So 'does it assert LOCK#' is not the question a
+  modern reader should be asking.
+
+1B4. THE THREE FENCES.  NOT MEASURED as to their cost.
+
+  FENCE | bytes   | orders a LOAD before a STORE?  orders a STORE
+  LFENCE| 0f ae e8| yes                        | no
+  SFENCE| 0f ae f8| no                         | yes
+  MFENCE| 0f ae f0| yes                        | yes
+
+  All three are the SAME opcode, 0F AE, with the ModRM byte's
+  reg field selecting the operation: F0, E8, F8.  They are not
+  three opcodes and there is nothing to remember about which is
+  which except the reg field.
+
+  AND WHAT THEY DO NOT DO, which is the part every summary of
+  TSO leaves out: a fence is a LOCALLY-OBSERVABLE order.  It
+  orders THIS core's own accesses with respect to each other.
+  It does not send anything to the other core, it does not flush
+  the other core's caches, and it is not a message-passing
+  primitive.  What it buys is that this core's store buffer is
+  DRAINED -- which is a mechanism this file can measure the cost
+  of, in section 5, and cannot observe the inside of.
+
+1B5. THE DIRECTION FLAG.  NOT MEASURED as to its history.
+
+  EFLAGS bit 10 = DF, the direction flag.  It selects whether
+  the string instructions increment or decrement their index
+  registers, and it is set and cleared by STD and CLD.
+
+  AND THE BIT THIS COURSE WAS DRAFTED AGAINST IS WRONG.  The
+  brief said 'the DIR flag is bit 21 of EFLAGS'.  Bit 21 is the
+  ID flag, the identification flag, and it exists for a reason
+  that has nothing to do with strings: before CPUID, software
+  identified a processor by SETTING a bit it was not supposed
+  to be able to set and pushing the flags.  The 8086 and 8088
+  had no such bit; the Pentium does.  R1.
+
+  THE HISTORY THAT IS ACTUALLY WORTH TELLING is the one this
+  course can MEASURE, and it is in section 5: on the 8086 the
+  string instructions had to compute the direction on every
+  element, so a backward REP MOVSB was materially slower than a
+  forward one.  Every later processor made the two the same.
+  On THIS one they are still not, by a factor this file measures
+  across five sizes and reports as a shape.
+
+2.  ALIGNMENT IS A FAULT REQUIREMENT, NOT A SPEED ONE.
+
+  Sixteen probes, each ONE instruction, each in a FORKED CHILD
+  so that a fault is a signal number rather than a dead artifact.
+  The buffer is mmap'd: the compiler knows nothing about its
+  contents and therefore cannot fold the load into a constant.
+
+  buffer 0x79f87816c000, 32-byte aligned: yes,  8-byte offset from that: NO
+
+  ALIGN | vmovapd load   | aligned: returned  | +8 bytes: SIGSEGV   | legacy encoding
+  ALIGN | vmovupd load   | aligned: returned  | +8 bytes: returned  | legacy encoding
+  ALIGN | vmovapd store  | aligned: returned  | +8 bytes: SIGSEGV   | legacy encoding
+  ALIGN | vmovupd store  | aligned: returned  | +8 bytes: returned  | legacy encoding
+  ALIGN | vmovdqa load   | aligned: returned  | +8 bytes: SIGSEGV   | legacy encoding
+  ALIGN | vmovdqu load   | aligned: returned  | +8 bytes: returned  | legacy encoding
+  ALIGN | movaps load    | aligned: returned  | +8 bytes: SIGSEGV   | legacy encoding
+  ALIGN | movups load    | aligned: returned  | +8 bytes: returned  | legacy encoding
+  ALIGN | vmovaps load   | aligned: returned  | +8 bytes: SIGSEGV   | VEX encoding
+  ALIGN | vmovdqa load   | aligned: returned  | +8 bytes: SIGSEGV   | VEX encoding
+
+  THE RESULT, and it is not a timing table at all:
+    Every ALIGNED form faults at +8 bytes and every unaligned
+    form returns -- LEGACY AND VEX ALIKE.  The fault is the
+    ONLY thing the 'a' in movaps names, and a duration table
+    is the wrong instrument for a correctness requirement.
+
+  AND THE DRAFT CLAIM ABOUT THE VEX PREFIX WAS WRONG, and the
+  two VEX rows are what caught it.  This section was written
+  asserting that the VEX encoding REMOVED the alignment
+  requirement -- which is what the VEX prefix's own Wikipedia
+  article says.  Measured, `vmovaps` and `vmovdqa` fault on
+  exactly the same addresses their legacy twins do, and the SDM
+  says so in as many words: the memory operand 'must be
+  aligned on a 16-byte (128-bit version), 32-byte (VEX.256)
+  or 64-byte (EVEX.512) boundary or a #GP will be generated'.
+  R15.
+
+  WHAT AVX ACTUALLY RELAXED is narrower and is worth stating
+  precisely, because the wrong version of it is the version
+  everybody repeats: the memory operands of instructions that
+  are NOT a load or a store -- `vpaddd ymm, ymm, [rbx]` and
+  every other VEX arithmetic instruction -- need not be
+  aligned.  Under the legacy encoding the same instruction
+  would have needed 16-byte alignment.  So the relaxation is
+  about FUSED memory operands, and the move instructions were
+  never part of it.  That is a smaller claim than the one the
+  draft made and a more useful one, because it tells you
+  exactly which instructions a compiler may emit for an
+  unaligned buffer.
+
+  WHAT THIS SECTION CANNOT SHOW: whether the aligned form is
+  FASTER when it succeeds.  The SIMD course measured that on
+  its own corpus and got no consistent direction across three
+  runs, which is what no effect looks like when the loop is
+  bandwidth-bound anyway.  This file does not repeat it, and it
+  says so rather than quoting a number it has not taken.
+
+  LIMITS OF THIS PROBE, and they are worth naming:
+    * ONE misalignment was measured: 8 bytes.  A load that is
+      8-byte aligned but not 16-byte aligned is the case that
+      matters and it is the case that was run; nothing here
+      says what happens at +4 or +20.
+    * The child's exit status is the instrument.  A probe that
+      was DELETED by the compiler would also report 'returned',
+      and the first version of this file did exactly that --
+      which is R11.  The build script therefore disassembles
+      these eight bodies and the harness asserts the mnemonics
+      are in the binary.
+    * Whether the kernel's SIGSEGV carries si_code 128 is the
+      x86sys course's measurement and it is not repeated here.
+
+3.  WHAT THE THREE OPERANDS BOUGHT, AND WHAT vzeroupper IS FOR.
+
+3A. THE THREE-OPERAND FORM, PRICED.  The assembly course ran
+  this experiment on one body and found the copy FREE.  A
+  negative result on one body is a fact about that body, so
+  this file runs the OTHER body -- the one where the
+  destination IS also a source, so the legacy form needs no
+  copy at all -- and the one where it does, at 128 bits.
+
+  VEX3 | SSE 2-operand, dest IS a source           2.0105 ticks/op | value 150001.000000
+  VEX3 | SSE 3-operand through a temp              1.9864 ticks/op | value 150001.000000
+  VEX3 | SSE 2-operand + an explicit copy          1.9831 ticks/op | value 150001.000000
+
+  THE THREE ARMS MUST COMPUTE THE SAME VALUE, and they AGREE:
+    150001.000000, 150001.000000, 150001.000000.  The arms are comparable.
+  arm 1 over arm 0: 1.00x    arm 2 over arm 0: 0.99x
+  arm 0 over arm 1: 1.01x
+
+  READ IT AS A NEGATIVE RESULT, because that is what it is.
+  The copy the three-operand form removes is a REGISTER MOVE,
+  and on a core this wide an instruction the front end can
+  issue for free is not on the critical path.  What the form
+  buys is a SOURCE-LEVEL PROPERTY -- the destination may be a
+  register you still need -- and a source-level property is
+  exactly what an encoding is for.  No duration here can price
+  it, and the assembly course said so on a different body and
+  at a different width, and this file agrees.
+
+  MECHANISM: INFERRED.  There is no counter here that can count
+  vector-port occupancy, and the vendor manual has no number
+  for it either.  What is measured is that there is no LARGE
+  difference, and the three values above are what it saw.
+
+3B. VZEROUPPER, AND THE ONE BIT PATTERN THAT EXPLAINS IT.
+
+  The claim being tested is the one in every AVX paper: a 256-bit
+  operation leaves the UPPER 128 BITS of a YMM register dirty,
+  a legacy SSE instruction reads the register without knowing
+  that, and the resulting false dependency is what vzeroupper
+  exists to clear.  The first half of that is a BIT PATTERN and
+  needs no timer at all.
+
+  Fill ymm0 with 0x11223344 in ALL EIGHT lanes, run ONE
+  instruction, then store all 32 bytes and look at lane 4:
+
+  DIRTY | no instruction (the control)       | upper 128 bits 0x3dcccccd  PRESERVED
+  DIRTY | ONE legacy addps   0f 58           | upper 128 bits 0x3dcccccd  PRESERVED
+  DIRTY | ONE VEX-128 vaddps c5 f8 58        | upper 128 bits 0x00000000  ZEROED
+  DIRTY | ONE legacy movaps  0f 28           | upper 128 bits 0x3dcccccd  PRESERVED
+  DIRTY | vzeroupper         c5 f8 77        | upper 128 bits 0x00000000  ZEROED
+  DIRTY | TWO legacy addps                   | upper 128 bits 0x3dcccccd  PRESERVED
+  DIRTY | TWO vzeroupper                     | upper 128 bits 0x00000000  ZEROED
+
+  AND THE RESULT CONTRADICTS THE STORY IN ITS USUAL FORM,
+  which is worth more than a timing table would have been.
+  On this part a LEGACY SSE instruction PRESERVES the upper
+  halves, and a VEX-128 instruction ZEROES them.  So the
+  'dirty upper state' that vzeroupper clears is created by
+  VEX-128 and destroyed by vzeroupper, and it is the LEGACY
+  instruction that finds the value intact.  Whether that
+  transition costs anything is a different question, and it
+  is the next one.
+
+3C. THE TRANSITION, TIMED, WITH THE LEGACY ENCODING FORCED.
+
+  The first version of this experiment used INTRINSICS for the
+  'SSE' arm, and gcc compiled them to VEX (`c5 f8 58 c1`).  A
+  VEX-128 instruction has no AVX-SSE transition penalty AT
+  ALL, so the experiment measured nothing: every arm came out
+  1.00x.  The arms below are RAW LEGACY ENCODINGS written in
+  inline asm, and section 1B's census plus the build script's
+  objdump are what make the difference checkable.  R7.
+
+  VZU  | A  AVX 256 only                                1.982 ticks/call
+  VZU  | B  LEGACY 0F 58 SSE only                      10.192 ticks/call
+  VZU  | C  VEX 128 SSE only                           10.405 ticks/call
+  VZU  | D  AVX then LEGACY SSE, no vzeroupper          7.226 ticks/call
+  VZU  | E  AVX, vzeroupper, then LEGACY SSE           11.859 ticks/call
+  VZU  | F  VEX 128 then LEGACY SSE (the control)      11.119 ticks/call
+
+  D over A 3.65x   E over D 1.64x   F over A 5.61x   B over A 5.14x
+
+  READ THE SIX ROWS AS FIVE SEPARATE CLAIMS, because they do
+  not say one thing and lumping them is how the draft got it
+  wrong.
+
+  ONE.  THE LANE COUNT, and nothing else.  B over A is 5.14x:
+  the same arithmetic at 128 bits takes five times as long as
+  at 256.  That is the width, and the SIMD course owns the
+  width.  It is quoted here only so that the OTHER rows can be
+  read against a baseline that is not a mystery.
+
+  TWO.  THE ENCODING, at a FIXED width.  B over C is 0.98x, and
+  that is the whole of the difference between a LEGACY 0F 58
+  and a VEX c5 f8 58 doing the same sixteen 128-bit adds in the
+  same loop.  On this part the legacy encoding is about a couple of percent slower.
+  The VEX prefix's cost is a handful of percent and NOT a
+  factor, and a reader who has been told the legacy encoding is
+  catastrophically slow is wrong about that too.
+
+  THREE.  VZEROUPPER COSTS SOMETHING HERE, and this is the row
+  the section exists for.  E over D is 1.64x: the SAME
+  interleaved loop with one vzeroupper between the two bodies
+  and without one.  The instruction is three bytes, it retires
+  on a port nothing else is using, and it is nonetheless about
+  a sixth more expensive than not doing it.  So the mechanism is
+  real and observable on this part, and its SIZE is the  only of
+  the loop and not a multiple of it.
+
+  FOUR.  AND THE DRAFT CLAIM THAT THE PENALTY IS LARGE IS NOT
+  SUPPORTED.  There is a widely quoted figure for the cost of an
+  AVX-to-SSE transition on an Intel part, and if it were the
+  cost here then row D would be several times row A.  It is
+  3.65x, and most of that 5.14x is row B's lane count being
+  averaged in rather than anything the fence or the absence of
+  one did.  On an AMD Zen 3 part in 2026 the transition penalty
+  is NOT OBSERVABLE at this granularity, and the honest
+  sentence is that this measurement does not show what the
+  quoted figure describes.  R6.
+
+  FIVE.  THE SHAPE THAT SURPRISES, and it is the one the draft
+  would have missed by only printing A and D.  Row D is the
+  AVERAGE cost of one AVX body and one legacy body per
+  iteration, and averaging the two alone gives 6.09.  The
+  measured row D is 7.23, which is LOWER than the arithmetic
+  mean.  Interleaving the two bodies is CHEAPER than running
+  either in a block.  WHY is not established here: there is no
+  counter that can see it, and the two obvious candidates -- a
+  clock that behaves differently for the two mixes, and a
+  store-forwarding interaction between them -- are both
+  INFERRED.  It is printed because a table that reported only
+  the ratios would have shown 1.00x and lost it.
+
+  WHAT NONE OF THIS SHOWS, and it is the important one:
+  * WHY vzeroupper exists.  The bit pattern above says what it
+    DOES -- it zeroes bits 16 and up of all sixteen YMM
+    registers -- and this table says what it COSTS here.  The
+    false dependency it prevents is a claim about an Intel
+    microarchitecture and it is INFERRED, not measured.
+  * Anything about a 512-bit register, because there is none
+    here.  Section 6B is explicit about that.
+  * The cost of vzeroupper on a COLD core, at low occupancy, or
+    with a different pair of bodies.  One body is one body and
+    the harness asserts this as a SHAPE.
+
+4.  THE ATOMIC SET, AND WHICH INSTRUCTIONS IMPLY LOCK.
+
+  Every arm is TWO THREADS pinned to two cores, a barrier,
+  60000 iterations each, and the word reset before EVERY arm.
+  Three instruments, and this section is mostly about why
+  there are three: four earlier versions of the second one
+  were wrong, each in a different way, and each produced a
+  clean and entirely incorrect table.  They are written out
+  above so a reader can see that a plausible table is not a
+  correct one.
+
+  INSTRUMENT 1, THE COUNTER.  Both threads run the arm on the
+     shared word and the total is read back.  Atomic means
+     exactly twice the iteration count.  Sound, and BLIND to
+     every instruction that does not move the value in one
+     direction.
+
+  CNT  | instruction              | bytes                |       target |          got | verdict
+  CNT  | add $1,        no LOCK   | 83 00 01             |       120000 |        65050 | NOT ATOMIC
+  CNT  | add $1,        LOCK      | f0 83 00 01          |       120000 |       120000 | ATOMIC
+  CNT  | inc,           no LOCK   | ff 00                |       120000 |        67270 | NOT ATOMIC
+  CNT  | inc,           LOCK      | f0 ff 00             |       120000 |       120000 | ATOMIC
+  CNT  | dec,           no LOCK   | ff 08                |   4294847296 |   4294901038 | NOT ATOMIC
+  CNT  | dec,           LOCK      | f0 ff 08             |   4294847296 |   4294847296 | ATOMIC
+  CNT  | xadd $1,       NO PREFIX | 0f c1 01             |       120000 |        93221 | NOT ATOMIC
+  CNT  | xadd $1,       LOCK      | f0 0f c1 01          |       120000 |       120000 | ATOMIC
+  CNT  | cmpxchg loop,  NO PREFIX | 0f b1 01             |       120000 |        62679 | NOT ATOMIC
+  CNT  | cmpxchg loop,  LOCK      | f0 0f b1 01          |       120000 |       120000 | ATOMIC
+  CNT  | cmpxchg8b,     NO PREFIX | 0f c7 01             |       120000 |        59137 | NOT ATOMIC
+  CNT  | cmpxchg16b,    NO PREFIX | 48 0f c7 01          |       120000 |        68113 | NOT ATOMIC
+  CNT  | cmpxchg8b,     LOCK      | f0 0f c7 01          |       120000 |       120000 | ATOMIC
+  CNT  | cmpxchg16b,    LOCK      | f0 48 0f c7 01       |       120000 |       120000 | ATOMIC
+  CNT  | load+add+XCHG            | mov;add;87           |       120000 |        72917 | NOT ATOMIC
+  CNT  | load+add+LOCK XCHG       | mov;add;f0 87        |       120000 |        94103 | NOT ATOMIC
+  CNT  | bts $0,        NO PREFIX | 0f ba a0 20 00       |            1 |            1 | ATOMIC
+  CNT  | bts $0,        LOCK      | f0 0f ba a0 20 00    |            1 |            1 | ATOMIC
+  CNT  | btc $0,        TOGGLES   | 0f ba f0 20 00       |            0 |            0 | ATOMIC
+  CNT  | btc $0,        LOCK      | f0 0f ba f0 20 00    |            0 |            0 | ATOMIC
+  CNT  | btr $0,        IDEMPOTENT | 0f ba b0 20 00       |            0 |            0 | ATOMIC
+  CNT  | btr $0,        LOCK      | f0 0f ba b0 20 00    |            0 |            0 | ATOMIC
+  CNT  | bt  $0 + a mov           | 0f ba 20 00; 89      |       120000 |   2438716048 | NOT ATOMIC
+
+  INSTRUMENT 2, THE PAIRED COUNTER.  Thread 0 runs
+     `lock add $1`.  Thread 1 runs the arm ON THE SAME WORD.
+     The target is the iteration count, because only thread 0
+     increments.  If the arm is atomic it reads the current
+     value and writes it straight back.  If it is not, its
+     stale writeback ERASES an increment the other thread had
+     already made, and the count of lost increments is the
+     count of times its read half was not atomic.  This is the
+     instrument that sees an operation whose VALUE never
+     changes, and it is the only one in the collection that
+     does.  R4.
+
+  PAIR | instruction              | bytes                |       target |          got | verdict
+  PAIR | or  $0,        NO PREFIX | 83 08 00             |        60000 |        28127 | NOT ATOMIC
+  PAIR | or  $0,        LOCK      | f0 83 08 00          |        60000 |        60000 | ATOMIC
+  PAIR | and $0xffffffff,NO PREFIX | 81 20 ff ff ff ff    |        60000 |        29331 | NOT ATOMIC
+  PAIR | and $0xffffffff,LOCK     | f0 81 20 ff ff ff ff |        60000 |        60000 | ATOMIC
+  PAIR | xor $0,        NO PREFIX | 83 30 00             |        60000 |        23051 | NOT ATOMIC
+  PAIR | xor $0,        LOCK      | f0 83 30 00          |        60000 |        60000 | ATOMIC
+  PAIR | sub $0,        NO PREFIX | 83 28 00             |        60000 |        43924 | NOT ATOMIC
+  PAIR | sub $0,        LOCK      | f0 83 28 00          |        60000 |        60000 | ATOMIC
+  PAIR | xor $0x80000000,NO PREFIX | 81 30 00 00 00 80    |        60000 |        30501 | NOT ATOMIC
+  PAIR | xor $0x80000000,LOCK     | f0 81 30 00 00 00 80 |        60000 |        60000 | ATOMIC
+  PAIR | bt  $0 + a mov           | 0f ba 20 00; 89      |        60000 |   2438768440 | NOT ATOMIC
+  PAIR | adc $0,        NO PREFIX | 83 10 00             |        60000 |        85097 | NOT ATOMIC
+  PAIR | adc $0,        LOCK      | f0 83 10 00          |        60000 |       120000 | NOT ATOMIC
+  PAIR | sbb $0,        NO PREFIX | 83 18 00             |        60000 |   4294936852 | NOT ATOMIC
+  PAIR | sbb $0,        LOCK      | f0 83 18 00          |        60000 |            0 | NOT ATOMIC
+
+  INSTRUMENT 3, THE IDENTITY PAIR.  NOT and NEG report no old
+     value and they are involutions, so neither instrument can
+     read them.  Apply twice and ask whether the word came
+     back: the pair IS the identity, so a lost update is the
+     only thing that can break it, and that is the whole of
+     what this instrument can say.
+
+  IDENT| instruction              | bytes                |        final | verdict
+  IDENT| not, twice,    no LOCK   | f7 d0                | 0xa5a5a5a5 | NOT ATOMIC
+  IDENT| not, twice,    LOCK      | f0 f7 d0             | 0x5a5a5a5a | RESTORED
+  IDENT| neg, twice,    no LOCK   | f7 d8                | 0xa5a5a5a6 | NOT ATOMIC
+  IDENT| neg, twice,    LOCK      | f0 f7 d8             | 0x5a5a5a5a | RESTORED
+
+  READ THE TABLES, and the answer is not the one most people
+  expect, which is the point of running it.
+
+  ONE.  XCHG WITH A MEMORY OPERAND IS THE ONLY INSTRUCTION
+  IN THE ENTIRE SET THAT IS ATOMIC WITH NO PREFIX, and the
+  CNT table's last two rows are the proof.  The SDM says so in
+  as many words: if a memory operand is referenced, the locking
+  protocol is implemented 'regardless of the presence or
+  absence of the LOCK prefix'.  So the IMPLICIT set is exactly
+  ONE INSTRUCTION WIDE, and XADD, CMPXCHG and CMPXCHG8B are
+  NOT in it.  They are on the EIGHTEEN-instruction list, which
+  is the list of instructions that ACCEPT the prefix, and
+  those are two different lists and everybody quotes the second
+  one when they mean the first.
+
+  TWO.  AND THE TRAP IS THAT `xchg` AND `lock xadd` LOOK LIKE
+  THE SAME THING.  They are the two standard spellings of an
+  atomic increment and the CNT table prices the difference:
+  a bare `xadd` loses updates and a locked one does not, and
+  the load-add-xchg sequence is a THIRD thing again, because
+  the load is outside the swap.  A reader who reached for
+  `xchg` because a book said so got a different answer from a
+  reader who reached for `lock xadd`, and both were following
+  advice.
+
+  THREE.  THE DRAFT CLAIM ABOUT INC WAS WRONG.  The brief this
+  course was written from said: 'INC and DEC are NOT atomic
+  even with the LOCK prefix, which is why the encoding exists
+  at all.'  Measured, `lock inc` is EXACT -- every iteration,
+  two threads, two cores -- and the unprefixed `inc` loses
+  roughly half.  INC and DEC are on the SDM's list of
+  EIGHTEEN like every other arithmetic instruction, and a
+  locked INC is an ordinary atomic read-modify-write.  The
+  encoding exists for a much smaller reason: `inc` does not
+  disturb the CARRY flag and `add $1, m` does.  R2.
+
+  FOUR.  THE IDENTITY ARMS ARE THE FINDING, and no other course
+  in this collection could have produced them.  `or $0`,
+  `and $~0`, `sub $0` and `xor $0` write back exactly the word
+  they read.  The VALUE is right whatever the interleaving, so
+  instrument 1 is blind to them -- and instrument 2 reports
+  that every unprefixed one of them LOSES INCREMENTS.  'The
+  value is unchanged' and 'the operation was atomic' are
+  different claims, and this is the instrument that tells them
+  apart.  R4.
+
+  FIVE.  THE BIT-TEST GROUP SPLITS THREE WAYS, and the split is
+  in the SDM's own list.  BTC, BTR and BTS are on it and their
+  locked rows are exact.  BT is NOT, because BT does not write:
+  `lock bt` is not a thing you can assemble, and the assembler
+  refusing it is the sharpest statement in the whole set.  A
+  read-modify-write a reader builds out of BT and a store is TWO
+  instructions and no prefix can make it atomic, and its row in
+  the table is that two-instruction body written out, with a
+  garbage result.
+
+  SIX.  AND WITHIN THE GROUP, TWO OF THE THREE ROWS ARE NOT
+  TESTABLE AT ALL, which is the sharpest thing this section
+  found and it took a wrong table to find it.  BTS SETS bit 0
+  and BTR CLEARS it, so both are IDEMPOTENT: a lost BTS of an
+  already-set bit is invisible, and the word ends at exactly 1
+  whether every update landed or half of them were lost.  The
+  ONLY member of the group this instrument can read is BTC,
+  because it TOGGLES, and a lost toggle leaves the bit in the
+  wrong state.  So the table's `bts` and `btr` rows read ATOMIC
+  for a reason that has nothing to do with the prefix, and the
+  artifact says so rather than quoting them as a result.  The
+  paired instrument cannot help either -- it restores the same
+  bit.  R20.
+
+  SEVEN.  ADC AND SBB ARE IN THE TABLE AND THE TABLE IS NOT
+  ENTIRELY ABOUT THE INSTRUCTION.  Both read the CARRY flag as
+  well as the word, and the flag is a register rather than a
+  memory location, so a stale writeback of the word is not the
+  only thing that can be lost.  They are printed because they
+  are on the list of eighteen, and the note above is the honest
+  limit of the instrument rather than a claim about them.
+
+  EIGHT.  CMPXCHG16b IS ATOMIC ON SIXTEEN BYTES, and that is the
+  answer to 'the atomicity of a compare-exchange against a
+  wider compare-exchange'.  No lost updates.  The COST is not
+  measured here and the limits block says so: this file
+  establishes the ATOMICITY and not the PRICE, and on a machine
+  with no PMU the price would be a duration that bounds a
+  count rather than measuring it.
+
+  WHAT THIS SECTION CANNOT SHOW, printed rather than footnoted:
+  * Whether any of these asserted LOCK# ON THE BUS.  On every
+    processor since the P6 a locked instruction whose line is
+    already cached does not drive the pin at all; only the
+    cache is locked.  What is measured is the OBSERVABLE
+    BEHAVIOUR, which is the thing a program can rely on.
+  * The cost of a locked instruction.  There is no counter
+    here; the smp course measured an uncontended lock against
+    a plain store and that is the number to quote, not this.
+  * Anything about false sharing.  Every arm here contends on
+    ONE line with ONE word, the truest sharing there is; the
+    smp course owns the rest.
+  * Whether the four failed instruments would have produced a
+    different ANSWER or only a different NUMBER.  They produced
+    different numbers, three of which said ATOMIC for arms that
+    are not, and whether a failed instrument's verdict was
+    right by luck was not checked and is not claimed.
+  * AArch64, RISC-V, and every other architecture.  LDXR/STXR
+    and the DMB that orders them are a different instruction
+    set with a different failure mode -- an LL/SC pair can
+    ALWAYS fail and there is no way to make it not -- and the
+    comparison belongs to the smp course.
+
+5.  ORDERING: THE THREE FENCES, THE STORE BUFFER, AND A FLAG
+    THAT IS AT BIT 10.
+
+5A. THE STORE-BUFFER PING-PONG, EXTENDED.  The smp course ran
+  this loop and it did NOT reproduce the shape it expected.
+  Here it is with an SFENCE, an MFENCE and a LOCKED store
+  added, on the same two cores, interleaved, min-of-14.
+
+  THE LAYOUT, printed because R24 was a layout bug:
+    the two 'mine' lines are  64 bytes apart (TWO lines)
+    the two 'both' lines are  64 bytes apart (TWO lines)
+    'mine' and 'both' are in different lines: yes
+
+  ORD  | store to my line, then load the peer's  (no flag)    27.712 ticks/iter
+  ORD  | ...with an SFENCE between them                    46.090 ticks/iter
+  ORD  | ...with an MFENCE between them                   160.799 ticks/iter
+  ORD  | ...with a LOCKED store instead of a plain one     65.281 ticks/iter
+  ORD  | store and load, both words in ONE cache line      87.956 ticks/iter
+  ORD  | THE FLOOR: the store alone, no peer load          35.242 ticks/iter
+  ORD  | the other floor: the peer load alone              44.374 ticks/iter
+
+  the ratios, and only the ratios, because the floor is large:
+    one cache line over two lines         3.17x
+    with MFENCE over the no-flag arm      5.80x
+    with a LOCKED store, over no flag     2.36x
+    with SFENCE over the no-flag arm      1.66x
+    no flag over the store-only floor     0.79x
+    the two floors differ by              0.79x
+
+  READ THE FIRST TWO RATIOS FIRST, because they are the
+  finding and they are the opposite of what the broken
+  instrument reported.  One cache line over two is several
+  TIMES the two-line version, and the no-flag arm over its
+  own store floor is NEAR ONE, which means the plain
+  ping-pong is barely more than a store to memory nobody
+  is reading.  That is the textbook answer, and it arrived
+  only after the layout was fixed.  Before the fix the same
+  table said the opposite -- the store floor ABOVE the
+  ping-pong, and one line over two at 1.22x -- and that
+  was not a subtle error.  It was the one-line case doing
+  the work of the two-line case, so the table was
+  comparing the worst case against itself and reporting
+  the difference as a small win.
+
+  AND HERE IS THE RESULT THE smp COURSE ASKED FOR, and half
+  of it is the answer the smp course was looking for.  Adding
+  an SFENCE to the ping-pong does NOT turn it back into the
+  textbook picture of a line changing hands on every
+  iteration; what SFENCE does is make the arm MORE EXPENSIVE, and what
+  the LOCKED store does is make it MORE EXPENSIVE, and both of those
+  are the store buffer DRAINING, which is the mechanism the
+  smp course named.  So the extension CONFIRMS the
+  explanation and does not rescue the shape.  THE OTHER HALF
+  is new, and it is the part the smp course could not have
+  seen: the same ping-pong with the two words in ONE line is
+  3.17x the two-line version, which is a bigger effect than
+  any fence here.  Whichever way a reader is going to make
+  this fast, moving the two words apart is worth more than
+  choosing a fence.
+
+  WHY THE SHAPE NEVER APPEARS, and this is the sentence the
+  whole section exists for.  A store does not invalidate the
+  other core's copy WHEN IT EXECUTES.  It goes into this
+  core's store buffer and the peer's copy stays VALID until
+  the store RETIRES.  Two threads in a tight loop with no
+  synchronisation therefore do not take turns: each runs
+  ahead, each load often finds the peer's line still valid
+  and SHARED, and the transfers that do happen are spread out
+  rather than serialised.
+
+  WHICH IS WHY A DATA RACE IS HARD TO FIND, and it is worth
+  more than the number it produced: THE FAST PATH AND THE
+  SLOW PATH LOOK THE SAME ON AVERAGE.  A program with a race
+  usually runs at full speed and gives the wrong answer once
+  in a million times, which is exactly the profile of a
+  heisenbug.  The single-line row is the one that DOES show a
+  cost, and it shows it because two words in one line is a
+  different data structure rather than a different fence.
+
+  WHAT THIS CANNOT SHOW: no count of coherence traffic.  There
+  is no PMU, so every mechanism named above is INFERRED from a
+  duration.  A duration bounds a count without measuring it.
+  The instrument that would settle it is perf_event_open with
+  a paranoid setting below 4 and a PMU passthrough from the
+  host, and this course does not have one.
+
+5B. THE FENCES THEMSELVES, AS BYTES.  Disassembled, not quoted,
+  because 'what does SFENCE actually encode' has an answer and
+  it is three bytes.
+
+  FENCE | the three bytes | the ModRM reg field, bits 5:3
+  ------+-----------------+--------------------------
+  MFENCE| 0f ae f0        | 111 = 7   order loads AND stores
+  LFENCE| 0f ae e8        | 101 = 5   order loads only
+  SFENCE| 0f ae f8        | 111 = 7   order stores only
+         all three are the SAME opcode, 0F AE, and the
+         mod and rm fields are 11 and 000 in all three.
+
+  AND ONE MORE THING THE ENCODING SAYS, and it is the reason a
+  disassembler needs a table for the fence set.  The three
+  bytes differ in the reg field ALONE, and two of the three
+  share it: MFENCE and SFENCE are both reg=7 and are told
+  apart by the MAP, which is the 0F escape byte they share.  So
+  there are not three opcodes and there are not three reg
+  values either -- 0F AE is one opcode with a three-bit
+  selector, and MFENCE and SFENCE collide in that selector and
+  are separated by the CPU's internal decode of the escape.
+  A decoder that switches on ModRM.reg alone gets MFENCE and
+  SFENCE right only by accident.
+
+  AND THE BITS ARE NOT CONTIGUOUS, which is worth noticing: the
+  two encodings are 0xF0 and 0xF8, so the reg field differs in
+  TWO bit positions and not one.  The draft said 'a single bit
+  position' and the difference is that MFENCE has bit 3 clear
+  where SFENCE has it set, while bits 2 and 1 are clear in
+  both.  R22.
+
+  A LOCKED INSTRUCTION IS A BETTER FENCE THAN SFENCE AND IT IS
+  ONE INSTRUCTION SHORTER: the LOCKED store row above already
+  drains the buffer, because the store cannot retire until it
+  has.  That is why a spinlock built on CMPXCHG needs no
+  SFENCE, and it is a property of the INSTRUCTION rather than
+  a recommendation.
+
+5C. THE DIRECTION FLAG, AND THE CORRECTION.
+
+  EFLAGS as read by PUSHFQ      0x0000000000000202
+    bit  0 CF                 0
+    bit  2 PF                 0
+    bit  6 ZF                 0
+    bit  9 IF                 1
+    bit 10 DF, THE DIRECTION  0
+    bit 11 OF                 0
+    bit 16 RF                 0
+    bit 18 AC                 0
+    bit 21 ID, NOT DIRECTION  0
+
+  THE CORRECTION, and it is the reason this subsection
+  exists rather than a footnote.  The brief this course was
+  written from said the direction flag is bit 21.  It is not.
+  Bit 10 is DF.  Bit 21 is the ID flag, and the ID flag has a
+  completely different job: before CPUID existed, software
+  identified a processor by SETTING a bit it was not supposed
+  to be able to set and pushing the flags.  The 8086 and 8088
+  had no such bit and the Pentium does.  R1.
+
+  AND THE DIRECTION FLAG IS SET AND CLEARED BY TWO INSTRUCTIONS
+  that do nothing else: STD sets it and CLD clears it.  There
+  is no complement, which is a gap in the instruction set that
+  is closed with PUSHF, an XOR and POPF.  Both are measured
+  below, and the fact that the flag can be set and read back is
+  what the identification trick depends on.
+
+  bytes |   DF=0  |   DF=1  | ratio  | ticks/byte up | ticks/byte dn
+  ------+----------+----------+--------+--------------+--------------
+     16 |       23 |      184 |   8.00 |       1.4375 |      11.5000
+    256 |       46 |      483 |  10.50 |       0.1797 |       1.8867
+   1024 |       69 |     1426 |  20.67 |       0.0674 |       1.3926
+   4096 |       92 |     2875 |  31.25 |       0.0225 |       0.7019
+
+  THE BOTH-ARMS-COPIED-THE-SAME-BYTES check runs on every row
+  and printed nothing, which is the result: the checksums agree,
+  so the two arms did the same work and the only difference is
+  the DIRECTION.  There is no way to be sure of that without
+  checking, because a `rep movsb` that faulted on the first
+  byte would be very fast.
+
+  AND THE RATIO GROWS WITH SIZE, which is the shape worth
+  keeping.  A fixed cost per `rep` would give a constant ratio
+  and a per-element cost would give one too; a growing ratio
+  means the DOWN direction is not a fast path at all on this
+  part, and the gap widens as the string gets longer.
+
+  THE HISTORY, STATED AS HISTORY AND NOT AS A MEASUREMENT:
+  the 8086 computed the direction on every element of a string
+  operation, so a backward REP MOVSB was materially slower
+  than a forward one.  That cost is the reason a great deal of
+  1980s code emits CLD once at every entry point.  Every later
+  processor narrowed it, and this file measures how much of it
+  is LEFT on an AMD Zen 3 part in 2026.  It has not gone to
+  zero.  A source for the 8086 behaviour is the ISA's own
+  documentation and any contemporary optimisation guide; the
+  NUMBER in the table above is this machine's, and the two are
+  different claims about different things.
+
+  LIMITS OF THIS MEASUREMENT:
+  * It is a MINIMUM over 3000 repetitions of a short body, so the
+    small rows are dominated by the `rep` start-up cost and the
+    ratio there is a start-up ratio, not a per-byte one.
+  * The two arms start at opposite ends of the array, so the
+    DOWN arm walks toward the beginning.  On a machine where
+    the array is one line this does not matter; it is stated
+    because it is a difference between the arms.
+  * Nothing here says WHY the down direction is slower.  There
+    is no counter that can count the micro-ops a string
+    operation expands to, and the vendor manual does not give a
+    number for it either.  The mechanism is INFERRED.
+
+6.  ENCODE THE MAPS, THEN DECODE THE BYTES.
+
+  30 cases.  Each one is ENCODED here from an operand spec,
+  DECODED here by an independent walk, and DISASSEMBLED by
+  objdump from a second reader that was not written from this
+  table.  All three must agree or the row is a failure.
+
+  WHY A SECOND READER IS NOT OPTIONAL, and this file is the
+  argument.  The first encoder in this course round-tripped
+  28 of 28 and was WRONG: it wrote the two-byte VEX with the
+  three-byte field order, and a decoder built from the same
+  wrong table agreed with it perfectly.  A round trip is a
+  tautology and it certified a broken encoder.  R9.
+
+  vecmaps_dis.txt                    loaded, 30 rows  (1 header, 290 padding skipped)
+
+  MAP  | addps xmm0,xmm1                  | 0f 58 c1 | roundtrip | objdump agrees
+  MAP  | addpd xmm0,xmm1                  | 66 0f 58 c1 | roundtrip | objdump agrees
+  MAP  | movaps xmm0,xmm1                 | 0f 28 c1 | roundtrip | objdump agrees
+  MAP  | movups xmm0,xmm1                 | 0f 10 c1 | roundtrip | objdump agrees
+  MAP  | movdqa xmm0,xmm1                 | 66 0f 6f c1 | roundtrip | objdump agrees
+  MAP  | movdqu xmm0,xmm1                 | f3 0f 6f c1 | roundtrip | objdump agrees
+  MAP  | pxor xmm0,xmm1                   | 66 0f ef c1 | roundtrip | objdump agrees
+  MAP  | mulps xmm0,xmm1                  | 0f 59 c1 | roundtrip | objdump agrees
+  MAP  | addps xmm0,[rbx]                 | 0f 58 03 | roundtrip | objdump agrees
+  MAP  | vaddps xmm2,xmm1,xmm0            | c5 f0 58 d0 | roundtrip | objdump agrees
+  MAP  | vaddps ymm2,ymm1,ymm0            | c5 f4 58 d0 | roundtrip | objdump agrees
+  MAP  | vaddpd ymm2,ymm1,ymm0            | c5 f5 58 d0 | roundtrip | objdump agrees
+  MAP  | vaddps ymm10,ymm0,ymm0           | c5 7c 58 d0 | roundtrip | objdump agrees
+  MAP  | vmovaps ymm0,[rbx]               | c5 fc 28 03 | roundtrip | objdump agrees
+  MAP  | vmovups ymm0,[rbx]               | c5 fc 10 03 | roundtrip | objdump agrees
+  MAP  | vmovdqa ymm0,[rbx]               | c5 fd 6f 03 | roundtrip | objdump agrees
+  MAP  | vmovdqu ymm0,[rbx]               | c5 fe 6f 03 | roundtrip | objdump agrees
+  MAP  | vpxor ymm2,ymm1,ymm0             | c5 f5 ef d0 | roundtrip | objdump agrees
+  MAP  | vpaddd ymm2,ymm1,ymm0            | c5 f5 fe d0 | roundtrip | objdump agrees
+  MAP  | vpsubd ymm2,ymm1,ymm0            | c5 f5 fa d0 | roundtrip | objdump agrees
+  MAP  | vpcmpeqd ymm2,ymm1,ymm0          | c5 f5 76 d0 | roundtrip | objdump agrees
+  MAP  | vbroadcastss ymm0,[rbx]          | c4 e2 7d 18 03 | roundtrip | objdump agrees
+  MAP  | vbroadcastsd ymm0,[rbx]          | c4 e2 7d 19 03 | roundtrip | objdump agrees
+  MAP  | vpbroadcastd ymm0,[rbx]          | c4 e2 7d 58 03 | roundtrip | objdump agrees
+  MAP  | vfmadd231pd ymm0,ymm1,ymm2       | c4 e2 f5 b8 c2 | roundtrip | objdump agrees
+  MAP  | vfmadd132ps xmm0,xmm1,xmm2       | c4 e2 71 98 c2 | roundtrip | objdump agrees
+  MAP  | vaddps zmm0,zmm1,zmm2            | 62 f1 74 48 58 c2 | roundtrip | objdump agrees
+  MAP  | vaddpd zmm0,zmm1,zmm2            | 62 f1 f5 48 58 c2 | roundtrip | objdump agrees
+  MAP  | vaddps zmm0{k2},zmm1,zmm2        | 62 f1 74 4a 58 c2 | roundtrip | objdump agrees
+  MAP  | vaddps zmm0,zmm1,zmm2{ru-sae}    | 62 f1 74 58 58 c2 | roundtrip | objdump agrees
+
+  30 cases, 30 round-tripped, 30 cross-checked against
+  objdump, 0 disagreed.
+  THE THREE NUMBERS ARE NOT THE SAME CLAIM.  'round-tripped'
+  says the encoder and the decoder agree with each other, and
+  that is necessary and NOT SUFFICIENT.  'objdump agrees' says
+  an implementation that was not written from this table read
+  the same bytes and named the same instruction, and that is
+  the claim worth making.
+
+  AND THE CROSS-CHECK IS WHAT FOUND THE THREE BUGS that the
+  round trip could not: the two-byte VEX field order, the
+  inversion of R and X and B, and the fact that the L bit
+  is TWO bits wide in EVEX and one in VEX.  All three
+  produced LEGAL BYTES for A DIFFERENT INSTRUCTION, which
+  is the worst kind of wrong: there is no trap to catch it
+  and no length to be surprised by.
+
+6B. AVX-512, WHICH THIS MACHINE CANNOT EXECUTE.  CPUID.7.0:EBX
+  reads F, DQ, CD, BW and VL as five ZEROS and the XCR0 opmask,
+  zmm_hi256 and hi16_zmm bits as three more, printed in
+  section 1.  So everything above the 0x62 rows is QUOTED, and
+  the one thing this file does with AVX-512 is DECODE ITS
+  BYTES, which needs no silicon at all.
+
+  THE FOUR LEVELS, and the L'L PAIR is the whole of it:
+    L'L = 00   no vector length in this instruction
+    L'L = 10   128 bit, xmm
+    L'L = 11   512 bit, zmm
+  and when L'L is 00 the SAME two bits are the ROUNDING CONTROL,
+  so a decoder cannot read them as a length without first
+  asking whether the instruction has a length.  That is why the
+  round trip above has a row with b=1 and no L at all.
+
+  THE ELEVEN BITS OF AN EVEX PREFIX, and every one of them is a
+  thing a VEX prefix could not express:
+    R~ X~ B~  16 more vector registers, so zmm0-zmm31
+    R~'        a FOURTH bit on ModRM.reg, so 32 GPRs
+    W          as before, and for the float map the packed-double
+    v~3..0     the third vector operand, as before
+    bit 2      a MANDATORY 1, which is what makes 0x62 safe: a
+              32-bit BOUND cannot have it, so the two never
+              collide in a mode where BOUND exists
+    p1 p0      the mandatory 66/F2/F3 prefix, as before
+    z          merging (0) versus ZEROING (1) the mask-off lanes
+    L' L       the length, or the rounding mode
+    b          broadcast from memory, or suppress exceptions
+    V~'        a fifth bit on the v operand
+    a2 a1 a0   WHICH OF EIGHT MASK REGISTERS, and a value of 0
+              means no mask at all
+
+  THE MASK REGISTER, and this is the part that has no analogue
+  anywhere else in the instruction set.  k0-k7 are not vector
+  registers and they are not general registers; each is 64 bits
+  and each bit of it says whether one LANE of the destination
+  takes part.  An AVX-512 add can be predicated on a mask for
+  FREE -- there is no compare instruction, no branch, and no
+  second pass over the data, because the mask is an OPERAND of
+  the arithmetic rather than an input to a sequence of it.
+
+  TWO PROPERTIES NO OTHER INSTRUCTION IN THIS COURSE HAS, and
+  they are the reasons the extension exists:
+    * THE TAIL DISAPPEARS.  A 4-wide loop over 66 elements needs
+      a scalar remainder, and the SIMD course measured that
+      remainder at 1.02x -- free, but only because the
+      remainder happened to be short.  With a mask register the
+      66th iteration is the same instruction with two of its four
+      lanes switched off, so there is no second code path at all.
+    * BROADCAST IS AN OPERAND.  vbroadcastsd ymm0, [rbx] loads
+      one eight-byte value into all four lanes.  The same bytes
+      are in the table above, encoded and decoded, and the
+      DISPATCH is a field of the instruction rather than a
+      separate load.
+
+  WHAT IS QUOTED HERE AND NOT MEASURED, itemised, because the
+  difference is the point of the section:
+    QUOTED  that a ZMM is 512 bits, that k0-k7 are 64 bits, that
+            z is merging-versus-zeroing, that b is broadcast
+    QUOTED  the four-level hierarchy and its dispatch penalty
+    MEASURED the five CPUID bits are zero
+    MEASURED the XCR0 state bits are zero
+    MEASURED the encoder emits the bytes the SDM says and
+            objdump reads them back the same way
+  NOT MEASURED  that any of it is FASTER, and not measured
+  because there is no hardware here on which to run it.  A
+  decoder that works on bytes is a decoder; it is not a
+  benchmark, and the two are confused often enough to be worth
+  naming.
+
+7.  RETRACTIONS AND LIMITS.
+
+7A. THE RETRACTIONS.  Twenty-four of them, and NOT ONE is a
+  mistake about how a computer works.  Every one is a mistake
+  about what a NUMBER or a FIELD is, or a mistake made by an
+  INSTRUMENT rather than by the hardware, and that is the whole
+  argument of this course.
+
+   R1. "The direction flag is EFLAGS bit 21."  RETRACTED.
+        Bit 10 is DF.  Bit 21 is the ID flag, whose entire job
+        is to be a bit software can set on a processor that has
+        CPUID and cannot on one that does not.  The two flags
+        have nothing in common and the bit number is the whole
+        of the error.  Section 5B reads both out of the flags
+        register on this machine.
+
+   R2. "INC and DEC are NOT atomic even with the LOCK prefix,
+        which is why the encoding exists at all."  RETRACTED.
+        Measured, `lock inc` is EXACT -- every iteration, two
+        threads, two cores -- and the unprefixed `inc` loses
+        updates.  INC and DEC are on the SDM's list of EIGHTEEN
+        instructions that accept LOCK, exactly like ADD, and a
+        locked INC is an ordinary atomic read-modify-write.
+        The encoding exists for a different reason: `inc` does
+        not disturb the CARRY flag and `add $1, m` does, and a
+        loop that carries a value across its body wants the
+        former.  Section 4 prints both.
+
+   R3. "A lost-update count is a test for atomicity."  RETRACTED
+        as a GENERAL instrument, and the retraction is the most
+        useful thing in this file.  A lost update is only
+        defined for an operation that moves a value in ONE
+        direction.  NOT and NEG are involutions: NOT twice is
+        the identity, so applying it an even number of times
+        returns the word to where it started WHETHER OR NOT the
+        individual NOT was atomic.  The first version of section
+        4 used NOT x2 and NEG x2 and reported EXACT for all four
+        unprefixed arms -- a table of four exact rows that were
+        all wrong.  The instrument that works for every one of
+        them is the DUPLICATE OLD VALUE, and it works because it
+        never asks what the value means.
+
+   R4. "An operation that did not change the value cannot have
+        lost an update."  RETRACTED.  'or $0, (%rbx)' writes
+        back exactly the word it read, so the value is right
+        whatever the interleaving, and the duplicate test still
+        fires -- two threads were handed the same old value, and
+        that is a fact about the INSTRUCTION rather than about
+        the data.  'The value is unchanged' and 'the operation
+        was atomic' are different claims and every instrument in
+        this collection except this one conflates them.
+
+   R5. "The three-operand VEX form removed an instruction from
+        the loop and so it must be faster."  RETRACTED, and
+        this one is inherited rather than new.  The assembly
+        course measured it at 1.00x and retracted the claim.  This
+        file ran the OTHER body -- the one where the destination
+        IS also a source, so the legacy form needs no copy at
+        all -- at 128 bits, and the copy is still free.  What
+        the three operands bought is a SOURCE-LEVEL PROPERTY,
+        and a source-level property is what an encoding is for.
+
+   R6. "The AVX-SSE transition penalty is what vzeroupper
+        exists for, and it will be visible here."  RETRACTED as
+        a claim about THIS machine.  The bit pattern came out
+        the other way round: on this part a LEGACY SSE
+        instruction PRESERVES the upper halves and a VEX-128
+        instruction ZEROES them.  And the timing table, once it
+        was measuring the legacy encoding rather than VEX, showed
+        the interleaved loop costing the same as the AVX loop
+        alone.  The transition penalty is NOT OBSERVABLE HERE.
+        The transition penalty is not the only reason the
+        instruction exists and on this part the other reason is
+        the bit pattern.
+
+   R7. "The first version of the vzeroupper experiment measured
+        nothing because it used intrinsics for the SSE arm."
+        CONFIRMED, and it is a compiler fact rather than a
+        timing fact.  `gcc -mavx2` compiles `_mm_add_ps` to
+        `c5 f8 58 c1` -- VEX -- and a VEX-128 instruction has no
+        AVX-SSE transition penalty AT ALL, so every arm came out
+        1.00x.  The measurement was of the wrong bytes.  The arms
+        in section 3C are raw 0F 58 encodings written in inline
+        asm, and the build script disassembles them.
+
+   R8. "A static array is a safe place to probe a load."  
+        RETRACTED.  The alignment probe used a static array
+        filled by a loop, and the compiler folded the whole
+        experiment: the `vmovapd` became a `vmovsd` of a value
+        it had already read at compile time, and the probe
+        reported OK for an aligned load AND for a misaligned
+        one.  A compiler that knows the CONTENTS cannot be asked
+        to measure what is in them.  The buffer is mmap'd now.
+
+   R9. "A round trip proves the encoder is right."  RETRACTED.
+        The first encoder in this course round-tripped 28 of 28
+        against its own decoder and was wrong: it wrote the
+        two-byte VEX with the THREE-byte field order, putting X~
+        and B~ where v~3 and v~2 belong.  A round trip is a
+        tautology -- two readers built from one table will agree
+        whether or not the table is.  It took objdump, which was
+        not written from that table, to find it.  The artifact now
+        cross-checks every row against a second reader and says
+        so on every row.
+
+  R10. "In a VEX-encoded instruction, ModRM.r/m is the
+        destination."  RETRACTED for the three-operand form.
+        It is the convention every GPR instruction follows and
+        it is wrong here:
+          Intel 'vaddps DEST, SRC1, SRC2'
+            ModRM.reg = DEST   vvvv = SRC1   ModRM.rm = SRC2
+        Established by assembling three DISTINCT registers and
+        reading which field each landed in, which is a five-line
+        experiment and the only trustworthy way to learn it.
+
+  R11. "A probe that returns must have run."  RETRACTED.
+        The exit status of a forked child is a SIGNAL, and a
+        probe the COMPILER DELETED also returns cleanly.  The
+        first alignment probe reported 'returned' for eight
+        instructions, four of which were not in the binary.  The
+        build script now disassembles the probe bodies and the
+        harness asserts the mnemonics are present.
+
+  R12. "Filling a YMM register, running one instruction and
+        reading lane 4 measures the transition."  RETRACTED as
+        a probe.  The fill and the read were two separate inline
+        asm blocks, and between them gcc inserted a VEX-128
+        instruction on ymm0 -- which ZEROES the upper half on
+        this part, so the experiment reported 0x00000000 for a
+        transition that never happened.  The whole sequence is
+        now ONE asm block, which is the only way to observe a
+        register state between two instructions.
+
+  R13. "The three-operand form is a source-level property and
+        no duration can price it."  NOT RETRACTED, and it is
+        printed here because the one retraction in this course
+        that survives is a NEGATIVE claim, and negative claims
+        are the ones that get quietly dropped.  Three bodies,
+        three widths, 1.00x, and the copy is free.
+
+  R16. "A duplicate-old-value test can decide whether a
+        read-modify-write is atomic."  RETRACTED, and it took
+        four versions to find the instrument that works.  A
+        PER-THREAD hash set reported N-1 duplicates for every
+        arm including `lock or $0`, because a thread that is
+        outrun sees its own value again -- which happens for an
+        ATOMIC read-modify-write too.  A SHARED set needs
+        synchronisation and had none, so it was a data race in
+        the instrument while it measured data races.  The version
+        that put the incrementer and the probe on the SAME word
+        counted CLOBBERS: a value-preserving probe writes a stale
+        value back and undoes an increment the other thread had
+        already made.  What works is the PAIRED COUNTER -- thread
+        0 increments, thread 1 probes the same word, and the
+        observable is a lost-update COUNT, which is a quantity
+        instrument 1 already measures correctly.  Section 4
+        writes all four out, with the number each one produced.
+
+  R17. "A CMPXCHG loop's accumulator pair is an input."
+        RETRACTED.  EDX:EAX is an INPUT *AND AN OUTPUT* pair: on
+        a failed compare the CPU writes the memory value back
+        into it, and THE LOOP NEEDS THAT WRITE.  Declared as plain
+        inputs -- which the first version did, because `+a` on a
+        `uint64_t` local looked like enough -- the compiler
+        reloads the same stale value every iteration, the compare
+        never succeeds, the loop gives up and the counter reads
+        1.  Four rows of the CNT table were wrong for this and
+        three of them printed a number that looked like a
+        result.  The 8-byte and 16-byte forms also need BOTH
+        halves of the new value bound: the new value is EBX:ECX
+        and RBX:RCX, and a half-bound one is whatever the
+        register allocator left in the other half.
+
+  R18. "An arm is atomic when the total is exactly 2N."
+        RETRACTED, and the correction is a table of THREE exact
+        totals rather than one.  An arm that moves the value UP
+        ends at 2N.  One that moves it DOWN ends at 2^32 - 2N,
+        because the word is 32 bits, and a table that expected
+        2N reported a perfectly atomic `lock dec` as non-atomic.
+        One that TOGGLES a bit ends at 0, because the two threads
+        toggle an even number of times between them.  Getting any
+        of the three wrong calls a working arm broken, and the
+        EXPECTATION is the thing that has to be right before a
+        measurement can be called a pass.
+
+  R19. "A table with twenty perfect rows is evidence."
+        RETRACTED.  It was the output of an instrument whose
+        probe thread had fallen through to `default` and done
+        NOTHING while the incrementer ran alone, so nothing was
+        lost and every arm read ATOMIC.  An instrument that
+        measured nothing reports no losses, and a table of
+        perfect results is what a broken instrument looks like
+        from the outside.  The CLOCK column section 4 prints
+        beside every count exists so a reader can check that the
+        instrument moved.
+
+  R20. "BTS and BTR are atomic when the final word is 1 and 0."
+        RETRACTED: they are NOT TESTABLE with this instrument, at
+        all, locked or not.  BTS SETS bit 0 and BTR CLEARS it, and
+        both are IDEMPOTENT, so a lost update is invisible -- the
+        word ends at exactly 1 however many updates were lost.
+        The paired instrument cannot help either, because it
+        restores the same bit.  Only BTC, which TOGGLES, can be
+        read this way, and it is the only member of the group
+        whose row means anything.  That is a limit of the
+        INSTRUMENT and not a fact about the instructions, and
+        the artifact says so rather than quoting the other two
+        rows as a result.
+
+  R21. "A checksum loop over a byte array is safe to let the
+        compiler vectorise."  RETRACTED.  It is the CHECKSUM
+        that is supposed to catch a bad copy, and a vectorised
+        32-byte load at offset 4092 of a 4096-byte buffer is a
+        clean SIGSEGV.  The artifact died there, four kilobytes
+        into a run that had already printed two hundred correct
+        lines.  The loops are volatile and the buffers are
+        oversized, and both of those are load-bearing.
+
+  R22. "MFENCE and SFENCE differ in a single bit position."
+        RETRACTED.  They are 0f ae f0 and 0f ae f8, so the ModRM
+        reg field differs in TWO bit positions and not one: MFENCE
+        has bit 3 clear where SFENCE has it set, while bits 2 and
+        1 are clear in both.  And the more interesting statement
+        is the OPPOSITE of the draft's: MFENCE and SFENCE share
+        the reg value 7 and are told apart by the ESCAPE, so a
+        decoder that switches on ModRM.reg alone gets them right
+        only by accident.
+
+  R23. "The objdump cross-check agreed with the encoder on
+        28 of 30 rows."  RETRACTED, and this is the worst of
+        the twenty-four, because it was BELIEVED.  The real
+        reading of the first run was 28 DISAGREEMENTS out of 30,
+        and this file reported them as evidence that the
+        encoder was broken.  The encoder was fine.  The reader
+        of the DISASSEMBLY was off by one row: objdump prints a
+        section header before the first instruction, that line
+        has no mnemonic in it, and the loader counted it as
+        row 0.  Every row was therefore compared against its
+        NEIGHBOUR's text, and the two rows that reported
+        agreement did so only because both of them happen to
+        be vaddps.  THE LESSON, and it is worth more than the
+        thirty bytes: a cross-check that disagrees with almost
+        everything is as SUSPICIOUS as one that agrees with
+        everything.  The two failure modes a misaligned reader
+        produces -- all-disagree and all-agree -- look nothing
+        like each other and are equally wrong, and the only
+        reason this one was caught is that the number was
+        checked against what a CORRECT run looks like and not
+        against whether it felt right.  This is the same fault
+        as R11, one layer up: a probe that returns must have
+        run, and a cross-check that fails must have been aimed.
+
+  R24. "The arm labelled 'store to my line, then load the
+        peer's' is a two-thread ping-pong."  RETRACTED, and it
+        took THREE attempts to fix, which is why it is here at
+        that length.
+        ONE.  The body took a THREAD ID and never used it: both
+        threads addressed mine[0] and peer[0], so 'my line'
+        and 'the peer's' were the SAME two words and the arm
+        was the one-cache-line case wearing the wrong name.
+        The floor arm, which stores and does NOT load, was not
+        a floor either, because its single store was already
+        contended; it measured half a same-line ping-pong and
+        came out the SAME SIZE as the full one.
+        TWO.  Indexing by id was not enough.  The arrays were
+        two words wide with aligned(64) on them, and that
+        attribute aligns the ARRAY and not each ELEMENT, so
+        the two threads' words were still EIGHT bytes apart and
+        still shared a line.  aligned(64) is not a promise
+        about the elements; it is a promise about the object.
+        THREE.  The fix is a STRIDE: a line is 64 bytes and a
+        uint64_t is 8, so each thread gets a row of eight.
+        THAT is the one that worked, and the layout is now
+        PRINTED above the table and asserted by the harness,
+        because two of the three were layout bugs that produced
+        numbers which looked entirely reasonable.
+        THE TELL, and it is the part worth keeping: the
+        store-only floor came out ABOVE the ping-pong in every
+        run.  That is impossible for a floor, and this file
+        PRINTED THE RATIO instead of treating it as a
+        contradiction of its own vocabulary.  A row's NAME is a
+        claim about what the row did, and a name is not
+        evidence -- which is R3 and R23 again, and the reason
+        this course spends three paragraphs on what an
+        instrument is.  A number that cannot have come out is
+        the friendliest thing an experiment ever does, and the
+        only way to deserve it is to hold a claim that says
+        the number should have been SMALLER.
+
+  R14. "A not-equal, not-0xFFFFFFFF, not-0x40000000 immediate
+        is a different test from 0."  NOT A RETRACTION BUT THE
+        FINDING THAT REPLACED ONE.  The involution arms were
+        rewritten to use immediates that CHANGE the value, which
+        is what makes the counter instrument applicable to them
+        at all.  XOR with 0 is the identity and can never lose an
+        update; XOR with 0x40000000 toggles a bit and can.
+
+
+  AND THE ONES THAT ARE NOT ABOUT THE ARCHITECTURE AT ALL
+  are R8, R11, R16, R17, R19, R21, R23 and R24, and they
+  are the eight a reader should take away from this
+  course: every one of them is a measurement that was
+  WRONG about the machine and RIGHT about its own
+  instrument.  Six of the twenty-four are mistakes about
+  what a NUMBER is (R2, R4, R18, R19, R20 and R22),
+  SEVEN are about what an INSTRUMENT is (R3, R8, R11,
+  R16, R21, R23 and R24), three are about what an
+  ENCODING is (R9, R10 and R15), and the rest are about
+  what a BINARY contains or what a SPECIFICATION says.
+  Not one of the twenty-four is a mistake about how a
+  computer works, and that is the argument the course
+  ends on.
+
+
+7B. THE LIMITS.  Printed rather than footnoted, because a limit
+  that is a footnote is a limit that gets forgotten.
+
+  NO EVENT COUNTER OF ANY KIND.  perf_event_paranoid is 4,
+  RDPMC is a fault, perf_event_open is EACCES, and
+  /dev/cpu/0/msr is root-only.  Nothing in this file counts
+  instructions, cycles, uops, cache lines or coherence
+  transactions.  Every duration is a DURATION, and a duration
+  BOUNDS A COUNT WITHOUT MEASURING IT.  Every mechanism named
+  in this file is therefore marked INFERRED unless it is a
+  fault, a bit pattern or a byte.  Settled by perf_event_open
+  with a paranoid setting below 4 and a PMU passthrough.
+
+  NO AVX-512.  CPUID.7.0:EBX F, DQ, CD, BW and VL are five
+  zeros and the XCR0 opmask, zmm_hi256 and hi16_zmm bits are
+  three more.  So EVERYTHING about a ZMM register, about a
+  k0-k7 mask and about the four-level dispatch is QUOTED and
+  marked so.  What IS measured is that the bytes decode, which
+  needs no silicon.  Settled by a Skylake-SP or a Zen 4.
+
+  ONLY ONE MISALIGNMENT WAS MEASURED, at 8 bytes.  A load that
+  is 8-byte aligned and not 16-byte aligned is the case that
+  matters and it is the case that ran; nothing here says what
+  happens at 4, 20 or 28, and the alignment requirement is a
+  requirement on the SIZE not the offset.
+
+  WHETHER ANY LOCKED INSTRUCTION ASSERTED LOCK# ON THE BUS.
+  On every processor since the P6 a locked instruction whose
+  line is already in the local cache does not drive the pin at
+  all; only the cache is locked.  What is measured is the
+  OBSERVABLE BEHAVIOUR, which is the thing a program relies
+  on.  Settled by a logic analyser on the pin.
+
+  THE COST OF A LOCKED INSTRUCTION, AND THE COST OF A LOCKED
+  16-BYTE ONE.  Section 4 establishes that CMPXCHG16b is
+  ATOMIC on 16 bytes and it does not establish what that costs.
+  The smp course measured an uncontended lock against a plain
+  store and that is the number to quote, not this one.
+
+  THE STORE-BUFFER DEPTH, AND WHETHER SFENCE ACTUALLY CHANGES
+  THE PING-PONG'S SHAPE.  Section 5A measures the COST of the
+  fence and does not observe the buffer.  The mechanism -- that
+  a store does not invalidate the peer's copy until it
+  retires -- is INFERRED from a duration that did not behave
+  the way the naive story predicts.  Settled by a PMU.
+
+  WHY THE DOWNWARD STRING DIRECTION IS SLOWER.  Measured, four
+  sizes, a shape.  NOT EXPLAINED: there is no counter that can
+  count the micro-ops a REP MOVSB expands to and the vendor
+  manual gives no number either.
+
+  A SECOND RUN'S RATIOS.  The exact figures move between runs;
+  the SHAPES do not, and every figure in the harness is
+  asserted as an ordering or a shape for that reason.
+
+  AArch64, RISC-V, and every other architecture.  LDXR/STXR and
+  the DMB that orders them are a different instruction set with
+  a different failure mode -- an LL/SC pair can ALWAYS fail and
+  there is no way to make it not -- and the comparison belongs
+  to the smp course, which owns the principle.
+
+7C. WHAT THIS ARTIFACT CAN SUPPORT.
+
+  Each line below is a claim this file MEASURED, and the
+  list was checked against the twenty-four retractions: the
+  first version of this block asserted that the VEX form
+  removed the alignment requirement, which R15 retracts and
+  section 2 measures the other way, and a verdict that
+  contradicts a retraction in the same file is worse than
+  no verdict at all.
+
+  * Which of eighteen instructions behave atomically on this
+    part, and which of them imply LOCK, MEASURED, and not
+    quoted.
+  * That the aligned vector loads fault at +8 bytes and the
+    unaligned ones do not -- and that the VEX form does NOT
+    remove the requirement, which is the opposite of what
+    the first version of this block said.
+  * What the upper 128 bits of a YMM register hold after each
+    class of instruction, as a BIT PATTERN, which needs no timer.
+  * The exact bytes of thirty instructions, agreed on by two
+    readers that were written independently of each other.
+  * That the three fences are ONE opcode, 0F AE, with a
+    three-bit selector in which MFENCE and SFENCE COLLIDE at
+    reg=7 and are told apart by the escape.  NOT 'they differ
+    in one field', which is the error R22 retracts.
+  * That the direction flag is at bit 10, and that a backward
+    REP MOVSB is still slower than a forward one here.
+
+7D. WHAT IT CANNOT SUPPORT.
+
+  * Any claim about AVX-512 EXECUTION, on any machine, because
+    there is no such machine in this file.
+  * Any cycle count, any event count, and any statement of the
+    form 'this instruction retires in N cycles'.
+  * Any claim that a locked instruction is SLOWER than an
+    unlocked one, which is a claim about a noise floor and not
+    about an instruction.
+  * Any claim about a cache hierarchy, a prefetcher or a branch
+    predictor.  The memory course owns those.
+
+
+  rows measured: 207
+  checksums folded in: 0xd93c0879198dc3fd
+  g_sink: -2793348444591481150

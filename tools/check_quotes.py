@@ -52,11 +52,21 @@ PREFIXES = {
     "x86sys": ("x86_syscall.ch", "x86_exceptions.ch", "x86_rings.ch",
                "x86_cr.ch", "x86_debug.ch", "x86_virtual.ch", "x86_paging.ch",
                "x86_pmu.ch", "x86_boundary.ch", "x86sys_landing.ch"),
+    # The FOURTH course of the section.  Six concepts plus a landing page,
+    # and the last concept is `x86_bytes.ch` and not `x86_verify.ch`: the
+    # plan gives the id `x86-verify` to all THREE of the remaining courses,
+    # x86abi took it, and a concept id is resolved GLOBALLY by
+    # render_concept() with no course in the key.  This one is named for
+    # what its artifact does, which is encode thirty instructions and
+    # decode them back.
+    "x86simd": ("x86_sse.ch", "x86_avx.ch", "x86_avx512.ch", "x86_atomics.ch",
+                "x86_order.ch", "x86_bytes.ch", "x86simd_landing.ch"),
 }
 OUTPUTS = {
     "x86asm": "x86dec.out",
     "x86abi": "abidump.out",
     "x86sys": "sysdump.out",
+    "x86simd": "vecdump.out",
 }
 PREF = PREFIXES.get(COURSE, (COURSE[:3],))
 if not isinstance(PREF, tuple):

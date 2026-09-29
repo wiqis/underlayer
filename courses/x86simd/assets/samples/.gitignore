@@ -1,0 +1,12 @@
+# Build products.  The RECORDED outputs ship: vecdump.out, run1.txt,
+# run2.txt, vecdump_dis.txt and vecmaps_dis.txt, so that every claim in
+# the course is checkable on a machine that never ran the benchmark --
+# which is the whole reason the harness takes a path argument and
+# defaults to vecdump.out.  The BINARIES do not ship, because a committed
+# executable is a file nobody can review and one that is wrong on the
+# next gcc.
+vecdump
+vecdump.bin
+vecmaps.bin
+*.o
+__pycache__/

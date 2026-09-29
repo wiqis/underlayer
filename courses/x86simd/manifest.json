@@ -1,0 +1,97 @@
+{
+  "id": "x86simd",
+  "title": "The x86-64 Data Path: Atomics, Ordering and Vectors",
+  "version": "1.0.0",
+  "description": "Fifteen `LOCK` arms and six unprefixed ones, each two threads and a barrier, and the verdict column is the finding: `lock inc` IS exact and the draft said it was not, while `or $0`, `xor $0` and `sub $0` with no prefix all LOSE increments. `XCHG` with a memory operand is the only instruction in the set that is atomic with no prefix, and the eighteen-instruction list everybody quotes is the list that ACCEPTS the prefix. Ten vector loads probed one per forked child, and VEX did NOT remove the alignment requirement: all five aligned forms die at +8 bytes, aligned and unaligned alike. Thirty encodings round-tripped AND cross-checked against objdump, which is how twenty-four of the draft's claims came back retracted.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 6 concepts, then reproduce the 266 checks in courses/x86simd/assets/samples/crosscheck.py and break one deliberately -- delete the header-skip in load_dis() in vecmaps.c so the objdump section header is counted as row 0 again, and watch group I report 28 disagreements out of 30 for an encoder that is entirely correct",
+  "min_score": 70,
+  "dependencies": [
+    "x86asm",
+    "x86abi",
+    "isa",
+    "smp",
+    "simd",
+    "mem"
+  ],
+  "modules": [
+    {
+      "id": "vectors",
+      "title": "The Vector Registers and What the Encoding Changed",
+      "concepts": [
+        "x86-sse",
+        "x86-avx",
+        "x86-avx512"
+      ]
+    },
+    {
+      "id": "ordering",
+      "title": "Atomics and Ordering, and the Instructions That Imply LOCK",
+      "concepts": [
+        "x86-atomics",
+        "x86-order",
+        "x86-bytes"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "x86-sse",
+      "title": "SSE and SSE2: The XMM Register and the Alignment Split",
+      "module_id": "vectors",
+      "description": "The eight-row table of the SSE and SSE2 moves, PRINTED AND NOT MEASURED, and then the fault half measured one forked child per row: ten probes at +8 bytes, of which five SIGSEGV and four return. The aligned set is a PARTITION of the probes, not a rule of thumb, and the direction flag is bit 10 and not bit 21 -- bit 21 is the ID flag, whose entire job is to be a bit software can set on a processor that has CPUID.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-avx",
+      "title": "AVX and AVX2: Three Operands, vzeroupper, and What the Upper Half Holds",
+      "module_id": "vectors",
+      "description": "The three-operand form is free here (1.00x, inherited from the assembly course and re-measured rather than re-argued), and vzeroupper is not observable on this microarchitecture. The finding is the opposite of the usual story: a LEGACY SSE instruction PRESERVES a YMM register's upper 128 bits and a VEX-128 instruction ZEROES them, read out of seven bit patterns rather than argued from a manual.",
+      "estimated_minutes": 27,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-avx512",
+      "title": "AVX-512: ZMM, k0-k7, and a Decoder That Needs No Silicon",
+      "module_id": "vectors",
+      "description": "This machine cannot execute one instruction in this concept: CPUID.7.0:EBX F, DQ, CD, BW and VL are five zeros and the three XCR0 state bits are three more, and every claim is marked QUOTED against MEASURED. What IS measured is that the bytes DECODE, which needs no hardware: the EVEX prefix, the eleven new bits, the L'L pair, the four levels, and a k mask that is an OPERAND of the add rather than an input to it.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-atomics",
+      "title": "The Atomic Set: Which Instructions Imply LOCK, and Which Do Not",
+      "module_id": "ordering",
+      "description": "Forty-two arms over three instruments, and the two that decide the concept are a `lock inc` that is EXACT -- the draft said it was not, and the reason it is exact is the only reason: INC does not disturb CARRY -- and `or $0`, `and $~0` and `sub $0` with no prefix, which all LOSE increments while looking like no-ops. The implicit set is one instruction wide. XCHG with a memory operand is the whole of it.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-order",
+      "title": "Ordering: TSO, the Three Fences, and What Each One Orders",
+      "module_id": "ordering",
+      "description": "MFENCE, LFENCE and SFENCE are `0f ae` with reg fields 7, 5 and 7 -- so MFENCE and SFENCE COLLIDE in the reg field and are told apart by the ESCAPE, and a decoder that switches on ModRM.reg alone gets them right only by accident. The ping-pong is measured over seven arms on two pinned cores, and the two that cost most are the same-cache-line arm and MFENCE. The DIR flag is bit 10, and `rep movsb` in that direction is 8.00x slower at 16 bytes and 31.25x at 4096.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-bytes",
+      "title": "Thirty Encodings, Round-Tripped and Cross-Checked",
+      "module_id": "ordering",
+      "description": "The artifact: an encoder, a decoder, and objdump as a second reader that was not written from the same table. A round trip is a tautology and it certified a broken encoder in the previous course -- twenty-eight of twenty-eight and wrong -- and twenty-four retractions came out of that, including two that the second reader itself had to be fixed for. Includes the one that took three attempts, because a plausible number is what a broken instrument looks like from the inside.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}
