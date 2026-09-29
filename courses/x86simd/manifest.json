@@ -2,7 +2,7 @@
   "id": "x86simd",
   "title": "The x86-64 Data Path: Atomics, Ordering and Vectors",
   "version": "1.0.0",
-  "description": "Fifteen `LOCK` arms and six unprefixed ones, each two threads and a barrier, and the verdict column is the finding: `lock inc` IS exact and the draft said it was not, while `or $0`, `xor $0` and `sub $0` with no prefix all LOSE increments. `XCHG` with a memory operand is the only instruction in the set that is atomic with no prefix, and the eighteen-instruction list everybody quotes is the list that ACCEPTS the prefix. Ten vector loads probed one per forked child, and VEX did NOT remove the alignment requirement: all five aligned forms die at +8 bytes, aligned and unaligned alike. Thirty encodings round-tripped AND cross-checked against objdump, which is how twenty-four of the draft's claims came back retracted.",
+  "description": "Twenty-one `LOCK` arms and fifteen without one, two threads and a barrier each, and the verdict column is the finding: `lock inc` IS exact and the draft said it was not, while `or $0`, `xor $0` and `sub $0` with no prefix all LOSE increments while looking like no-ops -- and only a SECOND instrument can see that, because the first is blind to an operation whose value never changes. The two prefixed arms that are not exact are `adc` and `sbb`, and the artifact says so rather than quoting them: they read a carry FLAG as well as the word, so a lost flag is not a lost increment. Ten vector loads probed one per forked child, and VEX did NOT remove the alignment requirement: all five aligned forms die at +8 bytes, aligned and unaligned alike. Thirty encodings round-tripped AND cross-checked against objdump, which is how twenty-four of the draft's claims came back retracted -- including two the second reader itself had to be fixed for, one of which reported 28 disagreements out of 30 for an encoder that was entirely correct.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",
@@ -70,7 +70,7 @@
       "id": "x86-atomics",
       "title": "The Atomic Set: Which Instructions Imply LOCK, and Which Do Not",
       "module_id": "ordering",
-      "description": "Forty-two arms over three instruments, and the two that decide the concept are a `lock inc` that is EXACT -- the draft said it was not, and the reason it is exact is the only reason: INC does not disturb CARRY -- and `or $0`, `and $~0` and `sub $0` with no prefix, which all LOSE increments while looking like no-ops. The implicit set is one instruction wide. XCHG with a memory operand is the whole of it.",
+      "description": "42 arms over three instruments, and the two that decide the concept are a `lock inc` that is EXACT -- the draft said it was not, and the reason it is exact is the only interesting one: INC does not disturb CARRY -- and `or $0`, `and $~0` and `sub $0` with no prefix, which all LOSE increments while looking like no-ops and which only a second instrument can see. The eighteen-instruction list everybody quotes is the list that ACCEPTS the prefix, not the list that guarantees it, and the implicit set is one instruction wide according to the SDM; the measured table is careful to say which of the two it is showing, because a load, an add and a bare `xchg` loses updates and adding `lock` to that `xchg` does not help.",
       "estimated_minutes": 25,
       "difficulty": "advanced",
       "importance": "critical"

@@ -138,6 +138,87 @@ Roadmap items **8** (SIMD), **9** (AVX and AVX2), **10** (AVX-512), **11**
 26 concepts in 4 courses, ~26 + 4 landings, all 18 roadmap items covered with
 nothing dropped and nothing re-taught.
 
+## The section is complete (2026-09-29)
+
+All four courses are shipped, all 26 concepts have live routes, and all 18
+roadmap items are ticked in `docs/courses-todo.md`.
+
+| # | Course | Concepts | Min | Artifact | Checks | Verifier |
+|---|---|---|---|---|---|---|
+| A | `x86asm` — Assembly and Encoding | 5 | 127 | `x86dec` | 155 | `verify_x86asm.py` |
+| B | `x86abi` — The ABI | 6 | 150 | `abidump` | 143 | `verify_x86abi.py` |
+| C | `x86sys` — Privilege, Memory and Time | 9 | 231 | `sysdump` | 214 | `verify_x86sys.py` |
+| D | `x86simd` — The Data Path | 6 | 154 | `vecdump` | 266 | `verify_x86simd.py` |
+| | **Total** | **26** | **662** | | **778** | |
+
+Every course ships its recorded artifact output, so its harness runs on a
+machine that never ran its benchmark. That is the property the section plan
+asked for and the one the harness's `default_output()` exists to provide.
+
+### The three concept-id collisions, and the rule they produced
+
+The plan gave the last concept of all three remaining courses the id
+`x86-verify`. A concept id is resolved **globally** by `render_concept()` in
+`web/src/helpers.ch` with no course in the key, so three courses cannot share
+one and only the first to claim it keeps it. `x86abi` took it. `x86sys` took
+`x86-boundary` and `x86simd` took `x86-bytes`.
+
+The general rule, now written into the comment at the call site:
+
+> **The only concept ids that survive are the ones nobody thought of first.**
+> Name a concept for the *thing it measures* and check `grep -n '"<id>"'
+> web/src/helpers.ch` before planning it, not after.
+
+### What the fourth course added to the twelve rules
+
+Rules 1–12 above were written after courses A–C. Course D did not add a
+thirteenth, which is the result worth recording, but it **sharpened three of
+them** in ways the earlier three could not have known:
+
+- **Rule 1 gained a second half.** The artifact is not finished when it runs.
+  Course D's cross-check reported *28 disagreements out of 30* for a full run
+  and the file believed them, concluding the encoder was broken. The encoder
+  was perfect; the **reader of the disassembly** was counting `objdump`'s
+  section header as row 0, so every row was compared against its neighbour's
+  text. The two rows that still "agreed" did so only because both happen to be
+  `vaddps`. All 30 agree once the reader is aimed.
+  **A second reader must itself be checked against what a correct run looks
+  like**, not against whether its verdict felt right.
+- **Rule 10 gained its sharpest illustration.** The store-buffer ping-pong took
+  three attempts, and every version produced numbers that looked entirely
+  reasonable. The tell was visible throughout — the store-only floor came out
+  **above** the thing it was a floor for, in every run — and the file printed
+  the ratio instead of objecting. A test that says *faster* passes when the
+  instrument is broken; a test that says *slower* fails and hands you the
+  instrument. **Every table needs a claim that says a number should have been
+  smaller.**
+- **Rule 3 gained a variant nobody had written down.** `aligned(64)` on a
+  two-element array aligns the *array*, not each *element*, so two threads
+  eight bytes apart still shared a cache line and the "two lines" arm was
+  secretly the "one line" arm. The fix is a stride. **A layout is a claim, and
+  it is printed above the table and asserted by the harness rather than
+  described in a comment** — a comment is not a measurement, and two of the
+  three attempts were bugs that read exactly like correct code.
+
+Course D also produced **24 retractions**, the most of the four, and the same
+shape as the others: six about what a *number* is, seven about what an
+*instrument* is, three about what an *encoding* is, and not one about how a
+computer works.
+
+### The one place this section is deliberately incomplete
+
+Course D's third concept covers AVX-512, and **this machine cannot execute one
+instruction in it**: `CPUID.7.0:EBX` reads F, DQ, CD, BW and VL as five zeros,
+and the three `XCR0` state bits are three more. Every claim in that concept is
+marked `QUOTED` against `MEASURED` on the page itself, and the one thing the
+artifact does with AVX-512 is decode its bytes, which needs no silicon. This
+is the correct outcome rather than a gap, and it generalises:
+
+> **A reference for a feature you cannot run is still worth writing, provided
+> every sentence in it says whether it was measured.** The alternative — omit
+> the feature — leaves the reader with no way to tell a quoted claim from a
+> tested one, and that is the failure that actually costs people.
+
 ## Rules every one of these four must follow
 
 The rules the last four courses learned, written down so they are not re-learned:

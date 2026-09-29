@@ -81,11 +81,15 @@
 - [x] Learn x86-64 ABI
 - [x] Learn x86-64 System Calls
 - [x] Learn x86-64 Interrupts and Exceptions
-- [ ] Learn x86-64 SIMD Instructions
-- [ ] Learn x86-64 AVX and AVX2
-- [ ] Learn x86-64 AVX-512
-- [ ] Learn x86-64 Atomic Instructions
-- [ ] Learn x86-64 Memory Ordering
+- [x] Learn x86-64 SIMD Instructions  — `x86simd`, concept `x86-sse`
+- [x] Learn x86-64 AVX and AVX2  — `x86simd`, concept `x86-avx`
+- [x] Learn x86-64 AVX-512  — `x86simd`, concept `x86-avx512`. Quoted, not
+      measured: this machine reads all five CPUID feature bits and all three
+      XCR0 state bits as zero, so the concept is reference plus a bytes-only
+      decoder and says which is which on every claim.
+- [x] Learn x86-64 Atomic Instructions  — `x86simd`, concept `x86-atomics`.
+      42 arms, 3 instruments, 266 harness checks.
+- [x] Learn x86-64 Memory Ordering  — `x86simd`, concept `x86-order`
 - [x] Learn x86-64 Virtual Memory
 - [x] Learn x86-64 Paging
 - [x] Learn x86-64 Protection Rings

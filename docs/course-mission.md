@@ -243,12 +243,14 @@ comparatively. The new courses must therefore **generalise, never repeat**:
 learner write a fourth format, or a linker. Today the collection can tell you
 what the Mach-O loader does but not how to build one.
 
-## The architecture half of the chain: 70 items -> 9 courses
+## The architecture half of the chain: 70 items -> 12 courses
 
 Also authorised 2026-09-26. `## CPU Architecture` held **30** items and
 duplicated the per-architecture sections three ways over. It collapsed to **6**,
-giving **9 courses** across the four architecture sections
-(`CPU Architecture` 30, `x86-64` 18, `ARM64` 13, `RISC-V` 9 = 70 items).
+giving **12 courses** across the four architecture sections
+(`CPU Architecture` 30, `x86-64` 18, `ARM64` 13, `RISC-V` 9 = 70 items). The
+count was 9 until 2026-09-29, when `x86-64` was split from one 22-concept
+course into four sequential ones; see the note under the table.
 
 The three per-architecture sections were already correctly shaped and are
 **unchanged**. The split that makes "every architecture" teachable:
@@ -264,12 +266,26 @@ The three per-architecture sections were already correctly shaped and are
 | 4 | **Exceptions, Privilege and Mode Changes** | CPU Exceptions, Hardware Interrupts, CPU Privilege Levels, Context Switching | 16 |
 | 5 | **Multiprocessor Architecture** | Multiprocessor Architecture, NUMA, CPU Virtualization, CPU Performance Counters | 16 |
 | 6 | **SIMD and Vector Processing** | SIMD, Vector Processing | 16 |
-| 7 | **x86-64** | the existing 18 items, unchanged | 22 |
-| 8 | **AArch64** | the existing 13 items, unchanged | 20 |
-| 9 | **RISC-V** | the existing 9 items, unchanged | 18 |
+| 7 | **x86-64 Assembly and Encoding** | 5 of the 18 `x86-64` items | 5 |
+| 8 | **The x86-64 ABI** | 3 more | 6 |
+| 9 | **The x86-64 Machine: Privilege, Memory and Time** | 5 more | 9 |
+| 10 | **The x86-64 Data Path: Atomics, Ordering and Vectors** | the last 5 | 6 |
+| 11 | **AArch64** | the existing 13 items, unchanged | 20 |
+| 12 | **RISC-V** | the existing 9 items, unchanged | 18 |
 
-8+7+5+4+4+2 = 30, and 18+13+9 = 40, so 70 items map onto 9 courses with
-**nothing dropped** -- every item becomes a named concept or module.
+8+7+5+4+4+2 = 30, and 18+13+9 = 40, so 70 items map onto **12** courses
+with **nothing dropped** -- every item becomes a named concept or module.
+
+> **Why `x86-64` is four rows and not one.** Rows 7-10 are the four courses
+> `docs/x86-64-section-plan.md` splits the original 22-concept `x86-64` entry
+> into, authorised by the founder on 2026-09-29. The no-duplication rule and
+> the total coverage were both kept; only the shape changed, because a single
+> 22-concept course is a course nobody finishes. Each of the four is finishable
+> on its own, and none of them re-teaches a principle the neutral courses
+> already own -- they pay the *exhaustive per-architecture reference* and link
+> back for the *why*. **All four are shipped** (26 concepts, 662 minutes, 778
+> harness checks), so the architecture half of the chain is complete up to
+> AArch64 and RISC-V.
 
 ### Duplication that had to be resolved
 
