@@ -74,8 +74,8 @@
 
 ## x86-64
 
-- [ ] Learn x86-64 Assembly
-- [ ] Learn x86-64 Instruction Encoding
+- [x] Learn x86-64 Assembly
+- [x] Learn x86-64 Instruction Encoding
 - [ ] Learn x86-64 Calling Conventions
 - [ ] Learn x86-64 Stack Frames
 - [ ] Learn x86-64 ABI

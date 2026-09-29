@@ -820,6 +820,28 @@ public namespace underlayer_web {
         return string()
     }
 
+    // x86-64 assembly and encoding. Same fall-through contract: empty
+    // string for anything else. `x86-` is a prefix no other course uses,
+    // and it is deliberately not `isa-` -- the instruction-set course owns
+    // that one and the two are different subjects: this one is the set of
+    // instructions and the encodings behind the escapes, that one is how to
+    // read an encoding one byte at a time.
+    public func render_x86asm_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var asm_id = std::string("x86-asm")
+        var integers_id = std::string("x86-integers")
+        var flags_id = std::string("x86-flags")
+        var vex_id = std::string("x86-vex")
+        var map_id = std::string("x86-map")
+
+        if(cid.equals(&asm_id)) { return underlayer_content::render_x86_asm() }
+        if(cid.equals(&integers_id)) { return underlayer_content::render_x86_integers() }
+        if(cid.equals(&flags_id)) { return underlayer_content::render_x86_flags() }
+        if(cid.equals(&vex_id)) { return underlayer_content::render_x86_vex() }
+        if(cid.equals(&map_id)) { return underlayer_content::render_x86_map() }
+        return string()
+    }
+
     // SIMD and vector processing. Same fall-through contract: empty string
     // for anything else. `simd-` is a prefix no other course uses.
     public func render_simd_concept(concept_id : *string) : string {
@@ -905,6 +927,9 @@ public namespace underlayer_web {
         // SIMD/vector concepts; same fall-through contract.
         var simd_html = render_simd_concept(concept_id)
         if(simd_html.size() > 0) { return simd_html }
+        // x86-64 assembly/encoding concepts; same fall-through contract.
+        var x86asm_html = render_x86asm_concept(concept_id)
+        if(x86asm_html.size() > 0) { return x86asm_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

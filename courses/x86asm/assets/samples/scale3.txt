@@ -1,0 +1,1 @@
+_probe.s:2: Error: expecting scale factor of 1, 2, 4, or 8: got `3'

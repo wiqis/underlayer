@@ -1,0 +1,1098 @@
+========================================================================
+x86dec -- the artifact for "x86-64 Assembly and Encoding"
+AMD Ryzen 5 7430U, family 0x19 model 0x50.  NO AVX-512.
+Every number below is a DURATION or a BIT PATTERN read on this
+machine.  Nothing is quoted from a manual and nothing is a count.
+========================================================================
+
+========================================================================
+SECTION 1 -- THE INSTRUMENT.  Nothing below this point is a claim yet.
+========================================================================
+
+THE CLOCK.  Measured twice: once with the machine busy, once across a
+400 ms sleep.  A TSC is a fixed-rate counter, so if the two agree then a
+tick is TIME and never a cycle count, and every cost in this file is a
+RATIO rather than a number of cycles.
+
+  TSC rate, busy               2.2957 GHz
+  TSC rate, across sleep       2.2957 GHz
+  drift                       -0.0004%   (busy is the reference)
+  VERDICT: invariant -- a tick is TIME, and the drift is the reason no
+          number in this file is quoted as a cycle count.
+
+  ORIENTATION ONLY, AND NOT USED: /proc/cpuinfo says 2832 MHz, so one
+  TSC tick is about 1.23 core cycles on this machine.  This number is
+  NOT used to convert anything, and the execution course is the reason:
+  it converted its timings with this file and was wrong by up to 3x,
+  because the value is refreshed far more slowly than a measurement.
+  A tick is a tick.  Every ratio below has the same conversion on both
+  sides and the conversion cancels.
+
+THE FLOOR OF THE ESTIMATOR, measured on TWO bodies on purpose.  They
+are the same loop shape and they differ in what they are waiting on.
+
+  estimator = min-of-5, 2000000 iterations, two bodies:
+     a POINTER CHASE, 64 KiB of nodes, L2-resident    7.995 ticks/op
+     an ARITHMETIC increment loop                        0.661 ticks/op
+     the two bodies differ by                          -91.7%
+
+  WHY TWO.  An arithmetic loop is bounded by the CORE CLOCK and the TSC
+  is FIXED-RATE, so a clock ramp reads as noise that is really the
+  clock.  A pointer chase spends its time WAITING on a load, and a clock
+  change does not shorten it.  The chase is the floor this course
+  quotes; the increment loop is printed so the gap is on the page.
+  WHAT A BENCHMARK'S NOISE USUALLY IS, TELLS YOU WHICH PART OF THE
+  MACHINE THE BENCHMARK IS MEASURING.  The floor used for every band
+  below is the POINTER CHASE at 7.995 ticks/op, and a difference smaller
+  than that is not a difference.
+
+  pinned to cpu2, and the cpu that answered is 2  (VERIFIED -- the rows below are a controlled experiment)
+
+  RDPMC in a forked child: KILLED by a signal
+    signal 11  (4 is SIGILL, which is what a machine with no
+    readable performance counters gives you)
+  /proc/sys/kernel/perf_event_paranoid = 4
+
+  CONSEQUENCE, and it governs every number in sections 2 to 4:
+    there is NO event counter.  Nothing in this file is a count of
+    instructions, of cycles, of a branch taken or of a branch
+    MISPREDICTED.  Every number is a DURATION, and a duration
+    bounds a count without measuring it.  Where predictability is
+    the interesting quantity, section 3 says so and stops.
+
+  iterations per arm: 2000000   copies per arm: 5, the MINIMUM is kept
+
+========================================================================
+SECTION 2 -- THE INSTRUCTION SET, MEASURED.
+Eight operations per iteration in every arm below, and the SAME two
+loop instructions (dec %rcx / jnz) in every arm, so the loop overhead
+is identical across rows and cancels in every ratio.  The control is
+the shell with the operation removed.
+
+2A.  THE ALU GROUP.  SUB, ADD, CMP and TEST, one dependency chain
+against eight independent ones.  ADD and SUB chain on a DATA
+dependency.  CMP and TEST chain on the FLAGS REGISTER, which is one
+bit wide and which eight flag-writers share -- so for those two the
+chain is a different experiment from the other two, and the table
+says which is which on every row.
+
+  the loop shell, the operation REMOVED (control)         1.710 ticks/op
+
+      chain = eight operations on ONE register;  independent = eight
+      operations on EIGHT registers.  Identical instruction counts.
+
+  add, chain of eight on rax                              7.129 ticks/op     4.17x the control
+  add, eight independent registers                        2.021 ticks/op     1.18x the control
+  sub, chain of eight on rax                              7.968 ticks/op     4.66x the control
+  sub, eight independent registers                        1.968 ticks/op     1.15x the control
+  cmp, EIGHT WRITES TO THE FLAGS REGISTER                 1.884 ticks/op     1.10x the control
+  cmp, eight independent registers                        2.711 ticks/op     1.59x the control
+  test, EIGHT WRITES TO THE FLAGS REGISTER                2.811 ticks/op     1.64x the control
+  test, eight independent registers                       2.810 ticks/op     1.64x the control
+
+      THE RATIOS THAT ARE THE POINT, chain over independent:
+         add      3.53x
+         sub      4.05x
+         cmp      0.69x
+         test     1.00x
+
+      AND THE FINDING IS IN THE BOTTOM TWO PAIRS, not the top.  ADD
+      chains at 3.53x and SUB at 4.05x, which is the story everybody
+      tells: a data dependency is a dependency and you wait for it.
+      CMP chains at 0.69x and TEST at 1.00x.  EIGHT FLAG-WRITERS IN A
+      ROW cost the same as eight flag-writers on eight registers, and
+      there is only ONE flags register.  So on this processor the
+      architectural serialisation between flag writers costs NOTHING.
+      THE REASON, and it is named in the AMD manual rather than
+      observed here: the flags are RENAMED, so each flag-writer gets a
+      copy and the serialisation is logical rather than physical.  This
+      artifact cannot SEE the renaming -- there is no counter and no
+      way to ask -- so the numbers are the measurement and the
+      mechanism is a quotation, and the two are labelled separately
+      because a course that blurs them is the disease this one is
+      about.  What the measurement establishes on its own is the
+      NEGATIVE claim, and it is the useful one: the first draft wrote
+      that CMP and TEST form a chain because the ISA says they share a
+      register, and the ISA does not say that at all.  It says they
+      write the same REGISTER, which is a different statement, and
+      the distinction is the whole of section 3.  See R9.
+
+      THE NOP ROW IS NOT A COST CONTROL, and the artifact says so by
+      CHECKING rather than by asserting.  Eight NOPS and eight SUBS are
+      both ten instructions and they are not the same ten.  A cost is a
+      DIFFERENCE and a difference needs a subtrahend, so:
+
+        on THIS run no row came in below the nop control, which is
+        the GOOD outcome and still does not license a subtraction.
+
+        So the nop row is a SHAPE control -- it shows the loop is the
+        shape this table thinks it is -- and NOT a cost control, and
+        no cost in this file is a difference against it.  See R8: the
+        first draft
+        subtracted it unconditionally and printed costs that were
+        negative on one run and plausible on the next.
+
+      THE CAVEAT, AND IT IS A BIG ONE: this is a property of THIS
+      microarchitecture, not of the ISA.  Nothing in the Intel or AMD
+      manual says what any of these numbers are.  What the ISA says is
+      which FLAGS each one writes, and that is section 3 and it is exact.
+
+2B.  LEA.  It is a single instruction with three inputs and one output,
+and the trap is that it is NOT a data move: `lea (%rdi), %rax`
+encodes a COPY OF AN ADDRESS and touches no memory.  Here are two
+bodies: `lea (%rdi), %rax` and `mov (%rdi), %rax`, which look like
+they do the same thing and do not.
+
+  lea 0(rdi,rsi,4), rax       -- ONE instruction          0.666 ticks/op
+  mov rdi,rax; add rsi,rax; shl $2,rax  -- THREE          0.854 ticks/op
+      THE RATIO, SEVEN TIMES, ALTERNATING, one LEA over three ALU ops.
+      A single pair of rows is a SAMPLE; this is a distribution.
+      Three runs of this course produced single-pair ratios of
+      2.00x, 0.55x and 2.77x for the SAME two arms on the SAME machine,
+      which is not a measurement of an instruction, it is a
+      measurement of what else the machine was doing:
+
+        minimum 0.553x    mean 1.068x    maximum 1.810x
+        the seven agree to within 227.6%
+
+        THE TWO FORMS SEPARATE by a factor of 3.28x across the
+        seven repetitions, which is larger than the estimator's own
+        spread and therefore worth reading.  Read the min, the mean
+        and the max and not the single pair above.
+
+        A NUMBER WITH A SPREAD IS THE MEASUREMENT.  A SINGLE PAIR
+        IS A SAMPLE, and this is the seventh row in this file where
+        the difference between those two words is the whole finding.
+        THE HONEST SUMMARY, and it is a NEGATIVE one.  The draft of
+        this course claimed a 3x win for the single LEA.  The mean of
+        seven alternating measurements is 1.068x with a spread of 227.6%,
+        so there is no 3x win, and -- this is the half that is easy to
+        get wrong -- the mean of 1.00x is NOT evidence that the two
+        forms are equal either.  A MEAN IS NOT A MEASUREMENT OF
+        EQUALITY when the spread around it is this wide, and the
+        interesting number in the whole section is the spread.
+
+  lea (rdi), rax              -- an ADDRESS copy          0.661 ticks/op
+  mov (rdi), rax              -- a DATA load              1.205 ticks/op
+
+      lea-of-three-inputs, over the three-instruction form: 1.28x
+      lea-of-an-address, over the load it is mistaken for: 1.82x
+
+
+      LEA HAS A COST OF ITS OWN AND IT IS NOT FLAT.  Three shapes of the
+      SAME instruction, one operation each, identical loop shells:
+
+  lea (rdi), rax          -- a base and nothing else      0.753 ticks/op
+  lea (rdi,rsi), rax      -- a base and an index          0.665 ticks/op
+  lea 8(rdi,rsi), rax     -- and a displacement           0.666 ticks/op
+  lea 0(rdi,rsi,4), rax   -- and a scale                  1.207 ticks/op
+
+      and the comparison the course wanted to make, restated now that
+      the sweep is on the page: ONE lea at 0.666 against THREE
+      instructions at 0.854.  If the one-instruction form were the fast
+      one, this would be the row the course is built on.  IT IS NOT.
+
+      WHAT THIS SHOWS, and it is not nothing: on a wide out-of-order
+      core, INSTRUCTION COUNT IS NOT THE COST.  Three cheap ALU
+      operations issue alongside each other and alongside the loop;
+      one address-generation operation does not.  The mechanism is
+      INFERRED and is marked as such -- there is no counter on this
+      machine that can count AGU occupancy -- and the vendor manual's
+      latency table is the only source that says what the sweep above
+      should be.  The one thing this file will NOT say is that LEA is
+      always the cheap way to compute an address.  Measured here it is
+      not, and see R10.
+
+      THE ENCODABLE SCALES ARE 1, 2, 4 AND 8, and that is not a choice
+      the assembler made -- it is the two bits the SIB byte has.  There
+      is no single instruction for a x3 address, and `as` says so:
+
+         $ printf 'lea 0(%rdi,%rsi,3), %rax\n' > /tmp/s3.s && as -o /tmp/s3.o /tmp/s3.s
+         _probe.s:2: Error: expecting scale factor of 1, 2, 4, or 8: got `3'
+      So `lea 0(rdi,rsi,3)` is the SAME SHAPE as `lea 0(rdi,rsi,4)` --
+      a base, an index, a scale, a displacement and a destination --
+      and there is a value of the scale for which the shape has no
+      encoding at all.  That is the whole ModRM/SIB story in one
+      assembler error, and the neutral course has the byte layout.
+
+2C.  THE TWO SHIFT COUNTS.  `shl $1, %rax` puts the count in the
+instruction.  `shl %cl, %rax` takes it from a register, and the
+register is the one place a caller and a callee can both be wrong.
+
+  shl $1, rax               -- the count is IN the instruction    0.668 ticks/op
+  shl cl, rax               -- the count comes from cl    0.667 ticks/op
+  shl cl, rax with cl=63    -- NOT CLEARED, see below     1.206 ticks/op
+
+      immediate-count, over the register-count: 1.00x
+
+
+      IMMEDIATE-COUNT, over the REGISTER-COUNT: 1.00x.  Read that the
+      way round if you like, and notice that it is not the direction the
+      encoding suggests: `shl $1, %rax` is three bytes and `shl %cl,
+      %rax` is also three bytes, so the immediate form buys nothing in
+      size here and measured dearer.  It is a property of this
+      microarchitecture and nothing in the manual predicts it.
+
+      THE THIRD ROW IS THE BUG, NOT A RESULT.  It shifts a ZERO by 63,
+      sixty-three times, and comes out at 1.81x the register-count
+      form -- DEARER, which in a timing table reads as a LOSS for the bug.
+      All three of those are the same lesson and it is the standing one:
+      A TIMING TABLE CANNOT TELL A FAST INSTRUCTION FROM A DELETED ONE.
+      Only the bit patterns can, so here they are, read out of the
+      register rather than timed:
+
+      exact and both read out of the register rather than timed:
+
+        starting value                            0x0123456789abcdef
+        shl %cl with cl = 0    ->  0x0123456789abcdef   (unchanged)
+        shl %cl with cl = 1    ->  0x02468acf13579bde
+        shl %cl with cl = 63   ->  0x8000000000000000   (everything shifted out)
+        shl %cl with cl = 64   ->  0x0123456789abcdef   (SAME as 0: the count is masked)
+
+        THE COUNT IS MASKED TO SIX BITS for a 64-bit operand, so a
+        caller that leaves 64 in %cl gets a shift of zero and a
+        function that returns an unchanged value, with no fault and no
+        indication anything went wrong.  This is a property of the
+        ISA and not of this processor, and it is why the variable form
+        is not simply the faster form.
+
+2D.  MOVZX, MOVSX, AND THE 32-BIT OPERATION.  This row is not really a
+cost row.  Writing to a 32-bit register ZERO-EXTENDS into bits 63:32,
+and that is a correctness rule with a cost attached, so both halves
+are here.
+
+  movzx eax, al             -- explicit zero extension    1.206 ticks/op
+  mov eax, eax              -- the 32-bit operation       0.661 ticks/op
+  movsx eax, al             -- explicit sign extension    0.763 ticks/op
+
+      32-bit operation, over the explicit movzx: 0.55x  0.87x over movsx
+
+      the bit patterns, read out of the register, no timing at all:
+        rax = 0x1122334455667788, al = 0x88, and then:
+           nothing at all       ->  0x1122334455667788
+           mov ax, al           ->  0x1122334455667788   (a 16-bit write, upper bits KEPT)
+           mov eax, al          ->  0x0000000055667788   (a 32-bit write, upper bits CLEARED)
+        and the two extensions of the byte 0x88:
+           movzx eax, al        ->  0x0000000000000088
+           movsx eax, al        ->  0x00000000ffffff88
+           movsxd rax, eax      ->  0x0000000000000088   (the 64-bit form of the same thing)
+
+        BOTH rows of that block are the trap, and the SECOND one is
+        the one that costs somebody a day: `mov ax, al` leaves the top
+        48 bits exactly as they were, so a compiler that meant to move a
+        byte and wrote the 16-bit form by accident produces a value
+        that is correct in its low half and garbage in its high half,
+        and no assembler or compiler says anything about it.
+
+2E.  SHR AT 32 BITS AND AT 64.  The same trap, with the width chosen
+by the register name, so it is invisible in the source.
+
+  shr $1, eax  -- a 32-bit destination                    1.205 ticks/op
+  shr $1, rax  -- a 64-bit destination                    0.696 ticks/op
+
+      64-bit form, over the 32-bit form: 0.58x
+
+      starting value                    0xffffffffffffffff
+      shr $1, eax   ->                  0x000000007fffffff
+         THE UPPER 32 BITS ARE ZERO, and they were not before.  Not
+         shifted.  ZEROED.  A 32-bit destination is also an
+         instruction to clear the top half, and the reason it is free
+         is a property of this processor, not of the ISA.
+      shr $1, rax   ->                  0x7fffffffffffffff   (what you meant)
+      shr eax then shr rax ->            0x000000003fffffff   (the top half is already gone)
+
+      WHERE THE 32-BIT FORM IS RIGHT: when the value really is
+      32 bits.  Then the zero extension is not a cost, it is a
+      guarantee, and it is why `unsigned int` arithmetic on x86-64 is
+      free of the wraparound worries that a 64-bit compiler has to
+      check.  The register name is the declaration of intent and
+      there is no other place to put it.
+
+2F.  THE FLAG LIST, EXACTLY.  The numbers above are what the machine
+charges.  This is what the ISA says, and it is a table of flags, not
+of cycles.  Every entry is which of the six arithmetic flags the
+instruction WRITES, and the six are CF PF AF ZF SF OF.
+
+   instruction group                  CF PF AF ZF SF OF     the trap
+   ---------------------------------   -- -- -- -- -- --    ----------------
+   add, adc, sub, sbb, cmp, neg      y  y  y  y  y  y     OF says signed overflow
+   inc, dec                           -  -  -  y  y  -     CF is NOT written
+   and, or, xor, test                 -  - -  y  y  -     (AND clears CF and OF)
+   shl, sal, shr, sar                 y  - -  y  y  y     OF only for a count of 1
+   shl, shr with a count of 1         y  - -  y  y  y     OF MEANS OVERFLOW and
+   shl, shr with a count > 1          y  - -  y  y  -     is undefined otherwise
+   rol, ror                           -  - -  -  -  y     ONLY OF is written
+   rcl, rcr                           y  - -  -  -  y     and CF for the rotate
+   imul                              y  - -  -  y  -     the 3 forms differ
+   mul                                y  - -  -  -  y     OF and SF are undefined
+   div, idiv                          -  - -  -  -  -     WRITES NO FLAGS AT ALL
+   lea                                -  - -  -  -  -     so does an address compute
+   mov                                -  - -  -  -  -     so does every load
+   setcc, cmovcc                      -  - -  -  -  -     they READ the flags
+
+   The two rows worth stopping on are `inc`/`dec` and `div`.  `inc`
+   and `dec` deliberately do not write CF, which is why the x86 has a
+   separate `inc` and not only `add $1`: the opcode byte frees up, and a
+   counter can be incremented in a loop without destroying a carry that
+   a multi-precision add is in the middle of.  And `div` writing no flags
+   is why a divide has to be followed by a compare to be usable, and why
+   the compiler emits one.
+
+   CHECKED, NOT QUOTED.  Three of those rows are verified here by
+   reading EFLAGS before and after, because a quoted flag table is a
+   table of claims:
+
+      5 + 5 = 10, so PF=1 and everything else clear:
+        add  eax, 5   after mov eax, 5    EFLAGS = 0x0000000000000206
+      5 - 7 = -2, so CF=1 (borrow), SF=1 and AF=1 (borrow out of bit 4):
+        sub  eax, 7   after mov eax, 5    EFLAGS = 0x0000000000000293
+      1 << 1 = 2, so CF=0 and OF=0 (2 did not overflow a signed int):
+        shl  eax, 1   after mov eax, 1    EFLAGS = 0x0000000000000212
+      0x7ffffffe and 0x80000000 have the same low bit, so CF agrees;
+      two rows below differ in exactly ONE bit:
+        shr  eax, 1   after mov eax, 0x7ffffffe   EFLAGS = 0x0000000000000216
+        shr  eax, 1   after mov eax, 0x80000000   EFLAGS = 0x0000000000000a16
+        THAT BIT IS OF, and the rule it obeys is the one the table
+        two hundred lines up only claimed: OF after a shift by one
+        is OVERFLOW, and after a shift by more than one it is
+        UNDEFINED.  Two values, one answer, one flag.  This is the
+        cheapest possible demonstration that a flag table is worth
+        reading and that OF is the one row in it that is a trap.
+      TWO DIVIDES, of different numbers, in a row:
+        div  eax, 2   after mov eax, 9    EFLAGS = 0x0000000000000a12
+        div  eax, 3   after mov eax, 11   EFLAGS = 0x0000000000000a12
+        THE TWO ROWS ARE BYTE-IDENTICAL and the two operations are
+        not: a divide writes NO FLAGS AT ALL, so both rows are
+        reading whatever the row above left behind.  Two different
+        computations, one EFLAGS value, no fault and no warning.
+        THE FIRST VERSION OF THIS TABLE compared the div row against
+        the row ABOVE it and found them different -- because the row
+        above had set OF and the div had not -- and read the
+        difference as a divide doing something.  Two identical rows
+        are the control; one row compared with an unrelated one is
+        not.  See R11, which is the same bug in a different place.
+
+      THE RESERVED BITS, read out of the machine rather than quoted,
+      and this is a place where the two come apart.  Six positions
+      are not general-purpose, and what PUSHFQ RETURNS for them is
+      printed here without a claim about what the manual says:
+
+        bit 1  read back as 1
+        bit 3  read back as 0
+        bit 5  read back as 0
+        bit 15 read back as 0
+        bit 22 read back as 0
+        bit 63 read back as 0
+        bits 32..63 read as          0x00000000  (RFLAGS has 32 defined bits)
+        EFLAGS AT REST was           0x0000000000000202
+
+        THE LESSON, and it is the reason the numbers above are
+        printed rather than interpreted: A PROGRAM THAT SAVES EFLAGS
+        AND COMPARES IT IS COMPARING A VALUE THE ARCHITECTURE DOES
+        NOT FULLY DEFINE.  Two machines of the same family can differ
+        in the bits above 21, and a program that survives on this
+        one has been lucky, not correct.  Save the six you care
+        about, or save the result of the comparison and never the
+        register.
+
+      EFLAGS AT REST, every defined bit that is set:
+        bit 9  IF
+
+========================================================================
+SECTION 3 -- FROM A COMPARISON TO A BOOLEAN.
+========================================================================
+
+Three ways to write `if (a < b) x = 1; else x = 0;` in x86-64, with
+nothing else different between them.  The floor for this section is
+the loop shell, because the bodies differ in what is INSIDE the loop.
+
+  cmp + cmovl                      -- 2 instructions      0.997 ticks/op
+  cmp + xor + setl + movzx + add  -- 5 instructions       2.411 ticks/op
+  cmp + jl                         -- 2 instructions and a branch    1.207 ticks/op
+
+      cmov, over the branch: 0.83x
+      setcc, over the branch: 2.00x
+      setcc, over the cmov:  2.42x
+
+      And read the instruction counts in the labels before you read the
+      ratios.  The setcc arm is FIVE instructions and not three, because
+      `setcc` writes a BYTE and the byte has to become a VALUE, and the
+      register it lands in has to be zeroed first or the widening widens
+      the garbage too.  The first draft of this artifact had three, and
+      the row it produced was a comparison against a program that does
+      not the same thing -- see R4.
+
+      SO WHICH IS CHEAPEST ON THIS MACHINE, with a comparison whose
+      direction does not change: the CMOV.
+      Read the three rows and the ratios above rather than this line, and
+      notice that the ranking is not the ranking anybody would guess from
+      the INSTRUCTION COUNTS in the labels: the five-instruction arm is
+      not the slowest, and the two-instruction arms are not tied.  On a
+      core this wide, what an arm costs is what it does to the
+      dependency graph, and a serial chain of five cheap operations
+      retires beside a single cmov quite happily.
+
+      AND THE HONEST ANSWER IS "IT DEPENDS ON PREDICTABILITY", which
+      this artifact CANNOT MEASURE, and the reason is printed in the
+      retraction block and repeated here because it is the single most
+      important limit in the course:
+
+        the loop above asks the predictor a question it can answer
+        perfectly, because the direction of the comparison is fixed by
+        the constants loaded before the loop.  A branch that is always
+        taken, or always not taken, is close to free on this processor,
+        and that is WHY the branch wins the row above.  The number that
+        would change the answer is the MISPREDICTION RATE, and to measure
+        it you need a counter that does not exist on this machine:
+        perf_event_paranoid is 4 and the forked child that ran RDPMC was
+        killed.  A CMOV does not branch, so it has no misprediction to
+        pay, and a branch has one.  Which is cheaper is a function of
+        that rate, and this file will not guess at it.
+
+      THE SECOND TRAP, AND IT IS A CORRECTNESS ONE.  `setcc` sets a
+      BYTE and only a byte.  Widening it is a second instruction, and if
+      you forget, the upper bits of the register are whatever they were:
+
+        eax = 0xFFFFFFFF, setl after (3 < 5), no widening -> 0x00000000ffffff01
+            the BYTE is right and the VALUE is not: it is -255, and any
+            later `test` on it branches the way you did not expect.
+        the same, with movzx                   -> 0x0000000000000001   (1)
+        eax = 0,       setl after (3 < 5)      -> 0x0000000000000001   (1)
+
+        cmovl ecx, edx, ecx=0x22, edx=0x11 (condition FALSE) -> 0x00000000000000bb
+        cmovl ecx, edx, ecx=0x11, edx=0x22 (condition TRUE)  -> 0x00000000000000bb
+
+        READ THOSE TWO ROWS AGAIN.  They are the same number, and they
+        have to be: `cmovl %edx, %ecx` after `cmp %edx, %ecx` is not
+        a conditional store, it is a MAXIMUM.  Both paths end at the
+        larger of the two.  That is the whole point of the idiom, and
+        it is also why the register can NEVER tell you whether the
+        cmov fired.  A branch has the same property in the register and
+        the opposite one in the WORK.
+
+        And here is the experiment that separates the two, because an
+        argument about it is not a measurement.  The source operand is
+        a page marked PROT_NONE: if the instruction touches it, the
+        child dies with SIGSEGV, and if it does not, the child lives.
+
+          a cmovl whose condition is FALSE, reading a PROT_NONE page:
+             KILLED, signal 11 (SIGSEGV) -- IT READ IT
+          a branch that is NOT taken, reading the same PROT_NONE page:
+             NO FAULT -- it did not read it
+          the CONTROL, the same branch with its body actually taken:
+             KILLED, signal 11 (SIGSEGV) -- the page IS reachable
+
+        SO: a cmov that FAILS still reads its source operand and still
+        writes its destination, and a branch that fails does not touch
+        either.  That is not a defect, it is the deal: the cmov buys a
+        branch-free body in exchange for a body that always runs, and
+        whether that trade is worth it is the predictability question
+        this artifact CANNOT answer.  The three rows above are the
+        measurement and it is not a timing at all: it is a fault.
+
+========================================================================
+SECTION 4 -- THE PREFIX ENCODINGS, DECODED FROM REAL BYTES.
+========================================================================
+
+FOUR INSTRUCTIONS, FOUR ENCODINGS, ONE IDEA.  Every byte below came out
+of the assembler in corpus.s, or out of a hand-built byte string this
+file decoded, and every one of them is checked against a second reader
+(GNU objdump, binutils 2.46) that was not written by the same hand.
+
+  label                 bytes                 real   mine   reader 1 (objdump) said
+  --------------------  -----                 ----   ----   ----------------
+  sse_legacy_addps       0f 58 c1           3      3      addps  xmm0,xmm1                   
+  sse_legacy_addpd       66 0f 58 c1        4      4      addpd  xmm0,xmm1                   
+  sse_legacy_movaps      0f 28 c1           3      3      movaps xmm0,xmm1                   
+  sse_legacy_pxor        66 0f ef c1        4      4      pxor   xmm0,xmm1                   
+  sse_legacy_shufps      0f c6 c1 1b        4      4      shufps xmm0,xmm1,0x1b              
+  sse_legacy_cvtsi2ss    f3 0f 2a c6        4      4      cvtsi2ss xmm0,esi                  
+  sse4_blendvps          66 0f 38 14 d1     5      5      blendvps xmm2,xmm1,xmm0            
+  vex2_vaddps_xmm        c5 f8 58 ca        4      4      vaddps xmm1,xmm0,xmm2              
+  vex2_vaddpd_xmm        c5 f9 58 ca        4      4      vaddpd xmm1,xmm0,xmm2              
+  vex2_vaddps_ymm        c5 fc 58 ca        4      4      vaddps ymm1,ymm0,ymm2              
+  vex2_vsubps_ymm        c5 fc 5c ca        4      4      vsubps ymm1,ymm0,ymm2              
+  vex2_vmovaps_ymm       c5 fc 28 ca        4      4      vmovaps ymm1,ymm2                  
+  vex2_vpxor_ymm         c5 fd ef ca        4      4      vpxor  ymm1,ymm0,ymm2              
+  vex3_vaddps_xmm8       c4 41 38 58 ca     5      5      vaddps xmm9,xmm8,xmm10             
+  vex3_vaddps_ymm8       c4 41 3c 58 ca     5      5      vaddps ymm9,ymm8,ymm10             
+  vex3_vpalignr          c4 e3 79 0f ca 0f  6      6      vpalignr xmm1,xmm0,xmm2,0xf        
+  vex3_vperm2f128        c4 e3 7d 06 ca 01  6      6      vperm2f128 ymm1,ymm0,ymm2,0x1      
+  int_sub                29 d8              2      2      sub    eax,ebx                     
+  int_cmp                39 d8              2      2      cmp    eax,ebx                     
+  int_test               85 d8              2      2      test   eax,ebx                     
+  int_lea                48 8d 04 b7        4      4      lea    rax,[rdi+rsi*4]             
+  int_shl_imm            48 d1 e0           3      3      shl    rax,1                       
+  int_shl_cl             48 d3 e0           3      3      shl    rax,cl                      
+  int_shr_imm32          d1 e8              2      2      shr    eax,1                       
+  int_shr_imm64          48 d1 e8           3      3      shr    rax,1                       
+  int_rol                48 c1 c0 07        4      4      rol    rax,0x7                     
+  int_ror                48 c1 c8 07        4      4      ror    rax,0x7                     
+  int_movzx              0f b6 c0           3      3      movzx  eax,al                      
+  int_movsx              0f be c0           3      3      movsx  eax,al                      
+  int_movsxd             48 63 c0           3      3      movsxd rax,eax                     
+  int_setl               0f 9c c0           3      3      setl   al                          
+  int_cmovl              0f 4c c3           3      3      cmovl  eax,ebx                     
+  int_mov32              89 c0              2      2      mov    eax,eax                     
+  int_mov16              66 89 c0           3      3      mov    ax,ax                       
+  int_neg                48 f7 d8           3      3      neg    rax                         
+  int_imul               0f af c3           3      3      imul   eax,ebx                     
+  int_mul                48 f7 e3           3      3      mul    rbx                         
+  int_div                48 f7 f3           3      3      div    rbx                         
+  int_xchg               48 93              2      n/a    xchg   rbx,rax                     
+  int_xadd               48 0f c1 d8        4      4      xadd   rax,rbx                     
+  int_lock_add           f0 48 83 00 01     5      5      lock add QWORD PTR [rax],0x1       
+  int_lock_add_plain     48 83 00 01        4      4      add    QWORD PTR [rax],0x1         
+  int_cmpxchg            48 0f b1 d8        4      4      cmpxchg rax,rbx                    
+  int_bt                 48 0f a3 c3        4      4      bt     rbx,rax                     
+  int_bsf                0f bc d8           3      3      bsf    ebx,eax                     
+  int_popcnt             f3 0f b8 d8        4      4      popcnt ebx,eax                     
+  int_lzcnt              f3 0f bd d8        4      4      lzcnt  ebx,eax                     
+  int_tzcnt              f3 0f bc d8        4      4      tzcnt  ebx,eax                     
+  int_movzx_m            0f b6 07           3      3      movzx  eax,BYTE PTR [rdi]          
+  int_lea_mem            48 8d 44 f7 08     5      5      lea    rax,[rdi+rsi*8+0x8]         
+  int_movsxd_mem         48 63 07           3      3      movsxd rax,DWORD PTR [rdi]         
+  int_lea_noindex        48 8d 47 10        4      4      lea    rax,[rdi+0x10]              
+
+  READER 1 is binutils.  READER 2 is the length function in this file,
+  which was written by the author of the prose and is therefore exactly
+  the kind of reader that agrees with a wrong answer.  Of 52 corpus
+  entries, 51 are inside the subset it models, 51 of those agree with the
+  byte count and 0 do not, and 1 are outside the subset and are
+  reported as "n/a" rather than as a number.  A decoder that returns a
+  plausible length for an opcode it did not model is worse than one that
+  says it does not know, and the difference is invisible in a table that
+  only prints numbers.
+
+
+  THE FIELD-BY-FIELD DERIVATION of the three forms, from the bytes.
+  This is the part the neutral ISA course does not have: it taught that
+  0xC4 and 0xC5 are two more prefix bytes.  Here is what they are for.
+
+  4A.  LEGACY, TWO OPERAND SLOTS, AND IT DESTROYS THE DESTINATION
+      bytes:0f 58 c1          
+
+        0f 58   the escape: `0f` moves the opcode into the TWO-BYTE map,
+               and 58 is `addps` inside it.  The same 58 in the
+               ONE-byte map is `pop r/m64`, which is the collision the
+               neutral course uses 0x62 for.
+        c1      ModRM = 11 000 001:  no displacement, no SIB,
+               reg = xmm0, rm = xmm1.  THERE ARE TWO SLOTS AND THAT IS
+               ALL: the destination is reg, the source is rm, and reg
+               is OVERWRITTEN.  There is no third operand, and no way
+               to name one, which is why this encoding cannot express
+               `a = b + c` and forces a copy first.
+
+        ASSEMBLED, both spellings, because that is the whole point:
+           a = b + c      addps  %xmm1, %xmm0 ; addps  %xmm2, %xmm0
+                          ->  movaps %xmm0, %xmm1
+                              addps  %xmm2, %xmm1
+                              -- 2 instructions, the copy is not free
+
+        And a worse one, the IMPLICIT xmm0.  `blendvps` has three named
+        operands in its encoding and a FOURTH that is hard-coded:
+           66 0f 38 14 d1    blendvps %xmm0, %xmm1, %xmm2
+        The implicit slot is not in the bytes at all, so objdump and a
+        human and a decoder all have to know it separately.  That is
+        the thing VEX removed.
+
+  4B.  VEX, TWO BYTES.
+      bytes:c5 f8 58 ca       
+
+        c5       identifies the TWO-byte VEX form.  It is chosen when
+                 the three bits below are enough, and the three bits
+                 below are a 4-bit register number inverted plus a 2-bit
+                 L and a 2-bit pp.
+        f8       = 1 111 1 0 00
+                 bit 7   R      inverted: 1 means EXTENSION NOT USED,
+                                 and it is ALWAYS 1 in the 2-byte form
+                 bits 6-3 vvvv   INVERTED register number: 1111 -> 0,
+                                 so this is xmm0.  THIS IS THE SECOND
+                                 OPERAND, and it is the one the legacy
+                                 encoding does not have.
+                 bit 2   L      0 = 128 bits, 1 = 256 bits
+                 bits 1-0 pp     00 none, 01 = the 0x66 prefix,
+                                 10 = 0xF3, 11 = 0xF2.  THIS IS THE THIRD
+                                 OPERAND, folded into one field.
+        ca       ModRM:  reg = xmm0 (destination), rm = xmm2
+        58       the opcode, vaddps.  The mnemonic grew a leading `v`
+                 and the escaping 0f 0x66 both disappear into VEX and pp.
+
+        0x53 was the byte this artifact was going to use, and it is
+        not a single one.  Here is the RETRACTED claim.  The first
+        draft of
+        this artifact asserted that the three-byte VEX form exists
+        because the two-byte form cannot name a 256-bit register.  It
+        CAN: L is a bit in byte 1, and the assembler itself chooses the
+        two-byte form for the 256-bit version of the very instruction
+        this is a case study of:
+
+           vaddps %ymm2, %ymm0, %ymm1  ->  c5 fc 58 ca   (TWO bytes)
+           vaddps %xmm2, %xmm0, %xmm1  ->  c5 f8 58 ca   (TWO bytes)
+
+        The only difference is L in bit 2.  WHAT THE THREE-BYTE FORM
+        IS FOR, and all three of these were assembled here:
+           xmm8 and above            c4 41 38 58 ca  vaddps xmm9,xmm8,xmm10
+             -- four register numbers do not fit in 4 inverted bits, so
+                R, X and B each need an extension bit and there is no
+                room left for them, which is the ONE thing the 2-byte
+                form cannot do.
+           a FOURTH operand           c4 e3 79 0f ca 0f  vpalignr
+             -- vvvv holds 4 bits, rm holds 4, and a fourth operand
+                would have to go in the 3-bit pp field.  There is no
+                room for it either, and the immediate has nowhere to
+                live except after the ModRM.
+           EVEX's successors          the 4-operand and 32-register
+             -- the same wall, one generation later, which is why EVEX
+                is three bytes and spends two of them on fields the
+                2-byte form does not have.
+
+  4C.  EVEX, AND IT CANNOT RUN HERE.  This machine has no AVX-512
+      and no assembler here will emit the instruction, so the bytes
+      below were BUILT BY HAND and then handed to a decoder that has
+      never met me: binutils' objdump, which does not care what the
+      CPU supports.
+
+      bytes:62 f1 7c 48 58 ca    hand-assembled, no assembler on this machine produced it
+
+        62       identifies EVEX.  The neutral ISA course has met this
+                 byte: it is BOUND in 32-bit mode and EVEX in 64-bit,
+                 and that collision is the only thing it said about it.
+        f1       = 1 1 1 1 0 0 00001
+                 bits 7-4  R X B R'  all inverted, all 1 = no extension
+                 bits 3-2  00       RESERVED, must be zero, or #UD
+                 bits 1-0  mmmmm   WHICH MAP.  This is the thing the
+                                  legacy encoding had no room for: 01
+                                  is the 0f map, 10 is 0f 38, 11 is
+                                  0f 3a.  The map stopped being a two-byte
+                                  accident and became a FIELD.
+        7c       = 0 1111 1 00
+                 bit 7   W      the REX.W analogue
+                 bits 6-3 vvvv   inverted, 1111 -> zmm0
+                 bit 2   always 1, and a #UD if it is not
+                 bits 1-0 pp     00 = packed SINGLE, 01 = packed DOUBLE
+        48       = 0 10 0 1 000
+                 bit 7   z      ZEROING.  The destination is CLEARED
+                                 instead of merged, so a masked-off lane
+                                 is 0 and not whatever was there.
+                 bits 6-5 L'L    11 = 512 bits, 10 = 256, 01 = 128.
+                                 TWO bits, because the 2-bit VEX L could
+                                 not express 512.
+                 bit 4   b      broadcast (memory) or {er} (register)
+                 bit 3   V'     inverted, and a #UD if it is not 1
+                 bits 2-0 aaa    the MASK REGISTER, k0 to k7
+        58 ca    the same opcode and the same ModRM as the legacy
+                 form.  That is the point of the design: the opcode is
+                 still the opcode, and a decoder written for 0f 58 with
+                 a VEX escape in front of it keeps working.
+
+        EXECUTED on this machine, in a forked child: killed by signal 4.
+        There is no AVX-512 on this part, so the CPU's answer is the
+        point: the SAME six bytes are a well-formed instruction that a
+        second reader names correctly, and the machine this runs on
+        cannot execute it.  A decoder that works on bytes and a decoder
+        that works on what the silicon has are different instruments
+        and this file keeps both.
+
+        The same six bytes with ONE BIT changed in byte 4, and the
+        instruction is different:
+           62 f1 7c 48 58 ca   vaddps  zmm1, zmm0, zmm2
+           62 f1 7c 4a 58 ca   vaddps  zmm1{k2}, zmm0, zmm2   aaa = 010
+           62 f1 7c 58 58 ca   vaddps  zmm1, zmm0, zmm2{ru-sae}   b = 1
+        (the first two lines are what binutils printed for these exact
+         bytes, and it is a SECOND reader agreeing with a hand build)
+
+        both of the variants were executed here too, and both died the
+        same way: signal 4 and signal 4.  The MASK REGISTER and the
+        EMBEDDED ROUNDING CONTROL are not executable on this part, and
+        that is a fact about the silicon rather than about the encoding.
+
+  4D.  WHAT THE THREE OPERANDS BOUGHT, PRICED.  Both arms below compute
+      xmm1 = xmm0 + xmm0, one iteration at a time, and the ONLY
+      difference is whether the destination had to be copied first.
+
+  vaddps xmm0, xmm0, xmm1   -- 3 operands, no copy        1.206 ticks/op
+  movaps + addps           -- 2 operands, copy first      1.205 ticks/op
+  movaps + addps + a discarded movd (CONTROL)             0.863 ticks/op
+
+      THE THREE ARMS MUST COMPUTE THE SAME VALUE or the table is a
+      comparison of two different computations, and the artifact says so
+      rather than leaving a reader to assume:
+        the two-operand arm returned  0x40000000
+        the CONTROL returned           0x40000000
+        the three-operand arm returned 0x40000000
+        ALL THREE AGREE: 0x40000000, which is 2.0f.  The arms are comparable.
+
+      the three-operand form, over the two-operand form: 1.00x
+      and the control, which is the two-operand form with a third
+      instruction whose result is thrown away: 0.72x the VEX form.
+
+
+      THE THREE ROWS, TAKEN AS A GROUP.  The fastest is 0.863 and the
+      slowest is 1.206, a spread of 1.40x, and the ORDER of the three
+      moves between runs on this machine: the one-instruction arm was
+      measured as the slowest, as the fastest and as the middle of the
+      three on three consecutive recorded runs.  So the only claim these
+      three rows support is a NEGATIVE one, and it is the claim the
+      course needed:
+
+        THE COPY IS FREE HERE.  One instruction, two and three all
+        cost the same, within a factor of 1.40x, on a machine where
+        the copy the three-operand encoding removes is a
+        REGISTER-TO-REGISTER MOVE.  It issues on a port the vector
+        add is not using, and on a core this wide an instruction the
+        front end can issue for free is not on the critical path.
+        WHAT THE THREE-OPERAND FORM BOUGHT IS A SOURCE-LEVEL
+        PROPERTY, and a source-level property is exactly what an
+        encoding is for.
+
+      THE MECHANISM IS INFERRED and is marked as such: there is no
+      counter on this machine that can count vector-port occupancy and
+      the vendor manual has no number for it either.  What the
+      measurement establishes on its own is that there is no LARGE
+      difference, and the three values above are what it saw today.
+
+      AND THIS IS NOT A NEW FACT.  The vector course measured the
+      same shape two instructions wider: a loop that does the same work
+      in a quarter of the instructions is not four times faster unless
+      the instruction RATE is the bottleneck, and on a wide core with
+      spare issue slots it is not.  This row is that lesson at a width
+      of one, and it is worth knowing BEFORE you write the encoder:
+      adding an operand to an instruction is nearly free in bytes and
+      buys a source-level expressiveness that no duration here can
+      price.  See R13.
+
+      WHAT IT IS NOT, and the list matters because every one of these
+      is a claim somebody makes about this byte:
+        it is not the claim that AVX is faster than SSE -- both arms are
+          SSE-width (L = 0) on xmm, and the vector course has the width
+          experiment;
+        it is not a claim about the three-byte form specifically, because
+          the two-byte form removes the copy just as well and one byte
+          shorter;
+        it is not a claim about the ENCODING at all, because nothing
+          about the encoding decided the result -- the two arms differ
+          in what the hardware does per iteration and the encoding is
+          only the reason the two source lines are different lengths.
+
+========================================================================
+SECTION 5 -- THE MAP AUDIT, AND THE READER THAT AGREED WITH ITSELF.
+========================================================================
+
+THE THREE MAPS, READ TWICE.  For each of the 256 candidate opcode
+slots in each map, build_samples.sh wrote the real prefix bytes into a
+real file and asked binutils to decode it -- once as a LEGACY escape
+(0f, 0f 38, 0f 3a) and once with a three-byte VEX in front of the same
+escape.  Same 768 slots, same decoder, one byte different.  The counts
+are therefore a count of what binutils 2.46 NAMES, which is a fact about
+binutils and not a claim about what the ISA defines, and the two
+columns are the point.
+
+  map        slots   legacy   VEX   legacy only   VEX only   both   neither
+  0F           256     218   101           124          7     94        31
+  0F38         256      28   125            13        110     15       118
+  0F3A         256       2    54             1         53      1       201
+
+  THE RESULT, AND IT IS NOT THE ONE THIS COURSE WAS DRAFTED AROUND.
+  The draft said the 0F map was crowded and 0F 38 and 0F 3A were
+  nearly FULL, because the designers knew the map would be consumed
+  and put a second escape in front of it.  Measured, the two newer
+  0F38   is named in 28 of its 256 slots with the legacy escape alone.
+  0F3A   is named in 2 of its 256 slots with the legacy escape alone.
+  0F38   is named in 125 of them with a VEX in front of the same slot.
+  0F3A   is named in 54 of them with a VEX in front of the same slot.
+
+  One byte in front of the same map, and the slot is named.  THE MAPS
+  WERE NOT LEFT FULL; THEY WERE LEFT ROOMY, AND THE ROOM IS WHAT VEX
+  AND THEN EVEX MOVED INTO.  That is what the mmmmm field is for, and it
+  is the whole reason a three-byte VEX exists rather than two.  See R12.
+
+     0F     7 slots named ONLY with the prefix, e.g. op 6c: vpunpcklqdq xmm2,xmm0,XMMWORD PTR [rax-0x6f6f6f70]
+     0F38   110 slots named ONLY with the prefix, e.g. op 0c: vpermilps xmm2,xmm0,XMMWORD PTR [rax-0x6f6f6f70]
+     0F3A   53 slots named ONLY with the prefix, e.g. op 02: vpblendd xmm2,xmm0,XMMWORD PTR [rax-0x6f6f6f70],0x90
+
+  THE THING THE TABLE SAYS ABOUT THE ISA, which is not about binutils:
+  a two-byte escape ran out of room, so the escape became a PREFIX with
+  its own fields, and one of those fields -- mmmmm -- is the map.  The
+  neutral ISA course met 0x62 and 0xC4 and 0xC5 and 0x0F and taught that
+  you can write them; this is the exhaustive answer to what is in them.
+  WHAT IT CANNOT SAY: whether a slot that binutils names is legal on
+  every microarchitecture, or in every mode, or was ever shipped.  A
+  name in a decoder is not a guarantee and a hole is not a gap in the
+  ISA.  That distinction is retraction R9 and it is the reason the two
+  are not collapsed into one number.
+
+     0F     94 slots carry the SAME mnemonic legacy and under VEX, which
+            is the whole of the backward compatibility argument: an old
+            decoder reading a new byte sees a byte it already knows.
+     0F38   15 slots carry the SAME mnemonic legacy and under VEX, which
+            is the whole of the backward compatibility argument: an old
+            decoder reading a new byte sees a byte it already knows.
+     0F3A   1 slot carries the SAME mnemonic legacy and under VEX, which
+            is the whole of the backward compatibility argument: an old
+            decoder reading a new byte sees a byte it already knows.
+
+THE CROSS-CHECK.  Two independent readers of the same bytes:
+   reader 1  this file's decoder, reading the bytes
+   reader 2  binutils' objdump, reading the same bytes
+A check that read the same byte twice would agree with a wrong answer,
+so here is that experiment run ON PURPOSE, and it is the most useful
+thing in this section:
+
+  CONTROL: decode every corpus entry TWICE through the same code path.
+     agreement: 51 of 51   -- 100%, and it means nothing at all.
+     Now poison the table.  The self-agreement of a reader with a wrong
+     answer is EXACTLY as high, and no amount of reading the same byte
+     twice can tell the two cases apart:
+       with the first byte of entry 1 changed, it still agrees with
+       itself: 3 and 3, still 100%.  SELF-AGREEMENT IS NOT EVIDENCE.
+
+  THE REAL CROSS-CHECK, then: reader 1 against reader 2, on the four
+  encodings this section is about.  Both readers name the same thing.
+
+     legacy SSE, 0F map     reader 1 says 3 bytes, reader 2 says `addps xmm0,xmm1`
+     VEX, two bytes         reader 1 says 4 bytes, reader 2 says `vaddps xmm1,xmm0,xmm2`
+     VEX, three bytes       reader 1 says 5 bytes, reader 2 says `vaddps xmm9,xmm8,xmm10`
+     EVEX, hand-built       reader 1 says 6 bytes, reader 2 says `vaddps zmm1,zmm0,zmm2`
+
+     4 of 4 lengths agree with the byte count, and the four
+     mnemonics in the last column are binutils' output, quoted.
+
+  WHAT A COMPLETE MAP WOULD COST, and why this file is not one.  The
+  two-byte map has 256 slots and the three-byte maps have 512 more, and
+  counting them is not the work: NAMING them is, and a name per slot is
+  a table of about 800 strings that this artifact would then have to
+  maintain.  The honest division of labour is the one this section is
+  built on -- binutils HAS the table, it is in the C source and it is
+  correct, and the way to know what an instruction is is to read the
+  bytes with something that knows.  What you cannot buy is a decoder
+  written by the person who is trying to check it.
+
+========================================================================
+SECTION 6 -- RETRACTIONS AND LIMITS.  Printed, not footnoted.
+========================================================================
+
+RETRACTED, and each one is a claim this course would otherwise have
+made and did not survive measuring.  Fourteen of them, in the
+order the measurement found them.
+
+   R1.  "The three-byte VEX form exists because the two-byte form cannot
+        name a 256-bit register."  RETRACTED.  It can: L is bit 2 of
+        byte 1, and the assembler emitted the TWO-byte form for
+        `vaddps %ymm2, %ymm0, %ymm1` -- c5 fc 58 ca -- during the run
+        that produced section 4.  What the three-byte form is for is
+        FOUR register numbers instead of three, and a fourth operand.
+        This is the most widely repeated false fact about VEX, and it
+        was in the first draft of this page.
+
+   R2.  "LEA is one instruction doing the work of three, so it is the
+        fast way to compute an address."  RETRACTED.  Measured here the
+        three ALU instructions and the one LEA are the same to within
+        the printed ratio, and the sweep of the instruction's own shapes
+        shows the address-generation unit is what has a cost, not the
+        instruction COUNT: a LEA with a base and an index and a scale
+        measured twice the cost of the same LEA with a base alone.
+        The claim is not true HERE and it is not obviously true
+        anywhere: what makes LEA a good idea is that it is ONE DECODE
+        SLOT on a front end that is the bottleneck in code that is NOT
+        this loop.  This loop has spare issue slots to spend.  A
+        benchmark that cannot make a claim is a different benchmark.
+
+   R3.  "LEA is the cheap way to multiply."  NEVER TRUE, and the
+        assembler says so rather than this file.  LEA has no multiplier:
+        the only scales it can express are the four the SIB byte has,
+        and `as` REJECTS a x3 with a diagnostic that section 2B captures
+        and prints, because a refusal is evidence and a claim is not.
+        A x3 address is a LEA and a shift and an add, and the sweep
+        above is the cost of the first of them.
+
+   R4.  "The setcc row is the cmov row with one more instruction."  NO,
+        and the missing instruction is the interesting one.  `setcc`
+        writes a BYTE; making that byte a value needs a widening AND a
+        zeroing, so the arm that looks shortest has the most
+        instructions.  The first draft had three, compared the result
+        against a two-instruction cmov, and published a ratio between
+        two programs that do not do the same thing.
+
+   R5.  "The branch is more expensive than the cmov, so prefer cmov."
+        RETRACTED TO THE OPPOSITE SIGN.  Measured with a comparison whose
+        direction does not change, the cheapest of the three is the CMOV, and the section 3 table
+        above has the numbers.
+        The general statement -- that a cmov wins on an UNPREDICTABLE
+        branch -- is true, is not measured here, and will not be guessed
+        at, because the counter that would settle it does not exist on
+        this machine.  An arm that mixed a predictable and an
+        unpredictable branch was written, measured, and DELETED: it
+        measures a blend it cannot decompose, and an experiment that
+        cannot answer its question is not data.
+
+   R6.  "The shift-count table shows the variable form is a win."  The
+        row that makes it look like one is the row with %cl = 63 and no
+        clear, which is the BUG being measured.  A timing table cannot
+        tell a fast instruction from a deleted one, and that rule has
+        now been caught in six courses in a row.  What settles it is
+        the bit pattern, printed beside the timing, and the fact that
+        the count is masked to six bits so cl=64 is a shift of zero.
+
+   R7.  "CMP and TEST form a dependency chain, because the ISA says they
+        all write the same flags register."  RETRACTED.  The ISA says
+        they write the same REGISTER, which is a different sentence.  The
+        measurement is unambiguous: eight flag-writers in a row cost the
+        same as eight on eight registers, and there is one flags
+        register.  The mechanism -- flag renaming -- is a QUOTATION from
+        the vendor manual, and the two are printed separately because a
+        course that blurs a measurement and a citation is the disease it
+        exists to name.
+
+   R8.  "The eight-nop control is the loop overhead, so the cost of an
+        operation is its row minus the control."  RETRACTED, because the
+        subtraction produced NEGATIVE costs beside positive ones, in the
+        same typeface, on the same run.  Eight NOPS and eight SUBS are
+        both ten instructions and they are NOT the same ten.  A control
+        that can be subtracted and produce a negative number is not a
+        control.  The row now shows the loop SHAPE and no cost in this
+        file is a difference against it.
+
+   R9.  "The map counts are how many instructions x86-64 has."  NO.  They
+        are how many slots binutils 2.46 names.  A slot can be named
+        and reserved, named and undefined, or named only in a mode you
+        are not in, and this file does not distinguish them, because
+        doing so is what a manual is for and a manual is a document and
+        this is a measurement.
+
+   R10. "The unaligned 32-bit vector load is free, so the earlier claim
+        about alignment was about something else."  NOT A CLAIM OF THIS
+        COURSE.  The vector course measured that, on a machine that is
+        this one, and this file does not re-measure it and does not
+        restate its number as its own.  Re-publishing another course's
+        measurement is the remembered-number mistake the whole of this
+        course's harness exists to prevent.
+
+   R11. "The EFLAGS table is a table of claims."  It was, and the
+        damage was silent.  One of the inline-asm blocks read a flag
+        register and left it in a register, and a LATER block used CLTD,
+        which writes EDX, without saying so in its clobber list.  The
+        compiler trusted the clobber list, the DIV destroyed the value,
+        and the table printed 0x1 -- a carry from an operation three rows
+        earlier -- beside five correct rows.  Nothing failed, nothing
+        warned, and the number was plausible.  THE GENERAL FORM: an
+        inline-asm block that touches a register it does not declare is
+        the quietest bug class in this file, because the failure is not
+        a crash but a plausible number, and a plausible number is what
+        the rest of this file is made of.
+
+   R12. "0F 38 and 0F 3A are nearly FULL, because the designers knew
+        the map would be consumed and put a second escape in front of
+        it."  RETRACTED, and REVERSED.  Measured, the two newer maps
+        are the emptiest part of the whole encoding in their LEGACY
+        form -- the counts are in the section 5 table -- and the second
+        column of the same table shows why: put one VEX byte in front of
+        the very same slots and they fill up.  So the maps were not left
+        full and the prefix was not added because they were; the maps
+        were left ROOMY and the prefix moved into the room.  Whether
+        anyone planned that is not something this file can determine, and
+        the claim that they did is a STORY, so it is marked as one.
+        The measured part is the shape and the shape is a fact: 0F 3A is
+        nearly empty legacy and half full under VEX, and that is the
+        mmmmm field earning its place.
+
+   R13. "The three-operand VEX encoding removed a real instruction from
+        a real loop, so it bought a real speed-up."  RETRACTED, AND THE
+        RETRACTION IS THE POINT.  Section 4D measures the one-, two- and
+        three-instruction versions of the same arithmetic, and the three
+        are within a small factor of each other with the ORDER moving
+        between runs.  There is no speed-up to find in either direction,
+        and the first two drafts of this artifact each asserted one: the
+        first that the copy was expensive, the second that the
+        three-instruction form was cheaper, and both were read off a
+        table whose own CONTROL row did not support the story.  WHAT IS
+        STABLE is the negative claim: the copy is free, because a
+        register-to-register move issues on a port the vector add is not
+        using and an instruction the front end can issue for free is not
+        on the critical path.  THE ENCODING IS A SOURCE-LEVEL FEATURE
+        and no duration here can price it, which is the honest answer to
+        the question the course was drafted to ask.  The general form, and
+        it is the sixth time in this collection: A TABLE WHOSE ORDER
+        MOVES BETWEEN RUNS HAS A SHAPE AND NOT A STORY, AND THE
+        CONTROL ROW IS WHAT TELLS YOU WHICH ONE YOU HAVE.
+
+   R14. "The artifact is correct because it runs to completion."  NO, and
+        the reason is the worst bug in this file and the best one to
+        teach.  Every measurement body binds its loop counter with the
+        `c` constraint -- %rcx -- and then counts the loop with
+        `dec %rcx`.  The clobber list named every register the body
+        WROTE and not the one it COUNTED with, so the compiler was
+        entitled to believe %rcx still held the counter when the same
+        assembly executed a second time -- and it does, because `bench`
+        runs a body g_copies times.  The first repetition counted
+        correctly.  Every repetition after it started at zero, `dec`
+        wrapped it to 2^64, and the loop ran for about 1.8 x 10^19
+        iterations: thirty seconds of pure user time on a table whose
+        first two rows had already printed correctly.
+        AND IT IS LATENT, which is the part that matters.  The same
+        source, with the surrounding loop bound changed from seven to
+        one, ran to completion in 1.7 seconds, because there the
+        compiler unrolled the outer loop and re-materialised the input.
+        A BUG THAT DEPENDS ON THE CODECODER'S MOOD IS NOT FOUND BY
+        RUNNING IT ONCE, AND A BENCHMARK THAT HANGS ON SOME BUILDS AND
+        NOT OTHERS IS WRONG ON BOTH.  THE FIX IS ONE `mov %[c], %rcx`
+        at the top of the body and `rcx` in the clobber list, and the
+        general form is worth more than the fix: THE CLOBBER LIST IS A
+        CLAIM ABOUT WHAT YOUR ASSEMBLY MODIFIES, AND A LOOP COUNTER
+        YOU DECREMENT IN IT IS THE ONE REGISTER YOU ALWAYS FORGET.
+        R11 is the same bug in a different register and the same idea:
+        an inline-asm block that lies to the compiler does not fail,
+        it produces a plausible number.
+
+LIMITS, and each one names the thing that would settle it:
+
+   ANY CYCLE COUNT.  There is no PMU on this machine, proved above by
+      a child that ran RDPMC and died.  Every number in section 2 is a
+      DURATION, and a duration bounds a count without measuring it.  The
+      instrument that would settle it is perf_event_open with a
+      paranoid setting below 4 and a VMX or PMU passthrough.
+   ANY BRANCH MISPREDICTION RATE, and therefore ANY PREDICTABILITY
+      CLAIM, in either direction.  Section 3 measures the branch in a
+      loop where it is PERFECTLY predictable and says so, and it will
+      not put a number on the other case.  An arm that mixed the two
+      together was written and then DELETED rather than reported,
+      because it measures a blend it cannot decompose.
+   WHETHER THIS PROCESSOR RENAMES THE FLAGS REGISTER, which is the
+      mechanism that would explain the CMP and TEST rows in section 2A,
+      and which nobody is allowed to observe from user mode.  The
+      measurements are consistent with renaming and with not renaming;
+      the ARM manual is the only source that says which it is.
+   THE COST OF THE ILLEGAL INSTRUCTIONS.  There are exactly fourteen
+      opcodes the AMD manuals call illegal in 64-bit mode, and they
+      are not measured here because a #UD kills the process and the
+      only instrument for it is a child per probe.
+   THE OPUS OF AVX-512 EXECUTION.  Nothing about a ZMM or a k0-k7 mask
+      register is timed here, because this part raises #UD on all of
+      it.  What IS measured is that the encodings decode, by a second
+      reader, and that this machine cannot run them.
+   THE OTHER TWO ARCHITECTURES.  AArch64 and RISC-V appear in this
+      course in the sense of `RISC-V has no flags register and no
+      condition codes, and therefore needs csel and cset to do what
+      SETcc and CMOVcc do here`.  QUOTED, NOT MEASURED.  There is no
+      such machine in the room.
+   WHETHER GCC CHOSE ANY OF THESE INSTRUCTIONS FOR A REASON.  The
+      corpus is a real compiled object and the mnemonics are real, but
+      a claim about a compiler is a claim about bytes, and this file
+      does not assert why the bytes are the bytes.
+
+VERDICT.  What this artifact can support:
+   - that on THIS machine, at THESE iterations, a chain of eight ADDs
+     costs about the ratio printed against eight independent ones, and
+     that four instructions in the same group do not agree about it;
+   - that the register-name choice in SHR and MOV decides the ANSWER,
+     which is exact, and whether it decides the COST, which is not;
+   - that a branch beats a cmov in a loop the predictor can learn, and
+     that this artifact cannot say anything about a loop it cannot;
+   - that the three encodings differ in a specific, named set of bits,
+     that a second reader agrees, and that one of the three is not
+     executable on this silicon.
+What it cannot support: any statement about a machine that is not this
+one, any statement about cycles, and any statement about what the
+assembler or the compiler was thinking.
+
+rows timed: 31    running checksum: 0x05cc0f5ac8c4b7c4    pinned cpu observed: 2

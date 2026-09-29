@@ -1,0 +1,86 @@
+{
+  "id": "x86asm",
+  "title": "x86-64 Assembly and Encoding",
+  "version": "1.0.0",
+  "description": "The three-byte VEX form is not for 256-bit registers, which it can name perfectly well; a register-to-register copy that the three-operand form eliminates was free; a failing cmov still reads its source, proved with a PROT_NONE page and not with a stopwatch; and the 0F 3A map is empty to two instructions in 256 and half full with one VEX byte in front.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 5 concepts, reproduce the 155 checks in courses/x86asm/assets/samples/crosscheck.py, then break the decoder's length arithmetic on purpose and make the group that catches it fail by name",
+  "min_score": 70,
+  "dependencies": [
+    "isa",
+    "exe",
+    "priv",
+    "simd",
+    "smp"
+  ],
+  "modules": [
+    {
+      "id": "surface",
+      "title": "The Surface: What the Instructions Are",
+      "concepts": [
+        "x86-asm",
+        "x86-integers",
+        "x86-flags"
+      ]
+    },
+    {
+      "id": "encode",
+      "title": "The Encoding: What the Bytes Are",
+      "concepts": [
+        "x86-vex",
+        "x86-map"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "x86-asm",
+      "title": "Reading a Disassembly Without Being Fooled",
+      "module_id": "surface",
+      "description": "Two syntaxes, one instruction, and the operand order that reverses between them: `addps %xmm1, %xmm0` and `addps xmm0, xmm1` are the same three bytes, and every tutorial that mixes them is describing two different instructions.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-integers",
+      "title": "The Integer Set, Which Nothing Teaches",
+      "module_id": "surface",
+      "description": "ADD and SUB chain at 3.65x and 3.25x; CMP and TEST, which all write the same one-bit-wide register, chain at 0.86x and 0.78x -- because the flags are renamed, which the ISA does not say and which no user-mode program can observe.",
+      "estimated_minutes": 28,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-flags",
+      "title": "From a Comparison to a Boolean",
+      "module_id": "surface",
+      "description": "A cmov whose condition FAILS still reads its source and still writes its destination, and a branch that fails touches neither -- proved with a PROT_NONE page, because the register results are identical and no stopwatch could ever have told you.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-vex",
+      "title": "Two Bytes, Three, and the Bit That Went Wrong",
+      "module_id": "encode",
+      "description": "The 0F 3A map is named in 2 of its 256 slots with the legacy escape and 54 of them with a three-byte VEX in front of the same slots, which is what the mmmmm field is for and the exact opposite of what this course was drafted to say about it.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-map",
+      "title": "The Audit, and the Reader That Agreed With Itself",
+      "module_id": "encode",
+      "description": "Fifty-one corpus entries, two independent decoders, zero disagreements -- and a control that decodes the same bytes twice, agrees 100%, and is then poisoned and agrees 100% again, which is the cheapest demonstration in this collection of why a check that reads its own input twice proves nothing.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}
