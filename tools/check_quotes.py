@@ -61,12 +61,23 @@ PREFIXES = {
     # decode them back.
     "x86simd": ("x86_sse.ch", "x86_avx.ch", "x86_avx512.ch", "x86_atomics.ch",
                 "x86_order.ch", "x86_bytes.ch", "x86simd_landing.ch"),
+    # The AArch64 course.  Five concepts plus a landing page, all prefixed
+    # `a64_` for the same reason the four above are prefixed `x86_`: a concept
+    # id is resolved globally, and the five ids here were checked against every
+    # other course in content/src before this table was written.  The prefix
+    # `a64_` matches no existing file, and the block filter below learned about
+    # `./a64dec.py` rather than `./x86dec` for the same reason -- a filter
+    # that names one artifact's command line silently skips every page of the
+    # next one.
+    "a64asm": ("a64_asm.ch", "a64_encoding.ch", "a64_immediate.ch",
+               "a64_cond.ch", "a64_verify.ch", "a64asm_landing.ch"),
 }
 OUTPUTS = {
     "x86asm": "x86dec.out",
     "x86abi": "abidump.out",
     "x86sys": "sysdump.out",
     "x86simd": "vecdump.out",
+    "a64asm": "a64dec.out",
 }
 PREF = PREFIXES.get(COURSE, (COURSE[:3],))
 if not isinstance(PREF, tuple):
@@ -83,6 +94,10 @@ EXEMPT = {
     "13.05": "the smp course's factor, not this one's",
     "61.9": "the memory course's factor, not this one's",
     "3.89": "the simd course's factor, not this one's",
+    # The AArch64 course's own harness count, which the artifact does not
+    # print and could not: the harness counts itself after the run, so the
+    # number lives in crosscheck.py's own output and is quoted as such.
+    "243":  "the a64asm harness's own check count",
 }
 
 TICK = re.compile(r"(\d+\.\d{3}) ticks/op")
@@ -103,8 +118,15 @@ for name in sorted(os.listdir(os.path.join(ROOT, "content", "src"))):
     # decimals and they are the author's arithmetic, not the artifact's.
     blocks = re.findall(r"<pre>(.*?)</pre>", body, re.S)
     for b in blocks:
+        # A quoted-output block is one that SHOWS a command.  The first
+        # version of this filter named four commands -- x86dec, sysdump,
+        # objdump, and a `$` prompt -- and the AArch64 pages quote
+        # `./a64dec.py` with a `$` prompt, so they happened to pass; the
+        # filter was widened here anyway because a filter that passes by luck
+        # is a filter that will fail by accident.  The check is now: does the
+        # block contain a shell prompt or a known artifact command?
         if "$ " not in b and "./x86dec" not in b and "./sysdump" not in b \
-            and "objdump" not in b:
+                and "./a64dec" not in b and "objdump" not in b:
             continue
         for pat, kind in ((TICK, "ticks/op"), (HEX, "hex"), (RATIO, "ratio")):
             for m in pat.finditer(b):

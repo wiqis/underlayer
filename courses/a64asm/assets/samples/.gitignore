@@ -1,0 +1,51 @@
+# The a64asm sample directory tracks its OUTPUT and ignores its INPUTS.
+#
+# The distinction is the whole point of the course: a number in the prose is
+# a claim about bytes, so the BYTES are committed and the things that make
+# the bytes are not.  A reader can check every figure in the course against
+# a64dec.out, fields.txt, run1.txt and run2.txt without installing a
+# cross-compiler.  A reader who wants to re-derive them runs build_samples.sh
+# and needs clang with an aarch64 target and llvm-objdump-21, which not every
+# machine has -- and a course whose numbers are only checkable on the machine
+# that produced them is a course whose numbers are claims.
+#
+# So: the recorded runs are tracked, the objects are not.  .gitignore keeps
+# the object files out of history; they are large, they are binary, and they
+# are reproducible from two text files with one command.
+
+# Object files, and the ELF sections the density comparison counts.  All of
+# these are outputs of build_samples.sh.
+*.o
+*.s.tmp
+corpus_O0.o
+corpus_O1.o
+corpus_O2.o
+corpus_Os.o
+density_a64_O0.o
+density_a64_O1.o
+density_a64_O2.o
+density_a64_Os.o
+density_x86_O0.o
+density_x86_O1.o
+density_x86_O2.o
+density_x86_Os.o
+
+# The disassembler's own listing, for the same reason: it is derived.
+a64_objdump.txt
+
+# The scratch files the measurement driver assembles.  a64dec.py writes
+# _p.s/_p.o for a single-word probe, _b.s/_b.o for a batch, and _w.s/_w.o
+# for a word asked about in isolation.  None of them is an input to anything.
+_p.s
+_p.o
+_b.s
+_b.o
+_w.s
+_w.o
+
+# The object files for the density comparison are listed twice above on
+# purpose: once by pattern and once by name.  The patterns catch a future
+# level (-O3, -Ofast) and the names document what the script produces, so a
+# reader who deletes one line does not silently start tracking binaries.
+__pycache__/
+*.pyc

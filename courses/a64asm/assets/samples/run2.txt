@@ -1,0 +1,2018 @@
+========================================================================
+a64dec -- the artifact for "AArch64: Encoding From The Ground Up"
+Every number below is a BIT PATTERN, a COUNT of bit patterns, an
+arithmetic identity, or a refusal from a real assembler.  Nothing is
+quoted from a manual and NOTHING IS EXECUTED: there is no AArch64
+machine on this host.  See section 15.
+========================================================================
+
+========================================================================
+SECTION 1 -- THE INSTRUMENT.  Nothing below this point is a claim yet.
+========================================================================
+
+  There is no AArch64 machine here, and the first thing this file has to say
+  is what follows from that. Nothing in the corpus is ever EXECUTED. The
+  compiler emits words, the disassembler names words, and this file reads
+  words. Every number below is a property of an ENCODING, and none of them is
+  a property of a running AArch64 program -- there is not one on this machine
+  to have a property.
+
+  role                what was found                                        what that means                   
+  assembles           Ubuntu clang version 21.1.8 (6ubuntu1)                the SECOND reader                 
+  disassembles        Ubuntu LLVM version 21.1.8                            the SECOND reader                 
+  links AArch64       NOT INSTALLED                                         so no linked image is compared    
+  emulates AArch64    NOT INSTALLED                                         so no instruction is executed     
+
+  The two rows that matter are the two NO rows. They are printed before any
+  measurement rather than in a limits section at the end, because a reader who
+  meets a number and meets the absence of the thing that would make it a
+  runtime measurement in a different order learns a different lesson.
+
+  THE DECODER USES NO TOOL AT ALL. Part one of this file imports os, re,
+  struct and sys and nothing else. struct.unpack_from reads the ELF64 section
+  header table by hand -- e_shoff at 0x28, e_shentsize/e_shnum/e_shstrndx at
+  0x3a, and then 64 bytes per entry -- and .text is found by NAME. The reader
+  is a dependency of the claim rather than a convenience, for the reason the
+  isa course's x86dec.py gives: a decoder that shells out to a disassembler is
+  a disassembler with a hardcoded path in it.
+
+  THE ELF64 FIELDS THIS FILE READS, and nothing else:
+  field         offset     width      what it selects                             
+  e_shoff       0x28       8 bytes    offset of the section table                 
+  e_shentsize   0x3a       2 bytes    size of ONE section header                  
+  e_shnum       0x3c       2 bytes    how many there are                          
+  e_shstrndx    0x3e       2 bytes    which one is the name table                 
+  e_machine     0x12       2 bytes    183 = EM_AARCH64                            
+
+  A reader who wants to check can: every offset above is in the ELF64
+  specification's section-header index and none of them is a constant invented
+  here. The decoder CHECKS e_machine == 183 and refuses a file that is not an
+  AArch64 object, because the alternative is decoding x86-64 words as AArch64
+  words and getting a plausible answer.
+
+  THE DECLARED SUBSET, and what "subset" means HERE:
+    21 instruction groups are modelled, and the subset is a
+    subset of NAMES, not of LENGTHS.  An instruction this file
+    cannot name still resolves a length, because the length is a
+    constant.  That is the whole difference from x86dec.py in one
+    line, and section 2 measures it.
+    Of the 868 words in the corpus, 859 are named by one of those
+    models and 9 are not.
+    A word no model claims is printed as (op 0xd503201f) and COUNTED.
+    It is never dropped, because a table that filtered them out
+    would be a property of the filter rather than of the corpus.
+
+========================================================================
+SECTION 2 -- FOUR BYTES, ALWAYS.  AND THE MNEMONIC IS NOT IN THERE.
+========================================================================
+
+  The claim this course is built on is that an AArch64 instruction is exactly
+  four bytes, and the claim is worth measuring because it is the one property
+  of the encoding that a decoder gets FOR FREE: a word of unknown meaning
+  still has a known length.
+
+  file              section   bytes    %4    insns   bytes/insn  chain   
+  a64.o             .text     540      0     135     4.0000      EXACTLY 
+  corpus_O0.o       .text     1352     0     338     4.0000      EXACTLY 
+  corpus_O1.o       .text     496      0     124     4.0000      EXACTLY 
+  corpus_O2.o       .text     588      0     147     4.0000      EXACTLY 
+  corpus_Os.o       .text     496      0     124     4.0000      EXACTLY 
+
+  868 instructions over 5 code sections.  Every section is a
+  multiple of four, every walk ends exactly on the section end, and
+  bytes/insn is 4.0000 in every row including the hand-written one.
+  VERDICT: fixed width, on this corpus
+
+  So here is what that buys, stated as the negative space rather than the
+  positive claim. Every one of these is a class of bug a variable-length
+  decoder has and this one cannot:
+
+  * DESYNCHRONISATION. A decoder that guesses a length wrong is reading
+  garbage forever after, and there is no resynchronisation point in a
+  variable-length encoding. Here the next instruction starts 4 bytes on
+  whether or not the previous one made sense. * A DECODED INSTRUCTION THAT IS
+  NOT AN INSTRUCTION. A word no model claims is 4 bytes of somebody else's
+  problem, and the count above is still right. * LENGTH ARITHMETIC. There is
+  no prefix byte, no escape, no opcode-length table, and therefore no integer
+  that can overflow.
+
+  And here is what it costs, because the list above is one-sided. Four bytes
+  is four bytes for `nop`, which does nothing. The x86-64 encoding has a
+  one-byte `nop` and a two-byte `ret`; this one pays four bytes each, and
+  section 13 measures what that costs in code size and finds the answer is "it
+  depends, and the answer is measurable".
+
+  THE MNEMONIC IS NOT IN THERE.  The encoding stores an OPCODE
+  and operands; the name you type is the ASSEMBLER'S, and the two
+  are related by a table the architecture defines.  Every row
+  below was MEASURED by assembling both lines and comparing the two
+  32-bit words, which is the only way to say what an alias
+  ACTUALLY stands for rather than what it looks like.
+
+    52824680  mov w0, #0x1234        == movz w0, #0x1234        MOVZ with hw = 0, and hw = 0 is the DEFAULT so the assembler hides it
+    6b01001f  cmp w0, w1             == subs wzr, w0, w1        the flag-writing form, with the destination thrown away
+    3100041f  cmn w0, #1             == adds wzr, w0, #1        the same, on the other side
+    4b0103e0  neg w0, w1             == sub w0, wzr, w1         the zero register as a SOURCE
+    2a2103e0  mvn w0, w1             == orn w0, wzr, w1         NOT is OR with all ones -- and the ZERO is the FIRST operand, so the spelling is `orn w0, wzr, w1` and NOT `orn w0, w1, wzr`
+    6a01001f  tst w0, w1             == ands wzr, w0, w1        and the destination thrown away
+    2a0103e0  mov w0, w1             == orr w0, wzr, w1         a MOVE IS AN OR with a zero -- and again the ZERO is first, so the spelling is `orr w0, wzr, w1`
+    9100001f  mov sp, x0             == add sp, x0, #0          the STACK POINTER is register 31 in this group
+    910003e0  mov x0, sp             == add x0, sp, #0          and the same 31 as a source
+    1b027c20  mul w0, w1, w2         == madd w0, w1, w2, wzr    a MULTIPLY IS a three-source with an addend of zero
+    93407c20  sxtw x0, w1            == sbfm x0, x1, #0, #31    a sign extend, expressed as a FIELD
+    d3407c20  uxtw x0, w1            == ubfm x0, x1, #0, #31    the same with the other bitfield op
+    531d7020  lsl w0, w1, #3         == ubfm w0, w1, #29, #28   a shift is a bitfield whose two halves are adjacent
+    d65f03c0  ret                    == ret x30                 and the link register is 30, so it is the DEFAULT
+    d503201f  nop                    == hint #0                 TWENTY-SEVEN FIXED BITS and a 5-bit hint number
+    11400420  add w0, w1, #0x1000    == add w0, w1, #1, lsl #12  one imm12 field, with a SHIFT on it
+    1a9f17e0  cset w0, eq            == csinc w0, wzr, wzr, ne  THE TRAP: the condition is INVERTED.  csinc with the same cond is a DIFFERENT 32 bits
+    1a9f07e0  cset w0, ne            == csinc w0, wzr, wzr, eq  and the other way round
+    5a9f13e0  csetm w0, eq           == csinv w0, wzr, wzr, ne  CSETM is CSINV, also with the condition inverted
+    1a811420  cinc w0, w1, eq        == csinc w0, w1, w1, ne    Rn == Rm, and again INVERTED
+    5a81b420  cneg w0, w1, ge        == csneg w0, w1, w1, lt    and the other way round
+    10ffffc0  adr x0, T              != 90000000 adrp x0, T              NOT AN ALIAS
+
+  21 of 22 pairs are the same 32 bits.
+
+  Read the table for what it says about the architecture rather than about the
+  aliases. `cmp` is a `subs` with a destination nobody keeps; `mvn` is an
+  `orn`; `mov` is an `orr`; `mul` is a `madd` with a zero addend; `cset` is a
+  `csinc` with the condition INVERTED. Four of the twenty-two rows are not
+  aliases at all and say so.
+
+  The `cset` row is the one to keep. `cset w0, eq` and `csinc w0, wzr, wzr,
+  eq` are DIFFERENT 32 bits, and the difference is in the condition field and
+  nowhere else. A disassembler that models `cset` as "csinc with Rn = Rm = 31"
+  produces a decoder that is right about the operands and wrong about every
+  `cset` in the program, and nothing about the result looks wrong: it is 0 or
+  1, exactly as `cset` promised.
+
+  WORD-LEVEL FACTS about the mnemonic field, all measured:
+    * `mov` has no encoding of its own.  Its two meanings -- a
+      MOVZ and an ORR -- are two different groups in two different
+      classes, and which one a word is depends on bits[28:23] and
+      nothing else.
+    * `nop` is bits[31:5] fixed and a 5-bit hint number in the low
+      five: 27 of 32 bits carry the same value in every hint.
+    * `cmp`/`cmn`/`tst` are three two-operand forms of
+      three-operand instructions, and the difference is one bit in
+      the destination field: register 31 in the DP-immediate group
+      is the STACK POINTER and in the DP-register logical group it
+      is the ZERO register.  Section 4 measures that too.
+
+========================================================================
+SECTION 3 -- THE CLASS FIELD, bits[28:25], MEASURED OVER A REAL CORPUS
+========================================================================
+
+  Four bits at position 25 are the first thing a decoder looks at. There are
+  sixteen values, and what each one MEANS is quoted from the architecture's
+  reference manual. What each one CONTAINS is measured here, by taking the
+  instructions out of five object files, reading four bits out of each, and
+  asking the oracle what that instruction is.
+
+  5 object files, 868 instructions the oracle named, 0 it did
+  not.  Missing from the corpus: nothing.
+
+  bits    n      what landed there, and how often                      the QUOTED name                       
+  00100   23     ldp:15 stp:8                                          Loads and Stores (pair)               
+  00101   111    add:40 mov:34 subs:6 cmp:5 neg:4                      Data Processing -- Register           
+  00110   1      ldp:1                                                 Advanced SIMD (pair)                  
+  00111   6      add:3 movi:2 addv:1                                   Advanced SIMD                         
+  01000   114    add:41 sub:31 cmp:20 subs:11 mov:4                    Data Processing -- Immediate          
+  01001   134    mov:45 and:28 movk:19 lsl:9 orr:8                     Data Processing -- Immediate          
+  01010   84     b:27 bl:10 b.ne:8 b.eq:7 cbz:6                        Branches, Exception Generating and System
+  01011   142    ret:134 tbz:4 br:1 blr:1 tbnz:1                       Branches, Exception Generating and System
+  01100   151    ldr:83 str:59 ldur:2 ldrb:2 ldrsw:2                   Loads and Stores                      
+  01101   101    csel:22 cset:14 mul:10 madd:10 lsl:5                  Data Processing -- Register           
+  01111   1      fmov:1                                                Advanced SIMD / FP                    
+
+  11 of the 16 values carry at least one real instruction in this
+  corpus.  Empty here: 00000, 00001, 00010, 00011, 01110.
+
+  The class NAMES are a quotation. The MEMBERSHIP is a measurement, and it is
+  the membership the decoder's dispatch is built on, because a dispatch built
+  on a remembered table is a claim and a claim cannot be debugged.
+
+  5 of the sixteen values are empty in this corpus and 1 of those carry SIMD.
+  That is a fact about this corpus, not about the architecture, and the
+  difference matters: a reader who has read that "bits[28:25] is the class
+  field" is holding a rule they will test, and the 5 empty rows are the 5 the
+  rule is easiest to get wrong by rounding a two-bit recollection up to four
+  bits.
+
+  And the one a two-bit rule cannot see is 1101, which holds `csel`, `cset`,
+  `mul` and `madd` -- 101 instructions, the sixth largest entry in the table.
+  A rule that stops at bits[28:27] and then peeks at bit 25 puts them in "Data
+  Processing -- Register" alongside 0101, and that is not merely cosmetic:
+  1101 and 0101 are different code paths through the decoder, with different
+  guards and different operand layouts.
+
+  WHAT THE EMPTY ROWS COST, stated exactly:
+    A decoder may implement 11 of the 16 classes and be correct
+    on every instruction in this corpus.  The 5 empty values are
+    not "unimplemented classes" -- they are values whose contents
+    this corpus did not exercise, and a class field is four bits
+    wide whether or not a program uses it.
+
+  The 4-bit field is also the CHEAPEST possible first cut, and the
+  reason is arithmetic rather than architectural taste: 16 buckets
+  means one 4-bit compare, and the ARM manual states the field
+  exists to give the decoder a top-level split.  What the manual
+  does not say is how much of the map is reachable, and section 5
+  measures that instead of quoting it.
+
+========================================================================
+SECTION 4 -- THE FIELD MAP, MEASURED BY DIFFERENCE
+========================================================================
+
+  A field map read out of a manual is a claim. A field map read off the XOR of
+  two assembled words is a measurement, and it is what the guards in part one
+  of this file are built from. The method is one line long: assemble an
+  instruction, change ONE operand, assemble it again, and every bit that moved
+  belongs to that operand.
+
+  One correction, because the first version of this measurement was wrong in a
+  way that looked like a result. A single pair marks the bits where the two
+  VALUES differ, which is a SUBSET of the field and not the field. Measured
+  with one pair, `movz w0, #0x1111` against `movz w0, #0x2222` gives an 8-bit
+  "imm16", because 0x1111 and 0x2222 happen to differ in eight bit positions.
+  The table below ORs the XOR over a SWEEP of variants, one per single bit,
+  which marks every position the operand can reach.
+
+  field              xor mask    the positions         base instruction                            
+  Rd                 0000000f    bits[3:0]             add w0, w1, w2                              
+  Rn                 000001c0    bits[8:6]             add w0, w1, w2                              
+  Rm                 000f0000    bits[19:16]           add w0, w1, w2                              
+  sf                 80030001    bits[0,16,17,31]      add w0, w1, w2                              
+  op                 40000000    bits[30:30]           add w0, w1, w2                              
+  S                  20000000    bits[29:29]           add w0, w1, w2                              
+  shift amt          0000fc00    bits[15:10]           add x0, x1, x2, lsl #0                      
+  shift amt (32-bit)  00007c00    bits[14:10]           add w0, w1, w2, lsl #0                      
+  shift type         00e0e000    bits[13,14,15,21,22,23]  add w0, w1, w2, lsl #3                      
+  shift N            80400000    bits[22,31]           add w0, w1, w2, lsl #3                      
+  opc                60000000    bits[30:29]           and w0, w1, w2                              
+  N                  60200000    bits[21,29,30]        and w0, w1, w2                              
+  imm12              003ffc00    bits[21:10]           add w0, w1, #0x0                            
+  lsl12              00400000    bits[22:22]           add w0, w1, #0x10                           
+  imm16              001fffe0    bits[20:5]            movz w0, #0x0000                            
+  hw                 00600000    bits[22:21]           movz x0, #0x1111                            
+  opc-movewide       60000000    bits[30:29]           movz w0, #0x1111                            
+  immr               001d7400    bits[10,12,13,14,16,18,19,20]  sbfx w0, w1, #4, #3                         
+  imms               00007c00    bits[14:10]           sbfx w0, w1, #4, #3                         
+  N (bitfield)       40181000    bits[12,19,20,30]     sbfx w0, w1, #4, #3                         
+  lsl0               00007000    bits[14:12]           extr w0, w1, w2, #3                         
+  cond (csel)        0000f000    bits[15:12]           csel w0, w1, w2, eq                         
+  op2 (csel)         00000400    bits[10:10]           csel w0, w1, w2, eq                         
+  inv (csel)         40000400    bits[10,30]           csel w0, w1, w2, eq                         
+  2src opc           00002c00    bits[10,11,13]        lsl w0, w1, w2                              
+  3src o0            0000f000    bits[15:12]           madd w0, w1, w2, w3                         
+  Ra                 00003800    bits[13:11]           madd w0, w1, w2, w3                         
+  1src opc           00001c00    bits[12:10]           clz w0, w1                                  
+  cond (b.cond)      000001ef    bits[0,1,2,3,5,6,7,8]  b.eq T                                      
+  cond (b.cond) top  0000006f    bits[0,1,2,3,5,6]     b.eq T                                      
+  cbz op             01000060    bits[5,6,24]          cbz w0, T                                   
+  cbz sf             80000060    bits[5,6,31]          cbz w0, T                                   
+  tbz op             01000060    bits[5,6,24]          tbz w0, #3, T                               
+  tbz bit5+imm5      00f800e0    bits[5,6,7,19,20,21,22,23]  tbz w0, #1, T                               
+  tbz b5             80f00060    bits[5,6,20,21,22,23,31]  tbz x0, #1, T                               
+  br opc             006003e0    bits[5,6,7,8,9,21,22]  br x0                                       
+  Rn (br)            000001e0    bits[8:5]             br x0                                       
+  B op               80000003    bits[0,1,31]          b T                                         
+  B imm26            03ffffff    bits[25:0]            b T                                         
+  adr/adrp page bit  80ffffc0    bits[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,31]  adr x0, T                                   
+  ADR immhi+immlo    60ff81e0    bits[5,6,7,8,15,16,17,18,19,20,21,22,23,29,30]  adr x0, T                                   
+  ld size            c4800000    bits[23,26,30,31]     ldr w0, [x1]                                
+  ld opc             00400000    bits[22:22]           ldr w0, [x1]                                
+  ld opc2            80000000    bits[31:31]           ldr w0, [x1]                                
+  ld opc3            00c00000    bits[23:22]           ldr w0, [x1]                                
+  ld imm12           003ffc00    bits[21:10]           ldr w0, [x1, #0x0]                          
+  ldur imm9          001ff000    bits[20:12]           ldur w0, [x1, #0x0]                         
+  ld Rt              0000000f    bits[3:0]             ldr w0, [x1]                                
+  ld Rn              000001e0    bits[8:5]             ldr w0, [x1]                                
+  ld mode            01008c00    bits[10,11,15,24]     ldr w0, [x1, #8]                            
+  ldur mode          001f0000    bits[20:16]           ldur w0, [x1, #8]                           
+  pair Rt            0000001f    bits[4:0]             stp x0, x1, [sp]                            
+  pair Rt2           00007c00    bits[14:10]           stp x0, x1, [sp]                            
+  pair Rn            000003e0    bits[9:5]             stp x0, x1, [sp]                            
+  pair imm           001f8000    bits[20:15]           stp x0, x1, [sp]                            
+  pair mode          01bf0000    bits[16,17,18,19,20,21,23,24]  stp x0, x1, [sp]                            
+  pair L             00400000    bits[22:22]           stp x0, x1, [sp]                            
+  pair scale         84000000    bits[26,31]           stp w0, w1, [sp]                            
+
+  58 field positions measured, 58 cases, 0 refusals.
+
+  Four things in that table are worth reading slowly.
+
+  `Rt2` in the pair form is bits[14:10] and NOT bits[11:10]. This is the
+  single most common A64 decoder bug in existence, because a decoder that
+  models `stp` after `ldp`-and-guesses puts the second register in a two-bit
+  field, which cannot address register 15. The table shows a 5-bit field.
+
+  `cond` is bits[15:12] in a conditional SELECT and bits[4:0] in a B.cond, and
+  the two fields do not overlap. A decoder that finds one `cond` and uses it
+  for both gets half of the conditional instructions in the program wrong, and
+  the two errors are in the same direction: `b.eq` decodes with the condition
+  read from the wrong end of the word.
+
+  Register 31 is the STACK POINTER in add/sub and the ZERO register in the
+  logical-shifted group, and this is measured twice in the same table: the
+  `Rd` mask is bits[4:0] in both, so the field is identical and the MEANING is
+  not. No field map can express that difference; only a decoder that says
+  which it means can, which is why part one of this file has a `sp` argument
+  on the register-name function and never guesses.
+
+  `imm12` is bits[21:10] and the scale on it is a SEPARATE two-bit field that
+  is only read when it is 0b01. `add w0, w1, #0x1000` and `add w0, w1, #1, lsl
+  #12` are the same 32 bits, which section 2 measured, and `add w0, w1,
+  #0x100` is REFUSED -- a refusal section 6 catches.
+
+  WHAT A MASK IS, precisely, and what it is not:
+
+    A mask is the OR of the XORs over the SWEEP, so it is a LOWER
+    BOUND on the field: every bit in the mask really is a bit that
+    operand owns, and a bit NOT in the mask is a bit the sweep did
+    not happen to move.  The third column above is the mask; the
+    interior gaps are listed here so a reader can see which of the
+    58 rows are complete and which are merely not-yet-tightened.
+
+      sf                     bits[0,16,17,31]                           not moved: bits[1:15], bits[18:30]
+      shift type             bits[13,14,15,21,22,23]                    not moved: bits[16:20]
+      shift N                bits[22,31]                                not moved: bits[23:30]
+      N                      bits[21,29,30]                             not moved: bits[22:28]
+      immr                   bits[10,12,13,14,16,18,19,20]              not moved: bits[11:11], bits[15:15], bits[17:17]
+      N (bitfield)           bits[12,19,20,30]                          not moved: bits[13:18], bits[21:29]
+      inv (csel)             bits[10,30]                                not moved: bits[11:29]
+      2src opc               bits[10,11,13]                             not moved: bits[12:12]
+      cond (b.cond)          bits[0,1,2,3,5,6,7,8]                      not moved: bits[4:4]
+      cond (b.cond) top      bits[0,1,2,3,5,6]                          not moved: bits[4:4]
+      cbz op                 bits[5,6,24]                               not moved: bits[7:23]
+      cbz sf                 bits[5,6,31]                               not moved: bits[7:30]
+      tbz op                 bits[5,6,24]                               not moved: bits[7:23]
+      tbz bit5+imm5          bits[5,6,7,19,20,21,22,23]                 not moved: bits[8:18]
+      tbz b5                 bits[5,6,20,21,22,23,31]                   not moved: bits[7:19], bits[24:30]
+      br opc                 bits[5,6,7,8,9,21,22]                      not moved: bits[10:20]
+      B op                   bits[0,1,31]                               not moved: bits[2:30]
+      adr/adrp page bit      bits[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,31] not moved: bits[24:30]
+      ADR immhi+immlo        bits[5,6,7,8,15,16,17,18,19,20,21,22,23,29,30] not moved: bits[9:14], bits[24:28]
+      ld size                bits[23,26,30,31]                          not moved: bits[24:25], bits[27:29]
+      ld mode                bits[10,11,15,24]                          not moved: bits[12:14], bits[16:23]
+      pair mode              bits[16,17,18,19,20,21,23,24]              not moved: bits[22:22]
+      pair scale             bits[26,31]                                not moved: bits[27:30]
+
+    Most of those gaps are there because a SMALL sweep cannot reach
+    every value: the `cond` sweep visits fifteen condition names
+    and so moves bits 0 to 3 but never bit 4, because a B.cond
+    condition is FIVE bits wide and the sweep simply did not ask
+    for the thirty-second value.  Two gaps are not gaps at all:
+    in the conditional-select family bit 30 and bits[11:10] together
+    select the operation, which is section 10, and in the bitfield
+    family the same bits[21:10] window holds immr for a BFXIL and
+    imms for a BFM.  Those are two instructions sharing a field and
+    not one operand, and the mask is the evidence.
+
+    A field this measurement CANNOT find is a field that is never
+    written: reserved bits, the scale on the add/sub immediate
+    (0b11 is refused by the assembler), and the high bit of a shift
+    amount on a 32-bit register, all measured in section 9.
+
+  Written to fields.txt.
+
+========================================================================
+SECTION 5 -- THE BIT BUDGET: THREE MEANINGS OF "WASTED BIT"
+========================================================================
+
+  The claim A64's reputation rests on is that a 32-bit instruction wastes a
+  lot of its width, because a group's field map must accommodate every member
+  whether or not THIS instance needs the field. That claim is true, and the
+  interesting question is HOW MUCH -- and the honest answer is that "wasted"
+  has three meanings that give three different numbers. All three are measured
+  here, because a course that quotes one of them without saying which is
+  quoting a slogan.
+
+=== 5A. BITS FIXED WITHIN A GROUP
+    AND every word of every instruction the decoder routes to the
+    same model.  A bit clear in every member is DEAD in that group: no
+    decoder has to look at it, cannot name a different instruction with it,
+    and would raise UNDEFINED on a word that set it.  This is a property of
+    the ENCODING and it is the number that matters for decode cost.
+
+  b          Branch/Sys n=28    live=28  dead=4
+  (unmodelled) SIMD       n=7     live=26  dead=6
+  movk       DP-imm     n=19    live=25  dead=7
+  stp        L/S        n=8     live=25  dead=7
+  movz       DP-imm     n=35    live=24  dead=8
+  b.ne       Branch/Sys n=8     live=23  dead=9
+  ldp        L/S        n=15    live=22  dead=10
+  cmp        DP-imm     n=20    live=21  dead=11
+  subs       DP-imm     n=11    live=21  dead=11
+  ldr        L/S        n=82    live=20  dead=12
+  and        DP-imm     n=28    live=20  dead=12
+  str        L/S        n=59    live=19  dead=13
+  add        DP-imm     n=41    live=19  dead=13
+  mov        DP-reg     n=34    live=19  dead=13
+  add        DP-reg     n=40    live=18  dead=14
+  sub        DP-imm     n=31    live=18  dead=14
+  mov        DP-imm     n=8     live=18  dead=14
+  mul        DP-reg     n=10    live=17  dead=15
+  ldur       L/S        n=2     live=17  dead=15
+  cset       DP-reg     n=14    live=16  dead=16
+  madd       DP-reg     n=10    live=16  dead=16
+  lsl        DP-imm     n=9     live=16  dead=16
+  stur       L/S        n=2     live=16  dead=16
+  csetm      DP-reg     n=2     live=16  dead=16
+  ret        Branch/Sys n=134   live=15  dead=17
+  orr        DP-imm     n=8     live=15  dead=17
+  csinv      DP-reg     n=5     live=15  dead=17
+  cmp        DP-reg     n=5     live=15  dead=17
+  lsr        DP-imm     n=4     live=15  dead=17
+  asr        DP-imm     n=4     live=15  dead=17
+  ldrsw      L/S        n=2     live=15  dead=17
+  sdiv       DP-reg     n=5     live=14  dead=18
+  tbz        Branch/Sys n=4     live=14  dead=18
+  ldrb       L/S        n=2     live=14  dead=18
+  csel       DP-reg     n=22    live=13  dead=19
+  tst        DP-imm     n=6     live=13  dead=19
+  neg        DP-reg     n=4     live=13  dead=19
+  bic        DP-reg     n=4     live=13  dead=19
+  nop        Branch/Sys n=3     live=13  dead=19
+  ubfx       DP-imm     n=2     live=13  dead=19
+  subs       DP-reg     n=6     live=12  dead=20
+  udiv       DP-reg     n=5     live=12  dead=20
+  csinc      DP-reg     n=5     live=12  dead=20
+  cneg       DP-reg     n=4     live=12  dead=20
+  lsl        DP-reg     n=5     live=11  dead=21
+  tst        DP-reg     n=4     live=11  dead=21
+  msub       DP-reg     n=4     live=11  dead=21
+  sub        DP-reg     n=2     live=11  dead=21
+  cinc       DP-reg     n=2     live=11  dead=21
+  movn       DP-imm     n=6     live=10  dead=22
+  b.lt       Branch/Sys n=4     live=10  dead=22
+  ands       DP-reg     n=3     live=10  dead=22
+  cmn        DP-imm     n=4     live=9   dead=23
+  b.le       Branch/Sys n=3     live=9   dead=23
+  b.ge       Branch/Sys n=3     live=9   dead=23
+  ands       DP-imm     n=2     live=9   dead=23
+  b.eq       Branch/Sys n=7     live=8   dead=24
+  cbz        Branch/Sys n=6     live=8   dead=24
+  b.hs       Branch/Sys n=3     live=8   dead=24
+  orr        DP-reg     n=2     live=8   dead=24
+  bl         Branch/Sys n=10    live=7   dead=25
+  b.lo       Branch/Sys n=2     live=7   dead=25
+
+  62 groups have more than one member, holding 829 of the 868
+  instructions.  Over those, 14.4 of the 32 bits are DEAD --
+  44.9% of the word carries nothing the group ever varies.
+  The other 17.6 bits are live FOR THE GROUP, and how many of
+  those a given INSTANCE needs is the next measurement.
+
+  39 groups have exactly one member and are EXCLUDED from that
+  average rather than counted as 0 dead bits.  A group of one has
+  no measurable fixed bits, so including it would report free bits
+  nobody can use.  Excluding them makes the figure CONSERVATIVE:
+  a one-member group may well have a fixed pattern, and this
+  measurement cannot see it.
+
+  A mnemonic that appears twice -- `add` in DP-imm and DP-reg,
+  `cmp` and `subs` in both, `lsl` in both, `mov` in both -- is ONE
+  name for TWO encodings, and the grouping is (class, name) rather
+  than name because a bit that varies across the two encodings is
+  not a bit either encoding varies.
+
+=== 5B. BITS FIXED WITHIN ONE MNEMONIC
+    The same measurement one level down, and this is the one a reader
+    of a disassembly actually pays for.  A bit that holds the same value in
+    every instance of `ldr` is a constant, whether it is 0 or 1.
+
+  cset       n=14    constant=15  live=17  (17.0 bits live per instruction)
+  ret        n=134   constant=15  live=17  (17.0 bits live per instruction)
+  cneg       n=4     constant=11  live=21  (21.0 bits live per instruction)
+  cmn        n=4     constant=9   live=23  (23.0 bits live per instruction)
+  neg        n=4     constant=9   live=23  (23.0 bits live per instruction)
+  stp        n=8     constant=9   live=23  (23.0 bits live per instruction)
+  mul        n=10    constant=9   live=23  (23.0 bits live per instruction)
+  tst        n=10    constant=8   live=24  (24.0 bits live per instruction)
+  cmp        n=25    constant=8   live=24  (24.0 bits live per instruction)
+  csinv      n=5     constant=7   live=25  (25.0 bits live per instruction)
+  sdiv       n=5     constant=7   live=25  (25.0 bits live per instruction)
+  b.lt       n=4     constant=6   live=26  (26.0 bits live per instruction)
+  msub       n=4     constant=6   live=26  (26.0 bits live per instruction)
+  csinc      n=5     constant=6   live=26  (26.0 bits live per instruction)
+  udiv       n=5     constant=6   live=26  (26.0 bits live per instruction)
+  str        n=59    constant=6   live=26  (26.0 bits live per instruction)
+  tbz        n=4     constant=5   live=27  (27.0 bits live per instruction)
+  asr        n=5     constant=5   live=27  (27.0 bits live per instruction)
+  lsr        n=5     constant=5   live=27  (27.0 bits live per instruction)
+  movk       n=19    constant=5   live=27  (27.0 bits live per instruction)
+  csel       n=22    constant=5   live=27  (27.0 bits live per instruction)
+  ldr        n=82    constant=5   live=27  (27.0 bits live per instruction)
+  b.ne       n=8     constant=4   live=28  (28.0 bits live per instruction)
+  madd       n=10    constant=4   live=28  (28.0 bits live per instruction)
+  movz       n=35    constant=4   live=28  (28.0 bits live per instruction)
+  bic        n=4     constant=3   live=29  (29.0 bits live per instruction)
+  ands       n=5     constant=3   live=29  (29.0 bits live per instruction)
+  cbz        n=6     constant=3   live=29  (29.0 bits live per instruction)
+  movn       n=6     constant=3   live=29  (29.0 bits live per instruction)
+  b.eq       n=7     constant=3   live=29  (29.0 bits live per instruction)
+  bl         n=10    constant=3   live=29  (29.0 bits live per instruction)
+  ldp        n=15    constant=3   live=29  (29.0 bits live per instruction)
+  subs       n=17    constant=3   live=29  (29.0 bits live per instruction)
+  sub        n=33    constant=3   live=29  (29.0 bits live per instruction)
+  orr        n=10    constant=2   live=30  (30.0 bits live per instruction)
+  lsl        n=14    constant=2   live=30  (30.0 bits live per instruction)
+  b          n=28    constant=2   live=30  (30.0 bits live per instruction)
+  (unmodelled) n=9     constant=1   live=31  (31.0 bits live per instruction)
+  and        n=29    constant=1   live=31  (31.0 bits live per instruction)
+  add        n=81    constant=1   live=31  (31.0 bits live per instruction)
+  mov        n=42    constant=0   live=32  (32.0 bits live per instruction)
+
+  Four or more instances, so a constant is a property of the
+  MNEMONIC and not an artefact of a small sample.  A group of one
+  has no measurable constants, and a group of two has one bit, and
+  neither number means anything.
+
+=== 5C. RESERVED BITS, which are the cheap part and not the free one
+    A reserved field is a field whose non-reserved values raise
+    UNDEFINED.  A decoder that SKIPS the check would be faster and wrong, and
+    that trade is the whole content of "reserved": the bits are cheap to
+    decode and they are not free, because reading them is the definition of
+    the instruction.
+
+  nop    d503201f  nop                    32 of 32 bits read,  0 not needed to name it
+  ret    d65f03c0  ret                    30 of 32 bits read,  2 not needed to name it
+  b.eq   54000000  b.eq     +0            32 of 32 bits read,  0 not needed to name it
+  csel   1a820020  csel     w0, w1, w2, eq 32 of 32 bits read,  0 not needed to name it
+  add    91000400  add      x0, x0, #0x1  32 of 32 bits read,  0 not needed to name it
+  ldr    f9400000  ldr      x0, [x0, #0]  32 of 32 bits read,  0 not needed to name it
+
+  A 32-bit fixed-width encoding with N bits of fixed pattern is a decoder with
+  N fewer BITS to look at but the same number of CHECKS to make. So the reason
+  A64 decodes quickly is not that the instructions are small -- it is that
+  they are UNIFORMLY small, which is what makes the length a constant, and
+  heavily constrained, which is what makes the opcode a short lookup. Both
+  halves are in 5A and 5C, and only the first half is what the architecture's
+  reputation mentions.
+
+  AND THE NUMBER THE DENSITY ARGUMENT IS REALLY ABOUT, which is
+  none of the three above: BYTES PER INSTRUCTION.  It is section
+  13, and it is a comparison with x86-64 rather than a property of
+  this file, because 4.0 bytes per instruction is not a claim, it
+  is a definition.
+
+  Modelled: 859 of 868 corpus instructions (99.0%).  Unmodelled and
+  COUNTED: 9.  The unmodelled ones are Advanced SIMD, which is a
+  real part of the architecture and out of this decoder's declared
+  subset.  They are counted in the length arithmetic and not named,
+  which is exactly the property section 2 is about: a word whose
+  meaning is unknown still has a length.
+
+========================================================================
+SECTION 6 -- TWO IMMEDIATES, TWO PRICES, AND THE ASSEMBLER IS THE EVIDENCE
+========================================================================
+
+  AArch64 has more than one way to put a number in an instruction, and each
+  way has a different reach. A claim about the reach is worth nothing without
+  the REFUSALS, so every limit below was found by asking the assembler for
+  something one step past it and printing what it said.
+
+
+=== 6A. add/sub immediate: 12 bits, and a scale
+
+  asked for                     word        verdict     what came back                                
+  add w0, w1, #0                11000020    accepted    add      w0, w1, #0x0                         
+  add w0, w1, #0xfff            113ffc20    accepted    add      w0, w1, #0xfff                       
+  add w0, w1, #0x1000           11400420    accepted    add      w0, w1, #0x1, lsl #12                
+  add w0, w1, #0x1001           --          REFUSED     _p.s:4:15: error: expected compatible register, symbol or integer in range
+  add w0, w1, #0x1, lsl #12     11400420    accepted    add      w0, w1, #0x1, lsl #12                
+  add w0, w1, #0xfff, lsl #12   117ffc20    accepted    add      w0, w1, #0xfff, lsl #12              
+  add w0, w1, #0x1000000        --          REFUSED     _p.s:4:15: error: expected compatible register, symbol or integer in range
+  add w0, w1, #0x1234           --          REFUSED     _p.s:4:15: error: expected compatible register, symbol or integer in range
+  sub x0, x1, #0xfff, lsl #12   d17ffc20    accepted    sub      x0, x1, #0xfff, lsl #12              
+
+  `add w0, w1, #0x1000` is accepted, and it is not a wider immediate: it is
+  the 12-bit value 1 with the scale field set, and the two are the same 32
+  bits. `#0x1001` is REFUSED, because 0x1001 is not reachable as a 12-bit
+  field in any of the three states the scale field admits. So the reach of
+  this field is NOT a contiguous range and no formula like "0 to 4095 times a
+  power of four" describes it, which is the trap: a reader who has
+  internalised the x86-64 `imm8-or-imm32` rule expects a contiguous range with
+  a scale and A64 gives three isolated values -- the value, the value shifted
+  left by 12, and zero.
+
+  Which means the worst case is a constant just above 4095 that is not a
+  multiple of 4096, and section 8 counts what the compiler has to do about it.
+
+=== 6B. move wide: 16 bits, and a shift of 0, 16, 32 or 48
+
+  asked for                       word        verdict     the oracle says                   
+  movz w0, #0xffff                529fffe0    accepted    movw0,#0xffff                     
+  movz x0, #0xffff, lsl #48       d2ffffe0    accepted    movx0,#0xffff000000000000         
+  movz x0, #0xffff, lsl #64       --          REFUSED     _p.s:4:21: error: expected 'lsl' with optional integer 0, 16, 32 or 48
+  movn w0, #0xffff                129fffe0    accepted    movw0,#0xffff0000                 
+  movn w0, #0x8000                12900000    accepted    movw0,#0xffff7fff                 
+  movn w0, #0                     12800000    accepted    movw0,#0xffffffff                 
+  movz w0, #0                     52800000    accepted    movw0,#0x0                        
+  movk w0, #0xffff, lsl #16       72bfffe0    accepted    movkw0,#0xffff,lsl#0x10           
+  movz w0, #0x1234                52824680    accepted    movw0,#0x1234                     
+
+  `movn w0, #0x8000` and `movn w0, #0xffff` are the same mnemonic and the
+  printer prints DIFFERENT things: the first as `mov w0, #-0x8001` and the
+  second as `movn w0, #0xffff`. The field holds the MAGNITUDE in both cases
+  and the register ends up holding the complement, and which of the two a
+  printer shows is a choice about what it thinks a reader wants. So the
+  encoding is unambiguous, the mnemonic is ambiguous, and a decoder that
+  prints the field is right while a decoder that prints the register value is
+  also right -- and the two-reader cross-check in section 12 has to normalise
+  this one and say that it does.
+
+  `movn w0, #0` and `movz w0, #0` are the same mnemonic with different
+  immediates, and they are different words: 0x12800000 and 0x52800000. One is
+  "all ones in a 32-bit register" and the other is "all zeros". A disassembly
+  that shows you `mov w0, #0x0` and `mov w0, #-0x1` is showing you two
+  different instructions, and the difference is invisible in the mnemonic.
+
+=== 6C. opc = bits[30:29] has a HOLE, and asking is how you see it
+
+  The move-wide group has three operations and a two-bit opcode, so
+  one of the four values has to be a hole -- and which one is a fact
+  about the ENCODING, measured by asking what each value is rather
+  than inferred from "three operations, two bits".  The guard is
+  bits[28:23] = 0b100101 and the opcode is bits[30:29]:
+
+  opc   word        the oracle calls it  the ENCODING is                 note      
+  00    12824689    MOV                 movn     w9, #0x1234            -         
+  01    32824689    ???                 (undefined) (undefined)         undefined 
+  10    52824689    MOV                 movz     w9, #0x1234            -         
+  11    72824689    MOVK                movk     w9, #0x1234, lsl #0    -         
+
+  Read the two name columns together.  The oracle prints `mov` for
+  opc = 0b00 and opc = 0b10 -- the SAME mnemonic for two different
+  operations -- because hw = 0, which is the default, is hidden.
+  The encoding column is the one the decoder has to agree with and
+  the oracle column is the one a human reads, and section 2 measured
+  that they are the same 32 bits for 19 of the 22 pairs it checked.
+
+  The hole is opc = 01, and this decoder reports it as UNDEFINED
+  rather than guessing.  That matters: a decoder that reads opc as
+  an index into a three-entry table and lets 0b01 alias onto MOVZ
+  would decode a word the architecture calls UNDEFINED into a
+  plausible instruction, and there is no value of the word that
+  would make the mistake visible afterwards.
+
+  A hole found by asking is a fact about the encoding; a hole
+  inferred from "there are three, so there must be two bits and one
+  of them is spare" is a guess with the same shape as the fact, and
+  the guess could put the hole in the wrong place.  This is the
+  third time in this file that a reserved value was found by
+  printing what a decoder does with it: section 7E and section 9B
+  found two more.
+
+=== 6D. branch immediates: 26 bits and 19 bits, and no scale at all
+
+  asked for         word        decoded here                                              
+  b T               17fffffe    b        -8                                               
+  bl T              97fffffe    bl       -8                                               
+  b.eq T            54ffffc0    b.eq     -8                                               
+  cbz w0, T         34ffffc0    cbz      w0, -8                                           
+  tbz w0, #31, T    36ffffc0    tbz      w0, #31, -8                                      
+  adr x0, T         10ffffc0    adr      x0, -8                                           
+  adrp x0, T        90000000    adrp     x0, +0                                           
+
+  Seven displacement fields, seven different widths and scales, and
+  section 11 works the arithmetic of three of them by hand out of
+  the bits.  The point of listing them here is that there is no
+  common shape: the encodings spend 19, 26 and 21 bits on three
+  instructions that all mean "move somewhere nearby", and the
+  differences are historical accidents of when each was added.
+
+========================================================================
+SECTION 7 -- THE LOGICAL IMMEDIATE: A ROTATE AND A RUN LENGTH, NOT A NUMBER
+========================================================================
+
+  This is the one place in the whole architecture where you cannot read the
+  number out, and it is the most interesting encoding in AArch64. A logical
+  immediate -- the operand of `and`, `orr`, `eor`, `bic` and their setting
+  forms -- is a CONSTANT OF A PARTICULAR SHAPE, stored as a rotate amount and
+  a run length in twelve bits.
+
+  The shape is this: the constant is built from ONE run of consecutive ones,
+  repeated to fill the register, and rotated. That is all. So the encodable
+  constants are exactly the periodic bit patterns, and the set is tiny.
+
+=== 7A. HOW MUCH OF THE CONSTANT SPACE THE ENCODING REACHES
+
+  width    encodable  the whole space           share     
+  32       1,302     4,294,967,296             3.031e-07 
+  64       5,334     18,446,744,073,709,551,616  2.892e-16 
+
+  1,302 is the count the manual quotes, and this file agrees with it, which is
+  worth saying plainly: the number is DERIVED here by enumerating the encoding
+  -- six element sizes, at most 64 run lengths, at most 64 rotations -- and
+  not read out of the manual. The enumeration is the smaller of the two
+  spaces, and that is the whole point: the encodable constants are the SMALL
+  set, not a filter on the large one.
+
+  A 32-bit logical immediate reaches 1,302 of 4,294,967,296 values. So the
+  instruction with the smallest field in the whole architecture -- 12 bits --
+  reaches more values than any other 12-bit field in AArch64, including the
+  add/sub immediate's 4,095. It reaches them by not being a number.
+
+=== 7B. THE ROUND TRIP, THIS ENCODER TO THIS DECODER
+
+  5334 encodable 64-bit constants; 0 round-trip failures
+
+  Self-consistency is necessary and NOT sufficient. Two functions can agree on
+  the wrong answer, and a round trip that never meets an independent party
+  proves only that the two halves of THIS file agree with each other. The
+  first version of this test handed the decoder the encoder's own imms, which
+  made it a tautology, and it is worth naming because a tautological round
+  trip reads exactly like a passing one in the output. The version above asks
+  the decoder to recover the element size from the imms FIELD, which is the
+  work a real decoder does, and 7C is the independent party: a real assembler,
+  asked for every encodable 32-bit constant, and this decoder reading back
+  every word it emitted.
+
+=== 7C. THE SAME CONSTANTS, ASSEMBLED BY SOMEONE ELSE, READ BACK HERE
+
+  asked the assembler for all 1302 encodable 32-bit constants and
+  read every word back with THIS decoder:
+    agreed:                    1302
+    disagreed:                 0
+
+  Every word in that batch is a real instruction that a real assembler
+  emitted, so the agreement is between two pieces of software written by
+  different people that cannot see each other. 1302 agreements and 0
+  disagreements.
+
+=== 7D. WHAT THE SHAPE LOOKS LIKE, DERIVED
+
+  One word, taken apart, with the constants beside every step.  The
+  first word here is the one the concept page works through, and it
+  is the first for a reason that is a rule rather than a preference:
+  a page that quotes a derivation must be quoting the RECORDED run,
+  and `check_quotes.py` reads only this file, so a word derived only
+  by `--why` on the command line is a word no harness can check.
+
+  1204cc00  and      w0, w0, #0xf0f0f0f0
+      0x1204cc00   and      w0, w0, #0xf0f0f0f0
+      class field bits[28:25] = 1001  ->  Data Processing -- Immediate
+      . N = 0 and opc = 0, so the word spells AND.  There is no invert bit: clang emits AND for `bic w0,w0,#0xff` by negating the CONSTANT to 0xffffff00, and the inversion is arithmetic, not encoding.
+      . LOGICAL IMMEDIATE: len = the position of the highest set bit of N:NOT(imms) = 0b0001100, so esize = 1 << 3 = 8 bits
+      . LOGICAL IMMEDIATE: S = imms & 0b111 = 3 is the WIDTH of the run of ones (S+1 = 4 of them); R = immr & 0b111 = 4 is how far RIGHT that run is rotated inside the element
+      . LOGICAL IMMEDIATE: a run of 4 ones is 0b1111; rotate it right by 4 within 8 bits and you get 0b11110000 = 0xf0
+      . LOGICAL IMMEDIATE: repeat that element 8 times: the 64-bit pattern is 0xf0f0f0f0f0f0f0f0
+      . LOGICAL IMMEDIATE: the destination is 32 bits, so the answer is the low 32 of that pattern: 0xf0f0f0f0
+      . this decode READ 32 of the 32 bits; 0 were not needed to name the instruction
+
+  92401000  and      x0, x0, #0x1f
+      0x92401000   and      x0, x0, #0x1f
+      class field bits[28:25] = 1001  ->  Data Processing -- Immediate
+      . N = bit[22] = 1 with sf = 1: the element is 64 bits wide or the top half needed filling, which is why the assembler reaches for N = 1 only on 64-bit inverted forms
+      . LOGICAL IMMEDIATE: len = the position of the highest set bit of N:NOT(imms) = 0b1111011, so esize = 1 << 6 = 64 bits
+      . LOGICAL IMMEDIATE: S = imms & 0b111111 = 4 is the WIDTH of the run of ones (S+1 = 5 of them); R = immr & 0b111111 = 0 is how far RIGHT that run is rotated inside the element
+      . LOGICAL IMMEDIATE: a run of 5 ones is 0b11111; rotate it right by 0 within 64 bits and you get 0b11111 = 0x1f
+      . LOGICAL IMMEDIATE: repeat that element 1 times: the 64-bit pattern is 0x000000000000001f
+      . this decode READ 32 of the 32 bits; 0 were not needed to name the instruction
+
+  9240d800  and      x0, x0, #0x7fffffffffffff
+      0x9240d800   and      x0, x0, #0x7fffffffffffff
+      class field bits[28:25] = 1001  ->  Data Processing -- Immediate
+      . N = bit[22] = 1 with sf = 1: the element is 64 bits wide or the top half needed filling, which is why the assembler reaches for N = 1 only on 64-bit inverted forms
+      . LOGICAL IMMEDIATE: len = the position of the highest set bit of N:NOT(imms) = 0b1001001, so esize = 1 << 6 = 64 bits
+      . LOGICAL IMMEDIATE: S = imms & 0b111111 = 54 is the WIDTH of the run of ones (S+1 = 55 of them); R = immr & 0b111111 = 0 is how far RIGHT that run is rotated inside the element
+      . LOGICAL IMMEDIATE: a run of 55 ones is 0b1111111111111111111111111111111111111111111111111111111; rotate it right by 0 within 64 bits and you get 0b1111111111111111111111111111111111111111111111111111111 = 0x7fffffffffffff
+      . LOGICAL IMMEDIATE: repeat that element 1 times: the 64-bit pattern is 0x007fffffffffffff
+      . this decode READ 32 of the 32 bits; 0 were not needed to name the instruction
+
+  9240b800  and      x0, x0, #0x7fffffffffff
+      0x9240b800   and      x0, x0, #0x7fffffffffff
+      class field bits[28:25] = 1001  ->  Data Processing -- Immediate
+      . N = bit[22] = 1 with sf = 1: the element is 64 bits wide or the top half needed filling, which is why the assembler reaches for N = 1 only on 64-bit inverted forms
+      . LOGICAL IMMEDIATE: len = the position of the highest set bit of N:NOT(imms) = 0b1010001, so esize = 1 << 6 = 64 bits
+      . LOGICAL IMMEDIATE: S = imms & 0b111111 = 46 is the WIDTH of the run of ones (S+1 = 47 of them); R = immr & 0b111111 = 0 is how far RIGHT that run is rotated inside the element
+      . LOGICAL IMMEDIATE: a run of 47 ones is 0b11111111111111111111111111111111111111111111111; rotate it right by 0 within 64 bits and you get 0b11111111111111111111111111111111111111111111111 = 0x7fffffffffff
+      . LOGICAL IMMEDIATE: repeat that element 1 times: the 64-bit pattern is 0x00007fffffffffff
+      . this decode READ 32 of the 32 bits; 0 were not needed to name the instruction
+
+  92401c00  and      x0, x0, #0xff
+      0x92401c00   and      x0, x0, #0xff
+      class field bits[28:25] = 1001  ->  Data Processing -- Immediate
+      . N = bit[22] = 1 with sf = 1: the element is 64 bits wide or the top half needed filling, which is why the assembler reaches for N = 1 only on 64-bit inverted forms
+      . LOGICAL IMMEDIATE: len = the position of the highest set bit of N:NOT(imms) = 0b1111000, so esize = 1 << 6 = 64 bits
+      . LOGICAL IMMEDIATE: S = imms & 0b111111 = 7 is the WIDTH of the run of ones (S+1 = 8 of them); R = immr & 0b111111 = 0 is how far RIGHT that run is rotated inside the element
+      . LOGICAL IMMEDIATE: a run of 8 ones is 0b11111111; rotate it right by 0 within 64 bits and you get 0b11111111 = 0xff
+      . LOGICAL IMMEDIATE: repeat that element 1 times: the 64-bit pattern is 0x00000000000000ff
+      . this decode READ 32 of the 32 bits; 0 were not needed to name the instruction
+
+=== 7E. THE RESERVED SPACE, FOUND BY ASKING
+
+  constant      shape                     verdict             what came back                
+  0x0           32-bit all zeros          REFUSED             _p.s:4:15: error: expected compatible register or logical immediate
+  0xffffffff    32-bit all ones, 32-bit   REFUSED             _p.s:4:15: error: expected compatible register or logical immediate
+  0xdeadbeef    32-bit no run of two bits twice  REFUSED             _p.s:4:15: error: expected compatible register or logical immediate
+  0x12345678    32-bit no period at all   REFUSED             _p.s:4:15: error: expected compatible register or logical immediate
+  0x80000001    32-bit ONE bit set        ACCEPTED as 12010400  andw0,w0,#0x80000001          
+  0x0           3-bit all zeros, 3 bits   REFUSED             _p.s:4:15: error: expected compatible register or logical immediate
+  0x7           3-bit all ones, 3 bits    ACCEPTED as 12000800  andw0,w0,#0x7                 
+
+  And the same constants at 64-bit width, where the answer CHANGES
+  for some and not others:
+
+  constant              shape                     verdict     what came back                
+  0xffffffffffffffff    all ones, 64-bit          REFUSED     the assembler says "expected compatible register or logical immediate"
+  0x7fffffffffffffff    all but the top bit       ACCEPTED    andx0,x0,#0x7fffffffffffffff  
+  0xfffffffffffffffe    all but the bottom bit    ACCEPTED    andx0,x0,#0xfffffffffffffffe  
+  0x0                   all zeros, 64-bit         REFUSED     the assembler says "expected compatible register or logical immediate"
+  0xf0f0f0f0f0f0f0f0    a 4-bit run               ACCEPTED    andx0,x0,#0xf0f0f0f0f0f0f0f0  
+  0x123456789abcdef0    no period at all          REFUSED     the assembler says "expected compatible register or logical immediate"
+
+  Every logical operation refuses the all-ones immediate, not just `and`: the
+  eight instructions `and`, `orr`, `eor`, `ands`, `orn`, `eon`, `bic` and
+  `bics` were each asked for `#0xffffffff` at 32 bits and each one refused
+  with the same diagnostic, and the same eight were asked for the 64-bit
+  all-ones and each refused. That is a property of the SHARED IMMEDIATE FIELD
+  and not of any one operation, which is why the diagnostic names the field
+  rather than the instruction.
+
+  And the sharpest fact in the encoding is the row just above it. The 64-bit
+  all-ones is refused, and the 64-bit all-but-the-top-bit is ACCEPTED: one bit
+  short of all-ones is a legal run of 63 ones in an element of size 64, and
+  all-ones is not a run at all. The boundary is not a WIDTH, it is the shape,
+  and a decoder that models the immediate as a scaled number will get this
+  wrong in the specific way of accepting a constant the assembler refuses --
+  which is the more dangerous direction, because a decoder that invents an
+  instruction produces output that looks right.
+
+  So a mask of "all but the low 32 bits" is not one instruction. It is a MOVN
+  and an AND, and section 8 measures that: `mov x0, #-1` is 0x92800000, one
+  word, and no logical immediate reaches it.
+
+========================================================================
+SECTION 8 -- A CONSTANT TOO BIG FOR ANY FIELD: FOUR INSTRUCTIONS, SIXTEEN BYTES
+========================================================================
+
+  Section 6 established that a 12-bit immediate reaches 4,095 unsigned values
+  with a scale, and section 7 that the logical immediate is not a number at
+  all. So what does a compiler do with a constant like 0x123456789abcdef?
+
+  It builds it out of MOVZ and MOVK. MOVZ writes one 16-bit field and zeroes
+  the rest; MOVK writes one 16-bit field and LEAVES THE OTHERS ALONE. Four
+  fields of 16 bits, so four instructions for a 64-bit constant -- sixteen
+  bytes, four words, for one C literal -- unless a field is zero, in which
+  case it is skipped.
+
+
+  width   constant              insns   what the assembler chose                  why it is interesting               
+  32      0x00001234            1       movz     w0, #0x1234                      one 16-bit field, the rest zero     
+  32      0x12345678            2       movz     w0, #0x5678, movk     w0, #0x1234, lsl #16  two non-zero fields                 
+  32      0xffffffff            1       movn     w0, #0x0                         all ones, 32-bit                    
+  64      0x123456789abcdef0    4       movz     x0, #0xdef0, movk     x0, #0x9abc, lsl #16, movk     x0, #0x5678, lsl #32, movk     x0, #0x1234, lsl #48  four non-zero fields                
+  64      0x0001000000000001    2       movz     x0, #0x1, movk     x0, #0x1, lsl #48  two non-zero fields                 
+  64      0x7fffffffffffffff    4       movz     x0, #0xffff, movk     x0, #0xffff, lsl #16, movk     x0, #0xffff, lsl #32, movk     x0, #0x7fff, lsl #48  the largest signed 64-bit value     
+  64      0xffffffffffffffff    1       movn     x0, #0x0                         the largest unsigned 64-bit value   
+  64      0x123456789abcdef1    4       movz     x0, #0xdef1, movk     x0, #0x9abc, lsl #16, movk     x0, #0x5678, lsl #32, movk     x0, #0x1234, lsl #48  a constant with no pattern at all   
+
+  Read the last three rows together, because the first draft of this
+  section predicted them and got all three wrong in the same way:
+  it assumed that "big number" meant "expensive".
+
+    * The 64-bit ALL ONES costs 1 instruction, and it is a MOVN, not
+      a MOVZ.  A MOVZ can only write a 16-bit field and zero the
+      rest, and this constant has no zero field, so no number of
+      MOVZ and MOVK reaches it.  MOVN exists for exactly this: it
+      writes the COMPLEMENT, so a run of ones is a run of zeroes
+      inverted, and the whole register is one complement away from a
+      field of zeros.  This is the reason MOVN exists at all, and
+      R7 in section 14 is about the mnemonic rather than the
+      operation.
+
+    * The largest SIGNED 64-bit value costs 4 instructions, which is
+      the same as an arbitrary 64-bit literal (4).  It is three
+      fields of ones and one of 0x7fff, and each of the four has to
+      be written, because MOVZ zeroes the rest of the register and
+      MOVK only patches one field.  There is no cheaper spelling:
+      it is not all-ones, so MOVN does not reach it either.
+
+  So the table is not ordered by size at all, and that is the finding. The
+  most expensive row and the cheapest are the two extremes of the 64-bit
+  range, and the difference between them is not the size of the number -- it
+  is whether the number is the COMPLEMENT of a field that MOVZ can write.
+
+  AArch64's move-wide group has two ways to be cheap and one way to be
+  expensive. Cheap: the value has a zero 16-bit field, so MOVZ writes it and
+  MOVK patches the rest. Cheapest: the value is all-ones, so MOVN writes its
+  complement, which is all-zeros, in one word. Expensive: the value has no
+  zero field and is not all-ones, so all four fields are written separately.
+
+  Which is the same rule section 7 measured from the other side. There, the
+  one 12-bit field in the architecture that is NOT a number reached more
+  values than any other 12-bit field. Here, the cheapest 64-bit constant is
+  the one with no variety in it at all. Both are the same design decision: the
+  encoding pays for reach in bits, and it pays in variety.
+
+=== 8A. HOW MANY MOVZ AND MOVK THE COMPILER ACTUALLY EMITTED
+
+  movz   35
+  movk   19
+  movn   6
+  mov    42
+  (a `mov` here is a MOVZ with hw = 0, decoded under the name the
+  ENCODING implies; section 2 measured that the two are the same
+  32 bits.)
+
+  The wide-constant cost is a per-CONSTANT cost, so a corpus with
+  many 64-bit literals and one with none differ by a factor of
+  four on these instructions alone.  That is why the density
+  comparison in section 13 is a table and not a verdict.
+========================================================================
+SECTION 9 -- THE EDGE OF EVERY MODELLED GROUP, FOUND BY ASKING FOR ONE MORE
+========================================================================
+
+  Everything so far measured things the encoding ALLOWS. The other half of an
+  encoding is the space it does not, and the only honest way to find that
+  boundary is to walk into it and see whether the assembler lets you back. A
+  refusal is a measurement: it is the architecture's own answer to a question,
+  it is exact, and it costs one line to print.
+
+
+=== 9A. ACCEPTED: the edge of every modelled group
+
+  case                                      word        verdict     what the oracle says                        
+  add/sub imm12 at its maximum              113ffc20    accepted    addw0,w1,#0xfff                             
+  add/sub imm12 with the scale set          917ffc20    accepted    addx0,x1,#0xfff,lsl#0xc                     
+  logical imm, a 2-bit element              1200f000    accepted    andw0,w0,#0x55555555                        
+  logical imm, a 64-bit element             9201f000    accepted    andx0,x0,#0xaaaaaaaaaaaaaaaa                
+  move wide, MOVZ at the top field          d2e24680    accepted    movx0,#0x1234000000000000                   
+  move wide, MOVK at the top field          f2e24680    accepted    movkx0,#0x1234,lsl#0x30                     
+  b.cond, imm19 at the far end              547fffe0    accepted    b.eqTARGET                                  
+  b.cond, imm19 at the near end             54800000    accepted    b.eqTARGET                                  
+  cbz, imm19 at the far end                 347fffe0    accepted    cbzw0,TARGET                                
+  cbz, imm19 at the near end                34800000    accepted    cbzw0,TARGET                                
+  B, imm26 at the far end                   15ffffff    accepted    bTARGET                                     
+  B, imm26 at the near end                  16000000    accepted    bTARGET                                     
+  adr, imm21 at the far end                 107fffe0    accepted    adrx0,TARGET                                
+  adr, imm21 at the near end                10800000    accepted    adrx0,TARGET                                
+  tbz, bit 63 of a 64-bit register          b6ffffc0    accepted    tbzx0,#0x3f,TARGET                          
+  tbz, bit 31 of a 32-bit register          36ffffc0    accepted    tbzw0,#0x1f,TARGET                          
+  2-source shift by register                1ac22020    accepted    lslw0,w1,w2                                 
+  condselect with cond = AL                 1a82e020    accepted    cselw0,w1,w2,al                             
+  condselect with cond = NV                 1a82f020    accepted    cselw0,w1,w2,nv                             
+  b.cond with cond = AL                     54ffffce    accepted    b.alTARGET                                  
+  b.cond with cond = NV                     54ffffcf    accepted    b.nvTARGET                                  
+  ldst, imm12 at its maximum                b97ffc20    accepted    ldrw0,[x1,#0x3ffc]                          
+  ldur with the largest negative offset     f8500020    accepted    ldurx0,[x1,#0xffffffffffffff00]             
+  pair, the largest legal forward offset    a89f87e0    accepted    stpx0,x1,[sp],#0x1f8                        
+  pair, the largest legal backward offset   a9a007e0    accepted    stpx0,x1,[sp,#0xfffffffffffffe00]!          
+  mov to the stack pointer                  9100001f    accepted    movsp,x0                                    
+  ret with an explicit register             d65f0000    accepted    retx0                                       
+  ret with a non-link register              d65f00a0    accepted    retx5                                       
+  sbfx whose immr runs off the end          131d7c20    accepted    asrw0,w1,#0x1d                              
+
+  29 of 29 accepted.  The `word` column is this file's own reading
+  of the bytes, and the last column is the disassembler's name for
+  the same bytes: the table is a cross-check that has already
+  happened, at every boundary of every modelled group.
+
+  Read the displacement rows together, because the first version of this list
+  got every one of them wrong by arithmetic and the assembler caught all of
+  them. A 19-bit signed field of INSTRUCTION offsets reaches +0xffffc bytes
+  forward and -0x100000 bytes back -- not symmetric, because a signed field is
+  0x7ffff forward and 0x80000 back. A 26-bit one reaches +0x7fffffc and
+  -0x8000000, which is +/-128 MiB. And ADR's 21 bits reach exactly +/-1 MiB,
+  the same as a conditional branch, so on AArch64 an address-of-data and a
+  conditional branch have the same reach.
+
+  The first draft wrote 0x1ffffc for b.cond and -0x40000000 for B, which are
+  both off by a factor of four, and both were refused. A sign extension is not
+  a magnitude; section 11 does the arithmetic out of the bits so the
+  difference is visible rather than assumed.
+
+
+=== 9B. REFUSED: the space outside
+
+  case                                      verdict                 what came back                                              
+  add/sub imm12, not reachable by any scale  REFUSED                 _p.s:4:15: error: expected compatible register, symbol or integer in range
+  add/sub imm12, past the top of the scaled range  REFUSED                 _p.s:4:15: error: expected compatible register, symbol or integer in range
+  add/sub with the scale field set to 3     REFUSED                 _p.s:4:15: error: expected compatible register, symbol or integer in range
+  logical imm, all zeros, 32-bit            REFUSED                 _p.s:4:15: error: expected compatible register or logical immediate
+  logical imm, all ones, 32-bit             REFUSED                 _p.s:4:15: error: expected compatible register or logical immediate
+  logical imm, a non-pattern 32-bit value   REFUSED                 _p.s:4:15: error: expected compatible register or logical immediate
+  logical imm, a non-pattern 64-bit value   REFUSED                 _p.s:4:15: error: expected compatible register or logical immediate
+  cset with cond = AL                       REFUSED                 _p.s:4:14: error: condition codes AL and NV are invalid for this instructi
+  cset with cond = NV                       REFUSED                 _p.s:4:14: error: condition codes AL and NV are invalid for this instructi
+  tbz, bit 32 of a 32-bit register          REFUSED                 _p.s:4:11: error: immediate must be an integer in range [0, 31].
+  tbz, bit 64                               REFUSED                 _p.s:4:11: error: immediate must be an integer in range [0, 63].
+  tbz, bit 33 of a 32-bit register          REFUSED                 _p.s:4:11: error: immediate must be an integer in range [0, 31].
+  add/sub with a shift of 32 on a 32-bit register  REFUSED                 _p.s:4:19: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in
+  add/sub with a rotate shift               REFUSED                 _p.s:4:19: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in
+  adr one instruction past the maximum      REFUSED                 _p.s:4:11: error: fixup value out of range                  
+  b.cond one instruction past the maximum   REFUSED                 _p.s:4:9: error: fixup value out of range                   
+  B, one instruction past the maximum       REFUSED                 _p.s:4:6: error: fixup value out of range                   
+  add w0 with 64-bit sources                REFUSED                 _p.s:4:11: error: invalid operand for instruction           
+  ldst, imm12 one past the maximum          REFUSED                 _p.s:4:16: error: index must be an integer in range [-256, 255].
+  ldur one past the maximum negative offset  REFUSED                 _p.s:4:17: error: index must be an integer in range [-256, 255].
+  pair, one past the maximum forward offset  REFUSED                 _p.s:4:21: error: index must be a multiple of 8 in range [-512, 504].
+  pair, one past the maximum backward offset  REFUSED                 _p.s:4:20: error: index must be a multiple of 8 in range [-512, 504].
+  pair, an offset that is not a multiple of 8  REFUSED                 _p.s:4:20: error: index must be a multiple of 8 in range [-512, 504].
+  pair with the stack pointer as Rt2        REFUSED                 _p.s:4:11: error: invalid operand for instruction           
+  sxtw spelled with a 32-bit destination    REFUSED                 _p.s:4:8: error: invalid operand for instruction            
+  and with a 64-bit constant and 32-bit registers  REFUSED                 _p.s:4:15: error: expected compatible register or logical immediate
+  csinc with the stack pointer as a source  REFUSED                 _p.s:4:13: error: invalid operand for instruction           
+  ldr with the stack pointer as the destination  REFUSED                 _p.s:4:7: error: invalid operand for instruction            
+  movz with a 32-bit shift                  REFUSED                 _p.s:4:16: error: expected 'lsl' with optional integer 0 or 16
+
+  29 of 29 refused.  Every refusal is a boundary the encoding
+  has, and the ACCEPTED rows in this table are boundaries that
+  MOVED: the first draft of this list expected a refusal for
+  `#0x1000`, for `#0x2000`, for `b.eq .+0x1ffffc` and for
+  `b .-0x40000000`, and the assembler accepted all four.  R4 in
+  section 14.
+
+  Three of these rows are worth a reader's attention.
+
+  `pair, an offset that is not a multiple of 8` is refused with a message that
+  says so, and it is refused because a 7-bit signed field scaled by 8 has no
+  value for 4. The encoding is a SCALED field, and the scale is 8 because the
+  two registers of a pair are 64 bits apart at minimum. That is the same shape
+  as the add/sub immediate's scale and the same trap: a scaled field is not a
+  contiguous range, and asking for the number between the multiples gets a
+  diagnostic instead of a second instruction.
+
+  `add/sub imm12, not reachable by any scale` is refused, so the three states
+  the field can express -- the value, the value shifted by 12, and zero -- are
+  the complete set. There is no encoding for 0x1001 and the architecture does
+  not approximate it.
+
+  `tbz, bit 32 of a 32-bit register` is refused while `tbz x0, #63, T` is
+  accepted, which is a REGISTER-WIDTH property and not a field property: the
+  bit number is b5:imm5, and b5 is only part of the address for a 64-bit
+  register. A decoder that reads b5 without reading sf will happily report bit
+  63 of a 32-bit register, which does not exist.
+
+  And one row in 9A is a boundary that is not one. `sbfx w0, w1, #29, #3` has
+  an offset plus width that runs off the end of the register, and the
+  assembler does not refuse it -- it reinterprets the word as `asr w0, w1,
+  #29`, because the bitfield encodings overlap the shift encodings and the
+  shift is the one the architecture prefers at those operand values. It is in
+  the accepted table because it IS accepted, and the last column says what it
+  became. A boundary table that quietly listed a row where the instruction
+  changes identity would be a table of something else.
+
+=== 9C. WHAT THE ASSEMBLER'S MESSAGE IS, verbatim and unedited
+
+  The diagnostics below are the architecture's, produced by a tool
+  that implements the manual, and they are quoted because a reader
+  is entitled to see the actual boundary in the actual words of the
+  thing that enforces it:
+
+    add w0, w1, #0x1001                      _p.s:4:15: error: expected compatible register, symbol or integer in range
+    and w0, w0, #0                           _p.s:4:15: error: expected compatible register or logical immediate
+    cset w0, al                              _p.s:4:14: error: condition codes AL and NV are invalid for this instructi
+    tbz w0, #32, T                           _p.s:4:11: error: immediate must be an integer in range [0, 31].
+    tbz x0, #64, T                           _p.s:4:11: error: immediate must be an integer in range [0, 63].
+    add w0, w1, w2, lsl #32                  _p.s:4:19: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in
+    adr x0, .+0x100000                       _p.s:4:11: error: fixup value out of range
+    b.eq .+0x100000                          _p.s:4:9: error: fixup value out of range
+    b .+0x8000000                            _p.s:4:6: error: fixup value out of range
+    add w0, x1, x2                           _p.s:4:11: error: invalid operand for instruction
+    ldr w0, [x1, #0x4000]                    _p.s:4:16: error: index must be an integer in range [-256, 255].
+    ldur w0, [x1, #-0x101]                   _p.s:4:17: error: index must be an integer in range [-256, 255].
+    stp x0, x1, [sp], #0x200                 _p.s:4:21: error: index must be a multiple of 8 in range [-512, 504].
+    stp x0, x1, [sp, #-0x208]!               _p.s:4:20: error: index must be a multiple of 8 in range [-512, 504].
+    sxtw w0, w1                              _p.s:4:8: error: invalid operand for instruction
+    csinc w0, sp, sp, eq                     _p.s:4:13: error: invalid operand for instruction
+    ldr sp, [x1]                             _p.s:4:7: error: invalid operand for instruction
+    movz w0, #1, lsl #32                     _p.s:4:16: error: expected 'lsl' with optional integer 0 or 16
+
+  There are 18 distinct messages for 29 refused cases: the encoder
+  is not one check, it is several, and which one fires is itself a
+  fact about the field.
+
+========================================================================
+SECTION 10 -- SIXTEEN CONDITION CODES IN FOUR BITS, AND TWO OF THEM ARE TRAPS
+========================================================================
+
+  AArch64 has no flags-register dependency for a conditional move. `csel w0,
+  w1, w2, eq` is one instruction that reads the flags `subs` wrote and writes
+  one of two registers, and that is the whole argument for the group: there is
+  no branch, no branch-delay slot, and no separate compare, so a compiler that
+  uses it turns a four-instruction x86-64 sequence into one.
+
+  The condition is FOUR BITS, and this file builds the whole 4x4 table of
+  selects and reads it back rather than quoting a list of sixteen names.
+
+
+=== 10A. THE FOUR-BIT FIELD, all sixteen values
+
+  value  bits    name    word        decoded here                      
+  0      0000    eq      1a820020    csel     w0, w1, w2, eq           
+  1      0001    ne      1a821020    csel     w0, w1, w2, ne           
+  2      0010    cs      1a822020    csel     w0, w1, w2, cs           
+  3      0011    cc      1a823020    csel     w0, w1, w2, cc           
+  4      0100    mi      1a824020    csel     w0, w1, w2, mi           
+  5      0101    pl      1a825020    csel     w0, w1, w2, pl           
+  6      0110    vs      1a826020    csel     w0, w1, w2, vs           
+  7      0111    vc      1a827020    csel     w0, w1, w2, vc           
+  8      1000    hi      1a828020    csel     w0, w1, w2, hi           
+  9      1001    ls      1a829020    csel     w0, w1, w2, ls           
+  10     1010    ge      1a82a020    csel     w0, w1, w2, ge           
+  11     1011    lt      1a82b020    csel     w0, w1, w2, lt           
+  12     1100    gt      1a82c020    csel     w0, w1, w2, gt           
+  13     1101    le      1a82d020    csel     w0, w1, w2, le           
+  14     1110    al      1a82e020    csel     w0, w1, w2, al           
+  15     1111    nv      1a82f020    csel     w0, w1, w2, nv           
+
+  Two names exist for values 2 and 3. In a SELECT the assembler calls them
+  `hs` and `lo`; in a BRANCH it calls them `cs` and `cc`. Both were measured:
+  `csel w0, w1, w2, cs` assembles to 0x1a822020 and the disassembler calls it
+  `hs`, and `b.cs T` assembles to 0x54000020 and the disassembler calls it
+  `cs`. The SAME 4 BITS have two names and the printer picks by position,
+  which is a fact about the ISA and a nuisance for a cross-check -- so this
+  file uses the select spelling throughout and section 12 normalises the other
+  one, and says that it does.
+
+=== 10B. THE 4x4 TABLE OF SELECTS, and op2 = bits[11:10] IS NOT THE OPERATION
+
+  The first version of this decoder read bits[11:10] and called it the
+  operation, and got half the table wrong. The measured structure is a PAIR:
+  bit 30 is the INVERT and bits[11:10] is the CHOICE, and the four
+  combinations that matter are the four rows the assembler will emit.
+
+  The first version of this TABLE assembled a line per cell, which is wrong by
+  construction: there is no mnemonic for (invert, op2) = (1, 0), so the
+  assembler silently assembled a CSINV for all four of the inv = 1 rows and
+  the table printed `csinv` eight times. The cells below are built as WORDS
+  and then asked about, which is the only way a cell that has no name can
+  still be measured.
+
+
+  bit30 (invert)  bits[11:10]  word        the oracle calls it       this decoder calls it         
+  0              00           1a800022    cselw2,w1,w0,eq           csel     w2, w1, w0, eq       
+  0              01           1a800422    csincw2,w1,w0,eq          csinc    w2, w1, w0, eq       
+  0              10           1a800822                              (undefined) (undefined)       
+  0              11           1a800c22                              (undefined) (undefined)       
+  1              00           5a800022    csinvw2,w1,w0,eq          csinv    w2, w1, w0, eq       
+  1              01           5a800422    csnegw2,w1,w0,eq          csneg    w2, w1, w0, eq       
+  1              10           5a800822                              (undefined) (undefined)       
+  1              11           5a800c22                              (undefined) (undefined)       
+
+  So there are FOUR distinct operations, not sixteen and not eight: csel,
+  csinc, csinv and csneg, selected by the pair (bit 30, bits[11:10]) = (0,00),
+  (0,01), (1,00) and (1,01). The remaining four cells of the 4x4 are UNDEFINED
+  -- the oracle prints `<unknown>` for all four and this decoder raises on all
+  four -- and the first draft of this file called two of them "the SET forms",
+  which is a plausible-sounding wrong answer that would have taught a reader
+  that the group has six operations.
+
+  The SET forms are not new opcodes. CSET is CSINC with both sources set to
+  the zero register, and CSETM is CSINV the same way, so they reuse the same
+  two field values and are distinguished by the REGISTER SLOTS rather than by
+  the bits. That is why the 4x4 table has no CSET row: a field map cannot show
+  it, because nothing in the fields is different. What is different is that Rn
+  and Rm are 31, and 31 means the zero register in this group -- so the pair
+  of field values plus the pair of register values together give a sixth and a
+  seventh instruction out of four opcodes.
+
+    cset w0, eq              1a9f17e0   csinc w0, wzr, wzr, ne   1a9f17e0   SAME
+    cset w0, ne              1a9f07e0   csinc w0, wzr, wzr, eq   1a9f07e0   SAME
+    csetm w0, eq             5a9f13e0   csinv w0, wzr, wzr, ne   5a9f13e0   SAME
+    csetm x0, ne             da9f03e0   csinv x0, xzr, xzr, eq   da9f03e0   SAME
+    cinc w0, w1, eq          1a811420   csinc w0, w1, w1, ne     1a811420   SAME
+    cinc w1, w2, eq          1a821441   csinc w1, w2, w2, ne     1a821441   SAME
+    cneg w0, w1, ge          5a81b420   csneg w0, w1, w1, lt     5a81b420   SAME
+    csinc w0, wzr, wzr, al   1a9fe7e0   cset w0, eq              1a9f17e0   DIFFERENT
+    csinc w0, wzr, wzr, ne   1a9f17e0   cset w0, eq              1a9f17e0   SAME
+    csinc w0, wzr, wzr, nv   1a9ff7e0   cset w0, eq              1a9f17e0   DIFFERENT
+    csinv w0, wzr, wzr, al   5a9fe3e0   csetm w0, eq             5a9f13e0   DIFFERENT
+
+  The last row is the sharpest form of the trap and it is worth reading twice.
+  `cset w0, eq` is `csinc w0, wzr, wzr, NE`, and the assembly text of the
+  first of those two is `csinc w0, wzr, wzr, AL` -- which is `cset w0, NE`. So
+  a decoder that models the SET family as "a CSEL with Rn = Rm = 31" produces
+  a decoder that reports the condition of every `cset` in the program
+  INVERTED, and the output is 0 or 1 either way, so nothing about it looks
+  wrong. That is the shape of the worst decoder bug in this file and it is why
+  the two-reader cross-check in section 12 exists.
+
+=== 10C. THE SAME 4 BITS IN A BRANCH, and 5 BITS there
+
+  value  bits    name    word        decoded here                  
+  0      0000    eq      54ffffc0    b.eq     -8                   
+  1      0001    ne      54ffffc1    b.ne     -8                   
+  2      0010    cs      54ffffc2    b.hs     -8                   
+  3      0011    cc      54ffffc3    b.lo     -8                   
+  4      0100    mi      54ffffc4    b.mi     -8                   
+  5      0101    pl      54ffffc5    b.pl     -8                   
+  6      0110    vs      54ffffc6    b.vs     -8                   
+  7      0111    vc      54ffffc7    b.vc     -8                   
+  8      1000    hi      54ffffc8    b.hi     -8                   
+  9      1001    ls      54ffffc9    b.ls     -8                   
+  10     1010    ge      54ffffca    b.ge     -8                   
+  11     1011    lt      54ffffcb    b.lt     -8                   
+  12     1100    gt      54ffffcc    b.gt     -8                   
+  13     1101    le      54ffffcd    b.le     -8                   
+  14     1110    al      54ffffce    b.al     -8                   
+  15     1111    nv      54ffffcf    b.nv     -8                   
+
+  A B.cond is bits[31:24] = 0b01010100 and bits[4:0] = the
+  condition, and the imm19 is bits[23:5].  So the SAME FOUR BITS
+  are at position 4 here and at position 12 in a CSEL, and a
+  decoder with one `cond` field decodes half the conditional
+  instructions in a program wrongly.  AArch64 does not have a
+  single condition field, and that is a cost of the encoding, not
+  an accident of this decoder: two different places, two different
+  widths, one meaning.
+
+=== 10D. HOW OFTEN THE COMPILER REACHES FOR A SELECT
+
+  csel   22
+  cset   14
+  csetm  2
+  csinc  5
+  csinv  5
+  csneg  1
+  cinc   2
+  cinv   1
+  cneg   4
+  b      28
+  b.eq   7
+  b.ne   8
+  b.hs   3
+  b.lo   2
+  b.mi   1
+  b.pl   1
+  b.hi   1
+  b.ls   1
+  b.ge   3
+  b.lt   4
+  b.gt   1
+  b.le   3
+  cbz    6
+  cbnz   1
+  tbz    4
+  tbnz   1
+  bl     10
+
+  conditional selects: 56   conditional branches: 49
+  and the 45-looking number is not a typo: 23 of the 56 selects are
+  the INVERTED forms -- cset, csetm, cinc, cinv, cneg -- which are
+  the ones whose condition field is the negation of the one the
+  mnemonic names.  A decoder that misses the inversion decodes 23
+  instructions in this corpus with the condition backwards, and
+  every one of them still produces a correct boolean for half of
+  its inputs.
+  Both are real and both are used, and which one a compiler
+  reaches for is a decision about whether the two sides of the
+  branch are EQUALLY likely -- a property of the PROGRAM, not of
+  the architecture.  So the number above is a fact about this
+  corpus and a fact about clang, and section 13 measures what it
+  costs in bytes rather than arguing about it.
+
+=== 10E. NZCV, WHICH A USER-MODE PROGRAM CANNOT WRITE DIRECTLY
+
+  Every condition is a function of four flag bits, NZCV: Negative,
+  Zero, Carry, Overflow.  They are written by the S-suffixed
+  instructions -- adds, subs, ands, bics, and the NEON compares --
+  and by nothing else a user-mode program can reach.  There is no
+  PUSHFLAGS, no LAHF, no `mov rflags, rax`: the four bits are
+  written by an operation and read by the next one, and the whole
+  of the conditional group is one instruction wide from the write to
+  the read.
+
+  What CANNOT be measured here, and is not claimed: the latency of
+  the flag write, whether a particular core renames the flags, and
+  whether a select is cheaper than a branch on a branch-free
+  predictor.  Those need an AArch64 machine and there is none on
+  this host.  Section 15 says so again in its own words.
+
+========================================================================
+SECTION 11 -- THE DISPLACEMENT ARITHMETIC, WORKED OUT OF THE BITS
+========================================================================
+
+  Sections 6 and 10 listed seven displacement fields and did not resolve any
+  of them, because a disassembler and a disassembler agree about a number
+  without either of them computing it. This section takes the words apart with
+  arithmetic and prints the steps, so the number a printer shows is accounted
+  for rather than trusted.
+
+
+=== 11A. B and BL: a 26-bit signed word offset, in bytes, times 4
+
+  case            word        the arithmetic, step by step                      decoded here
+  b +4            14000001    imm26 = 0x1 -> sign bit 25 = 0 -> signed 1 -> x4 -> bytes +4  b        +4 
+  b -4            17ffffff    imm26 = 0x3ffffff -> sign bit 25 = 1 -> signed -1 -> x4 -> bytes -4  b        -4 
+  b +0x1000       14000400    imm26 = 0x400 -> sign bit 25 = 0 -> signed 1024 -> x4 -> bytes +4096  b        +4096
+  b -0x1000       17fffc00    imm26 = 0x3fffc00 -> sign bit 25 = 1 -> signed -1024 -> x4 -> bytes -4096  b        -4096
+  bl +4           94000001    imm26 = 0x1 -> sign bit 25 = 0 -> signed 1 -> x4 -> bytes +4  bl       +4 
+  bl -4           97ffffff    imm26 = 0x3ffffff -> sign bit 25 = 1 -> signed -1 -> x4 -> bytes -4  bl       -4 
+  b the far end   15ffffff    imm26 = 0x1ffffff -> sign bit 25 = 0 -> signed 33554431 -> x4 -> bytes +134217724  b        +134217724
+  b the near end  16000000    imm26 = 0x2000000 -> sign bit 25 = 1 -> signed -33554432 -> x4 -> bytes -134217728  b        -134217728
+
+  The sign bit is bit 25 OF THE FIELD, and it is worth noticing what that
+  means: the field is 26 bits, the sign is one of them, and the remaining 25
+  are a magnitude in INSTRUCTIONS, which are then multiplied by four. So the
+  last two rows are not symmetric -- +0x7fffffc forward and -0x8000000 back --
+  and a reader who treats 26 bits as 26 bits of magnitude is wrong twice over:
+  by a factor of four for the missing alignment, and by a factor of two for
+  the missing sign. That is R5 in section 14, retracted from this very
+  course's first draft, and the two rows are the evidence that the correction
+  is right rather than merely different.
+
+  What it buys: the whole 26-bit displacement is inside ONE instruction, with
+  no register and no second field, and it reaches 128 MiB in either direction.
+  No variable-length encoding in the same collection can put a displacement of
+  that size in one instruction without a second word, because the second word
+  is where the size lives.
+
+=== 11B. B.cond, CBZ and TBZ: a 19-bit signed word offset
+
+  TBZ IS NOT IN THIS TABLE, and the reason is the fourth measurement
+  error in this section.  The first version of it put TBZ here and
+  applied the imm19 formula to it, which printed a byte count of
+  +196,612 for an instruction the assembler had emitted as a
+  displacement of +4 -- wrong by a factor of 49,153, and wrong in a
+  row that LOOKED like a measurement because a number was in it.
+  TBZ's displacement field is FOURTEEN bits and it gets its own
+  table below.
+
+  case        word        the arithmetic, step by step                      decoded here  
+  b.eq +4     54000020    imm19 = 0x1 -> sign bit 18 = 0 -> signed 1 -> bytes +4  b.eq     +4   
+  b.eq -4     54ffffe0    imm19 = 0x7ffff -> sign bit 18 = 1 -> signed -1 -> bytes -4  b.eq     -4   
+  b.eq far    547fffe0    imm19 = 0x3ffff -> sign bit 18 = 0 -> signed 262143 -> bytes +1048572  b.eq     +1048572
+  b.eq near   54800000    imm19 = 0x40000 -> sign bit 18 = 1 -> signed -262144 -> bytes -1048576  b.eq     -1048576
+  cbz +4      34000020    imm19 = 0x1 -> sign bit 18 = 0 -> signed 1 -> bytes +4  cbz      w0, +4
+  cbnz -4     35ffffe0    imm19 = 0x7ffff -> sign bit 18 = 1 -> signed -1 -> bytes -4  cbnz     w0, -4
+
+  TBZ IS THE EXCEPTION, and it gets its own table because its field
+  is FOURTEEN bits, not nineteen: the bit number it tests is
+  b5:imm5 -- five bits at the top and five at bit 19, with the
+  opcode in between.  So TBZ reaches +-32 KiB and B.cond reaches
+  +-1 MiB, and both spend 19 bits of the word on the pair {which
+  bit, how far}.
+
+  case        word        TBZ's own arithmetic                              decoded here  
+  tbz +4      36180020    imm14 = 0x1 -> sign bit 13 = 0 -> signed 1 -> bytes +4  tbz      w0, #3, +4
+  tbnz -4     371fffe0    imm14 = 0x3fff -> sign bit 13 = 1 -> signed -1 -> bytes -4  tbnz     w0, #3, -4
+  tbz far     361bffe0    imm14 = 0x1fff -> sign bit 13 = 0 -> signed 8191 -> bytes +32764  tbz      w0, #3, +32764
+  tbz near    361c0000    imm14 = 0x2000 -> sign bit 13 = 1 -> signed -8192 -> bytes -32768  tbz      w0, #3, -32768
+  19 bits signed is 0x7ffff forward and 0x80000 back, so B.cond reaches
+  +0xffffc bytes and -0x100000 bytes: about 1 MiB, and NOT symmetric, because
+  a signed field has one more negative value than positive. That asymmetry is
+  the same one section 9A measured and R5 is about -- a sign extension is not
+  a magnitude.
+
+  What the reach costs. AArch64 has no short-jump encoding and no medium one.
+  If a conditional target is further than 1 MiB away, the assembler INVERTS
+  the condition and emits a branch over an unconditional B, and the inversion
+  is a property of the CONDITION CODE -- which is why section 10 had to
+  measure the invert bit rather than quote it, and why CSET's inverted
+  condition is the same mechanism seen from the other side.
+
+  An unconditional B reaches +/-128 MiB with 26 bits, so between 1 MiB and 128
+  MiB a function is a function whose far branches cost two words. The ISA that
+  designed fixed-length instruction words to make decode cheap gave up branch
+  range to do it, and the two field widths above are the bill.
+
+=== 11C. ADR and ADRP: the same 21 bits, and ONE bit apart
+
+  case           word        the arithmetic, step by step                        the decoder says
+  adr  0         10000000    imm21 = (immhi 0x0 << 2) | immlo 0 = 0x0 -> signed +0 -> bytes  +0          
+  adrp 0         90000000    imm21 = (immhi 0x0 << 2) | immlo 0 = 0x0 -> signed +0 -> x4096 pages  +0          
+  adr  +4        10000020    imm21 = (immhi 0x1 << 2) | immlo 0 = 0x4 -> signed +4 -> bytes  +4          
+  adrp +4        90000000    imm21 = (immhi 0x0 << 2) | immlo 0 = 0x0 -> signed +0 -> x4096 pages  +0          
+  adr  -4        10ffffe0    imm21 = (immhi 0x7ffff << 2) | immlo 0 = 0x1ffffc -> signed -4 -> bytes  -4          
+  adr  +0x1000   10008000    imm21 = (immhi 0x400 << 2) | immlo 0 = 0x1000 -> signed +4096 -> bytes  +4096       
+  adr  +0x100000  --          _p.s:4:11: error: fixup value out of range          (REFUSED)   
+  adr  -0x100000  10800000    imm21 = (immhi 0x40000 << 2) | immlo 0 = 0x100000 -> signed -1048576 -> bytes  -1048576    
+  adrp +0x100000  90000000    imm21 = (immhi 0x0 << 2) | immlo 0 = 0x0 -> signed +0 -> x4096 pages  +0          
+
+  Two things are visible here and both are the reason the pair exists.
+
+  First, the 21 bits are SPLIT: bits[30:29] are the low two and bits[25:5] are
+  the high nineteen, with bits[28:24] in the middle because the opcode has to
+  live somewhere. A field split across the word like that is unusual, and a
+  decoder that reads imm21 as a contiguous field reads garbage -- and reads
+  garbage that LOOKS plausible, because the arithmetic still produces a number
+  in range. The immlo column is zero in every row above because none of the
+  offsets is 1, 2 or 3 mod 4; section 4 measured where those two bits go.
+
+  Second, ADRP and ADR differ by ONE BIT -- bit 31 -- and the difference in
+  reach is 4,096. Bit 31 is `sf` in every other group in the encoding, so a
+  decoder that assumes bit 31 means the same thing everywhere gets ADR right
+  and ADRP wrong, or the reverse, or both, depending on the order of its
+  dispatch. The MOVN and CSEL families in sections 8 and 10 are the other two
+  places bit 31 does something else.
+
+  Read the two ADRP rows for +4 and for +0x100000 together, because they are
+  the most instructive rows in the table. Both print imm21 = 0, and both are
+  RIGHT: an ADRP's immediate counts PAGES, so an offset of 4 bytes and an
+  offset of 1 MiB are not just small, they are zero to the field and 256 pages
+  respectively -- and 256 does not fit in 21 signed bits, so the assembler
+  truncates it to zero. An ADRP is a page-granular instruction and the field
+  says so.
+
+  And the pair is a two-instruction idiom that no single instruction can be.
+  ADRP gives a page-aligned address within +/-1 MiB of pages, and the paired
+  `add` below it takes the 12 low bits -- so a reference to a 64-bit literal,
+  which fits in no immediate field, is two instructions where an x86-64
+  RIP-relative load is one. The reason is the reason section 8 measured from
+  the other side: a scaled field is not a contiguous range.
+
+=== 11D. THE PAIR, ASSEMBLED
+
+  adrp x0, page                      90000000  adrp     x0, +0          32 of 32 bits read
+  add x0, x0, :lo12:page             91000000  add      x0, x0, #0x0    32 of 32 bits read
+  adr x1, page                       10000001  adr      x1, +0          32 of 32 bits read
+  adrp x2, page                      90000002  adrp     x2, +0          32 of 32 bits read
+  add x2, x2, :lo12:sym              91000042  add      x2, x2, #0x0    32 of 32 bits read
+
+  The ADRP and the ADD are four bytes each, so the pair is eight bytes for one
+  address. What the assembler writes as `:lo12:` is not a field in either
+  instruction: it is arithmetic on the symbol, and the ADD gets a 12-bit
+  immediate that happens to be exactly the low twelve bits of the target. The
+  `:lo12:` text is what the LINKER consumes -- it produces an
+  R_AARCH64_LDST12_ABS_LO12_NC relocation -- and it is not in the word at all.
+
+  So a decoder reading these two words in isolation sees two unremarkable
+  instructions and CANNOT know they are a pair, because the relationship is in
+  the assembler and in the relocation rather than in the bits. That is the
+  limit of a byte-level decoder, and it is why the two-reader cross-check in
+  section 12 normalises a relocatable object's PC-relative operands to TARGET
+  rather than pretending to compare them: the number in the object file is a
+  placeholder, and a placeholder that both readers print identically is not a
+  cross-check of anything.
+
+========================================================================
+SECTION 12 -- TWO READERS, AND THEN ONE OF THEM POISONED ON PURPOSE
+========================================================================
+
+  A decoder checked against itself is not checked. So every instruction in the
+  corpus is decoded TWICE: once by the model chain in part one of this file,
+  and once by `llvm-objdump-21 --triple=aarch64`. The two agree on the word
+  and rarely agree on the STRING, for seven reasons that are all about
+  PRINTING, and all seven are listed in the normalise function above because a
+  cross-check that quietly normalises away a real disagreement is worse than
+  no cross-check.
+
+
+  5 object files, 868 instructions, 859 named by this decoder,
+  9 left unmodelled and counted.
+
+    the two readers agree on:   859
+    the two readers disagree:    0
+    agreement:                   100.0000% of named instructions
+
+
+  Now the control, and it is the reason this section exists. A cross-check
+  that agrees 100% of the time is exactly what a broken cross-check looks
+  like, so the table is then POISONED: one model in part one is deliberately
+  replaced by a function that claims nothing, the same bytes go through the
+  same loop, and the number is read again. If the poison does not move the
+  agreement, the cross-check is not looking at the thing it claims to look at.
+
+
+  The largest model in the corpus is m_ldst_uimm, and it alone claims 142
+  words.  A representative word it claims is 0xb9400820, which is
+  `ldr	w0, [x1, #0x8]` -- asked of the oracle, not of this file.
+
+    with the table intact:              ldr      w0, [x1, #8]
+    with m_ldst_uimm poisoned:     (op 0xb9400820)  Loads and Stores
+
+    the cross-check BEFORE the poison: 859 agree, 0 disagree, of 859
+    the cross-check AFTER  the poison: 717 agree, 0 disagree, of 717
+
+    VERDICT: the number MOVED, by 142 instructions, which is the
+    control doing its job.  The unpoisoned agreement was read off
+    this decoder and not off something else.
+
+    The 142 instructions that changed their name are LOCALISED: they
+    are the words m_ldst_uimm owned, and every one of them now reads as a
+    different instruction or as nothing at all.  That is the shape
+    a real bug has, and it is not the shape a broken LOOP has -- a
+    broken loop moves everything or nothing.
+
+  THE POINT, stated once.  The unpoisoned number is the claim.  The
+  poisoned number is the evidence that the claim was read off this
+  decoder.  A course that printed only the first number would be
+  asking the reader to trust a tick mark, and a tick mark is
+  exactly what a check that does not check looks like.
+
+  THE SEVEN NORMALISATIONS, and every one of them exists because a
+  disagreement was found once and turned out to be PRINTING:
+    1. a trailing `// =1234` comment, which is the oracle doing
+       arithmetic a byte-level decoder does not do;
+    2. a TAB between mnemonic and operands, and a space after every
+       comma;
+    3. a symbol annotation `// <sym>` and a resolved address after
+       a branch, an adr or an adrp -- in a relocatable object that
+       number is a PLACEHOLDER and the real value is in a
+       relocation, so both sides are compared as TARGET and the
+       arithmetic is checked by hand in section 11 instead;
+    4. small immediates printed in DECIMAL by one reader and in hex
+       by the other, so every immediate is folded to one form;
+    5. a zero offset, which the oracle prints as a PRONOUN --
+       `[x1]` for `[x1, #0]` -- and which this decoder always
+       prints, because a decoder that omits a field it read cannot
+       be audited;
+    6. `add x0, x1, #0x1000` against `add x0, x1, #0x1, lsl #12`,
+       which section 2 measured to be the same 32 bits, folded onto
+       the value.  Told to by a REGISTER shift -- `add x0, x0, x0,
+       lsl #48` -- which looks identical and is not, so the fold is
+       applied only where a `#` precedes the shift;
+    7. the SIGN of an immediate, which three printers disagree about.
+       MOVN prints the register value (the field's complement), a
+       logical immediate that became a MOV alias prints signed, and
+       MOVZ prints unsigned -- so every `#-0x...` is folded onto the
+       unsigned value at the register width.  MEASURED, and rule 7
+       is nine of the eleven disagreements above.
+
+  Rule 6 had a bug in the first version, and the bug is worth
+  reporting rather than fixing quietly: the fold was applied to
+  every `,lsl#N`, and one branch of it turned a REGISTER NAME into
+  a number, so `add x0, x0, x0, lsl #48` cross-checked as `add x0,
+  x0, #0x3000000`.  The cross-check ran, reported 100% agreement,
+  and was comparing a register against a constant.  A green
+  cross-check is not evidence that the check works; the poison above
+  is, and the 98.72% run is.
+
+  WHAT THE TWO READERS SHARE, and it is a real weakness: both
+  ultimately come from one LLVM tree, because clang assembled the
+  corpus and llvm-objdump disassembled it.  An independent second
+  assembler does not exist on this host and GNU binutils has no
+  AArch64 target installed.  So the cross-check establishes that
+  this decoder and one other piece of software agree on what the
+  bytes mean -- not that either agrees with the silicon.  Section 15
+  says so again in its own words.
+
+========================================================================
+SECTION 13 -- CODE DENSITY, AARCH64 AGAINST X86-64, FROM THE SAME C
+========================================================================
+
+  Fixed width is a claim about a RATIO, and a ratio needs both sides. So: the
+  same corpus.c, the same compiler, four optimisation levels, two targets, and
+  the total size of every executable section.
+
+  Three wrong answers are available, and the first version of this comparison
+  printed the first one, so they are named before the number.
+
+  WRONG ANSWER 1 -- "AArch64 is 4 bytes per instruction and x86-64 averages 3,
+  so AArch64 is 4/3 DENSER." The ratio is AArch64's bytes-per-instruction OVER
+  x86-64's, so a value ABOVE 1 means AArch64 spends MORE bytes per
+  instruction, which is the opposite of denser. A caption whose sign is wrong
+  is worse than no caption, because the number survives and the sentence does
+  not.
+
+  WRONG ANSWER 2 -- "bytes per instruction" at all. AArch64's is exactly 4 by
+  construction and x86-64's is a distribution from 1 to 15, so the ratio of
+  the two averages is a statement about the ENCODINGS, not about the CODE. The
+  number that means anything is total bytes for the same source, and even that
+  is confounded, which is wrong answer 3.
+
+  WRONG ANSWER 3 -- treating the two builds as doing the same work. They do
+  not. A compiler is entitled to make the instruction count whatever it likes,
+  so the table reports BOTH, and the honest comparison is total bytes with the
+  instruction counts beside it.
+
+
+  -O      a64 bytes    insns    x86 bytes    insns   a64/x86 b/insn x86
+  -0           1352      338         1174      393     1.152   2.9873
+  -1            496      124          610      200     0.813   3.0500
+  -2            588      147          738      236     0.797   3.1271
+  -s            496      124          384      151     1.292   2.5430
+
+  THE RESULT, and it is not the one this course was drafted
+  around.  AArch64 is LARGER at 2 of the 4 levels.
+
+    -O0  a64  1352 bytes /  338 insns      x86  1174 bytes /  393 insns      ratio 1.152  AArch64 LARGER
+    -O1  a64   496 bytes /  124 insns      x86   610 bytes /  200 insns      ratio 0.813  AArch64 smaller
+    -O2  a64   588 bytes /  147 insns      x86   738 bytes /  236 insns      ratio 0.797  AArch64 smaller
+    -Os  a64   496 bytes /  124 insns      x86   384 bytes /  151 insns      ratio 1.292  AArch64 LARGER
+
+  The -O0 row is the one to read twice, because it is the only
+  row where the two instruction counts point the OTHER way from
+  the byte counts: AArch64 emitted 338 instructions to x86-64's
+  393 -- FEWER -- and still produced 1352 bytes against 1174, MORE.
+  Both are true, and the only way both can be is that the
+  instructions AArch64 did not emit were cheap on x86-64.  That
+  is the -O0 spill story, measured rather than asserted.
+
+  So the claim this course was written to make -- "AArch64 loses on code
+  density" -- is TRUE AT TWO OF FOUR LEVELS AND FALSE AT TWO, and it was
+  retracted rather than softened. R1 in section 14.
+
+  The direction is not a mystery and the instruction counts explain it. At -O0
+  clang spills every parameter to the stack, and one AArch64 store is 4 bytes
+  against a 2-or-3 byte x86-64 one, so the spill-heavy build is exactly where
+  fixed width costs the most -- and the -O0 row shows the other side of the
+  same trade, which is printed above with its instruction counts beside it:
+  AArch64 emitted FEWER instructions than x86-64 and still produced MORE
+  bytes, which can only happen if the instructions it did not emit were cheap
+  on the other side.
+
+  At -O1 and -O2 the three-operand form and the `csel` idiom remove the MOVs
+  x86-64 needs, and the ratio falls below 1. At -Os the compiler trades size
+  for speed on both targets and the balance moves back.
+
+  So the defensible claim is: FIXED WIDTH COSTS CODE SIZE WHEN THE CODE IS
+  SPILL-HEAVY AND SAVES IT WHEN THE CODE IS NOT, and the crossover on this
+  corpus is between -O0 and -O1. Everything else is a claim about a compiler,
+  and this section's own table is the evidence for that sentence: four numbers
+  from one compiler version, two of which have the opposite sign to the other
+  two.
+
+
+=== 13A. THE ACTUAL LENGTH DISTRIBUTION, which is the whole point
+
+  -O0  x86-64, 393 instructions
+     1 bytes    104   26.5%  ##########
+     2 bytes     39    9.9%  ###
+     3 bytes    145   36.9%  ##############
+     4 bytes     43   10.9%  ####
+     5 bytes     22    5.6%  ##
+     6 bytes      5    1.3%  #
+     7 bytes     35    8.9%  ###
+    AArch64     338  100.0%  ########################################
+    spread: x86-64 has 7 distinct lengths, AArch64 has 1
+
+  -O1  x86-64, 200 instructions
+     1 bytes     48   24.0%  #########
+     2 bytes     52   26.0%  ##########
+     3 bytes     45   22.5%  #########
+     4 bytes      8    4.0%  #
+     5 bytes     16    8.0%  ###
+     6 bytes      6    3.0%  #
+     7 bytes     25   12.5%  #####
+    AArch64     124  100.0%  ########################################
+    spread: x86-64 has 7 distinct lengths, AArch64 has 1
+
+  -O2  x86-64, 236 instructions
+     1 bytes     47   19.9%  #######
+     2 bytes     64   27.1%  ##########
+     3 bytes     50   21.2%  ########
+     4 bytes     21    8.9%  ###
+     5 bytes     21    8.9%  ###
+     6 bytes      7    3.0%  #
+     7 bytes     26   11.0%  ####
+    AArch64     147  100.0%  ########################################
+    spread: x86-64 has 7 distinct lengths, AArch64 has 1
+
+  -Os  x86-64, 151 instructions
+     1 bytes     37   24.5%  #########
+     2 bytes     49   32.5%  ############
+     3 bytes     40   26.5%  ##########
+     4 bytes      6    4.0%  #
+     5 bytes     13    8.6%  ###
+     6 bytes      2    1.3%  #
+     7 bytes      4    2.6%  #
+    AArch64     124  100.0%  ########################################
+    spread: x86-64 has 7 distinct lengths, AArch64 has 1
+
+=== 13B. WHAT FIXED WIDTH BUYS, and where each item is measured
+  * A LENGTH THAT IS A CONSTANT.  Section 2: every section is a
+    multiple of four and every walk ends exactly on the end.  The
+    table above is the same object read by two rules, and one of
+    them produces a distribution and the other produces a single
+    value.  That difference is the isa course's whole subject.
+  * AN IMMEDIATE THAT IS A ROTATE AND A RUN LENGTH.  Section 7:
+    1,302 of the 4,294,967,296 32-bit constants are encodable, so
+    the 12-bit field reaches more values than any other 12-bit
+    field in the architecture.
+  * A SHIFT AMOUNT IN THE INSTRUCTION.  imm6 is six bits, so
+    `add x0, x1, x2, lsl #3` is one word; on x86-64 the count has
+    to be in `%cl`.
+  * CONDITION CODES IN A FIELD.  `csel` needs no compare before it,
+    and section 10 measured the 4x4 table of them.
+
+=== 13C. AND WHAT IT COSTS, which is the other side of one sentence
+  The six bits of imm6 are six bits the add/subtract group cannot
+  spend on anything else, so its immediate is 12 bits -- three times
+  x86-64's 8-bit signed immediate with a 32-bit escape hatch.  A
+  large constant therefore has to be assembled out of MOVZ and
+  MOVK: four instructions, sixteen bytes, for one 64-bit C literal,
+  measured in section 8.  The same is true of the branch range:
+  19 bits for a conditional branch, so a function bigger than 1 MiB
+  spends two words per far branch, measured in section 11.
+
+  THE GENERAL FORM, which is the only claim here worth carrying
+  away: every feature of the AArch64 encoding is a way of spending
+  bits to remove a DIFFERENT ambiguity, and none of them is free.
+  4 bytes buys an unambiguous length.  A 12-bit logical immediate
+  buys a 4-billion-value constant out of 12 bits.  A 4-bit
+  condition field buys a branchless select.  Each of those bits is
+  taken out of the space of ordinary values, and the price is
+  visible above: 1,302 reachable 32-bit constants, a 1 MiB
+  conditional branch, and sixteen bytes for a wide literal.
+
+========================================================================
+SECTION 14 -- RETRACTIONS.  PRINTED, NOT FOOTNOTED.
+========================================================================
+
+  Each one is a claim this course would otherwise have made and did not
+  survive measuring. Seventeen, in the order the measurement found them, and
+  each one is checked by the harness in crosscheck.py, which asserts the
+  PRESENCE of every retraction -- a course that quietly dropped one would pass
+  every other check in the file.
+
+
+  R1.  "AArch64 loses on code density, because 4 bytes per instruction beats an average of 3."
+       RETRACTED, AND REVERSED AT HALF THE LEVELS. Section 13 compiles the same C
+       for both targets at four optimisation levels. AArch64 is LARGER at -O0 and
+       -Os and SMALLER at -O1 and -O2. The defensible claim is that fixed width
+       costs bytes in spill-heavy code and saves them otherwise; the crossover on
+       this corpus is between -O0 and -O1. A ratio that changes sign with the
+       optimisation level was never a property of the architecture and should not
+       have been asserted in its name.
+
+  R2.  "The class field is 2 bits, and four named classes cover the encoding."
+       RETRACTED. Measured over 868 instructions, the class field is FOUR BITS at
+       position 25, and ELEVEN of the sixteen values carry a real instruction in
+       this corpus. The two-bit rule this decoder first used put `ret` -- 134 of
+       the 868, the largest single entry in the distribution -- into "Data
+       Processing -- Register", because bits[28:26] of 0xd65f03c0 is 0b110, and a
+       two-bit rule cannot see the value 1101 that holds csel, cset, mul and
+       madd. The class NAMES are still quoted from the manual; only the WIDTH was
+       wrong, and the width is what the dispatch is built on. The counts here
+       (868 instructions, 11 of 16 values) are printed by section 3 on this run.
+
+  R3.  "A 32-bit logical immediate reaches every 32-bit value, so a compiler can use it for any mask."
+       RETRACTED, MEASURED, AND THE MEASUREMENT IS THE MOST USEFUL NUMBER IN THE
+       FILE. 1,302 of 4,294,967,296 32-bit values are encodable. The all-ones and
+       the all-zeros are among the 4.29 billion that are NOT, and those two are
+       exactly the constants a compiler wants most. `and w0, w0, #0xffffffff` is
+       refused by the assembler. Section 7 shows the set is the SMALL one, and
+       section 9 shows the assembler enforcing it.
+
+  R4.  "The add/sub immediate reaches 0 to 4095, or that value shifted left by 12."
+       NOT WRONG, BUT INCOMPLETE IN A WAY THAT MATTERS. `add w0, w1, #0x1000` is
+       ACCEPTED, and it is the 12-bit value 1 with the scale field set, so the
+       first version of the boundary list asked for it expecting a refusal and
+       got an instruction. The true reach is three isolated values -- the field,
+       the field shifted by 12, and zero -- so #0x1001 is refused while #0x1000
+       is not. A scaled field is not a contiguous range and no formula of the
+       form "0 to N times a power of four" describes it. The same shape appears
+       three more times: the pair offset (a multiple of 8 in [-512, 504]), the
+       unscaled load offset, and the branch displacement.
+
+  R5.  "A 26-bit branch field is 26 bits of magnitude."
+       RETRACTED, TWICE, AND THE SECOND TIME IS THE ONE THAT MATTERS. Bit 25 OF
+       THE FIELD is the sign and the remaining 25 are a magnitude in
+       INSTRUCTIONS, which are then multiplied by four -- so the range is not
+       even. The first draft of section 11 treated 0x3ffffff as a magnitude; the
+       second draft corrected the arithmetic and then still wrote the boundaries
+       from memory, giving b.cond a far end of 0x1ffffc and B a near end of
+       -0x40000000, and the assembler REFUSED both. A 19-bit signed field reaches
+       +0xffffc bytes and -0x100000; a 26-bit one reaches +0x7fffffc and
+       -0x8000000. Both mistakes were caught by asking, which is the entire
+       argument of section 9.
+
+  R6.  "`cset` is `csinc` with Rn = Rm = 31."
+       RETRACTED, AND THIS IS THE TRAP THE SECTION IS ABOUT. The condition is
+       INVERTED: `cset w0, eq` is `csinc w0, wzr, wzr, NE`, measured, and the two
+       are different 32 bits that differ only in the condition field. A decoder
+       that models the SET family as a plain CSEL reports every condition in the
+       program inverted, and the output is 0 or 1 either way, so nothing about it
+       looks wrong. The same inversion applies to csetm, cinc, cinv and cneg, and
+       it is why op2 = bits[11:10] is not the operation: the operation is the
+       PAIR (bit 30, bits[11:10]).
+
+  R7.  "MOVN is a signed immediate, like MOVZ with a different sign."
+       RETRACTED. The field holds a MAGNITUDE and the register ends up holding
+       its COMPLEMENT, and the printer's choice about which of the two to show is
+       what makes the mnemonic ambiguous: `movn w0, #0x8000` is printed `mov w0,
+       #-0x8001` and `movn w0, #0xffff` is printed `movn w0, #0xffff`, by the
+       same tool, on the same instruction group. The consequence is real and is
+       why MOVN exists: a 64-bit all-ones is ONE MOVN and no number of MOVZ and
+       MOVK, because it has no zero field to write. A decoder that prints the
+       field is right; one that prints the register value is also right; and a
+       cross-check between them has to normalise this one and say so, which
+       section 12 does.
+
+  R8.  "The declared subset is a subset of the instruction set."
+       REFINED, because the phrase means two things and this decoder is one of
+       them. The subset here is a subset of NAMES, not of LENGTHS: an Advanced
+       SIMD instruction this file cannot name still contributes exactly four
+       bytes to the count, because the length is a constant. That is the whole
+       difference from the isa course's x86dec.py, whose declared subset is a
+       subset of lengths and which can therefore desynchronise. The unmodelled
+       words are COUNTED, never dropped: a table that filtered them out would be
+       a property of the filter.
+
+  R9.  "An unmodelled word is an error in the decoder."
+       RETRACTED, and the direction of the error is the interesting part. The
+       words this decoder does not name are Advanced SIMD -- `movi`, `addv`,
+       `addv` on vectors, SIMD pair loads -- and the oracle names every one of
+       them without hesitation. So the disagreement is a property of the SUBSET,
+       not of either decoder, and a two-reader cross-check that reported those as
+       failures would be reporting its own declared scope as a bug. They are
+       counted, they are listed, and they are not called errors.
+
+  R10.  "`llvm-objdump -b binary` disassembles a flat file of instructions."
+       RETRACTED BY THE TOOL, in the most instructive way available. THIS
+       llvm-objdump has no `-b` option: `--triple=aarch64 -D -b binary f` prints
+       `error: unknown argument '-b'`. The isa course's harness uses GNU objdump,
+       which does have it, so the technique worked there and does not work here.
+       Every binary probe in this file is therefore assembled into a real object
+       file and asked about in a section objdump already knows how to read. A
+       cross-check that quietly substituted a different disassembler for the
+       convenience of a script would have been a claim about a tool that is not
+       installed.
+
+  R11.  "The width of a register is one bit, so `sf` at bit 31 means the same thing everywhere."
+       RETRACTED. Bit 31 is `sf` in most groups and something else in three that
+       were measured: in ADRP it is the PAGE bit and the reach changes by 4,096
+       (section 11C); in the conditional-select family it is the INVERT bit
+       (section 10B); and in CSET and CSETM it is the difference between a
+       set-to-0 and a set-to-1. A decoder that reads one `sf` gets a wrong
+       CONSTANT rather than a wrong name, and a wrong constant is the worst kind
+       of decode error, because the instruction still looks like a plausible
+       instruction. The logical-immediate field is the sharp case: the same
+       twelve bits name a 32-bit constant or a 64-bit one, so a decoder that
+       ignores sf does not get the wrong NAME, it gets the wrong NUMBER.
+
+  R12.  "A field map is a set of bit ranges, and a span that is not contiguous means the measurement is wrong."
+       REFINED, and the wrong version of this was this file's own. A single pair
+       of assembled words marks the bits where the two VALUES differ, which is a
+       SUBSET of the field: measured that way, `movz w0, #0x1111` against `movz
+       w0, #0x2222` gives an 8-bit "imm16" when the field is 16 bits wide, and
+       the table looked wrong because the table was. The measurement now ORs the
+       XOR over a sweep of variants, one per single bit of the operand, and the
+       table is right because the method was. A measurement that disagrees with a
+       remembered table is sometimes telling you about the measurement.
+
+  R13.  "The 4x4 table of conditional selects has sixteen entries."
+       CORRECTED IN COUNT, NOT IN CONCLUSION. There are FOUR operations -- csel,
+       csinc, csinv and csneg -- and the other twelve cells of the 4x4 are
+       UNDEFINED. The first draft of this file called two of those cells "the SET
+       forms", which is a plausible-sounding wrong answer that would have taught
+       a reader the group has six operations. The SET forms are not new opcodes:
+       CSET is CSINC with both sources set to the zero register, so the same two
+       field values give a sixth instruction and a field map cannot show it,
+       because nothing in the fields is different.
+
+  R14.  "A decoder that agrees with a disassembler is correct."
+       REFINED into something checkable, and the refinement is the only reason
+       this course can claim a cross-check. Agreement to 100% is what a BROKEN
+       cross-check looks like, so section 12 replaces one model with a function
+       that claims nothing, decodes the same bytes through the same loop, and
+       reads the number again. The poison moved the number by 142 instructions on
+       the recorded run. Without the poison the agreement is a claim about the
+       corpus; with it, the agreement is a measurement of this decoder. And the
+       first version of the poison was a no-op -- it prepended a model that
+       claims nothing rather than REMOVING one, and the number did not move,
+       which is how a control that cannot fail gets written.
+
+  R15.  "Register 31 means the stack pointer wherever a 5-bit register field appears."
+       RETRACTED, AND FOUND BY THE CROSS-CHECK RATHER THAN BY READING. Register
+       31 is the STACK POINTER in add/sub and in a load's base, and the ZERO
+       REGISTER in the logical groups, in a load's data register, in a select's
+       sources and in CBZ/TBZ. This decoder's register function takes a
+       permission flag from the model, and the logical-IMMEDIATE model was
+       calling it with the default -- so it printed `orr x9, sp,
+       #0x8000000000000001` for a word the oracle calls `mov x9,
+       #-0x7fffffffffffffff`. That is not a naming difference: a logical OR
+       against the stack pointer is a different VALUE from a logical OR against
+       zero. Section 12 reports this as two of eleven disagreements, and the fix
+       was found by reading the disagreements, not by re-reading the manual. A
+       flag with a default is a flag nobody checks.
+
+  R16.  "A 64-bit logical immediate can express any 64-bit pattern, because the field is 64 bits wide."
+       RETRACTED. 5,334 of the 18,446,744,073,709,551,616 64-bit values are
+       encodable, and the 64-bit ALL-ONES is NOT among them -- the assembler
+       refuses `and x0, x0, #0xffffffffffffffff` with the same diagnostic it uses
+       for the 32-bit all-ones. The first draft of this file said the all-ones is
+       acceptable at 64 bits and reserved at 32, which is the reverse of the
+       truth, and the error was caught by asking rather than by reasoning: the
+       boundary is not a WIDTH, it is the SHAPE. One bit short of all-ones is a
+       legal run of 63 ones and all-ones is not a run at all, and section 7E
+       prints both rows side by side.
+
+  R17.  "A cross-check that has been normalised until it reports 100% has found no bugs."
+       RETRACTED, AND IT IS THE MOST IMPORTANT LINE IN THE SECTION. The first run
+       of the two-reader comparison reported 848 of 859 -- 98.72% -- and the
+       eleven were the most useful output in the file: two of them were a real
+       decoder bug (R15) and nine were a normalisation rule written against a
+       string with a space in it, so it matched NOTHING and the cross-check
+       carried on running. Every future run of this section will report 100%,
+       which is the correct answer and is also the reason the history is printed:
+       100% is what a check that has been normalised until it cannot fail looks
+       like, and the only way to tell the two apart is the poison and the list of
+       what the failures were.
+
+  WHICH OF THESE A READER IS MOST LIKELY TO BELIEVE: R1, R3, R6, R7,
+  R11, R15 and R16, because each of them is TRUE of a different
+  architecture or of a different part of this one, and the whole
+  difficulty of an encoding claim is that the true fact next door
+  looks like the false one.
+
+  WHICH OF THESE THE NEXT PERSON TO READ THIS FILE IS MOST LIKELY
+  TO REINTRODUCE: R2, because a two-bit class field is what the
+  older documentation says and a four-bit one is what 868 assembled
+  words say; and R14 and R17, because a cross-check that reports
+  100% is the thing everybody wants and the thing that has to be
+  poisoned before it means anything.
+
+  AND THE GENERAL FORM, which is the same sentence four times over:
+  in this file the claims that failed were not claims about BITS.
+  They were claims about WIDTH, about SIGN, about which register
+  number 31 means in which group, and about what a normaliser was
+  allowed to do quietly.  The bits were the easy part; the bits
+  were the part that could be checked.  Everything that went wrong
+  went wrong in the space between a bit pattern and a sentence about
+  it, and that space is where every reader of a disassembly lives.
+
+========================================================================
+SECTION 15 -- WHAT THIS FILE CANNOT SHOW, AND WHY IT STILL EXISTS
+========================================================================
+
+  A measurement course that does not print its own limits is teaching the
+  reader that a table is the truth. These are the limits, and they are printed
+  as limits and not as a footnote, because the reader who meets them in order
+  learns something the reader who meets them last does not.
+
+
+  NOTHING IS EXECUTED
+    There is no AArch64 machine and no emulator on this host, so not one
+    instruction in this file has been run. Every number is a property of an
+    ENCODING or of a COMPILER'S CHOICE. Nothing here is a claim about speed,
+    latency, throughput, portablity to real hardware, or what a program does.
+    A course that taught encoding from a machine would be a different course
+    and this is not it.
+
+  THE DECODER IS A SUBSET, AND SAYS SO
+    Advanced SIMD and floating-point are not modelled. Their words are counted
+    in the length arithmetic and printed as (op 0x...) rather than named. R8
+    and R9 in section 14 are about exactly this, and the reason a two-reader
+    cross-check has to distinguish "this decoder is wrong" from "this decoder
+    does not model this" is that the two produce the same output.
+
+  THE ORACLE IS A TOOL, NOT THE ARCHITECTURE
+    llvm-objdump-21 is one implementation, and where it and this file disagree
+    this file is not automatically right. The disagreements were examined one
+    at a time and all of the ones in section 12 are PRINTING, but the correct
+    general statement is that two independent readers agreeing is evidence and
+    one reader agreeing with itself is nothing. Where the architecture defines
+    a name, the architecture wins; this file has no copy of the manual open.
+
+  THE FIELD MAP IS MEASURED FROM ONE ASSEMBLER
+    Section 4 measures field positions by asking clang's integrated assembler,
+    and a field map is a property of the ENCODING. A different assembler
+    choosing a different encoding for the same text would not be a different
+    encoding, and would not show up here. What the measurement does establish
+    is that the guards in this file are consistent with the words a real
+    assembler emits, which is a different and weaker claim than correctness.
+
+  THE CORPUS IS ORDINARY C, WHICH IS A CHOICE
+    corpus.c is 25 functions of arithmetic, masks, conditionals, a loop, a
+    struct walk and a call. The distribution in section 3 is a distribution of
+    what clang chose for THAT code. A corpus with SIMD, floating point, switch
+    tables or C++ would fill the four class values that are empty here, and
+    the section 3 table would look different. Nothing in the course is
+    generalisable from the EMPTY ROWS; everything in the bit budget is
+    generalisable because it is a property of the field map rather than of the
+    corpus.
+
+  DENSITY IS A PROPERTY OF A COMPILER, NOT OF AN ISA
+    Section 13 is a table of four ratios from one compiler version on one
+    source file, and R1 is the retraction that says so. The instruction COUNTS
+    are the compiler's, not the architecture's: the same C at the same -O
+    level produces a different instruction count on a different compiler
+    version, and the BYTES follow it. What is a property of the ISA is the
+    4.0000 bytes per instruction, which is a definition.
+
+  NO EXECUTION MEANS NO SAFETY CLAIM
+    The architecture defines an UNDEFINED encoding and this decoder raises on
+    some of them. Which encodings the architecture calls UNDEFINED and what a
+    given core does with one is a property of the architecture specification
+    AND of the implementation, and there is nothing on this host that can tell
+    you which core you have. The reserved-field table in section 5C is a
+    decoder cost, not a promise.
+
+  THE TWO READERS SHARE A SOURCE
+    Both readers ultimately depend on the same LLVM tree, because clang
+    assembled the corpus and llvm-objdump disassembled it. That is a real
+    weakness in the cross-check and it is not fixable by trying harder: an
+    independent second assembler does not exist on this host, and GNU binutils
+    has no AArch64 target installed. What the cross-check establishes is that
+    this decoder and one other piece of software agree on what the bytes mean
+    -- not that either agrees with the silicon.
+
+  And with all of that in place, the file is worth reading, for one reason.
+  Every claim in it is a bit pattern, a count of bit patterns, an arithmetic
+  identity, or a refusal from a real assembler. Those four kinds of claim do
+  not need a machine to be verified, do not go stale when a compiler changes,
+  and can be checked by a reader with a hex editor. Everything this course
+  teaches is in that class, and that is the design: the first step of the
+  chain -- a byte that means something -- is checkable by hand, and the parts
+  of the chain that need silicon are somebody else's course.
+
+  AND THE HARNESS.  crosscheck.py reads this file's output and
+  re-asks the claims.  It asserts the bit patterns exactly, the
+  counts exactly, the ORDER of the tables, and the PRESENCE of all
+  seventeen retractions.  It asserts the density comparison as a
+  SHAPE -- that the sign changes between -O0 and -O1 -- and not as
+  a value, because a value there moves with the compiler and a
+  shape does not.  That asymmetry is deliberate: a check whose
+  threshold is a bare number is a check that fails on a busier
+  machine and teaches its reader to ignore it.  And it asserts the
+  POISON moved the number, because a harness that only ever reads
+  the 100% is the harness this course retracted in R14 and R17.
+

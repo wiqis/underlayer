@@ -842,6 +842,31 @@ public namespace underlayer_web {
         return string()
     }
 
+    // AArch64 assembly and encoding.  Same fall-through contract: empty
+    // string for anything else.  `a64-` is a prefix no other course uses,
+    // and it is deliberately not `x86-`: the five ids below were checked
+    // against every other course in this directory and none of them owns
+    // `a64-asm`, `a64-encoding`, `a64-immediate`, `a64-cond` or `a64-verify`.
+    // That check matters because render_concept() resolves ids GLOBALLY
+    // with no course in the key, so a collision is silent -- the first
+    // course to claim a name keeps it and every later one that asks for it
+    // gets this course's page.
+    public func render_a64asm_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var asm_id = std::string("a64-asm")
+        var encoding_id = std::string("a64-encoding")
+        var immediate_id = std::string("a64-immediate")
+        var cond_id = std::string("a64-cond")
+        var verify_id = std::string("a64-verify")
+
+        if(cid.equals(&asm_id)) { return underlayer_content::render_a64_asm() }
+        if(cid.equals(&encoding_id)) { return underlayer_content::render_a64_encoding() }
+        if(cid.equals(&immediate_id)) { return underlayer_content::render_a64_immediate() }
+        if(cid.equals(&cond_id)) { return underlayer_content::render_a64_cond() }
+        if(cid.equals(&verify_id)) { return underlayer_content::render_a64_verify() }
+        return string()
+    }
+
     // The x86-64 ABI. Same fall-through contract: empty string for anything
     // else.  `x86-calling` and its five siblings continue the `x86-` prefix
     // the assembly course already owns, and they are deliberately NOT
@@ -1009,6 +1034,14 @@ public namespace underlayer_web {
         // x86-64 assembly/encoding concepts; same fall-through contract.
         var x86asm_html = render_x86asm_concept(concept_id)
         if(x86asm_html.size() > 0) { return x86asm_html }
+        // AArch64 assembly/encoding concepts; same fall-through contract.
+        // Placed after the x86asm lookup and before every other course,
+        // because the ids are disjoint and the ORDER of these calls is the
+        // order in which a name was claimed.  Nothing here can shadow
+        // anything, which is the reason the five ids were chosen with a
+        // prefix no other course uses.
+        var a64asm_html = render_a64asm_concept(concept_id)
+        if(a64asm_html.size() > 0) { return a64asm_html }
         // x86-64 ABI concepts; same fall-through contract.
         var x86abi_html = render_x86abi_concept(concept_id)
         if(x86abi_html.size() > 0) { return x86abi_html }

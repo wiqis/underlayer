@@ -100,8 +100,8 @@
 
 ## ARM64
 
-- [ ] Learn AArch64 Assembly
-- [ ] Learn AArch64 Instruction Encoding
+- [x] Learn AArch64 Assembly
+- [x] Learn AArch64 Instruction Encoding
 - [ ] Learn AArch64 Calling Conventions
 - [ ] Learn AArch64 ABI
 - [ ] Learn AArch64 Stack Frames

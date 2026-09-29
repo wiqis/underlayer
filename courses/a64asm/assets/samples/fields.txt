@@ -1,0 +1,65 @@
+# a64asm FIELD MAP -- MEASURED by assembling an instruction
+# and a SWEEP of variants that differ in ONE operand, and
+# OR-ing the XOR of the 32-bit words.  A single pair marks
+# the bits where the two VALUES differ, which is a subset of
+# the field.  Written by a64dec.py --run.  Do not hand-edit.
+#
+# field            xor mask   positions            base
+Rd               0000000f   bits[3:0]            add w0, w1, w2
+Rn               000001c0   bits[8:6]            add w0, w1, w2
+Rm               000f0000   bits[19:16]          add w0, w1, w2
+sf               80030001   bits[0,16,17,31]     add w0, w1, w2
+op               40000000   bits[30:30]          add w0, w1, w2
+S                20000000   bits[29:29]          add w0, w1, w2
+shift amt        0000fc00   bits[15:10]          add x0, x1, x2, lsl #0
+shift amt (32-bit) 00007c00   bits[14:10]          add w0, w1, w2, lsl #0
+shift type       00e0e000   bits[13,14,15,21,22,23] add w0, w1, w2, lsl #3
+shift N          80400000   bits[22,31]          add w0, w1, w2, lsl #3
+opc              60000000   bits[30:29]          and w0, w1, w2
+N                60200000   bits[21,29,30]       and w0, w1, w2
+imm12            003ffc00   bits[21:10]          add w0, w1, #0x0
+lsl12            00400000   bits[22:22]          add w0, w1, #0x10
+imm16            001fffe0   bits[20:5]           movz w0, #0x0000
+hw               00600000   bits[22:21]          movz x0, #0x1111
+opc-movewide     60000000   bits[30:29]          movz w0, #0x1111
+immr             001d7400   bits[10,12,13,14,16,18,19,20] sbfx w0, w1, #4, #3
+imms             00007c00   bits[14:10]          sbfx w0, w1, #4, #3
+N (bitfield)     40181000   bits[12,19,20,30]    sbfx w0, w1, #4, #3
+lsl0             00007000   bits[14:12]          extr w0, w1, w2, #3
+cond (csel)      0000f000   bits[15:12]          csel w0, w1, w2, eq
+op2 (csel)       00000400   bits[10:10]          csel w0, w1, w2, eq
+inv (csel)       40000400   bits[10,30]          csel w0, w1, w2, eq
+2src opc         00002c00   bits[10,11,13]       lsl w0, w1, w2
+3src o0          0000f000   bits[15:12]          madd w0, w1, w2, w3
+Ra               00003800   bits[13:11]          madd w0, w1, w2, w3
+1src opc         00001c00   bits[12:10]          clz w0, w1
+cond (b.cond)    000001ef   bits[0,1,2,3,5,6,7,8] b.eq T
+cond (b.cond) top 0000006f   bits[0,1,2,3,5,6]    b.eq T
+cbz op           01000060   bits[5,6,24]         cbz w0, T
+cbz sf           80000060   bits[5,6,31]         cbz w0, T
+tbz op           01000060   bits[5,6,24]         tbz w0, #3, T
+tbz bit5+imm5    00f800e0   bits[5,6,7,19,20,21,22,23] tbz w0, #1, T
+tbz b5           80f00060   bits[5,6,20,21,22,23,31] tbz x0, #1, T
+br opc           006003e0   bits[5,6,7,8,9,21,22] br x0
+Rn (br)          000001e0   bits[8:5]            br x0
+B op             80000003   bits[0,1,31]         b T
+B imm26          03ffffff   bits[25:0]           b T
+adr/adrp page bit 80ffffc0   bits[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,31] adr x0, T
+ADR immhi+immlo  60ff81e0   bits[5,6,7,8,15,16,17,18,19,20,21,22,23,29,30] adr x0, T
+ld size          c4800000   bits[23,26,30,31]    ldr w0, [x1]
+ld opc           00400000   bits[22:22]          ldr w0, [x1]
+ld opc2          80000000   bits[31:31]          ldr w0, [x1]
+ld opc3          00c00000   bits[23:22]          ldr w0, [x1]
+ld imm12         003ffc00   bits[21:10]          ldr w0, [x1, #0x0]
+ldur imm9        001ff000   bits[20:12]          ldur w0, [x1, #0x0]
+ld Rt            0000000f   bits[3:0]            ldr w0, [x1]
+ld Rn            000001e0   bits[8:5]            ldr w0, [x1]
+ld mode          01008c00   bits[10,11,15,24]    ldr w0, [x1, #8]
+ldur mode        001f0000   bits[20:16]          ldur w0, [x1, #8]
+pair Rt          0000001f   bits[4:0]            stp x0, x1, [sp]
+pair Rt2         00007c00   bits[14:10]          stp x0, x1, [sp]
+pair Rn          000003e0   bits[9:5]            stp x0, x1, [sp]
+pair imm         001f8000   bits[20:15]          stp x0, x1, [sp]
+pair mode        01bf0000   bits[16,17,18,19,20,21,23,24] stp x0, x1, [sp]
+pair L           00400000   bits[22:22]          stp x0, x1, [sp]
+pair scale       84000000   bits[26,31]          stp w0, w1, [sp]

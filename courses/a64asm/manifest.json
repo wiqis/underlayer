@@ -1,0 +1,82 @@
+{
+  "id": "a64asm",
+  "title": "AArch64: Encoding From The Ground Up",
+  "version": "1.0.0",
+  "description": "The class field is four bits and not two, and `ret` is in a class a two-bit rule cannot see; a 12-bit logical immediate reaches 1,302 of 4,294,967,296 constants and refuses the two a compiler wants most; `cset w0, eq` is `csinc w0, wzr, wzr, NE`, so the condition is inverted and nothing about the result looks wrong; and AArch64 loses on code density at two optimisation levels and wins at two, which retracts the claim the course was written to make.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 5 concepts, reproduce the 239 checks in courses/a64asm/assets/samples/crosscheck.py against the shipped a64dec.out, then change one guard in a64dec.py -- any guard, one bit -- and make the poisoned cross-check in section 12 move by name",
+  "min_score": 70,
+  "dependencies": [
+    "elf"
+  ],
+  "modules": [
+    {
+      "id": "surface",
+      "title": "The Surface: What the Instructions Are",
+      "concepts": [
+        "a64-asm",
+        "a64-cond"
+      ]
+    },
+    {
+      "id": "encode",
+      "title": "The Encoding: What the Bytes Are",
+      "concepts": [
+        "a64-encoding",
+        "a64-immediate",
+        "a64-verify"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "a64-asm",
+      "title": "Four Bytes, and a Mnemonic That Is Not In There",
+      "module_id": "surface",
+      "description": "Every instruction is exactly 4 bytes, so a decoder that does not know what a word DOES still knows how long it is -- which is the whole difference from x86 in one sentence. The mnemonic is not stored: `cmp` is a `subs` with the destination dropped, `mvn` is an `orn`, `mul` is a `madd` with a zero addend, and `mov` is an `orr`. Nineteen of twenty-two alias pairs are the same 32 bits and the twenty-second is `adr` against `adrp`, one bit apart.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "a64-encoding",
+      "title": "The Class Field Is Four Bits, and the Field Map Is Measured",
+      "module_id": "encode",
+      "description": "58 field positions measured by assembling a sweep of variants and OR-ing the XOR -- a method whose first version reported an 8-bit `imm16` for a 16-bit field, because a single pair marks the bits where two VALUES differ and not the bits the field owns. `Rt2` in the pair form is bits[14:10] and not bits[11:10]. The condition is bits[15:12] in a select and bits[4:0] in a B.cond, and the two do not overlap.",
+      "estimated_minutes": 30,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "a64-immediate",
+      "title": "A Constant Is a Rotate and a Run Length",
+      "module_id": "encode",
+      "description": "1,302 of the 4,294,967,296 32-bit constants and 5,334 of the 2^64 64-bit ones are encodable as a logical immediate, and the all-ones and the all-zeros are among the ones that are not -- at BOTH widths, which reverses the first draft of this course. A 64-bit literal with no pattern costs four instructions; the 64-bit all-ones costs one, and it is a MOVN, because MOVN writes the complement.",
+      "estimated_minutes": 27,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "a64-cond",
+      "title": "Sixteen Conditions, Four Bits, and the Inversion That Hides",
+      "module_id": "surface",
+      "description": "There are four conditional-select operations, not sixteen and not eight, selected by the PAIR (bit 30, bits[11:10]) -- and the other twelve cells of the 4x4 are UNDEFINED. `cset w0, eq` is `csinc w0, wzr, wzr, NE`: the condition is inverted, the two are different 32 bits, and a decoder that misses it reports every condition in the program backwards while producing 0 or 1 either way.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "a64-verify",
+      "title": "Two Readers, and Then One of Them Poisoned",
+      "module_id": "encode",
+      "description": "868 corpus instructions decoded by this file and by llvm-objdump, seven printing conventions reconciled, and 100% agreement -- which is what a BROKEN cross-check looks like, so the model table is then poisoned on purpose and the number is read again. The first run reported 98.72%, and the eleven failures were two real decoder bugs and one normalisation rule that had been matching nothing at all.",
+      "estimated_minutes": 22,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}
