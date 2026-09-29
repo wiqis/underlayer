@@ -867,6 +867,35 @@ public namespace underlayer_web {
         return string()
     }
 
+    // The x86-64 machine: privilege, memory and time.  Same
+    // fall-through contract: empty string for anything else.  `x86-` is
+    // already in use by the assembly and ABI courses, so these nine ids
+    // continue it rather than introducing a fourth prefix; the subjects are
+    // different enough that no id collides.
+    public func render_x86sys_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var syscall_id = std::string("x86-syscall")
+        var exceptions_id = std::string("x86-exceptions")
+        var rings_id = std::string("x86-rings")
+        var cr_id = std::string("x86-cr")
+        var debug_id = std::string("x86-debug")
+        var virtual_id = std::string("x86-virtual")
+        var paging_id = std::string("x86-paging")
+        var pmu_id = std::string("x86-pmu")
+        var boundary_id = std::string("x86-boundary")
+
+        if(cid.equals(&syscall_id)) { return underlayer_content::render_x86_syscall() }
+        if(cid.equals(&exceptions_id)) { return underlayer_content::render_x86_exceptions() }
+        if(cid.equals(&rings_id)) { return underlayer_content::render_x86_rings() }
+        if(cid.equals(&cr_id)) { return underlayer_content::render_x86_cr() }
+        if(cid.equals(&debug_id)) { return underlayer_content::render_x86_debug() }
+        if(cid.equals(&virtual_id)) { return underlayer_content::render_x86_virtual() }
+        if(cid.equals(&paging_id)) { return underlayer_content::render_x86_paging() }
+        if(cid.equals(&pmu_id)) { return underlayer_content::render_x86_pmu() }
+        if(cid.equals(&boundary_id)) { return underlayer_content::render_x86_boundary() }
+        return string()
+    }
+
     // SIMD and vector processing. Same fall-through contract: empty string
     // for anything else. `simd-` is a prefix no other course uses.
     public func render_simd_concept(concept_id : *string) : string {
@@ -958,6 +987,16 @@ public namespace underlayer_web {
         // x86-64 ABI concepts; same fall-through contract.
         var x86abi_html = render_x86abi_concept(concept_id)
         if(x86abi_html.size() > 0) { return x86abi_html }
+        // The x86-64 machine's privileged side, its memory and its time.
+        // Same fall-through contract.  The last concept is `x86-boundary`
+        // and NOT `x86-verify`: the section plan gives the artifact
+        // concept the id `x86-verify` in all THREE of the remaining
+        // courses, and a concept id is resolved GLOBALLY by
+        // render_concept() with no course in the key, so only the first
+        // course to take a name can keep it.  x86abi took it, and this one
+        // takes the name of the thing it measures.
+        var x86sys_html = render_x86sys_concept(concept_id)
+        if(x86sys_html.size() > 0) { return x86sys_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

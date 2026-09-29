@@ -79,19 +79,19 @@
 - [x] Learn x86-64 Calling Conventions
 - [x] Learn x86-64 Stack Frames
 - [x] Learn x86-64 ABI
-- [ ] Learn x86-64 System Calls
-- [ ] Learn x86-64 Interrupts and Exceptions
+- [x] Learn x86-64 System Calls
+- [x] Learn x86-64 Interrupts and Exceptions
 - [ ] Learn x86-64 SIMD Instructions
 - [ ] Learn x86-64 AVX and AVX2
 - [ ] Learn x86-64 AVX-512
 - [ ] Learn x86-64 Atomic Instructions
 - [ ] Learn x86-64 Memory Ordering
-- [ ] Learn x86-64 Virtual Memory
-- [ ] Learn x86-64 Paging
-- [ ] Learn x86-64 Protection Rings
-- [ ] Learn x86-64 Control Registers
-- [ ] Learn x86-64 Debug Registers
-- [ ] Learn x86-64 Performance Monitoring
+- [x] Learn x86-64 Virtual Memory
+- [x] Learn x86-64 Paging
+- [x] Learn x86-64 Protection Rings
+- [x] Learn x86-64 Control Registers
+- [x] Learn x86-64 Debug Registers
+- [x] Learn x86-64 Performance Monitoring
 
 
 ## ARM64

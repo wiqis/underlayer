@@ -42,10 +42,21 @@ PREFIXES = {
     "x86abi": ("x86_calling.ch", "x86_frame.ch", "x86_saved.ch",
                "x86_varargs.ch", "x86_unwind.ch", "x86_verify.ch",
                "x86abi_landing.ch"),
+    # The THIRD course of the section.  Nine concepts plus a landing page, and
+    # the last concept is `x86_boundary.ch` and not `x86_verify.ch`: the plan
+    # gives the id `x86-verify` to all THREE of the remaining courses, and a
+    # concept id is resolved GLOBALLY by render_concept() in web/src/helpers.ch
+    # with no course in the key, so three courses cannot share one.  The first
+    # course to take the name keeps it, and this one takes the name of the
+    # thing it measures.
+    "x86sys": ("x86_syscall.ch", "x86_exceptions.ch", "x86_rings.ch",
+               "x86_cr.ch", "x86_debug.ch", "x86_virtual.ch", "x86_paging.ch",
+               "x86_pmu.ch", "x86_boundary.ch", "x86sys_landing.ch"),
 }
 OUTPUTS = {
     "x86asm": "x86dec.out",
     "x86abi": "abidump.out",
+    "x86sys": "sysdump.out",
 }
 PREF = PREFIXES.get(COURSE, (COURSE[:3],))
 if not isinstance(PREF, tuple):
@@ -82,7 +93,8 @@ for name in sorted(os.listdir(os.path.join(ROOT, "content", "src"))):
     # decimals and they are the author's arithmetic, not the artifact's.
     blocks = re.findall(r"<pre>(.*?)</pre>", body, re.S)
     for b in blocks:
-        if "$ " not in b and "./x86dec" not in b and "objdump" not in b:
+        if "$ " not in b and "./x86dec" not in b and "./sysdump" not in b \
+            and "objdump" not in b:
             continue
         for pat, kind in ((TICK, "ticks/op"), (HEX, "hex"), (RATIO, "ratio")):
             for m in pat.finditer(b):

@@ -1,0 +1,135 @@
+{
+  "id": "x86sys",
+  "title": "The x86-64 Machine: Privilege, Memory and Time",
+  "version": "1.0.0",
+  "description": "Every privileged instruction a ring-3 program can try, one forked child each, with the signal it dies from -- and the set is not the one in the manual: SIDT, SGDT, STR, SLDT, SMSW, XGETBV and RDFSBASE all return, while RDPMC, RDMSR, every MOV to or from CR0-CR8, and both segment-register loads die with si_code 128 and no address. The absence this course proves is not a feature bit: CPUID says the core and L3 performance monitors ARE present, and the process is simply not allowed to read them.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 9 concepts, then reproduce the 214 checks in courses/x86sys/assets/samples/crosscheck.py and break one deliberately -- add a row to the syscall marker list in sysdump.c with a register gcc allocates for an output, and make the E2 group fail with SIGBUS rather than a number",
+  "min_score": 70,
+  "dependencies": [
+    "x86asm",
+    "x86abi",
+    "isa",
+    "exe",
+    "mem",
+    "priv",
+    "smp",
+    "simd"
+  ],
+  "modules": [
+    {
+      "id": "mode",
+      "title": "The Machine's Privileged Side, as an Inventory",
+      "concepts": [
+        "x86-syscall",
+        "x86-exceptions",
+        "x86-rings",
+        "x86-cr",
+        "x86-debug"
+      ]
+    },
+    {
+      "id": "memory",
+      "title": "The Address Space, and Which Bytes of It Exist",
+      "concepts": [
+        "x86-virtual",
+        "x86-paging"
+      ]
+    },
+    {
+      "id": "time",
+      "title": "Time, and the Limits of What a User Process Can Count",
+      "concepts": [
+        "x86-pmu",
+        "x86-boundary"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "x86-syscall",
+      "title": "SYSCALL and the Four Registers It Touches",
+      "module_id": "mode",
+      "description": "A marker in each of the thirteen registers a syscall might destroy, one syscall, read back immediately: twelve come back and only R11 does not. Plus the instruction's own two -- RCX becomes the return RIP -- and why the fourth argument of a system call is R10 and not RCX, and why an unknown system call number is a RETURN of -ENOSYS rather than a fault.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-exceptions",
+      "title": "All Thirty-Two, As an x86-64 Reference",
+      "module_id": "mode",
+      "description": "Every vector 0 to 31 with its class, whether it pushes an error code, and a column saying whether this file raised it or is quoting a manual -- six measured, twenty-six quoted. The vendor census is a partition of the thirty-two, and the two rows that first did not add up are printed beside the ones that do.",
+      "estimated_minutes": 27,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-rings",
+      "title": "Descriptor Tables and the Privilege Checks",
+      "module_id": "mode",
+      "description": "The selector's three fields and the three comparisons, with the call-gate rule that every textbook quotes for an interrupt gate. SIDT and SGDT both return from ring 3; reading one byte of either table does not, and it dies with si_code 1 and an address -- which makes the boundary a page-table fact rather than a privilege one.",
+      "estimated_minutes": 28,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-cr",
+      "title": "CR0 to CR4, Every Bit",
+      "module_id": "mode",
+      "description": "Fifteen CR0 rows, six CR3 fields, thirty-one CR4 rows, and the five of them that decide whether this process can observe anything at all -- UMIP, PCE, TSD, PCIDE, LA57 -- every one of them in a register that reads as a fault. And the five bits of a page-fault error code, of which ring 3 sees one.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-debug",
+      "title": "DR0 to DR7 and the Mask a Debugger Must Program",
+      "module_id": "mode",
+      "description": "The eighteen DR7 rows, the eight enable bits at 0 through 7, four control fields of four bits from 16, and the mask for four 4-byte write breakpoints COMPUTED from the formula rather than typed in. Plus the two descriptions of that layout that disagree, and why the file cannot say which one its own CPU implements.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-virtual",
+      "title": "The 48-Bit Split, LA57 and LAM",
+      "module_id": "memory",
+      "description": "The canonical boundary re-derived on FIVE access widths instead of three, and the extension that found a real error: the upper half begins at 0xffff800000000000 and not at 0xffffffff80000000, which is 2^31 bytes inside it. Plus the constant that reads as a count of bits and is not one.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-paging",
+      "title": "The Four Entries and Every Flag in One",
+      "module_id": "memory",
+      "description": "Five index fields, fourteen flag bits, and the four the hardware sets. Measured where it can be: an untouched mapping has NO page-table entry at all and mprotect alone creates none, which is demand paging seen from the inside, and the A and D bits are the two a kernel needs and the two a process cannot see.",
+      "estimated_minutes": 27,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-pmu",
+      "title": "The Performance Monitoring Architecture",
+      "module_id": "time",
+      "description": "This machine has core and L3 performance monitors and CPUID says so in the same breath in which RDPMC is a fault and perf_event_open is EACCES. So the course's original sentence -- 'this machine has no PMU' -- is retracted in favour of one about ACCESS, which is falsifiable and the old one was not.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "x86-boundary",
+      "title": "What Ring 3 Can See, and What It Cannot",
+      "module_id": "time",
+      "description": "The artifact: fifty instructions run one per forked child, three absences proved rather than quoted, and the whole of what a user program can learn about the machine it is running on -- with every entry in the cannot column a signal number and every entry in the can column a bit pattern read out of a register here.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}

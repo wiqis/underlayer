@@ -1,0 +1,9 @@
+# Build products.  The RECORDED outputs ship: sysdump.out, run1.txt,
+# run2.txt and sysdump_dis.txt, so that every claim in the course is
+# checkable on a machine that never ran the benchmark -- which is the whole
+# reason the harness takes a path argument and defaults to sysdump.out.
+# The BINARY does not ship, because a committed executable is a file nobody
+# can review and one that is wrong on the next gcc.
+sysdump
+*.o
+__pycache__/

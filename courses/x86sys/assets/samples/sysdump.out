@@ -1,0 +1,1108 @@
+=====================================================================
+ sysdump -- The x86-64 Machine: Privilege, Memory and Time
+=====================================================================
+
+1.  THE INSTRUMENT.  Nothing in this section is a claim.
+
+  TSC rate, busy                    2.2957 GHz
+  TSC rate, across a 300 ms sleep   2.2957 GHz
+  drift                             -0.0004 %
+  pinned to cpu3, and the cpu that answered is 3  (VERIFIED -- the rows below are a controlled experiment)
+  POINTER CHASE, 64 KiB of nodes    5.725 ticks/op
+  ARITHMETIC increment loop         1.198 ticks/op
+  the floor used for every band in this file is the POINTER CHASE,
+  because the increment loop is printed too and is the CLOCK rather
+  than noise: 4.78x apart.
+
+  RDPMC in a forked child: KILLED by a signal
+    signal 11, and 11 is SIGSEGV with si_code 128 -- the
+    kernel's way of saying the CPU raised a #GP and there
+    is no address to report.
+  /proc/sys/kernel/perf_event_paranoid = 4
+
+  CONSEQUENCE, and it governs every duration in this file:
+    there is NO event counter this process can open.  Nothing
+    here counts instructions, cycles, branches or
+    mispredictions.  Every number is a DURATION, and a
+    duration bounds a count without measuring it.
+
+  vendor "AuthenticAMD"   max basic leaf 0x00000010
+  max extended leaf                 0x80000023
+  brand string                      'AMD Ryzen 5 7430U with Radeon Graphics         '
+  inputs: sysdump_dis.txt           loaded
+  and it is OPTIONAL: section 5 says so and runs the 16-byte
+  arm with an instruction this file writes itself rather than
+  printing an empty row that reads like a result.
+
+1B. THE ORACLE: THE REFERENCE TABLES, PRINTED AND NOT MEASURED.
+    Nothing in this section came out of this machine.  Every row is
+    a bit position, and a bit position is exact -- which is why the
+    harness can assert this section to the bit and asserts the rest
+    of the file only as orderings and shapes.
+
+1B1. CR0.  WHAT SETS A BIT, WHAT CLEARS IT, WHAT IT INVALIDATES.
+     Readable only at CPL 0; section 3 measures that for itself.
+
+  CR0 | 0    | PE  | protected-mode enable; RESET TO 1 by the CPU
+  CR0 | 1    | MP  | monitor coprocessor; must be 1 on a 486+
+  CR0 | 2    | EM  | emulation: 1 means NO x87 unit present
+  CR0 | 3    | TS  | task switched: saves x87 state on a switch
+  CR0 | 4    | ET  | extension type, RESERVED and ALWAYS 1 since the 486
+  CR0 | 5    | NE  | numeric error internal to the FPU; 1 on a 486+
+  CR0 | 6-15 | -   | reserved
+  CR0 | 16   | WP  | write protect: honour read-only pages in CPL 0 TOO
+  CR0 | 17   | -   | reserved
+  CR0 | 18   | AM  | alignment mask: with EFLAGS.AC, check CPL 3 alignment
+  CR0 | 19-28 | -  | reserved
+  CR0 | 29   | NW  | not-write-through: caches may hold dirty lines
+  CR0 | 30   | CD  | cache disable: the whole cache hierarchy off
+  CR0 | 31   | PG  | paging enable; the MASTER bit of the register
+  CR0 | 32-63 | - | reserved, written 0
+
+  WRITING CR0 invalidates:  CR0.PG 0->1 flushes the TLB completely.
+                              CR0.WP and CR0.AM change no TLB entry, so
+                              the SDM requires NO invalidation for them
+                              and this file has no instrument either.
+  CR0.ET is the interesting row: a bit with no meaning and no way to
+  read it, which survives because software once wrote 0 and then
+  faulted.  A 'reserved, always 1' is a compatibility scar.
+
+1B2. CR3.  THE PAGE-DIRECTORY BASE AND THE ADDRESS-SIZE BITS.
+
+  CR3 | 0-11  | PCID   | address space tag, USED ONLY IF CR4.PCIDE=1
+  CR3 | 12    | PWT    | page-table writes are write-through
+  CR3 | 13    | PCD    | page-table writes bypass the cache
+  CR3 | 14-47 | BASE   | physical address of the PML4, 4 KiB aligned
+  CR3 | 48-51 | SEAM   | reserved, and MUST EQUAL bit 47 of BASE:
+  CR3 |         |        | this is the sign-extension of the base and
+  CR3 |         |        | it is the only thing in CR3 that is not a bit
+  CR3 |         |        | you can set to a constant
+  CR3 | 52-63 | ZERO   | must be zero in 4-level paging; with CR4.LA57=1
+  CR3 |         |        | the 52-56 field grows a sign-extension role
+
+  THE FOUR ADDRESS-SIZE BITS, which is what a compiler backend has to
+  get right and what CR0.CR3 and CR4.LA57 select between:
+    4-level paging   CR3[63:52] reserved-zero,  CR3[51:48] sign-extend
+    5-level paging   CR3[63:58] reserved-zero,  CR3[57:52] sign-extend
+  The address bits come from the CPUID, not from CR3, and section 2
+  measures which of the two this machine reports.
+
+1B3. CR4.  EVERY BIT, IN ORDER, WITH THE ROW THAT DECIDES THIS COURSE.
+
+  CR4 | 0    | VME         | virtual-8086 mode extensions
+  CR4 | 1    | PVI         | protected-mode virtual interrupts
+  CR4 | 2    | TSD         | if 1, RDTSC is CPL 0 only; if 0 it is not
+  CR4 | 3    | DE          | enables I/O breakpoints, i.e. makes DR4/DR5 #UD
+  CR4 | 4    | PSE         | 4 MiB pages in 32-bit mode; IGNORED in long mode
+  CR4 | 5    | PAE         | 36-bit physical; REQUIRED, always 1 in long mode
+  CR4 | 6    | MCE         | machine-check exception enable
+  CR4 | 7    | PGE         | translations may be shared between address spaces
+  CR4 | 8    | PCE         | if 1, RDPMC is permitted at any CPL
+  CR4 | 9    | OSFXSR      | OS has enabled FXSAVE/FXRSTOR and SSE
+  CR4 | 10   | OSXMMEXCPT  | unmasked SSE exceptions are delivered
+  CR4 | 11   | UMIP        | if 1, SGDT SIDT SLDT SMSW STR are #GP at CPL>0
+  CR4 | 12   | LA57        | five-level paging: 57-bit linear addresses
+  CR4 | 13   | VMXE        | VMX extensions
+  CR4 | 14   | SMXE        | safer mode extensions
+  CR4 | 15   | -           | reserved
+  CR4 | 16   | FSGSBASE    | enables RDFSBASE/WRFSBASE/RDGSBASE/WRGSBASE
+  CR4 | 17   | PCIDE       | CR3[11:0] is a PCID rather than part of the base
+  CR4 | 18   | OSXSAVE     | XSAVE and XGETBV are enabled
+  CR4 | 19   | KL          | AES key locker; absent from QEMU's CR4 mask
+  CR4 | 20   | SMEP        | supervisor-mode EXECUTION of user pages is #PF
+  CR4 | 21   | SMAP        | supervisor-mode ACCESS to user pages is #PF
+  CR4 | 22   | PKE         | protection keys, user pages
+  CR4 | 23   | CET         | control-flow enforcement
+  CR4 | 24   | PKS         | protection keys, supervisor pages
+  CR4 | 25   | UINTR       | user-mode interrupts
+  CR4 | 26   | -           | reserved
+  CR4 | 27   | LAM         | linear address masking, user mode
+  CR4 | 28   | LAM_SUP     | linear address masking, supervisor mode
+  CR4 | 29-31 | -          | reserved
+  CR4 | 32   | FRED        | flexible return and event delivery
+  CR4 | 33-63 | -          | reserved, written 0
+
+  FIVE ROWS OF THAT TABLE DECIDE WHETHER THIS PROCESS CAN OBSERVE
+  ANYTHING AT ALL, and every one of them is a bit in a register it
+  cannot read:  CR4.UMIP decides whether SIDT and SGDT are legal at
+  CPL 3.  CR4.PCE decides whether RDPMC is legal at CPL 3.
+  CR4.TSD decides whether RDTSC is legal at CPL 3.  CR4.PCIDE and
+  CR4.LA57 decide the shape of CR3.  Section 3 measures the
+  CONSEQUENCES and section 2 measures what the kernel says the bits
+  are.  What it CANNOT do is read CR4, and that is the limit.
+
+1B4. DR0-DR7.  THE MASK, THE FORMULA, AND THE TWO SOURCES.
+
+  DR0-DR3  | one LINEAR address each; four breakpoints, no more
+  DR4,DR5  | aliases of DR6,DR7 when CR4.DE=0, #UD when CR4.DE=1
+  DR6      | status: bits 0-3 B0-B3, 13 BD, 14 BS, 15 BT
+  DR7      | control: the eight enable bits, the GD bit, and EIGHT
+           | four-bit fields, one per breakpoint
+
+  DR7 | 0     | L0      | local enable, breakpoint 0, cleared on a switch
+  DR7 | 1     | G0      | global enable, breakpoint 0
+  DR7 | 2     | L1      | local enable, breakpoint 1
+  DR7 | 3     | G1      | global enable, breakpoint 1
+  DR7 | 4     | L2      | local enable, breakpoint 2
+  DR7 | 5     | G2      | global enable, breakpoint 2
+  DR7 | 6     | L3      | local enable, breakpoint 3
+  DR7 | 7     | G3      | global enable, breakpoint 3
+  DR7 | 8     | LE      | local exact-breakpoint enable, ignored after the 486
+  DR7 | 9     | GE      | global exact-breakpoint enable, ignored after the 486
+  DR7 | 10    | ONE     | architecturally reserved to 1, the RESET value's bit
+  DR7 | 11-12 | -       | reserved
+  DR7 | 13    | GD      | general detect: #DB on any DR0-DR7 access
+  DR7 | 14-15 | -       | reserved
+  DR7 | 16-19 | FP0     | bits 17:16 R/W0, bits 19:18 LEN0
+  DR7 | 20-23 | FP1     | bits 21:20 R/W1, bits 23:22 LEN1
+  DR7 | 24-27 | FP2     | bits 25:24 R/W2, bits 27:26 LEN2
+  DR7 | 28-31 | FP3     | bits 29:28 R/W3, bits 31:30 LEN3
+  DR7 | 32-63 | -       | reserved, read as 0
+
+  R/W | 00 | execute
+  R/W | 01 | data write
+  R/W | 10 | I/O read or write, ONLY defined while CR4.DE=1
+  R/W | 11 | data read or write
+  LEN | 00 | 1 byte
+  LEN | 01 | 2 bytes
+  LEN | 10 | 8 bytes, ONLY defined in 64-bit mode
+  LEN | 11 | 4 bytes
+  NOTE the order: LEN 10 is EIGHT bytes and LEN 11 is FOUR.  A table
+  that says 10=4 reproduces the single most common DR7 bug there is.
+
+  THE MASK A DEBUGGER MUST PROGRAM, and the formula, evaluated here
+  rather than typed, so that a page cannot quote a stale constant:
+    enable(i)  = (L_i ? 1 : 0) << (2*i) | (G_i ? 1 : 0) << (2*i+1)
+    field(i)   = ((LEN_i & 3) << 2 | (RW_i & 3)) << (16 + 4*i)
+    DR7        = 0x400 | GE<<9 | GD<<13 | sum enable(i) | sum field(i)
+
+  DISAGREEMENT, PRINTED RATHER THAN SETTLED.  A third description,
+  the Intel SDM as summarised in several secondary sources, places
+  L2 and G2 at bits 8 and 9, LE and GE at 16 and 17, and starts the
+  R/W0 field at bit 22 with FOUR-bit LEN fields.  Linux
+  DR_LOCAL_ENABLE_MASK=0x55, DR_GLOBAL_ENABLE_MASK=0xAA,
+  DR_CONTROL_SHIFT=16, DR_CONTROL_SIZE=4, DR7_FIXED_1=0x400 and
+  QEMU's DR7_TYPE_SHIFT=16, DR7_LEN_SHIFT=18 all say the table
+  above.  Two implementations that work on real silicon agree with
+  each other.  This file CANNOT MEASURE WHICH ONE ITS OWN CPU
+  IMPLEMENTS, because DR7 is unreadable from ring 3: section 3
+  shows the MOV failing.  The instrument that would settle it is a
+  one-line ptrace program running at CPL 0.
+
+  DR7MASK | case | value | fields disjoint
+  DR7MASK | four breakpoints, 4-byte, data write, global   | 0x00000000dddd06aa | yes
+  DR7MASK | four breakpoints, 4-byte, data read/write, global | 0x00000000ffff06aa | yes
+  DR7MASK | four breakpoints, 8-byte, data read/write, global | 0x00000000bbbb06aa | yes
+  DR7MASK | one breakpoint, 1-byte, execute, LOCAL         | 0x0000000000000601 | yes
+  DR7MASK | the mask for four 4-byte WRITE breakpoints | 0x00000000dddd06aa
+  DR7MASK | derived from the formula above, not typed in
+  DR7LOCAL | the same four, all LOCAL, no GD | 0x0000000055550455
+  DR7RESET | the reset value: the fixed one and nothing else | 0x0000000000000400
+1B5. THE SEGMENT SELECTOR, WHICH IS SIXTEEN BITS AND THREE FIELDS.
+
+  SEL | 15:3 | index  | which descriptor in the GDT or LDT
+  SEL | 2    | TI     | 0 = GDT, 1 = the LDT
+  SEL | 1:0  | RPL    | requested privilege level, 0 to 3
+  SEL | 0xffff | a NULL selector: index 8191, TI 1, RPL 3
+
+  The four privilege numbers and the two comparisons:
+    CPL   the current privilege level, from CS.RPL in long mode
+    RPL   requested, from the low two bits of the selector loaded
+    DPL   descriptor privilege level, bits 14:13 of the descriptor
+    for a DATA or CODE segment:  max(CPL, RPL) <= DPL   or  #GP
+    for a CALL GATE:             max(CPL, RPL) <= DPL   or  #GP(tss)
+    for an INTERRUPT gate:       CPL <= DPL             or  #GP(vector)
+  The third rule has no RPL in it because an interrupt gate is
+  indexed by a VECTOR NUMBER and a vector number has no RPL field.
+  Every textbook that quotes the first rule for 'gates' is quoting
+  the CALL-GATE rule for something that is not a call gate.
+
+1B6. THE FOUR ENTRIES, AND EVERY FLAG IN ONE OF THEM.
+
+  IDX | PML4 | 9 bits | address bits 47:39
+  IDX | PDPT | 9 bits | address bits 38:30
+  IDX | PD   | 9 bits | address bits 29:21
+  IDX | PT   | 9 bits | address bits 20:12
+  IDX | OFF  | 12 bits | address bits 11:0, always added last
+  9+9+9+9+12 = 48, and with LA57 there are five levels of 9.
+
+  PTE | 0    | P       | present; 0 makes the entry INVALID and every
+  PTE |      |         | access through it a #PF with error bit 0 clear
+  PTE | 1    | RW      | writable; 0 with RW=1 above is the #PF case
+  PTE | 2    | US      | accessible at CPL 3; 0 and CPL>0 is a #PF
+  PTE | 3    | PWT     | write-through for this page
+  PTE | 4    | PCD     | cache disabled for this page
+  PTE | 5    | A       | accessed: SET BY HARDWARE on the first touch
+  PTE | 6    | D       | dirty: SET BY HARDWARE on the first write
+  PTE | 7    | PS      | page size: 0 = 4 KiB, 1 = 2 MiB, PD level ONLY
+  PTE | 8    | G       | global: a translation usable by every address space
+  PTE | 9-11 | -       | available to the operating system
+  PTE | 12   | PAT     | at the PD level, the PAT bit for the whole 2 MiB
+  PTE | 13-58 | -      | reserved, except bits 59-62 which hold PKRU
+  PTE | 59-62 | PKRU   | protection key; ignored unless CR4.PKE or PKS
+  PTE | 63   | NX      | no-execute; needs EFER.NXE, and a #PF without
+  PTE |      |         | the instruction bit set if the fetch is denied
+  PTE | 4-5 are the ONLY bits the HARDWARE sets.  Everything else in
+  the entry is written by software, which is why a kernel's paging
+  format is a choice and not a fact.
+
+  The page-fault ERROR CODE, a fifth encoding with its own layout:
+  ERR | 0   | P   | 0 = the page was not present
+  ERR | 1   | W/R | 1 = the access was a WRITE, 0 = a read or a fetch
+  ERR | 2   | U/S | 0 = the access was at CPL 0, 1 = at CPL 3
+  ERR | 3   | RSVD| 1 = a reserved bit of the page-table entry was set
+  ERR | 4   | I/D | 1 = the access was an INSTRUCTION FETCH
+  ERR | 5   | PK  | 1 = a protection-key violation
+  ERR | 6-31 | -  | must be zero
+  Bits 1 and 4 are exactly the two a demand-paging system needs and
+  section 4 shows that ring 3 cannot see either of them.
+
+2A. CPUID, LEAF BY LEAF, EVERY FIELD THIS COURSE USES DECODED.
+    CPUID is UNPRIVILEGED on purpose.  It is a register-to-register
+    instruction that writes four registers you name, and there is
+    no privileged alternative.  That is the whole reason a user
+    process can find out what kind of CPU it is on.
+
+  CPUID | 0x00000000 | EAX 0x00000010 | the highest BASIC leaf
+  CPUID | 0x00000000 | EBX 0x68747541 EDX 0x69746e65 ECX 0x444d4163
+  CPUID | 0x00000000 | vendor | AuthenticAMD
+  CPUID | 0x80000000 | EAX 0x80000023 | the highest EXTENDED leaf
+
+  CPUID | 0x00000001 | EAX 0x00a50f00 | stepping 0 model 0 family 15
+  CPUID | 0x00000001 | EAX 0x00a50f00 | ext model 5 ext family 10
+  CPUID | 0x00000001 | EAX 0x00a50f00 | type 0 (0 = the original)
+  CPUID | 0x00000001 | EBX 0x030c0800 | initial APIC id 3
+  CPUID | 0x00000001 | EBX 0x030c0800 | and the brand string is NOT here: it
+  CPUID | 0x00000001 | EBX 0x030c0800 | is in leaves 0x80000002 to 4.  EBX bit
+  CPUID | 0x00000001 | EBX 0x030c0800 | 31:24 of leaf 1 is the APIC id, and it
+  CPUID | 0x00000001 | EBX 0x030c0800 | MOVES between runs because it is the
+  CPUID | 0x00000001 | EBX 0x030c0800 | cpu this process was pinned to.
+  CPUID | 0x00000001 | ECX 0x7ed8320b | SSE3 1 PCLMUL 1 SSSE3 1
+  CPUID | 0x00000001 | ECX 0x7ed8320b | FMA 1 CMPXCHG16B 1
+  CPUID | 0x00000001 | ECX 0x7ed8320b | SSE4.1 1 SSE4.2 1 AES 1
+  CPUID | 0x00000001 | ECX 0x7ed8320b | XSAVE 1 OSXSAVE 1 AVX 1
+  CPUID | 0x00000001 | ECX 0x7ed8320b | RDRAND 1 UMIP(supported) 0
+  CPUID | 0x00000001 | EDX 0x178bfbff | TSC 1 MSR 1 PAE 1 MCE 1
+  CPUID | 0x00000001 | EDX 0x178bfbff | CX8 1 APIC 1 SEP 1 PGE 1
+  CPUID | 0x00000001 | EDX 0x178bfbff | CLFLUSH 1 SSE2 1 SS 0 HTT 1
+  CPUID | 0x00000001 | EDX 0x178bfbff | TSC-deadline 1 PCOMMIT 1
+
+  CPUID | 0x00000007 subleaf 0 | EAX 0x00000000
+  CPUID | 0x00000007 subleaf 0 | EBX 0x219c97a9
+  CPUID | 0x00000007 subleaf 0 | ECX 0x0040069c
+  CPUID | 0x00000007 subleaf 0 | EDX 0x00000010
+  CPUID | 0x00000007 subleaf 0 | EBX | FSGSBASE 1 BMI1 1 HLE 0
+  CPUID | 0x00000007 subleaf 0 | EBX | AVX2 1 SMEP 1 BMI2 1 ERMS 1
+  CPUID | 0x00000007 subleaf 0 | EBX | INVPCID 1 RDT 0 SMAP 1
+  CPUID | 0x00000007 subleaf 0 | EBX | AVX512F 0 AVX512DQ 0
+  CPUID | 0x00000007 subleaf 0 | EBX | AVX512CD 0 SHA_NI 1
+  CPUID | 0x00000007 subleaf 0 | EBX | AVX512BW 0 AVX512VL 0
+  CPUID | 0x00000007 subleaf 0 | ECX | PRED_LA 0 UMIP 1 PKU 1
+  CPUID | 0x00000007 subleaf 0 | ECX | LA57 0 RDPID 1 KeyLocker 0
+  CPUID | 0x00000007 subleaf 0 | ECX | BUS-LOCK-DETECT 0 CLDEMOTE 0
+  CPUID | 0x00000007 subleaf 0 | EDX | AVX512_4VNNIW 0 FSRM 1
+  CPUID | 0x00000007 subleaf 0 | EDX | MD_CLEAR 0 SERIALIZE 0
+  CPUID | 0x00000007 subleaf 0 | EDX | PHRES 1 LBR 0 CET_IBT 0
+  CPUID | 0x00000007 subleaf 0 | EDX | AMX_BF16 0
+  CPUID | 0x00000007 subleaf 1 | EAX 0x00000000 | SHA512 0 SM3 0 SM4 0
+  CPUID | 0x00000007 subleaf 1 | EAX 0x00000000 | FRED 0 LKGS 0
+  CPUID | 0x00000007 subleaf 1 | EAX 0x00000000 | LAM 0 MOVRS 0
+  NOTE: LAM is in subleaf 1 EAX bit 26 and NOT in subleaf 0, and a
+  first version of this file read subleaf 0 ECX bit 26 -- the same
+  number, a different register, a different subleaf -- and reported
+  LAM as unsupported for a reason that had nothing to do with LAM.
+  It happened to be right and it was still wrong.
+
+  CPUID | 0x80000001 | ECX 0x75c237ff | LAHF_LM 1 CMP_LEG 1 SVM 1
+  CPUID | 0x80000001 | ECX 0x75c237ff | 1G-PAGES 1 RDTSCP 0
+  CPUID | 0x80000001 | EDX 0x2fd3fbff | SYSCALL 1 LM 1
+  CPUID | 0x80000001 | EDX 0x2fd3fbff | NX 1 TSCINV 1 RDRAND 0
+
+  CPUID | 0x80000008 | EAX 0x00003030
+  CPUID | 0x80000008 | EAX | physical address bits = 48
+  CPUID | 0x80000008 | EAX | bits 13:12, the linear-address field = 3
+  CPUID | 0x80000008 | EAX | of which 0 means 48-bit and 1 means 57-bit;
+  CPUID | 0x80000008 | EAX | values 2 and 3 are RESERVED and this machine
+  CPUID | 0x80000008 | EAX | reports 3.  A first version of this file read
+  CPUID | 0x80000008 | EAX | that field as a COUNT OF BITS and printed 51.
+  CPUID | 0x80000008 | EAX | The two bits software actually reads are bit 21
+  CPUID | 0x80000008 | EAX | here and CPUID.7.0:ECX bit 16, and BOTH say 48:
+  CPUID | 0x80000008 | EAX | five-level paging (LA57) = 0
+  CPUID | 0x80000008 | EBX 0x191ef657 | CLZERO 1 XSAVEERPTR 1
+  CPUID | 0x80000008 | EBX 0x191ef657 | WBNOINVD 1 IBRS 1 STIBP 1
+  CPUID | 0x80000008 | EBX 0x191ef657 | core-PMU 1 L3-PMU 1
+  THE LAST TWO ROWS ARE THE COUNTEREXAMPLE AND THEY MATTER: the
+  silicon HAS core and L3 performance monitors, CPUID says so in
+  the same breath in which RDPMC is not permitted, and section 6
+  proves the permission is what is missing rather than the metal.
+
+2B. THE TWO PSEUDO-DESCRIPTORS, READ BOTH WAYS ROUND ON PURPOSE.
+
+  the ten bytes SIDT actually wrote, in memory order:
+    00 00 00 00 ff ff ff ff ff ff
+  SIDT | base 0xffffffff00000000 | limit 65535 | entries 4096 of 16 bytes
+  SGDT | base 0xfffffffe00000000 | limit 65535 | entries 8192 of 8 bytes
+
+  THE FIELD ORDER, and it is the whole of this sub-section:
+    offset 0..7  BASE   first
+    offset 8..9  LIMIT  second
+  Read the documented-in-prose 'limit first, then base' way and:
+    base 0xffffffffffff0000  limit 0
+  NO FAULT, and no obviously impossible value either.  A limit of
+  0 is INDISTINGUISHABLE from a kernel that installed an empty
+  IDT, so the wrong reading is not merely wrong, it is
+  UNFALSIFIABLE.  A tool written that way reports a plausible
+  base in the middle of nowhere and never tells you.
+
+  WHAT THE TWO BASES ARE, as arithmetic on the two numbers above:
+    GDT base 0xfffffffe00000000 = 2^64 - 8589934592
+    IDT base 0xffffffff00000000 = 2^64 - 4294967296
+    IDT base - GDT base = 0x0000000100000000, i.e. 2^32 bytes apart
+  Each table is EXACTLY 65535+1 bytes and nothing more: the GDT's
+  8192 entries of 8 bytes and the IDT's 4096 entries of 16 bytes are
+  both 2^16 bytes, and 2^16 is the most a 16-bit limit can describe.
+  A FIRST DRAFT OF THIS SECTION said the two tables were ADJACENT,
+  because it computed base+limit+1 and read the answer off a hex
+  string by eye.  base+limit+1 is 0xfffffffe00010000 and the IDT base is
+  0xffffffff00000000, and those are not equal: the gap between the two 4 GiB
+  placements is 2^32 bytes and neither table is more than 2^16 long.
+  The PLACEMENT is a choice this kernel made, the LENGTH is a
+  consequence of the limit being 16 bits wide, and this file prints
+  what it read and checks the arithmetic rather than asserting the
+  addresses from a manual.
+
+  AND NEITHER TABLE CAN BE READ.  Section 6 forks a child, takes
+  the base out of SIDT, and reads ONE byte at it.
+
+2C. THE OTHER REGISTERS A RING-3 PROCESS CAN READ, ALL OF THEM.
+
+  XGETBV(0) | 0x0000000000000207 | x87 1 SSE 1 AVX 1 PKRU 1
+  XGETBV(0) | XCR0 is 64 bits wide and XGETBV is UNPRIVILEGED, which
+  is unusual: the INSTRUCTION that reads the register that decides
+  which instructions you may execute is itself unprivileged.
+  XSETBV, the write, is not: section 3 measures that.
+  TR  | 0x0040 | index 8 TI 0 RPL 0
+  TR  | and the `str %w0` form writes 16 bits and LEAVES THE UPPER
+  TR  | BITS OF THE GENERAL REGISTER UNDEFINED, which gcc does not
+  TR  | know, so the read is masked to 0xffff and the first version
+  TR  | of this file printed TR as 0x35410040: a value that looks
+  TR  | like an address and is sixteen bits of selector plus whatever
+  TR  | the allocator had left there.  Sixteen bits is all of TR.
+  SEG | cs 0x0033 ss 0x002b ds 0x0000 es 0x0000 fs 0x0000 gs 0x0000
+  SEG | decoded as index<<3 | TI<<2 | RPL:
+  SEG | cs | selector 0x0033 | index 6 TI 0 RPL 3 | CPL IS THE RPL OF CS IN LONG MODE
+  SEG | ss | selector 0x002b | index 5 TI 0 RPL 3 | 
+  SEG | ds | selector 0x0000 | index 0 TI 0 RPL 0 | 
+  SEG | es | selector 0x0000 | index 0 TI 0 RPL 0 | 
+  SEG | fs | selector 0x0000 | index 0 TI 0 RPL 0 | 
+  SEG | gs | selector 0x0000 | index 0 TI 0 RPL 0 | 
+  CS has RPL 3, so this process is at CPL 3, and SS has RPL 3 to
+  match it.  DS, ES, FS and GS are all 0x0000 here: a NULL selector
+  is perfectly legal to LOAD in 64-bit mode, and a NULL selector
+  in a data segment no longer means the base is zero, because in
+  long mode the base of DS and ES is ignored entirely.  Section 3
+  shows that LOADING a non-zero selector into DS is what faults.
+
+2D. `syscall` AND THE FOUR REGISTERS IT IS SUPPOSED TO TOUCH.
+
+  The ISA destroys exactly TWO registers: RCX becomes the address of
+  the following instruction and R11 becomes the RFLAGS that was
+  saved on the way in.  A marker in each of the other thirteen, one
+  syscall, read back immediately, in three batches:
+
+  SYSCALL | register | marker in | marker out | verdict
+  SYSCALL | rbx | 0xb000000000000010 | 0xb000000000000010 | SURVIVED
+  SYSCALL | rdx | 0xb000000000000020 | 0xb000000000000020 | SURVIVED
+  SYSCALL | rsi | 0xb000000000000030 | 0xb000000000000030 | SURVIVED
+  SYSCALL | rdi | 0xb000000000000040 | 0xb000000000000040 | SURVIVED
+  SYSCALL | rbp | 0xb000000000000050 | 0xb000000000000050 | SURVIVED
+  SYSCALL | r8  | 0xb000000000000060 | 0xb000000000000060 | SURVIVED
+  SYSCALL | r9  | 0xb000000000000070 | 0xb000000000000070 | SURVIVED
+  SYSCALL | r10 | 0xb000000000000080 | 0xb000000000000080 | SURVIVED
+  SYSCALL | r11 | 0xb000000000000090 | 0x0000000000000202 | CLOBBERED
+  SYSCALL | r12 | 0xb0000000000000a0 | 0xb0000000000000a0 | SURVIVED
+  SYSCALL | r13 | 0xb0000000000000b0 | 0xb0000000000000b0 | SURVIVED
+  SYSCALL | r14 | 0xb0000000000000c0 | 0xb0000000000000c0 | SURVIVED
+  SYSCALL | r15 | 0xb0000000000000d0 | 0xb0000000000000d0 | SURVIVED
+  SYSCALL | arms 26 | survived 24 | clobbered 2
+  SYSCALL | WHY THREE BLOCKS AND NOT ONE, which is R3 in section 7:
+  SYSCALL | there are fewer than fourteen allocatable registers once
+  SYSCALL | rax and rcx are clobbered, so a fourteen-output asm block
+  SYSCALL | cannot be written at all; the first version asked for one
+  SYSCALL | and died with SIGBUS, because the compiler was holding
+  SYSCALL | the ADDRESS of one of the fourteen output slots in a
+  SYSCALL | register the body had already overwritten.
+  SYSCALL | RCX is not in that list because it holds the RETURN RIP
+  SYSCALL | after the instruction, and R11 is in it because the ISA
+  SYSCALL | has already promised that R11 is destroyed.  The x86-64
+  SYSCALL | ABI course measured the return RIP bit for bit; this
+  SYSCALL | file measures the other thirteen so that the sentence
+  SYSCALL | 'exactly two' has thirteen rows beside it.
+
+  THE NUMBER, WHERE DOES THE ERROR NUMBER GO, AND WHAT A CALL
+  WITH NO SUCH NUMBER RETURNS:
+    getpid, six arguments, RAW         = 1057077
+    and getpid() through libc          = 1057077   same ? YES
+    syscall number 9999, RAW           = -38, i.e. -ENOSYS
+    and the same call through libc     = -1 with errno 38
+    A bad number is an ERROR RETURN, not a fault: the kernel
+    checked the number at the boundary, returned -ENOSYS in RAX,
+    and on x86-64 it did NOT set CF.  The clear-carry-on-error
+    convention is the i386 one.  And the SIX arguments were
+    accepted and ignored: getpid takes none, the kernel reads the
+    number of arguments from the call SITE'S declared arity, and
+    this call site is libc's, which is why a caller cannot vary
+    the cost of a system call by passing more arguments.
+
+  WHY THE FOURTH ARGUMENT IS R10 AND NOT RCX is a fact about
+  the instruction, not about the kernel: `syscall` needs RCX for
+  the return RIP, and the ABI course measured that bit for bit.
+  What this file CANNOT see is IA32_STAR, IA32_LSTAR and
+  IA32_SFMASK, which are the three MSRs that decide where the
+  entry goes and which flags are cleared on the way.  RDMSR is
+  privileged: section 3 measures that, and /dev/cpu/0/msr is
+  root-only, which section 6 measures too.
+
+2E. arch_prctl, AND THE MEMORY TOPOLOGY FROM /sys.
+
+  PRCTL | ARCH_GET_XCOMP_PERM rc=0 | perms 0x207
+  PRCTL | bit0 SMEP=1 bit1 SMAP=1 bit2 SHSTK=1
+  PRCTL | that is the KERNEL'S REPORT and not a measurement of the
+  PRCTL | CR4 bits, which are privileged and unreadable.  A kernel
+  PRCTL | can report anything here and this process cannot check it.
+
+  TOPO | cpu0 cache level 3, shared_cpu_list = 0-11
+
+  TOPO | cpu0 cache level 3, size            = 16384K
+  TOPO | /sys/devices/system/cpu/online        = 0-11
+  TOPO | /sys/devices/system/node/node0/cpulist = 0-11
+  TOPO | one NUMA node, so NUMA is a question this machine cannot be
+  TOPO | asked.  The files exist and the answer is a single node.
+3.  THE BOUNDARY, MEASURED, ONE INSTRUCTION AT A TIME.
+
+    Every row below is a FORKED CHILD.  The parent read the signal
+    number and the si_code out of a MAP_SHARED page the child's own
+    handler wrote, which is the only way a number can cross a fork.
+    A first version of this file read the handler's globals in the
+    PARENT, where the handler never ran, and printed si_code 0 for
+    every row of this table.  They are all 128.  A wrong result that
+    is a 0 where a 128 belongs is the kind that survives review.
+
+  si_code 1 = SEGV_MAPERR, 2 = SEGV_ACCERR, 128 = SI_KERNEL.
+  si_code 128 is what a #GP becomes here, and it is the same 128 a
+  non-canonical access produces in section 5, which is why the two
+  are indistinguishable from ring 3.
+
+  EDGE | lidt                           | descriptor tables | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | lgdt                           | descriptor tables | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | ltr                            | descriptor tables | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | lldt                           | descriptor tables | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | sidt                           | descriptor tables | RETURNED | sig 0  | si_code 0   | si_addr 0x000000000000
+  EDGE | sgdt                           | descriptor tables | RETURNED | sig 0  | si_code 0   | si_addr 0x000000000000
+  EDGE | sldt                           | descriptor tables | RETURNED | sig 0  | si_code 0   | si_addr 0x000000000000
+  EDGE | str                            | descriptor tables | RETURNED | sig 0  | si_code 0   | si_addr 0x000000000000
+  EDGE | smsw                           | descriptor tables | RETURNED | sig 0  | si_code 0   | si_addr 0x000000000000
+  EDGE | mov cr0 -> reg                 | control registers | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | mov cr2 -> reg                 | control registers | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | mov cr3 -> reg                 | control registers | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | mov cr4 -> reg                 | control registers | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | mov cr8 -> reg                 | control registers | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | mov reg -> cr0                 | control registers | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | mov reg -> cr3                 | control registers | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | mov reg -> cr4                 | control registers | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | mov reg -> cr8                 | control registers | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | mov dr0 -> reg                 | debug registers   | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | mov dr6 -> reg                 | debug registers   | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | mov dr7 -> reg                 | debug registers   | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | mov reg -> dr7                 | debug registers   | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | rdmsr                          | model-specific    | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | wrmsr                          | model-specific    | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | rdtsc                          | timing            | RETURNED | sig 0  | si_code 0   | si_addr 0x000000000000
+  EDGE | rdtscp                         | timing            | RETURNED | sig 0  | si_code 0   | si_addr 0x000000000000
+  EDGE | rdpmc                          | counters          | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | xgetbv                         | extended state    | RETURNED | sig 0  | si_code 0   | si_addr 0x000000000000
+  EDGE | xsetbv                         | extended state    | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | rdfsbase                       | extended state    | RETURNED | sig 0  | si_code 0   | si_addr 0x000000000000
+  EDGE | wrfsbase                       | extended state    | RETURNED | sig 0  | si_code 0   | si_addr 0x000000000000
+  EDGE | invd                           | cache and tlb     | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | wbinvd                         | cache and tlb     | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | invlpg                         | cache and tlb     | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | clts                           | cache and tlb     | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | lmsw                           | cache and tlb     | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | hlt                            | mode change       | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | cli                            | mode change       | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | sti                            | mode change       | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | swapgs                         | mode change       | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | sysret                         | mode change       | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | iretq                          | mode change       | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | sysenter                       | mode change       | FAULTED | sig 4  | si_code 2   | si_addr 0x5a4d74b9e8a4
+  EDGE | vmcall                         | mode change       | FAULTED | sig 4  | si_code 2   | si_addr 0x5a4d74b9e874
+  EDGE | mgmt                           | mode change       | FAULTED | sig 4  | si_code 2   | si_addr 0x5a4d74b9e884
+  EDGE | mov 0x1234,%ax; mov %ax,%ds    | segments          | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | mov 0x1234,%ax; mov %ax,%ss    | segments          | FAULTED | sig 11 | si_code 128 | si_addr 0x000000000000
+  EDGE | ud2                            | mode change       | FAULTED | sig 4  | si_code 2   | si_addr 0x5a4d74b9e894
+  EDGE | into, OF clear                 | mode change       | RETURNED | sig 0  | si_code 0   | si_addr 0x000000000000
+  EDGE | bound, raw bytes               | mode change       | FAULTED | sig 4  | si_code 2   | si_addr 0x5a4d74b9e8b4
+
+  EDGE | rows 50 | faulted 39 | returned 11 | si_code 128 34 | other 5
+  EDGE | readable from ring 3, all measured, none assumed:
+  EDGEREAD | sidt                           | si_code 0 | readable
+  EDGEREAD | sgdt                           | si_code 0 | readable
+  EDGEREAD | sldt                           | si_code 0 | readable
+  EDGEREAD | str                            | si_code 0 | readable
+  EDGEREAD | smsw                           | si_code 0 | readable
+  EDGEREAD | rdtsc                          | si_code 0 | readable
+  EDGEREAD | rdtscp                         | si_code 0 | readable
+  EDGEREAD | xgetbv                         | si_code 0 | readable
+  EDGEREAD | rdfsbase                       | si_code 0 | readable
+  EDGEREAD | wrfsbase                       | si_code 0 | readable
+
+  FOUR THINGS IN THAT TABLE THAT THE TEXTBOOK SAYS DIFFERENTLY,
+  all of them settled here by running the instruction:
+    1. SGDT and SIDT are NOT privileged.  CR4.UMIP can make them
+       #GP at CPL>0, but whatever this kernel has UMIP set to, it is
+       not blocking them, and that is a measurement of the EFFECT
+       and not a reading of the bit.
+    2. STR and SLDT and SMSW are in the same group, and STR is the
+       one every answer gets wrong, because the check for WRITING
+       TR is CPL > IOPL and the check for READING it is nothing.
+    3. XGETBV is UNPRIVILEGED while XSETBV is privileged.  A read of
+       the register that decides which instructions you may execute
+       needs no privilege, and a write of it does.
+    4. SYSRET from ring 3 is a #GP here, not a #UD, and SYSENTER
+       is a #UD on this AMD part.  Two different faults for two
+       instructions whose only similarity is the word SYSCALL.
+  AND NOTHING ABOVE IS A READING OF A CONTROL REGISTER.  Every row
+  is a consequence.  The bits themselves are in a register this
+  process cannot read, which is the honest limit of the section.
+
+4.  THE EXCEPTIONS, THE ONES THAT CAN BE RAISED FROM RING 3.
+
+  RAISE | what | vector | signal | si_code | si_addr | si_addr is
+  RAISE | the LAST column is keyed off the SIGNAL and not off si_code,
+  RAISE | because SIGSEGV is delivered for two unrelated things.  The
+  RAISE | first version keyed it off si_code and called ud2's fault
+  RAISE | 'the exact address the CPU tried', which is a claim about a
+  RAISE | page fault sitting next to an invalid opcode.  si_addr is the
+  RAISE | faulting RIP for a SIGILL, the faulting ADDRESS for a SIGSEGV,
+  RAISE | and either for a SIGTRAP.
+  RAISE | THE DIVIDE ARM IS WRITTEN IN INLINE ASSEMBLY FOR A REASON:
+  RAISE | the first version was `volatile long z = 0; d / z;` and at
+  RAISE | -O2 gcc saw a division by a constant zero, which is
+  RAISE | undefined behaviour, removed the division, and the probe
+  RAISE | RETURNED.  A `volatile` on a LOCALLY INITIALISED object is
+  RAISE | not enough; the value has to arrive from somewhere the
+  RAISE | optimiser cannot see, and the instruction has to be named.
+  RAISE | The table would otherwise have said a divide by zero does
+  RAISE | not fault on this machine, and it would have been the
+  RAISE | compiler talking rather than the CPU.
+  RAISE | divq by zero, divisor behind a volatile pointer   | #DE 0   | sig 8  | 1    | 0x5a4d74b9e909 | the exact ADDRESS, a mapping failure
+  RAISE | ud2                                               | #UD 6   | sig 4  | 2    | 0x5a4d74ba0994 | the faulting INSTRUCTION, for SIGILL
+  RAISE | int3                                              | #BP 3   | sig 5  | 128  | 0x000000000000 | the RIP the kernel chose to report, for SIGTRAP
+  RAISE | int1                                              | #DB 1   | sig 5  | 1    | 0x5a4d74b9e965 | the RIP the kernel chose to report, for SIGTRAP
+  RAISE | EFLAGS.TF set, then two more instructions         | #DB 1   | sig 5  | 2    | 0x5a4d74b9e95c | the RIP the kernel chose to report, for SIGTRAP
+  RAISE | write through a NULL pointer                      | #PF 14  | sig 11 | 1    | 0x000000000000 | the exact ADDRESS, a mapping failure
+  RAISE | write to a PROT_READ page                         | #PF 14  | sig 11 | 2    | 0x78ad47240000 | the exact ADDRESS, a protection failure
+  RAISE | touch a PROT_NONE page                            | #PF 14  | sig 11 | 2    | 0x78ad47240000 | the exact ADDRESS, a protection failure
+  RAISE | execute a page mapped RW and not X                | #PF 14  | sig 11 | 2    | 0x78ad47240000 | the exact ADDRESS, a protection failure
+  RAISE | READ a PROT_READ page, the control                | none    | sig 0  | 0    | 0x000000000000 | the control: the page WAS readable
+  RAISE | int $0x01                                         | #GP 13  | sig 11 | 128  | 0x000000000000 | nothing: a #GP has no address
+  RAISE | int $0x05                                         | #GP 13  | sig 11 | 128  | 0x000000000000 | nothing: a #GP has no address
+  RAISE | int $0x06                                         | #GP 13  | sig 11 | 128  | 0x000000000000 | nothing: a #GP has no address
+  RAISE | int $0x0e                                         | #GP 13  | sig 11 | 128  | 0x000000000000 | nothing: a #GP has no address
+  RAISE | int $0x20                                         | #GP 13  | sig 11 | 128  | 0x000000000000 | nothing: a #GP has no address
+  RAISE | int $0x28                                         | #GP 13  | sig 11 | 128  | 0x000000000000 | nothing: a #GP has no address
+  RAISE | int $0x2e                                         | #GP 13  | sig 11 | 128  | 0x000000000000 | nothing: a #GP has no address
+  RAISE | int $0x41                                         | #GP 13  | sig 11 | 128  | 0x000000000000 | nothing: a #GP has no address
+  RAISE | int $0xff                                         | #GP 13  | sig 11 | 128  | 0x000000000000 | nothing: a #GP has no address
+
+  THE THREE PAGE FAULTS ARE THREE DIFFERENT EVENTS AND RING 3
+  CANNOT TELL TWO OF THEM APART:
+  PFC | write to NULL          si_code 1
+  PFC | write to a PROT_READ   si_code 2
+  PFC | touch a PROT_NONE     si_code 2
+  PFC | the first is a MAPPING failure and the other two are
+  PFC | PERMISSION failures, and the two permission failures
+  PFC | are the SAME number.  The error code the CPU pushed has
+  PFC | a write bit and an instruction bit in it, bits 1 and 4,
+  PFC | and a demand-paging system needs both of them, and
+  PFC | neither reaches this process.  si_code is the KERNEL's
+  PFC | translation of that word and it keeps exactly one bit:
+  PFC | present or not.
+
+  `int $N` FOR EVERY VECTOR A USER CAN NAME, and what it costs:
+  INTVEC | 0x01 0x05 0x06 0x0e 0x20 0x28 0x2e 0x41 0xff
+  INTVEC | 128 128 128 128 128 128 128 128 128
+  INTVEC | every one of them is 128, the #GP shape, and the reason
+  INTVEC | is DPL: a user process does not get to choose where a
+  INTVEC | vector GOES, only that the gate has DPL 3 so the CPU will
+  INTVEC | enter it.  Vectors 0-31 have DPL 0, so naming one of them
+  INTVEC | is a #GP exactly like naming an unused one of 32-255.
+
+  INTVEC | and the ONE exception on this machine, which is a
+  INTVEC | mechanism and not a right: vector 0x80 is the i386
+  INTVEC | system-call gate, its DPL is 3, and `int $0x80` works.
+  INTVEC | `int $0x80` with the i386 getpid in eax: RETURNED
+
+  NOW THE WHOLE TABLE, all thirty-two, and every row says whether
+  this file measured it or is quoting a manual:
+
+  VEC | num | mnemonic | class | error code | source | note
+  VEC | 0   | #DE     | F     | no         | MEASURED | divide error
+  VEC | 1   | #DB     | T     | no         | MEASURED | debug; TRAP for a breakpoint, FAULT for a task switch
+  VEC | 2   | NMI     | I     | no         | QUOTED   | not an exception
+  VEC | 3   | #BP     | T     | no         | MEASURED | INT3; saved RIP is the NEXT instruction
+  VEC | 4   | #OF     | T     | no         | QUOTED   | INTO; saved RIP is the NEXT instruction
+  VEC | 5   | #BR     | F     | no         | QUOTED   | BOUND; not encodable in 64-bit mode
+  VEC | 6   | #UD     | F     | no         | MEASURED | invalid opcode; saved RIP is THIS one
+  VEC | 7   | #NM     | F     | no         | QUOTED   | device not available
+  VEC | 8   | #DF     | A     | yes        | QUOTED   | abort; the saved RIP is UNDEFINED
+  VEC | 9   | -       | -     | no         | QUOTED   | coprocessor segment overrun; RESERVED
+  VEC | 10  | #TS     | F     | yes        | QUOTED   | invalid TSS
+  VEC | 11  | #NP     | F     | yes        | QUOTED   | segment not present
+  VEC | 12  | #SS     | F     | yes        | QUOTED   | stack-segment fault
+  VEC | 13  | #GP     | F     | yes        | MEASURED | general protection
+  VEC | 14  | #PF     | F     | yes        | MEASURED | page fault; the error code has its OWN format
+  VEC | 15  | -       | -     | no         | QUOTED   | RESERVED
+  VEC | 16  | #MF     | F     | no         | QUOTED   | x87; saved RIP is the NEXT DEFERRED point
+  VEC | 17  | #AC     | F     | yes        | QUOTED   | alignment check
+  VEC | 18  | #MC     | A     | no         | QUOTED   | machine check; abort
+  VEC | 19  | #XM     | F     | no         | QUOTED   | SIMD FP; AMD calls it #XF
+  VEC | 20  | #VE     | F     | no         | QUOTED   | virtualization; Intel defines it, AMD RESERVED
+  VEC | 21  | #CP     | F     | yes        | QUOTED   | control protection; a THIRD error-code format
+  VEC | 22  | -       | -     | no         | QUOTED   | RESERVED
+  VEC | 23  | -       | -     | no         | QUOTED   | RESERVED
+  VEC | 24  | -       | -     | no         | QUOTED   | RESERVED
+  VEC | 25  | -       | -     | no         | QUOTED   | RESERVED
+  VEC | 26  | -       | -     | no         | QUOTED   | RESERVED
+  VEC | 27  | -       | -     | no         | QUOTED   | RESERVED
+  VEC | 28  | -       | -     | no         | QUOTED   | RESERVED on Intel; AMD calls it #HV
+  VEC | 29  | #VC     | F     | no         | QUOTED   | VMM communication; Intel's own table says reserved
+  VEC | 30  | #SX     | A     | no         | QUOTED   | security; Intel's own table says reserved
+  VEC | 31  | -       | -     | no         | QUOTED   | RESERVED
+
+  CLASS | F fault: saved RIP is the FAULTING instruction
+  CLASS | T trap:  saved RIP is the NEXT instruction
+  CLASS | A abort: the saved RIP is UNDEFINED
+  CLASS | I interrupt: not an exception at all
+  CLASS | - reserved
+  CLASS | and #DB is the row that shows the class is a property of
+  CLASS | the CAUSE rather than of the vector: a debug exception
+  CLASS | raised by a data breakpoint is a TRAP and one raised by a
+  CLASS | task switch is a FAULT, and this file measured both
+  CLASS | mechanisms on vector 1: INT1 gave si_code 1 and EFLAGS.TF
+  CLASS | gave si_code 2, which is the two of them arriving as two
+  CLASS | different signals with two different si_codes.
+  CLASS | The class is the ONLY reason the saved RIP differs, and the
+  CLASS | class of every row above is QUOTED.  Deciding it needs the
+  CLASS | saved RIP, and a ring 3 process never sees one: the kernel
+  CLASS | does not put it in the siginfo.  Six rows say MEASURED and
+  CLASS | those six are measured only in the sense that the fault
+  CLASS | happened and the signal number was read.
+
+  VENDOR | reserved on BOTH 9 | Intel only 1 (#20) | AMD only 1 (#28)
+  VENDOR | same number, different name 1 (#19) | defined on both 20
+  VENDOR | and the four counts are a PARTITION: 20 + 1 + 1 + 9 + 1 = 32
+  VENDOR | Two rows that the second draft got wrong and this one
+  VENDOR | prints, because a census of vendors that does not add up
+  VENDOR | is a census of a typo.  A first version read 28 twice: once
+  VENDOR | as AMD-only and once as reserved, which is how a table of
+  VENDOR | three columns came to 21, 1 and 0 and none of them
+  VENDOR | summable.  And #19 was counted as 'defined on both'
+  VENDOR | rather than as the renamed row it is, because the same
+  VENDOR | number with two names is neither of the two categories a
+  VENDOR | three-column table offers.
+  VENDOR | 19 is #XM on Intel and #XF on AMD: the same number, the
+  VENDOR | same class, and two names.  20 is #VE on Intel and RESERVED
+  VENDOR | on AMD.  28 is #HV on AMD and RESERVED on Intel.  29 and 30
+  VENDOR | are real on BOTH while Intel's own summary table lists them
+  VENDOR | as reserved, which is a documentation error rather than a
+  VENDOR | hardware difference and is the row to distrust first.
+  VENDOR | NONE of that is measured here: this machine is AMD, and a
+  VENDOR | table of what Intel does is a CITATION.  What IS measured
+  VENDOR | is what a user process can REACH.  9 of the 32 numbers are
+  VENDOR | reserved on this part, and six more raised a real fault in
+  VENDOR | section 4, so 15 of the 32 numbers are reachable to a user
+  VENDOR | and 17 of them are not, and the gap is not a permissions
+  VENDOR | decision: it is what the silicon implements.  #20 exists on
+  VENDOR | Intel and not on this AMD part, and no gate for it exists
+  VENDOR | to make one.
+  RAISED | 17 of the 18 arms above raised the exception they name
+5.  THE CANONICAL BOUNDARY, ON FIVE WIDTHS INSTEAD OF THREE.
+
+  A canonical 48-bit address has bit 47 EQUAL to bit 63.  The gap
+  between the two halves is not an address: the CPU rejects it while
+  it is still generating the effective address, before the MMU is
+  consulted, so there is no page-table entry to look up and no
+  present bit to clear.  That is why it is not a page fault.
+
+  THE PROBE, one access of each width at each address, in a fork:
+
+    1   = SEGV_MAPERR, a real address that is not mapped
+    128 = SI_KERNEL, not an address at all
+
+  MATRIX | address | 1-byte  2-byte  4-byte  8-byte  16-byte | canonical
+  MATRIX | 2^47 -18 | 0x00007fffffffffee | 1       1       1       1       1       
+  MATRIX | 2^47 -17 | 0x00007fffffffffef | 1       1       1       1       1       
+  MATRIX | 2^47 -16 | 0x00007ffffffffff0 | 1       1       1       1       1       
+  MATRIX | 2^47 -15 | 0x00007ffffffffff1 | 1       1       1       1       128     
+  MATRIX | 2^47 -14 | 0x00007ffffffffff2 | 1       1       1       1       128     
+  MATRIX | 2^47 -13 | 0x00007ffffffffff3 | 1       1       1       1       128     
+  MATRIX | 2^47 -12 | 0x00007ffffffffff4 | 1       1       1       1       128     
+  MATRIX | 2^47 -11 | 0x00007ffffffffff5 | 1       1       1       1       128     
+  MATRIX | 2^47 -10 | 0x00007ffffffffff6 | 1       1       1       1       128     
+  MATRIX | 2^47  -9 | 0x00007ffffffffff7 | 1       1       1       1       128     
+  MATRIX | 2^47  -8 | 0x00007ffffffffff8 | 1       1       1       1       128     
+  MATRIX | 2^47  -7 | 0x00007ffffffffff9 | 1       1       1       128     128     
+  MATRIX | 2^47  -6 | 0x00007ffffffffffa | 1       1       1       128     128     
+  MATRIX | 2^47  -5 | 0x00007ffffffffffb | 1       1       1       128     128     
+  MATRIX | 2^47  -4 | 0x00007ffffffffffc | 1       1       1       128     128     
+  MATRIX | 2^47  -3 | 0x00007ffffffffffd | 1       1       128     128     128     
+  MATRIX | 2^47  -2 | 0x00007ffffffffffe | 1       1       128     128     128     
+  MATRIX | 2^47  -1 | 0x00007fffffffffff | 1       128     128     128     128     
+  MATRIX | 2^47  +0 | 0x0000800000000000 | 128     128     128     128     128     NON-canonical
+  MATRIX | 2^47  +1 | 0x0000800000000001 | 128     128     128     128     128     NON-canonical
+
+  READ THE 16-BYTE COLUMN AND THEN THE 8-BYTE ONE.  They do not
+  change over at the same offset, and that is not noise: an access
+  that STARTS below 2^47 still fails if it REACHES 2^47, because the
+  CPU validates the whole byte range of the operand and not its
+  first byte.  A 1-byte read therefore gets right up to the line.
+
+  BISE | width | first rejected address | 2^47-(size-1) | holds
+  BISE | 1-byte | 0x0000800000000000          | 0x0000800000000000 | YES
+  BISE | 2-byte | 0x00007fffffffffff          | 0x00007fffffffffff | YES
+  BISE | 4-byte | 0x00007ffffffffffd          | 0x00007ffffffffffd | YES
+  BISE | 8-byte | 0x00007ffffffffff9          | 0x00007ffffffffff9 | YES
+  BISE | 16-byte | 0x00007ffffffffff1          | 0x00007ffffffffff1 | YES
+  BISE | the rule, on five widths: 5 of 5
+  BISE | first rejected = 2^47 MINUS (access size - 1)
+  BISE | The privilege course established this on THREE widths.  Two
+  BISE | more are not decoration: the 2-byte width is the one that
+  BISE | catches a rule stated as 'the boundary is 2^47' and a
+  BISE | statement about addresses, because a 2-byte read fails ONE
+  BISE | byte before the line and a 1-byte read fails none.
+
+  THE UPPER HALF, AND THE CONSTANT THAT WAS WRONG IN THE DRAFT.
+
+  A first version of this section asserted that the upper canonical
+  half began at 0xffffffff80000000.  It does not, and 0xffffffff80000000
+  is not even its lowest address: it is 2^31 bytes INSIDE the half.
+  Nobody who wrote that sentence was wrong about the half being
+  there, and everybody who has read it has believed the base is at the
+  2^31 mark, which is a different number and a different claim.  The
+  table below is the answer, and only four of the nine rows are
+  addresses at all:
+
+  UPPER | address | 1 | 2 | 4 | 8 | 16 | reading
+  UPPER | 0x00007fffffffffff | 1 | 128 | 128 | 128 | 128 | canonical, not mapped
+  UPPER | 0x0000800000000000 | 128 | 128 | 128 | 128 | 128 | NOT AN ADDRESS
+  UPPER | 0x7fffffffffffffff | 128 | 128 | 128 | 128 | 128 | NOT AN ADDRESS
+  UPPER | 0x8000000000000000 | 128 | 128 | 128 | 128 | 128 | NOT AN ADDRESS
+  UPPER | 0xc000000000000000 | 128 | 128 | 128 | 128 | 128 | NOT AN ADDRESS
+  UPPER | 0xffffff0000000000 | 1 | 1 | 1 | 1 | 1 | canonical, not mapped
+  UPPER | 0xffffffff00000000 | 1 | 1 | 1 | 1 | 1 | canonical, not mapped
+  UPPER | 0xffffffff80000000 | 1 | 1 | 1 | 1 | 1 | canonical, not mapped
+  UPPER | 0xffffffffffffffff | 1 | 1 | 1 | 1 | 1 | canonical, not mapped
+
+  0xffffffff80000000 is NOT an address on this machine, and a
+  second version of this section discovered that by bisecting for the
+  boundary instead of assuming it:
+  UPPER | and bisecting for it, once per access width, the first
+  UPPER | address of the upper half that is an address AT ALL:
+
+  BISEL | width | first address of the upper half | 2^64 - 2^47 | holds
+  BISEL | 1-byte | 0xffff800000000000                 | 0xffff800000000000 | YES
+  BISEL | 2-byte | 0xffff800000000000                 | 0xffff800000000000 | YES
+  BISEL | 4-byte | 0xffff800000000000                 | 0xffff800000000000 | YES
+  BISEL | 8-byte | 0xffff800000000000                 | 0xffff800000000000 | YES
+  BISEL | 16-byte | 0xffff800000000000                 | 0xffff800000000000 | YES
+  BISEL | 2^64 - 2^47 on 5 of 5 widths
+  UPPER | and the SAME address for all five, which is the other half
+  UPPER | of the same result: the LOWER edge of a canonical half is
+  UPPER | one address and does not depend on the access width, while
+  UPPER | the UPPER edge does, because that is the edge the rule is
+  UPPER | about.  0xffffffff80000000 is the address people quote,
+  UPPER | and it is 2^31 bytes into the hole.
+
+  ONE ASYMMETRY, MEASURED AND NOT EXPLAINED, because this file
+  would rather print a thing it cannot account for than a story
+  about it.  A SIXTEEN-BYTE read at 0xffffffffffffffff, whose range
+  runs off the end of the address space and wraps, comes back as a
+  real address (si_code 1) rather than as a rejection:
+  WRAP | 16-byte read at 0xffffffffffffffff | si_code 1
+  WRAP | 16-byte read at 0xfffffffffffffff0 | si_code 1
+  WRAP | 8-byte read at 0xffffffffffffffff    | si_code 1
+  WRAP | So the LOW half's end is range-checked, on five widths, and
+  WRAP | the TOP of the space is not observed to be.  This file does
+  WRAP | not say why, because the two candidate explanations -- that
+  WRAP | the implementation compares the offset within the half and
+  WRAP | the high half's offset arithmetic cannot overflow, or that
+  WRAP | the top of the space is simply never used and the hardware
+  WRAP | never agreed to define it -- need a CPUID bit or a manual
+  WRAP | sentence this process has no way to check.  Named as an
+  WRAP | OPEN QUESTION, which is a different thing from being wrong.
+
+  AND THE ARM THAT MEASURED THE WRONG THING, kept because a
+  retraction with the numbers beside it is worth more than a
+  retraction without them.  The SAME C statement,
+  `*(volatile __int128 *)a`, compiled to `movdqa` -- an
+  ALIGNMENT-REQUIRING load -- and the sweep then reported si_code
+  128 for every address that was not 16-byte aligned, at every
+  offset, which is a table with a pattern in it and no rule behind
+  it:
+  ALIGN | offset from 2^47 | movdqa (what gcc chose) | movdqu (meant)
+  ALIGN | 2^47 -17            | 128                       | 1
+  ALIGN | 2^47 -16            | 1                         | 1
+  ALIGN | 2^47 -15            | 128                       | 128
+  ALIGN | 2^47  -8            | 128                       | 128
+  ALIGN | 2^47  -7            | 128                       | 128
+  ALIGN | 2^47  -1            | 128                       | 128
+  ALIGN | and objdump on the first build, which is the only reason
+  ALIGN | this was caught at all:
+  ALIGN | (the named symbol was not in sysdump_dis.txt)
+  ALIGN | The lesson is not about alignment.  It is that a
+  ALIGN | measurement harness must be READ, not trusted, and that
+  ALIGN | a compiler is free to strengthen an instruction you asked
+  ALIGN | for by name in no way at all.
+
+6.  WHAT IS ABSENT, AND EVERY ABSENCE PROVED WITH A FORK.
+
+  6A. THE IDT AND THE GDT ARE AT A KNOWN ADDRESS AND ARE NOT
+      MAPPED INTO THIS PROCESS.
+
+  ABSENT | what | si_code | si_addr | si_addr equals
+  ABSENT | read one byte of the IDT | 1 | 0xffffffff00000000 | the IDT base SIDT printed
+  ABSENT | read one byte of the GDT | 1 | 0xfffffffe00000000 | the GDT base SGDT printed
+  ABSENT | both are si_code 1, SEGV_MAPERR, which is the shape of
+  ABSENT | a MAPPING failure and not the shape of a #GP.  So the
+  ABSENT | register is readable, the address is readable, and the
+  ABSENT | table is not, and the reason is that no user mapping
+  ABSENT | covers it.  That is a PAGE-TABLE fact, not a privilege
+  ABSENT | fact, and it is a better story than 'the IDT is
+  ABSENT | privileged' because it predicts the si_addr.
+
+  6B. THERE IS NO COUNTER THIS PROCESS CAN OPEN.  Three ways in,
+      all three refused, and none of them is a statement about the
+      silicon.
+
+  ABSENT | RDPMC in a forked child | si_code 128 | signal 11 | KILLED
+  ABSENT | perf_event_open, a NULL attr | -1 | errno 13 | EACCES
+  ABSENT | open /dev/cpu/0/msr | DENIED | errno 13 | EACCES: root only
+  ABSENT | and yet CPUID.80000008.EBX bit 6 core-PMU = 1 and
+  ABSENT | bit 15 L3-PMU = 1, so the METAL HAS PERFORMANCE
+  ABSENT | MONITORS and this process is not allowed to read them.
+  ABSENT | A first draft of this course said 'this machine has
+  ABSENT | no PMU'.  The right sentence is about ACCESS, and it
+  ABSENT | is a better one because it is falsifiable: it says
+  ABSENT | which permission is missing, and a page that cannot
+  ABSENT | name the missing permission is not making a claim.
+
+  6C. THERE IS NO AVX-512, WHICH IS A DIFFERENT KIND OF ABSENCE,
+      because it is a FEATURE BIT rather than a permission.
+
+  ABSENT | CPUID.7.0:EBX AVX512F 0 DQ 0 CD 0 BW 0 VL 0 | ALL ZERO
+  ABSENT | XCR0 = 0x0000000000000207, and the AVX-512 STATE bits of XCR0
+  ABSENT | (5 opmask, 6 zmm_hi256, 7 hi16_zmm) are all 0, so even
+  ABSENT | the state is not merely unsupported, it is not enabled.
+  ABSENT | A feature bit is a FACT ABOUT THE CPU that any process
+  ABSENT | can read with an unprivileged instruction, which is the
+  ABSENT | opposite of a permission: the absence of AVX-512 is
+  ABSENT | DECLARED BY THE HARDWARE, and the absence of the PMU is
+  ABSENT | imposed by software.  Two absences, two different kinds.
+
+  6D. THE ONE PAGE-TABLE FLAG A USER PROCESS CAN SEE, AND THE
+      THREE IT CANNOT, read from /proc/self/pagemap.
+
+  PAGEMAP | a fresh RW mapping, untouched | 0x0080000000000000 | bit63 0
+  PAGEMAP | the same page after ONE write      | 0x8180000000000000 | bit63 1
+  PAGEMAP | a PROT_NONE mapping, untouched     | 0x0080000000000000 | bit63 0
+  PAGEMAP | PROT_NONE, then mprotect RW      | 0x0080000000000000 | bit63 0
+  PAGEMAP | and then ONE write              | 0x8180000000000000 | bit63 1
+  PAGEMAP | a PROT_READ page, after ONE read | 0x8080000000000000 | bit63 1
+  PAGEMAP | and note that mprotect does NOT populate: the entry
+  PAGEMAP | appears at the first TOUCH and not at the permission
+  PAGEMAP | change, which is the same statement the first two rows
+  PAGEMAP | make and is now three measurements instead of one.
+  PAGEMAP | WHICH BITS MOVED, within one page, three times --
+  PAGEMAP | and the answer is NOT only bit 63 in the last one:
+  PAGEMAP | fresh -> write          0x8100000000000000
+  PAGEMAP | none  -> mprotect       0x0000000000000000
+  PAGEMAP | mprotect -> write      0x8100000000000000
+  PAGEMAP | rw-written -> prot-read 0x0100000000000000
+  PAGEMAP | Bit 63 is in the first and the third, and the
+  PAGEMAP | second is NOTHING AT ALL: mprotect does not create
+  PAGEMAP | the entry, the first touch does.
+  PAGEMAP | One more bit moves in the fourth row and this file
+  PAGEMAP | does not name it: bit 62 of a pagemap word is a
+  PAGEMAP | mapping-sharing flag whose kernel definition has
+  PAGEMAP | changed twice, and a page that names a bit it cannot
+  PAGEMAP | account for is worse than one that admits it.  The
+  PAGEMAP | harness caught this one, which is the argument for
+  PAGEMAP | having a harness that asserts the WHOLE word rather
+  PAGEMAP | than the bit it expected.
+  PAGEMAP | THE RESULT, and it is the whole of demand paging seen
+  PAGEMAP | from the inside: an UNTOUCHED mapping has NO PAGE-TABLE
+  PAGEMAP | ENTRY AT ALL, and the entry appears at the first touch.
+  PAGEMAP | A PROT_NONE mapping reports not-present and stays that
+  PAGEMAP | way through mprotect, and changes only on a touch.
+  PAGEMAP | WHAT THIS INTERFACE CANNOT TELL US, all three measured
+  PAGEMAP | as zero in every row above:
+  PAGEMAP |   bit 1  RW    of the entry -- is this page writable?
+  PAGEMAP |   bit 2  US    of the entry -- may a user touch it?
+  PAGEMAP |   bit 5  A     of the entry -- has it been accessed?
+  PAGEMAP |   bit 63 of the PTE is NO-EXECUTE, and bit 63 of THIS
+  PAGEMAP |   word is PM_PRESENT.  Two different bits, the same
+  PAGEMAP |   number, and a first draft of this section read this
+  PAGEMAP |   word as if it were the entry and reported NX=1 for a
+  PAGEMAP |   page it had never written.  See R10 in section 7.
+7.  RETRACTIONS, AND LIMITS, PRINTED RATHER THAN FOOTNOTED.
+
+   R1. "A ring-3 process cannot read the IDT because the IDT is
+       privileged."  RETRACTED AND REPLACED.  The REGISTER is
+       readable: SIDT returns base and limit from ring 3, and section
+       2 prints them.  What cannot be read is one byte of the TABLE,
+       and the reason is not privilege: the fault is si_code 1,
+       SEGV_MAPERR, with si_addr EXACTLY the base SIDT printed.  A
+       #GP would have been si_code 128 and si_addr 0, which is what
+       every privileged instruction in section 3 produced.  The right
+       sentence is a PAGE-TABLE sentence, and it predicts the address
+       the first sentence could not.
+
+   R2. "The 16-byte arm of the canonical sweep measures the
+       canonical boundary."  RETRACTED.  It measured an ALIGNMENT
+       requirement, because gcc compiled the __int128 load to
+       `movdqa`, and the sweep then reported si_code 128 for every
+       unaligned address at every offset, which looks like a rule and
+       is not one.  Written in inline `movdqu` the same sweep gives
+       2^47 - 15, the value the rule predicts, and section 5 prints
+       BOTH arms side by side so that the retraction has numbers.
+       A compiler will strengthen an instruction you asked for by name
+       in no way at all, and a harness that is not read cannot notice.
+
+   R3. "One inline-asm block can read all fourteen of the registers
+       a syscall might destroy."  RETRACTED.  It died with SIGBUS,
+       because gcc was holding the ADDRESS of one of the fourteen
+       output slots in a register the body had already overwritten.
+       There are fewer than fourteen allocatable registers once rax
+       and rcx are clobbered, so the block cannot be written.  It is
+       now three blocks of six, six and one, and each register it
+       overwrites is NAMED in that block's clobber list.
+
+   R4. "`syscall` destroys fifteen registers."  NEVER TRUE, AND IT
+       WAS THIS FILE'S OWN OUTPUT FOR ONE RUN.  The first version of
+       the fourteen-register table, which had the clobber-list bug
+       from R3, reported all fifteen clobbered -- and it was the
+       HARNESS talking, not the CPU.  Fixed, twelve of the thirteen
+       markers come back and only R11 does not, which is what the
+       ISA promises and what the x86-64 syscall ABI documents.  A
+       wrong result that agrees with a plausible story is the hardest
+       kind to catch, and this one agreed with a story the author had
+       already written down.
+
+   R5. "LAM is reported in CPUID leaf 7 subleaf 0."  WRONG, AND IT
+       HAD THE RIGHT ANSWER.  LAM is leaf 7 SUBLEAF 1, EAX bit 26.
+       A first version read subleaf 0 ECX bit 26 -- the same number,
+       a different register, a different subleaf -- got zero, and
+       reported LAM as unsupported with a confident sentence.  It
+       happened to be right and it was still wrong.
+
+   R6. "The canonical boundary is the address 2^47."  NOT AS A
+       STATEMENT ABOUT AN ACCESS.  It is 2^47 MINUS (size - 1),
+       because the CPU validates the whole byte range of the operand
+       and not its first byte.  The privilege course established this
+       on THREE widths and this file re-derives it on FIVE, adding
+       the 2-byte and 16-byte arms.  The 2-byte one is the arm that
+       separates the rule from a constant.
+
+   R7. "This machine has no performance monitoring hardware."
+       RETRACTED.  CPUID.80000008.EBX bit 6 and bit 15 say the core
+       and L3 performance monitors ARE present, in the same breath in
+       which RDPMC is not permitted, perf_event_open returns EACCES,
+       and /dev/cpu/0/msr is root-only.  What is absent is ACCESS.
+       The retraction matters because the two sentences have
+       different consequences: one says the hardware cannot be used
+       and the other says a permission has to be changed.
+
+   R8. "si_addr is the address the CPU faulted on."  NOT A CLAIM
+       THIS FILE CAN MAKE.  For a #GP there is no address and the
+       kernel reports 0; for a page fault the address is exact.  Both
+       are measured in sections 3, 4 and 5, and the field that tells
+       them apart is si_code, not si_addr.  A handler that reads
+       si_addr before si_code concludes a #GP dereferenced NULL.
+
+   R9. "Writing a PROT_READ page and touching a PROT_NONE page are
+       different protections, so they are distinguishable."  THEY
+       ARE NOT, from ring 3.  Both are si_code 2 with an si_addr.
+       Only the null dereference, si_code 1, is distinguishable, and
+       it is distinguished by MAPPED-ness rather than by protection.
+       The page-fault error code has five other bits, of which a
+       process sees one.
+
+  R10. "The high bit of a /proc/self/pagemap word is the PTE's
+       no-execute bit."  WRONG, AND IT REPORTED NX=1 FOR A PAGE
+       THAT HAD NEVER BEEN WRITTEN.  Bit 63 of the PAGEMAP word is
+       PM_PRESENT, which is the PTE's PRESENT bit; NX is bit 63 OF
+       THE PTE and pagemap exposes no field for it.  What the file
+       actually measured is that an untouched mapping has no entry at
+       all, which is demand paging seen from the inside.
+
+  LIMITS -- what this artifact cannot tell you, printed not footnoted,
+  and each one names the instrument that would settle it:
+    * ANY CYCLE COUNT.  There is no counter this process can open:
+      RDPMC is a #GP, perf_event_open is EACCES, and the kernel
+      reports perf_event_paranoid above.  Every duration in this file
+      is a DURATION, and a duration bounds a count without measuring
+      it.  Settled by perf_event_open with a paranoid setting below 4
+      and a PMU passthrough from the host.
+    * WHETHER CR0 TO CR4 HOLD THE VALUES THE KERNEL REPORTS.
+      Section 2 prints arch_prctl's SMEP/SMAP/SHSTK bits and section
+      3 measures that every read of CR0-CR4 and CR0-CR8 is a fault.
+      A consequence is not a reading.  Settled by a CPL 0 program.
+    * WHETHER SMEP AND SMAP ARE ON.  A report, not a measurement:
+      a process cannot exec a supervisor page to find out, because
+      there are none.  Settled by a CPL 0 program that reads CR4.
+    * THE IA32_STAR, IA32_LSTAR AND IA32_SFMASK VALUES.  RDMSR is a
+      fault and /dev/cpu/0/msr is root-only, both measured.  Settled
+      by a CPL 0 program, or by reading the entry code in the vDSO.
+    * THE CLASS OF ANY EXCEPTION.  Fault, trap and abort are read
+      from a manual in section 4, and marked QUOTED on every row.
+      Deciding one needs the saved RIP, which the kernel does not
+      put in the siginfo.  Settled by a kernel-side trap handler.
+    * THE ERROR CODE THE CPU PUSHED.  si_code is the kernel's
+      translation of it, and section 4 measures that one of the five
+      meaningful bits survives.  Settled by reading orig_ax in pt_regs.
+    * WHICH DR7 LAYOUT THIS CPU IMPLEMENTS.  Section 1B prints two
+      descriptions that disagree and says so; section 3 measures
+      that DR7 cannot be read from ring 3.  Settled by one ptrace
+      PTRACE_PEEKUSER at DR7, at CPL 0, in five lines.
+    * THE PS BIT OF A REAL 2 MiB MAPPING.  MAP_HUGETLB was tried and
+      returned ENOMEM on this machine, and no transparent huge page
+      collapsed during the run, so the PS=1 row of the entry table in
+      section 1B is QUOTED and the 4 KiB path is the only one
+      MEASURED.  Settled by a machine with huge pages configured.
+    * AArch64, RISC-V, or any other architecture.  Not run, not
+      quoted, and deliberately absent: the comparison lives in the
+      neutral courses and this one is the x86-64 reference.
+    * A SECOND RUN'S ADDRESSES.  Every address in this file moves
+      with ASLR and with the heap, so a page that quotes one quotes
+      it as a RELATION and the relation is the measurement.
+
+  What this artifact can support: an inventory of what a ring-3
+  process can and cannot learn about the machine it is running on,
+  with every entry of the CANNOT column a signal number rather than a
+  quotation, and every entry of the CAN column a bit pattern read out
+  of a register on this CPU.
+  What it cannot support: any claim about a control register's value,
+  any cycle count, any exception's class, and any statement about a
+  second machine.  Four of those five are properties of the
+  instrument, not of the subject.
+
+  checksums folded in: 0xc00000ff22a47d9e
+  rows measured: 11
+  every arm in every section was either proved to have done its work
+  or is a fault; there is no row in this file whose value could have
+  come from a deleted experiment.
+=====================================================================
+ end of sysdump
+=====================================================================
