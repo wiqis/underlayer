@@ -166,11 +166,11 @@ public func render_x86_pmu() : string {
   TSC rate, across a 300 ms sleep   2.2957 GHz
   drift                             -0.0006 %
   pinned to cpu3, and the cpu that answered is 3  (VERIFIED -- the rows below are a controlled experiment)
-  POINTER CHASE, 64 KiB of nodes    9.161 ticks/op
+  POINTER CHASE, 64 KiB of nodes    5.725 ticks/op
   ARITHMETIC increment loop         1.198 ticks/op
   the floor used for every band in this file is the POINTER CHASE,
   because the increment loop is printed too and is the CLOCK rather
-  than noise: 7.65x apart.
+  than noise: 4.78x apart.
                 </pre>
             </div>
                 <p>Three things in that block are load-bearing, and the first is the one nobody checks.</p>

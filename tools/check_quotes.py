@@ -71,6 +71,13 @@ PREFIXES = {
     # next one.
     "a64asm": ("a64_asm.ch", "a64_encoding.ch", "a64_immediate.ch",
                "a64_cond.ch", "a64_verify.ch", "a64asm_landing.ch"),
+    # The second AArch64 course.  Five concepts plus a landing page.  Note
+    # that its artifact is `a64abi.py` and NOT `a64dec.py`, so it needed its
+    # own OUTPUTS entry for the same reason the two sections needed their own:
+    # a table entry that names one course's output file leaves the next
+    # course's pages silently unchecked against a file they do not belong to.
+    "a64abi": ("a64_aapcs.ch", "a64_registers.ch", "a64_frame.ch",
+               "a64_save.ch", "a64_unwind.ch", "a64abi_landing.ch"),
 }
 OUTPUTS = {
     "x86asm": "x86dec.out",
@@ -78,6 +85,7 @@ OUTPUTS = {
     "x86sys": "sysdump.out",
     "x86simd": "vecdump.out",
     "a64asm": "a64dec.out",
+    "a64abi": "a64abi.out",
 }
 PREF = PREFIXES.get(COURSE, (COURSE[:3],))
 if not isinstance(PREF, tuple):
@@ -98,6 +106,7 @@ EXEMPT = {
     # print and could not: the harness counts itself after the run, so the
     # number lives in crosscheck.py's own output and is quoted as such.
     "243":  "the a64asm harness's own check count",
+    "166":  "the a64abi harness's own check count",
 }
 
 TICK = re.compile(r"(\d+\.\d{3}) ticks/op")
@@ -126,7 +135,8 @@ for name in sorted(os.listdir(os.path.join(ROOT, "content", "src"))):
         # is a filter that will fail by accident.  The check is now: does the
         # block contain a shell prompt or a known artifact command?
         if "$ " not in b and "./x86dec" not in b and "./sysdump" not in b \
-                and "./a64dec" not in b and "objdump" not in b:
+                and "./a64dec" not in b and "./a64abi" not in b \
+                and "objdump" not in b:
             continue
         for pat, kind in ((TICK, "ticks/op"), (HEX, "hex"), (RATIO, "ratio")):
             for m in pat.finditer(b):

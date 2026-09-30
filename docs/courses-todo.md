@@ -102,9 +102,9 @@
 
 - [x] Learn AArch64 Assembly
 - [x] Learn AArch64 Instruction Encoding
-- [ ] Learn AArch64 Calling Conventions
-- [ ] Learn AArch64 ABI
-- [ ] Learn AArch64 Stack Frames
+- [x] Learn AArch64 Calling Conventions
+- [x] Learn AArch64 ABI
+- [x] Learn AArch64 Stack Frames
 - [ ] Learn AArch64 System Calls
 - [ ] Learn AArch64 Exceptions
 - [ ] Learn AArch64 Interrupts

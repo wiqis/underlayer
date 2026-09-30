@@ -65,7 +65,7 @@ a forked child, with a partition the harness can check.
 | # | Experiment | Recorded result | What it changed |
 |---|---|---|---|
 | A1 | TSC busy and across a 300 ms sleep | 2.2957 vs 2.2957 GHz, drift −0.0006 % | A tick is TIME. Every figure is a ratio. |
-| A2 | Noise floor on two bodies, printed before anything else | pointer chase 9.161, arithmetic loop 1.198, 7.65× apart | The floor is the chase; the increment loop is *the clock*. |
+| A2 | Noise floor on two bodies, printed before anything else | pointer chase 5.725, arithmetic loop 1.198, 4.78× apart | The floor is the chase; the increment loop is *the clock*. |
 | A3 | Counter absence, three ways | `RDPMC` → #GP, `perf_event_open` → `EACCES`, `/dev/cpu/0/msr` → `EACCES` | **R7.** The draft said "this machine has no PMU". The silicon HAS core and L3 PMUs. The absence is ACCESS, which names the permission to change. |
 | A4 | The specification, printed as section 1B and marked **NOT MEASURED** | CR0's 15 rows, CR3's 6 fields, CR4's 31 rows, DR7's 18 rows, the 4 paging indices, 14 entry flags, 7 error-code bits | The only quoted tables in the file, and the harness asserts them **to the bit** — which is possible because a bit position is exact. |
 | F1 | **The boundary**: 50 instructions, one forked child each | 39 fault, 11 return, **34 at `si_code` 128**, 5 at `SIGILL` | The set is not the one in the manual. `SIDT`/`SGDT`/`STR`/`SLDT`/`SMSW`/`XGETBV`/`RDFSBASE`/`WRFSBASE` all return. |
