@@ -1,0 +1,8 @@
+
+zicsr_rv64i.o:	file format elf64-littleriscv
+
+Disassembly of section .text:
+
+0000000000000000 <just_a_csr>:
+       0: c00022f3     	rdcycle	t0
+       4: 00008067     	ret

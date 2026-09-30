@@ -1083,6 +1083,56 @@ public namespace underlayer_web {
         return string()
     }
 
+    // The RISC-V privileged architecture.  The FOURTH RISC-V course, and the
+    // only one in the section whose subject cannot be observed at all -- so
+    // the ids are named for what each page MEASURES rather than for what it
+    // describes, which is the convention the two resolvers above set and the
+    // reason it is followed here.
+    //
+    //   rv-modes     the CSR ADDRESS and the twelve instructions that touch
+    //                it.  NOT `rv-csr`: the page is about four bits of a
+    //                twelve-bit number, and `csr` is what the address is
+    //                called rather than what the page is about.  The privilege
+    //                convention lives in the ADDRESS, so the address is the
+    //                spine and the instructions are what the page opens it
+    //                into.
+    //   rv-paging    Sv39/48/57 and `satp`.  NOT `rv-sv39`: the page covers
+    //                three formats and the finding is about `satp`, where
+    //                two natural PPN widths both compile.
+    //   rv-traps     `ecall`, the five trap registers, and the finding that
+    //                all three `stvec` functions emit the SAME 32 bits.
+    //                NOT `rv-ecall`: `ecall` is one instruction of the page
+    //                and the same-instruction finding is the part that is
+    //                not about `ecall`.
+    //   rv-boundary  the measured/quoted boundary, the sixteen limits, the
+    //                two scope lists and the seventeen retractions.  NOT
+    //                `rv-verify`, and this is the one name in this file
+    //                that was CHANGED rather than chosen: the section plan
+    //                gives `rv-verify` to this course as its artifact page,
+    //                and `render_rvasm_concept` above already claims it for
+    //                the decoder's cross-check.  Both courses cannot serve
+    //                one id, and a collision here does not 404 -- it
+    //                silently serves another course's page under this
+    //                course's URL.  `rv-boundary` is named for what the page
+    //                is, which is a boundary: forty-four provenance rows, a
+    //                count, eight things a reader cannot conclude beside ten
+    //                they can, and the retractions.  It is also the last
+    //                concept, so "boundary" is literally where the course
+    //                ends.
+    public func render_rvpriv_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var modes_id = std::string("rv-modes")
+        var paging_id = std::string("rv-paging")
+        var traps_id = std::string("rv-traps")
+        var boundary_id = std::string("rv-boundary")
+
+        if(cid.equals(&modes_id)) { return underlayer_content::render_rv_modes() }
+        if(cid.equals(&paging_id)) { return underlayer_content::render_rv_paging() }
+        if(cid.equals(&traps_id)) { return underlayer_content::render_rv_traps() }
+        if(cid.equals(&boundary_id)) { return underlayer_content::render_rv_boundary() }
+        return string()
+    }
+
     // The x86-64 ABI. Same fall-through contract: empty string for anything
     // else.  `x86-calling` and its five siblings continue the `x86-` prefix
     // the assembly course already owns, and they are deliberately NOT
@@ -1328,6 +1378,19 @@ public namespace underlayer_web {
         // another course's page under this course's URL.
         var rvabi_html = render_rvabi_concept(concept_id)
         if(rvabi_html.size() > 0) { return rvabi_html }
+        // The RISC-V section's third course: the privileged architecture.
+        // Checked LAST of the four RISC-V resolvers, and the order is not
+        // alphabetical by accident -- it is by how long each has been here.
+        // `rv-compressed` / `rv-compressed-cost` is the only overlap between
+        // any two of them and the encoding course has first refusal on it, and
+        // `rv-verify` was the collision the note above `render_rvpriv_concept`
+        // describes: the encoding course already had it, so the privileged
+        // course's artifact page is `rv-boundary`.  With that resolved, the
+        // four resolvers claim disjoint sets and the order does not matter --
+        // which is the state worth being in, because an order that matters
+        // is an order that will be broken by the next course.
+        var rvpriv_html = render_rvpriv_concept(concept_id)
+        if(rvpriv_html.size() > 0) { return rvpriv_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

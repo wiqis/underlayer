@@ -129,6 +129,21 @@ PREFIXES = {
     # THIS course's six files.
     "rvabi": ("rv_calling.ch", "rv_noflags.ch", "rv_registers.ch",
               "rv_compressed_cost.ch", "rvabi_landing.ch"),
+    # The RISC-V section's FOURTH course, and the one with no runtime subject
+    # at all: no machine, no emulator, no linker, so every number in it is a
+    # bit pattern, a count of bit patterns, an arithmetic identity or a
+    # refusal from a real assembler.  That does not make it exempt -- an
+    # exempt course is one this tool cannot check, and the whole point of the
+    # entry is that a course absent from PREFIXES passes WITHOUT BEING CHECKED.
+    #
+    # The id collision this entry has to avoid is the one the plan creates:
+    # `rv-verify` is given to BOTH `rvasm` and `rvpriv`, and render_concept()
+    # resolves ids GLOBALLY with no course in the key, so `rvasm` kept it and
+    # this course's artifact page is `rv_boundary.ch` instead.  The tuple here
+    # lists only THIS course's five files, and none of them collides with the
+    # two entries above.
+    "rvpriv": ("rv_modes.ch", "rv_paging.ch", "rv_traps.ch",
+               "rv_boundary.ch", "rvpriv_landing.ch"),
 }
 OUTPUTS = {
     "x86asm": "x86dec.out",
@@ -146,6 +161,16 @@ OUTPUTS = {
     # against the encoding course's recording -- and the two share a
     # `rv_compressed` subject, so the numbers are similar enough to pass.
     "rvabi": "rvabi.out",
+    # This course's artifact is `rvpriv.py` and its output is `rvpriv.out`, and
+    # it is a DIFFERENT file from every name above.  This one matters more than
+    # the rvabi entry did, because the two output files share a subject: both
+    # record the same CSR instruction encodings, and a page that quoted
+    # rvabi.out by mistake would find most of its numbers present -- the
+    # relocation codes, the shift amounts and the `a7`/`a6` XOR all appear in
+    # both.  So a missing entry here would produce a quiet partial pass rather
+    # than an obvious miss, which is the failure mode this table exists to
+    # prevent.
+    "rvpriv": "rvpriv.out",
 }
 PREF = PREFIXES.get(COURSE, (COURSE[:3],))
 if not isinstance(PREF, tuple):
@@ -172,6 +197,10 @@ EXEMPT = {
     "128":  "the rvasm harness's own check count, which the artifact cannot "
             "print because the harness counts itself after the run",
     "171":  "the rvabi harness's own check count, for the same reason",
+    "391":  "the rvpriv harness's own check count, for the same reason.  "
+            "Eighteen of those are pinned claim sentences, so the count is a "
+            "property of the harness and not of the artifact's output -- which "
+            "is exactly why it cannot be in the output.",
     "0x9f": "a hint encoding quoted in a64sys, present in a64sys.out",
     "0x80aa": "a c.mv encoding quoted on the rv-compressed page; it is in "
               "rvdec.out inside section 4C's refusal table",
@@ -192,7 +221,7 @@ EXEMPT = {
 ARTIFACT_CMDS = ("./x86dec", "./sysdump", "./a64dec", "./a64abi", "./a64sys",
                  "a64sys.py", "./a64data", "a64data.py", "./rvdec",
                  "rvdec.py", "./rvabi", "rvabi.py", "crosscheck.py",
-                 "build_samples.sh")
+                 "build_samples.sh", "./rvpriv", "rvpriv.py")
 
 TICK = re.compile(r"(\d+\.\d{3}) ticks/op")
 HEX = re.compile(r"(0x[0-9a-f]{8,16})\b")

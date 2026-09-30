@@ -137,9 +137,34 @@
 - [x] Learn RISC-V Assembly
 - [x] Learn RISC-V Instruction Encoding
 - [x] Learn RISC-V Calling Conventions
-- [ ] Learn RISC-V Privilege Specification
-- [ ] Learn RISC-V Virtual Memory
-- [ ] Learn RISC-V Interrupts
+- [x] Learn RISC-V Privilege Specification
+       "The RISC-V Privileged Architecture", 4 concepts in 2 modules,
+       101 minutes, and the THIRD of the four splits
+       `docs/riscv-section-plan.md` makes of the RISC-V roadmap. It is the
+       FIRST course in the collection whose SUBJECT cannot be observed at
+       all: no RISC-V machine, no emulator, no RISC-V linker, so no exception
+       is taken, no page is walked, no TLB is consulted, and no `ecall` is
+       observed trapping. `ecall` is measured AS EMITTED and labelled so on
+       every page that mentions it. What survives is the part a compiler
+       author needs: the twelve CSR instruction encodings and the single
+       funct3 bit between the register and immediate forms (1^5 = 2^6 = 3^7 =
+       4), the 12-bit CSR address decomposed into accessibility and privilege
+       with encoding 2 printed as a hole, the Zicsr split, the satp PPN width
+       of 36 bits with two natural wrong widths BOTH COMPILING and measured on
+       the compiler's own shifts, the PTE bit table as seven descending shift
+       amounts, the relocation records a walk emits with the HI20/LO12
+       asymmetry, and the pairing rule's arithmetic over six distances the
+       assembler refuses to diagnose. 44 provenance rows with the count
+       printed (8 MEASURED, 13 MEASURED-ON-BYTES, 23 QUOTED), 16 limits, 17
+       retractions, 4 poisons.
+- [x] Learn RISC-V Virtual Memory
+       Same course, `rv-paging`: Sv39/Sv48/Sv57, `satp`, the PTE layout and
+       the A/D bits, plus the object-file half that a walk produces.
+- [x] Learn RISC-V Interrupts
+       Same course, `rv-traps`: the five trap CSR addresses and their
+       decomposition, `stvec`'s mode and base alignment, the cause-number-
+       equals-bit rule measured on the compiler's `ori` immediates, and the
+       read-modify-write race named and labelled a quoted consequence.
 - [ ] Learn RISC-V Atomics
 - [ ] Learn RISC-V Vector Extension
 

@@ -1,0 +1,2007 @@
+==========================================================================
+rvpriv.py -- the RISC-V privileged architecture, measured on the bytes
+==========================================================================
+
+  Every claim in this file carries one of three labels:
+
+    MEASURED           about the compiler or the bytes, by experiment
+    MEASURED-ON-BYTES  a property of emitted bytes, cross-checked against
+                      llvm-objdump-21 as a second reader
+    QUOTED             a manual claim, with a document and a section
+
+  The three documents every QUOTED row names:
+    priv-spec    Volume II, the privileged architecture, v20260120
+    riscv-elf    the RISC-V ABIs Specification v1.0
+    rv32-unpriv  Volume I, the unprivileged architecture
+
+  NOTHING HERE IS EXECUTED.  There is no RISC-V machine, no
+  emulator and no RISC-V linker on this host, so NO EXCEPTION IS
+  EVER TAKEN, NO PAGE IS EVER WALKED, NO TLB IS EVER CONSULTED,
+  AND NO ecall IS EVER OBSERVED DOING ANYTHING.  There are NO
+  TIMINGS and NO SPEEDUPS anywhere in this file.  Section 1 says
+  so before the first measurement and section 15 says so after
+  the last one, and the table in section 15 says WHICH of the
+  three labels each claim class carries.
+
+  The decoder is BORROWED from courses/rvasm/assets/samples/
+  (rvdec.py) and this file PREPENDS TWO models of its own.
+  `m_csr_address` decomposes a CSR address into accessibility
+  and privilege, and `m_sfence_vma` names SFENCE.VMA, which the
+  inherited decoder could not name at all.  It edits no sibling;
+  section 14's R1 and R14 say what each one adds and why the
+  sibling is untouched.
+
+  Inherited decoder models: 26, of which this course PREPENDS 2.
+  Total in the dispatch here: 28.
+
+==========================================================================
+SECTION 1 -- THE METHOD, AND WHAT IT MAY NOT CLAIM
+==========================================================================
+
+  There are FOUR ABSENCES on this host and they are not the same absence as
+  the sibling course's, because this course is about the part of the machine a
+  sibling could not even name.
+
+  * NO RISC-V MACHINE.  The host is x86-64.
+  * NO EMULATOR.  `qemu-riscv64` and `spike` are both ABSENT.
+  * NO RISC-V BINUTILS.  `riscv64-linux-gnu-{gcc,as,ld}` are all ABSENT, so
+    there is not even a RISC-V LINKER and no relocation in this course is
+    ever resolved.
+  * NO SECOND ASSEMBLER.  GNU binutils has no RISC-V target here, so both
+    readers of the two-reader check come from ONE LLVM TREE.
+
+  NOT ONE INSTRUCTION IN THIS COURSE HAS BEEN RUN. No exception has ever been
+  TAKEN. No page has ever been WALKED. No TLB has ever been CONSULTED. No
+  `ecall` has ever been OBSERVED returning anything.
+
+  That last sentence is the one a reader of the previous two RISC-V courses
+  does not expect, and it is worth being explicit about the difference. The
+  ABI course lost the ability to TIME. This course loses the ability to
+  OBSERVE THE SUBJECT. Every claim about what a trap DOES is a quotation from
+  a document, and every claim about what the toolchain EMITS is a measurement,
+  and the sentence that separates them appears on every page.
+
+
+  tool                    result                                
+  assembler               Ubuntu clang version 21.1.8 (6ubuntu1)
+  disassembler            Ubuntu LLVM version 21.1.8            
+  readelf                 Ubuntu LLVM version 21.1.8            
+  linker, riscv64         IS NOT INSTALLED                      
+  assembler, riscv64 GNU  IS NOT INSTALLED                      
+  emulator, qemu-riscv64  ABSENT                                
+  emulator, spike         ABSENT                                
+
+  AND THE `ecall` CONVENTION IS MEASURED AS THE COMPILER EMITS IT, which is
+  WEAKER than an execution would have been. What is measured is that clang
+  emits the constant 0x00000073 with the syscall number in a7 and the answer
+  in a0. What is NOT measured is that the trap is taken, that it reaches
+  supervisor mode, that a7 is read, that a kernel exists, or that anything
+  comes back. Section 5 says so in the place a reader would otherwise assume
+  otherwise, and section 14's table says which claims are which.
+
+  THE TWO READERS. `rvdec.py` in the first course of this section decodes;
+  `llvm-objdump-21 --triple=riscv64` decodes again; section 12 counts how many
+  instructions the two compared, how many each NAMED, and how many disagreed.
+  This file PREPENDS ONE MODEL to the inherited dispatch and edits no sibling:
+  the inherited `s_system` already names the six CSR instructions and reads
+  the CSR number, and what it does not do is DECOMPOSE the number into
+  accessibility and privilege, which is the whole of the convention. Section 3
+  prepends the model and section 14's R1 records why. The count is printed
+  because "this course wrote no decoder" is a claim a reader is entitled to
+  check.
+
+  THE CORPUS IS A NAMED CONSTANT, and a missing file is REPORTED rather than
+  skipped, because a coverage number is a number about WHAT WAS FED TO IT. 28
+  of 28 corpus objects are present; 0 missing. Every one of them is produced
+  by `build_samples.sh` from four hand-written assembly or C files, four
+  optimisation levels, three `-march` settings for the Zicsr question, four
+  builds of one page-table walk, and SIX builds of the same two instructions
+  at six different distances apart.
+
+
+  CORPUS COMPLETENESS, checked on every run and printed whether or
+  not there is anything wrong with it:
+
+    THE CORPUS IS INCOMPLETE: no.  All 28 objects are present,
+    and this run read all of them.
+
+  THE THREE LABELS, and they are DEFINED rather than implied:
+
+  MEASURED about the compiler or the bytes, by experiment. MEASURED-ON-BYTES a
+  property of emitted bytes, cross-checked against llvm-objdump-21 as a second
+  reader. QUOTED a manual claim, with a document and a section.
+
+  Every QUOTED row in this file names one of THREE DOCUMENTS with a section:
+  `priv-spec` (Volume II, the privileged architecture, v20260120), `riscv-elf`
+  (the RISC-V ABIs Specification v1.0, chapters 3 and 8), and `rv32-unpriv`
+  (Volume I, the unprivileged architecture). The three short names are the
+  only spelling used, so a reader can search for one.
+
+==========================================================================
+SECTION 2 -- THE PRIVILEGE ARCHITECTURE, QUOTED, BEFORE ANY COMPILER RUNS
+==========================================================================
+
+  Everything in this section is QUOTED. Nothing in it is measured, because
+  nothing in it needs to be: it is the ORACLE, and the oracle is the document.
+  Sections 3 to 11 measure the toolchain AGAINST it, and the seven places the
+  two disagree are section 14's retractions.
+
+
+  THE THREE MODES, `priv-spec` Table 1.1. Three and not four, and the hole is
+  in the encoding rather than at the end of the list:
+
+  Encoding Name Abbreviation 0 00 User/Application U 1 01 Supervisor S 2 10
+  Reserved -- 3 11 Machine M
+
+  and `priv-spec` section 2.1: "machine-mode (M-mode) is the highest privilege
+  mode in a RISC-V hart ... and is the first mode entered at reset."
+
+  THE LADDER IS ENCODED IN TWO BITS AND IN NOTHING ELSE. `mstatus.MPP` is TWO
+  bits wide and `sstatus.SPP` is ONE, and `priv-spec` section 2.1.6.1 says why
+  they are different sizes and the reason is the whole of the two-mode design:
+
+  "The xPP fields can only hold privilege modes up to x, so MPP is two bits
+  wide and SPP is one bit wide."
+
+  So a trap handler's "where did I come from" is a TWO-BIT field in machine
+  mode and a ONE-BIT field in supervisor mode, and the difference is not an
+  optimisation. A trap out of S-mode can only have come from U-mode or S-mode,
+  and there is nothing else to remember.
+
+  THE STACK. `priv-spec` section 2.1.6.1, and this is the sentence a trap
+  handler author has to internalise:
+
+  "When a trap is taken from privilege mode y into privilege mode x, xPIE is
+  set to the value of xIE; xIE is set to 0; and xPP is set to y."
+
+  THREE WRITES, IN THAT ORDER, ON EVERY TRAP. The saved-enable bit, the clear,
+  and the previous mode. And on the way back, `xRET`:
+
+  "When executing an xRET instruction, supposing xPP holds the value y, xIE is
+  set to xPIE; the privilege mode is changed to y; xPIE is set to 1; and xPP
+  is set to the least-privileged supported mode."
+
+  The last clause is a DEBUGGING AID and the specification says so: "Setting
+  xPP to the least-privileged supported mode on an xRET helps identify
+  software bugs in the management of the two-level privilege-mode stack."
+  There is no behavioural reason to clear SPP on SRET and there is a
+  diagnostic one.
+
+  THE DELEGATION, `priv-spec` section 2.1.1.8, and it is the sentence that
+  makes S-mode possible:
+
+  "By default, all traps at any privilege level are handled in machine mode
+  ... To increase performance, implementations can provide individual
+  read/write bits within medeleg and mideleg to indicate that certain
+  exceptions and interrupts should be processed directly by a lower privilege
+  level."
+
+  "When a trap is delegated to S-mode, the scause register is written with the
+  trap cause; the sepc register is written with the virtual address of the
+  instruction that took the trap; the stval register is written with an
+  exception-specific datum; the SPP field of mstatus is written with the
+  active privilege mode at the time of the trap; the SPIE field of mstatus is
+  written with the value of the SIE field at the time of the trap; and the SIE
+  field of mstatus is cleared. The mcause, mepc, and mtval registers and the
+  MPP and MPIE fields of mstatus are not written."
+
+  SIX REGISTERS WRITTEN, AND THE ABSENCE IS PART OF THE CLAIM: the machine
+  level's `mcause`, `mepc` and `mtval` are NOT written, and `MPP`/`MPIE` are
+  NOT written. A trap handler that reads `mcause` after a delegated trap reads
+  whatever was there before, and section 6 measures that nothing in the
+  emitted code knows which of the two happened.
+
+  AND THE DISCOVERY PROCEDURE IS A WRITE-ONE-TO-EVERY-BIT-AND-READ-BACK, which
+  is the same trick three times in one chapter and is worth knowing because it
+  is how every WARL field in this architecture is discovered:
+
+  * ASIDLEN: "may be determined by writing one to every bit position in the
+    ASID field, then reading back the value in satp to see which bit positions
+    in the ASID field hold a one."
+  * the delegatable traps: "with the supported delegatable bits found by
+    writing one to every bit location, then reading back the value in medeleg
+    or mideleg to see which bit positions hold a one."
+  * the implemented interrupts: "The implemented interrupts may be found by
+    writing one to every bit location in sie, then reading back to see which
+    bit positions hold a one."
+
+  THAT IS A LOOP A KERNEL MUST RUN AT BOOT, AGAINST HARDWARE THIS HOST DOES
+  NOT HAVE. It is the clearest statement in the course of what "no machine"
+  costs: not a timing, but a whole category of algorithm that exists only to
+  interrogate silicon.
+
+
+  THE CSR ADDRESS, `priv-spec` section 1 and the psABI's Table 3. The whole
+  convention in two sentences:
+
+  "The standard RISC-V ISA sets aside a 12-bit encoding space (csr[11:0]) for
+  up to 4,096 CSRs. By convention, the upper 4 bits of the CSR address
+  (csr[11:8]) are used to encode the read and write accessibility of the CSRs
+  according to privilege level."
+
+  "The top two bits (csr[11:10]) indicate whether the register is read/write
+  (00, 01, or 10) or read-only (11). The next two bits (csr[9:8]) encode the
+  lowest privilege level that can access the CSR."
+
+  THREE NUMBERS AND THEY ARE ALL CHECKABLE. 12 bits of address, 4,096 CSRs, 4
+  values of accessibility with THREE of them meaning the same thing, 4 values
+  of privilege with ONE of them a hole. Section 3 measures the 12 and the
+  4,096, and section 4 measures the decomposition against 42 real addresses
+  the assembler resolved from names, and the hole at csr[9:8] = 2 is visible
+  in that table as a column with no row in it.
+
+  AND THE POINT OF THE CONVENTION, which is not tidiness. A CSR's address says
+  who may touch it, so the SAME INSTRUCTION is a legal act in one mode and an
+  illegal-instruction exception in another. There is no privilege check
+  anywhere in the encoding: `csrr t0, mstatus` is one 32-bit word, and whether
+  it returns a value or traps is decided entirely by the two bits inside the
+  number it names. Section 3 assembles the same instruction that a
+  machine-mode kernel uses and that a user program would fault on, and the two
+  words are IDENTICAL -- which is the sharpest available statement that the
+  privilege model is not in the instruction stream.
+
+  THE FOUR STANDARD INTERRUPT BITS, `priv-spec` section 11.1.1.3. "Interrupt
+  cause number i (as reported in CSR scause) corresponds with bit i in both
+  sip and sie. Bits 15:0 are allocated to standard interrupt causes only,
+  while bits 16 and above are designated for platform use." A supervisor
+  software interrupt is cause 1, a supervisor timer interrupt is cause 5 and a
+  supervisor external interrupt is cause 9, so the three enable bits are 1<<1,
+  1<<5 and 1<<9. Section 7 compiles those three writes and reads the constants
+  back out of the words, and the compiler has no idea they are interrupts: it
+  emits `ori a0, a0, 0x2` and nothing else.
+
+==========================================================================
+SECTION 3 -- THE TWELVE CSR INSTRUCTIONS, AND THE ONE BIT BETWEEN THEM
+==========================================================================
+
+  There are SIX CSR instructions and each of them has an immediate
+  counterpart, so there are TWELVE, and the whole set is a single three-bit
+  `funct3` field. The finding of this section is that the difference between
+  the register form and the immediate form is EXACTLY ONE BIT of that field,
+  and that the twelve instructions are one instruction with a three-bit
+  selector -- which is why an instruction table for this group is twelve rows
+  long and the decoder is four lines.
+
+  The words below are read out of `csr.o` by `llvm-objdump-21` and are
+  MEASURED-ON-BYTES. `csr.s` puts each pair of forms next to each other on
+  purpose, so the twelve words come out in a known order and the pairing is
+  arithmetic rather than a search.
+
+
+  The pairing is CHECKED, not assumed: 57 source lines against 58 words
+  in the object, the difference being the trailing `ret`.
+
+  THE TWELVE INSTRUCTIONS: six operations, two source forms, and
+  every row read out of the word rather than out of the source.
+
+  op       register form    word          funct3   immediate form    word          funct3   csr      inst[19:15] reg    imm  
+  CSRRW    csrrw            0xc00312f3    1        csrrwi            0xc002d2f3    5        0xc00    6                  5    
+  CSRRS    csrrs            0xc00322f3    2        csrrsi            0xc002e2f3    6        0xc00    6                  5    
+  CSRRC    csrrc            0xc00332f3    3        csrrci            0xc002f2f3    7        0xc00    6                  5    
+
+  READ THE TWO `inst[19:15]` COLUMNS. They are the SAME FIVE BITS in all six
+  words, and in the left-hand set they name REGISTER t1 and in the right-hand
+  set they name the VALUE 5. That is the whole difference between the two
+  families, and the operand column already said so: `csrrs t0, cycle, t1`
+  names a register and `csrrsi t0, cycle, 5` names a number, and the assembler
+  has put them in the same five bits.
+
+
+  THE ONE BIT.  Each register form against its immediate form,
+  with funct3 read out of the two words and nothing else:
+
+  register form    funct3   immediate form     funct3   xor     where           
+  csrrw            1        csrrwi             5        0x04    bit 2 of funct3 
+  csrrs            2        csrrsi             6        0x04    bit 2 of funct3 
+  csrrc            3        csrrci             7        0x04    bit 2 of funct3 
+
+    the three XORs are 0x04, and there is exactly one bit in the output
+    setting all three: 1 against 5, 2 against 6, 3 against 7, and
+    1 ^ 5 = 2 ^ 6 = 3 ^ 7 = 4, and 4 is bit 2 of a three-bit field.
+
+  THREE PAIRS, THREE IDENTICAL DELTAS, AND THE DELTA IS FUNCT3 BIT 2. A register and an immediate are the same instruction with one bit changed, and the bit is inside the three-bit selector rather
+  than anywhere in the operand fields.
+
+  That is worth a sentence on its own, because it is the shape of a design decision rather than the shape of an accident. A register field and an immediate field are the SAME WIDTH -- five bits -- and
+  a designer who had put the two in different places would have had to spend a bit somewhere. The architecture spends it in the selector instead, where it costs nothing at decode time because the
+  selector is read first, and the reader gets one selector with six values instead of two selectors with three values each.
+
+
+  THE TWO-WORD SPELLINGS, and what they actually are:
+
+  two-word  operands     three-operand   operands              word         word         verdict                 
+  csrw      cycle, t0    csrrw           zero, cycle, t0       0xc0029073   0xc0029073   IDENTICAL               
+  csrw      cycle, t0    csrrw           x0, cycle, t0         0xc0029073   0xc0029073   IDENTICAL               
+  csrs      cycle, t0    csrrs           zero, cycle, t0       0xc002a073   0xc002a073   IDENTICAL               
+  csrc      cycle, t0    csrrc           zero, cycle, t0       0xc002b073   0xc002b073   IDENTICAL               
+  csrwi     cycle, 5     csrrwi          zero, cycle, 5        0xc002d073   0xc002d073   IDENTICAL               
+  csrsi     cycle, 5     csrrsi          zero, cycle, 5        0xc002e073   0xc002e073   IDENTICAL               
+  csrci     cycle, 5     csrrci          zero, cycle, 5        0xc002f073   0xc002f073   IDENTICAL               
+  csrr      t0, cycle    csrrs           t0, cycle, zero       0xc00022f3   0xc00022f3   IDENTICAL               
+
+    8 of 8 comparisons are byte-identical, and the number of
+    differences is 0: a pseudo-instruction is not a separate
+    encoding, it is a three-operand form with x0 in one of the
+    two register slots.  `zero` and `x0` are the same register
+    spelled two ways and they are in the table as two separate
+    rows because otherwise the check needs a special case.
+
+  `csrw cycle, t0` is `csrrw zero, cycle, t0` and NOT `csrrs zero, cycle, t0`,
+  which is the mistake a reader makes when they assume the `w` stands for
+  "write the value in" rather than for the instruction's own mnemonic. The
+  first version of this file's alias table paired `csrw` with `csrrs` on that
+  assumption and the comparison printed a difference of 0x00000000 -- which is
+  a DIFFERENCE and not a typo, because the two words differ in `funct3` alone:
+  1 against 2, a WRITE against a SET.
+
+  AND `csrr rd, csr` IS `csrrs rd, csr, zero`, so the most common CSR
+  instruction in any privileged program is a SET whose source register is
+  hardwired zero. The `rs1` field is 0 in the word, and the second reader's
+  alias `rdcycle` is a mnemonic this file's own decoder does not print: the
+  inherited `rvdec.py` names the underlying instruction, and section 12 is
+  where the two readers' disagreement about the SPELLING is measured and found
+  to be a spelling rather than a decoding.
+
+
+  THE FIELD MASKS, derived rather than quoted, by asking what the
+  sweep moved.  A mask is a LOWER BOUND: it is what this corpus
+  moved, and it is the field's width only if the sweep was wide
+  enough.
+
+  what the sweep moved                              words   raw mask      bits   isolated      bits 
+  funct3 alone, masked out of the three register forms  3       0x00033000    4      0x00003000    2    
+  inst[19:15] alone, the same three forms against the base  3       0x00033000    4      0x00030000    2    
+  the CSR NUMBER, every csrr in the file (NOT ISOLATED)  50      0xfff3f280    20     0xfff3f280    20   
+  the CSR NUMBER, ISOLATED: two-operand csrr words only  36      0xfff00000    12     0xfff00000    12   
+
+    the isolated row moves bits 20 to 31: 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
+    12 bits, CONTIGUOUS, and the boundary is confirmed by the
+    assembler refusing 0x1000 rather than by the sweep alone.
+
+  THE FIRST TWO ROWS ARE TWO ISOLATIONS OF THE SAME THREE WORDS, and they are in the table because a mask is a LOWER BOUND and the two ways of getting one disagree about what the field is. The raw XOR
+  of the three register forms against the base moved FOUR bits -- bits 12, 13, 16 and 17 -- and that is `funct3` AND `rs1`, because the base is a two-operand `csrr` with rs1 = 0 and the three forms
+  all have rs1 = t1. Masking with `0x7000` leaves `funct3` at TWO bits moved and masking with `0x000f8000` leaves `rs1` at TWO bits moved, and neither of those is the field's width either: three
+  register forms differ in only TWO funct3 values out of the three the field can hold, because the base is funct3 = 2 and the sweep moved to 1 and 3. A MASK IS A LOWER BOUND AND A SWEEP OF THREE
+  INSTRUCTIONS IN A FOUR-VALUE FIELD CANNOT FIND THE FOURTH.
+
+  THE THIRD AND FOURTH ROWS ARE THE SAME FIELD AND THEY ARE THE WHOLE OF RETRACTION R2. The raw sweep moved 20 bits; the isolated sweep moved the CSR NUMBER and nothing else.
+
+  The raw sweep is "every `csrr` in the file", and that set includes the immediate forms and the three-operand forms as well as the two-operand ones, so it moves `funct3` and `rs1` as well as the
+  address. The isolated sweep holds `funct3` and `rs1` constant by using the 36 two-operand `csrr rd, csr` words and nothing else, and what is left is the address field ALONE: bits 20 to 31,
+  contiguous, 12 of them.
+
+  A MASK WITH A HOLE IN IT IS A NUMBER ABOUT THE SET YOU SWEPT AND NOT ABOUT THE FIELD, AND THE REPAIR IS TO HOLD THE OTHER FIELDS CONSTANT RATHER THAN TO MASK THE RESULT AFTERWARDS. The two masks are
+  printed in this file's source next to the sweep, so a reader can see what was held constant. Masking the RESULT would have been equivalent here and is worse, because a result mask cannot distinguish
+  "this field did not move" from "this field moved and the mask hid it": a mask applied to the INPUT is a statement about the sweep and a mask applied to the OUTPUT is a statement about the answer.
+
+  AND THE FOURTH ROW IS ALSO THE COURSE'S BEST EXERCISE IN A LOWER BOUND. The first version of the isolated sweep moved ELEVEN bits and not twelve, because every named CSR in `csr.s` and every U-mode
+  address in it had bit 5 of its address clear -- so the sweep reported a field of eleven bits for a field the specification says is twelve, and the missing bit was bit 25. The fix was to add two
+  addresses with bit 5 SET, and `csr.s` says so at the line where they are written. A CORPUS IN WHICH EVERY ADDRESS HAS THE SAME BIT CLEAR WILL REPORT A FIELD ONE BIT NARROWER THAN IT IS, WITH NOTHING
+  IN THE OUTPUT THAT LOOKS LIKE A GAP.
+
+  That is why the field's width here rests on TWO measurements and not one. The sweep says 12 bits moved, and the assembler's REFUSAL at 0x1000 says twelve bits is all there is. A sweep alone would
+  have said eleven, and would have been right about its corpus -- which is the least comforting kind of right and the one the AArch64 section's HINT finding is about.
+
+
+  THE TWELVE-BIT FIELD, MEASURED BY WHERE THE ASSEMBLER STOPS.
+  A boundary measured by a refusal is worth more than a boundary
+  quoted from a diagram, because it is the TOOL agreeing with the
+  document rather than a second reading of the same document.
+
+  source                  verdict    size      word          the assembler's own words                                     
+  csrr t0, 0x7ff          accepted   4 bytes   0x7ff022f3    csrr                                                          
+  csrr t0, 0x800          accepted   4 bytes   0x800022f3    csrr                                                          
+  csrr t0, 0xfff          accepted   4 bytes   0xfff022f3    csrr                                                          
+  csrr t0, 0x1000         REFUSED    -         -             immediate must be an integer in the range [0, 4095]           
+  csrr t0, 0xfff0         REFUSED    -         -             immediate must be an integer in the range [0, 4095]           
+  csrwi 0xfff, 0x1f       accepted   4 bytes   0xffffd073    csrwi                                                         
+  csrwi 0xfff, 0x20       REFUSED    -         -             immediate must be an integer in the range [0, 31]             
+  csrwi 0x1000, 5         REFUSED    -         -             immediate must be an integer in the range [0, 4095]           
+  csrrs t0, 0xfff, t1     accepted   4 bytes   0xfff322f3    csrrs                                                         
+  csrw 0xfff, t0          accepted   4 bytes   0xfff29073    csrw                                                          
+
+  4095 IS THE LAST CSR NUMBER AND 4096 IS NOT ONE, AND THE ASSEMBLER SAYS SO IN ITS OWN WORDS: immediate must be an integer in the range [0, 4095]. THE FIVE-BIT IMMEDIATE HAS ITS OWN BOUNDARY AT 31,
+  and it is the SAME SHAPE OF MESSAGE on a DIFFERENT FIELD: immediate must be an integer in the range [0, 31].
+
+  Two boundaries, two fields, one message. 2^12 - 1 is 4095 and 2^5 - 1 is 31, and the field widths are the only difference between them, which is the check on the quoted "twelve bits" and on the
+  immediate form's five at the same time. 6 of the 10 probes were accepted and 4 refused, and every refusal is quoted above in the assembler's own words rather than summarised, because a summarised
+  refusal is a refusal a reader has to trust.
+
+==========================================================================
+SECTION 4 -- Zicsr IS NOT IN THE BASE ISA -- AND THE ISA STRING DOES NOT NOTICE
+==========================================================================
+
+  THE SPLIT IS QUOTED, and it is worth stating in the manual's own terms
+  because the wording is unusual. From `rv32-unpriv`, which is the document
+  the previous RISC-V course established as this section's unprivileged
+  oracle: the base integer set no longer contains the six CSR instructions,
+  and a hardware implementation that includes the privileged architecture is
+  expected to require them anyway.
+
+  That is a DOCUMENTARY fact and there is nothing to measure about it. What IS
+  measurable is what the toolchain does about it, and the answer is the
+  finding of this section.
+
+
+  THE SAME TWO INSTRUCTIONS, THREE TIMES, AT THREE -march SETTINGS.
+  only_zicsr.s is `csrr t0, cycle` and `ret` and nothing else, so
+  the object cannot contain anything but the extension in question.
+
+  -march                      Tag_RISCV_arch in the object                words   word 0        claims zicsr? 
+  rv64i                       rv64i2p1                                    2       0xc00022f3    NO            
+  rv64i_zicsr                 rv64i2p1_zicsr2p0                           2       0xc00022f3    YES           
+  rv64i_zicsr_zifencei        rv64i2p1_zicsr2p0_zifencei2p0               2       0xc00022f3    YES           
+
+    The FIRST row is the finding.  -march=rv64i, the base, and the
+    object contains 0xc00022f3 -- a Zicsr instruction -- and its ISA
+    string is rv64i2p1.
+
+  THE ASSEMBLER EMITTED A Zicsr INSTRUCTION UNDER -march=rv64i, GAVE NO DIAGNOSTIC, AND THE OBJECT'S ISA STRING SAYS rv64i2p1 WITH NO zicsr IN IT.
+
+  Read that as three separate claims, because they are three separate things and the course could easily have collapsed them into one:
+
+  * 1. THE ASSEMBLER DOES NOT ENFORCE THE SPLIT.  It will assemble a Zicsr
+  instruction with the base ISA selected and it says nothing.  The word
+  `zicsr` is not in the object and the instruction is in the object.
+  * 2. THE INSTRUCTION IS THE SAME ONE either way.  The first word of both
+  objects is the same 32 bits, and the two files differ in one string in one
+  section and in nothing else this artifact looks at.
+  * 3. THE ISA STRING RECORDS WHAT WAS ASKED FOR AND NOT WHAT IS THERE.
+
+  THE THIRD IS THE ONE WITH CONSEQUENCES. `Tag_RISCV_arch` is the string a linker and a loader read to decide whether an object's instructions are decodable by the machine it is producing. The
+  previous RISC-V course established, from `rvasm`'s `rv-isa` concept, that the string is a rich and useful record: it names the sub-extensions an object actually uses, so a linker knows whether its
+  compressed instructions are decodable. THIS IS THE SAME STRING, AND IT IS A RECORD OF THE REQUEST.
+
+  The consequence is precise and it is not a defect anybody has to fix: a `-march=rv64i` object assembled by this toolchain can contain a Zicsr instruction, and the string in the file will not warn
+  you. A toolchain that wanted to make the string trustworthy would have to REFUSE the instruction under a base `-march`, and this one does not.
+
+  AND THE INSTRUCTION IS IN THE C TOO, which is the part that makes it a compiler observation rather than an assembler curiosity. Section 5's `ecall` wrapper is written in C, and the `csrr` functions
+  beside it compile to bare `csrr` instructions with no diagnostic and no attribute change. Nothing in the C source tells the compiler that a privileged register is involved, so there is nothing for
+  it to check: `csrr %0, satp` in a function that will run in U-mode assembles exactly as cleanly as one that will run in M-mode, and the object is identical.
+
+  THAT IS THE HONEST VERSION OF "PRIVILEGE IS A CONVENTION ON RISC-V", and it is a stronger claim than the manual's. The manual says the CSR ADDRESS encodes who may touch a register. The measurement
+  says the INSTRUCTION does not notice which register it is touching, that no part of the toolchain notices, and that the string a linker would consult does not record it either.
+
+
+  AND IN C, WHERE NOTHING COULD HAVE CHECKED ANYWAY:
+
+    rd_satp        0x18002573  csrr   a0, satp                4 bytes
+    rd_stvec       0x10502573  csrr   a0, stvec               4 bytes
+    rd_scause      0x14202573  csrr   a0, scause              4 bytes
+
+  Three privileged registers, read by three C functions, and the compiler's
+  whole contribution to each is `csrr a0, <name>`. The CSR ADDRESS is a
+  three-digit hexadecimal constant that the assembler resolved from a name,
+  and the compiler never sees the number: it sees a string in an inline `asm`
+  statement and passes it through.
+
+  MEASURED-ON-BYTES, and the second reader prints the same three words. And
+  this is the honest place for the section's own limit: what is measured is
+  the emission, and what is NOT measured is whether a RISC-V machine would
+  trap on `rd_satp` when it executes in U-mode, which is what the privilege
+  model says and which nothing on this host can confirm.
+
+==========================================================================
+SECTION 5 -- THE ecall CONVENTION, AND THE ONE BIT THAT SEPARATES a7 FROM a6
+==========================================================================
+
+  `ecall` is 0x00000073 and thirty-one of its thirty-two bits are a fixed
+  pattern, which the first course in this section measured and this one
+  repeats in a different role. What is NEW here is everything around it: the
+  compiler's choice of registers, and the measurement that the choice is a
+  CONVENTION -- that a reader who guesses wrong about it produces a program
+  which differs from the right one by ONE BIT of ONE INSTRUCTION and has no
+  other symptom.
+
+  The convention is QUOTED, from the psABI's chapter on system calls, and it
+  is NOT in the instruction: the syscall number goes in `a7`, the arguments in
+  `a0` to `a5`, and the answer comes back in `a0`. Read the next table before
+  the next paragraph, because the table is the argument that the convention is
+  not in the instruction.
+
+
+  THE THREE WRAPPERS AT -O2, FUNCTION BY FUNCTION:
+
+  function          instructions   bytes    the whole body                                
+  sys_write         5              16       li | add | ecall | add | ret                  
+  sys_getpid        4              12       li | li | ecall | ret                         
+  sys_write_a6      5              16       li | add | ecall | add | ret                  
+
+  THE CONTROL.  `sys_write` puts the number in a7 and
+  `sys_write_a6` puts it in a6 -- the register a reader would
+  guess from x86-64, where the number goes in rax.  The two
+  functions are the same C with one word changed.
+
+    li     a7, 0x40           0x04000893
+    li     a6, 0x40           0x04000813
+    XOR 0x00000080 -- bits 7
+
+    a7 is x17 and a6 is x16, and x17 is 0b10001 and x16 is
+    0b10000, so the difference is the LOWEST BIT OF THE
+    DESTINATION FIELD, rd at inst[11:7], and nothing else in
+    the word.  The same 32 bits, one bit apart, and the bit
+    is not in the opcode, not in the CSR field and not in
+    any immediate.
+
+  THE SYSCALL NUMBER GOES IN a7 AND THE SAME PROGRAM WITH a6 DIFFERS IN EXACTLY ONE BIT OF ONE INSTRUCTION, AND THAT BIT IS rd[0].
+
+  Now put the three facts side by side and they make a sentence:
+
+  * `ecall` is 0x00000073: thirty-one fixed bits and nothing that names a
+    register;
+  * the number is in a7, which is `rd[0]` of the word three instructions
+    earlier, and nothing in `ecall` refers to it;
+  * a7 and a6 are ONE BIT apart.
+
+  So the ENTIRE difference between a working system call and a broken one, on this architecture, is a bit that appears in a DIFFERENT INSTRUCTION than the one that performs the call. There is no
+  linker check for it, no assembler check for it, no encoding relationship between them, and no diagnostic. A kernel whose ABI said a6 instead of a7 would be a kernel that works, and the only way to
+  find out which one you have is to read a7 or a6 out of a register in a debugger on hardware this host does not have.
+
+  THAT IS THE STRONGEST FORM OF "THE ecall CONVENTION IS AN ABI AND NOT AN ARCHITECTURE", and it is measured rather than asserted. The weaker form -- "the instruction does not name a register" -- is
+  true and is stated in the first RISC-V course. The stronger form is that the register the ABI names is carried by a field the ABI also has to agree on separately, one bit wide, in an instruction the
+  architecture does not associate with the call.
+
+  AND THE CORPUS SAYS THE SAME THING AT FOUR LEVELS. The table above is -O2. At -O0 the same function is 30 instructions and 100 bytes and the two versions differ in one word as well, at a different
+  offset, because the registers are spilled and reloaded. Section 5's own finding is therefore not an artefact of one optimisation level: the pair differs in exactly one word at all four, and which
+  word moves with the level. That is a SHAPE, and the harness asserts the shape and not the offsets.
+
+
+  THE SAME FUNCTIONS AT FOUR LEVELS, and the counts:
+
+  level    sys_write insns   bytes    sys_write_a6 insns  words that differ  same length? 
+  O0       30                100      30                  1                 yes          
+  O1       5                 16       5                   1                 yes          
+  O2       5                 16       5                   1                 yes          
+  Os       5                 16       5                   1                 yes          
+
+  THE SPREAD IS 30 INSTRUCTIONS AT -O0 AND 5 AT THE OTHER THREE, and that
+  spread is the compiler's and not the convention's. A reader who quoted 30
+  would be quoting a property of clang's -O0 scaffolding; a reader who quoted
+  5 would be quoting clang 21.1.8's -O1. The number that is the ABI's is the
+  last column: the two functions have the SAME LENGTH at every level and
+  differ in EXACTLY ONE WORD.
+
+  The first version of `wrap.c` was a different program and it taught a
+  different lesson, so the difference is recorded rather than hidden. The
+  original had
+
+  long sys_write(long fd, const char *buf, long n) { register long a7
+  __asm__("a7") = 64; __asm__ volatile ("ecall" : "+r"(a0) : ... ); return a0;
+  }
+
+  and at -O1 and above clang compiled it to `li a7, 0x40 ; ecall ; ret` --
+  THREE instructions, with the three argument loads DELETED. Nothing was wrong
+  with the compiler. The arguments were dead as far as it could see, and what
+  the measurement had become was a measurement of dead-code elimination. The
+  corpus adds `+ nfd + n` to the return value, which makes them live, and the
+  count is then a count of the convention. A course that had shipped the first
+  version would have reported a number that was true and about the wrong
+  thing, and section 14's R4 is that retraction.
+
+
+  WHAT THE EMITTED BYTES DO NOT CONTAIN, which is the limit and
+  not a disclaimer:
+
+    - the number 64 as a syscall number
+    - any reference to a7 from inside `ecall`
+    - any check that a0-a5 were set
+    - any indication that this is a system call at all
+    - any return path, because the trap is a jump to a handler
+
+  NOT ONE OF THOSE FIVE IS IN THE OBJECT FILE, and all five are things the word `ecall` is usually taken to mean. WHAT IS MEASURED HERE IS THAT THE COMPILER EMITS THE CONSTANT 0x00000073 WITH THE
+  CONVENTION'S REGISTERS AROUND IT, AND WHAT IS NOT MEASURED IS THAT ANY OF IT WORKS: no trap is taken, no mode changes, no handler runs, no value comes back, and the number 64 is not known to be a
+  syscall number by anything in this course except the specification that says so.
+
+==========================================================================
+SECTION 6 -- Sv39, Sv48, Sv57 -- THREE LEVEL COUNTS AND A PAGE SIZE
+==========================================================================
+
+  The three formats are QUOTED, and the quotes are short enough to print.
+  `priv-spec` section 11.1.4, on Sv39: "The algorithm for virtual-to-physical
+  address translation is the same as in 11.1.3.2 ... except LEVELS equals 3
+  and PTESIZE equals 8." Section 11.1.5, on Sv48: "It closely follows the
+  design of Sv39, simply adding an additional level of page table, and so this
+  chapter only details the differences between the two schemes ... LEVELS
+  equals 4 and PTESIZE equals 8." Section 11.1.6, on Sv57, adds a fifth.
+
+  And the page size, from the same chapter and stated as a decision rather
+  than a derivation: "After much deliberation, we have settled on a
+  conventional page size of 4 KiB for both RV32 and RV64. We expect this
+  decision to ease the porting of low-level runtime software and device
+  drivers."
+
+  THE ARITHMETIC IS THE WHOLE OF THE THREE FORMATS, and this is the one
+  section of the course where a reader with a pencil can check every number.
+  From PTESIZE = 8 and a 4 KiB granule: 4096 / 8 = 512 entries per table, and
+  512 is 2^9, so NINE index bits per level. From LEVELS = L: L * 9 + 12 = the
+  width of the virtual address, and the 12 is the page offset that is never
+  translated.
+
+
+  format   LEVELS   satp.MODE   entries/table  index bits   VPN bits    VA bits   range     range in human units
+  Sv39     3        8           512            9            27          39        2^39      512 GiB         
+  Sv48     4        9           512            9            36          48        2^48      256 TiB         
+  Sv57     5        10          512            9            45          57        2^57      128 PiB         
+
+  READ THE `satp.MODE` COLUMN AGAINST THE `LEVELS` COLUMN. The mode values are
+  8, 9 and 10 and they are NOT the level counts: a mode of 8 is three levels,
+  9 is four and 10 is five, and the offset between them is consistent (+1 per
+  level) but the base is 5 above three. The reason is that modes 0 through 7
+  are spoken for -- 0 is Bare, 1 is Sv32, and 2 through 7 are "Reserved for
+  standard use" -- so the Sv modes could not have started at the level count
+  without colliding, and the numbering is a REGISTRY rather than a formula. A
+  reader who writes `satp.MODE = LEVELS` gets a hardware address-translation
+  mode this specification does not define.
+
+  And the read-only hole: mode 11 is Sv64, "Reserved for page-based 64-bit
+  virtual addressing", and 12 through 13 are reserved and 14 through 15 are
+  "Designated for custom use". Three of the sixteen mode values a 4-bit field
+  can hold are for modes that do not exist, which is worth knowing before
+  writing a mode-check switch that assumes its default case is unreachable.
+
+
+  THE SAME TABLE AS CHECKABLE ARITHMETIC.  Each line is an
+  identity, and each is asserted by this file rather than left to
+  the reader, because an identity printed and not checked is a
+  claim.
+
+    Sv39  LEVELS=3  mode=8  VA=39 bits  2^39 = 512 GiB
+        [ok] granule / PTE_BYTES = 512 = 2^9
+        [ok] a page table is EXACTLY one granule: 512 * 8 = 4096 = 4096
+        [ok] LEVELS * 9 + 12 = 39
+        [ok] the mode is 5 above the level count, and +1 per level
+        [ok] the flat table is 2^27 = 134217728 entries
+        [ok] a flat table is 1/512 of the space it covers: 1073741824 * 512 = 2^39
+        flat table would be 134217728 entries = 1 GiB of PTE bytes
+
+    Sv48  LEVELS=4  mode=9  VA=48 bits  2^48 = 256 TiB
+        [ok] granule / PTE_BYTES = 512 = 2^9
+        [ok] a page table is EXACTLY one granule: 512 * 8 = 4096 = 4096
+        [ok] LEVELS * 9 + 12 = 48
+        [ok] the mode is 5 above the level count, and +1 per level
+        [ok] the flat table is 2^36 = 68719476736 entries
+        [ok] a flat table is 1/512 of the space it covers: 549755813888 * 512 = 2^48
+        flat table would be 68719476736 entries = 512 GiB of PTE bytes
+
+    Sv57  LEVELS=5  mode=10  VA=57 bits  2^57 = 128 PiB
+        [ok] granule / PTE_BYTES = 512 = 2^9
+        [ok] a page table is EXACTLY one granule: 512 * 8 = 4096 = 4096
+        [ok] LEVELS * 9 + 12 = 57
+        [ok] the mode is 5 above the level count, and +1 per level
+        [ok] the flat table is 2^45 = 35184372088832 entries
+        [ok] a flat table is 1/512 of the space it covers: 281474976710656 * 512 = 2^57
+        flat table would be 35184372088832 entries = 256 TiB of PTE bytes
+
+  THE LAST LINE OF EACH BLOCK IS THE ARGUMENT FOR HAVING MORE THAN ONE LEVEL,
+  and it is the number a reader should take away. A flat table for Sv39 would
+  be 2^27 entries of 8 bytes, which is 1 GiB of page table to map 512 GiB of
+  address space -- a ratio of one table byte per 512 address bytes. Sv48's
+  flat table is 512 GiB for 256 TiB, the same ratio, and Sv57's is 256 TiB for
+  128 PiB. The multi-level walk exists so that the UNUSED part of the address
+  space costs nothing, and the cost of a level is 4 KiB: one page of pointers,
+  of which 512 - 1 are free for the level below.
+
+  So the whole cost of the third level of Sv39 is 4 KiB, and the whole benefit
+  is that 511 of the 512 entries in the root table can be left alone. A reader
+  who wants the sharpest single sentence in this section has it: THE THIRD
+  LEVEL COSTS ONE PAGE AND BUYS 511 ENTRIES OF ROOT TABLE.
+
+
+  THE PAGE-TABLE PAGE, and the two numbers a kernel must match:
+
+    entries per table        512 = 2^9        (4096 / 8)
+    a page table is exactly  4096 bytes      (512 * 8, and the
+                                           granule is 4096)
+    entries actually usable  511             (entry 0 is a fault
+                                           handler by convention)
+    the aligned size is      2^12 = 4096     (a page, and 512*8
+                                           is a page, so a page
+                                           table and a page are the
+                                           same size by arithmetic)
+
+  THE LAST OF THOSE IS THE ONE A KERNEL GETS WRONG BY ASSUMING. 512 entries of
+  8 bytes is EXACTLY one 4 KiB page, and that is not a coincidence to be
+  noticed -- it is why PTESIZE is 8 and not 4, and `priv-spec` says so
+  directly: "Sv39 page tables contain 2^9 page table entries (PTEs), eight
+  bytes each. A page table is exactly the size of a page and must always be
+  aligned to a page boundary."
+
+  So the alignment requirement falls out of the geometry. A page table IS a
+  page. Which means `satp`'s PPN is a page number rather than an address, and
+  which means a kernel that allocates a page table out of a page allocator
+  gets the alignment for free -- and a kernel that allocates one out of a slab
+  has to ask for it, and `a64sys`'s concept 5 measured the AArch64 version of
+  exactly that mistake, where the alignment is a property of the SECTION
+  rather than of the declaration. The RISC-V version is easier, and section
+  9's `pt.s` puts the tables in a `.data` section with `.align 12` precisely
+  so that the relocation offsets in the table are page numbers rather than
+  byte offsets, and the numbers come out clean.
+
+
+  THE LEAF SIZES, and the rule that produces them.  "Any level of
+  PTE may be a leaf PTE" -- so a leaf is not "the last level", it
+  is "any level whose PPN is aligned to its own size".
+
+  format   LEVELS   the leaf sizes below the root             and                       
+  Sv39     3        4 KiB, 2 MiB, 1 GiB                       and one more, 512 GiB, at the root
+  Sv48     4        4 KiB, 2 MiB, 1 GiB, 512 GiB              and one more, 256 TiB, at the root
+  Sv57     5        4 KiB, 2 MiB, 1 GiB, 512 GiB, 256 TiB     and one more, 128 PiB, at the root
+
+  Sv39 has three levels and therefore three leaf sizes: 4 KiB, 2 MiB and 1 GiB. `priv-spec` §11.1.4 states them: "in addition to 4 KiB pages, Sv39 supports 2 MiB megapages and 1 GiB gigapages, each of
+  which must be virtually and physically aligned to a boundary equal to its size. A page-fault exception is raised if the physical address is insufficiently aligned."
+
+  Sv48 adds 512 GiB and Sv57 adds 256 TiB, and the count of sizes is exactly the number of levels, which follows from the rule rather than from a table: a leaf at level k has consumed k index fields
+  and so covers 2^(12 + 9k) bytes. 2^(12+9) is 2^21 = 2 MiB, 2^(12+18) is 2^30 = 1 GiB, 2^(12+27) is 2^39 = 512 GiB. The numbers in that sentence are arithmetic from the granule and the index width,
+  and a reader who wants to check them does not need the manual.
+
+  AND THE ALIGNMENT REQUIREMENT IS NOT FREE, which is the sentence worth keeping. A megapage leaf's PPN must be 2^(9+1) = 2^10 = 1024-aligned within its 4 KiB PTE field -- the low 10 bits of the PPN
+  must be zero, which is 2^9 for the index field and 1 for the offset. A gigapage's must be 2^19-aligned. The hardware does not mask them: "A page-fault exception is raised if the physical address is
+  insufficiently aligned." So a kernel that builds a megapage at a 4 KiB-aligned address FAULTS, and the fault is arithmetic rather than a policy decision, and the check is three instructions in the
+  wrong place if the allocator does not do it.
+
+  AND NONE OF IT IS OBSERVABLE HERE. There is no RISC-V machine on this host, so no page is walked, no TLB is consulted, no page fault is raised and no A or D bit is set by anything. Every number in
+  this section is arithmetic over two quoted constants, and that is the strongest kind of claim in the course: it does not need the specification's trust beyond the two constants and it does not need
+  hardware at all.
+
+==========================================================================
+SECTION 7 -- THE EIGHT PTE BITS, READ OUT OF WHAT THE COMPILER EMITTED
+==========================================================================
+
+  The PTE format is QUOTED. `priv-spec` §11.1.4 prints it as a figure and then
+  says the part that matters for a decoder: "The PTE format for Sv39 is shown
+  in Figure 22. Bits 9-0 have the same meaning as for Sv32." The layout, from
+  the low bit up, is V, R, W, X, U, G, A, D, then PTESIZE at bits 9-8, then
+  the PPN at bits 53-10, with bit 63 reserved for Svnapot and bits 62-61
+  reserved for Svpbmt and bits 60-54 reserved for future standard use.
+
+  THE WAY TO CHECK IT WITHOUT A MANUAL is to write the eight bit extractions
+  in C, compile them, and read the SHIFTS back out of the words. `bits.c` does
+  that and the compiler emits, for every one of the eight, the same two-
+  instruction shape: a left shift by 63 - n followed by a right shift by 63. A
+  reader can verify the whole table against a manual by checking eight
+  decreasing shift amounts, and that is a much better check than reading eight
+  rows of a table and hoping.
+
+
+  bit    n     the first instruction   the second      what it says about the bit              
+  V      0     andi a0, a0, 0x1        mask 0x1        the compiler SPECIALISED bit 0 into a mask
+  R      1     slli by 0x3e            srli by 0x3f    63 - 0x3e = 1                           
+  W      2     slli by 0x3d            srli by 0x3f    63 - 0x3d = 2                           
+  X      3     slli by 0x3c            srli by 0x3f    63 - 0x3c = 3                           
+  U      4     slli by 0x3b            srli by 0x3f    63 - 0x3b = 4                           
+  G      5     slli by 0x3a            srli by 0x3f    63 - 0x3a = 5                           
+  A      6     slli by 0x39            srli by 0x3f    63 - 0x39 = 6                           
+  D      7     slli by 0x38            srli by 0x3f    63 - 0x38 = 7                           
+
+    EIGHT BITS, EIGHT LEFT SHIFTS, AND THEY ARE 0x3e 0x3d 0x3c 0x3b 0x3a 0x39 0x38 in
+    the order R W X U G A D -- that is, DECREASING BY ONE as the
+    bit number increases, because 63 - n decreases as n does.
+    And the right shift is 0x3f = 63 in all seven, because the
+    mask is a sign-extend-to-64 and not a zero-extend.
+
+  THE COMPILER EMITTED THE MANUAL'S BIT TABLE AS SEVEN DESCENDING SHIFT AMOUNTS AND A FIXED RIGHT SHIFT OF 63, AND 63 - n IS THE ONLY ARITHMETIC IN IT.
+
+  That is the third reader. The manual has a figure, the compiler has an instruction sequence, and this file compares them by reading the immediate out of a word and subtracting it from 63. If the
+  manual's figure were wrong -- if A were bit 5 and D were bit 6 -- the compiler's `((p) >> 6) & 1` would still emit `slli by 0x39` and the check would fail. The compiler is not an authority on the
+  PTE layout; it is an authority on what a C expression becomes, and those are two different things and the composition of the two is what checks the figure.
+
+  AND THE RIGHT SHIFT OF 63 IS WORTH A SENTENCE ON ITS OWN, because it is a fact about the MASK and not about the layout. `(p >> 6) & 1` could be `andi` with a literal 1 after a right shift, and clang
+  emitted a left shift first and then a sign-extend instead, because that form is branch-free and constant-foldable on a 64-bit target and the compiler prefers it. The consequence is that a reader
+  looking for `srli a0, a0, 6 ; andi a0, a0, 1` finds NEITHER instruction, and a decoder written against the shape they expected finds two instructions that are not the two they wanted. BIT 0 IS THE
+  ONE EXCEPTION: clang emitted `andi a0, a0, 0x1` and NO SHIFT AT ALL, because shifting by zero and masking with one is the identity and the optimiser knows it.
+
+  So the table is seven rows of one shape and one row of another, and a reader who writes a field-extraction helper that assumes the uniform shape will work on seven of the eight and produce a wrong
+  answer on the eighth with no diagnostic.
+
+
+  THE A AND D BITS, and the two schemes for managing them.  The
+  bits are the measurement above; the two SCHEMES are quoted, and
+  the quotation is the sharpest thing in the whole course about
+  what a specification does when a hardware decision is left to
+  the implementer.
+
+  `priv-spec` §11.1.3.1: "Each leaf PTE contains an accessed (A) and dirty (D) bit. The A bit indicates the virtual page has been read, written, or fetched from since the last time the A bit was
+  cleared. The D bit indicates the virtual page has been written since the last time the D bit was cleared."
+
+  And then the specification offers TWO schemes, and the choice between them is not the implementation's alone:
+
+  "Two schemes to manage the A and D bits are defined:
+
+     * The Svade extension: when a virtual page is accessed and the A bit is
+       clear, or is written and the D bit is clear, a page-fault exception is
+       raised.
+
+     * When the Svade extension is not implemented, the following scheme
+       applies.  When a virtual page is accessed and the A bit is clear, the
+       PTE is updated to set the A bit.  When the virtual page is written and
+       the D bit is clear, the PTE is updated to set the D bit."
+
+  THAT IS THE IMPLICIT PAGE-FAULT PATH, and it is worth being precise about which is which, because the names are easy to swap:
+
+  * WITHOUT Svade, hardware SETS the bits.  A first touch to a page whose A
+    and D are both clear succeeds, and the hardware updates the PTE as a side
+    effect.  No trap, and the cost is a store to the page table inside what
+    the program experiences as a load.
+  * WITH Svade, hardware TRAPS.  A first touch to the same page raises a page
+    fault, the handler sets the bits, and returns.  The cost is an exception
+    round trip.
+
+  The v1.11 preface records the change: "Hardware management of page-table entry Accessed and Dirty bits has been made optional; simpler implementations may trap to software to set them." A
+  specification that used to require the hardware scheme now permits both, and a kernel that has to know which one it is running on cannot find out by reading a register -- it has to WRITE ONE TO
+  EVERY BIT AND READ BACK, the same procedure the specification gives three times elsewhere.
+
+  AND NEITHER SCHEME IS OBSERVABLE ON THIS HOST, because there is no RISC-V machine here to touch a page. What is measured is that the two bits are at 6 and 7 and that a C expression for them compiles
+  to a specific pair of instructions. What is quoted is what each scheme does. What is NOT claimed, and could not be, is which scheme any particular hart implements, how many page faults a first touch
+  costs, or whether the hardware update is atomic with the access that caused it -- the last of which the specification addresses at length and which is emphatically a property of silicon this course
+  has no way to reach.
+
+==========================================================================
+SECTION 8 -- satp, AND TWO MASKS OF OURS OWN THAT ARE WRONG
+==========================================================================
+
+  `satp` is QUOTED, and the field layout is `priv-spec` §11.1.1.11: MODE at bits 63-60, ASID at 59-44, and the PPN below that. On RV64 that is 4 bits, 16 bits, and whatever is left, and "whatever is
+  left" is the interesting arithmetic: 64 - 4 - 16 = 44 bits, and the PPN is stored DIVIDED BY THE GRANULE, so the register holds a page number rather than an address and the field is 44 - 8 = 36 bits
+  of page number.
+
+  THE PPN FIELD IN satp IS 36 BITS, NOT 44 AND NOT 54, AND bits.c CONTAINS TWO MASKS THAT ARE WRONG AND THIS FILE MEASURED BOTH.
+
+  The two wrong masks are in the corpus on purpose. `satp_ppn54_wrong` masks with 0x3fffffffffffff, which is 54 bits -- the width of the PPN field in a PTE, applied to the wrong register.
+  `satp_ppn44_wrong` masks with 0xfffffffffff, which is 44 bits -- the width the manual's PPN figure shows, also applied to the wrong register. Both are NATURAL mistakes, both compile, and the
+  compiled form is a pair of plausible shifts.
+
+
+  THE FIVE satp EXTRACTORS, AS COMPILED, AND WHAT EACH ONE
+  ACTUALLY RETURNS.  The width and the position are RECOVERED from
+  the two shifts rather than assumed: a `slli by L ; srli by R`
+  pair on a 64-bit value returns input bits [R-L : 63-L], so the
+  width is 64 - R and the low bit is R - L.  A pair with no slli
+  is L = 0 and the formula still holds, which is why the MODE row
+  is in the table at all.
+
+  field               slli            srli     the width the C asked for  the width emitted  the bits it keeps   verdict             
+  MODE                (none, L = 0)   0x3c     4                         4                  satp[63:60]         CORRECT             
+  ASID                0x4             0x30     16                        16                 satp[59:44]         CORRECT             
+  PPN                 0x14            0x1c     36                        36                 satp[43:8]          CORRECT             
+  PPN, 44-bit mask    0xc             0x14     44                        44                 satp[51:8]          WRONG by +8 bits    
+  PPN, 54-bit mask    0x2             0xa      54                        54                 satp[61:8]          WRONG by +18 bits   
+
+  READ THE LAST ROW AGAINST THE THIRD. 54 bits of `satp` at [61:8] swallows the ENTIRE ASID, both bits of ASID's neighbours, and the low two bits of MODE. So `satp_ppn54_wrong` returns a value in
+  which sixteen bits of address space identifier and two bits of translation mode are silently mixed into the page number, and a caller that used it to compute a physical address would get a plausible
+  number that is wrong in a way no assertion catches.
+
+  The 44-bit mask is worse in the way that matters, because 44 IS the number the manual prints for a PTE's PPN. A reader who takes 44 from the PTE figure and applies it to satp gets a value that LOOKS
+  like the documented field width, and it is 8 bits too wide, and those 8 bits are exactly satp[51:44] -- the top eight bits of the ASID.
+
+  THE RIGHT ANSWER IS 36 BITS AND IT FOLLOWS FROM SUBTRACTING, NOT FROM READING A FIGURE: 64 - 4 (MODE) - 16 (ASID) - 8 (the granule shift) = 36.
+
+  The retracted claims and what replaced them are R5 and R6 in section 14, and the harness asserts the TEXT of both, because a retraction that is quietly deleted is the one failure no number in this
+  file can catch. The reason the two are worth printing rather than fixing silently is that BOTH ARE THE KIND OF MISTAKE A READER MAKING THIS COURSE WOULD MAKE. The PPN is 54 bits in a PTE. The PPN is
+  44 bits in the figure. satp holds a PPN. Two reasonable steps and a wrong register.
+
+  AND THE COMPILER'S CONTRIBUTION TO THE BUG WAS ZERO. It did not misunderstand either expression; it compiled both exactly as written, and the artifact's audit in section 12 is the only reason the
+  width is knowable without running the thing. That is a small point and it is the same point the sibling courses keep making: a compiler faithfully implements the C you wrote, including the C that is
+  wrong, and no amount of optimisation will tell you your mask is 18 bits too wide.
+
+
+  ONE MORE MEASUREMENT IN THE satp TABLE, and it is a small one:
+
+    srli a0, a0, 0x3c | ret 
+
+  `satp_mode` is written `(s >> 60) & 0xf` and clang emitted a RIGHT SHIFT BY
+  60 AND NO MASK. The `& 0xf` is gone, and it is gone because it is provably
+  redundant: a logical right shift by 60 of a 64-bit value leaves four bits,
+  so masking with 0xf cannot change it, and the optimiser removed it.
+
+  That is worth one paragraph because it is the clearest possible
+  demonstration that the MODE field is the TOP FOUR BITS of satp: the compiler
+  proved it without being told, from the shift alone. A reader who wanted to
+  confirm the field position had a compiler confirm it for them, and the
+  confirmation is a MISSING INSTRUCTION.
+
+  The same thing does NOT happen for `satp_asid`, which is `(s >> 44) &
+  0xffff`: a right shift by 44 leaves twenty bits and the mask removes four of
+  them, so the mask is load-bearing and the compiler keeps it. The difference
+  between the two rows of section 8's table is therefore a measurement of two
+  different facts, and a reader can check both.
+
+
+  THE RESERVED PTE BITS, and the reason they are the most
+  dangerous field in the format:
+
+    `pte_reserved`  srli   a0, a0, 0x36
+    `pte_reserved`  ret    
+
+  `priv-spec` §11.1.4: "Bits 60-54 are reserved for future standard use and,
+  until their use is defined by some standard extension, must be zeroed by
+  software for forward compatibility. If any of these bits are set, a
+  page-fault exception is raised."
+
+  So the reserved field is a TRAP, not a no-op. A kernel that leaves a garbage
+  bit in a PTE it allocated gets a page fault on an address it believes is
+  mapped, and the fault's cause code says "load page fault" rather than
+  "reserved bit set", so the handler goes looking for a permissions problem
+  and does not find one. The specification says it three times over -- for bit
+  63, for bits 62-61 and for bits 60-54 -- and each of the three has a named
+  extension that will eventually use it: Svnapot for bit 63, Svpbmt for 62-61,
+  and "future standard use" for the rest.
+
+  The consequence for a reader of this course is a rule rather than a fact: a
+  PTE is not a struct with some padding. Every bit of it is either assigned or
+  a trap, and `malloc`ing a page of zeros and filling in the fields you care
+  about is the correct procedure while `malloc`ing it and OR-ing in whatever
+  was there is not.
+
+==========================================================================
+SECTION 9 -- THE RELOCATIONS, AND WHAT A LINKER HAS TO BE TOLD ABOUT A PAGE TABLE
+==========================================================================
+
+  This section is the hinge between the privileged architecture and the
+  object-file half of this collection, and it exists because a page-table
+  walker is a CHAIN OF ADDRESSES THE COMPILER DOES NOT KNOW. Every level of
+  the walk names a table whose address is a runtime value, so every one of
+  them is a reference the assembler has to record and a linker has to resolve.
+
+  The previous RISC-V course measured the REACH of the `auipc`+`addi` pair.
+  This section measures the RECORDS, and it does not repeat a word of that.
+  What is new is: the names and NUMBERS of the relocations, read from
+  `llvm-readelf-21 -r`; the fact that the LO12 record names the ADDRESS OF THE
+  AUIPC rather than the target; and the finding that the number of records a
+  page-table walk produces is a function of the DATA LAYOUT.
+
+  The table is QUOTED, `riscv-elf` chapter 8, Table 3, and the numbers in it
+  are cross-checked against the reader in this section and asserted EXACTLY by
+  the harness, because a relocation NAME is a convention and a relocation
+  NUMBER is what goes in the file.
+
+
+  THE RELOCATIONS THIS COURSE USES, psABI Table 3 against the
+  second reader.  "in the file" is the count llvm-readelf-21
+  found across the hand-written corpus; 0 means the corpus does
+  not contain it, which is a statement about the corpus.
+
+  code    name              field     in the file  hex           calculation   
+  16      BRANCH            B-Type    0            0x10 = 16     S + A - P     
+  17      JAL               J-Type    0            0x11 = 17     S + A - P     
+  20      GOT_HI20          U-Type    2            0x14 = 20     G + GOT + A - P
+  23      PCREL_HI20        U-Type    15           0x17 = 23     S + A - P     
+  24      PCREL_LO12_I      I-Type    25           0x18 = 24     S - P         
+  25      PCREL_LO12_S      S-Type    2            0x19 = 25     S - P         
+  26      HI20              U-Type    8            0x1a = 26     S + A         
+  27      LO12_I            I-Type    8            0x1b = 27     S + A         
+  28      LO12_S            S-Type    0            0x1c = 28     S + A         
+  51      RELAX             -         58           0x33 = 51     -             
+
+  THE CODES ARE CONTIGUOUS WHERE THE ENCODING IS, and the two gaps are the two gaps in the specification. 16, 17, then a gap to 20 (GOT_HI20), then a gap to 23 (PCREL_HI20), then 24, 25, 26, 27, 28
+  with nothing between them, then a gap to 44 (RVC_BRANCH), then a gap to 51 (RELAX). The first gap is 18 and 19 -- CALL and CALL_PLT, the `call` pseudoinstruction's relocations -- and the second is
+  43 (ALIGN) and 44-50.
+
+  R_RISCV_PCREL_HI20 IS 23 AND R_RISCV_PCREL_LO12_I IS 24 AND R_RISCV_PCREL_LO12_S IS 25, AND THE THREE OF THEM ARE CONSECUTIVE FOR A REASON: the first names the TARGET and the other two name the HIGH
+  HALF.
+
+  The three-in-a-row is not tidiness. A PC-relative address on RISC-V is TWO instructions and therefore TWO relocation records with DIFFERENT jobs, and a reader who knows that the pair exists still
+  has to know which record means what. Section 9's tables below show the difference directly, and it is the difference that makes the psABI's sentence "the addend must be 0" on the two LO12 records
+  make sense: the LO12 record's value is the target MINUS THE AUIPC'S OWN OFFSET, which is a difference of two things in the same object and needs no addend.
+
+  The `I` and `S` suffixes on 24 and 25 are the SAME distinction the encoding makes and for the same reason: 24 patches a 12-bit field in an I-type instruction (`addi`, `lw`, `ld`) and 25 patches one
+  in an S-type (`sw`, `sd`). They are different BITS in the word and they are different RECORDS in the table, and `pt.s` contains one of each so the distinction is a measurement rather than a
+  footnote.
+
+
+  WHAT EACH RECORD NAMES.  Read the SYMBOL column: it is not the
+  target.
+
+  offset    code    name                  the symbol it names             addend  
+  0x0       23      R_RISCV_PCREL_HI20    root_pte                        +0      
+  0x4       24      R_RISCV_PCREL_LO12_I  .Lpcrel_hi0                     +0      
+  0xe       23      R_RISCV_PCREL_HI20    l1_pte                          +0      
+  0x12      24      R_RISCV_PCREL_LO12_I  walk_three                      +0      
+  0x16      24      R_RISCV_PCREL_LO12_I  walk_three                      +0      
+  0x1a      24      R_RISCV_PCREL_LO12_I  walk_three                      +0      
+  0x20      23      R_RISCV_PCREL_HI20    l2_pte                          +0      
+  0x24      24      R_RISCV_PCREL_LO12_I  walk_offsets                    +0      
+  0x28      24      R_RISCV_PCREL_LO12_I  walk_offsets                    +0x8    
+  0x2c      24      R_RISCV_PCREL_LO12_I  walk_offsets                    +0x800  
+  0x32      23      R_RISCV_PCREL_HI20    l1_pte                          +0      
+  0x36      25      R_RISCV_PCREL_LO12_S  store_pte                       +0      
+  0x3c      26      R_RISCV_HI20          l1_pte                          +0      
+  0x40      27      R_RISCV_LO12_I        l1_pte                          +0      
+  0x46      23      R_RISCV_PCREL_HI20    root_pte                        +0      
+  0x4a      24      R_RISCV_PCREL_LO12_I  .Lpcrel_hi1                     +0      
+
+  THE HI20 RECORDS NAME THE TARGET. root_pte, l1_pte, l2_pte -- the three page tables, named as symbols. That is the ordinary case and it is what a reader expects.
+
+  THE LO12 RECORDS NAME SOMETHING ELSE ENTIRELY: they name the ADDRESS OF THE AUIPC, and one of them names a LOCAL SYMBOL CALLED .Lpcrel_hi0 THAT THE COMPILER INVENTED.
+
+  `.Lpcrel_hi0` is not in the source. It is not in the symbol table as anything a programmer wrote. It is a label the compiler created at the `auipc` so that the `ld` four bytes later has something to
+  point at, and the relocation's job is to say "the low twelve bits of the value the AUIPC computes, which is the target's address minus this AUIPC's address".
+
+  And that is the mechanism, in one sentence: A PC-RELATIVE ADDRESS ON RISC-V IS A TWO-INSTRUCTION ARITHMETIC EXPRESSION, AND THE OBJECT FILE STORES ONE HALF OF IT IN THE INSTRUCTION WORD AND THE
+  OTHER HALF IN THE RELOCATION TABLE.
+
+  `auipc` puts the high 20 bits of (target - pc) in a U-type immediate. `ld` then has to add the low 12 bits, and the low 12 bits of (target - pc) is not a compile-time constant when target is a page
+  table chosen at run time. So the `ld`'s own 12-bit immediate is left at whatever the assembler put there -- usually zero -- and a relocation record says "fill this in later", and the linker computes
+  the sum.
+
+  A reader who has only seen x86-64's `mov rax, [rip+X]` is likely to assume the RISC-V pair is a convenience and that the target's address is somewhere in the record. IT IS NOT. The target's address
+  is in the HI20 record; the LO12 record names a label in the CODE. That is why `pt.s` and `sp.s` both use `%pcrel_lo(<the auipc's own label>)` rather than `%pcrel_lo(target)`, and why getting it
+  wrong is a linker error rather than a wrong number.
+
+
+  THE INSTRUCTION WORDS THE LO12 RECORDS ATTACH TO, and the
+  immediate each one leaves for the linker:
+
+  offset    code    name              word          inst[31:20]   instruction               
+  0x0       23      R_RISCV_PCREL_HI20  0x00000297    0x000         auipc t0, 0x0             
+  0x4       24      R_RISCV_PCREL_LO12_I  0x00028293    0x000         mv t0, t0                 
+  0xe       23      R_RISCV_PCREL_HI20  0x00000297    0x000         auipc t0, 0x0             
+  0x12      24      R_RISCV_PCREL_LO12_I  0x0002b303    0x000         ld t1, 0x0(t0)            
+  0x16      24      R_RISCV_PCREL_LO12_I  0x0002b383    0x000         ld t2, 0x0(t0)            
+  0x1a      24      R_RISCV_PCREL_LO12_I  0x00028e13    0x000         mv t3, t0                 
+  0x20      23      R_RISCV_PCREL_HI20  0x00000297    0x000         auipc t0, 0x0             
+  0x24      24      R_RISCV_PCREL_LO12_I  0x0002b303    0x000         ld t1, 0x0(t0)            
+  0x28      24      R_RISCV_PCREL_LO12_I  0x0002b383    0x000         ld t2, 0x0(t0)            
+  0x2c      24      R_RISCV_PCREL_LO12_I  0x0002be03    0x000         ld t3, 0x0(t0)            
+  0x32      23      R_RISCV_PCREL_HI20  0x00000297    0x000         auipc t0, 0x0             
+  0x36      25      R_RISCV_PCREL_LO12_S  0x0062b023    0x006         sd t1, 0x0(t0)            
+  0x46      23      R_RISCV_PCREL_HI20  0x00000297    0x000         auipc t0, 0x0             
+  0x4a      24      R_RISCV_PCREL_LO12_I  0x00028293    0x000         mv t0, t0                 
+
+
+  THE SAME TWELVE BITS DECODED THROUGH BOTH FIELD TABLES, because
+  the S-type immediate is NOT CONTIGUOUS and a mask that does not
+  know the format hands back a REGISTER:
+
+  offset    code    format    the mask: inst[31:20]   inst[11:7]   inst[24:20]   the immediate, DECODED    the reader says 
+  0x0       23      I-type    0x000                   5            0             0x000                     auipc           
+  0x4       24      I-type    0x000                   5            0             0x000                     mv              
+  0xe       23      I-type    0x000                   5            0             0x000                     auipc           
+  0x12      24      I-type    0x000                   6            0             0x000                     ld              
+  0x16      24      I-type    0x000                   7            0             0x000                     ld              
+  0x1a      24      I-type    0x000                   28           0             0x000                     mv              
+  0x20      23      I-type    0x000                   5            0             0x000                     auipc           
+  0x24      24      I-type    0x000                   6            0             0x000                     ld              
+  0x28      24      I-type    0x000                   7            0             0x000                     ld              
+  0x2c      24      I-type    0x000                   28           0             0x000                     ld              
+  0x32      23      I-type    0x000                   5            0             0x000                     auipc           
+  0x36      25      S-type    0x006                   0            6             0x000                     sd              
+  0x46      23      I-type    0x000                   5            0             0x000                     auipc           
+  0x4a      24      I-type    0x000                   5            0             0x000                     mv              
+
+  THE ARITHMETIC, on the one S-type row, printed as an equation
+  rather than asserted:
+
+    inst[31:25] = 0x00   -> imm[11:5] = 0, so the high half is empty
+    inst[24:20] = 0x06   -> rs2     = t1 (x6)
+    inst[31:20] = 0x006   -> (0 << 5) | 6 = 6   the SAME number, twice
+    inst[11:7]  = 0x00   -> imm[4:0] = 0, the low half
+
+    so imm[11:0] = (imm[11:5] << 5) | imm[4:0] = 0, and the mask returned 6.
+
+  EVERY VALUE IN THE "the immediate, DECODED" COLUMN IS ZERO, and that is the measurement which makes the "half in the instruction, half in the table" sentence literal. It took four columns to say,
+  because one of them was lying until R16 and one of them was meaningless until now.
+
+  AND THE 0x006 IN THE MASK COLUMN OF THE S-TYPE ROW IS NOT AN IMMEDIATE AT ALL. IT IS rs2 -- THE REGISTER THE STORE IS MOVING FROM -- AND THE TWO COLUMNS ON THAT SAME ROW ARE THE PROOF, NOT AN
+  ARGUMENT.
+
+  Read the inst[24:20] column on the `sd` row: it is also 6, and the disassembly in the last column says sd t1, and t1 IS x6. So the mask's answer and the register column's answer are the same number,
+  the disassembly names that number, and the only reading left is that the mask read a register. A MASK IS NOT A FIELD, AND A DECODER THAT READS inst[31:20] OUT OF AN S-TYPE WORD GETS A REGISTER
+  NUMBER WHERE AN IMMEDIATE SHOULD BE.
+
+  And the inst[11:7] column is zero on that same row, which is the other half of the finding: for an S-TYPE the low five bits are imm[4:0] and they are EMPTY, so the mask's seven high bits plus a
+  whole register is not a small immediate, it is no immediate at all.
+
+  For an S-type the layout is inst[31:25] = imm[11:5], inst[24:20] = rs2, inst[14:12] = funct3, inst[11:7] = imm[4:0] -- and there is no rd anywhere in it, because a store has nowhere to put a result.
+  The twelve bits at inst[31:20] are therefore SEVEN BITS OF ONE FIELD FOLLOWED BY A WHOLE REGISTER, and reading them as an I-immediate gives you that register with a zero in front of it. A store's
+  immediate is SPLIT ACROSS THE TWO ENDS OF THE WORD, which is `rvasm`'s subject and not this one; what belongs here is that the two halves are each zero here, for a reason nobody wrote down.
+
+  The first version of this table read inst[31:20] for every row and printed 0x006 on the `sd`, and the sentence above it said every immediate was zero, which was a claim about a number that was not
+  an immediate. Both the table and the sentence were wrong in the same way, which is the shape of a bug this collection has now met twice: A NUMBER COMPUTED FROM THE WRONG FIELD IS NOT A SMALLER
+  NUMBER, IT IS A DIFFERENT NUMBER, AND IT LOOKS LIKE A SMALLER ONE.
+
+  The correction cost a second retraction rather than a quiet edit, because the first fix named that register rd, and rd DOES NOT EXIST IN AN S-TYPE WORD. The number was right and the NAME was wrong,
+  and a wrong field name is how a decoder ends up reading the wrong bits somewhere else. A NUMBER YOU CAN NAME IS NOT YET A FIELD, AND NAMING IT AFTER A FIELD THAT IS NOT THERE IS THE SAME ERROR WITH
+  A DIFFERENT SPELLING.
+
+  The S-type immediate, decoded properly, is inst[31:25] concatenated with inst[11:7] -- which is `rvasm`'s subject and not this one, and which is why the link is below rather than re-taught here.
+  What belongs to THIS course is the other half of the sentence: the linker writes that zero, and a reader who hexdumps a RISC-V `.o` and computes an address from the instructions alone will get zero,
+  and there is nothing in the file to tell them that zero is a placeholder rather than a value.
+
+  The ADDEND carries the part that IS knowable. `walk_offsets` in `pt.s` asks for `%pcrel_lo(walk_offsets)+8` and for `+0x800`, and the records come out with addends 8 and 0x800 while the instruction
+  immediates stay at zero. So the addend is the known offset within the field and the linker adds the unknown low twelve bits of the target to it. THE PSABI STATES THE ADDEND MUST BE 0 FOR THE TWO
+  PCREL_LO12 RECORDS, AND THIS CORPUS HAS RECORDS WITH ADDENDS OF 8 AND 0x800 ON THEM.
+
+  That is a contradiction worth pausing on, because it is the sort of thing that is either a bug or a misreading. It is not a bug in the assembler: the `%pcrel_lo(label)+N` form with a non-zero N is a
+  documented and widely used idiom, and the psABI's own example of the pair shows `%pcrel_lo(label)` with no addend. The honest reading is that "the addend must be 0" describes the CANONICAL pair as
+  generated by `%pcrel_hi`/`%pcrel_lo` with no offset, and that a hand-written offset on the LO12 is a legitimate extension of it that the linker handles. There is no RISC-V linker on this host, so
+  whether it handles it is QUOTED and not measured, and this file says so rather than claiming a bug it cannot demonstrate.
+
+
+  THE LAYOUT EXPERIMENT, and it is the section's finding.  One C
+  file, one page-table walk, two builds, and the ONLY difference
+  is whether 4 KiB of unrelated data sits between each pair of
+  page tables.  FOUR builds rather than two, because the first two
+  are CONFOUNDED and the file says so rather than reporting the
+  pair that flatters the claim.
+
+  object                  layout and code model     walk insns   bytes     HI20 records   LO12 records   of which S-type
+  sp2_dense_nopic.o       adjacent,  -fno-pic       59           150       2              2              0              
+  sp2_sparse_nopic.o      4 KiB apart, -fno-pic     60           154       4              4              0              
+  sp2_dense.o             adjacent,  default (PIC)  58           148       1              1              0              
+  sp2_sparse.o            4 KiB apart, default (PIC)  13           34        3              4              0              
+
+    The -fno-pic pair is CLEAN: 59 against 60 instructions, a
+    difference of +1, and the HI20 count goes 2 -> 4.
+
+    The default (PIC) pair is CONFOUNDED: 58 against 13
+    instructions, a difference of -45, and the HI20 count goes
+    1 -> 3.  The instruction count is NOT held constant
+    there, and section 14 records that as a retraction.
+
+  READ THE INSTRUCTION COLUMN AGAINST THE RELOCATION COLUMNS, because the two columns do not behave the same way and the difference between them is the methodological result.
+
+  THE CLEAN PAIR: 59 instructions against 60, and the HI20 count goes 2 to 4. THE CONFOUNDED PAIR: 58 instructions against 13, and the HI20 count goes 1 to 3.
+
+  The `-fno-pic` pair is the one the claim rests on. The instruction count is essentially held -- one instruction of difference, which is a different `ld` displacement encoding and not a different
+  program -- and the HI20 count DOUBLES. THREE PAGE TABLES, THREE LEVELS, ONE FUNCTION, ONE INSTRUCTION OF DIFFERENCE, AND THE NUMBER OF HI20 RECORDS GOES 2 TO 4 BECAUSE THE TABLES MOVED 4 KiB APART.
+
+  The default PIC pair is CONFOUNDED and the file says so in the table's own caption rather than picking the pair that flatters the claim. THE INSTRUCTION COUNT IS NOT CONSTANT ACROSS THE PIC PAIR, IT
+  IS 58 AGAINST 13, AND REPORTING THE RELOCATION DELTA WITHOUT SAYING THAT WOULD BE REPORTING A COMPOUND MEASUREMENT UNDER A SIMPLE CLAIM.
+
+  The reason is visible in the disassembly rather than needing to be asserted. In the adjacent PIC build the compiler UNROLLED the three fill paths -- the `*a = (l1tab & ~0xff) | 1` stores are all
+  there, each one a separate `ld`/`and`/`ori`/`sd` sequence. In the 4 KiB-apart build it did not, because the three tables are three separate symbols and the merged-globals pass had nothing to merge.
+  So the layout changed the relocation count AND the amount of code the optimiser was willing to duplicate, and a reader who quoted the PIC pair's relocation delta as "what the layout costs" would be
+  quoting a number that mixes two effects.
+
+  THE MECHANISM IS THE MERGED GLOBALS PASS, and the evidence for it is in the symbol names rather than in the counts. In the adjacent build every HI20 record names `.L_MergedGlobals`, a single
+  synthetic symbol the compiler created because the three tables were near each other and it could reach all three from one base register. In the 4 KiB-apart build the records name `root`, `l1tab` and
+  `l2tab` -- the three real symbols -- and the offsets in the symbol table differ by 0x1000 and 0x2000, which is the padding made visible in the relocation table.
+
+  So the number of records is not a property of the page-table walk, the level count, or the number of tables. It is a property of a LAYOUT DECISION made by a compiler optimisation pass, and the
+  walk's author is not in the conversation.
+
+  AND THE PAIRED COUNT IS THE OTHER HALF, and it moves the same way. One HI20 can serve any number of LO12s, so a table referenced three times costs one HI20 and three LO12s -- and a table referenced
+  once costs one of each. A reader who counted "references" and a reader who counted "records" get different numbers, and the difference is not a mistake by either.
+
+  THE CONSEQUENCE FOR A BACKEND AUTHOR, and it is the reason the section is here: if you are counting the relocations your page-table code will produce, you are counting a property of the DATA
+  PLACEMENT, and the way to change the count is to move the tables next to each other. Nothing about the walk's ALGORITHM changes. A reader who has been counting references and calling them
+  relocations has been reporting a number that is a function of where the linker happened to put things, which is a number about a layout and not about a program.
+
+==========================================================================
+SECTION 10 -- THE PAIRING DISTANCE, AND THE ASSEMBLER THAT DOES NOT ENFORCE IT
+==========================================================================
+
+  The rule is QUOTED, `riscv-elf` §8.1.4.9: the LO12 record's calculation is
+  `symbol_address - hi20_reloc_offset`, and the record's symbol is "a label
+  pointing to an instruction in the same section with an R_RISCV_PCREL_HI20
+  relocation entry that points to the target symbol". So a linker pairs each
+  LO12 with the HI20 at the label the LO12 names, and the value it has to fit
+  into a SIGNED TWELVE-BIT FIELD is the offset from that AUIPC to the target.
+
+  The bound follows from arithmetic and needs no document: a signed 12-bit
+  field holds -2048 to 2047, so the AUIPC must be within 2048 bytes of the
+  target. And a 4 KiB granule is 4096, and 4096 > 2047, which is where the
+  familiar "pair has to be within the same page" rule comes from -- a
+  page-aligned target and an AUIPC in the same 4 KiB region differ by a
+  multiple of 4096 in their low twelve bits, and no multiple of 4096 other
+  than zero fits.
+
+  The question this section asks is WHO ENFORCES IT, and the answer is a
+  measurement with six data points.
+
+
+  THE SAME TWO INSTRUCTIONS, SIX TIMES, WITH THE SECOND ONE MOVED.
+  `sp.s` asks for ONE HI20 and TWO LO12s at six distances, and the
+  distance is the only thing that changes.
+
+    4 KiB = 4096 > 2047, so offsets of 0x800 and above cannot fit
+    a signed 12-bit field.  The assembler is asked anyway.
+
+  pad       HI20    LO12_I    the HI20 is at   the farthest LO12 is at  that distance  fits a signed 12-bit field?  the immediates left in the words
+  0x0       1       2         0x0              0x8                   8              YES                         0x000 0x000                   
+  0x40      1       2         0x0              0x48                  72             YES                         0x000 0x000                   
+  0x800     1       2         0x0              0x808                 2056           NO                          0x000 0x000                   
+  0xffc     1       2         0x0              0x1004                4100           NO                          0x000 0x000                   
+  0x1000    1       2         0x0              0x1008                4104           NO                          0x000 0x000                   
+  0x2000    1       2         0x0              0x2008                8200           NO                          0x000 0x000                   
+
+    Every one of the six has ONE HI20 record, including the two
+    whose LO12s are 8 KiB apart, and every one of the six has two
+    LO12_I records.
+
+  THE ASSEMBLER EMITTED EXACTLY ONE R_RISCV_PCREL_HI20 RECORD IN ALL SIX CASES, INCLUDING THE TWO WHERE THE TWO LO12 RECORDS ARE 8 KIB APART, AND IT DID NOT DIAGNOSE ANY OF THEM.
+
+  Read the table's last column as well. Every immediate in every word is 0x000, at every distance, because the value is not knowable at assembly time and the assembler does not pretend otherwise. So
+  what the assembler has produced in the 0x2000 case is an object file containing a relocation pair that a linker may legitimately reject: the LO12 at offset 0x2008 names a label whose HI20 is at
+  offset 0x0000, and the difference is 8200 bytes, and 8200 does not fit in a signed twelve-bit field.
+
+  THE ASSEMBLER DOES NOT ENFORCE THE PAIRING RULE, AND THERE IS NO RISC-V LINKER ON THIS HOST TO ENFORCE IT EITHER, SO WHETHER THE OBJECT IS VALID IS A QUOTED CLAIM AND NOT A MEASURED ONE.
+
+  That is the honest boundary and it is a real one, so this section does not claim a bug. What it claims is narrower and is worth more:
+
+  * THE ASSEMBLER PRODUCES THE RECORDS.  It does not check them, and a
+    hand-written offset on `%pcrel_lo` is accepted at any distance.
+  * THE BOUND IS ARITHMETIC.  2047 is what a signed 12-bit field holds and
+    4096 is a page, and every number in that sentence is in the table above.
+  * A LINKER IS THE ONLY THING THAT CAN CHECK IT, and there is not one here.
+
+  AND THE PRACTICAL CONSEQUENCE FOR A KERNEL, which is the reason a reader should care: the pairing rule is a constraint on CODE LAYOUT that the assembler will not tell you about. A page-table walk is
+  exactly the code most likely to violate it, because the references are spread across a data section and the author has no reason to think about where the AUIPC is. The mitigation in real kernels is
+  to keep the walk and its tables in one page, or to accept the linker's error. On this host neither can be tested.
+
+==========================================================================
+SECTION 11 -- stvec, sepc, scause, stval, sie, sip -- THE FIVE, DECODED
+==========================================================================
+
+  The trap model is QUOTED, and this section's job is to separate what the
+  specification says from what the words say, because for these five registers
+  the two disagree in an interesting way.
+
+  The specification, `priv-spec` §11.1.1.2, on `stvec`: "The stvec register is
+  an SXLEN-bit read/write register that holds trap vector configuration,
+  consisting of a vector base address (BASE) and a vector mode (MODE)." Table
+  1 gives the mode encoding: 0 is Direct, 1 is Vectored, and anything >= 2 is
+  Reserved. And the sentence that has the sharpest consequence in the whole
+  chapter:
+
+  "Note that the CSR contains only bits XLEN-1 through 2 of the address BASE.
+  When used as an address, the lower two bits are filled with zeroes to obtain
+  an XLEN-bit address that is always aligned on a 4-byte boundary."
+
+  THE MODE IS TWO BITS OF A VALUE, NOT AN INSTRUCTION, and section 11's
+  measurement is that the instruction which writes `stvec` is BYTE-IDENTICAL
+  whether the mode is Direct or Vectored. The three functions in `wrap.c` are
+  three different C functions and the corpus contains the words.
+
+
+  THE THREE stvec WRITES, AND THE VALUE EACH ONE PUTS IN A
+  REGISTER BEFORE THE SAME INSTRUCTION RUNS:
+
+  function                  insns    the register the CSR is written from  the value in that register  the whole body                          
+  set_stvec_direct          4        a1                              0x000000001000        lui | csrr | csrw | ret                 
+  set_stvec_vectored        5        a1                              0x000000001001        lui | addi | csrr | csrw | ret          
+  set_stvec_misaligned      4        a1                              0x000000000123        li | csrr | csrw | ret                  
+
+  ALL THREE FUNCTIONS EMIT THE SAME 32-BIT WORD FOR THE stvec WRITE, 0x10559073, AND THE THREE OF THEM ARE: set_stvec_direct, set_stvec_vectored, set_stvec_misaligned.
+
+  That is the measurement. `set_stvec_direct` builds 0x1000, which is BASE = 0x1000 and MODE = 0. `set_stvec_vectored` builds 0x1001, which is the SAME BASE and MODE = 1. `set_stvec_misaligned` builds
+  0x123, which is BASE = 0x120 and MODE = 3 -- a RESERVED mode, with a BASE that is not 4-byte aligned -- and the compiler emitted the same instruction for it.
+
+  So the mode and the alignment are PROPERTIES OF THE VALUE and the hardware enforces both. The instruction is one 32-bit word with a three-digit hexadecimal constant in inst[31:20] and it does not
+  know which of the three things it is writing. A disassembler reading the object can recover the instruction and CANNOT recover the mode, and the value that would tell it is four instructions earlier
+  in the same function.
+
+  AND THE WORD ITSELF DECODES TO SOMETHING THE SOURCE NEVER WROTE. 0x10559073 read field by field is: inst[6:0] = 0x73, funct3 = 1 so CSRRW, inst[31:20] = 0x105 so `stvec`, inst[19:15] = rs1 = 11 =
+  a1, inst[24:20] = rs2 = 5 = t0, inst[31:25] = funct7 = 8, and rd[4:0] = 0. THE ZERO IN rd[4:0] IS WHAT MAKES THE WRITE DISCARDABLE, and that zero is why `csrw` needs no separate encoding: the
+  pseudo-instruction is the encoding with rd = x0, which is section 3's alias table showing up here as a consequence rather than as a curiosity. FUNCT7 = 8 AND rs2 = 5 ARE BOTH READ OFF THE WORD AND
+  NEITHER IS IN THE SOURCE, and a reader who has not been told that will treat them as noise.
+
+  One caveat, because a reader who writes a decoder will hit it in the same afternoon. rd[4:0] is an immediate for the immediate forms and a register number for the register forms, and funct3 is what
+  tells them apart: funct3 = 1, 2, 3 put rd at inst[11:7] and funct3 = 5, 6, 7 put zimm[4:0] there. A BIT FIELD AT THE SAME POSITION WITH TWO MEANINGS IS DISAMBIGUATED BY A NEIGHBOURING FIELD AND NOT
+  BY ITS OWN POSITION. The claim "rd = 0" is true of 0x10559073 because its funct3 is 1, and would be false of the same five bits in a `csrrwi`, which is the same shape of trap as section 3's one-bit
+  finding and is asserted in the harness with its funct3 named rather than as a bare mask.
+
+  AND THE MISALIGNED ONE IS THE INTERESTING ONE. The specification says the CSR "contains only bits XLEN-1 through 2 of the address BASE" and that "the lower two bits are filled with zeroes". So
+  writing 0x123 does NOT set BASE to 0x123: it sets BASE to 0x120 and MODE to 3, and a mode of 3 is Reserved, which `priv-spec` says in one word and does not define. A kernel that computes a trap
+  vector address and forgets to clear the low two bits gets a Reserved mode and the behaviour of a Reserved mode is not specified.
+
+  The assembler did not diagnose it. There is no diagnostic, and there could not be: the instruction does not know the value. THIS IS THE THIRD PLACE IN THE COURSE WHERE A CONSTRAINT IS ENFORCED BY
+  HARDWARE THAT THIS HOST DOES NOT HAVE, AND IT IS THE ONE A BACKEND AUTHOR IS MOST LIKELY TO GET WRONG, because the code is a perfectly ordinary `csrw stvec, a1` and reads correctly.
+
+
+  THE THREE INTERRUPT ENABLE BITS, and the compiler's whole
+  contribution to each:
+
+  function        cause number    the bit       the mask   what the compiler emitted  the whole body            
+  enable_ssie     1               1 << 1        0x2        0x2                       csrr | ori | csrw | ret   
+  enable_stie     5               1 << 5        0x20       0x20                      csrr | ori | csrw | ret   
+  enable_seie     9               1 << 9        0x200      0x200                     csrr | ori | csrw | ret   
+
+  A SUPERVISOR SOFTWARE INTERRUPT IS CAUSE 1, A TIMER INTERRUPT IS CAUSE 5 AND AN EXTERNAL INTERRUPT IS CAUSE 9, SO THE THREE ENABLE MASKS ARE 0x2, 0x20 AND 0x200, AND THE COMPILER EMITTED `ori a0,
+  a0, <mask>` AND NOTHING ELSE.
+
+  Three functions, three `csrr`/`ori`/`csrw` triples, and the constant is the whole of the interrupt. The compiler has no idea these are interrupts: it sees `v | (1UL << 5)` in C and it emits an OR
+  with 32. The five-bit and nine-bit positions come from `priv-spec` §11.1.1.3 -- "Interrupt cause number i ... corresponds with bit i in both sip and sie" -- and the cause NUMBERS 1, 5 and 9 are
+  Table 2's, and every one of the three is a value the compiler passed through untouched.
+
+  Read the masks as a shape rather than as three numbers: 0x2, 0x20 and 0x200 are 1, 5 and 9 SHIFTED LEFT ONCE, and the shift is the whole of the mapping from cause number to bit position. A reader
+  who has internalised the rule can derive the mask for cause 13 without looking it up, and that is a property a quoted table does not give you.
+
+  AND THE READ-THEN-WRITE IS NOT A CONVENTION EITHER, it is a race. Each of the three functions is `csrr sie ; ori ; csrw sie`, which is a read-modify-write of a register that hardware also writes,
+  and two of them running at once lose an update. The specification's answer is `sie` and `sip` being subsets of `mie` and `mip` and the writes being to the same homonymous fields, and the
+  specification does not provide an atomic read-modify-write. A kernel that enables interrupts does it in a critical section. None of that is measurable here: there is no RISC-V machine, so the race
+  is a QUOTED consequence and the three instruction triples are MEASURED-ON-BYTES, and the two must not be run together in a reader's head.
+
+
+  THE FIVE TRAP REGISTERS, the addresses the assembler resolved,
+  and the decomposition of each address into the two convention
+  fields.  This is the table that makes the convention real:
+
+  name          address    word          csr[11:10]   access    csr[9:8]   privilege    csr[7:0] 
+  cycle         0xc00      0xc00022f3    3            RO        0          U            0x00     
+  cycle         0xc00      0xc00312f3    3            RO        0          U            0x00     
+  cycle         0xc00      0xc00322f3    3            RO        0          U            0x00     
+  cycle         0xc00      0xc00332f3    3            RO        0          U            0x00     
+  cycle         0xc00      0xc002d2f3    3            RO        0          U            0x00     
+  cycle         0xc00      0xc002e2f3    3            RO        0          U            0x00     
+  cycle         0xc00      0xc002f2f3    3            RO        0          U            0x00     
+  cycle         0xc00      0xc00022f3    3            RO        0          U            0x00     
+  sstatus       0x100      0x100022f3    0            rw        1          S            0x00     
+  sie           0x104      0x104022f3    0            rw        1          S            0x04     
+  sip           0x144      0x144022f3    0            rw        1          S            0x44     
+  stvec         0x105      0x105022f3    0            rw        1          S            0x05     
+  sepc          0x141      0x141022f3    0            rw        1          S            0x41     
+  scause        0x142      0x142022f3    0            rw        1          S            0x42     
+  stval         0x143      0x143022f3    0            rw        1          S            0x43     
+  satp          0x180      0x180022f3    0            rw        1          S            0x80     
+  sscratch      0x140      0x140022f3    0            rw        1          S            0x40     
+  0x114         0x114      0x114022f3    0            rw        1          S            0x14     
+  0x154         0x154      0x154022f3    0            rw        1          S            0x54     
+  mstatus       0x300      0x300022f3    0            rw        3          M            0x00     
+  mtvec         0x305      0x305022f3    0            rw        3          M            0x05     
+  mepc          0x341      0x341022f3    0            rw        3          M            0x41     
+  mcause        0x342      0x342022f3    0            rw        3          M            0x42     
+  mie           0x304      0x304022f3    0            rw        3          M            0x04     
+  mip           0x344      0x344022f3    0            rw        3          M            0x44     
+  medeleg       0x302      0x302022f3    0            rw        3          M            0x02     
+  mideleg       0x303      0x303022f3    0            rw        3          M            0x03     
+  mcounteren    0x306      0x306022f3    0            rw        3          M            0x06     
+  scounteren    0x106      0x106022f3    0            rw        1          S            0x06     
+  stimecmp      0x14d      0x14d022f3    0            rw        1          S            0x4d     
+  0x005         0x005      0x005022f3    0            rw        0          U            0x05     
+  0x041         0x041      0x041022f3    0            rw        0          U            0x41     
+  0x042         0x042      0x042022f3    0            rw        0          U            0x42     
+  0x043         0x043      0x043022f3    0            rw        0          U            0x43     
+  0x004         0x004      0x004022f3    0            rw        0          U            0x04     
+  0x044         0x044      0x044022f3    0            rw        0          U            0x44     
+  0x025         0x025      0x025022f3    0            rw        0          U            0x25     
+  0x045         0x045      0x045022f3    0            rw        0          U            0x45     
+  cycle         0xc00      0xc00022f3    3            RO        0          U            0x00     
+  time          0xc01      0xc01022f3    3            RO        0          U            0x01     
+  instret       0xc02      0xc02022f3    3            RO        0          U            0x02     
+  0xb00         0xb00      0xb00022f3    2            rw        3          M            0x00     
+  mvendorid     0xf11      0xf11022f3    3            RO        3          M            0x11     
+  0xf11         0xf11      0xf11022f3    3            RO        3          M            0x11     
+
+  EVERY S-LEVEL REGISTER IN THAT TABLE HAS `csr[9:8] = 1` AND EVERY M-LEVEL REGISTER HAS `csr[9:8] = 3`, and the column is not decoration: it is the difference between a trap handler and a user
+  program, encoded in the NUMBER.
+
+  `priv-spec` §1: "The top two bits (csr[11:10]) indicate whether the register is read/write (00, 01, or 10) or read-only (11). The next two bits (csr[9:8]) encode the lowest privilege level that can
+  access the CSR." So `stvec` at 0x105 is 00 / 01 / 0x05: read/write, lowest privilege S, number 5. `mtvec` at 0x305 is 00 / 11 / 0x05: read/write, lowest privilege M, number 5. THE SAME NUMBER, FIVE,
+  IN BOTH, AND THE ONLY DIFFERENCE IS TWO BITS OF PRIVILEGE.
+
+  That is a nice illustration of why the convention exists. A supervisor kernel and a machine kernel both want a trap vector and both call it number 5; the privilege bits are what make them different
+  registers, and a supervisor program that writes `mtvec` gets an illegal-instruction exception because 0x305 says "lowest privilege M" and it is running in S.
+
+  AND THE READ-ONLY CLASS IS MEASURED TOO, which is the check on the accessibility half. `cycle` at 0xc00 has `csr[11:10] = 11` and `mvendorid` at 0xf11 has 11, and both are read-only. `stvec` at
+  0x105 and `satp` at 0x180 have 00 and both are read/write. So the bit that says "you cannot write this" is in the address, and the SAME instruction with the same five bits in its operand slot is a
+  legal read and an illegal write depending on two bits of a constant three instructions earlier.
+
+  THE RESERVED ROW IS ALSO IN THE TABLE, which is worth having: the user-level trap registers at 0x041 to 0x044 have `csr[9:8] = 0`, and 0x105's encoding value 2 in the privilege field is a hole that
+  no standard register occupies. `priv-spec` reserves 10 by leaving it out of Table 1.1, and a reader who assumed all four values of a two-bit field were meaningful would expect four privilege levels
+  and there are three.
+
+  AND NONE OF THE ENFORCEMENT IS OBSERVABLE HERE. There is no RISC-V machine on this host, so no access to a supervisor CSR from user mode has been observed to fault, no write to `mtvec` from S-mode
+  has been observed to be an illegal-instruction exception, and no read-only CSR has been observed to refuse a write. What is measured is that the addresses carry those bits and that the instructions
+  do not. What is quoted is that the hardware acts on them.
+
+==========================================================================
+SECTION 12 -- TWO READERS ON THE SAME BYTES
+==========================================================================
+
+  Every instruction in the RISC-V corpus is decoded TWICE: once by the
+  inherited decoder and once by `llvm-objdump-21 --triple=riscv64`. Four
+  numbers, and the three that matter are not the first:
+
+  * how many instructions the reader PRINTED and this file COMPARED;
+  * how many of them this file NAMED (an unmodelled word is counted, never
+    dropped);
+  * how many DISAGREED -- and, if any did, each one PRINTED BY NAME, because
+    a number of eleven is a bug report and a list of eleven is a diagnosis;
+  * and how many disagreed on the LENGTH, which is a separate comparison
+    and not a subset of the first, because RISC-V's two-byte instructions
+    make it a real question.
+
+  THE EXPECTED DISAGREEMENT IS ABOUT SPELLING, and this corpus is unusually
+  well placed to show why that is a different thing from being wrong. The
+  second reader prints `rdcycle` where the inherited decoder prints `csrrs t0,
+  0xc00, zero`, because the reader is applying an ALIAS and the decoder is
+  naming the instruction. Both are the same 32 bits and both are right about
+  their own subject. Section 12's own table says which of the two kinds of
+  disagreement it found, because a cross-check that counts a spelling
+  difference and a cross-check that counts a misread the same way is a
+  cross-check that cannot tell a decoder bug from a convention.
+
+
+  11214  instructions the second reader printed, and this file compared
+  11065  of them this file NAMES
+  149  unmodelled -- counted, never dropped
+  0  where the two readers disagree on the LENGTH
+
+  0  DISAGREE
+
+  THE CLASSIFIER, run on every run and printed whether or not
+  there is anything to classify:
+
+    NOTHING TO CLASSIFY: the two readers agree on every word
+    they both name, so there is no pair to sort.  The
+    classifier is here rather than in the failure branch so
+    that a run where it finds nothing is visibly a run where
+    it RAN and found nothing.
+
+  THE FIRE TABLE, printed WHETHER OR NOT there is anything to put
+  in it, and PRE-SEEDED so that a rule which never fires is a row
+  with a zero rather than an absence:
+
+    negative immediate, decimal on both sides fired 314 times
+    c.li and li are one instruction fired 44 times
+
+    2 rules, 2 fired, 0 matched nothing
+
+  THE CLASSIFICATION IS THE POINT, and it is the thing the sibling courses'
+  findings converge on. An ALIAS difference is a difference of SPELLING
+  applied to the same bits: `rdcycle` and `csrrs t0, 0xc00, zero` are one
+  instruction and two readers disagreeing about which of its two names to
+  print. A MISSING OPERAND is a difference of INFORMATION: one reader named a
+  register and the other did not, and one of them read the word wrongly. A
+  cross-check that reports both as "disagreements" has produced a number a
+  reader cannot use, and this collection has now paid for that twice -- once
+  in the AArch64 data path course, where 85 instructions genuinely disagreed
+  and the check printed 0, and once in this section's sibling, where the
+  classification of 701 "disagreements" turned out to be seven distinct
+  defects plus a set of printing conventions.
+
+  So this file classifies rather than counts, and it prints the classification
+  on EVERY run whether or not there is anything to put in it. A check that
+  exists only in the failure branch is a check the harness can never exercise
+  on a healthy artifact, and the sibling course's own harness failed exactly
+  that way during development.
+
+  11214 instructions, 11065 named, 0 disagreements, 0 length disagreements. ZERO disagreements over 11065 named instructions, and ZERO length disagreements over the same 11214.
+
+==========================================================================
+SECTION 13 -- FOUR POISONS, AND EACH ONE HAS TO MOVE ITS OWN NUMBER
+==========================================================================
+
+  A control that cannot be made to fail is a comment that says the word
+  POISONED. This collection has paid for that lesson repeatedly -- the AArch64
+  data-path course's cross-check reported ZERO disagreements over a corpus
+  where eighty-five instructions genuinely disagreed, and every one of the
+  four bugs had made the comparison VACUOUS rather than wrong; and the first
+  RISC-V course shipped a poison whose victim had no corpus footprint, so it
+  could not move anything.
+
+  So each of the four below names the number it tests, runs the SAME loop over
+  the SAME bytes, prints the DELTA as a number, and prints [POISON FAILED] if
+  the delta is zero. The victims are chosen FROM THE CORPUS and not from a
+  list of interesting models, because a poison whose victim owns no words in
+  this corpus is a poison that cannot move a number no matter what it prints.
+
+
+  POISON 1 -- remove BOTH OF THIS COURSE'S OWN MODELS,
+              `m_sfence_vma` and `m_csr_address`, in one step.
+              It claims THREE numbers, and the reason is worth
+              stating because it is the opposite of the usual
+              case: removing them does NOT simply lose words.
+              With both gone the INHERITED `s_system` takes the
+              CSR words, and it prints them differently, so the
+              unmodelled count FALLS -- the words stop being holes
+              and become WRONG.  The named count goes UP and the
+              disagreement count goes UP, and a cross-check that
+              watched only one of the three would have reported
+              the wrong verdict.  §KEEP§A POISON THAT MOVES TWO
+              NUMBERS IN OPPOSITE DIRECTIONS IS A BETTER POISON
+              THAN ONE THAT MOVES ONE, BECAUSE IT PROVES THE
+              COLUMNS ARE NOT THE SAME COLUMN.
+
+    BEFORE: 11065 named, 0 disagree, 149 unmodelled
+    AFTER : 11211 named, 141 disagree, 3 unmodelled
+    DELTA: named +146, disagreements +141, unmodelled -146
+    VERDICT: POISON 1 FIRED
+
+  POISON 2 -- read the WRONG HALF of r_info in the relocation
+              reader.  The type is the LOW 32 bits; the high 32
+              are the symbol index, and the low half of THAT is
+              a small integer that looks exactly like a type
+              number.  The number it must move is the count of
+              records whose NAME the reader can recover at all.
+
+    records examined                                    : 125
+    read the RIGHT way, names that match the psABI table : 104
+    read the WRONG way, values that name a real type    : 5
+    and the WRONG way names a real type for 5 of them, which is
+    5 in 125, and THAT is the dangerous part: a reader that got
+    this wrong would have a table that is right about 120 records
+    and silently wrong about 5, and nothing in the output would
+    have said so.
+    DELTA: 104 records lose their name and 5 gain a WRONG one
+    VERDICT: POISON 2 FIRED
+
+  AND THE DIRECTION OF THAT POISON IS THE FINDING, so it is worth more than a sentence. READING THE WRONG HALF OF r_info DOES NOT PRODUCE AN OBVIOUSLY BROKEN TABLE. IT PRODUCES A TABLE THAT IS RIGHT
+  ABOUT 120 OF 125 RECORDS AND SILENTLY WRONG ABOUT 5, AND NOTHING IN THE OUTPUT SAYS WHICH IS WHICH.
+
+  The reason is arithmetic. The relocation TYPES are 20, 23, 24, 25, 26, 27 and 51, and the SYMBOL INDICES in objects this small are 0 through 13. Those ranges barely overlap, so most of the records
+  would read as an index the psABI table has no row for -- which is at least a VISIBLE failure. The 5 that overlap are the dangerous ones, because a symbol index of 20 reads as GOT_HI20 and 23 reads
+  as PCREL_HI20, and a table with a few of the right names in the wrong places is exactly the kind of output a reader skims.
+
+  A CONTROL THAT FAILS BY PRODUCING A MOSTLY-CORRECT ANSWER IS HARDER TO NOTICE THAN ONE THAT FAILS BY PRODUCING NOTHING, AND THE POISON IS PRINTED WITH BOTH NUMBERS FOR THAT REASON.
+
+  This is the third time this collection has met the same shape. The AArch64 data path's check printed ZERO where eighty-five instructions disagreed; the section's first course shipped a poison whose
+  victim had no corpus footprint and printed [POISON FAILED] against a control that had never run; and this file's first version of poison 2 compared the reader's `R_RISCV_`-prefixed names against a
+  table keyed on the psABI's SHORT names, so `right` came out ZERO and the poison reported a failure against a control that worked. All three are the same bug wearing different clothes: a number that
+  is zero for a reason nobody looked at.
+
+
+  POISON 3 -- hand the instruction LENGTH in from outside, as a
+              disassembler with a symbol table can, and compare
+              the instruction count against the two-bit rule.
+              The number it must move is the COUNT ITSELF: with
+              the length supplied the rule is no longer being
+              tested by anything, and a rule nothing tests is a
+              comment.
+
+    instructions found by the RULE      : 11214
+    instructions found with length GIVEN: 5933
+    DELTA: -5281
+    VERDICT: POISON 3 FIRED
+
+  POISON 4 -- break the CHECK, not the decoder.  Every
+              instruction this file can name is listed, and then
+              an AArch64-shaped normaliser -- one that KEEPS the
+              mnemonic and the FIRST operand and DELETES the rest
+              -- is applied to both sides of a PLANTED set of
+              real disagreements.  The number it must move is the
+              number of disagreements that DISAPPEAR.
+
+    real disagreements planted (last operand changed): 10797
+    of those, the working cross-check CATCHES           : 10797
+    of those, the broken rule makes DISAPPEAR           : 639
+    DELTA: 639 of the 10797 planted disagreements were HIDDEN
+    VERDICT: POISON 4 FIRED
+
+  FOUR POISONS, FOUR CLAIMED NUMBERS, FOUR NON-ZERO DELTAS:
+
+  * poison 1 claims the NAMED, the DISAGREE and the UNMODELLED counts, and
+            moved them by +146, +141 and -146
+  * poison 2 claims the RELOCATION NAME count, and moved it by 104 names lost
+  and 5 wrongly named
+  * poison 3 claims the INSTRUCTION COUNT,   and moved it by -5281
+  * poison 4 claims the VISIBILITY of the check, and hid 639 of 10797
+
+  AND THE ONE WORTH READING TWICE IS POISON 1, BECAUSE IT MOVES THREE NUMBERS AND TWO OF THEM GO IN OPPOSITE DIRECTIONS. The unmodelled count FALLS by 146 and the disagreement count RISES by 141 over
+  the same removal, and both moves are correct: the words stopped being holes and became wrong, which is two different failures with the same cause.
+
+  A CROSS-CHECK THAT COUNTS AGREEMENTS AND A CROSS-CHECK THAT COUNTS HOLES ARE MEASURING DIFFERENT THINGS, AND A POISON THAT MOVES BOTH IN OPPOSITE DIRECTIONS IS THE PROOF THAT THEY ARE.
+
+  That is the whole reason the UNMODELLED column is printed beside the disagreement column rather than in a footnote. A model can be removed, or become unreachable, or be shadowed by an earlier model,
+  and every word it owned can end up named by something else at the same address -- and a check that watched only the disagreement count would have seen +141 and called it progress. It is the reverse
+  of progress. The number of words that stopped being named is 146, and every one of them is a word this file can no longer account for.
+
+  A poison that cannot move must say so, and this file prints [POISON FAILED] and stops. A control that did not run and a control that ran and found nothing are the same number and two different bugs,
+  and the distinction is made in the return value rather than in a comment nobody reads.
+
+==========================================================================
+SECTION 14 -- SEVENTEEN RETRACTIONS
+==========================================================================
+
+  Seventeen of them, and every one was asserted in a draft of this course or in the plan it was written from, measured, and withdrawn. They are printed in full rather than footnoted, and
+  `crosscheck.py` asserts their TEXT so that a later edit cannot quietly delete one -- which is the only mechanism that has ever stopped a retraction being quietly dropped.
+
+  Eleven of the 17 are about a READER, an INSTRUMENT or an EXPERIMENT and six are about a COMPARISON, and that ratio is the shape of this subject: the privileged architecture is a document you can
+  quote exactly, and almost everything that went wrong here was in the machinery built to read it.
+
+  The two that are NOT that are worth naming, because a list that is uniformly one thing is a list nobody read: R10 says this course cannot say what a trap DOES, and R14 says the defect is in a
+  SIBLING's decoder rather than in this one. A RETRACTION THAT ADMITS A WHOLE SECTION IS UNCLEARED IS NOT A RETRACTION, IT IS A COURSE THAT HAS DECIDED IT IS BEING CAREFUL, AND THE ONE THAT ADMITS THE
+  DEFECT IS ELSEWHERE IS THE ONE THAT KEEPS THE OTHER COURSES HONEST.
+
+  NOTHING HERE IS A MISTAKE ABOUT HOW A COMPUTER WORKS. That is seventeen courses in a row, and it is the most interesting thing about the list. The RISC-V privileged architecture did not surprise
+  this course once. What surprised it was a mask two registers wide, a pseudo-instruction whose letter does not mean what it says, an assembler that enforces nothing, and its own dead-code elimination
+  reported as a calling convention.
+
+
+  R1  CLAIMED: the inherited decoder covers what this course needs of the CSR address space
+        SOURCE: this course's own first draft, section 3
+     it prints the CSR NUMBER and stops. `s_system` reads inst[31:20] and
+                renders it as three hex digits, which is the address and not the
+                privilege: csr[11:10] is the accessibility class and csr[9:8] is the
+                lowest privilege that may touch the register, and NEITHER is in the
+                rendering. A decoder that says `csrr t0, 0x100` has decoded sstatus
+                and has not said that a user-mode program may not read it. The
+                correction is a model PREPENDED in THIS file and the sibling is
+                untouched, for the reason the sibling course set out: two harnesses
+                that both pass while reading different code is the failure mode this
+                collection keeps paying for, and this course's harness asserts the
+                decomposition while the encoding course's asserts nothing about it.
+                Section 13's poison 1 removes this very model.
+
+  R2  CLAIMED: the CSR NUMBER field is the mask the sweep found
+        SOURCE: this course's own first draft, section 3's mask table
+         the mask is NOT CONTIGUOUS and quoting it is a measurement about the SWEEP rather than about the field. Sweeping "every `csrr` in the file" against `csrr t0, cycle` moved bits 20-31 AND bits 12-17, because
+                the immediate forms and the three-operand forms are in the sweep and they differ in funct3 and in rs1. A MASK WITH A HOLE IN IT IS A NUMBER ABOUT THE SET YOU SWEPT AND NOT ABOUT THE FIELD. The
+                isolated measurement, over the two-operand `csrr` words only, is bits 20-31 and nothing else -- and it took TWO further repairs to get there, because the first isolated version moved ELEVEN bits and
+                not twelve: every named CSR in `csr.s` and every U-mode address in it had bit 5 of its address clear, so the sweep reported a narrower field than the specification has, with nothing in the output that
+                looked like a gap.
+
+  R3  CLAIMED: the pseudo-instruction `csrw cycle, t0` is `csrrs zero, cycle, t0`
+        SOURCE: this course's own first draft, section 3's alias table
+         it is `csrrw x0, cycle, t0`, and the difference is funct3: 1 against 2, a WRITE against a SET. The first version of the alias table paired it with csrrs on the reasonable-sounding assumption that the `w`
+                stands for "write the value in" rather than for the instruction's own mnemonic, and the comparison printed a difference of 0x00000000 -- which is a real difference and not a typo, and which a reader
+                skimming a table of "IDENTICAL / DIFFER" would have checked and found. A COMPARISON THAT PRINTS 0x00000000 IS A FINDING AND NOT A BUG IN THE PRINTER, AND THE ONLY WAY TO KNOW WHICH IS TO LOOK AT THE
+                XOR ITSELF.
+
+  R4  CLAIMED: the `ecall` wrapper's instruction count is the convention's
+        SOURCE: this course's own first draft of `wrap.c`
+         the FIRST version of `wrap.c` measured dead-code elimination and this file reported it as a convention. The original wrapper never used its arguments after the trap, and at -O1 and above clang deleted the
+                three argument loads, so the function became `li a7, 0x40 ; ecall ; ret` -- three instructions, and a number that is clang 21.1.8's opinion of unused parameters. The corpus adds `+ nfd + n` to the
+                return value, which makes them live, and the count is now a count of the convention. A COUNT OVER -O0 IS A COUNT OF A COMPILER'S SCAFFOLDING, AND THE ONLY WAY TO TELL A CONVENTION'S NUMBER FROM A
+                COMPILER'S IS TO VARY THE LEVEL AND SEE WHICH ONE MOVES.
+
+  R5  CLAIMED: the PPN field in `satp` is 54 bits, because the PPN field in a PTE is 54 bits
+        SOURCE: this course's own first draft of `bits.c`
+         it is 36 bits, and the two live in different registers. A PTE stores the PPN at bits 53-10, and `satp` stores a PPN at bits 51-8 with a FOUR-BIT MODE and a SIXTEEN-BIT ASID above it, so the field is 64 - 4 -
+                16 - 8 = 36 bits. THE MASK WAS WRONG AND IT COMPILED, AND THE COMPILER IS NOT THE PROBLEM: a 54-bit mask of satp returns a value with all sixteen ASID bits and two MODE bits mixed into a page number,
+                and nothing about the emitted code says so.
+
+  R6  CLAIMED: the PPN field in `satp` is 44 bits, because the manual's PTE figure shows a 44-bit PPN
+        SOURCE: this course's own second draft of `bits.c`
+         also wrong, and worse, because 44 IS the number the manual prints. A reader who takes 44 from the PTE figure and applies it to satp gets a mask that LOOKS documented and is eight bits too wide, and the eight
+                bits are exactly satp[51:44], the top eight of the ASID. TWO NATURAL MISTAKES WITH A PLEASING SHAPE ARE WORSE THAN ONE UGLY ONE, BECAUSE THE UGLY ONE GETS CHECKED.
+
+  R7  CLAIMED: the pairing distance is a property of the object file
+        SOURCE: `docs/riscv-section-plan.md`, the pair-per-page question
+         the assembler does not enforce it and the numbers in section 10 are the evidence. One `R_RISCV_PCREL_HI20` and TWO `R_RISCV_PCREL_LO12_I` records were emitted at every one of six distances, including 0x2000
+                -- 8200 bytes, which does not fit a signed 12-bit field and which a linker is entitled to reject. A RELOCATION RULE ENFORCED BY NO TOOL ON THE HOST IS A QUOTED CONSTRAINT AND NOT A MEASURED ONE, AND
+                THE COURSE SAYS WHICH IT IS INSTEAD OF CLAIMING A BUG IT CANNOT DEMONSTRATE.
+
+  R8  CLAIMED: the addend on an `R_RISCV_PCREL_LO12_I` record is always zero
+        SOURCE: this course's own first draft of section 9
+         the psABI says "the addend must be 0" and this corpus has records with addends of 8 and 0x800 on them, produced by `%pcrel_lo(label)+N`. The honest reading is that the sentence describes the CANONICAL pair
+                as generated with no offset and that a hand-written offset is a legitimate extension a linker handles. THERE IS NO RISC-V LINKER ON THIS HOST, SO WHETHER IT HANDLES IT IS QUOTED AND NOT MEASURED, AND
+                A COURSE THAT CLAIMED A BUG HERE WOULD BE CLAIMING SOMETHING IT CANNOT SEE.
+
+  R9  CLAIMED: the number of relocation records a page-table walk produces is a property of the walk
+        SOURCE: this course's own first draft of section 9
+         it is a property of the DATA LAYOUT, and the same source file at the same optimisation level emits ONE `R_RISCV_PCREL_HI20` when the three tables are adjacent and THREE when they are 4 KiB apart. THE AUTHOR
+                OF THE WALK IS NOT IN THE CONVERSATION: the change is the merged-globals pass, and the evidence is in the symbol names, which switch from `.L_MergedGlobals` to `root`/`l1tab`/`l2tab` between the two
+                builds.
+
+  R10  CLAIMED: this course can say what a trap, a page fault or a syscall does
+        SOURCE: this course's own first draft of section 5
+         IT IS NOT MEASURED, and the file says so in its header, in section 1, at the end of every affected section, and in the table in section 15 rather than in a disclaimer. There is no RISC-V machine, no emulator
+                and no RISC-V linker on this host. No exception has been taken, no page has been walked, no TLB has been consulted, and no `ecall` has been observed returning anything. WHAT IS MEASURED IS THAT THE
+                COMPILER EMITS THE CONSTANT 0x00000073 WITH THE CONVENTION'S REGISTERS AROUND IT, AND WHAT IS NOT MEASURED IS THAT ANY OF IT WORKS.
+
+  R11  CLAIMED: the mode of `stvec` is a property of the instruction that writes it
+        SOURCE: this course's own first draft of section 11
+         it is a property of the VALUE, and all three of the corpus's `csrw stvec, a1` instructions are the SAME 32 bits -- 0x10559073 -- whether the mode is Direct, Vectored or Reserved. The first draft reported the
+                three functions' bodies as three different instruction counts and a reader could have concluded the mode was visible in the code, and the second draft had the same finding for a different reason: the
+                functions returned their constant, clang put the return value in a1 and the argument in a0, and the three `csrw` words came out with TWO different rs1 values. A DISASSEMBLER READING THE OBJECT CAN
+                RECOVER THE INSTRUCTION AND CANNOT RECOVER THE MODE, AND THE VALUE THAT WOULD TELL IT IS FOUR INSTRUCTIONS EARLIER IN THE SAME FUNCTION.
+
+  R12  CLAIMED: the two readers' disagreement count is a measure of this decoder's correctness
+        SOURCE: this course's own first draft of section 12
+         it is a measure of a COMPARISON, and section 12 CLASSIFIES every disagreement by kind. The kind this corpus actually produced was a SPELLING difference -- `c.li a2, -1` against `li a2, -0x1`, the same value
+                in two encodings printed two ways -- and ten such words were counted as disagreements until this file added two normalisation rules that bring both sides to one spelling BEFORE the inherited rules
+                run. A CROSS-CHECK THAT COUNTS A SPELLING DIFFERENCE AND A CROSS-CHECK THAT COUNTS A MISREAD THE SAME WAY IS A CROSS-CHECK THAT CANNOT TELL A DECODER BUG FROM A CONVENTION, AND THIS COLLECTION HAS
+                PAID FOR THAT TWICE.
+
+  R13  CLAIMED: the layout experiment holds the instruction count constant, so the relocation delta is clean
+        SOURCE: this course's own first draft of section 9, the layout table
+         it holds the instruction count constant in the -fno-pic pair ONLY, and the default PIC pair is confounded by a factor of four. The first draft of section 9 built two objects, both at the target default, and
+                wrote "the same number of instructions in both" over a table whose own column read 58 against 13. The adjacent PIC build UNROLLED the three fill paths and the 4 KiB-apart one did not, because the
+                merged-globals pass had nothing to merge when the tables are three separate symbols. A TABLE THAT PRINTS THE CONFOUNDING NUMBER IN ITS OWN COLUMN IS NOT A CONFIRMED CLAIM, IT IS A CLAIM WITH THE
+                EVIDENCE AGAINST IT ATTACHED, AND THE DRAFT QUOTED THE COLUMN AND NOT THE NUMBER. The experiment now builds FOUR objects, labels the -fno-pic pair CLEAN and the PIC pair CONFOUNDED in the caption, and
+                rests the claim on the clean one.
+
+  R14  CLAIMED: the inherited decoder names the instructions this course needs
+        SOURCE: this course's own first run of section 12 -- and the defect is in the SIBLING's decoder rather than in this file's
+         it names NONE of the privileged ones, and the gap is in the privileged architecture rather than at the edge of the base ISA. `s_misc_mem` in `rvdec.py` handles opcode 0x73 with funct3 = 0 by reading the
+                funct12 and printing `ecall` for 0, `ebreak` for 1 and `system funct12=0x0NNN` for everything else -- and it DECLINES any such word whose rd or rs1 is non-zero, because the first two were the only
+                funct3 = 0 SYSTEM words it knew. SFENCE.VMA is funct12 = 0x120. THE ENCODING COURSE'S DECODER CANNOT NAME A PRIVILEGED INSTRUCTION, AND THE PAGE-TABLE COURSE IS THE ONE THAT NEEDS IT. The first run of
+                this file's cross-check reported twelve of them as disagreements, and a reader would have had to work out for themselves that a decoder printing `(undefined)` is claiming the ARCHITECTURE defines no
+                meaning for a word the architecture defines precisely. The correction is PREPENDED here and the sibling is untouched.
+
+  R15  CLAIMED: `sfence.vma %0` assembles to one of the two forms the psABI defines
+        SOURCE: this course's own first run of section 12, found by assembling one instruction and reading the word
+         it does not, and this one is a TOOLCHAIN finding rather than a reader finding. `riscv-elf` and `priv-spec` define funct12 = 0x120 as the bare form with rs1 = x0 and rs2 = x0, and funct12 = 0x121 as the form
+                that takes the two operands. clang's integrated assembler emits `sfence.vma %0` with the operand bound to a0 as funct12 = 0x120 and rs1 = a0 -- 0x12050073 -- which is NEITHER of the two defined forms.
+                Both readers name it, which is why this file and the second reader agree, and the specification is left to say what it does. A CROSS-CHECK THAT AGREES BECAUSE BOTH READERS GUESSED THE SAME THING IS
+                NOT EVIDENCE, AND THE FILE SAYS SO RATHER THAN BANKING THE ZERO.
+
+  R16  CLAIMED: every immediate the LO12 records attach to is zero
+        SOURCE: this course's own first run of section 9's immediate column
+         every IMMEDIATE is, and the first version of the table computed one of them from the wrong field. It read inst[31:20] for every row and printed 0x006 on the `sd`, because for an S-TYPE inst[31:20] is not an
+                immediate at all: inst[31:25] is imm[11:5] and inst[24:20] is rs2, so the twelve bits are seven bits of one field followed by a whole register. A NUMBER COMPUTED FROM THE WRONG FIELD IS NOT A SMALLER
+                NUMBER, IT IS A DIFFERENT NUMBER, AND IT LOOKS LIKE A SMALLER ONE. The table now decodes the S-type immediate as inst[31:25] concatenated with inst[11:7] and prints BOTH inst[11:7] and inst[24:20]
+                beside it, so the reader can see which bits are which, and the sentence above the table is about immediates rather than about a twelve-bit window.
+
+  R17  CLAIMED: the first correction to R16 named that register `rd`
+        SOURCE: this course's own first CORRECTION to R16 -- the value was right and the field name was not
+         there is no rd in an S-TYPE word at all, and the number was right while the NAME was wrong. A store has no destination register, so its inst[24:20] is rs2 -- the register the value is moved FROM -- and the
+                instruction the corpus built is `sd t1, 0(t0)`, so rs2 = t1 = x6 = 0x006, which is exactly the number the mask returned. A NUMBER YOU CAN NAME IS NOT YET A FIELD, AND NAMING IT AFTER A FIELD THAT IS
+                NOT IN THE WORD IS THE SAME ERROR WITH A DIFFERENT SPELLING. A wrong field NAME is worse than a wrong field VALUE in one specific way: the value is caught by the next comparison and the name is not,
+                and it gets copied. The table now prints inst[11:7] and inst[24:20] as two unnamed columns and prints the arithmetic that turns one into the other, so the reader is shown WHICH BITS rather than being
+                told WHICH FIELD they are.
+
+==========================================================================
+SECTION 15 -- THE MEASURED/QUOTED BOUNDARY, THE LIMITS, AND WHERE EVERY CLAIM CAME FROM
+==========================================================================
+
+  Everything in the last fourteen sections carries one of three labels, and on
+  most pages you would be forgiven for not noticing. This section prints all
+  of them, in one table, with the count -- and the COUNT is the finding,
+  because this is the course in the whole collection where the QUOTED third is
+  largest and the reason is structural rather than a matter of care.
+
+  A privileged architecture is a DOCUMENT. What a document says is not
+  measurable on a host with no machine, and what IS measurable -- the
+  encoding, the CSR address arithmetic, the relocation records, the size
+  arithmetic -- is the part a compiler author needs and the part a page-table
+  writer needs. So the ratio below is not a disclaimer. It is a map of the
+  subject.
+
+
+  label              the claim                                                           where it came from                                                                    
+  QUOTED             the three privilege modes and the hole at encoding 2                priv-spec, Table 1.1                                                                  
+  QUOTED             MPP is two bits and SPP is one                                      priv-spec, section 2.1.6.1 -- "xPP fields can only hold privilege modes up to x"      
+  QUOTED             the trap-entry stack: xPIE, xIE, xPP                                priv-spec, section 2.1.6.1                                                            
+  QUOTED             the xRET rule and the debugging aid in it                           priv-spec, section 2.1.6.1                                                            
+  QUOTED             medeleg and mideleg, and the six registers a delegated trap writes  priv-spec, section 2.1.1.8                                                            
+  QUOTED             the write-one-to-every-bit discovery procedure, three times         priv-spec, sections 2.1.1.8, 11.1.1.3 and 11.1.1.11                                   
+  QUOTED             the CSR address is 12 bits and 4,096 CSRs                           priv-spec, section 1 -- "a 12-bit encoding space (csr[11:0]) for up to 4,096 CSRs"    
+  QUOTED             csr[11:10] is accessibility and csr[9:8] is privilege               priv-spec, section 1, and riscv-elf Table 3                                           
+  QUOTED             Sv39 has LEVELS = 3 and PTESIZE = 8                                 priv-spec, section 11.1.4                                                             
+  QUOTED             Sv48 has LEVELS = 4 and PTESIZE = 8                                 priv-spec, section 11.1.5                                                             
+  QUOTED             Sv57 adds a fifth level                                             priv-spec, section 11.1.6                                                             
+  QUOTED             satp.MODE 0, 8, 9, 10 and the reserved values                       priv-spec, section 11.1.1.11, Table 5                                                 
+  QUOTED             a page table is exactly the size of a page                          priv-spec, section 11.1.4 -- "2^9 page table entries (PTEs), eight bytes each"        
+  QUOTED             the PTE layout, V through D and the reserved fields                 priv-spec, section 11.1.4, Figure 22 and the text after it                            
+  QUOTED             the two A/D schemes, and Svade                                      priv-spec, section 11.1.3.1                                                           
+  QUOTED             hardware A/D management became optional in 1.11                     priv-spec v1.11 preface, "Changes from version 1.10"                                  
+  QUOTED             the leaf sizes and the alignment requirement                        priv-spec, section 11.1.4 -- "2 MiB megapages and 1 GiB gigapages"                    
+  QUOTED             stvec BASE must be 4-byte aligned and MODE is 0, 1 or reserved      priv-spec, section 11.1.1.2, Table 1                                                  
+  QUOTED             a timer interrupt vectors to BASE + 0x14 in S-mode                  priv-spec, section 11.1.1.2 -- cause 5 times four is 0x14                             
+  QUOTED             interrupt cause i is bit i in sie and sip                           priv-spec, section 11.1.1.3                                                           
+  QUOTED             the R_RISCV_PCREL_HI20 / LO12_I / LO12_S codes, 23 / 24 / 25        riscv-elf chapter 8, Table 3 -- cross-checked against llvm-readelf-21 -r below        
+  QUOTED             the LO12 calculation S - P and "the addend must be 0"               riscv-elf chapter 8, section 8.1.4.9                                                  
+  QUOTED             the sys_write convention: number in a7, answer in a0                riscv-elf chapter 3, Calling Conventions for System Calls                             
+  MEASURED-ON-BYTES  the twelve CSR instructions and the three-bit funct3                inst[14:12] of 42 words in csr.o, cross-checked against llvm-objdump-21               
+  MEASURED-ON-BYTES  the register and immediate forms differ by funct3 bit 2             three XOR pairs in csr.o, 0x0001c000 with rs1 held constant                           
+  MEASURED-ON-BYTES  the seven pseudo-instructions are three-operand aliases             byte-for-byte comparison of the words in csr.o                                        
+  MEASURED-ON-BYTES  the CSR number is inst[31:20], isolated                             the sweep with funct3 and rs1 held constant; see R2 for the version that was retracted
+  MEASURED           4095 is the last CSR number and 4096 is refused                     two assembler probes, one accepted and one refused, at section 3                      
+  MEASURED           the immediate form's 5-bit field stops at 31                        two assembler probes, 0x1f accepted and 0x20 refused                                  
+  MEASURED           -march=rv64i emits a Zicsr instruction and records rv64i2p1         three builds of only_zicsr.s and three Tag_RISCV_arch strings                         
+  MEASURED           the ecall wrapper: 5 instructions at -O1 and above, 30 at -O0       function extents from llvm-objdump-21 at four levels                                  
+  MEASURED-ON-BYTES  a7 and a6 differ in exactly one bit at all four levels              instruction-by-instruction comparison of the two functions' words                     
+  MEASURED           Sv39/48/57: 512 entries, 9 index bits, 39/48/57 VA bits             arithmetic over the two quoted constants, each identity asserted                      
+  MEASURED-ON-BYTES  the PTE bit positions, as eight compiler-emitted shift pairs        bits_O2.o, reading the immediates out of the words and subtracting from 63            
+  MEASURED-ON-BYTES  satp MODE is 4 bits at [63:60] and the mask was optimised away      a missing `andi` in bits_O2.o -- the compiler proved the field width                  
+  MEASURED-ON-BYTES  the satp PPN is 36 bits and the two shipped masks are 44 and 54     bits_O2.o, with the width recovered from the two shifts                               
+  MEASURED           the relocation counts of the dense and sparse walks                 llvm-readelf-21 -r on four builds of one source file                                  
+  MEASURED           `.L_MergedGlobals` versus `root`/`l1tab`/`l2tab`                    the symbol column of the same two relocation tables                                   
+  MEASURED           one HI20 and two LO12s at all six distances                         llvm-readelf-21 -r on six objects differing only in a `.space`                        
+  MEASURED-ON-BYTES  every LO12 leaves the I/S immediate at zero                         the immediate field of the words the LO12 records attach to                           
+  MEASURED-ON-BYTES  all three stvec writes emit the same 32-bit word                    the `csrw stvec, a1` word in three functions of wrap_O2.o                             
+  MEASURED-ON-BYTES  the three interrupt masks are 0x2, 0x20 and 0x200                   the `ori` immediate in three functions of wrap_O2.o                                   
+  MEASURED-ON-BYTES  42 CSR addresses and their three-field decomposition                inst[31:20] of 42 words, decomposed by this file's own model                          
+  MEASURED-ON-BYTES  the two-reader agreement, and its classification                    this file's decoder against llvm-objdump-21, over the whole corpus                    
+
+  44 rows: 8 MEASURED, 13 MEASURED-ON-BYTES, 23 QUOTED.
+
+  AT 52 PER CENT THE QUOTED THIRD IS A MAJORITY OF THIS COURSE'S CLAIMS, AND THE COMPARISON WITH ITS SIBLING IS THE INTERESTING NUMBER: 23 OF 44 HERE AGAINST 31 OF 57 IN a64sys.
+
+  And that comparison CUTS BOTH WAYS, so both halves are printed. THIS COURSE'S QUOTED FRACTION IS 52 PER CENT AND a64sys's IS 54 PER CENT, SO THE AArch64 MACHINE COURSE'S QUOTED THIRD IS THE LARGER
+  ONE AND A COURSE THAT CLAIMED OTHERWISE WOULD BE MAKING A NUMBER UP.
+
+  The reason this course's is smaller is not that it is less dependent on a document. It is that there was MORE TO MEASURE: 21 of the 44 rows here are MEASURED or MEASURED-ON-BYTES against a64sys's 26
+  of 57, and the extra measurements are the relocation RECORDS, the CSR ADDRESS arithmetic and the twelve CSR instruction encodings -- none of which a64sys had a reason to touch, because its subject
+  is a descriptor format and a trap register rather than an object file.
+
+  The subject is a document. What a document says is not measurable on a host with no machine, and what IS measurable -- the encoding, the CSR address arithmetic, the relocation records, the size
+  arithmetic -- is the part a compiler author needs and the part a page-table writer needs. So the ratio above is not a disclaimer. It is a map of the subject, and it is printed as a table rather than
+  as a percentage in a sentence because a percentage in a sentence is a number nobody can check.
+
+
+  Sixteen limits, and they are printed in the artifact's own words so that a
+  reader who copies a number out of this file cannot lose the sentence that
+  limits it. The first two decide what every other one may say.
+
+
+  1. NO TIMING. No cycle, no latency, no throughput, no speedup, no ratio
+     of anything a machine did. There is no RISC-V machine, no emulator and
+     no RISC-V linker on this host, so every figure is a bit pattern, a
+     count of bit patterns, an arithmetic identity, or a refusal from a
+     real assembler. The x86-64 section measured a 4.92x and a 27.65x;
+     those have NO COUNTERPART HERE AND ARE NOT INVENTED TO FILL THE GAP.
+  2. NOTHING IS EXECUTED. Not one instruction in this course has run. A
+     page-table walk in section 9 has never walked a page; it is a function
+     that the compiler emitted and a disassembly that named it.
+  3. NO EXCEPTION IS EVER TAKEN, NO INTERRUPT IS EVER TAKEN, NO PAGE FAULT
+     IS EVER RAISED, NO TLB IS EVER CONSULTED AND NO ACCESS FAULT IS EVER
+     RAISED. Six separate absences, and each one is a separate thing this
+     course would otherwise be able to say.
+  4. THE ecall CONVENTION IS MEASURED AS EMITTED, WHICH IS WEAKER. What is
+     measured is that clang emits the constant 0x00000073 and that the
+     convention's registers are a7 and a0. What is NOT measured is that the
+     trap is taken, that it reaches supervisor mode, that a7 is read, that
+     a kernel exists, or that anything comes back.
+  5. NO LINKER RUNS. So the relocation NAMES and NUMBERS are measured, the
+     records are measured, and what a linker DOES with them -- including
+     whether it accepts a pair 8 KiB apart, and whether it relaxes anything
+     -- is quoted. R_RISCV_RELAX appears in every object and has never been
+     acted on.
+  6. THE A AND D BITS ARE TWO QUOTED SCHEMES AND NEITHER HAS BEEN
+     OBSERVED. The bit POSITIONS are measured on the compiler's own shifts.
+     Which scheme a given hart implements, how many page faults a first
+     touch costs, and whether the hardware update is atomic with the access
+     that caused it are all properties of silicon this host does not have.
+  7. THE CSR ACCESSIBILITY AND PRIVILEGE BITS ARE MEASURED AS ADDRESSES
+     AND NOT AS ENFORCEMENT. It is measured that `stvec` is 0x105 and
+     `mtvec` is 0x305 and that the instruction writing them is
+     byte-identical. It is NOT measured that a write to `mtvec` from S-mode
+     raises an illegal-instruction exception, because there is no S-mode
+     here.
+  8. THE stvec MODE AND THE BASE ALIGNMENT ARE VALUES AND NOT
+     INSTRUCTIONS, and the enforcement is hardware this host does not have.
+     All three corpus functions emit the same 32-bit word; the value four
+     instructions earlier is what distinguishes Direct from Vectored from
+     Reserved, and whether the hardware clears the low two bits of BASE is
+     a claim this course can only quote.
+  9. THE TWO READERS SHARE AN ASSEMBLER. `clang` assembled the corpus and
+     `llvm-objdump-21` disassembled it, so both come from one LLVM tree,
+     and GNU binutils has no RISC-V target installed on this host. What
+     section 12 establishes is "this decoder and one other piece of
+     software agree on what the bytes mean" -- NOT "either agrees with
+     silicon".
+  10. THE SOURCE/DISASSEMBLY PAIRING IN SECTIONS 3 AND 11 IS POSITIONAL,
+     AND THE FILE CHECKS IT. `csr.s` is a straight-line list of one
+     instruction per line with no labels inside the instruction run, so
+     source line N is word N. The count is asserted on every run and a file
+     that changed shape would fail loudly rather than silently mis-pair
+     every field in the course.
+  11. THE TWO satp MASKS THIS FILE SHIPS ARE WRONG ON PURPOSE.
+     `satp_ppn54_wrong` and `satp_ppn44_wrong` are in the corpus so that
+     the wrong width can be read out of the compiler's own output rather
+     than asserted. A reader who copies them out of `bits.c` gets a page
+     number with sixteen ASID bits mixed into it.
+  12. EVERY INSTRUCTION COUNT AND EVERY FUNCTION IS CLANG 21.1.8'S.
+     `crosscheck.py` asserts the encodings, the field positions, the
+     relocation numbers, the size arithmetic and the poison deltas as exact
+     quantities, and the instruction counts and relocation COUNTS as shapes
+     and orderings, because a shape does not move with a compiler and a
+     bare value does.
+  13. THE LAYOUT EXPERIMENT MEASURES A COMPILER PASS, NOT AN ARCHITECTURE.
+     The dense/sparse difference in section 9 is the merged-globals pass,
+     and it would be a different number under a different compiler at a
+     different optimisation level. What is NOT a compiler property is the
+     psABI's arithmetic: one AUIPC per 2048 bytes is arithmetic.
+  14. NOTHING GENERALISES FROM AN EMPTY ROW. Every distribution here is a
+     distribution of what clang chose for a handful of files at one version
+     on one host, and a row with nothing in it is a statement about that
+     corpus and not about the architecture.
+  15. A CROSS-CHECK THAT AGREES IS NOT PROOF. Section 13 exists because the
+     AArch64 data-path course reported ZERO disagreements over a corpus
+     where eighty-five instructions genuinely disagreed, and the only way
+     to know whether a cross-check can fail is to make it fail on purpose.
+  16. THE SPECIFICATIONS ARE AN ORACLE, NOT A MEASUREMENT. Quoting is not
+     verifying. The three documents -- `priv-spec`, `riscv-elf` and
+     `rv32-unpriv` -- were read on this host and every QUOTED row names one
+     of them with a section, and a reader who wants to disagree with a
+     QUOTED row has the citation to disagree with.
+
+  A LIST OF SIXTEEN LIMITS says what this file declines to do. A LIST OF WHAT
+  A READER THEREFORE CANNOT CONCLUDE is a different thing, and it is the one
+  that protects the reader rather than the file: the limits are this course's
+  promises and the cannot-list is the set of sentences that would be FALSE if
+  a reader carried the sixteen promises in one direction rather than the
+  other. It is printed beside the limits, not in a footnote, because a
+  footnote is a place where a scope statement goes to be skipped.
+
+
+  * That a page is ever walked. `walk.c` compiles to a function whose
+    body is three `auipc`/`ld` pairs and whose name says walk. No pointer
+    is dereferenced, no PPN is translated, and `priv-spec` section 11.1.4
+    is quoted rather than performed.
+  * That an `ecall` traps. What is measured is the constant 0x00000073
+    and the register a7 around it. Whether the trap is taken, whether
+    control reaches supervisor mode, and whether anything returns are four
+    separate questions and none of them has been asked of a machine.
+  * That writing `mtvec` from S-mode raises an illegal-instruction
+    exception. The privilege bits of the CSR address are measured as
+    NUMBERS. The rule that turns the numbers into an exception is quoted,
+    and there is no S-mode here to be refused by.
+  * That `stvec`'s low two bits are cleared by hardware. The three corpus
+    functions write 0x1000, 0x1001 and 0x123 through the SAME word, and
+    the specification's sentence about zero-filling the low two bits is
+    QUOTED. Whether it happens is a silicon question.
+  * Which of the two A/D schemes a hart implements. Section 9 measured
+    the bit POSITIONS on the compiler's own shifts; the two schemes, their
+    costs and their atomicity are `priv-spec` text.
+  * That a linker accepts the pair 8 KiB apart. The assembler emitted the
+    records at 8200 bytes and said nothing. There is no RISC-V linker on
+    this host, so what one would do is quoted and section 9 labels it so.
+  * Whether a page fault is cheaper or dearer than an access fault.
+    Nothing on this host can raise either.
+  * That `llvm-objdump-21` agrees with the silicon. Section 13
+    establishes that this file's decoder and one other piece of software
+    from the same LLVM tree agree on what the bytes mean. That is a fact
+    about two programs and not about a processor.
+
+  AND HERE IS THE OTHER HALF, because a course that prints only a cannot-list teaches its reader that the subject is unknowable, which is the opposite of what fourteen sections of measured bits are
+  for.
+
+
+  * Every bit pattern in this course is byte-for-byte reproducible from
+    the files in this directory and the exact clang invocation section 1
+    prints. That is the whole of the MEASURED label and it is a stronger
+    property than "probably right".
+  * Every relocation NAME and NUMBER this course uses appears in the
+    psABI table AND in the object files of the corpus. Names are a
+    convention; numbers are a fact, and both were read rather than
+    remembered.
+  * Every refusal, by running the assembler. 0x1000, 0x20 and the rest
+    are the assembler's own words, quoted verbatim, not this file's
+    summary of what it probably said.
+  * The size arithmetic, exactly: 4096 / 8 = 512, 3 x 9 + 12 = 39, 64 - 4
+    - 16 - 8 = 36, 2048 - 1 = 2047. Four identities, each one load-bearing
+    for a field width, each one checkable with a pencil.
+  * The CSR instruction encodings: twelve of them, three operations, two
+    forms, and the single bit that separates them. Section 3 measured that
+    bit three separate ways and the second reader confirms the words.
+  * The pairing rule's ARITHMETIC -- 2048 - 1 = 2047, one AUIPC per 2048
+    bytes -- and that the assembler enforces none of it. Both halves are
+    measured; only the enforcement is quoted.
+  * The three codes 23 and 24 and 25, that they are consecutive, and that
+    the first names the TARGET while the other two name a LABEL THE
+    COMPILER INVENTED. That asymmetry is the load-bearing fact about a
+    RISC-V relocation and it was read out of a symbol table.
+  * That the correct `satp` PPN width is 36 bits and that two natural
+    wrong answers -- 44 and 54 -- both COMPILE. The wrongness was measured
+    on the compiler's own shifts, so a reader can see it rather than take
+    it.
+  * That two independent readers, given the same bytes, disagree on zero
+    of them over this corpus -- and, because poison 4 exists, that this
+    check CAN fail and catches 10,797 of 10,797 planted disagreements when
+    asked.
+  * Every limit on this page, which are the sentences that make the other
+    nine safe to say.
+
+  THE TWO LISTS ARE THE SAME ABSENCES SEEN FROM OPPOSITE SIDES, AND THE SECOND IS LONGER -- 10 items against 8 -- WHICH IS THE POINT: there is more that can be read off bytes than there is that can be
+  said about behaviour. A reader who finishes this file able to state the second list precisely and the first list vaguely has it exactly backwards.
+
+
+  WHAT THE COURSE OWES ITS SIBLINGS, and does not re-teach. Every link was
+  verified present before it was written.
+
+  * why privilege exists at all, and what a ring is -- the neutral course:
+    `/courses/priv/lessons/priv-vectors`, `/courses/priv/lessons/priv-doors`,
+    `/courses/priv/lessons/priv-convention`
+  * what a page table is and why the levels exist --
+    `/courses/mem/lessons/mem-translation`
+  * the same subject for x86-64: the syscall register, the rings, the
+    four-level page walk -- `/courses/x86sys/lessons/x86-syscall`,
+    `/courses/x86sys/lessons/x86-rings`, `/courses/x86sys/lessons/x86-paging`
+  * the same subject for AArch64: the syscall, the four levels and the
+    descriptors -- `/courses/a64sys/lessons/a64-syscall`,
+    `/courses/a64sys/lessons/a64-pagetables`
+  * what a relocation record IS, and the two halves of the object-file story
+    -- `/courses/obj/lessons/obj-relocations`,
+    `/courses/reloc/lessons/reloc-why-so-many`
+  * the `auipc` immediates, which the first RISC-V course measured and this
+    one does not repeat -- `/courses/rvasm/lessons/rv-immediate`
+  * what a linker does with a pair once it has one --
+    `/courses/rvabi/lessons/rv-calling` for the register half, and this
+    course's section 9 for the record half
+
+  THE ONE OVERLAP WORTH NAMING is `rvasm`'s `rv-isa`, which measured the
+  Tag_RISCV_arch string across eight `-march` settings. Section 4 re-measures
+  it for a different reason -- not "what does the string contain" but "does
+  the toolchain agree with itself" -- and the finding is the opposite of that
+  course's, which is why it belongs here and not there. `rv-isa` showed the
+  string is rich; this section shows it is a record of the request.
+
+  Verified present before linking, every one of them.
+
+==========================================================================
+END OF REPORT -- 15 sections, 16 limits, 17 retractions, 4 poisons.
+==========================================================================

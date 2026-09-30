@@ -1,0 +1,75 @@
+{
+  "id": "rvpriv",
+  "title": "The RISC-V Privileged Architecture",
+  "version": "1.0.0",
+  "description": "A privileged architecture is a DOCUMENT, and this course is unusually honest about what that costs. There is no RISC-V machine, no emulator and no RISC-V linker on the build host, so NOTHING IS EXECUTED: no exception is taken, no page is walked, no TLB is consulted, no `ecall` is observed trapping. What IS measurable is the part a compiler author needs -- the twelve CSR instruction encodings and the single funct3 bit between them, the 12-bit CSR address decomposed into its accessibility and privilege fields, the Zicsr split that moves a standard extension out of the base ISA string without the ISA string noticing, and the relocation records a page-table walk emits, read out of a relocatable object. Two natural satp PPN widths -- 44 and 54 -- both COMPILE, and the wrongness was measured on the compiler's own shifts. The pairing rule's arithmetic (2048 - 1 = 2047) is exact and the assembler enforces none of it: one HI20 and two LO12_I records at every one of six distances, including 8 KiB apart. Seventeen retractions, sixteen limits, four poisons, and the measured/quoted boundary printed as a 44-row table rather than a disclaimer.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 4 concepts, reproduce the 398 checks in courses/rvpriv/assets/samples/crosscheck.py against the shipped rvpriv.out, then break one of the four numbers a poison claims and watch the delta move by name. The 398 includes eighteen pinned claim sentences, because a scope list you can soften without editing a test is not a scope list.",
+  "min_score": 70,
+  "dependencies": [
+    "elf",
+    "rvasm",
+    "rvabi",
+    "obj"
+  ],
+  "modules": [
+    {
+      "id": "translation",
+      "title": "The Address, the Bits, and the Trap",
+      "concepts": [
+        "rv-modes",
+        "rv-paging",
+        "rv-traps"
+      ]
+    },
+    {
+      "id": "boundary",
+      "title": "Where the Claim Stops",
+      "concepts": [
+        "rv-boundary"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "rv-modes",
+      "title": "The CSR Address and the Twelve Instructions That Touch It",
+      "module_id": "translation",
+      "description": "MEASURED, because encodings are bytes. Twelve CSR instructions, three operations, two forms, and the whole of the difference between them is ONE BIT of funct3: funct3 is 1, 2, 3 for the register forms CSRRW/CSRRS/CSRRC and 5, 6, 7 for the immediate forms, so 1^5 = 2^6 = 3^7 = 4 and every one of the three XORs is 0x04 at bit 2. Then the CSR ADDRESS, which is where the privilege lives: twelve bits, decomposed into csr[11:10] (read/write versus read-only) and csr[9:8] (the lowest privilege that may touch it) -- and encoding 2 in the privilege field is a HOLE, with the table saying so. The boundaries are measured BY REFUSAL, in the assembler's own words: 0x7ff, 0x800 and 0xfff all accepted, 0x1000 refused with `immediate must be an integer in the range [0, 4095]`, and the five-bit immediate has its own boundary at 31. And the gap the sibling decoder has: `-march=rv64i` emits `csrr` and writes `Tag_RISCV_arch = rv64i2p1`, so the ISA string does not notice that Zicsr was used at all.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "rv-paging",
+      "title": "Sv39, Sv48, Sv57 and satp, Measured on the Compiler's Own Shifts",
+      "module_id": "translation",
+      "description": "Sv39, Sv48 and Sv57 differ by ONE number, and it is arithmetic: 4096 / 8 = 512, 3 x 9 + 12 = 39 levels, 64 - 4 - 16 - 8 = 36 bits of PPN in satp. The trap is that 36 is neither of the two numbers a reader will reach for -- 44 comes from the manual's PTE figure and 54 from the PTE's own field -- and this corpus SHIPS BOTH WRONG MASKS on purpose so the wrongness can be measured rather than asserted. The compiler emits `slli a0, a0, 0x14 ; srli a0, a0, 0x1c` for 44 and `0x2`/`0xa` for 54, and a 54-bit mask swallows the entire ASID with nothing in the emitted code saying so. The A/D bits land as `slli 0x3e` down to `srli 0x38`, and MODE has NO slli at all because the mask optimised away. Then the relocations: 23, 24, 25 are consecutive for a reason, the HI20 names the TARGET and the LO12 names a LOCAL LABEL THE COMPILER INVENTED, and reading inst[31:20] out of an S-type word hands you rs2 rather than an immediate.",
+      "estimated_minutes": 27,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "rv-traps",
+      "title": "ecall, the Five Registers, and Why the Mode Is Not in the Instruction",
+      "module_id": "translation",
+      "description": "The syscall convention is quoted (`riscv-elf` chapter 3) and then measured AS EMITTED, which is weaker and is labelled so. What is measured: the constant 0x00000073, a7 as the syscall number, and the stronger form -- `li a7, 0x40` and `li a6, 0x40` differ in EXACTLY ONE BIT of one instruction, and that bit is rd[0], because the ABI names a register by the low five bits of the destination field. What is not measured: that the trap is taken, that it reaches supervisor mode, that a7 is read, that anything returns. The three stvec functions are the finding: Direct, Vectored and a misaligned value all emit the SAME 32 bits, 0x10559073, so the mode is a property of the VALUE and the enforcement is hardware this host does not have. And the enable bits -- cause 1, 5, 9 are 1 << 1, 1 << 5, 1 << 9, read straight out of the compiler's `ori` immediates, which is the quoted rule measured without quoting it.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "rv-boundary",
+      "title": "What This Course Measured, and What It Refused To",
+      "module_id": "boundary",
+      "description": "The measured/quoted boundary as a 44-row table with the count printed, because a percentage in a sentence is a number nobody can check: 8 MEASURED, 13 MEASURED-ON-BYTES, 23 QUOTED, and the comparison with the AArch64 data-path course is printed BOTH WAYS because this course's quoted fraction is smaller and saying so would be making a number up. Sixteen numbered limits, then EIGHT things a reader therefore CANNOT conclude beside TEN they can -- pinned whole, sentence by sentence, by the harness. Seventeen retractions with a SOURCE line each, including the two that are not about the reader at all: R10 says the course cannot say what a trap DOES, and R14 admits the defect is in a SIBLING's decoder. Four poisons, each required to MOVE the number it claims: remove the two prepended models and 146 words stop being named; plant 10,797 disagreements and the working check catches 10,797 while the broken one hides 639. The last page is the two-reader cross-check and the discipline around it.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}
