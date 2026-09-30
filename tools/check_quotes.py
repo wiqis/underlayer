@@ -78,6 +78,17 @@ PREFIXES = {
     # course's pages silently unchecked against a file they do not belong to.
     "a64abi": ("a64_aapcs.ch", "a64_registers.ch", "a64_frame.ch",
                "a64_save.ch", "a64_unwind.ch", "a64abi_landing.ch"),
+    # The THIRD AArch64 course.  Six concepts plus a landing page, and the
+    # last concept is `a64_evidence.ch` and NOT `a64_verify.ch`: the plan
+    # names `a64-verify`, a64asm took that name in the first course of the
+    # section, and a concept id is resolved GLOBALLY by render_concept() in
+    # web/src/helpers.ch with no course in the key.  The FILE has to be
+    # renamed too and not only the id -- content/src already holds
+    # a64_verify.ch from a64asm, so writing this course's artifact page to
+    # the same path would have silently replaced that course's concept.
+    "a64sys": ("a64_syscall.ch", "a64_exceptions.ch", "a64_interrupts.ch",
+               "a64_virtual.ch", "a64_pagetables.ch", "a64_evidence.ch",
+               "a64sys_landing.ch"),
 }
 OUTPUTS = {
     "x86asm": "x86dec.out",
@@ -86,6 +97,7 @@ OUTPUTS = {
     "x86simd": "vecdump.out",
     "a64asm": "a64dec.out",
     "a64abi": "a64abi.out",
+    "a64sys": "a64sys.out",
 }
 PREF = PREFIXES.get(COURSE, (COURSE[:3],))
 if not isinstance(PREF, tuple):
@@ -107,6 +119,8 @@ EXEMPT = {
     # number lives in crosscheck.py's own output and is quoted as such.
     "243":  "the a64asm harness's own check count",
     "166":  "the a64abi harness's own check count",
+    "210":  "the a64sys harness's own check count",
+    "0x9f": "a hint encoding quoted in a64sys, present in a64sys.out",
 }
 
 TICK = re.compile(r"(\d+\.\d{3}) ticks/op")
@@ -136,6 +150,7 @@ for name in sorted(os.listdir(os.path.join(ROOT, "content", "src"))):
         # block contain a shell prompt or a known artifact command?
         if "$ " not in b and "./x86dec" not in b and "./sysdump" not in b \
                 and "./a64dec" not in b and "./a64abi" not in b \
+                and "./a64sys" not in b and "a64sys.py" not in b \
                 and "objdump" not in b:
             continue
         for pat, kind in ((TICK, "ticks/op"), (HEX, "hex"), (RATIO, "ratio")):

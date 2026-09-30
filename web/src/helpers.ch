@@ -894,6 +894,53 @@ public namespace underlayer_web {
         return string()
     }
 
+    // The AArch64 machine: modes, memory and faults.  Same fall-through
+    // contract: empty string for anything else.
+    //
+    // THE PLAN GAVE THE LAST CONCEPT THE ID `a64-verify`, AND THAT NAME IS
+    // GONE.  render_concept() resolves concept ids GLOBALLY with no course in
+    // the key, and `a64-verify` was claimed by the ENCODING course, whose
+    // concept 5 is the cross-check this course's concept 6 is the sibling of.
+    // The first course to claim a name keeps it and every later one that asks
+    // for it silently gets the first course's page -- which is the same trap
+    // that lost three concept names to the x86-64 section, and the reason
+    // this paragraph exists.
+    //
+    // So this course's six ids were chosen by grepping every shipped
+    // manifest in `courses/` for each of them, and the plan's two taken names
+    // were dropped rather than reused:
+    //
+    //     a64-verify   ALREADY TAKEN by a64asm   -> a64-evidence
+    //     a64-unwind   ALREADY TAKEN by a64abi   (not wanted here)
+    //     a64-syscall  free                       -> a64-syscall
+    //     a64-exceptions free                     -> a64-exceptions
+    //     a64-interrupts free                     -> a64-interrupts
+    //     a64-virtual  free                       -> a64-virtual
+    //     a64-pagetables free                     -> a64-pagetables
+    //
+    // `a64-evidence` is named for the thing the concept is: it is the page
+    // that says which of the other five you are allowed to believe.  The
+    // x86-64 section made the same substitution twice -- `x86-verify` became
+    // `x86-boundary` and then `x86-bytes` -- and both are about the artifact
+    // rather than about the word "verify".
+    public func render_a64sys_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var syscall_id = std::string("a64-syscall")
+        var exceptions_id = std::string("a64-exceptions")
+        var interrupts_id = std::string("a64-interrupts")
+        var virtual_id = std::string("a64-virtual")
+        var pagetables_id = std::string("a64-pagetables")
+        var evidence_id = std::string("a64-evidence")
+
+        if(cid.equals(&syscall_id)) { return underlayer_content::render_a64_syscall() }
+        if(cid.equals(&exceptions_id)) { return underlayer_content::render_a64_exceptions() }
+        if(cid.equals(&interrupts_id)) { return underlayer_content::render_a64_interrupts() }
+        if(cid.equals(&virtual_id)) { return underlayer_content::render_a64_virtual() }
+        if(cid.equals(&pagetables_id)) { return underlayer_content::render_a64_pagetables() }
+        if(cid.equals(&evidence_id)) { return underlayer_content::render_a64_evidence() }
+        return string()
+    }
+
     // The x86-64 ABI. Same fall-through contract: empty string for anything
     // else.  `x86-calling` and its five siblings continue the `x86-` prefix
     // the assembly course already owns, and they are deliberately NOT
@@ -1078,6 +1125,15 @@ public namespace underlayer_web {
         // nothing here can shadow anything.
         var a64abi_html = render_a64abi_concept(concept_id)
         if(a64abi_html.size() > 0) { return a64abi_html }
+        // The AArch64 machine: modes, memory and faults; same fall-through
+        // contract.  Placed IMMEDIATELY after the a64abi lookup because it
+        // shares the `a64-` prefix and its six ids were chosen by grepping
+        // every shipped manifest rather than by reading the plan -- the plan
+        // gives the last one as `a64-verify`, and a64asm took that name in
+        // the FIRST course of this section, so this course's is
+        // `a64-evidence` and the paragraph above says why.
+        var a64sys_html = render_a64sys_concept(concept_id)
+        if(a64sys_html.size() > 0) { return a64sys_html }
         // x86-64 ABI concepts; same fall-through contract.
         var x86abi_html = render_x86abi_concept(concept_id)
         if(x86abi_html.size() > 0) { return x86abi_html }

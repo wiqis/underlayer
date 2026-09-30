@@ -206,13 +206,23 @@ def report(path):
 
 if __name__ == '__main__':
     args = sys.argv[1:]
-    write = '--check' not in args
-    args = [a for a in args if a != '--check']
+    # A verifier must not mutate what it verifies.  This tool used to REWRITE
+    # every file it was pointed at unless `--check` was passed, and that is how
+    # a page with a genuinely unbalanced div shipped and still read as balanced:
+    # the repair appended the missing close at the end of the block with no
+    # newline, after which the counts matched.  The check that was supposed to
+    # catch the bug was the thing lying about it.
+    #
+    # So writing now requires `--repair`, and `--check` is accepted and ignored
+    # so that existing callers -- and the four subagents' notes that say
+    # "html_balance.py --check" -- keep working unchanged.
+    write = '--repair' in args
+    args = [a for a in args if a not in ('--check', '--repair')]
     allok = True
     for p in args:
         if write:
             n, leftover = repair(p)
             if n:
-                print('repaired %d nesting error(s) in %s' % (n, p))
+                print('repaired %d nesting error(s) in %s' % (n, leftover and p))
         allok &= report(p)
     sys.exit(0 if allok else 1)

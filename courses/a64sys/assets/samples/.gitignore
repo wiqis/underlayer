@@ -1,0 +1,11 @@
+# Probes and intermediates.  The RECORDED run (a64sys.out) and the recorded
+# determinism check (run1.txt, run2.txt) are committed, because a course
+# whose claims can only be verified by rebuilding its own artifact is a course
+# whose claims are only verifiable on the machine that wrote them.
+_probe.*
+_pz*
+_x86cmp.*
+_a64cmp.*
+_al.*
+_r.*
+__pycache__/

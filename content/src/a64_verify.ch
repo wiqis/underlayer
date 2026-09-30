@@ -121,6 +121,8 @@ public func render_a64_verify() : string {
                 <p>There is one more limitation with a name, and it cost this course a whole afternoon: <strong><code>llvm-objdump</code> in this collection has no <code>-b binary</code> option.</strong> <code>--triple=aarch64 -D -b binary f</code> prints <code>error: unknown argument '-b'</code>. The ISA course's harness uses GNU objdump, which does have it, so the technique worked there and does not work here. Every single-word probe in this artifact is therefore assembled into a real object file and asked about in a section the disassembler already knows how to read. A cross-check that quietly substituted a different disassembler for the convenience of a script would have been a claim about a tool that is not installed.</p>
             </div>
 
+            </div>
+
             <div class="unit unit-reality">
                 <h2>Three things that are cheaper to state than to prove</h2>
                 <p>Each was asserted in a draft of this course. Each was measured. Each was retracted in public, and the history is printed by the artifact rather than fixed in silence.</p>
@@ -174,7 +176,7 @@ public func render_a64_verify() : string {
             </div>
         </div>
 
-    </div>render_lesson_js(&mut page)
+    render_lesson_js(&mut page)
     }
 
     return page.toString()

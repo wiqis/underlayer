@@ -133,8 +133,17 @@ Roadmap items **6** (System Calls), **7** (Exceptions), **8** (Interrupts),
     which symbols need `R_AARCH64_ADR_PREL_PG_HI21` and why a pair of them per
     page — measured, because the object-file courses already teach ELF and
     this is the hinge.
-16. `a64-verify` — the artifact, and the measured/quoted boundary made
-    explicit.
+16. `a64-evidence` — the artifact, and the measured/quoted boundary made
+    explicit. **Renamed from `a64-verify` as planned**, because
+    `render_concept()` resolves concept ids GLOBALLY with no course in the
+    key and `a64-verify` was already claimed by `a64asm`; a second course
+    asking for it silently receives the first one's page. The id is the only
+    thing that changed, the file is `content/src/a64_evidence.ch`, and the
+    reason is recorded where the fall-through lives in `web/src/helpers.ch`.
+    Note also that this concept is written LAST and is therefore placed at the
+    end of module `memory` in the manifest, not at the front of module `mode`
+    as this list orders it, because the prev/next chain is generated from
+    manifest module order.
 
 ### D. `a64simd` — "The AArch64 Data Path: NEON, Atomics and Ordering"
 Roadmap items **9** (SIMD and NEON), **10** (Atomics), **11** (Memory

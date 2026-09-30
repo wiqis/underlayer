@@ -1,0 +1,92 @@
+{
+  "id": "a64sys",
+  "title": "The AArch64 Machine: Modes, Memory and Faults",
+  "version": "1.0.0",
+  "description": "There is no AArch64 machine on the machine that wrote this course, no AArch64 emulator and no AArch64 linker, so not one instruction in it has been run and there is not a single timing in it -- and the two things the section plan got wrong about this subject are both about provenance. The syscall number is a 16-bit UNSIGNED field at bits[20:5] of the SVC and x8 is a separate ABI convention that clang uses as an ordinary scratch register in every function that does not mention it. A page needs a PAIR of relocations not because adrp reaches only 4 GiB -- it reaches 4 GiB and the pair happens four bytes away -- but because ADRP masks off the low twelve bits of the target. And an 8-bit HINT guard in the encoding course's decoder matches NOP alone out of eleven, which survived a whole course because that course's corpus contains no yield, no wfe, no wfi and no sev: a count of unmodelled words is a fact about A CORPUS and not about A DECODER. 111 of 111 argument placements audited at -O1, -O2 and -Os, and at -O0 clang spills every argument so the contract is not visible at all. ESR_EL0 and its six siblings do not exist and the assembler refuses all seven with one diagnostic. Testing for EC 0x24 or 0x25 costs three instructions, not six, because the two classes differ in one bit. And the most useful measurement in the course is an absence: four different alignment directives for a vector table and four times no diagnostic.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 6 concepts, reproduce the 209 checks in courses/a64sys/assets/samples/crosscheck.py against the shipped a64sys.out -- which needs no toolchain at all -- then change one guard in a64sys.py, any guard, and make the poisoned cross-check in section 9B move by name: the named count must fall from 1516 to 1459 and the disagreement count must rise from 0 to 57. A second exercise: delete m_hint_family from the dispatch and watch section 3's coverage table fall from 100 percent to 90.6, which is the only demonstration in the collection that a decoder is a subset of NAMES.",
+  "min_score": 70,
+  "dependencies": [
+    "a64abi"
+  ],
+  "modules": [
+    {
+      "id": "mode",
+      "title": "The Modes: Getting In, Getting Out, and Being Interrupted",
+      "concepts": [
+        "a64-syscall",
+        "a64-exceptions",
+        "a64-interrupts"
+      ]
+    },
+    {
+      "id": "memory",
+      "title": "The Memory: Regimes, Descriptors, and What Was Measured",
+      "concepts": [
+        "a64-virtual",
+        "a64-pagetables",
+        "a64-evidence"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "a64-syscall",
+      "title": "SVC #imm16, and x8 Is a Convention and Not an Architecture",
+      "module_id": "mode",
+      "description": "The number the kernel reads is a SIXTEEN-BIT CONSTANT BAKED INTO THE INSTRUCTION at bits[20:5], unsigned: the assembler accepts 0 to 65535 and refuses both ends with the same diagnostic, and it refuses `svc #-1` even though -1 is the same sixteen bits. That is a real design difference from x86-64's two-byte SYSCALL, and the reason is the encoding budget rather than the argument. But the number is ALSO in x8, and the second half of the concept is the measurement that separates them: 111 of 111 argument placements land in the register whose NUMBER is the argument's, at -O1, -O2 and -Os -- and at -O0 clang spills every argument to the stack, so the contract is not VISIBLE in the code at all. clang uses x8 as an ordinary scratch in every function that does not mention it, which is the proof that the convention is ABI and not architecture.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "a64-exceptions",
+      "title": "One Register, Three Fields, and Thirty-Nine Meanings",
+      "module_id": "mode",
+      "description": "ESR_ELx is 64 bits and the syndrome occupies bits 31:0, with bits 55:32 named ISS2 -- so a handler that masks 0xffffffff has thrown away a field it needs for an SError. EC is bits 31:26, IL is bit 25, ISS is bits 24:0, and the same twenty-five bits mean a syscall number in class 0x03 and a fault address in class 0x25: the field is not a number, it is a DISCRIMINATED UNION, and the discriminant is the six bits above it. ESR_EL0 and six siblings DO NOT EXIST and the assembler refuses all seven with one diagnostic. And the measurement worth reading twice: testing for EC 0x24 or 0x25 costs THREE instructions, not six, because the two classes differ in one bit and clang masks that bit off instead of shifting.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "a64-interrupts",
+      "title": "Sixteen Entries of 0x80, and Four Times No Diagnostic",
+      "module_id": "mode",
+      "description": "The table is 16 entries of 0x80 bytes and the assembler measured that as 2048, with all sixteen offsets at 0x800 to 0xf80 and the sixteenth at 0xf80. VBAR is written with an ordinary data instruction -- `msr VBAR_EL1, x0` is `mrs` with bit 21 flipped -- and installing the table is a PAIR of relocations like every other address on this architecture. But the largest result in the concept is an ABSENCE: four different alignment directives for the table and four times no diagnostic, because a misaligned table is not an error, it is a jump to the wrong address, and nothing in the toolchain says so. EL0 cannot install one, and the low eleven bits of VBAR are RES0.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "a64-virtual",
+      "title": "T0SZ = 64 - 48, and the Field With a Floor",
+      "module_id": "memory",
+      "description": "TTBR0, TTBR1 and TCR are all CRn = 2 and are told apart by a two-bit op2 field: 0, 1, 2. The 48/52 split is the identity TnSZ = 64 - (bits of VA), checked in seven configurations, and the row that is not in the section plan is the important one: T0SZ is a FIVE-BIT field, so the smallest regime a 4 KiB granule can name is 2^33 bytes and a 32-bit address space is not expressible at all. The first draft of that table had a 30-bit row in it and the same arithmetic on the row below killed it. Measured on the side: ADR reaches 0xffffc bytes and the assembler refuses 0x100000, exactly a 21-bit signed field -- while the ADRP reach of 4 GiB is NOT measurable here because the assembler does not check it and there is no linker.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "a64-pagetables",
+      "title": "Four Levels, and Why a Page Needs a Pair of Relocations",
+      "module_id": "memory",
+      "description": "512 descriptors of 8 bytes is 4096 bytes exactly, so the index into a table is nine bits and four levels is 36 bits of index plus 12 of offset. The hinge to the ELF courses is one integer: four 4 KiB-aligned tables and one 2 MiB-aligned table, and `.bss` comes back with alignment 0x200000 from BOTH readers -- and 0x1000 without the 2 MiB one. Same types, same code, one attribute on one declaration. Then the relocation census, two readers agreeing on all eight: R_AARCH64_ADR_PREL_PG_HI21 is 275 and R_AARCH64_ADD_ABS_LO12_NC is 277, three of the four ADRPs are immediately followed four bytes later by a LO12, and the reason is MASKING and not reach -- ADRP keeps only bits 32:12 of the target and something has to add the low twelve back.",
+      "estimated_minutes": 27,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "a64-evidence",
+      "title": "What Is Measured Here, What Is Quoted, and What You Cannot Conclude",
+      "module_id": "mode",
+      "description": "Fifty-seven claims, each with one of three labels, and the ratio is the finding: 31 QUOTED against 21 MEASURED and 5 MEASURED-ON-BYTES, because the subject of this course is a MACHINE and the machine is the one thing this host does not have. What is measured is the encoding, the compiler and the object file -- the three things a learner writing a backend has to get right and the three that do not need a CPU. Then the poison: one guard of m_sysreg changed by one bit and the named count falls from 1516 to 1459 while the disagreement count rises from 0 to 57, which is the only reason the zero means anything. Sixteen retractions and fifteen limits, all printed rather than footnoted.",
+      "estimated_minutes": 22,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}

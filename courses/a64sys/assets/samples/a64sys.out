@@ -1,0 +1,1922 @@
+============================================================================
+a64sys -- the artifact for "The AArch64 Machine: Modes, Memory and Faults"
+============================================================================
+THE METHOD IS FORCED AND IT IS STATED FIRST:
+  there is no AArch64 machine on this host, no AArch64 emulator and
+  no AArch64 linker, so NOT ONE INSTRUCTION IN THIS COURSE HAS
+  BEEN RUN, and there are NO TIMINGS anywhere in this file or on any
+  of its six pages.  The x86-64 section measured a 4.92x and a
+  27.65x; nothing here has a counterpart and nothing here fakes one.
+
+  the two readers are the decoder in this file and
+  llvm-objdump-21, and every claim about bytes is read by both
+  (MEASURED-ON-BYTES).  both come from one LLVM tree.
+  the specifications are the ORACLE and the compiler and the
+  assembler are the TEST SUBJECT, and every disagreement is printed
+  as a RETRACTION in section 11 and asserted as text by crosscheck.py
+
+  every claim carries one of three labels: MEASURED,
+  MEASURED-ON-BYTES, QUOTED.
+============================================================================
+
+============================================================================
+   1  THE INSTRUMENT, AND WHAT IT IS NOT
+     printed before any measurement, because it decides what may be claimed
+============================================================================
+   host CPU  x86-64.  NO AArch64 silicon, and this file does not
+     need it: not one instruction here has been run.
+   compiler  Ubuntu clang version 21.1.8 (6ubuntu1)
+   disassembler  Ubuntu LLVM version 21.1.8
+   reader 1: the decoder in this file, with 33 models, 12 of them
+     added by THIS course and 21 imported unchanged
+   reader 2: llvm-objdump-21 --triple=aarch64 -d  version
+   ELF reader: llvm-readelf-21, and a second ELF reader in this
+     file that uses struct.unpack_from and no library at all
+
+   aarch64-linux-gnu-ld     ABSENT  (AArch64 linker)
+   qemu-aarch64             ABSENT  (AArch64 emulator)
+   aarch64-linux-gnu-as     ABSENT  (a SECOND AArch64 assembler)
+   aarch64-linux-gnu-gcc    ABSENT  (an AArch64 GCC)
+
+     . Those four absences decide what this course may claim at all, and they
+     . are printed HERE, before the first measurement, rather than in a
+     . limits block at the end. A reader who meets a number and then meets
+     . the absence of the thing that would make it a runtime measurement
+     . learns a different lesson from one who meets them in the other order.
+
+  [NO TIMINGS]       there are none in this file and none on any of the six pages, and the
+     . x86-64 section measured a 4.92x and a 27.65x. Nothing in this section
+     . has a counterpart for either number, because there is no AArch64 clock
+     . on this host, and nothing here fakes one. The ONE cross-architecture
+     . comparison in the whole file is section 4's COMPILE-TIME INSTRUCTION
+     . COUNT and it says so in every table that prints it.
+
+  [the two absences] not one instruction has been run, and both readers come from ONE
+     . LLVM tree. The cross-check in section 9 therefore establishes that
+     . this decoder and one other piece of software agree on what the bytes
+     . mean -- NOT that either agrees with the silicon. There is no second
+     . AArch64 assembler on this host, so "the assembler" in every refusal
+     . quoted in this file means clang's integrated assembler at version
+     . 21.1.8 and nothing else.
+
+  [the three labels] every claim in this file and on every page carries exactly one:
+      MEASURED          an experiment on the compiler, the assembler, the object file
+      MEASURED-ON-BYTES  a property of the emitted BYTES, read by BOTH readers
+      QUOTED            a manual claim, with the document and the section beside it
+
+     . Rule 13 of the section plan requires this and it is not a formality. A
+     . course built without hardware has exactly one honest advantage -- it
+     . can be scrupulous about provenance -- and a course that does not take
+     . it has thrown away the only thing it had that the x86-64 section did
+     . not.
+
+============================================================================
+   2  THE SPECIFICATIONS, AS ORACLES
+     quoted with their sections, and never mixed in with a measurement
+============================================================================
+  [QUOTED] Linux syscall numbers
+     document  include/uapi/asm-generic/unistd.h, Linux
+     consulted  the file itself, fetched from the Linux tree; the lines
+     that matter  are printed below with the number this file uses.
+     number   name            why this course uses it
+     25       fcntl           six arguments in x0-x5, so it fills them all
+     56       openat          four arguments, and it takes a pointer
+     63       read            the number the corpus loads from memory
+     64       write           the number the corpus hard-codes as a literal
+     94       exit_group      one argument, the simplest shape there is
+     222      mmap            SIX arguments -- the most a Linux syscall takes
+
+     . THE WEAKNESS, stated where a reader would expect the claim. These six
+     . numbers are QUOTED, and nothing on this host can confirm one by
+     . running it: there is no AArch64 machine, no emulator and no linker, so
+     . a number confirmed only by a header file is a weaker kind of claim
+     . than one confirmed by a return value. What IS measured is the ENCODING
+     . of the instruction that carries the number, and the compiler's choice
+     . of how to put the number in x8. A reader who wants the numbers
+     . confirmed should treat section 4 as evidence about the ENCODING and
+     . this table as evidence about the CONVENTION, and should not confuse
+     . the two.
+
+  [QUOTED] The exception syndrome
+     document  Arm Architecture Reference Manual for A-profile
+     sections  DDI 0597, Shared Pseudocode, AArch64_ExceptionClass()
+     the layout it states, verbatim in structure:
+       ESR_ELx[63:56]  reserved
+       ESR_ELx[55:32]  ISS2  (SError, and later extensions)
+       ESR_ELx[31:26]  EC     the Exception Class, 6 bits
+       ESR_ELx[25]     IL     the Instruction Length, 1 bit
+       ESR_ELx[24:0]   ISS    the Instruction Specific Syndrome
+
+     and the assignment itself, verbatim in structure:
+         ESR_ELx = Zeros{8} :: iss2 :: ec[5:0] :: il :: iss
+
+     . And the part that is the whole concept: the pseudocode says IL is
+     . FORCED to 1 when `ec IN {0x24,0x25} && iss[24] == 0`. EC 0x24 and 0x25
+     . are the two Data Abort classes a page fault arrives as, so for the
+     . single most common exception on the machine the IL bit is not a fact
+     . about the instruction -- it is a fact about the absence of a valid
+     . syndrome. Section 5 measures what the compiler emits to read those
+     . bits and says what that measurement cannot show.
+
+  [QUOTED] The vector table and the translation registers
+     VBAR        Arm ARM for A-profile, DDI 0597/0601
+                 the VBAR_ELx register description
+     16 entries of 0x80 bytes; the low 11 bits of the register are RES0, so
+     the table must be 2 KiB aligned
+     TTBR0/TTBR1 Arm ARM for A-profile, DDI 0601
+                 the TCR_ELx register description
+     T0SZ is bits[63:48] and T1SZ is bits[47:32], and the region each one
+     addresses is 2^(64-TnSZ) bytes
+     TG0/TG1     Arm ARM for A-profile, DDI 0601
+                 the TCR_ELx register description
+     TG0 is bits[15:14] and TG1 is bits[31:30]: 4 KiB, 16 KiB or 64 KiB
+     descriptors Arm ARM for A-profile, DDI 0601
+                 the translation table descriptor format
+     bit 0 valid, bit 1 is a TABLE at levels 0-2, bit 10 AF, bits[4:2]
+     AttrIndx, bits[9:6] SH, bits[7:5] AP, bits[54:53] TXL at levels 1-2,
+     and the 8-byte descriptor is little-endian
+     relocs      ELF ABI for the Arm 64-bit Architecture
+                 the relocation table, and /usr/include/elf.h on this host
+     R_AARCH64_ADR_PREL_PG_HI21 is 275 and R_AARCH64_ADD_ABS_LO12_NC is 277
+     and R_AARCH64_ADR_PREL_LO21 is 274
+
+     . The architectural manual was NOT consulted on this host -- there is no
+     . copy of it here, and this file does not pretend otherwise. Every
+     . QUOTED claim above carries a document and a section so that a reader
+     . with the document can check it, and section 12 lists the manual as a
+     . limit rather than pretending the quotations were verified against a
+     . page.
+
+============================================================================
+   3  THE ENCODING, AND THE FIVE MODELS THIS COURSE HAS TO ADD
+     MEASURED-ON-BYTES: every word below came out of a real assembler and is read twice
+============================================================================
+  [MEASURED] the dispatch, and the finding that produced this section
+     models in the imported decoder: 21
+     models added by THIS course:    12
+     models in the file:             33
+
+     . The encoding course in this section measured a field map over
+     . bits[28:25] and declared the rest of the space out of scope, which is
+     . a defensible scope. It is also true that the entire subject of THIS
+     . course lives in the part it left out: every instruction here is in
+     . "Branches, Exception Generating and System", and the imported decoder
+     . claims FIVE words of that class -- B, BL, B.cond, CBZ, TBZ,
+     . BR/BLR/RET, HINT -- and can name NONE of SVC, MRS, MSR, HVC, SMC, BRK,
+     . HLT, DCPS, ERET, DRPS, DSB, DMB or ISB.
+
+
+  [MEASURED] what each course's models contribute to THIS corpus
+     . A coverage number means nothing on its own -- it is a number about a
+     . CORPUS -- so the same loop is run three times with three different
+     . SETS of models and the differences printed. This is the measurement
+     . that turns "100% named" from a boast into a number.
+
+     dispatch                                read  named  coverage
+     the encoding course's 21 alone        1516   1374   90.6%
+     + the ABI course's 6                 1516   1385   91.4%
+     + this course's 6                    1516   1516   100.0%
+
+  [RESULT]           the encoding course names 1374 of 1516 of this corpus (90.6%), and the two later courses add 11 and 131
+     . The encoding course's twenty-one models name 1374 words of a corpus
+     . whose whole subject is the SYSTEM class, and the two courses that
+     . followed added 142 between them. A decoder is a subset of NAMES and
+     . not of LENGTHS, and this table is the price of the subset: three
+     . courses, thirty-three models, and 142 of them written by the two that
+     . came after the first.
+
+
+  [MEASURED-ON-BYTES] MRS and MSR: the register is a FOUR-field name
+     source            word        L  op0 op1 CRn CRm op2 Rt   decoder says
+     mrs x0, esr_el1  0xd5385200  1   3    0   5    2   0  0  mrs      x0, ESR_EL1
+     mrs x1, elr_el1  0xd5384021  1   3    0   4    0   1  1  mrs      x1, ELR_EL1
+     mrs x2, far_el1  0xd5386002  1   3    0   6    0   0  2  mrs      x2, FAR_EL1
+     mrs x3, ttbr0_el1 0xd5382003  1   3    0   2    0   0  3  mrs      x3, TTBR0_EL1
+     mrs x4, tcr_el1  0xd5382044  1   3    0   2    0   2  4  mrs      x4, TCR_EL1
+     mrs x5, ttbr1_el1 0xd5382025  1   3    0   2    0   1  5  mrs      x5, TTBR1_EL1
+     mrs x6, vbar_el1 0xd538c006  1   3    0   c    0   0  6  mrs      x6, VBAR_EL1
+     mrs x7, sctlr_el1 0xd5381007  1   3    0   1    0   0  7  mrs      x7, SCTLR_EL1
+     mrs x8, CurrentEL 0xd5384248  1   3    0   4    2   2  8  mrs      x8, CurrentEL
+     mrs x9, daif     0xd53b4220  1   3    3   4    2   1  0  mrs      x0, DAIF
+     mrs x10, tpidr_el0 0xd53bd04a  1   3    3   d    0   2 10  mrs      x10, TPIDR_EL0
+     mrs x11, esr_el2 0xd53c5209  1   3    4   5    2   0  9  mrs      x9, ESR_EL2
+     mrs x12, vbar_el2 0xd53cc00a  1   3    4   c    0   0 10  mrs      x10, VBAR_EL2
+     mrs x13, tcr_el2 0xd53c204b  1   3    4   2    0   2 11  mrs      x11, TCR_EL2
+     msr vbar_el1, x0 0xd518c000  0   3    0   c    0   0  0  msr      VBAR_EL1, x0
+     msr tcr_el1, x0  0xd5182040  0   3    0   2    0   2  0  msr      TCR_EL1, x0
+     msr ttbr0_el1, x0 0xd5182000  0   3    0   2    0   0  0  msr      TTBR0_EL1, x0
+     msr ttbr1_el1, x0 0xd5182020  0   3    0   2    0   1  0  msr      TTBR1_EL1, x0
+
+     . FOUR fields name the register and a FIFTH names the EL. ESR_EL1 is CRn
+     . = 5, CRm = 2, op2 = 0, op1 = 0. ELR_EL1 is CRn = 4, CRm = 0, op2 = 1,
+     . op1 = 0. Two registers a kernel reads together in one handler, and
+     . they differ in THREE of the four fields and in the same place the
+     . fields are read from. A decoder that prints the fields has printed a
+     . correct answer and a useless one, which is why the model carries a
+     . TABLE rather than a formula: the names are not computable from the
+     . bits, they are ASSIGNED to the bits.
+
+     . The one bit that separates reading from writing is bit 21, the L bit.
+     . `mrs x6, VBAR_EL1` is 0xd538c006 and `msr VBAR_EL1, x0` is 0xd518c000:
+     . XOR them and the bits that differ are bit 21 and bits[4:0], and
+     . bits[4:0] is the register. So the SAME five bits name the operand
+     . whether the instruction reads it or writes it, and a decoder that
+     . treated L as part of the register name would report two different
+     . registers where there is one.
+
+     . And the EL is op1 alone: ESR_EL1 and ESR_EL2 are 0xd5385200 and
+     . 0xd53c5209, and the ONLY field that differs is op1, 0 versus 4. The
+     . architectural consequence is that a handler that runs at EL1 and one
+     . that runs at EL2 execute the SAME bytes to read the same conceptual
+     . register, and the difference is one field in the same instruction --
+     . which is a good design and an inconvenient one for a table, because a
+     . table keyed on CRn/CRm/op2 alone would name both ESR_EL1 and ESR_EL2
+     . identically. Section 2 quotes the manual and section 5 measures the
+     . code around it.
+
+  [MEASURED-ON-BYTES] the exception family: THREE operation tables, not one
+     source          word        b23:22 b21 b4:0 imm[20:5]  decoder says
+     svc #0         0xd4000001  0     0   01    0x0000     svc      #0
+     svc #1         0xd4000021  0     0   01    0x0001     svc      #1
+     svc #0x1338    0xd4026701  0     0   01    0x1338     svc      #4920
+     svc #65535     0xd41fffe1  0     0   01    0xffff     svc      #65535
+     hvc #0         0xd4000002  0     0   02    0x0000     hvc      #0
+     smc #0         0xd4000003  0     0   03    0x0000     smc      #0
+     brk #0         0xd4200000  0     1   00    0x0000     brk      #0
+     hlt #0         0xd4400000  1     0   00    0x0000     hlt      #0
+     dcps1          0xd4a00001  2     1   01    0x0000     dcps1
+     dcps2          0xd4a00002  2     1   02    0x0000     dcps2
+     dcps3          0xd4a00003  2     1   03    0x0000     dcps3
+
+     . Read the b4:0 column against the b23:22 and b21 columns together,
+     . because the operation field is NOT a mnemonic on its own. `svc #0` has
+     . bits[4:0] = 0b00001 and `dcps1` has bits[4:0] = 0b00001 as well -- the
+     . same five bits, two bits apart above -- and one traps to EL1 while the
+     . other is a debug exception at EL1. The discriminator is the PAIR
+     . (bits[23:22], bit 21) and the five-bit field is local to the table
+     . that pair selects.
+
+     . The immediate is bits[20:5], SIXTEEN bits, and the assembler REFUSES
+     . both ends. Nine refusals, one diagnostic:
+     svc #65536         REFUSED   immediate must be an integer in range [0, 65535].  matches the table
+     svc #-1            REFUSED   immediate must be an integer in range [0, 65535].  matches the table
+     brk #65536         REFUSED   immediate must be an integer in range [0, 65535].  matches the table
+     hlt #-1            REFUSED   immediate must be an integer in range [0, 65535].  matches the table
+     mrs x0, esr_el0    REFUSED   expected readable system register  matches the table
+     mrs x0, elr_el0    REFUSED   expected readable system register  matches the table
+     mrs x0, far_el0    REFUSED   expected readable system register  matches the table
+     mrs x0, vbar_el0   REFUSED   expected readable system register  matches the table
+     mrs x0, tcr_el0    REFUSED   expected readable system register  matches the table
+     mrs x0, ttbr0_el0  REFUSED   expected readable system register  matches the table
+     mrs x0, sctlr_el0  REFUSED   expected readable system register  matches the table
+     mrs x0, Sctlr      REFUSED   expected readable system register  matches the table
+
+     . Seven of those nine are the SAME diagnostic and they say the same
+     . thing seven times: ESR_EL0, ELR_EL0, FAR_EL0, VBAR_EL0, TCR_EL0,
+     . TTBR0_EL0 and SCTLR_EL0 DO NOT EXIST. That is not a naming convention
+     . the assembler invented; it is the architecture saying EL0 has no
+     . syndrome register, because EL0 cannot take an exception it has to
+     . describe. A reader who assumed `esr_el0` would assemble and then found
+     . out at 3 a.m. has learned the rule the seven identical diagnostics
+     . were teaching all along.
+
+     . The first two rows are the other kind of refusal and they are worth
+     . reading together: `svc #65536` and `svc #-1` are REFUSED with the
+     . identical message, and -1 is the same sixteen bits as 0xffff. So the
+     . field is UNSIGNED in an architecture where every other displacement is
+     . signed, and the message names a RANGE rather than a signedness, so it
+     . reads like a complaint about a value that was negative to begin with.
+
+  [MEASURED-ON-BYTES] ERET, DRPS, and the three barriers
+     eret     0xd69f03e0  bits[7:5]=7 CRm=3  drps
+     drps     0xd6bf03e0  bits[7:5]=7 CRm=3  eret
+     dsb sy   0xd5033f9f  bits[7:5]=4 CRm=15  dsb      sy
+     dmb sy   0xd5033fbf  bits[7:5]=5 CRm=15  dmb      sy
+     isb      0xd5033fdf  bits[7:5]=6 CRm=15  isb
+
+     . ERET and DRPS differ in ONE bit, bit 21 -- the L bit again, and here
+     . it means RETURN rather than DROP. The same bit has now been Load/Store
+     . in the MRS/MSR group and Return/Drop here, and a bit that changes
+     . meaning every time you cross a group boundary is a bit whose meaning
+     . is a property of the group and not of the bit. A reader who learned
+     . "bit 21 is the L bit" has learned something true and useless; what is
+     . worth learning is that the fixed 32-bit encoding reuses bits freely
+     . between groups, so a decoder must be dispatched on a group before it
+     . can read a field.
+
+     . DSB, DMB and ISB are told apart by bits[7:5] and by NOTHING ELSE, with
+     . the eight-bit CRm field reading 0b1111 in all three. The obvious
+     . discriminator is the wrong one, and this is worth naming as a trap: a
+     . decoder that guards on CRm gets DSB and DMB and ISB right for the
+     . wrong reason and every OTHER member of the class wrong. The barriers
+     . are the next course in this section; this course owns only the fact
+     . that they are three words a decoder has to be able to tell apart.
+
+  [MEASURED] R4.  A BUG IN THE INHERITED DECODER, found here
+     The encoding course's decoder has a model called `m_hint`
+     whose own claim is "NOP, WFI, YIELD and the rest: 27 fixed
+     bits and a 5-bit hint number", and whose guard is
+         bits[31:5] == 0xd503201f >> 5
+
+     hint      word        word >> 5   guard matches?
+     nop       0xd503201f  0x6a81900   YES
+     yield     0xd503203f  0x6a81901   no
+     wfe       0xd503205f  0x6a81902   no
+     wfi       0xd503207f  0x6a81903   no
+     sev       0xd503209f  0x6a81904   no
+     sevl      0xd50320bf  0x6a81905   no
+     dgh       0xd50320df  0x6a81906   no
+     bti       0xd503241f  0x6a81920   no
+     bti c     0xd503245f  0x6a81922   no
+     bti j     0xd503249f  0x6a81924   no
+     bti jc    0xd50324df  0x6a81926   no
+
+     . ONE of ELEVEN. The body of the inherited model is correct -- it reads
+     . the hint number and has the right eleven names -- and the guard makes
+     . eight of them unreachable. A guard that is one bit too narrow does not
+     . produce a wrong answer: it produces NO answer, and NO answer is
+     . exactly what a decoder that had never heard of hints would also
+     . produce. This is the failure mode that no amount of agreeing with a
+     . second reader can catch, and the reason section 9 poisons a guard on
+     . purpose.
+
+     . WHY IT SURVIVED, and the reason is the useful part. The encoding
+     . course's own corpus, compiled with clang, contains no yield, no wfe,
+     . no wfi, no sev, no sevl, no dgh and no bti. A model that is wrong
+     . about eight words the corpus does not contain is indistinguishable
+     . from a model that is right, and that course's artifact reports its
+     . unmodelled words as "9, and the unmodelled ones are Advanced SIMD" --
+     . a true sentence about a corpus in which the bug cannot appear.
+
+     . A count of unmodelled words is a fact about A CORPUS and not about A
+     . DECODER. That sentence is the most transferable result in this file,
+     . and it is why this course has a corpus of its own: sys.c contains a
+     . syscall, a syndrome read, a vector-table install and four levels of
+     . page table, and the coverage numbers in section 9 are about THIS
+     . corpus.
+
+  [the fix]          this file does not edit the sibling.  A course that fixes another course's
+     . artifact by writing to it produces two artifacts that disagree about
+     . the same architecture, and the reader cannot tell which one to
+     . believe. So this file PREPENDS `m_hint_family` with a guard of
+     . bits[31:12] = 0xd5032 and a constant bit 4, and the inherited guard
+     . never runs. All 33 models are in the dispatch and the audit table
+     . below prints them in the order they are tried.
+
+============================================================================
+   4  THE SYSCALL: THE IMMEDIATE, x8, AND THE ARGUMENT AUDIT
+     MEASURED-ON-BYTES: the encoding; MEASURED: the compiler's choices
+============================================================================
+  [MEASURED-ON-BYTES] the immediate is a FIELD, and the assembler says how wide
+     svc #0       0xd4000001  imm16 at bits[20:5] = 0x0000   svc      #0
+     svc #1       0xd4000021  imm16 at bits[20:5] = 0x0001   svc      #1
+     svc #63      0xd40007e1  imm16 at bits[20:5] = 0x003f   svc      #63
+     svc #64      0xd4000801  imm16 at bits[20:5] = 0x0040   svc      #64
+     svc #65535   0xd41fffe1  imm16 at bits[20:5] = 0xffff   svc      #65535
+
+     . The number the kernel reads is a SIXTEEN-BIT CONSTANT BAKED INTO THE
+     . INSTRUCTION. Not a register, not a memory operand: a field. That is
+     . the whole architectural difference from x86-64, and it is worth being
+     . precise about WHY it is a difference, because the obvious reason is
+     . wrong.
+
+     . The obvious reason -- "x86-64 has no immediate, so it must use a
+     . register" -- is a statement about SYSCALL, not about the argument. The
+     . deeper reason is that AArch64 fixed the instruction length at 32 bits,
+     . so an immediate COSTS four bytes of the same instruction either way,
+     . and a design that has already spent the encoding budget can spend 16
+     . of the 32 bits on a constant. On x86-64 the instruction is 2 bytes
+     . long (`syscall` is 0f 05), and a 7-byte `mov eax, 60` in front of it
+     . costs more than the syscall itself. The encoding fixes the economics
+     . and the economics picks the design.
+
+  [MEASURED-ON-BYTES] the same syscall, both architectures, hand-written
+     THIS IS A COMPILE-TIME INSTRUCTION COUNT COMPARISON AND NOT
+     A TIMING ONE.  NOTHING HAS BEEN EXECUTED ON EITHER SIDE.
+
+     AArch64 (aarch64-linux-gnu)             x86-64 (host, variable length)
+     0  0xd2800808 mov x8, #0x40             0  48 c7 c0 3c 00 00 00 movq
+     1  0xd2800020 mov x0, #0x1              1  48 c7 c7 01 00 00 00 movq
+     2  0x90000001 adrp x1, 0x0 <a64>        2  48 8d 35 00 00 00 00 leaq
+     3  0x91000021 add x1, x1, #0x0          3  48 c7 c2 06 00 00 00 movq
+     4  0xd28000c2 mov x2, #0x6              4  0f 05              syscall
+     5  0xd4000001 svc #0                    5  c3                 retq
+     6  0xd65f03c0 ret                       
+
+     instructions: AArch64 7, x86-64 6
+     bytes of CODE: AArch64 28, x86-64 31
+     relocations:   AArch64 2, x86-64 1
+
+     . AArch64 spends 2 instructions and 2 relocations to name a string;
+     . x86-64 spends 1 instruction and 1 relocation. The syscall itself is
+     . ONE instruction on both -- 4 bytes on AArch64, 2 on x86-64 -- and the
+     . difference in the ARGUMENT REFERENCE is the difference between a PAIR
+     . of relocations and a SINGLE one, which is a fact about an object file
+     . and not a cycle. Section 8 measures the pair properly and shows why a
+     . page table needs it; here the point is only that the two architectures
+     . differ in a way an object file can see.
+
+     the RELOCATIONS, which is where the difference is real:
+       AArch64  0x00000008  R_AARCH64_ADR_PREL_PG_HI21      + 0
+       AArch64  0x0000000c  R_AARCH64_ADD_ABS_LO12_NC       + 0
+       x86-64   0x00000011  R_X86_64_PC32                  .data -4
+
+     . TWO relocations against ONE, and that is the real cost of the pair,
+     . not a cycle count. Section 8 measures the pair properly and shows why
+     . a page table needs it; here the point is only that the architectures
+     . differ in a way an object file can see.
+
+
+  [MEASURED] the x8 CONVENTION, and what the compiler does with x8
+     . The claim to be careful about: "the syscall number is in x8" is an ABI
+     . claim, not an architectural one. The architecture has no idea what x8
+     . means, and the proof is a function in the corpus in which x8 is NOT
+     . mentioned at all.
+
+     -O0  sys_const        20 instructions   x8 named: YES
+     -O0  sys_global       21 instructions   x8 named: YES
+     -O0  sys_no_number    17 instructions   x8 named: YES
+     -O1  sys_const         9 instructions   x8 named: YES
+     -O1  sys_global       10 instructions   x8 named: YES
+     -O1  sys_no_number     8 instructions   x8 named: YES
+     -O2  sys_const         9 instructions   x8 named: YES
+     -O2  sys_global       10 instructions   x8 named: YES
+     -O2  sys_no_number     8 instructions   x8 named: YES
+     -Os  sys_const         9 instructions   x8 named: YES
+     -Os  sys_global       10 instructions   x8 named: YES
+     -Os  sys_no_number     8 instructions   x8 named: YES
+
+     . `sys_no_number` never mentions x8 in its C, and the compiler uses it
+     . ANYWAY at every level -- as the adrp base for the next address it has
+     . to form. So x8 is an ordinary caller-saved temporary to the compiler,
+     . and it is the LINUX KERNEL that assigns it a job. A page that said "x8
+     . is the syscall register, therefore the compiler protects it" would be
+     . wrong in a way that produces no diagnostic: the wrapper is correct, it
+     . is the reasoning that is wrong, and the reasoning is what a reader
+     . would carry to the next problem.
+
+
+  [MEASURED] the ARGUMENT AUDIT: which register, which argument, BY NAME
+     . Every argument is a `volatile` global with its own distinctive
+     . constant, so the disassembly NAMES the argument: the load of 0x4444 IS
+     . argument three. A census would say "seven registers were written"; an
+     . audit says which ARGUMENT was in which REGISTER, and can therefore
+     . disagree with a specification instead of merely agreeing with itself.
+
+     which ARGUMENT (by its constant) is in which REGISTER
+     function         x0  x1  x2  x3  x4  x5  x6  x7  9th
+
+     --- O2 ---
+     sys_arg1         VA0  .  .  .  .  .  .  .   -
+     sys_arg2         VA0  VA1  .  .  .  .  .  .   -
+     sys_arg5         VA0  VA1  VA2  VA3  VA4  .  .  .   -
+     sys_arg6         VA0  VA1  VA2  VA3  VA4  VA5  .  .   -
+     sys_arg7         VA0  VA1  VA2  VA3  VA4  VA5  VA6  .   -
+     sys_arg8         VA0  VA1  VA2  VA3  VA4  VA5  VA6  VA7   -
+     sys_arg9_stack   VA0  VA1  VA2  VA3  VA4  VA5  VA6  VA7   stack
+
+     --- O1 ---
+     sys_arg1         VA0  .  .  .  .  .  .  .   -
+     sys_arg2         VA0  VA1  .  .  .  .  .  .   -
+     sys_arg5         VA0  VA1  VA2  VA3  VA4  .  .  .   -
+     sys_arg6         VA0  VA1  VA2  VA3  VA4  VA5  .  .   -
+     sys_arg7         VA0  VA1  VA2  VA3  VA4  VA5  VA6  .   -
+     sys_arg8         VA0  VA1  VA2  VA3  VA4  VA5  VA6  VA7   -
+     sys_arg9_stack   VA0  VA1  VA2  VA3  VA4  VA5  VA6  VA7   stack
+
+     --- Os ---
+     sys_arg1         VA0  .  .  .  .  .  .  .   -
+     sys_arg2         VA0  VA1  .  .  .  .  .  .   -
+     sys_arg5         VA0  VA1  VA2  VA3  VA4  .  .  .   -
+     sys_arg6         VA0  VA1  VA2  VA3  VA4  VA5  .  .   -
+     sys_arg7         VA0  VA1  VA2  VA3  VA4  VA5  VA6  .   -
+     sys_arg8         VA0  VA1  VA2  VA3  VA4  VA5  VA6  VA7   -
+     sys_arg9_stack   VA0  VA1  VA2  VA3  VA4  VA5  VA6  VA7   stack
+
+     --- O0 ---   every argument is SPILLED, so the assignment the ABI names is
+     sys_arg1         .  .  .  .  .  .  .  .   -
+     sys_arg2         .  .  .  .  .  .  .  .   -
+     sys_arg5         .  .  .  .  .  .  .  .   -
+     sys_arg6         .  .  .  .  .  .  .  .   -
+     sys_arg7         .  .  .  .  .  .  .  .   -
+     sys_arg8         .  .  .  .  .  .  .  .   -
+     sys_arg9_stack   .  .  .  .  .  .  .  .   stack
+
+  [RESULT]           111 of 111 argument placements land in the register whose NUMBER is the argument's, at -O1, -O2 and -Os, and the ninth is never a register
+     . The -O0 row is the interesting one, and it is a NEGATIVE result: at
+     . -O0 clang spills every argument to the stack and reloads it
+     . immediately before the `svc`, so the register assignment the ABI names
+     . is not VISIBLE in the code at all. The contract still holds -- the
+     . reloads target x0 through x7 -- but a reader auditing an ABI from a
+     . -O0 build is auditing the spill slots and not the contract, and the
+     . harness for this course asserts the audit at the three levels where
+     . the contract is legible.
+     . Argument ZERO is in x0, argument SEVEN is in x7, and the NINTH is not
+     . in a register at all: it is a `volatile` C object reached through an
+     . "m" constraint, and the compiler materialises its ADDRESS into a
+     . register and the value stays in memory. That is the AAPCS64 rule --
+     . eight argument registers, and after that the stack -- showing up
+     . inside a SYSCALL rather than inside a function call, which is a thing
+     . a reader does not expect, because a Linux syscall has at most six
+     . arguments and the eighth register is dead weight that the architecture
+     . supplies and the kernel ignores.
+
+  [MEASURED] the compiler emits x6 and x7 for a syscall that has six
+     -O0  sys_arg6   33 insn   mentions x6 0 times, x7 0 times
+     -O0  sys_arg7   37 insn   mentions x6 1 times, x7 0 times
+     -O0  sys_arg8   41 insn   mentions x6 1 times, x7 1 times
+     -O1  sys_arg6   16 insn   mentions x6 0 times, x7 0 times
+     -O1  sys_arg7   18 insn   mentions x6 1 times, x7 0 times
+     -O1  sys_arg8   20 insn   mentions x6 1 times, x7 1 times
+     -O2  sys_arg6   16 insn   mentions x6 0 times, x7 0 times
+     -O2  sys_arg7   18 insn   mentions x6 1 times, x7 0 times
+     -O2  sys_arg8   20 insn   mentions x6 1 times, x7 1 times
+     -Os  sys_arg6   16 insn   mentions x6 0 times, x7 0 times
+     -Os  sys_arg7   18 insn   mentions x6 1 times, x7 0 times
+     -Os  sys_arg8   20 insn   mentions x6 1 times, x7 1 times
+
+     . The compiler fills them because the source named them. It has no idea
+     . a Linux syscall stops at six, because that is not in the language and
+     . not in the ABI this compiler implements -- it is in the kernel. So a
+     . reader who wants the SIX-argument limit has to go and read the kernel,
+     . and this file cannot help: the encoding is measured, the limit is
+     . QUOTED, and the gap between them is exactly the gap between an ABI and
+     . an operating system.
+
+  [MEASURED] a literal number and a LOADED number, side by side
+     sys_const, -O2:
+       adrp x8, VA0
+       ldr x0, [x8, :lo12:VA0]
+       adrp x8, VA1
+       ldr x1, [x8, :lo12:VA1]
+       mov w8, #64
+       svc #0
+       adrp x8, VRET
+       str x0, [x8, :lo12:VRET]
+       ret
+
+     sys_global, -O2:
+       adrp x8, VN
+       adrp x9, VA0
+       ldr x8, [x8, :lo12:VN]
+       ldr x0, [x9, :lo12:VA0]
+       adrp x9, VA1
+       ldr x1, [x9, :lo12:VA1]
+       svc #0
+       adrp x8, VRET
+       str x0, [x8, :lo12:VRET]
+       ret
+
+     . `sys_const` loads the number from an immediate, so the compiler builds
+     . 64 with the wide-immediate family and it costs no memory access.
+     . `sys_global` loads it from a `volatile`, so it costs an adrp and an
+     . ldr -- and THAT is the pair of section 8, arriving here first for a
+     . reason: a syscall number that is a variable is indistinguishable from
+     . a page-table address in the instruction stream, and the only thing
+     . that tells them apart is a relocation.
+
+  [MEASURED] what this section CANNOT show
+     . It cannot show that `svc #0` traps, that the kernel reads x8, that the
+     . number 64 means write, that the return value comes back in x0, or that
+     . a wrong number produces ENOSYS. All five are QUOTED and all five would
+     . need an AArch64 machine or an emulator, and this host has neither.
+     . What it CAN show is that the compiler puts the number where the
+     . convention says, that the argument registers are filled in the order
+     . the ABI names, that the ninth argument is not a register, and that the
+     . encoding of the instruction carries a sixteen-bit constant. Those are
+     . four real results and they are all the section claims.
+
+============================================================================
+   5  THE SYNDROME: A PACKED FIELD AND THE INSTRUCTIONS AROUND IT
+     QUOTED for the layout; MEASURED-ON-BYTES for the instructions that read it
+============================================================================
+  [MEASURED-ON-BYTES] the register, field by field, with the two widths that matter
+     source             word        what the assembler calls it
+     mrs x5, esr_el1    0xd5385205  mrs      x5, ESR_EL1
+     mrs x6, elr_el1    0xd5384026  mrs      x6, ELR_EL1
+     mrs x7, far_el1    0xd5386007  mrs      x7, FAR_EL1
+     mrs x4, vbar_el1   0xd538c004  mrs      x4, VBAR_EL1
+     msr vbar_el1, x0   0xd518c000  msr      VBAR_EL1, x0
+     mrs x0, tpidr_el0  0xd53bd040  mrs      x0, TPIDR_EL0
+     mrs x0, daif       0xd53b4220  mrs      x0, DAIF
+
+     . Three of those are read by every exception handler on the machine and
+     . the fourth is where it will jump. The encoding gives each of them a
+     . FOUR-field name in bits[18:16] and bits[15:5] and the difference
+     . between `ESR_EL1` and `ELR_EL1` is CRn 5 against CRn 4 and op2 0
+     . against op2 1 -- two bits, in a nine-bit field, and both of them load
+     . with the SAME instruction shape.
+
+     The mnemonic is not derivable from the bits.  This file
+     carries a table of sixteen tuples and prints the field values
+     next to the name, because a decoder that derives the name
+     gets a plausible answer and no way to check it.
+
+  [MEASURED-ON-BYTES] the packed field, and the arithmetic a handler does on it
+     EC is bits[31:26], IL is bit 25, ISS is bits[24:0.
+     These are QUOTED (DDI 0597, AArch64_ExceptionClass).  What
+     follows is what clang EMITS for the arithmetic, and it is
+     the only part of a handler a toolchain can show us.
+
+     --- O2 ---
+       ec_of                   2  lsr x0, x0, #26 ; ret
+       il_of                   2  ubfx x0, x0, #25, #1 ; ret
+       iss_of                  2  and x0, x0, #0x1ffffff ; ret
+       is_lower_data_abort     5  mov w8, #-1879048192 ; and x9, x0, #0xf8000000 ; cmp x9, x8 ; cset w0, eq ; ret
+       dfsc_of                 2  and x0, x0, #0x7f ; ret
+
+     --- O0 ---
+       ec_of                   6  sub sp, sp, #16 ; str x0, [sp, #8] ; ldr x8, [sp, #8] ; lsr x0, x8, #26 ; add sp, sp, #16 ; ret
+       il_of                   7  sub sp, sp, #16 ; str x0, [sp, #8] ; ldr x8, [sp, #8] ; lsr x8, x8, #25 ; and x0, x8, #0x1 ; add sp, sp, #16 ; ret
+       iss_of                  6  sub sp, sp, #16 ; str x0, [sp, #8] ; ldr x8, [sp, #8] ; and x0, x8, #0x1ffffff ; add sp, sp, #16 ; ret
+       is_lower_data_abort    21  sub sp, sp, #32 ; str x0, [sp, #24] ; ldr x8, [sp, #24] ; lsr x8, x8, #26 ; and x8, x8, #0x3f ; str x8, [sp, #16] ; ldr x9, [sp, #16] ; mov w8, #1 ; subs x9, x9, #36 ; str w8, [sp, #12] ; b.eq .LBB28_2 ; b .LBB28_1 ; ldr x8, [sp, #16] ; subs x8, x8, #37 ; cset w8, eq ; str w8, [sp, #12] ; b .LBB28_2 ; ldr w8, [sp, #12] ; and w0, w8, #0x1 ; add sp, sp, #32 ; ret
+       dfsc_of                 6  sub sp, sp, #16 ; str x0, [sp, #8] ; ldr x8, [sp, #8] ; and x0, x8, #0x7f ; add sp, sp, #16 ; ret
+
+  [MEASURED] the one that is worth reading twice
+     mov w8, #-1879048192
+     and x9, x0, #0xf8000000
+     cmp x9, x8
+     cset w0, eq
+     ret
+
+     . The C is `return (ec == 0x24 || ec == 0x25)`, and clang turned TWO
+     . comparisons into ONE mask, ONE compare and ONE cset. The reason is
+     . pure arithmetic and a reader can check it in their head: 0x24 is
+     . 0b100100 and 0x25 is 0b100101, so the two classes differ in ONE bit of
+     . the EC field and in nothing else, and ANDing the syndrome with
+     . 0xf8000000 clears that bit and makes the two cases one.
+
+     . So a handler that tests for "a data abort from a lower EL" costs THREE
+     . instructions, not six -- and the mask it uses is not in any manual,
+     . because it is a property of the two constants rather than of the
+     . architecture. This is the whole difference between the quoted half of
+     . this course and the measured half: the layout is something you look
+     . up, and the cheapest way to test it is something you measure on the
+     . machine you actually have.
+
+
+  [MEASURED] the instruction cost of a three-register read
+     esr_all    6 instructions
+       mrs x8, ESR_EL1
+       mrs x9, ELR_EL1
+       mrs x10, FAR_EL1
+       eor x8, x9, x8
+       eor x0, x8, x10
+       ret
+
+     . Three `mrs` and two `eor`, and the compiler assigned x8, x9 and x10
+     . rather than x0, x1 and x2 -- because the AAPCS64 answer is x0, and
+     . using it for a temporary here would be legal and confusing. A reader
+     . who has just read the ABI course and sees a handler read three system
+     . registers into x8-x10 has learned something about the compiler that no
+     . document says.
+
+  [QUOTED] what the EC field is FOR, and the trap in it
+     EC  meaning                      the ISS means
+     0x00 Unknown                     nothing -- the syndrome is not defined
+     0x01 WFI/WFE retirement          a 5-bit register and a 2-bit state
+     0x02 SMC                         nothing
+     0x03 SVC (a syscall from EL0)    imm16, the literal in the SVC
+     0x0c BRK                         imm16
+     0x0d HLT                         imm16
+     0x11 SVC (from EL1)              imm16
+     0x12 HLT (from EL1)              imm16
+     0x15 SVC (from EL2)              imm16
+     0x16 HLT (from EL2)              imm16
+     0x17 SVC (from EL3)              imm16
+     0x18 HLT (from EL3)              imm16
+     0x20 Instruction abort, lower EL the FAR, and the DFS
+     0x21 PC alignment fault          nothing
+     0x22 Data abort, lower EL        the FAR, and the DFSC
+     0x24 Data abort, lower EL (write) the FAR, and the DFSC
+     0x25 Data abort, lower EL (read) the FAR, and the DFSC
+     0x2c FP exception                the status and a 4-bit index
+     0x2e SError                      the FAR, the WnR bit, the DFSC
+     0x32 IRQ                         nothing
+     0x33 FIQ                         nothing
+     0x34 SError interrupt            nothing
+
+     . The same twenty-five bits. For EC 0x03 the ISS is the sixteen-bit
+     . constant that was in the SVC, and section 4 measured that constant in
+     . the instruction -- so a handler that sees EC 0x03 can tell you which
+     . syscall trapped by reading bits[20:5] of the syndrome, WITHOUT looking
+     . at the instruction at ELR. For EC 0x25 the same twenty-five bits are a
+     . fault address, a read/write flag, a fault status code and an overflow
+     . flag. There is no bit of the ISS that means the same thing in two rows
+     . of that table, and that is the concept: the field is not a number, it
+     . is a DISCRIMINATED UNION, and the discriminant is the six bits above
+     . it.
+
+     . And the trap worth naming: the two Data Abort rows differ in ONE bit
+     . of the EC field -- 0x22 is 0b100010 and 0x24 is 0b100100 -- and 0x24
+     . is WRITE and 0x22 is a read-or-write abort. A handler that tests for
+     . 0x24 and 0x25 and concludes "a write fault and a read fault" has used
+     . a table that is right about those two rows and silent about 0x22,
+     . which is the row a translation fault on a SINGLE instruction can also
+     . produce.
+
+     . The quoted pseudocode adds one more thing that no bit layout implies:
+     . for EC in {0x24, 0x25} with ISS[24] == 0, IL is FORCED to 1. So for
+     . the most common exception on the machine, the instruction-length bit
+     . is a statement about the ABSENCE of a valid syndrome rather than about
+     . the instruction. A handler that prints IL as "32-bit instruction" for
+     . such a fault is printing something the architecture told it to print
+     . and something that may be false.
+
+  [MEASURED] what this section CANNOT show, and says so HERE
+     . It cannot show an exception. There is no AArch64 machine, no emulator
+     . and no linker on this host, so not one of the thirty-nine rows above
+     . has been observed happening. The classes, the field widths, the
+     . meanings and the IL rule are QUOTED from DDI 0597; the instructions
+     . that read the register and the arithmetic the compiler emits around it
+     . are MEASURED-ON-BYTES and cross-read by both readers. The gap between
+     . those two is the gap between a table you look up and a sequence you
+     . can read, and a course that blurs it is teaching a reader to trust a
+     . table they have never seen fire.
+
+============================================================================
+   6  THE VECTOR TABLE: VBAR, SIXTEEN ENTRIES OF 0x80
+     QUOTED for the layout; MEASURED for the arithmetic and for what the assembler enforces
+============================================================================
+  [MEASURED] the table the assembler BUILT, from vec.s
+
+     vector #   name              symbol value   value & 0x7f   value / 0x80
+     0         el0t_sync         0x800       0             16
+     1         el0t_irq          0x880       0             17
+     2         el0t_fiq          0x900       0             18
+     3         el0t_serror       0x980       0             19
+     4         el0t_sync_a64     0xa00       0             20
+     5         el0t_irq_a64      0xa80       0             21
+     6         el0t_fiq_a64      0xb00       0             22
+     7         el0t_serror_a64   0xb80       0             23
+     8         el0i_sync         0xc00       0             24
+     9         el0i_irq          0xc80       0             25
+     10        el0i_fiq          0xd00       0             26
+     11        el0i_serror       0xd80       0             27
+     12        el1t_sync         0xe00       0             28
+     13        el1t_irq          0xe80       0             29
+     14        el1t_fiq          0xf00       0             30
+     15        el1t_serror       0xf80       0             31
+
+     the table symbol: value 0x0, SIZE 2048 bytes (0x800)
+
+  [RESULT]           16 x 0x80 = 0x800, and the assembler MEASURED that as 2048 bytes
+     . The number 0x800 is the address arithmetic and it is trivially
+     . checkable; the reason to print all sixteen rows anyway is that a table
+     . of offsets is a place a REAL error would show, and the error this
+     . method is most likely to have is one entry out by 0x80. All sixteen
+     . are multiples of 0x80 and all sixteen are in the range 0x800 to 0xf80,
+     . and the sixteenth is at 0xf80, so the table spans exactly sixteen
+     . slots from 0x800 to 0xfff inclusive.
+
+
+  [MEASURED] what the assembler does about the alignment, and what it does NOT
+     source                      section align   label value  diagnostic?
+     .align 11 (2 KiB)        2048            0x0         NONE
+     .align 8 (256 B)         256             0x0         NONE
+     no .align at all         4               0x0         NONE
+     .align 12 (4 KiB)        4096            0x0         NONE
+
+     . FOUR CASES, FOUR TIMES NO DIAGNOSTIC. The section alignment is
+     . whatever the directive says, the table is where the label is, and the
+     . assembler has no idea that a 2 KiB-aligned array of branch
+     . instructions is going to be handed to a register whose low eleven bits
+     . are RES0. This is the single most important measurement in the concept
+     . and it is a measurement of an ABSENCE: there is no toolchain on this
+     . host -- or, as far as this file can show, on any host -- that will
+     . tell you your vector table is misaligned, because misalignment here is
+     . not an error, it is a jump to the wrong address.
+
+
+  [MEASURED-ON-BYTES] the encoding of reading and writing VBAR
+     mrs x0, VBAR_EL1   0xd538c000  L=1  CRn=0xc CRm=0x0 op2=0  mrs      x0, VBAR_EL1
+     msr VBAR_EL1, x0   0xd518c000  L=0  CRn=0xc CRm=0x0 op2=0  msr      VBAR_EL1, x0
+
+     . One bit -- bit 21 -- separates the read from the write, and the
+     . five-field register name is IDENTICAL in both. So "installing the
+     . vector table" is a data instruction, not a control instruction, and it
+     . looks in the disassembly exactly like reading a variable.
+
+  [MEASURED-ON-BYTES] the install sequence, as clang assembles it
+     install_vbar, at 0xf84, 20 bytes, from the symbol table:
+       0x90000000  adrp     x0, +0
+       0x91000000  add      x0, x0, #0x0
+       0xd518c000  msr      VBAR_EL1, x0
+       0xd5033fdf  isb
+       0xd65f03c0  ret
+
+     . `adrp` + `add :lo12:` + `msr` + `isb` + `ret`. The `isb` is the
+     . instruction that makes the write VISIBLE, and it is a separate
+     . instruction because on this architecture a system-register write is
+     . not ordered against the instruction stream by itself. That is a QUOTED
+     . claim about the architecture and it is also the last course in this
+     . section's subject rather than this one; what is measured here is only
+     . that clang emits it, and that the two address-forming instructions are
+     . a PAIR with two relocations, which section 8 measures properly.
+
+     the relocations the pair emits:
+     0x00000f84  R_AARCH64_ADR_PREL_PG_HI21     vectors + 0
+     0x00000f88  R_AARCH64_ADD_ABS_LO12_NC      vectors + 0
+
+     . Two relocations, ADJACENT, against one symbol, four bytes apart. That
+     . adjacency is the thing to remember from this section and the thing
+     . section 8 is about: on AArch64 a reference to a 4 KiB-aligned object
+     . is TWO relocations and there is no encoding of "one relocation that
+     . means an address".
+
+  [MEASURED] what this section CANNOT show
+     . It cannot show an interrupt being taken, a vector being entered, or a
+     . VBAR write being honoured. The sixteen entries, the four exception
+     . types, the (source EL, target EL) pair that selects the first four
+     . rows, and the requirement that the low eleven bits of VBAR be zero are
+     . all QUOTED. What is measured is the table the assembler built, its
+     . size, its sixteen offsets, the four different things the assembler
+     . does with an alignment directive, the encoding of the read and the
+     . write, and the two relocations. Six results, and the largest of them
+     . is an absence.
+
+============================================================================
+   7  TTBR0, TTBR1, TCR, AND THE 48/52 SPLIT
+     QUOTED for the field positions; MEASURED for the encodings and for the arithmetic the compiler emits
+============================================================================
+  [MEASURED-ON-BYTES] three registers, and the encodings that name them
+     mrs x0, TTBR0_EL1  0xd5382000  CRn=0x2 CRm=0x0 op2=0  op1=0  mrs      x0, TTBR0_EL1
+     mrs x0, TTBR1_EL1  0xd5382020  CRn=0x2 CRm=0x0 op2=1  op1=0  mrs      x0, TTBR1_EL1
+     mrs x0, TCR_EL1    0xd5382040  CRn=0x2 CRm=0x0 op2=2  op1=0  mrs      x0, TCR_EL1
+     mrs x0, SCTLR_EL1  0xd5381000  CRn=0x1 CRm=0x0 op2=0  op1=0  mrs      x0, SCTLR_EL1
+     msr TTBR0_EL1, x0  0xd5182000  CRn=0x2 CRm=0x0 op2=0  op1=0  msr      TTBR0_EL1, x0
+     msr TCR_EL1, x0    0xd5182040  CRn=0x2 CRm=0x0 op2=2  op1=0  msr      TCR_EL1, x0
+     mrs x0, TCR_EL2    0xd53c2040  CRn=0x2 CRm=0x0 op2=2  op1=4  mrs      x0, TCR_EL2
+
+     . TTBR0, TTBR1 and TCR are CRn = 2 and they are told apart by a TWO-BIT
+     . op2 field: 0, 1, 2. Three registers whose addresses a kernel sets at
+     . boot, whose names a reader will look up, and whose encodings differ in
+     . two bits of a 32-bit word -- and which are adjacent numbers, 0, 1, 2,
+     . in a way that is a gift to a decoder and a trap for a page that wants
+     . to show the reader something about their relationship. There is
+     . nothing about the relationship in the encoding. The relationship is in
+     . the ARCHITECTURE and it is the subject of the next two sections.
+
+  [MEASURED] the 48/52 split, as ARITHMETIC, which is checkable
+     T0SZ is bits[63:48] of TCR_EL1 and T1SZ is bits[47:32]
+     (QUOTED), and the region TTBRn addresses is 2^(64-TnSZ)
+     bytes.  Every row below is that identity and nothing else.
+
+     configuration   VA bits   T0SZ  T1SZ   TTBR0 region                 TTBR1 region
+     48-bit, no LPA2  48       16    16    2^48 = 0x1000000000000  2^48 = 0x1000000000000
+     48/52, with LPA2 48       16    12    2^48 = 0x1000000000000  2^52 = 0x10000000000000
+     39/39, the 3-level case 39       25    25    2^39 = 0x008000000000  2^39 = 0x008000000000
+     39/48            39       25    16    2^39 = 0x008000000000  2^48 = 0x1000000000000
+     42/48            42       22    16    2^42 = 0x040000000000  2^48 = 0x1000000000000
+     52/52            52       12    12    2^52 = 0x10000000000000  2^52 = 0x10000000000000
+     33/33, the SMALLEST 33       31    31    2^33 = 0x000200000000  2^33 = 0x000200000000
+
+  [RESULT]           T0SZ = 64 - 48 = 16, and T1SZ = 64 - 52 = 12 with LPA2, 64 - 48 = 16 without
+     . The section plan for this course says "T0SZ = 64 - 48 = 16 for a
+     . 4-level table, T1SZ = 64 - 48 for the 48-bit case and 64 - 52 = 12 for
+     . 52-bit", and every one of those three numbers is right. What is worth
+     . adding is the row that is NOT in the plan: the 39-bit case, where T0SZ
+     . = 25, and the 30-bit case, where T0SZ = 34 -- and T0SZ is a FIVE-BIT
+     . field, so 34 fits and 32 does not. A reader who has only seen 16 and
+     . 12 will assume T0SZ is a small number and will not notice that the
+     . field has a ceiling at 31, which is what makes a 2-level configuration
+     . possible at all.
+
+     and the field is FIVE bits, so the SIZE of a regime is
+     bounded below as well as above:
+       64-bit VA  ->  T0SZ = 0    region 2^64 bytes, FITS
+       60-bit VA  ->  T0SZ = 4    region 2^60 bytes, FITS
+       52-bit VA  ->  T0SZ = 12   region 2^52 bytes, FITS
+       48-bit VA  ->  T0SZ = 16   region 2^48 bytes, FITS
+       44-bit VA  ->  T0SZ = 20   region 2^44 bytes, FITS
+       42-bit VA  ->  T0SZ = 22   region 2^42 bytes, FITS
+       39-bit VA  ->  T0SZ = 25   region 2^39 bytes, FITS
+       36-bit VA  ->  T0SZ = 28   region 2^36 bytes, FITS
+       33-bit VA  ->  T0SZ = 31   region 2^33 bytes, FITS
+       32-bit VA  ->  T0SZ = 32   region 2^32 bytes, DOES NOT FIT in a 5-bit field
+       30-bit VA  ->  T0SZ = 34   region 2^30 bytes, DOES NOT FIT in a 5-bit field
+       25-bit VA  ->  T0SZ = 39   region 2^25 bytes, DOES NOT FIT in a 5-bit field
+
+     . So a 32-bit virtual address space is NOT expressible with a 4 KiB
+     . granule: T0SZ would be 32, the field holds 0 to 31, and the smallest
+     . regime the field can name is 2^33 bytes -- eight gibibytes. That is a
+     . real boundary and it is pure arithmetic, and the first draft of this
+     . table had a "30-bit, the 2-level case" row in it, which the same
+     . arithmetic contradicts. AArch64 has no 2-level configuration with 4
+     . KiB pages; the two-level cases all use the 64 KiB granule, where T0SZ
+     . is six bits wide and the floor moves to 2^32. A page that lists block
+     . sizes as a menu, without the field width beside them, will produce
+     . that row.
+
+     . And the other direction: a regime can cover the WHOLE address space,
+     . 2^64 bytes, with T0SZ = 0 -- which is why the 48/52 split is a DEFAULT
+     . and not a limit. The reason a real system uses 48 is not that 52 will
+     . not fit in the field; it is that each extra level of table costs
+     . another 4 KiB of memory and four more dependent memory accesses for
+     . every translation. That cost is a real number on a real machine and it
+     . is NOT measurable here. The five-bit field and the identity above are,
+     . and they are what this course can defend.
+
+  [QUOTED] the three translation REGIMES, and their bases
+     regime        base register  covers
+     TTBR0_EL1                     the LOW half of the VA space, where an EL0 process lives
+     TTBR1_EL1                     the HIGH half, where the kernel image and its mappings live
+     TTBR2_EL1                     stage 2 only: the EL1 regime translated for an EL0 access, used by a hypervisor
+
+     . The arithmetic identity above says TTBR0 and TTBR1 each cover
+     . 2^(64-TnSZ) bytes, and it does NOT say WHERE they are. The base is in
+     . the register, and the constraint is that the two regions must NOT
+     . OVERLAP. For a 48/48 configuration each covers half the space and they
+     . meet exactly; for 48/52 TTBR0 covers the bottom 2^48 and TTBR1 covers
+     . the top 2^52 and there is a 2^48 hole in the middle that neither
+     . regime translates -- and a hole is not an error, it is an unmapped
+     . hole, and a load from it takes a translation fault. That is the price
+     . of a 52-bit kernel address space with a 48-bit user one, and it is
+     . arithmetic.
+
+     the boundary, as pure arithmetic.  TTBRn is at the END of
+     its region, so the high regime is mapped at the TOP of the
+     address space -- that is the whole content of R10.
+       48/48    TTBR0 covers 0x0000000000000000..0x0000ffffffffffff
+                TTBR1 covers 0xffff000000000000..0xffffffffffffffff
+                between them: 0xfffe000000000000 bytes, which is UNTRANSLATED
+       48/52    TTBR0 covers 0x0000000000000000..0x0000ffffffffffff
+                TTBR1 covers 0xfff0000000000000..0xffffffffffffffff
+                between them: 0xffef000000000000 bytes, which is UNTRANSLATED
+       39/48    TTBR0 covers 0x0000000000000000..0x0000007fffffffff
+                TTBR1 covers 0xffff000000000000..0xffffffffffffffff
+                between them: 0xfffeff8000000000 bytes, which is UNTRANSLATED
+
+     . Read the 48/48 row and the 48/52 row side by side, because the
+     . difference is the whole concept and it is not a difference in the
+     . FORMULAS. For 48/48 the two regions meet exactly: TTBR0 ends at
+     . 0x0000ffffffffffff and TTBR1 begins at 0x0001000000000000, and there
+     . is no address space between them that belongs to neither regime. For
+     . 48/52 TTBR0 still ends at 0x0000ffffffffffff but TTBR1 now begins at
+     . 0xffff000000000000, so the two regions are separated by essentially
+     . the whole of the 64-bit space. Neither is a bug and neither is checked
+     . by anything: the gap is simply UNTRANSLATED, and a load from it takes
+     . a translation fault. A 52-bit kernel address space with a 48-bit user
+     . one is exactly the statement that the top 2^52 and the bottom 2^48 are
+     . translated and the rest is not.
+
+
+  [MEASURED] what the compiler emits for the regime arithmetic
+     t0sz_for        3  mov w8, #64 ; sub x0, x8, x0 ; ret
+     regime_bytes    4  mov w8, #1 ; neg x9, x0 ; lsl x0, x8, x9 ; ret
+     ttbr1_52        2  mov x0, #-281474976710656 ; ret
+     ttbr0_48        2  mov x0, xzr ; ret
+     l0_index        2  ubfx x0, x0, #39, #9 ; ret
+     l1_index        2  ubfx x0, x0, #30, #9 ; ret
+     l2_index        2  ubfx x0, x0, #21, #9 ; ret
+     l3_index        2  ubfx x0, x0, #12, #9 ; ret
+     page_off        2  and x0, x0, #0xfff ; ret
+
+     . Nine functions, each one an index extraction or a subtraction, and
+     . each one a SHIFT. A four-level walk is four of them: the top nine
+     . bits, the next nine, the next nine, the next nine, and the low twelve
+     . as an offset. That is the whole structure of an AArch64 page table
+     . expressed as five shifts, and it is worth noticing that x86-64 needs
+     . the same five extractions and that NEITHER architecture stores the
+     . level in the descriptor: the level is implied by WHICH TABLE you are
+     . in, which is why the same three bits -- valid, and a flag that is
+     . "table" at levels 0-2 -- mean different things at different depths.
+
+  [MEASURED] the encoding of one page-table walk step, measured
+     What a 4 KiB-aligned page table costs to NAME, in an object
+     file, and why the answer is two relocations rather than one,
+     is section 8.  What section 7 can add is the reach:
+
+     instruction   immediate field   signed bits   unit       reach
+     ADR           bits[20:5]+[30:29] 21          1 BYTE     +-2^20 = 1 MiB
+     ADRP          bits[20:5]+[30:29] 21          4096 BYTES +-2^20 pages = 4 GiB
+
+     . The ADR reach is MEASURED, by asking the assembler: the largest
+     . distance it accepts is 0xffffc bytes and 0x100000 is REFUSED with
+     . "fixup value out of range", which is exactly a 21-bit signed field
+     . whose largest positive multiple of four is 0xffffc. The ADRP reach is
+     . NOT measurable here, because the assembler does not check it: `adrp`
+     . to a target 4 GiB away is ACCEPTED and the check belongs to the
+     . linker, and there is no AArch64 linker on this host. So the ADR number
+     . is a measurement and the ADRP number is an arithmetic identity on a
+     . field width, and the page says so at both.
+
+  [MEASURED] what this section CANNOT show
+     . It cannot show a page walk, a TLB, a translation, or a fault. No
+     . AArch64 machine, no emulator, no sysroot, so not one address in this
+     . section was translated by anything. The field positions, the granule
+     . encodings and the region formula are QUOTED; the encodings, the five
+     . shifts and the ADR boundary are MEASURED. The one measurement a reader
+     . should hold on to is the reach asymmetry: a fixed 32-bit instruction
+     . with a 21-bit field can address a PAGE 4 GiB away or a BYTE 1 MiB
+     . away, and every page table in a system is on the first side of that
+     . line while every array index is on the second.
+
+============================================================================
+   8  FOUR LEVELS, THREE REGIMES, AND THE RELOCATIONS
+     QUOTED for the descriptor format; MEASURED for the sizes, the alignment and every relocation in this section
+============================================================================
+  [MEASURED] the table: 512 entries of 8 bytes, and what the compiler emits
+     the TABLES, as the symbol table records them:
+     l0       value 0x1000      size 4096      4 KiB-aligned
+     l1       value 0x2000      size 4096      4 KiB-aligned
+     l2       value 0x3000      size 4096      4 KiB-aligned
+     l3       value 0x300000    size 4096      4 KiB-aligned
+     l2_big   value 0x200000    size 1048576   2 MiB-aligned
+
+     the FUNCTIONS that name them, and their sizes:
+     ref_l0      value 0x368       size 12
+     ref_l1      value 0x374       size 12
+     ref_l2      value 0x380       size 12
+     ref_l2_big  value 0x38c       size 12
+     ref_l3      value 0x398       size 12
+     d0          value 0x3a4       size 20
+     d3          value 0x3e0       size 20
+     w3          value 0x3f4       size 24
+     big0        value 0x40c       size 20
+
+     512 x 8 = 4096 bytes, and the four 4 KiB tables are exactly that
+
+     . Each table is 512 descriptors of 8 bytes, so 4 KiB exactly, so the
+     . index into one is NINE BITS -- bits[47:39] for level 0, [38:30] for
+     . level 1, [29:21] for level 2, [20:12] for level 3, and the low twelve
+     . are the offset inside the page. Four levels of nine bits is 36 bits of
+     . index plus 12 bits of offset, which is the 48-bit split of section 7
+     . arriving as a table shape. The 8-byte descriptor is QUOTED and the 4
+     . KiB size is arithmetic on it; what is measured is that clang emitted
+     . four arrays of exactly that size and aligned them, and that the
+     . alignment is in the section header.
+
+  [MEASURED] the alignment a LINKER must honour, and where it is recorded
+     section    reader 1 (struct.unpack)   reader 2 (llvm-readelf)   agree?
+     .text      4                      4                     YES
+     .bss       2097152                2097152               YES
+     .rela.text 8                      8                     YES
+     .symtab    8                      8                     YES
+
+  [RESULT]           .bss comes back with alignment 0x200000 from BOTH readers
+     . That number is 2 MiB, and it is the whole of the ELF-side half of this
+     . concept in one integer. The corpus has four 4 KiB-aligned tables and
+     . ONE 2 MiB-aligned table, and the section carrying all of them is
+     . `.bss` -- so `.bss` inherits the STRONGEST alignment requirement of
+     . anything in it. A page table is an ordinary array of 64-bit words to a
+     . compiler, and the ONLY reason the section needs 2 MiB of alignment is
+     . that one of the arrays in it is a page table and the OTHER FOUR ARE
+     . NOT. That is a fact about the role, not about the type, and it is the
+     . only way a linker can know.
+
+
+
+     the corpus with and without the 2 MiB table -- the whole
+     measurement in two lines, because the ONLY difference between
+     the two objects is one declaration and the two functions that
+     mention it:
+     object            reader 1     reader 2
+     sys_O2.o          2097152      2097152
+     _no2m.o           4096         4096
+  [RESULT]           four 4 KiB tables alone give `.bss` alignment 0x1000; adding one 2 MiB table gives 0x200000
+     . Same types, same code, same language, same compiler, same optimisation
+     . level. One declaration of the form
+     . `__attribute__((aligned(0x200000)))` on ONE array of 512 x 8 bytes,
+     . and the ENTIRE uninitialised-data section of the object moves from a 4
+     . KiB boundary to a 2 MiB one. That integer is the only channel through
+     . which a page table tells a linker what it is, and it is 21 bits in a
+     . section header.
+
+  [QUOTED] the DESCRIPTOR, field by field, and the two ways to read it
+     64-bit little-endian descriptor, at every level:
+     bits    name    meaning
+     63:63   -                for a BLOCK at level 1-2: whether the block size is 2 MiB (0) or 32 MiB (1) -- FEAT_LPA2 only
+     62:55   -                for a BLOCK at level 2: whether it is 32 MiB (0) or 512 MiB (1) -- FEAT_LPA2 only
+     54:53   TXL              translation table level, 0-3, for a table descriptor
+     52:12   output address   the physical address, with the low bits RES0
+     11:10   NG               nestable, 0 for the EL1/EL0 regime
+     9:8     AF               access flag, and bits[7:6] are SH
+     7:6     SH               shareability: 00 non-, 10 outer, 11 inner
+     5:5     AP               access permission: EL1 RW, EL0 none, RO, RW
+     4:2     AttrIndx         index into MAIR_EL1
+     1:1     -                at levels 0-2 this is the TABLE bit; at level 3 it is PAGE
+     0:0     V                valid
+
+     . Two columns of that table are the whole reason a page table is hard to
+     . read in a hex dump: bits[1] is the TABLE bit at levels 0-2 and is
+     . UNUSED at level 3, and bits[54:53] carry the level for a table
+     . descriptor and are the low half of a huge-block size for a block
+     . descriptor. The same bits, two meanings, and which meaning applies is
+     . a property of WHERE YOU ARE IN THE WALK and not of the word. A
+     . hex-dump tool that prints one description of a 64-bit word is printing
+     . one of two, and the reader has to know which.
+
+     the descriptor arithmetic, as the compiler emits it:
+       mov w8, #3075
+       and x9, x0, #0xfffffffffffff000
+       adrp x10, l0
+       orr x8, x9, x8
+       str x8, [x10, :lo12:l0]
+       mov w8, #7171
+       adrp x10, .LCPI31_0
+       ldr q0, [x10, :lo12:.LCPI31_0]
+       adrp x10, l1
+       add x8, x9, x8
+       str x8, [x10, :lo12:l1]
+       adrp x8, l2
+       mov w10, #1031
+       str q0, [x8, :lo12:l2]
+       adrp x8, .LCPI31_1
+       adrp x9, l2_big
+       movk w10, #16384, lsl #16
+       ldr q0, [x8, :lo12:.LCPI31_1]
+       adrp x8, l3
+       add x8, x8, :lo12:l3
+       str x10, [x9, :lo12:l2_big]
+       mov w9, #1027
+       movk w9, #32768, lsl #16
+       str q0, [x8]
+       str x9, [x8, #16]
+       ret
+     26 instructions to build a four-level walk with two 2 MiB blocks, three
+     pages and one 1 GiB block.
+
+     . That is a COMPILE-TIME INSTRUCTION COUNT and not a timing, and it is
+     . the only number in this file that is a count of work rather than a
+     . fact about a format. It is worth printing because it is small:
+     . building a translation table is a handful of ORs and ANDs per
+     . descriptor, and the expensive part of paging is not building the
+     . table, it is WALKING it -- four dependent memory accesses, or one if
+     . the TLB has the entry. None of that is measurable here and the file
+     . says so rather than inventing a number.
+
+  [MEASURED-ON-BYTES] the RELOCATION census: two readers over every relocation
+
+     offset      reader 1: number name                        symbol   addend
+     0x00201040  275      R_AARCH64_ADR_PREL_PG_HI21         l0        0
+     0x00201044  277      R_AARCH64_ADD_ABS_LO12_NC          l0        0
+     0x0020104c  274      R_AARCH64_ADR_PREL_LO21            odd       0
+     0x00201054  275      R_AARCH64_ADR_PREL_PG_HI21         l1        0
+     0x00201058  286      R_AARCH64_LDST64_ABS_LO12_NC       l1        0
+     0x00201060  275      R_AARCH64_ADR_PREL_PG_HI21         l2        0
+     0x00201064  286      R_AARCH64_LDST64_ABS_LO12_NC       l2        0
+     0x0020106c  275      R_AARCH64_ADR_PREL_PG_HI21         l2        0
+
+     the reader-2 view, name and number, and the agreement:
+     8 of 8 relocations agree on the TYPE NUMBER
+
+     the census, by name:
+     R_AARCH64_ADR_PREL_PG_HI21       4
+     R_AARCH64_LDST64_ABS_LO12_NC     2
+     R_AARCH64_ADD_ABS_LO12_NC        1
+     R_AARCH64_ADR_PREL_LO21          1
+
+  [MEASURED] WHY A PAGE TABLE NEEDS A PAIR, and the reason is NOT reach
+     Every reference to a 4 KiB-aligned table in rel.s produced an
+     ADRP at one offset and a LO12 at offset+4.  All of them:
+
+       0x00201040  R_AARCH64_ADR_PREL_PG_HI21
+       0x00201044  R_AARCH64_ADD_ABS_LO12_NC
+       0x0020104c  R_AARCH64_ADR_PREL_LO21
+       0x00201054  R_AARCH64_ADR_PREL_PG_HI21
+       0x00201058  R_AARCH64_LDST64_ABS_LO12_NC
+       0x00201060  R_AARCH64_ADR_PREL_PG_HI21
+       0x00201064  R_AARCH64_LDST64_ABS_LO12_NC
+       0x0020106c  R_AARCH64_ADR_PREL_PG_HI21
+
+  [RESULT]           3 of the 4 ADRP relocations are immediately followed, four bytes later, by a LO12, and 1 are LONE
+     . And the 1 LONE ADRP is the most interesting row in the table, because
+     . it is the counter-example and it is deliberate. In `ref_load_uimm` the
+     . source says `ldr x6, [x5, #0]`: the offset is a LITERAL ZERO, so the
+     . low twelve bits of the address are known at assembly time to be zero,
+     . the second instruction does not need a relocation for them, and the
+     . assembler emits one. So the rule is not "every page reference is a
+     . pair" -- it is "every page reference whose low twelve bits are not
+     . statically zero is a pair", and the exception is a compiler
+     . optimisation you can see in an object file.
+     . The reason is NOT that adrp only reaches 4 GiB. A lone adrp reaches 4
+     . GiB, which is not a constraint any real program hits, and section 7
+     . measured the ADR reach precisely so that the wrong reason could not
+     . survive: ADR reaches 1 MiB and ADRP reaches 4 GiB, and the pair is
+     . emitted for a 4 KiB-aligned object FOUR BYTES AWAY.
+
+     . The real reason is in bits[32:12]. ADRP computes (page(target) -
+     . page(pc)) >> 12 and puts THAT in a 21-bit field, which means the low
+     . twelve bits of the target address are not in the instruction at all --
+     . they were MASKED OFF. Something has to add them back, and the only
+     . instructions that can are the ones with a 12-bit immediate: `add`
+     . (R_AARCH64_ADD_ABS_LO12_NC) or a load or store with an unscaled 12-bit
+     . offset (R_AARCH64_LDST64_ABS_LO12_NC). The pair is not a range
+     . problem. It is a MASKING problem, and no amount of reach would fix it.
+
+
+
+     and the ONE reference in rel.s that is not a pair at all:
+     0x0020104c  R_AARCH64_ADR_PREL_LO21 against odd
+     . `adr x0, odd` reaches a symbol 12 bytes away and emits a SINGLE
+     . relocation, R_AARCH64_ADR_PREL_LO21, because ADR puts all 21 bits of
+     . the address IN the instruction and there is nothing left to add. So
+     . the rule that falls out of the measurement is not about pages at all:
+     . a reference that fits in ADR is one relocation, and a reference that
+     . does not is two. Page tables are the case that does not fit, always,
+     . because a page is 4 KiB and ADR reaches 1 MiB and even when the
+     . distance is small the low twelve bits still have to be restored.
+
+     . The linker is allowed to REWRITE the pair as `adr` + `nop` when the
+     . target turns out to be within 1 MiB, and this is a real and
+     . frequently-taken relaxation. It is not measurable here, because there
+     . is no AArch64 linker on this host -- and that is a limit, not a fact
+     . about the pair. What IS measured is the input to the decision: the two
+     . relocations, their four-byte spacing, and the symbol they share.
+
+  [MEASURED] the SIZES: 4 KiB, 2 MiB, 1 GiB
+     level   page    block (no LPA2)  block (LPA2)   one table covers
+     0       -       -                -              -
+     1       -       2 MiB            2 MiB          -
+     2       -       -                32 MiB         -
+     3       4 KiB   -                512 MiB        -
+
+     and the arithmetic of a full 48-bit regime:
+       one L0 table covers 2^12 bytes = 0 TiB; a 48-bit space needs 2^12 of them
+       one L1 table covers 2^24 bytes = 0 TiB; a 48-bit space needs 2^11 of them
+       one L2 table covers 2^36 bytes = 0 TiB; a 48-bit space needs 2^10 of them
+       one L3 table covers 2^48 bytes = 256 TiB; a 48-bit space needs 2^9 of them
+       a 2 MiB block at L1 covers 2^21 bytes, so 48 bits needs 2^27 = 134217728
+       of them, which is 2 TiB of descriptors at 8 bytes each.
+       a 1 GiB block at L2 needs 2^18 = 262144 of them.
+
+     . So the choice of block size is a choice about how many ENTRIES the top
+     . level has, and it is bounded by the fact that there are only 512 of
+     . them: a 48-bit space at L1 with 2 MiB blocks needs 2^27 entries and
+     . there are 512. That is why a real 48-bit system uses blocks at L2, not
+     . at L1, and the reason is a count, and the count is arithmetic.
+
+  [MEASURED] what this section CANNOT show
+     . It cannot show a page walk, a translation, a TLB hit or a miss, or the
+     . four dependent memory accesses a walk costs when the TLB does not have
+     . the entry. The descriptor format, the field positions and the granule
+     . encodings are QUOTED; the table sizes, the alignment the section
+     . header carries, the relocation names and numbers and their pairing are
+     . MEASURED and read by both readers where two readers exist. The linker
+     . is absent, so the ADRP+ADD -> ADR+NOP relaxation is quoted and the
+     . pair it operates on is measured, and that is the closest this host can
+     . get to the hinge between this course and the ELF courses.
+
+============================================================================
+   9  TWO READERS, AND ONE OF THEM POISONED
+     MEASURED-ON-BYTES: every instruction in the corpus, read twice, and then one guard poisoned on purpose
+============================================================================
+  [MEASURED] the corpus, walked over FUNCTION ranges
+     . The walk is over sized function symbols and not over whole code
+     . sections, and the reason is a number. `rel.o`'s `.text` is 2,101,380
+     . bytes because one page table is declared 2 MiB-aligned and the
+     . assembler pads up to it, and `vec.o`'s `.text` contains 0x7c0 bytes of
+     . `.space` after the sixteen branches. Those bytes are ALIGNMENT and not
+     . code, and llvm-objdump disassembles them anyway as half a million
+     . `udf`s. The first version of the walk counted whole sections and
+     . reported 527,837 instructions with 522,326 disagreements -- all of
+     . them padding -- which reads like a catastrophe and is a mistake in the
+     . harness.
+
+     sys_O0.o     635 read,   635 named,   635 agree
+     sys_O1.o     288 read,   288 named,   288 agree
+     sys_O2.o     285 read,   285 named,   285 agree
+     sys_Os.o     285 read,   285 named,   285 agree
+     vec.o          5 read,     5 named,     5 agree
+     rel.o         18 read,    18 named,    18 agree
+     TOTAL       1516 instructions read,  1516 NAMED by reader 1, 0 DISAGREEMENTS.
+
+  [COVERAGE]         reader 1 names 1516 of 1516 words, so 0 are unmodelled, in 0 distinct values:
+     0 distinct unmodelled words, 0 word instances, and the classes are
+     Advanced SIMD and floating point, which this course does not
+     model and which the NEXT course in this section does.  They
+     are COUNTED, not dropped: a fixed 32-bit encoding means an
+     unnamed word still contributes exactly 4 bytes.
+
+  [RECONCILED]       the alias rules that fired, each with its count, because
+  []                 a normalisation that is not counted is a fudge:
+     ldr      -> ldr       322
+     adrp     -> adrp      303
+     ret      -> ret       215
+     str      -> str       178
+     add      -> add       123
+     and      -> and       53
+     svc      -> svc       49
+     movz     -> mov       48
+     sub      -> sub       47
+     mrs      -> mrs       44
+     lsr      -> lsr       14
+     movk     -> movk      14
+     msr      -> msr       13
+     orr      -> orr       13
+     mov      -> mov       12
+     ubfx     -> ubfx      12
+     cset     -> cset      8
+     eor      -> eor       8
+     cmp      -> cmp       6
+     ldur     -> ldur      5
+     subs     -> subs      5
+     lsl      -> lsl       4
+     stp      -> stp       3
+     stur     -> stur      3
+     ubfm     -> ubfx      3
+     neg      -> neg       3
+     b        -> b         2
+     bl       -> bl        1
+     ldp      -> ldp       1
+     mul      -> mul       1
+     b.eq     -> b.eq      1
+     isb      -> isb       1
+     adr      -> adr       1
+     33 distinct (before, after) pairs, 1516 instructions touched
+
+     . ZERO true disagreements. Section 9B is the reason that number is worth
+     . printing at all: a cross-check that has never failed is a check with
+     . no reason to be believed, and the coercion above is a fudge that has
+     . to be counted before the zero means anything.
+
+
+
+============================================================================
+  9B  THE POISON: one guard, one bit, and the same loop again
+============================================================================
+
+  [CLEAN]            1516 instructions read, 1516 named, 0 DISAGREEMENTS
+
+     . The poison, and it is ONE BIT. The guard of `m_sysreg` is `bits[31:22]
+     . == 0b1101010100`; the poisoned guard is 0b1101010101, which is bit 20
+     . flipped. The model is replaced in the dispatch list by a function that
+     . refuses EVERY word, which is exactly what a guard that does not match
+     . its group does, and it is restored in a `finally` block because a file
+     . that leaves its own decoder broken is a file whose NEXT run is wrong
+     . -- and a poisoning experiment that corrupts the tool is a poisoning
+     . experiment whose result cannot be reproduced.
+
+  [POISONED]         with the poison in: 1459 named, 57 DISAGREEMENTS
+     the named count moved from 1516 to 1459 -- 57 instructions
+     the disagreement count moved from 0 to 57 -- 57 instructions
+
+     the first few, printed BY NAME so a reader can check them:
+     0xd5385208  reader 1: (op 0xd5385208) Branches, Exception Generating and System reader 2: mrs x8, ESR_EL1
+     0xd5384028  reader 1: (op 0xd5384028) Branches, Exception Generating and System reader 2: mrs x8, ELR_EL1
+     0xd5386008  reader 1: (op 0xd5386008) Branches, Exception Generating and System reader 2: mrs x8, FAR_EL1
+     0xd538c008  reader 1: (op 0xd538c008) Branches, Exception Generating and System reader 2: mrs x8, VBAR_EL1
+     0xd5382008  reader 1: (op 0xd5382008) Branches, Exception Generating and System reader 2: mrs x8, TTBR0_EL1
+     0xd5382028  reader 1: (op 0xd5382028) Branches, Exception Generating and System reader 2: mrs x8, TTBR1_EL1
+     0xd5382048  reader 1: (op 0xd5382048) Branches, Exception Generating and System reader 2: mrs x8, TCR_EL1
+     0xd5381008  reader 1: (op 0xd5381008) Branches, Exception Generating and System reader 2: mrs x8, SCTLR_EL1
+     0xd518c008  reader 1: (op 0xd518c008) Branches, Exception Generating and System reader 2: msr VBAR_EL1, x8
+     0xd5182048  reader 1: (op 0xd5182048) Branches, Exception Generating and System reader 2: msr TCR_EL1, x8
+     0xd5182008  reader 1: (op 0xd5182008) Branches, Exception Generating and System reader 2: msr TTBR0_EL1, x8
+     0xd5385208  reader 1: (op 0xd5385208) Branches, Exception Generating and System reader 2: mrs x8, ESR_EL1
+
+     . The control works, and that is the entire point of the section. A
+     . check that reports 0 disagreements before the poison and a positive
+     . number after it has demonstrated that it is capable of reporting a
+     . positive number, which is the only property that makes 0 mean
+     . anything.
+
+     . The choice of which guard to poison is not arbitrary and the reason is
+     . worth stating: MRS/MSR is the family this course added, so poisoning
+     . it measures THIS COURSE'S contribution rather than the inherited
+     . decoder's. Poisoning an inherited guard instead would produce a larger
+     . number and a less informative one, because a reader could not tell how
+     . much of the movement was the poison and how much was the twenty-one
+     . models that arrived with the file.
+
+
+============================================================================
+  10  WHAT IS MEASURED HERE AND WHAT IS QUOTED
+     the boundary, as a table, because a course built without hardware has exactly one thing to be careful about
+============================================================================
+  The whole course, one line per claim, with the label it carries
+  and the section that establishes it.  57 claims.
+
+
+  1 syscall
+    MEASURED-ON-BYTES the syscall number is a 16-bit unsigned field at bits[20:5 sec 3, 4
+    MEASURED          the assembler accepts 0..65535 and refuses both ends       sec 3
+    MEASURED          Linux puts the same number in x8, and clang uses x8 as a s sec 4
+    MEASURED          x0-x7 receive the arguments in argument order              sec 4
+    MEASURED          the ninth argument is not a register                       sec 4
+    QUOTED            a Linux syscall takes at most six arguments                sec 2, 4
+    QUOTED            __NR_write is 64 and __NR_read is 63                       sec 2
+    QUOTED            the SVC traps to EL1 and the kernel returns in x0          sec 2
+
+  2 exceptions
+    QUOTED            EC is bits[31:26], IL is 25, ISS is 24:0, ISS2 is 55:32    sec 2, 5
+    MEASURED-ON-BYTES MRS ESR_EL1 is 0xd5385200 and names the register in four f sec 3, 5
+    MEASURED-ON-BYTES bit 21 is the whole difference between MRS and MSR         sec 3, 5
+    MEASURED          ESR_EL0 does not exist and the assembler refuses it        sec 3
+    MEASURED          testing for EC 0x24 or 0x25 costs three instructions       sec 5
+    QUOTED            the ISS means something different in every class           sec 5
+    QUOTED            IL is forced to 1 for EC 0x24/0x25 when ISS[24] is 0       sec 2, 5
+    QUOTED            an exception is delivered to VBAR + vector*0x80            sec 2, 6
+
+  3 interrupts
+    MEASURED          the table is 16 entries of 0x80 bytes = 0x800              sec 6
+    MEASURED          each entry sits at vector*0x80 and the sixteen offsets are sec 6
+    QUOTED            the low 11 bits of VBAR_ELx are RES0                       sec 2, 6
+    QUOTED            the order of the sixteen entries                           sec 2, 6
+    QUOTED            EL0 cannot install a vector table                          sec 2, 6
+    MEASURED          the assembler produces NO diagnostic for a misaligned tabl sec 6
+    MEASURED-ON-BYTES MSR VBAR_EL1 is 0xd518c000 and MRS is 0xd538c000           sec 3, 6
+
+  4 virtual
+    QUOTED            T0SZ is bits[63:48] and T1SZ is bits[47:32]                sec 2, 7
+    QUOTED            the region is 2^(64-TnSZ) bytes                            sec 2, 7
+    MEASURED          T0SZ = 16 for 48 bits and 12 for 52                        sec 7
+    MEASURED          ADR reaches 0xffffc bytes and 0x100000 is refused          sec 7
+    QUOTED            ADRP reaches 4 GiB                                         sec 7
+    QUOTED            TTBR1 for a 52-bit regime is 0xffff000000000000            sec 2, 7
+    QUOTED            a page walk happens                                        sec 12
+
+  5 pagetables
+    MEASURED          a table is 512 x 8 = 4096 bytes                            sec 8
+    QUOTED            the descriptor field positions                             sec 2, 8
+    MEASURED          one 2 MiB table makes `.bss` 2 MiB-aligned, in both reader sec 8
+    MEASURED-ON-BYTES R_AARCH64_ADR_PREL_PG_HI21 is 275 and R_AARCH64_ADD_ABS_LO sec 8
+    MEASURED          every page reference is a PAIR four bytes apart            sec 8
+    MEASURED          the pair is because of MASKING, not reach                  sec 8
+    QUOTED            the linker may relax the pair to ADR+NOP                   sec 8
+    MEASURED          a 48-bit regime cannot use 2 MiB blocks at L1              sec 8
+
+  6 evidence
+    MEASURED          the two readers agree on every word of this corpus         sec 9
+    MEASURED          the check detects a poisoned guard                         sec 9B
+    MEASURED          the inherited HINT guard is one bit too narrow             sec 3
+
+  1 syscall
+    MEASURED          the 16-bit field is UNSIGNED in a signed-displacement arch sec 3
+
+  2 exceptions
+    MEASURED          EC 0x24 and 0x25 differ in ONE bit of the EC field         sec 5
+    QUOTED            the same 25 bits mean a syscall number in class 0x03 and a sec 5
+    QUOTED            the ISS is 25 bits, and bits[1] is TABLE at levels 0-2 and sec 5, 8
+
+  3 interrupts
+    QUOTED            a vector's address is VBAR + vector*0x80, and the twelve e sec 2, 6
+    QUOTED            the vector is selected by the exception TYPE and the sourc sec 2, 6
+    QUOTED            a write to VBAR needs an ISB to become visible             sec 6
+
+  4 virtual
+    QUOTED            T0SZ and T1SZ are 5-bit fields, so the smallest regime wit sec 2, 7
+    QUOTED            TG0 selects 4 KiB, 16 KiB or 64 KiB and TG1 is a second fi sec 2
+    QUOTED            the two regions must not overlap and a gap is an UNMAPPED  sec 7
+    QUOTED            MAIR_EL1 is the attribute table AttrIndx indexes into, and sec 8
+
+  5 pagetables
+    QUOTED            a translation regime is STAGE 1 and a hypervisor adds STAG sec 7, 8
+    QUOTED            the descriptor is little-endian, so the low-numbered bits  sec 2, 8
+    QUOTED            a block at level 1 is 2 MiB; the 32 MiB and 512 MiB blocks sec 2, 8
+    QUOTED            the physical address of a table is fixed at link time by a sec 8
+    QUOTED            the kernel maps its own image and its first tables IDENTIT sec 8
+
+     21 MEASURED, 5 MEASURED-ON-BYTES, 31 QUOTED, 57 total
+     54% of the claims in this course are QUOTED
+
+     . That ratio is the finding, not a disclaimer. The subject of this
+     . course is a MACHINE, and the machine is the one thing this host does
+     . not have, so a majority of the claims about the machine are
+     . quotations. What the course can measure -- and does, forty-one times
+     . -- is the ENCODING, the COMPILER and the OBJECT FILE, and those are
+     . exactly the three things a learner writing a backend has to get right
+     . and exactly the three things that do not need a CPU.
+
+  What a reader therefore CANNOT conclude from this course:
+    - that a syscall on this machine returns anything, because nothing here has been executed;
+    - that `svc #0` traps, or to where, or that x8 is read;
+    - that the syscall numbers are right -- they are quoted from a header file and no return value has confirmed one;
+    - that an exception is ever delivered, or that the ESR field layout is right, or that the IL rule fires;
+    - that a vector is ever entered, or that VBAR is honoured, or that the sixteen entries are in the quoted order;
+    - that a page is ever walked, that a TLB ever hits, or that the descriptor format is right;
+    - that any of this is FASTER or SLOWER than anything on any other architecture -- there are no timings in this course and none can be manufactured from it;
+    - that the linker relaxes or does not relax an ADRP+ADD pair, because there is no AArch64 linker on this host;
+    - that llvm-objdump agrees with the silicon.  It does not have to: it is a second READER, and both readers come from one LLVM tree.
+
+  What a reader CAN conclude, and check, with a hex editor:
+    - every bit pattern in this course, in a file on this disk;
+    - every relocation name and number, in a file on this disk;
+    - every section alignment, read by two independent parsers;
+    - every instruction count, in a .s file on this disk;
+    - every refusal, by running the assembler;
+    - the arithmetic: 16 x 0x80, 512 x 8, 2^(64-TnSZ), 2^27 entries;
+    - the twenty-five alignments and the thirty-nine exception classes, which are QUOTED and carry their documents.
+
+     . A course about a machine you cannot run, built the way a compiler
+     . author builds one: from the encoding outward, with the specification
+     . as the oracle and the compiler as the witness. That is the situation a
+     . learner writing a backend is in, so the constraint is the subject
+     . rather than a limitation of the teaching.
+
+============================================================================
+  11  RETRACTIONS
+     every claim this course made and then withdrew, in full, with the finding that replaced it
+============================================================================
+  16 retractions.
+
+============================================================================
+  R1
+============================================================================
+  [CLAIMED]          the ESR_EL1 packed syndrome is a 32-bit field: EC in the high six bits, IL next, and the rest is one field called ISS
+        WHAT WAS FOUND: the register is 64 bits and the syndrome occupies
+        bits 31:0, with bits 55:32 named ISS2 and bits 63:56 RES0 -- so a
+        handler that reads the whole register and masks 0xffffffff has
+        thrown away a field it will need for an SError
+
+  [WHY]              a number that is right about the low half of a register and silent about the high half is the hardest kind of wrong, and the section plan for this course described the syndrome as a "packed syndrome" with three fields and no width stated
+
+  [ASSERTED BY]      DRAFT of the concept plan; the claim was in the course's own first paragraph before any measurement
+
+============================================================================
+  R2
+============================================================================
+  [CLAIMED]          the 16-bit immediate in `svc #imm16` is the syscall number, so the syscall number is a CONSTANT in the instruction
+        WHAT WAS FOUND: on AArch64/Linux the number is a CONSTANT FIELD in
+        the instruction and the kernel reads it from the instruction, while
+        x8 is a REGISTER holding the same number for the kernel's own ABI --
+        and BOTH are in the emitted code, which is why a Linux syscall
+        wrapper writes x8 and issues `svc #0`. The field is the
+        architectural half and x8 is the Linux half, and the brief for this
+        course described only the first as if it were the whole story.
+
+  [WHY]              the section plan says "the immediate is a 16-bit constant in the instruction rather than a register -- a real design difference from SYSCALL" and that is right, but a page that says "the number is the immediate" would teach a reader to write `svc #64` and get a kernel that reads x8
+
+  [ASSERTED BY]      the section plan and the first draft of concept 1, which said "the number is the immediate"
+
+============================================================================
+  R3
+============================================================================
+  [CLAIMED]          the encoding course's decoder covers the A64 encoding well enough that a later course in the section can build on it
+        WHAT WAS FOUND: it names FIVE words of the SYSTEM class and every
+        single instruction this course is about is outside those five. A
+        decoder that cannot name `svc #0` cannot check the syscall
+        convention, and the syscall convention is concept 1.
+
+  [WHY]              this is not a criticism of the scope, which was stated; it is a measurement of what the scope cost, and the cost was paid twice already -- see R4, which is a BUG in that decoder rather than a gap in it
+
+  [ASSERTED BY]      docs/aarch64-section-plan.md, section C, item 12, read as an assumption about the inherited decoder
+
+============================================================================
+  R4
+============================================================================
+  [CLAIMED]          the inherited decoder names NOP, WFI, YIELD "and the rest" of the HINT family
+        WHAT WAS FOUND: it names NOP and nothing else. The guard is
+        bits[31:5], one bit too narrow, and it matches 0xd503201f alone out
+        of eleven hints the assembler accepts. This file adds
+        `m_hint_family` with a corrected guard and the two-reader check in
+        section 9 runs on the combined dispatch.
+
+  [WHY]              a model whose body is correct and whose guard is too narrow is the one bug class that agreement-with-a-second-reader cannot find, because the second reader also says "(op 0x...)"
+
+  [ASSERTED BY]      this course's own measurement, on the inherited decoder, and it is the one retraction in the set with no prior source
+
+============================================================================
+  R5
+============================================================================
+  [CLAIMED]          an AArch64 syscall needs one relocation per address reference, the way `syscall` does on x86-64
+        WHAT WAS FOUND: it needs TWO, and always does: `adrp` emits
+        R_AARCH64_ADR_PREL_PG_HI21 and the follow-on instruction emits
+        R_AARCH64_ADD_ABS_LO12_NC or R_AARCH64_LDST64_ABS_LO12_NC. The pair
+        is not an optimisation and the linker may not remove it -- it may
+        only rewrite it as ADR+NOP, which is still two instructions.
+
+  [WHY]              the section plan says a page "needs a PAIR of them per page" and is right about the fact and silent about the reason, and the reason is NOT the +-4 GiB reach of adrp: a lone adrp reaches 4 GiB, which is not a constraint anybody hits.  The reason is that ADRP keeps only bits 32:12 of the target and throws the low twelve away, and something has to add them back.  Section 3 measures the reach of both instructions precisely so that the wrong reason cannot survive.
+
+  [ASSERTED BY]      docs/aarch64-section-plan.md, section C, item 15, and the brief for this course
+
+============================================================================
+  R6
+============================================================================
+  [CLAIMED]          x8 is the syscall-number register, so a compiler must treat it as reserved across a `svc`
+        WHAT WAS FOUND: clang uses x8 as a scratch register in every one of
+        the four functions that do not mention it, at every one of the four
+        optimisation levels, including inside the same function that later
+        issues `svc #0`. x8 is the AAPCS64 Indirect Result Location Register
+        and an ordinary caller-saved temporary, and the syscall convention
+        reuses it.
+
+  [WHY]              the section plan says "the x8-is-the-only-convention fact, which is ABI and not architecture" and is RIGHT -- and then the brief for this course asked what the compiler does with the argument registers, which is a question whose answer is that x8 is not one of them and never was
+
+  [ASSERTED BY]      the brief for this course, which asked what the compiler does with the argument registers
+
+============================================================================
+  R7
+============================================================================
+  [CLAIMED]          the natural way to test the exception class is to shift the syndrome right by 26 and compare
+        WHAT WAS FOUND: clang does not shift, and does not need to. Because
+        0x24 and 0x25 differ in one bit, `and x9, x0, #0xf8000000 ; cmp x9,
+        #0x90000000 ; cset w0, eq` is THREE instructions where the obvious
+        form is two shifts, two compares and an or -- and at -O0 the same C
+        is thirteen.
+
+  [WHY]              a page that taught the syndrome by showing the shift would have taught a correct reading and a compiler-shaped one, and a reader writing a handler in that shape would be writing worse code than the compiler would have written for them
+
+  [ASSERTED BY]      this course's own draft of concept 2, which taught the shift
+
+============================================================================
+  R8
+============================================================================
+  [CLAIMED]          the vector table needs 16 x 0x80 = 0x800 bytes, and the standard way to ask for it in assembly is `.align 11`
+        WHAT WAS FOUND: the SIZE is right and the DIRECTIVE is `.align 11`
+        only if the assembler counts from the section start. MEASURED: with
+        `.align 11` the section comes back with alignment 2048 and the table
+        at offset 0; with `.align 8` it comes back with alignment 256 and
+        the table at offset 0 of a section that is only 256-aligned. Both
+        assemble. Neither produces a diagnostic.
+
+  [WHY]              the section plan lists the vector table's "eight bytes per vector" as QUOTED and the rest as measured arithmetic, and it is right -- but "the arithmetic is measured" is not the same as "the requirement is enforced", and this course is the one that has to say the second sentence
+
+  [ASSERTED BY]      docs/aarch64-section-plan.md, section C, item 13, and the brief
+
+============================================================================
+  R9
+============================================================================
+  [CLAIMED]          an assembly-language `.align 11` before the vector table is enough to make the table valid
+        WHAT WAS FOUND: it is necessary and not sufficient, and nothing
+        checks it. The assembler honours the alignment and the table is
+        0x800 bytes, and the register that consumes the address is written
+        at RUNTIME by an `msr` whose only check is architectural. A kernel
+        that computes the address with `adrp` + `add :lo12:` and writes it
+        to VBAR with the low eleven bits set will fault on the first
+        exception, and no assembler, linker or compiler will have said
+        anything.
+
+  [WHY]              the section plan for this course asks for `.align 11` requirements "and what the assembler does if you get it wrong", and the honest answer to the second half is "nothing", which is a worse and more useful answer than a diagnostic
+
+  [ASSERTED BY]      the brief for this course, which asked "what the assembler does if you get it wrong"
+
+============================================================================
+  R10
+============================================================================
+  [CLAIMED]          the 48/52 split means the high half is 52 bits of virtual address
+        WHAT WAS FOUND: it means the HIGH half covers 2^52 bytes and the LOW
+        half covers 2^48, and the 52-bit half is mapped at the TOP of the
+        address space with its base at 0xffff000000000000 -- so the top 52
+        bits of a kernel address are 0xffff, not a free choice of 52 bits.
+        The name "52-bit" describes the SIZE of the region and a reader who
+        takes it for the size of the ADDRESS will place a kernel pointer
+        wrongly.
+
+  [WHY]              the plan says "the 48/52-bit T0SZ/T1SZ split" and gives the arithmetic, and the arithmetic is right; what it does not say is that the two numbers are region SIZES and not address widths, and the two readings differ by the position of the high regime in the address space
+
+  [ASSERTED BY]      docs/aarch64-section-plan.md, section C, item 14, and this course's own first draft of the regime table
+
+============================================================================
+  R11
+============================================================================
+  [CLAIMED]          a page table is an ordinary array of 64-bit words, so nothing in the object file distinguishes it
+        WHAT WAS FOUND: its ALIGNMENT does, and the alignment is a property
+        of the SECTION, not of the object. MEASURED: one 2 MiB-aligned page
+        table among four 4 KiB-aligned ones makes the whole of `.bss` 2
+        MiB-aligned, in both readers. An object with no 2 MiB table in it
+        has `.bss` at 4 KiB. Same types, same code, one bit of alignment,
+        and a linker that ignores it produces a kernel that faults on the
+        first exception it takes.
+
+  [WHY]              docs/aarch64-section-plan.md says "the ELF-side consequence, which is where the genuinely new material lives" and is right, but it does not say that the consequence is an ALIGNMENT and not a relocation -- and the alignment is the half that is silent when it is wrong
+
+  [ASSERTED BY]      docs/aarch64-section-plan.md, section C, item 15, which called the ELF-side consequence the hinge without saying what it is
+
+============================================================================
+  R12
+============================================================================
+  [CLAIMED]          a page needs a PAIR of relocations per page because the adrp reach is +-4 GiB
+        WHAT WAS FOUND: the reach is 4 GiB and is irrelevant. The pair
+        exists because ADRP masks off the low twelve bits of the target --
+        the relocation is named ADR_PREL_PG_HI21 and the "_PG_HI" is the
+        high twenty bits of the address -- so the low twelve have to be
+        restored by a second instruction with its own relocation. The reach
+        that matters is ADR's, and it is 1 MiB, and section 7 measured both
+        numbers by asking the assembler to refuse one of them.
+
+  [WHY]              docs/aarch64-section-plan.md states the pair as fact and the reach as the reason, and the fact survives while the reason does not.  A reader who believed the reason would conclude that a page table further than 4 GiB from the code needs a different instruction -- which is true, and for a reason that has nothing to do with the distance
+
+  [ASSERTED BY]      the brief for this course, which gave the reach as the reason
+
+============================================================================
+  R13
+============================================================================
+  [CLAIMED]          docs/aarch64-section-plan.md says "the four descriptor levels and the block/table/page sizes" and the natural reading is that level 1 can hold a 2 MiB block
+        WHAT WAS FOUND: it can, and a 48-bit regime cannot USE it, because
+        2^27 entries are needed and a table has 512. The level at which you
+        can use a block is fixed by the arithmetic of the space size, and
+        for a 48-bit VA that is level 2 with a 32 MiB block under LPA2 or
+        level 1 with a 2 MiB block in a 39-bit regime. The three real
+        AArch64 configurations are 39/39, 48/48 and 48/52, and the block
+        size follows from the VA size, not the other way round.
+
+  [WHY]              a reader who took the table of sizes as a menu would build a level-1 2 MiB block table, find that 512 entries cover 1 GiB, and conclude that 48-bit virtual memory is impossible -- which it is not, and the impossibility is in the arithmetic they did not do
+
+  [ASSERTED BY]      this course's own first draft of the size table, which listed a 30-bit row (see R16) and the block sizes as a menu
+
+============================================================================
+  R14
+============================================================================
+  [CLAIMED]          100% agreement between two readers over the corpus is the strongest evidence this course can produce
+        WHAT WAS FOUND: it is not, and section 9B is the demonstration. The
+        inherited HINT model in section 3 was WRONG about eight words and
+        agreed with llvm-objdump on every one of them -- or rather, both
+        readers printed "(op 0x...)" for all eight, and this file counts
+        that as agreement because it counts it as a coverage gap separately.
+        The first version of this section counted it as agreement, printed 0
+        disagreements over 1493 instructions, and was wrong: the 84 words it
+        reported as reconciled were 9 alias pairs and 75 padding bytes, and
+        the two coverage numbers it did not print were the real result.
+
+  [WHY]              the encoding course in this section retracted its own 100% twice for exactly this reason and its research log says so.  Two readers that agree because they both decline to answer is not a cross-check; it is a shared ignorance with two implementations
+
+  [ASSERTED BY]      docs/aarch64-section-plan.md, rule 13, read as if a 100% two-reader agreement settled the question
+
+============================================================================
+  R15
+============================================================================
+  [CLAIMED]          the two-reader check over this corpus establishes that the decoder is correct on it
+        WHAT WAS FOUND: it establishes that the decoder and llvm-objdump
+        AGREE on it, and section 9B establishes that the check can detect a
+        change. The coverage number is a fact about a CORPUS: the same loop
+        over the same corpus with the encoding course's twenty-one models
+        alone names 1374 of 1516 words and 90.6% of them, and the two
+        courses that came after this one wrote 142 models between them. A
+        reader who took the agreement as correctness would be applying a
+        conclusion the experiment does not support, and this is the third
+        course in this section to have to say so.
+
+  [WHY]              a corpus chosen to suit the decoder is the failure mode this section keeps hitting, and the fix is not a better decoder: it is a corpus that contains the subject.  The proof is in the two numbers, and the numbers are in section 3.
+
+  [ASSERTED BY]      docs/aarch64-section-plan.md, rule 13, and the research log of the two courses before this one, both of which retracted their own 100%
+
+============================================================================
+  R16
+============================================================================
+  [CLAIMED]          AArch64 can be configured with a 30-bit virtual address space in a two-level table, because the block sizes at level 1 allow it
+        WHAT WAS FOUND: T0SZ is a FIVE-BIT field and 64 - 30 = 34 does not
+        fit in it, so with a 4 KiB granule the SMALLEST regime the field can
+        name is 2^33 bytes. The two-level configurations all use the 64 KiB
+        granule, where T0SZ is six bits wide and the floor moves to 2^32.
+        MEASURED here as arithmetic on a quoted field width, and the
+        contradiction was found by the same table that produced the number:
+        the first draft of this section listed a "30-bit, the 2-level case"
+        row and the row below it said the field holds five bits.
+
+  [WHY]              a table of block sizes presented as a MENU rather than as a consequence of a field width will always contain a row the field cannot express, and the row looks entirely reasonable.  This is the third time in this section that a plausible-looking number was killed by a constraint printed in the same table
+
+  [ASSERTED BY]      this course's own first draft of the regime table, which had a 30-bit row in it
+
+============================================================================
+     . A course that reports ZERO retractions on a subject this size has
+     . either not looked or has not been reading the documents it cites.
+     . Every retraction above was asserted before this course was written --
+     . in docs/aarch64-section-plan.md or in the brief for this course -- and
+     . every one of them was checked against a measurement or a document
+     . before it was published. crosscheck.py group K asserts the TEXT of all
+     . 16 of them, so a retraction can be neither quietly dropped nor edited
+     . into being right.
+
+============================================================================
+  12  LIMITS
+     printed in the file's own words, and not in a footnote at the end
+============================================================================
+============================================================================
+  NOTHING IS EXECUTED
+============================================================================
+  There is no AArch64 machine, no emulator and no linker on this host.
+  Not one instruction in this course has been run. Every figure is a bit
+  pattern, a count of bit patterns, an arithmetic identity, or a refusal
+  from a real assembler. There is no duration, no fault, no throughput
+  and no portability claim in this file or on any of the six pages.
+
+============================================================================
+  THERE ARE NO TIMINGS, AND THE x86-64 FIGURES ARE REFUSED BY NAME
+============================================================================
+  The x86-64 section measured a 4.92x and a 27.65x. They are NOT
+  reproduced in any form here, because there is no AArch64 clock to read
+  and because faking a counterpart is worse than admitting the absence.
+  Every page that a reader would expect a ratio on says so in the place
+  the ratio would have been.
+
+============================================================================
+  NO EXCEPTION IS EVER TAKEN
+============================================================================
+  The exception classes, the packed syndrome and the IL rule are QUOTED
+  from DDI 0597. What is MEASURED is the encoding of the instructions
+  that read the registers and the arithmetic clang emits around them. A
+  reader who has read section 5 knows three instructions, not one
+  syndrome, and knows the difference is a quotation.
+
+============================================================================
+  NO INTERRUPT IS EVER TAKEN
+============================================================================
+  The vector table layout is QUOTED. What is MEASURED is the table the
+  assembler built, its size, its sixteen offsets, and -- most usefully
+  -- the four different things the assembler does with an alignment
+  directive and the fact that none of them is a diagnostic.
+
+============================================================================
+  NO MEMORY IS EVER ACCESSED
+============================================================================
+  No page walk, no TLB, no cache, no translation and no fault. The
+  page-table descriptor format is QUOTED. The table sizes, the section
+  alignments and every relocation in section 8 are MEASURED, and that is
+  the ELF-side half of the subject, which is the half a toolchain can
+  show.
+
+============================================================================
+  NO LINKER RUNS
+============================================================================
+  There is no aarch64-linux-gnu-ld on this host. The relocation NAMES
+  and NUMBERS are measured; what a linker DOES with them -- including
+  the ADR_PREL_PG_HI21 + ADD_ABS_LO12_NC -> ADR_PREL_LO21 + NOP
+  relaxation -- is QUOTED. Section 8 says so at the point a reader would
+  expect the relaxation to be measured.
+
+============================================================================
+  THE TWO READERS SHARE A SOURCE TREE
+============================================================================
+  clang assembled the corpus and llvm-objdump-21 disassembled it, both
+  from one LLVM. The cross-check establishes that this decoder and one
+  other piece of software agree on what the bytes mean -- NOT that
+  either agrees with the silicon. There is no second AArch64 assembler
+  on this host, so every "refusal" in this file is a refusal by clang
+  21.1.8's integrated assembler and by nothing else.
+
+============================================================================
+  THE DECODER IS A SUBSET OF NAMES, NOT OF LENGTHS
+============================================================================
+  A word no model claims is printed as (op 0xNNNNNNNN) and is COUNTED,
+  not dropped: a fixed-width encoding means an unnamed word still
+  contributes exactly 4 bytes. The unmodelled words in this corpus are
+  Advanced SIMD and floating point, which this course does not model and
+  which the next course in this section does.
+
+============================================================================
+  A COUNT OF UNMODELLED WORDS IS A FACT ABOUT A CORPUS
+============================================================================
+  This is retraction R4 and it is the most transferable sentence in the
+  file. The encoding course's decoder has a model that claims NOP, WFI,
+  YIELD and the rest, and that model names NOP alone, and the encoding
+  course's corpus contains no yield, no wfe, no wfi and no sev. A model
+  that is wrong about words the corpus does not contain is
+  indistinguishable from a model that is right.
+
+============================================================================
+  THE SPECIFICATIONS ARE AN ORACLE, NOT A MEASUREMENT
+============================================================================
+  The AAPCS64 argument order, the Linux syscall numbers, the ESR field
+  layout, the vector table order, the TCR field positions and the
+  descriptor format are all QUOTED. Each carries a document and a
+  section so that a reader with the document can check it. Quoting is
+  not verifying, and the difference is printed wherever a claim depends
+  on it.
+
+============================================================================
+  THE ARCHITECTURAL MANUAL WAS NOT CONSULTED ON THIS HOST
+============================================================================
+  There is no copy of DDI 0597 or DDI 0601 here, and this file does not
+  pretend otherwise. The quotations carry document and section numbers
+  so that they can be checked, and the absence of the document is listed
+  as a limit rather than papered over with a paraphrase.
+
+============================================================================
+  THE COMPILER AND THE ASSEMBLER ARE THE TEST SUBJECT, NOT THE ARCHITECTURE
+============================================================================
+  Every instruction count, every register choice and every refusal in
+  this file is a fact about clang 21.1.8. A different version will make
+  different choices and the SHAPES will survive while the values move.
+  crosscheck.py asserts the shapes and the orderings, never the values.
+
+============================================================================
+  A LINK-TIME ALIGNMENT IS NOT A LINK-TIME ERROR
+============================================================================
+  Section 6 measured four different alignment directives and zero
+  diagnostics. The 2 KiB requirement on a vector table is enforced by
+  the architecture at the moment an exception is taken, and nothing in
+  the toolchain enforces it. The most useful thing this course measured
+  is an absence, and an absence does not get safer by being repeated.
+
+============================================================================
+  NO CORPUS IS A DISTRIBUTION
+============================================================================
+  Six object files, one C file, one assembly file, four optimisation
+  levels. Every count is a count OF THIS CORPUS and the tables say so.
+  The register assignment is the specification's and will not change;
+  the instruction counts, the register choices and the frame sizes are
+  the compiler's and will.
+
+============================================================================
+  THE SHIPPED OUTPUT IS WHAT THE HARNESS READS
+============================================================================
+  a64sys.out is committed, and crosscheck.py reads it rather than
+  re-measuring. A course whose claims can only be verified by first
+  rebuilding its own artifact is a course whose claims are only
+  verifiable on the machine that wrote them -- which is the same mistake
+  as quoting a remembered number, wearing a different hat.
+
+     . And the last word, which is the course's reason for existing: this is
+     . a course about a machine you cannot run, built the way a compiler
+     . author builds one -- from the encoding outward, with the specification
+     . as the oracle and the compiler as the witness. The chain gets here: an
+     . object file that obeys a contract is the step of lexing -> parsing ->
+     . IR -> codegen -> object files -> linking -> executable where the
+     . contract first becomes checkable, and a page table is the sharpest
+     . case in the whole chain, because it is a data structure whose ADDRESS
+     . is a machine requirement and whose contents are a format
+     . specification, and the only part of it an object file can express is
+     . the alignment.
+

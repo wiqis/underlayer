@@ -105,14 +105,17 @@
 - [x] Learn AArch64 Calling Conventions
 - [x] Learn AArch64 ABI
 - [x] Learn AArch64 Stack Frames
-- [ ] Learn AArch64 System Calls
-- [ ] Learn AArch64 Exceptions
-- [ ] Learn AArch64 Interrupts
+- [x] Learn AArch64 System Calls  — `a64sys`, concept `a64-syscall`
+- [x] Learn AArch64 Exceptions  — `a64sys`, concept `a64-exceptions`
+- [x] Learn AArch64 Interrupts  — `a64sys`, concept `a64-interrupts`
 - [ ] Learn AArch64 SIMD and NEON
 - [ ] Learn AArch64 Atomics
 - [ ] Learn AArch64 Memory Ordering
-- [ ] Learn AArch64 Virtual Memory
-- [ ] Learn AArch64 Page Tables
+- [x] Learn AArch64 Virtual Memory  — `a64sys`, concept `a64-virtual`
+- [x] Learn AArch64 Page Tables  — `a64sys`, concept `a64-pagetables`. The
+      hinge into the ELF courses: `sh_addralign` carries the 2 MiB
+      requirement and the ADRP+LO12 pair is read from an object file, both by
+      two parsers that agree. No timings anywhere in this course.
 
 
 ## RISC-V
