@@ -344,6 +344,56 @@ By the mission's "every instruction, every architecture" rule that section
 matters more than any other, and as written it would produce the same sprawl.
 **Not yet restructured** — awaiting a ruling.
 
+## The AArch64 section is FOUR courses, not one
+
+Appended 2026-09-30, after the fourth and last course shipped. This is an
+**addition to** the mission document and not a rewrite of it: the paragraphs
+above are the ones the section was planned under and they stay as they are,
+because a mission document that is quietly edited to match what was built is a
+mission document that can no longer be used to judge what should be built next.
+
+What changed is a fact about scope. The AArch64 material is not one course and
+never plausibly was: `docs/courses-todo.md` has **thirteen** ARM64 items
+(Assembly, Instruction Encoding, Calling Conventions, ABI, Stack Frames, System
+Calls, Exceptions, Interrupts, SIMD/NEON, Atomics, Memory Ordering, Virtual
+Memory, Page Tables), and the section resolved them into four courses:
+
+| course | resolves | concepts | minutes |
+|---|---|---|---|
+| `a64asm` | Assembly, Instruction Encoding | 5 | 127 |
+| `a64abi` | Calling Conventions, ABI, Stack Frames | 5 | 125 |
+| `a64sys` | System Calls, Exceptions, Interrupts, Virtual Memory, Page Tables | 6 | 150 |
+| `a64simd` | SIMD/NEON, Atomics, Memory Ordering | 5 | 127 |
+
+All thirteen roadmap items are now ticked: 21 concepts, 529 minutes. The x86-64 section resolved its
+eighteen items into four courses the same way, so the two sections are now
+symmetric, and the practical consequence is the one worth stating: **a roadmap
+item is not a course.** One ARM64 item -- "Memory Ordering" -- became a
+twenty-six minute concept inside a five-concept course whose other four
+concepts are about register files, encodings, atomics and cross-checks, and
+splitting it into a course of its own would have produced a course about one
+barrier field and no reason to read it.
+
+Two things the mission's own rules gained from the section, both of which were
+already required and are now checkable:
+
+- **Rule 13 (label every claim MEASURED / MEASURED-ON-BYTES / QUOTED) caught a
+  defect in itself.** The last course's artifact defined all three labels and
+  then rendered only two of them in the same form, so a reader scanning for an
+  unmeasured claim would have seen two labels one way and the third another.
+  Fixed, and the fix is a count: the harness now asserts how many times each
+  label appears *in its own form*, because a label rendered two ways is not a
+  label. A rule nobody measures is a rule nobody has checked.
+- **A cross-check that has silently stopped comparing reports the same number
+  as one that is working.** The last course produced four normaliser bugs that
+  each left a printed disagreement count at zero while eighty-five real decoder
+  defects sat behind them, and not one of them printed a wrong word. The
+  general form is now a check in the course's own harness: every reported
+  number has its own poison, and a poison that does not move its number prints
+  a failure. This belongs in the mission document rather than in one course's
+  notes because it is true of the whole collection, and the collection's other
+  seventeen course verifiers are the right place to apply it next.
+
 ## Related documents
 
 | Document | Purpose |

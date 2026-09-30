@@ -1,0 +1,17 @@
+# The probe files this course's artifact writes while it works.
+#
+# The `_NNN` files are the one-instruction-per-file probes: a batch of fifty
+# probes in one .s means the single probe the assembler rejects takes the other
+# forty-nine with it, and a run that prints blanks looks exactly like a run that
+# measured nothing.  They are the residue of that discipline and they are not
+# part of the course.
+_*.s
+_*.o
+__pycache__/
+
+# The generated .s and .o are here rather than ignored because they ARE the
+# course: every instruction count in section 5 is a claim about a line of
+# these files, and every two-reader agreement in section 11 is a claim about a
+# word in the .o.  `build_samples.sh` rebuilds all thirteen of them from two C
+# files in about a second, and `crosscheck.py` reads the SHIPPED ones, so a
+# reader can check the claims without a compiler at all.

@@ -1,0 +1,1761 @@
+
+==============================================================================
+ 1  THE METHOD, AND THE TWO ABSENCES
+==============================================================================
+
+  ==========================================================================
+  a64data -- the artifact for "The AArch64 Data Path: NEON, Atomics and
+  Ordering"
+  ==========================================================================
+  THE METHOD IS FORCED AND IT IS STATED FIRST:
+    there is no AArch64 machine on this host, no AArch64 emulator and
+    no AArch64 linker, so NOT ONE INSTRUCTION IN THIS COURSE HAS BEEN
+    RUN, and there are NO TIMINGS anywhere in this file or on any of
+    its five pages.
+
+    The two neutral courses that own the PRINCIPLES both measured
+    durations.  `simd` measured that a wider vector is 3.89x at 2 KiB
+    and 1.14x at 24 MiB.  `smp` measured an uncontended `lock xadd` at
+    2.54x a plain store and the contended one at 21.20x the floor.  The
+    x86-64 sibling of THIS course measured 3.89x, 4.92x and 27.65x.
+
+    NOT ONE OF THOSE HAS A COUNTERPART HERE, and the honest
+    alternative to a number is not a smaller number.  Where a reader
+    would expect a ratio on a page of this course, the page says what
+    is missing instead.  Section 5 is where that bites hardest,
+    because an INSTRUCTION COUNT is the measurement this course can
+    make and it points in the OPPOSITE direction to the one a reader
+    expects.
+
+    The three labels, and the only honest treatment of a claim about
+    a machine nobody in this file has run:
+
+      MEASURED            an experiment on the compiler, the
+                          assembler, the object file or the bytes.
+                          One command reproduces it.
+      MEASURED-ON-BYTES   a property of the emitted BYTES, read TWICE
+                          -- by the decoder in this file and by
+                          llvm-objdump-21 -- and the two readers are
+                          compared word by word.
+      QUOTED              a manual claim, with the document and the
+                          section printed beside it, and never mixed
+                          in with a measurement.
+
+  -------------------------------------------------------------------------
+  THE INSTRUMENT, AND WHAT IT IS NOT
+  -------------------------------------------------------------------------
+    Ubuntu clang version 21.1.8 (6ubuntu1)
+        the C compiler AND the assembler: one program, and the only one on this host
+    Ubuntu LLVM version 21.1.8
+        the INDEPENDENT READER for the two-reader check; it and the first line are ONE LLVM tree
+    Ubuntu LLVM version 21.1.8
+        an ELF reader, used for the section headers in section 11 -- the second reader of the section TABLE
+
+    reader 1: the decoder in this file -- 14 models of its own,
+              12 borrowed from the two earlier courses in this section
+              and 21 imported unchanged from the encoding course
+    reader 2: llvm-objdump-21 --triple=aarch64 -d
+
+    BOTH READERS COME FROM ONE LLVM TREE, and there is no second
+    AArch64 assembler on this host, so every "refusal" in this file
+    is a refusal by clang 21.1.8 and by nothing else.  A reader who
+    reads that as a property of the architecture has made the mistake
+    this file exists to prevent.
+
+    aarch64-linux-gnu-ld       ABSENT  (AArch64 linker)
+    qemu-aarch64               ABSENT  (AArch64 emulator)
+    aarch64-linux-gnu-as       ABSENT  (a SECOND AArch64 assembler)
+    aarch64-linux-gnu-gcc      ABSENT  (an AArch64 GCC)
+
+  -------------------------------------------------------------------------
+  THE SPECIFICATIONS, AS ORACLES -- QUOTED, never measured here
+  -------------------------------------------------------------------------
+    ARM DDI 0487, "A64 Instruction Set"                 
+        the Advanced SIMD groups, the size and Q fields, the structure load
+    ARM DDI 0487, "A64 Advanced SIMD"                   
+        ld1/ld2/ld3/ld4 and their stride
+    ARM DDI 0597, "AArch64 Pseudocode"                  
+        PSTATE.PAN, the barrier semantics, the exclusive monitor
+    ARM DDI 0602, "A64 Instruction Set for SVE"         
+        the Z and P register files and the absence of a length field
+    ARM DDI 0601, "AArch64 Floating-Point"              
+        the FP size suffix, fmov, the type field that S/D/H share
+    ARM ARM, "Atomicity" and "Memory ordering"          
+        what acquire and release mean, and what DMB orders
+
+    No copy of any of these documents was CONSULTED on this host.  The
+    quotations carry document and section so they can be checked
+    elsewhere, and the absence of the document here is a LIMIT and not
+    a paraphrase.
+
+  -------------------------------------------------------------------------
+  THE TEST SUBJECT, AND THE RULE FOR BEING WRONG
+  -------------------------------------------------------------------------
+    The specifications are the ORACLE.  The compiler and the assembler
+    are the TEST SUBJECT, and the architecture is the thing being
+    described.  This is worth stating because the three are easy to
+    confuse and the confusion is the most common error in this field:
+    a refusal is a fact about an ASSEMBLER, a bit pattern is a fact
+    about an ENCODING, and neither is a fact about a CPU.  Every
+    disagreement between the two readers in this file is printed by
+    name, in full, with the two texts side by side -- and every
+    disagreement between this file and its own earlier drafts is
+    filed as a RETRACTION in section 13, with the measurement that
+    killed it and the general form it illustrates.  There are 27 of
+    them and the rule is not "be careful".  It is: a claim that a
+    reader cannot check is a claim the reader will believe, and a
+    course about a machine nobody has run is MOSTLY such claims, so
+    the ones that can be checked are the ones that carry the weight.
+
+  -------------------------------------------------------------------------
+  THE SECTIONS
+  -------------------------------------------------------------------------
+    1  THE METHOD, AND THE TWO ABSENCES
+    2  THE VECTOR REGISTER FILE: FIVE VIEWS, ONE REGISTER
+    3  THE FIELD MAP, MEASURED BY SWEEP
+    4  THE SHARED MEMORY SPACE, AND THE BIT SVE DOES NOT HAVE
+    5  WHAT THE COMPILER EMITS, AND WHY THE COUNT POINTS BACKWARDS
+    6  THE EXCLUSIVE MONITOR, AND WHY THE RETRY IS A LOOP
+    7  FEAT_LSE: ONE INSTRUCTION INSTEAD OF FOUR
+    8  DMB, DSB, ISB: TWO FIELDS, NOT ONE
+    9  ORDERING AS ACCESS MODES: WHERE THE BARRIERS ARE
+   10  PSTATE.PAN: A REFUSAL AND A BIT PATTERN
+   11  THE ROUND TRIP, AND ONE OF THE TWO READERS POISONED
+   12  THE PROVENANCE TABLE
+   13  THE RETRACTIONS
+   14  THE LIMITS, AND WHAT A READER CANNOT CONCLUDE
+
+
+==============================================================================
+ 2  THE VECTOR REGISTER FILE: FIVE VIEWS, ONE REGISTER
+==============================================================================
+
+  The rule the architectures quote, and the rule this page exists to
+  re-measure.  There are 32 vector registers, each 128 bits.  An instruction
+  names a VIEW of one: the same 16 bytes read as 16 bytes, 8 halfwords, 4 words
+  or 2 doublewords, and the suffix on the register is the view, not the
+  register.  QUOTED (ARM DDI 0487, "A64 Advanced SIMD", the section on register
+  size), and it is worth a paragraph why the suffix reinterprets and never
+  converts: `fadd s0, s1, s2` and `fadd d0, d1, d2` are the same OPERATION at
+  two widths, and `mov v0.4s, v1.4s` moves bits without touching them.
+
+  What CAN be measured is everything the encoding has to say about it, and the
+  encoding says less and more than the prose does.
+
+instruction       word         binary                                the three size bits
+  ---------------- ----------- ------------------------------------ --------------------------
+  ldr b0, [x0]     0x3d400000  00111101010000000000000000000000     size=0 Q=0 L=1            
+  ldr h0, [x0]     0x7d400000  01111101010000000000000000000000     size=1 Q=0 L=1            
+  ldr s0, [x0]     0xbd400000  10111101010000000000000000000000     size=2 Q=0 L=1            
+  ldr d0, [x0]     0xfd400000  11111101010000000000000000000000     size=3 Q=0 L=1            
+  ldr q0, [x0]     0x3dc00000  00111101110000000000000000000000     size=0 Q=1 L=1            
+  str b0, [x0]     0x3d000000  00111101000000000000000000000000     size=0 Q=0 L=0            
+  str h0, [x0]     0x7d000000  01111101000000000000000000000000     size=1 Q=0 L=0            
+  str s0, [x0]     0xbd000000  10111101000000000000000000000000     size=2 Q=0 L=0            
+  str d0, [x0]     0xfd000000  11111101000000000000000000000000     size=3 Q=0 L=0            
+  str q0, [x0]     0x3d800000  00111101100000000000000000000000     size=0 Q=1 L=0            
+
+  [MEASURED-ON-BYTES]  ldr b0 and ldr q0 differ in EXACTLY ONE BIT.
+  ldr b0         xor ldr q0         = 0x00800000  -> bit 23
+  [MEASURED-ON-BYTES]  ldr b0 and str b0 differ in EXACTLY ONE BIT.
+  ldr b0         xor str b0         = 0x00400000  -> bit 22
+
+  So for the Advanced SIMD single load/store: bits[31:30] is the element
+  size, bit 23 is Q, and bit 22 is L.  The ACCESS SIZE is therefore THREE bits
+  wide with FIVE allocated values out of eight, and the bit that separates 64
+  bits from 128 bits is bit 23 -- not bit 30, not bit 31, and nowhere near the
+  top of the word.
+
+  The first draft of this file's decoder read bit 31 as Q, because bit 31 IS
+  the Q bit in the Advanced SIMD three-same group, and it named `ldr b0` and
+  `ldr q0` with the same mnemonic.  Nothing complained.  Section 3 prints the
+  table in which the two groups' layouts sit side by side, and the general form
+  is the one the encoding course already wrote down: a decoder that has one
+  "size" field is a decoder that has one measurement and two answers.
+
+instruction         word         binary                                bits[23:22]
+  ------------------ ----------- ------------------------------------ ----------------
+  fadd s0, s1, s2    0x1e222820  00011110001000100010100000100000     0               
+  fadd d0, d1, d2    0x1e622820  00011110011000100010100000100000     1               
+  fmov s0, w0        0x1e270000  00011110001001110000000000000000     0               
+  fmov d0, x0        0x9e670000  10011110011001110000000000000000     1               
+  umov w0, v0.s[0]   0x0e043c00  00001110000001000011110000000000     0               
+  umov x0, v0.d[0]   0x4e083c00  01001110000010000011110000000000     0               
+  fmov s0, wzr       0x1e2703e0  00011110001001110000001111100000     0               
+
+  [MEASURED-ON-BYTES]  fadd s0 and fadd d0 differ in bit 22 alone, so
+  the floating-point TYPE is bits[23:22] with S = 00 and D = 01.
+
+  [MEASURED]  and there is a third value, which the assembler hides:
+     fadd h0, h1, h2                    (baseline)             REFUSED: instruction requires: fullfp16
+     fadd h0, h1, h2                    -march=armv8.2-a+fp16  0x1ee22820  fadd h0, h1, h2
+     fadd q0, q1, q2                    (baseline)             REFUSED: invalid operand for instruction
+     fadd b0, b1, b2                    (baseline)             REFUSED: invalid operand for instruction
+     fmov h0, w0                        (baseline)             REFUSED: instruction requires: fullfp16
+     fmov h0, w0                        -march=armv8.2-a+fp16  0x1ee70000  fmov h0, w0
+     scvtf s0, d0                       (baseline)             REFUSED: instruction requires: fprcvt
+     fcvtzs s0, d0                      (baseline)             REFUSED: instruction requires: fprcvt
+
+  `fadd h0, h1, h2` is REFUSED at baseline with a diagnostic that NAMES
+  THE FEATURE: "instruction requires: fullfp16".  With
+  `-march=armv8.2-a+fp16` it assembles to 0x1ee22820, and 0x1ee22820 xor
+  0x1e222820 is 0x00c00000 -- bits 22 AND 23.  So the encoding has a THIRD
+  type value, a four-bit window, and half of the window is unused by the
+  instructions a baseline assembler will produce.  That is the shape of every
+  architectural extension: the encoding is allocated generously and the
+  assembler is stingy, and only the first of the two is checkable with a hex
+  editor.
+
+  `fadd q0, q1, q2` is refused with "invalid operand", and the reason is the
+  first table on this page: the floating-point groups have a TYPE field and the
+  128-bit form is not a type.  The 128-bit arithmetic instruction is spelled
+  `fadd v0.4s, v1.4s, v2.4s` and it is a DIFFERENT ENCODING -- 0x4e22d420
+  against 0x1e222820 -- differing in six bits, not one.  A reader who took
+  "the suffix picks the width" to mean "one instruction, five widths" has the
+  wrong mental model, and it is worth being wrong about exactly here.
+  -------------------------------------------------------------------------
+  WHAT THIS MEASUREMENT CANNOT SHOW
+  -------------------------------------------------------------------------
+    It cannot show that the five views are the same BITS at run time.
+    There is no AArch64 machine here, so no value was loaded, no
+    reinterpretation happened and no lane was read.  What is measured
+    is that five names are five 32-bit words which differ in a total of
+    two bit positions -- which is a fact about the ENCODING and a
+    necessary, not sufficient, condition on the views being one
+    register.
+    It cannot show a throughput, a latency, a register-file size in
+    bytes, or whether a particular core has 32 vector registers or
+    fewer.  That last one is QUOTED (the architectural register file
+    is 32 x 128 bits) and the number of PHYSICAL registers a
+    particular implementation has is not in the architecture at all.
+
+==============================================================================
+ 3  THE FIELD MAP, MEASURED BY SWEEP
+==============================================================================
+
+  A field map read out of a manual is a claim.  A field map read off the
+  XOR of assembled words is a measurement, and the method is one line long:
+  assemble an instruction, change ONE operand, assemble it again, and every bit
+  that moved belongs to that operand.  The mask below is the OR of the XORs
+  over a SWEEP of variants -- one per single bit of the operand -- and a sweep
+  is necessary because a single pair marks the bits where two VALUES differ,
+  which is a SUBSET of the field.  The encoding course's own map was wrong
+  exactly there: one pair gave `movz w0, #0x1111` against `movz w0, #0x2222` an
+  eight-bit `imm16` for a sixteen-bit field, and the table looked wrong because
+  the table was.
+
+field             xor mask    the positions           base instruction
+  ---------------- ---------- ---------------------- ----------------------------------------
+  ldr size         c0000000   bits[31:30]            ldr b0, [x0]                            
+  ldr Q            00800000   bits[23:23]            ldr b0, [x0]                            
+  ldr L            00400000   bits[22:22]            ldr b0, [x0]                            
+  ldr Rt           0000001f   bits[4:0]              ldr q0, [x0]                            
+  ldr Rn           000003e0   bits[9:5]              ldr q0, [x0]                            
+  ldr imm12        003ffc00   bits[21:10]            ldr q0, [x0, #0]                        
+  ldp pair width   c0000000   bits[31:30]            ldp d0, d1, [x0]                        
+  ldp Rt2          00007c00   bits[14:10]            ldp q0, q1, [x0]                        
+  ldp pair (both, not one) 0000781e   bits[1,2,3,4,11,12,13,14] ldp q0, q1, [x0]                        
+  ld1 size         00000c00   bits[11:10]            ld1 {v0.16b}, [x0]                      
+  ld1 Q            40000000   bits[30:30]            ld1 {v0.8b}, [x0]                       
+  ld1 Rt           0000001f   bits[4:0]              ld1 {v0.16b, v1.16b}, [x0]              
+  ld1 opcode       0000f000   bits[15:12]            ld1 {v0.16b}, [x0]                      
+  ld1 L            00400000   bits[22:22]            ld1 {v0.16b}, [x0]                      
+  add v size       00c00000   bits[23:22]            add v0.16b, v1.16b, v2.16b              
+  add v Q          40000000   bits[30:30]            add v0.8b, v1.8b, v2.8b                 
+  add v op         2000b800   bits[11,12,13,15,29]   add v0.4s, v1.4s, v2.4s                 
+  add v U          20000800   bits[11,29]            smax v0.4s, v1.4s, v2.4s                
+  add v Rm         001d0000   bits[16,18,19,20]      add v0.4s, v1.4s, v2.4s                 
+  fadd type        00400000   bits[22:22]            fadd s0, s1, s2                         
+  addv op          --         REFUSED at 'addv d0, v1.2d': invalid operand f addv s0, v1.4s                          
+  addp class       10400000   bits[22,28]            addv s0, v1.4s                          
+  dup index        001e0000   bits[20:17]            dup v0.16b, v1.b[0]                     
+  movi cmode       0000e000   bits[15:13]            movi v0.4s, #1                          
+  movi imm8        000703e0   bits[5,6,7,8,9,16,17,18] movi v0.4s, #0                          
+  ldxr size        c0000000   bits[31:30]            ldxrb w1, [x0]                          
+  ldaxr o1         00008000   bits[15:15]            ldxr w1, [x0]                           
+  stlxr o1         00008000   bits[15:15]            stxr w2, w1, [x0]                       
+  ldaxp o1         00008000   bits[15:15]            ldxp x9, x8, [x0]                       
+  ldxr Rs          0000001b   bits[0,1,3,4]          ldxr w1, [x0]                           
+  ldar size        c0000000   bits[31:30]            ldarb w1, [x0]                          
+  ldar L           00400000   bits[22:22]            ldar w1, [x0]                           
+  dmb option       00000f00   bits[11:8]             dmb sy                                  
+  dmb vs dsb       00000020   bits[5:5]              dmb sy                                  
+  dmb vs isb       00000060   bits[6:5]              dmb sy                                  
+  dmb vs clrex     000000e0   bits[7:5]              dmb sy                                  
+  isb option       --         REFUSED at 'isb ish': 'sy' or #imm operand exp isb                                     
+  cas o2           00408000   bits[15,22]            cas w1, w2, [x0]                        
+  cas size         c0000000   bits[31:30]            casb w1, w2, [x0]                       
+  casp pair        00408000   bits[15,22]            casp x0, x1, x2, x3, [x4]               
+  ldadd op         00003000   bits[13:12]            ldadd w1, w2, [x0]                      
+  ldadd o2         00c00000   bits[23:22]            ldadd w1, w2, [x0]                      
+  sve size         00c00000   bits[23:22]            add z0.d, p0/m, z0.d, z1.d              
+  sve zreg         000000e7   bits[0,1,2,5,6,7]      add z0.d, p0/m, z0.d, z1.d              
+  sve pg           00000c00   bits[11:10]            add z0.d, p0/m, z0.d, z1.d              
+  sve Zm           000000e0   bits[7:5]              add z0.d, p0/m, z0.d, z1.d              
+  ld1 lane         40001c00   bits[10,11,12,30]      ld1 {v0.b}[0], [x0]                     
+
+  45 field positions measured over 47 cases, 2 refusals.
+
+  Five rows in that table are the course, and they are five rows about
+  the SAME FOUR ELEMENT SIZES.
+
+      `ldr size`      is bits[31:30]    and `ldr Q`    is bit 23
+      `add v size`   is bits[23:22]    and `add v Q`  is bit 30
+      `ld1 size`     is bits[11:10]    and `ld1 Q`    is bit 30
+      `sve size`     is bits[23:22]    and has NO Q bit at all
+
+  So the same four element sizes live at TWO different places in the 32-bit word
+  -- the top of the word for the scalar-register load and arithmetic groups, and
+  bits[11:10] for the structure load -- and the 128-bit form is a bit in three of
+  the four groups and ABSENT from the fourth.  A decoder that has one "vector
+  size" field and one flag for which group it is in is a decoder with FOUR field
+  maps and one flag, and the flag is the part a reader forgets to check.
+
+  The fourth row is the one the next section is about, and the reason SVE has no
+  Q bit is NOT an omission: an SVE vector is not a fixed 128 bits, so a bit that
+  said "128" would be a lie.  Section 4 measures what the instruction says
+  instead, which is nothing.
+
+  Four more rows are worth reading slowly, and all four are the shape of a
+  trap rather than a number:
+
+      `ldp Rt2`       is bits[14:10] -- and the second register field, bits[4:0],
+                      CANNOT BE SWEPT ALONE, because `ldp` takes a consecutive
+                      even/odd pair.  The row labelled `ldp pair (both, not one)`
+                      is the proof: its mask is bits[1,2,3,4,11,12,13,14], which
+                      is TWO fields' increment patterns added together and is not
+                      a field anybody can read.  It is printed anyway, with a
+                      label that says what it is, because a table that quietly
+                      drops the row a reader was about to ask about teaches them
+                      that the table was edited to be right.
+      `movi imm8`     is bits[9:5] AND bits[18:16] -- a NON-CONTIGUOUS eight-bit
+                      immediate, and a mask that is not a span is evidence about
+                      the DESIGN here and evidence about the MEASUREMENT
+                      everywhere else.  The only way to tell the two apart is to
+                      have swept, which is why this row is here and not in a
+                      footnote.
+      `add v op`      and `add v U` are the same six-bit opcode with ONE BIT
+                      riding on it: `umax` is `smax` with bit 29 flipped.  A
+                      sweep that finds the opcode field finds bit 29 in the same
+                      mask and cannot say which of the two questions it was
+                      asking, and a field map with one mask for two questions is
+                      a field map with one answer for two questions.
+
+  The other two rows are the reason the barrier table in section 8 can be read
+  at all:
+
+      `dmb option`   is bits[11:8]             FOUR bits, TWELVE names
+      `dmb vs dsb`   is bits[7:5]              THREE bits, three names
+
+  so "DMB, DSB and ISB differ in one field" is true and is half the answer, and
+  `dmb vs clrex` -- THREE bits, because clrex shares the same group -- is the row
+  that says a fourth instruction is in there too.
+
+  And `sve zreg` is bits[9:5] and bits[4:0] -- five bits, thirty-two Z
+  registers, the same width as a scalar register field and the same width as an
+  Advanced SIMD V field -- with nothing anywhere else in the word for the width
+  of the vector they hold.  Section 4 is about that absence.
+  -------------------------------------------------------------------------
+  WHAT A MASK IS, PRECISELY, AND WHAT IT IS NOT
+  -------------------------------------------------------------------------
+    A mask is the OR of the XORs over the sweep, so it is a LOWER
+    BOUND on the field: every bit in the mask really is a bit that
+    operand owns, and a bit NOT in the mask is a bit the sweep did
+    not happen to move.  A field this measurement CANNOT find is a
+    field that is never written in the corpus, and saying "bits[]"
+    for one of those would be asserting a field nobody measured.
+
+    One of those is measured deliberately and named in the row:
+    `dup index` sweeps FIVE indices 0,1,2,4,8,15 and gets bits[20:17], and the
+    element size of the same instruction is imm4[1:0] at
+    bits[13:12] -- so the index is THREE bits and the size is TWO
+    and both are in the same 32-bit word as the destination.
+
+  -------------------------------------------------------------------------
+  WHAT THIS MEASUREMENT CANNOT SHOW
+  -------------------------------------------------------------------------
+    A mask cannot show a field the sweep never reached, and it cannot
+    show a field that is CONSTANT across the whole corpus -- which is
+    exactly the kind of field a decoder is most likely to get wrong,
+    because nothing in the corpus moves it.  The two earlier courses
+    in this section both found one: the HINT guard one bit too narrow,
+    which matched NOP alone out of eleven hints because the corpus
+    contained no yield, no wfe and no wfi.
+
+    A COUNT OF UNMODELLED WORDS IS A FACT ABOUT A CORPUS AND NOT ABOUT
+    A DECODER, and this course asserts it for itself in section 11.
+
+==============================================================================
+ 4  THE SHARED MEMORY SPACE, AND THE BIT SVE DOES NOT HAVE
+==============================================================================
+
+  [QUOTED]  the paragraph below is a manual claim, and every
+            sentence of it is one: the document and the section
+            are named in the text and the measurement is not.
+  The claim, QUOTED (ARM DDI 0602 for the SVE half; ARM DDI 0487 for the
+  Advanced SIMD half; the FEAT definitions in the Arm Architecture Reference
+  Manual's appendix for the extensions): Advanced SIMD, the FP extensions, the
+  SVE and SVE2 extensions and the cryptographic extensions are SEPARATE
+  architectural extensions that SHARE ONE INSTRUCTION ENCODING SPACE and ONE
+  SET OF REGISTERS.  The register sharing is the load-bearing part and it is
+  what the shared-resource rule means: an implementation that has SVE also has
+  Advanced SIMD, on the same physical registers, and SVE's Z0's bottom 128 bits
+  are Advanced SIMD's V0.  One file register, two views, and the second view is
+  wider.
+
+  The consequence is the thing worth teaching, and it is measurable in one
+  command: if the encoding had to say how wide a vector is, it would need a
+  field, and the field would have to be as wide as the widest vector any
+  implementation might have.  SVE's vector length is at most 2048 bits, so a
+  length field would be four bits and every instruction would pay for it.  So
+  SVE does not have one, and the space it shares is what makes that affordable:
+  the encoding's register fields are FIVE BITS for thirty-two Z registers, and
+  the length of those registers is a property of the IMPLEMENTATION, read at run
+  time from the vector length register rather than from the instruction.
+
+family                    word         binary                                class field
+  ------------------------ ----------- ------------------------------------ ----------------------
+  Advanced SIMD, 128-bit   0x4ea28420  01001110101000101000010000100000     bits[28:25] = 0111    
+  Advanced SIMD, 64-bit    0x0ea28420  00001110101000101000010000100000     bits[28:25] = 0111    
+  SVE, .d                  0x04c00020  00000100110000000000000000100000     bits[28:25] = 0010    
+  SVE, .s                  0x04800020  00000100100000000000000000100000     bits[28:25] = 0010    
+  SVE, .h                  0x04400020  00000100010000000000000000100000     bits[28:25] = 0010    
+  SVE, .b                  0x04000020  00000100000000000000000000100000     bits[28:25] = 0010    
+  FP scalar, .d            0x1e622820  00011110011000100010100000100000     bits[28:25] = 1111    
+  AES (FEAT_AES)           REFUSED     instruction requires: aes            bits[28:25] = ?       
+  SHA-256 (FEAT_SHA2)      REFUSED     instruction requires: sha2           bits[28:25] = ?       
+  SVE predicate            0x25e11c00  00100101111000010001110000000000     bits[28:25] = 0010    
+  SVE load                 0xa5e0a000  10100101111000001010000000000000     bits[28:25] = 0010    
+  SVE store                0xe5e0e000  11100101111000001110000000000000     bits[28:25] = 0010    
+
+  [MEASURED-ON-BYTES]  the class field bits[28:25] is 0b0111 for the
+  Advanced SIMD data-processing group, the FP groups, AES and SHA-2,
+  and 0b0010 for the SVE data-processing group -- so four extensions
+  and two architectures share the space by sharing a class.
+
+  [MEASURED]  and the measurement the concept is built on:
+
+-msve-vector-bits   the same instruction assembles to         
+  ------------------ ---------------------------------------- ----------------------------------------
+  128    bits        0x04c00020                                                                       
+  256    bits        0x04c00020                                                                       
+  512    bits        0x04c00020                                                                       
+  1024   bits        0x04c00020                                                                       
+  2048   bits        0x04c00020                                                                       
+
+  [MEASURED-ON-BYTES]  5 of 5 are the SAME WORD, from 128 bits to
+  2048 bits -- a factor of SIXTEEN in vector length and NOT ONE BIT
+  of difference.  That is the whole claim, and it takes one command.
+
+  [MEASURED]  the field the size DOES live in, for SVE:
+     size = 0  (element  8 bits)  0x04000000  xor 0x00c00020
+     size = 1  (element 16 bits)  0x04400000  xor 0x00800020
+     size = 2  (element 32 bits)  0x04800000  xor 0x00400020
+     size = 3  (element 64 bits)  0x04c00000  xor 0x00000020
+     TWO bits at bits[23:22] carry all four element sizes and there
+     is no fourth bit anywhere for the vector LENGTH.
+
+  [MEASURED]  and the restriction the assembler adds that the field
+  does not: the SVE predicates are FOUR bits wide in the encoding
+     whilelo p0.d   0x25e11c00  xor 0x00000000
+     whilelo p1.d   0x25e11c01  xor 0x00000001
+     whilelo p2.d   0x25e11c02  xor 0x00000002
+     whilelo p3.d   0x25e11c03  xor 0x00000003
+     whilelo p4.d   0x25e11c04  xor 0x00000004
+     add z0.d, p8/m  -> invalid restricted predicate register, expected p0..p7 (without element suffix)
+     so bits[3:0] address SIXTEEN predicates and the arithmetic
+     form may use only p0..p7 -- a restriction the ENCODING does not
+     express and only the assembler enforces.  An enforcement the
+     encoding does not express is a rule with no bytes behind it.
+  [MEASURED-ON-BYTES]  and the two register files SVE adds, swept:
+     z0   0x04c00000  xor 0x00000020
+     z1   0x04c00020  xor 0x00000000
+     z15  0x04c001e0  xor 0x000001c0
+     z31  0x04c003e0  xor 0x000003c0
+     Z0 through Z31 -- five bits, the same width as a scalar
+     register field and the same width as an Advanced SIMD V
+     field, and NOTHING else in the word for how wide those
+     registers are.  Thirty-two Z registers and sixteen predicate
+     registers in two fields of five and four bits, in a word with
+     no width field at all.
+  SVE rows that had nothing to do with either reader being wrong:
+     add   0x04c00020  op[21:16] = 000000  class = 00000100
+     sub   0x04c10020  op[21:16] = 000001  class = 00000100
+     umax  0x04c90020  op[21:16] = 001001  class = 00000100
+     smin  0x04ca0020  op[21:16] = 001010  class = 00000100
+     umin  0x04cb0020  op[21:16] = 001011  class = 00000100
+     mul   0x04d00020  op[21:16] = 010000  class = 00000100
+     sdiv  0x04d40020  op[21:16] = 010100  class = 00000100
+     udiv  0x04d50020  op[21:16] = 010101  class = 00000100
+     orr   0x04d80020  op[21:16] = 011000  class = 00000100
+     eor   0x04d90020  op[21:16] = 011001  class = 00000100
+     and   0x04da0020  op[21:16] = 011010  class = 00000100
+     bic   0x04db0020  op[21:16] = 011011  class = 00000100
+     So the operation is a SIX-BIT field at bits[21:16] and a name
+     table is TWELVE entries long so far and no longer a single bit,
+     and the class byte bits[31:24] is 0b00000100 for all twelve.
+
+     AND THE DESTINATION IS ALSO THE SECOND SOURCE.  MEASURED: the
+     assembler REFUSES `add z0.d, p0/m, z1.d, z1.d`, so there are
+     only THREE register fields here -- bits[4:0], bits[9:5] and the
+     predicate at bits[12:10] -- and the second reader prints the
+     destination TWICE.  A decoder that "fixes" the repeated operand
+     names a register the word does not contain.
+
+
+  And the refusals, which are the other half of a shared space: an
+  assembler that does not have the feature says so by NAME, and the name is
+  architecture rather than assembler.
+
+      aese v0.16b, v1.16b     at baseline -> "instruction requires: aes"
+      ldapr w1, [x0]          at 8.1-a    -> "instruction requires: rcpc"
+      ldapr w1, [x0]          at 8.3-a    -> accepted, 0xdac0dc01
+      cas  w1, w2, [x0]       at baseline -> "instruction requires: lse"
+
+  FEAT_LSE is armv8.1-a, FEAT_RCPC is armv8.3-a, FEAT_AES is armv8-a+crypto, and
+  FEAT_FP16 is armv8.2-a+fp16.  Four refusals, four feature names, and the
+  whole feature-gating story of the architecture in four lines of diagnostic.
+  A space that four extensions share is a space whose decoding requires knowing
+  WHICH extensions are present -- which is a fact about a CPU's ID registers, and
+  a decoder on a machine that cannot read them has to guess or decline.  This
+  one declines, and says so in the output.
+  -------------------------------------------------------------------------
+  WHAT THIS MEASUREMENT CANNOT SHOW
+  -------------------------------------------------------------------------
+    It cannot show that a 2048-bit vector actually has 2048 bits, or
+    that Z0's bottom 128 bits are V0, or that any SVE instruction
+    runs.  The claim "the length is not in the instruction" is
+    MEASURED; the claim "the length is therefore correct at run time"
+    is QUOTED and needs silicon.  That is a one-line argument and it
+    is the whole course in miniature.
+    It cannot show WHICH extensions an implementation has, because the
+    feature registers are readable only at EL1 and there is no EL1
+    here.  The class field is shared whether or not every member of
+    the space is present, which is the definition of a shared space
+    and also the reason the decode is a function of the CPU.
+
+==============================================================================
+ 5  WHAT THE COMPILER EMITS, AND WHY THE COUNT POINTS BACKWARDS
+==============================================================================
+
+  THE SCOPE, first, because it is a rule and not a preference.  The neutral
+  `simd` course owns the PRINCIPLE: a wider vector is not automatically faster,
+  and it measured 3.89x at 2 KiB against 1.14x at 24 MiB, because at 24 MiB the
+  array no longer fits anywhere.  `simd-reduce` owns the tail.  This section
+  does NOT re-measure either.  What it measures is the STATIC shape of what
+  clang emits, and the shape is a compile-time property with no duration in it
+  anywhere.
+
+  Which is exactly the problem, and the problem is the finding.
+  [MEASURED]  the same C, with and without the vectoriser.  TWO FILES,
+  one flag, four functions, and the counts are a COMPILE-TIME
+  INSTRUCTION COUNT and NOT A TIMING ONE.  Nothing here has been
+  executed on either side.
+
+function      vectorised    scalar      NEON insns (vec)    NEON insns (scalar)
+  ------------ ------------ ---------- ------------------ --------------------
+  sum_loop     34           12         13                 4                   
+  max_loop     39           12         11                 1                   
+  axpy_loop    9            9          0                  0                   
+  copy_loop    29           7          2                  0                   
+  fsum_loop    37           8          18                 2                   
+  sadd         61           9          8                  0                   
+
+  [MEASURED]  and for `sum_loop` the vectorised body is LONGER than
+  the scalar one: 34 instructions against 12.
+
+  So a reader looking for the ratio finds the vectorised version LOSING
+  on the only measure available, and the reason is worth more than a number
+  would have been: the vectoriser pays for a vector-length PROLOGUE (compute
+  the largest multiple of four, branch around the tail) and a scalar EPILOGUE
+  for the leftover elements, and it pays for them ONCE while the loop body runs
+  n times.  A whole-function instruction count measures code that runs once.
+
+  Which is the course's refusal, stated as a measurement.  An instruction count
+  is a COUNT OF BIT PATTERNS and a duration is a property of a machine, and the
+  two are related by a rate nobody here can read.  The x86-64 sibling measured a
+  ratio and could compare it with the neutral course's ratio; this course cannot
+  compare anything with anything, and the honest move is to say which count is
+  even the right one and then say that the right one is still not a time.
+  [MEASURED]  the two loop BODIES, which is the only count here that
+  has a shape at all -- and even this one is a count of instructions,
+  NOT a speedup.  Each row is the block between a loop label and the
+  branch that jumps back to it, and the two columns are the elements
+  that block handles PER ITERATION, read out of the load:
+     sum_loop     vectorised:  6 instructions per  4 elements = 1.50 per element
+                  scalar    :  4 instructions per  1 elements = 4.00 per element
+                  one `ldp q2, q3` is four `long`s
+     fsum_loop    vectorised: 18 instructions per  4 elements = 4.50 per element
+                  scalar    :  4 instructions per  1 elements = 4.00 per element
+                  four `float`s
+     copy_loop    vectorised:  6 instructions per  2 elements = 3.00 per element
+                  scalar    :  4 instructions per  1 elements = 4.00 per element
+                  one `ldp q1, q1` is two `long`s
+     axpy_loop    vectorised:  6 instructions per  4 elements = 1.50 per element
+                  scalar    :  6 instructions per  1 elements = 6.00 per element
+                  a multiply and an add, six both ways
+     sadd         vectorised:  6 instructions per 16 elements = 0.38 per element
+                  scalar    :  6 instructions per  1 elements = 6.00 per element
+                  a byte loop, and SIXTEEN lanes per iteration
+
+     So the ONE figure this course can print that points the way a
+     reader expects is the first row: SIX instructions per four
+     elements against FOUR per ONE, a ratio of 2.67 on a COUNT.  It
+     is printed as a count, in a table whose column heading says
+     "instructions", because the ratio it contains is not a speedup
+     and there is no clock on this host to turn it into one.
+
+     AND THE MORE USEFUL HALF OF THE TABLE IS THE ROW WHERE THE
+     VECTORISED BODY IS LONGER: `fsum_loop` is 18 instructions per
+     four elements against the scalar four per one, so on this count
+     the vectorised build is the worse one, and the whole-function
+     counts above said the same thing for all five functions.  The
+     first draft of this section asserted that `sadd` and `axpy_loop`
+     were loops the vectoriser declined, and the measurement says
+     otherwise: both ARE vectorised, and the prose was written about
+     a version of the corpus the compiler had since changed.  That
+     is retraction R15, it was caught by reading the table against
+     the sentence above it, and the general form is the one worth
+     keeping: A NOTE THAT EXPLAINS A ROW IS A CLAIM ABOUT THE ROW,
+     and a claim about a row is checkable by looking at the row.
+
+     A REDUCTION, MEASURED: the vectorised `sum_loop` finishes with
+       b.ne	.LBB0_5
+       add	v0.2d, v1.2d, v0.2d
+       cmp	x1, x9
+       addp	d0, v0.2d
+       fmov	x8, d0
+       b.eq	.LBB0_9
+       add	x10, x0, x9, lsl #3
+       sub	x9, x1, x9
+     `addp d0, v0.2d` is the cross-lane pairwise add, and it is a
+     separate instruction with its own encoding, not a loop.  How
+     long it takes is not measurable here and this file does not
+     pretend otherwise.
+
+  -------------------------------------------------------------------------
+  WHAT THIS MEASUREMENT CANNOT SHOW
+  -------------------------------------------------------------------------
+    It cannot show that the vectorised loop is FASTER, and the table
+    above is the proof: on instruction count it is not, and only a
+    clock could have said otherwise.  Everything after this sentence
+    is a static property of the emitted bytes.
+    It cannot show WHAT the vectoriser chose for a different compiler,
+    a different version, a different -march or a different loop
+    body, and the harness asserts SHAPES -- "the vectorised body has
+    fewer instructions than the scalar body", "the vectorised body
+    mentions a v register and the scalar one does not" -- rather than
+    any of these counts, because a check whose threshold is a bare
+    number from one compiler is a check that fails on a busier
+    machine and teaches its reader to ignore it.
+
+==============================================================================
+ 6  THE EXCLUSIVE MONITOR, AND WHY THE RETRY IS A LOOP
+==============================================================================
+
+  [QUOTED]  the paragraph below is a manual claim, and every
+            sentence of it is one: the document and the section
+            are named in the text and the measurement is not.
+  The mechanism, QUOTED (ARM DDI 0597, the pseudocode for the Load-Acquire-
+  Exclusive and Store-Release-Exclusive instruction groups, and the
+  `AArch64.ExclusiveMonitorsPass` pseudocode functions): LDAXR opens a local
+  monitor on the address, STXR attempts a store under it, and the store reports
+  SUCCESS or FAILURE IN A REGISTER.  The architecture guarantees nothing about
+  when the store fails.  A context switch, an exception, a different core
+  writing the same line, a cache eviction, or the store being split can all make
+  it fail, and there is NO ENCODING THAT MAKES IT NOT FAIL.
+
+  The reason that is a LOOP and not an instruction is therefore structural, and
+  this section measures it rather than asserting it: the failure is reported
+  IN the instruction's own output, so the instruction cannot itself decide what
+  to do about it, so the only way to act on it is a branch, and a branch that
+  goes back to the load is a loop.  The word "by construction" in the concept
+  title is a claim about the interface, and the interface is one register wide.
+
+instruction               word         binary                                three bits to read
+  ------------------------ ----------- ------------------------------------ ------------------------
+  ldxr w1, [x0]            0x885f7c01  10001000010111110111110000000001     o1=0 pair=0 size=2      
+  ldaxr w1, [x0]           0x885ffc01  10001000010111111111110000000001     o1=1 pair=0 size=2      
+  ldxr x1, [x0]            0xc85f7c01  11001000010111110111110000000001     o1=0 pair=0 size=3      
+  ldaxr x1, [x0]           0xc85ffc01  11001000010111111111110000000001     o1=1 pair=0 size=3      
+  ldaxrb w1, [x0]          0x085ffc01  00001000010111111111110000000001     o1=1 pair=0 size=0      
+  ldaxrh w1, [x0]          0x485ffc01  01001000010111111111110000000001     o1=1 pair=0 size=1      
+  ldxrb w1, [x0]           0x085f7c01  00001000010111110111110000000001     o1=0 pair=0 size=0      
+  ldxrh w1, [x0]           0x485f7c01  01001000010111110111110000000001     o1=0 pair=0 size=1      
+  stxr w2, w1, [x0]        0x88027c01  10001000000000100111110000000001     o1=0 pair=0 size=2      
+  stlxr w2, w1, [x0]       0x8802fc01  10001000000000101111110000000001     o1=1 pair=0 size=2      
+  stxr w2, x1, [x0]        0xc8027c01  11001000000000100111110000000001     o1=0 pair=0 size=3      
+  stlxr w2, x1, [x0]       0xc802fc01  11001000000000101111110000000001     o1=1 pair=0 size=3      
+  stxrb w2, w1, [x0]       0x08027c01  00001000000000100111110000000001     o1=0 pair=0 size=0      
+  stlxrb w2, w1, [x0]      0x0802fc01  00001000000000101111110000000001     o1=1 pair=0 size=0      
+  ldxp w9, w8, [x0]        0x887f2009  10001000011111110010000000001001     o1=0 pair=1 size=2      
+  ldaxp x9, x8, [x0]       0xc87fa009  11001000011111111010000000001001     o1=1 pair=1 size=3      
+  ldxp x9, x8, [x0]        0xc87f2009  11001000011111110010000000001001     o1=0 pair=1 size=3      
+  stxp w14, w9, w8, [x0]   0x882e2009  10001000001011100010000000001001     o1=0 pair=1 size=2      
+  stlxp w14, w9, w8, [x0]  0x882ea009  10001000001011101010000000001001     o1=1 pair=1 size=2      
+  clrex                    0xd5033f5f  11010101000000110011111101011111     o1=0 pair=0 size=3      
+
+  [MEASURED-ON-BYTES]  the acquire/release bit is BIT 15 and it is
+  ONE BIT, and it is the same bit in a load and in a store:
+     ldxr w1, [x0]            xor ldaxr w1, [x0]             = 0x00008000  -> bit 15
+     stxr w2, w1, [x0]        xor stlxr w2, w1, [x0]         = 0x00008000  -> bit 15
+     ldxr x1, [x0]            xor ldaxr x1, [x0]             = 0x00008000  -> bit 15
+     ldxp x9, x8, [x0]        xor ldaxp x9, x8, [x0]         = 0x00008000  -> bit 15
+     stxp w14, w9, w8, [x0]   xor stlxp w14, w9, w8, [x0]    = 0x00008000  -> bit 15
+
+  [MEASURED-ON-BYTES]  AND BIT 21 IS NOT THE ACQUIRE BIT, which is
+  what the first draft of this file called it.  MEASURED over the
+  twenty words above: bit 21 is 0 in EVERY single-register word and
+  1 in EVERY pair word, so it is the PAIR DISCRIMINATOR.  A bit that
+  is CONSTANT across the family you are describing is the signature
+  of a field you did not mean, and that is the cheapest possible
+  test and the one the first draft did not run.
+
+  [MEASURED]  and the STATUS REGISTER WIDTH IS THE DATA WIDTH,
+  which the assembler enforces and the encoding cannot show:
+     stlxp w14, w9, w8, [x0]    -> 0x882ea009
+     stlxp w14, x9, x8, [x0]    -> 0xc82ea009
+     stlxp x14, x9, x8, [x0]    -> REFUSED: invalid operand for instruction
+     MEASURED: the status register is ALWAYS 32 bits, whatever the
+     data width, and `stlxp x14, x9, x8` is REFUSED with "invalid
+     operand for instruction" -- so the failure is a register that is
+     32 bits where the assembler insists on 32 bits being spelled
+     `w`.  The status FIELD is five bits either way and the WIDTH of
+     the DATA comes from bits[31:30], the same two bits that are
+     written on the data registers, and this is the FIFTH instance in
+     this file of one field written twice in the syntax.
+
+     The first draft of this file wrote `stlxp x14, x9, x8` in its
+     own table on the reasonable reading that a 64-bit atomic has a
+     64-bit status, the assembler refused it, and the file PRINTED A
+     REFUSAL as though the instruction did not exist.  That is the
+     eighth time this file has reported a refusal that was really a
+     SPELLING RULE, and the reason the general form is worth
+     writing down: A REFUSAL IS NOT THE ABSENCE OF AN INSTRUCTION,
+     and the difference between the two is one word of diagnostic.
+
+  [MEASURED-ON-BYTES]  the SIZE is bits[31:30] and it is TWO bits,
+  with all four values allocated, and the 32- and 64-bit forms are
+  ADJACENT in it while the 8- and 16-bit forms are in the other half.
+  And it is the SAME two bits as a scalar `ldrb` size field, written
+  TWICE in the syntax: once as the mnemonic suffix and once as the
+  register width.  This file has now had to learn that one field is
+  written twice in THREE separate groups, which is the sharpest
+  argument in it for reading a field once and printing it wherever
+  the assembly happens to want it.
+
+  [MEASURED]  and the LOOP, read out of the emitted assembly.  The
+  function is `inc_seq`, one __atomic_fetch_add, at -O2:
+     mov	x8, x0
+     ldaxr	x0, [x8]
+     add	x9, x0, #1
+     stlxr	w10, x9, [x8]
+     cbnz	w10, .LBB6_1
+     ret
+     The BACKWARD branch is `cbnz w10, .LBB4_1`, and the label it
+     names is not in the printed block, so the target is a label
+     earlier in the function.  The retry is the loop, the loop is a
+     branch, and the branch exists because STXR wrote a register.
+
+  [MEASURED]  four orderings of the same increment, and what each
+  buys in bits.  Every one of them is a load-exclusive, an add, a
+  store-exclusive and a backward branch:
+     inc_seq      ldaxr	x0, [x8]         stlxr	w10, x9, [x8]        6 instructions
+     inc_acq      ldaxr	x0, [x8]         stxr	w10, x9, [x8]         6 instructions
+     inc_rel      ldxr	x0, [x8]          stlxr	w10, x9, [x8]        6 instructions
+     inc_relaxed  ldxr	x0, [x8]          stxr	w10, x9, [x8]         6 instructions
+     Four memory orders and four INSTRUCTION PAIRS, differing in
+     exactly one bit each -- and the SEQ_CST one is not a wider
+     instruction than the relaxed one.  Section 9 says where the
+     sequential consistency actually comes from, and the answer is
+     not from this table.
+
+  [MEASURED]  the 16-byte case, which is where the two-register
+  exclusive appears and where the corpus is `pair.c`:
+     ldp	x11, x10, [x1]
+     ldp	x13, x12, [x2]
+     ldaxp	x9, x8, [x0]
+     cmp	x9, x11
+     cset	w14, ne
+     cmp	x8, x10
+     cinc	w14, w14, ne
+     cbz	w14, .LBB0_3
+     stlxp	w14, x9, x8, [x0]
+     cbnz	w14, .LBB0_1
+     b	.LBB0_4
+     stlxp	w14, x13, x12, [x0]
+     cbnz	w14, .LBB0_1
+     cmp	x9, x11
+     ccmp	x8, x10, #0, eq
+     cset	w0, eq
+     b.eq	.LBB0_6
+     stp	x9, x8, [x1]
+     ret
+     `ldaxp`/`stlxp` name TWO data registers and ONE status register,
+     so the pair-exclusive form has the same status-register interface
+     as the single one and therefore the same loop, and clang emits
+     SEVEN instructions per attempt against the single-word form's
+     FOUR.  Both are the same loop at two widths.
+
+  [MEASURED]  and CLREX, the one instruction in this course that
+  exists to make an LL/SC pair stop being a loop:
+     inc_seq     clrex present: False
+     inc_acq     clrex present: False
+     xchg_seq    clrex present: False
+     MEASURED: NO clrex in any of the fetch-add or exchange bodies,
+     because the architecture already cleared the monitor when the
+     store failed.  A CLREX there would be redundant and a compiler
+     that emitted it would be costing an instruction for a
+     reassurance the hardware already gave.  That is a claim about
+     the ARCHITECTURE and it is QUOTED; the absence is measured.
+
+  -------------------------------------------------------------------------
+  WHAT THIS MEASUREMENT CANNOT SHOW
+  -------------------------------------------------------------------------
+    It cannot show that a store ever FAILS, or how often, or what a
+    lost update costs, or whether the monitor is per-core or
+    per-address, or how many times the loop runs.  Every number above
+    is a bit pattern or a count of instructions.  The sibling `smp`
+    course measured a lost update and an uncontended `lock xadd` at
+    2.54x a plain store; those are DURATIONS and this file has no
+    counterpart of either, so it links rather than restating them.
+    It cannot show that the loop is NECESSARY.  It shows that the
+    compiler writes one and that the status register is where the
+    decision comes from; the necessity is quoted, and the quote is
+    labelled.
+
+==============================================================================
+ 7  FEAT_LSE: ONE INSTRUCTION INSTEAD OF FOUR
+==============================================================================
+
+  [QUOTED]  the paragraph below is a manual claim, and every
+            sentence of it is one: the document and the section
+            are named in the text and the measurement is not.
+  The feature, QUOTED (the Arm Architecture Reference Manual's FEAT_LSE
+  section, and the `AArch64.CAS*` pseudocode): v8.1-a added compare-and-swap and
+  the atomic memory operations as SINGLE INSTRUCTIONS.  The point of the section
+  is not that the instruction is longer or shorter.  The point is that the
+  loop is GONE -- and the loop was not an optimisation artefact, it was forced
+  by the interface described in section 6.  An architecture that added the
+  feature had to add an instruction whose failure mode is not a register, and
+  that is a different kind of atomic from LDAXR/STLXR rather than a faster one.
+
+  What CAN be measured is what the compiler does with the feature, and the
+  answer is a single, checkable compiler decision: the SAME C, the same
+  optimisation level, one flag apart, and one instruction in place of four.
+
+instruction                     word         binary                                bits[15:10] / 23:21
+  ------------------------------ ----------- ------------------------------------ --------------------
+  cas w1, w2, [x0]               0x88a17c02  10001000101000010111110000000010     op=011111 23:21=101 
+  cas x1, x2, [x0]               0xc8a17c02  11001000101000010111110000000010     op=011111 23:21=101 
+  casa w1, w2, [x0]              0x88e17c02  10001000111000010111110000000010     op=011111 23:21=111 
+  casl w1, w2, [x0]              0x88a1fc02  10001000101000011111110000000010     op=111111 23:21=101 
+  casal w1, w2, [x0]             0x88e1fc02  10001000111000011111110000000010     op=111111 23:21=111 
+  casb w1, w2, [x0]              0x08a17c02  00001000101000010111110000000010     op=011111 23:21=101 
+  cash w1, w2, [x0]              0x48a17c02  01001000101000010111110000000010     op=011111 23:21=101 
+  casab w1, w2, [x0]             0x08e17c02  00001000111000010111110000000010     op=011111 23:21=111 
+  casp x0, x1, x2, x3, [x4]      0x48207c82  01001000001000000111110010000010     op=011111 23:21=001 
+  caspal x0, x1, x2, x3, [x4]    0x4860fc82  01001000011000001111110010000010     op=111111 23:21=011 
+  caspa x0, x1, x2, x3, [x4]     0x48607c82  01001000011000000111110010000010     op=011111 23:21=011 
+  swp w1, w2, [x0]               0xb8218002  10111000001000011000000000000010     op=100000 23:21=001 
+  swpa w1, w2, [x0]              0xb8a18002  10111000101000011000000000000010     op=100000 23:21=101 
+  swpal w1, w2, [x0]             0xb8e18002  10111000111000011000000000000010     op=100000 23:21=111 
+  ldadd w1, w2, [x0]             0xb8210002  10111000001000010000000000000010     op=000000 23:21=001 
+  ldadda w1, w2, [x0]            0xb8a10002  10111000101000010000000000000010     op=000000 23:21=101 
+  ldaddl w1, w2, [x0]            0xb8610002  10111000011000010000000000000010     op=000000 23:21=011 
+  ldaddal w1, w2, [x0]           0xb8e10002  10111000111000010000000000000010     op=000000 23:21=111 
+  ldclr w1, w2, [x0]             0xb8211002  10111000001000010001000000000010     op=000100 23:21=001 
+  ldeor w1, w2, [x0]             0xb8212002  10111000001000010010000000000010     op=001000 23:21=001 
+  ldset w1, w2, [x0]             0xb8213002  10111000001000010011000000000010     op=001100 23:21=001 
+
+  [MEASURED]  the same instructions at BASELINE, where every one of
+  them is a refusal that NAMES the feature:
+     cas w1, w2, [x0]             -> instruction requires: lse
+     swp w1, w2, [x0]             -> instruction requires: lse
+     ldadd w1, w2, [x0]           -> instruction requires: lse
+     casp x0, x1, x2, x3, [x4]    -> instruction requires: lse
+     FEAT_LSE is armv8.1-a.  A refusal that names the feature is a
+     better failure than a syntax error, and a decoder that wants to
+     know whether a word is valid on the machine in front of it has
+     to read the same feature bit out of an ID register -- which
+     this host cannot do, because the ID registers are EL1.
+
+  [MEASURED-ON-BYTES]  THE GROUP IS NOT ONE GROUP.  In the CAS half
+  ACQUIRE IS BIT 22 and RELEASE IS BIT 15; in the LDADD half ACQUIRE
+  IS BIT 23 and RELEASE IS BIT 22.  Four suffixes, each half:
+     cas  0x88a17c02   casal 0x88e1fc02   xor 0x00408000  -> bits 22 and 15
+     casp 0x48207c82  caspal 0x4860fc82  xor 0x00408000  -> bits 22 and 15
+     ldadd  0xb8210002  a: 0xb8a10002  xor 0x00800000  -> bit 23
+     ldadd  0xb8210002  l: 0xb8610002  xor 0x00400000  -> bit 22
+     ldadd  0xb8210002  al:0xb8e10002  xor 0x00c00000  -> bits 23 and 22
+     ldclr  0xb8211002  a: 0xb8a11002  xor 0x00800000  -> bit 23
+     ldclr  0xb8211002  l: 0xb8611002  xor 0x00400000  -> bit 22
+     ldclr  0xb8211002  al:0xb8e11002  xor 0x00c00000  -> bits 23 and 22
+
+     AND BIT 21 IS 1 IN EVERY ONE OF THOSE EIGHT WORDS AND IN THE
+     FOUR CAS WORDS ABOVE, so it is a CONSTANT of the whole group
+     rather than an ordering bit.  The first version of this section
+     read it AS the release bit, and the cross-check caught it: the
+     decoder printed `ldaddl` where the assembler prints `ldadd`, a
+     relaxed atomic silently promoted to a release one, in a legal
+     word with nothing wrong in it.  A WRONG CONSTANT AND A CONSTANT
+     FIELD LOOK IDENTICAL UNTIL YOU SWEEP THE SUFFIX.
+
+     THE CONSEQUENCE IS THE SHARPEST THING IN THE SECTION.  CASP is
+     the 128-bit form, and its 128-bit-ness is BIT 23 -- which is the
+     bit that says "acquire" in the LDADD family.  ONE BIT, TWO
+     MEANINGS, NO OVERLAP, and the two meanings are in the same
+     word a few opcodes apart.  So the question "does this word want
+     a 128-bit atomic or an acquire" has no answer from a field
+     diagram, and a decoder that answers it from one is answering a
+     question nobody asked.
+
+     AND ONE MORE THING ABOUT THE CAS HALF, because it is the
+     clearest case in the section of a FLAG THAT IS NOT A FLAG.
+     MEASURED: bits[15:10] reads 0b011111 for `cas` and 0b111111 for
+     `casl` -- the SAME six bits, with the release bit as the TOP ONE
+     of the opcode.  So "release" is not a flag in this group, it is
+     half the NAME of the instruction, and a decoder that wants a
+     release flag has to read the opcode and then test a bit of it,
+     which is the same work twice and looks like a different design.
+
+  [MEASURED]  AND THE COMPILER DECISION, which is the measurement
+  the concept is built on.  The same C, the same -O2, one flag:
+     cas64     (a 64-bit compare-exchange)
+       baseline : ldr	x9, [x1] | ldaxr	x8, [x0] | cmp	x8, x9 | b.ne	.LBB12_4 | stlxr	w10, x2, [x0] | cbnz	w10, .LBB12_1
+     inc_seq   (a fetch-add)
+       baseline : mov	x8, x0 | ldaxr	x0, [x8] | add	x9, x0, #1 | stlxr	w10, x9, [x8] | cbnz	w10, .LBB6_1 | ret
+     xchg_seq  (an exchange)
+       baseline : mov	x8, x0 | ldaxr	x0, [x8] | stlxr	w9, x1, [x8] | cbnz	w9, .LBB10_1 | ret
+     and the -march=armv8.1-a build of the SAME source:
+     cas64     -> ldr	x9, [x1] | mov	x8, x9 | casal	x8, x2, [x0] | cmp	x8, x9 | cset	w0, eq | b.eq	.LBB12_2
+     inc_seq   -> mov	w8, #1 | ldaddal	x8, x0, [x0] | ret
+     xchg_seq  -> swpal	x1, x0, [x0] | ret
+
+     FOUR instructions become ONE.  This is a COMPILE-TIME
+     INSTRUCTION COUNT, printed as such, and it is the only
+     "speedup" this course can print -- it is a count, and there is
+     no clock here to turn it into a ratio, and the sibling x86-64
+     course's `lock` numbers are DURATIONS and are not comparable
+     with this one in either direction.
+
+  [MEASURED]  the 16-byte case, and the shape of what LSE does NOT
+  buy.  `pair.c`, -O2, with the 16-byte alignment the structure
+  needs:
+     cas_pair_seqcst    -> caspal	x2, x3, x6, x7, [x0]
+     cas_pair_relaxed   -> casp	x2, x3, x6, x7, [x0]
+     cas_pair_acqrel    -> caspal	x2, x3, x6, x7, [x0]
+     pair_fetch_add     -> ldaddal	x1, x8, [x0] | ldaddal	x1, x1, [x9]
+     THREE different C11 memory orders (seq_cst, relaxed, acq_rel)
+     produce TWO distinct instructions, and a 128-bit FETCH-ADD
+     produces TWO 64-bit `ldaddal` because there is no 128-bit LSE
+     arithmetic at all.  A feature is not a blanket.
+
+  [MEASURED]  the diagnostic that cost this section its CASP
+  encoding, and it is worth printing because it is a lesson:
+     casp x0, x1, [x2]          -> expected register
+     casp x0, x1, x2            -> expected comma
+     casp x0, x1, x2, x3        -> too few operands for instruction
+     CASP takes FIVE operands -- two register pairs and the memory
+     -- and the diagnostic for the three-operand form points AT THE
+     MEMORY OPERAND, which is the one operand that was correct.
+     A diagnostic that points at the right operand is a diagnostic
+     that will be believed, and the first draft of this file
+     believed it and then reported a REFUSAL where there was an
+     instruction.  That is retraction R8 and it was found by
+     assembling nine spellings of one mnemonic.
+
+  -------------------------------------------------------------------------
+  WHAT THIS MEASUREMENT CANNOT SHOW
+  -------------------------------------------------------------------------
+    It cannot show that `cas` is FASTER than the loop, or by how
+    much, or whether the loop it replaced was the bottleneck.  Four
+    instructions against one is a count and a claim about a
+    pipeline nobody here can read.  The x86-64 equivalent is
+    `lock cmpxchg`, and the `x86simd` course measured it; this
+    course links to that rather than restating a number, because
+    the number is a duration and there is no counterpart here.
+    It cannot show that FEAT_LSE is faster on hardware that has it,
+    or that the microarchitecture implements it in a way that
+    matters.  All this file shows is that clang takes the feature
+    and that the encoding has a place for it.
+
+==============================================================================
+ 8  DMB, DSB, ISB: TWO FIELDS, NOT ONE
+==============================================================================
+
+  [QUOTED]  the paragraph below is a manual claim, and every
+            sentence of it is one: the document and the section
+            are named in the text and the measurement is not.
+  The three barriers, QUOTED (ARM DDI 0597, the pseudocode for the DMB,
+  DSB and ISB instruction groups, and the "Memory ordering" chapter of the
+  Architecture Reference Manual for what each one orders):
+
+      DMB   a data memory barrier: orders the memory accesses either side of
+            it, and does NOT make the instruction stream see anything new.
+      DSB   a data synchronisation barrier: as DMB, and it also completes before
+            any instruction after it is executed -- so it waits for stores to
+            become OBSERVABLE, not merely performed.
+      ISB   an instruction synchronisation barrier: flushes the pipeline and the
+            instruction-fetch side of the machine, and is how a context switch
+            to a different exception level or a different PC is made to take
+            effect.  It has no effect on the DATA side at all.
+
+  They are not interchangeable and the difference is not a matter of degree.  A
+  DMB does not stop an instruction fetch; an ISB does not order a load.  That
+  is QUOTED.  What is MEASURED is that the encoding expresses the difference in
+  TWO SEPARATE FIELDS, and that the second one is the one everybody forgets.
+
+option    dmb          dsb          isb          the option field    the id field
+  -------- ----------- ----------- ----------- ------------------ --------------
+  oshld    0xd50331bf  0xd503319f  REFUSED     CRm = 0001         op2 = 101     
+  oshst    0xd50332bf  0xd503329f  REFUSED     CRm = 0010         op2 = 101     
+  osh      0xd50333bf  0xd503339f  REFUSED     CRm = 0011         op2 = 101     
+  nsh      0xd50337bf  0xd503379f  REFUSED     CRm = 0111         op2 = 101     
+  nshld    0xd50335bf  0xd503359f  REFUSED     CRm = 0101         op2 = 101     
+  nshst    0xd50336bf  0xd503369f  REFUSED     CRm = 0110         op2 = 101     
+  ish      0xd5033bbf  0xd5033b9f  REFUSED     CRm = 1011         op2 = 101     
+  ishld    0xd50339bf  0xd503399f  REFUSED     CRm = 1001         op2 = 101     
+  ishst    0xd5033abf  0xd5033a9f  REFUSED     CRm = 1010         op2 = 101     
+  ld       0xd5033dbf  0xd5033d9f  REFUSED     CRm = 1101         op2 = 101     
+  st       0xd5033ebf  0xd5033e9f  REFUSED     CRm = 1110         op2 = 101     
+  sy       0xd5033fbf  0xd5033f9f  0xd5033fdf  CRm = 1111         op2 = 101     
+
+  [MEASURED]  DMB and DSB accept 12 of the 12 options, and the
+  option field is bits[11:8] -- FOUR bits carrying TWELVE names, so
+  four of the sixteen values are unallocated.  ISB accepts ONE.
+
+  [MEASURED-ON-BYTES]  and the identity bit is bits[7:5], which is
+     dmb sy 0xd5033fbf   dsb sy 0xd5033f9f   isb 0xd5033fdf
+     dmb xor dsb = 0x00000020 -> bit 5 only
+     dmb xor isb = 0x00000060 -> bit 5 and bit 6
+     So the three are told apart by a THREE-bit field, and the sibling
+     course's model reads exactly that field and exactly right -- and
+     it FIXES CRm to 0b1111, so it names the `sy` form of each and
+     nothing else.  The sibling model is not wrong; it is a SUBSET,
+     and a subset of a field is invisible.
+
+  [MEASURED]  and the option field is not decoration.  The scope
+  names are the WHOLE POINT of the instruction and they are four
+  bits wide:
+     dmb osh   CRm = 0011  =  3  -- the domain it orders
+     dmb nsh   CRm = 0111  =  7  -- the domain it orders
+     dmb ish   CRm = 1011  = 11  -- the domain it orders
+     dmb sy    CRm = 1111  = 15  -- the domain it orders
+     `osh` orders accesses to the OUTER SHAREABLE domain, `ish` the
+     INNER one, and `sy` the whole system.  A four-bit field choosing
+     among four DOMAINS and two DIRECTIONS (ld, st) and their
+     combinations is twelve names in sixteen codes, and the two
+     direction bits and the domain bits are the SAME four bits.
+     QUOTED: what ld and st mean.  MEASURED: that they are in the
+     same field as the domain, so there is no way to say "inner,
+     loads only" without spending a code the encoding spent on a
+     combination of the two -- and in fact ishld IS that code, 1001.
+
+  [MEASURED]  the one that is NOT a barrier and shares the group:
+     clrex  0xd5033f5f   op2 = 010   Rt = 11111
+     MEASURED: 0b010, and none of the three barriers uses it.  Four
+     instructions share bits[31:8] and differ in three bits, and one
+     of the four has no ordering effect at all.
+
+  [MEASURED]  the sibling model and this one, side by side, because
+  the coverage number in section 11 depends on it:
+     a64sys.py m_barrier  guards CRm = 0b1111  -> 1 word per barrier
+     this file m_barrier_opt  reads CRm as the option -> 12 + 1
+     Both are CORRECT about the words they claim.  The lesson is the
+     one the encoding course recorded as R17: a guard that is too
+     NARROW does not fail, it silently reduces the model.
+
+  -------------------------------------------------------------------------
+  WHAT THIS MEASUREMENT CANNOT SHOW
+  -------------------------------------------------------------------------
+    It cannot show that any barrier ORDERS anything.  There is no
+    second core, no cache, no store buffer and no memory traffic on
+    this host.  What the four bits select is QUOTED; that the
+    selection has the described effect is quoted, and the only thing
+    measured here is that the field exists, is four bits wide, and
+    carries twelve names.
+    It cannot show that DSB waits for stores to become OBSERVABLE and
+    DMB does not.  That is the single most important sentence on this
+    page and it is the one sentence on it that no command on this
+    host can confirm.  It is QUOTED, with the document, and a reader
+    who wants it verified needs a machine.
+
+==============================================================================
+ 9  ORDERING AS ACCESS MODES: WHERE THE BARRIERS ARE
+==============================================================================
+
+  THE PAYOFF OF THE WHOLE SECTION, and the place where AArch64 differs
+  from x86-64 IN KIND rather than in detail.  x86-64's model is strong and
+  mostly implicit: a program is sequentially consistent unless it says
+  otherwise, and the exceptions are three opcodes -- MFENCE, LFENCE, SFENCE --
+  which a program sprinkles at the places it wants to be weaker.  AArch64's
+  model is WEAK, and the only tool for strengthening it is an ACCESS MODE
+  written on the access itself: LDAR is a load that also acquires, STLR is a
+  store that also releases, and a C11 acquire load is one of them rather than a
+  load followed by a barrier.
+
+  So the same correct-looking C11 program needs DIFFERENT INSTRUCTIONS on the
+  two architectures, and the compiler is what translates.  Which means the
+  compiler's choices are the reference material, and they are measurable.
+
+function            the C11 operation         what clang emitted                        barriers
+  ------------------ ------------------------ ---------------------------------------- ---------
+  load_acq           acquire load             ldar	x0, [x0]                            0        
+  load_seqcst        seq_cst load             ldar	x0, [x0]                            0        
+  store_rel          release store            stlr	x1, [x0]                            0        
+  store_seqcst       seq_cst store            stlr	x1, [x0]                            0        
+  fence_seqcst       seq_cst fence            dmb	ish                                  1        
+  fence_acquire      acquire fence            dmb	ishld                                1        
+  fence_release      release fence            dmb	ish                                  1        
+  fence_relaxed      relaxed fence            (nothing)                                0        
+  load_then_load     two seq_cst loads        ldar	x8, [x0] | ldar	x9, [x1] | add	x0, x9, x8 0        
+  store_then_store   two seq_cst stores       stlr	x2, [x0] | stlr	x3, [x1]            0        
+  bump               a seq_cst fetch-add      mov	x8, x0 | ldaxr	x0, [x8] | add	x9, x0, #1 | stlxr	w10, x9, [x8] | cbnz	w10, .LBB23_1 0        
+  publish            a plain store, then a seq_cst store mov	w8, #1 | str	x1, [x0, #8] | stlr	x8, [x0] 0        
+
+  [MEASURED]  and the number that decides the concept:
+     3 barriers in 12 functions that perform C11 atomic operations.
+
+  [MEASURED]  read the first two rows again.  A C11 ACQUIRE load and
+  a C11 SEQUENTIALLY CONSISTENT load are THE SAME INSTRUCTION -- one
+  `ldar x0, [x0]`, 0xc8dffc01 -- and so are a release store and a seq_cst
+  store, both one `stlr`, 0xc89ffc01.  There is no `dmb ish` in either,
+  and there is no wider instruction for the stronger order.  And the
+  32-bit form, `ldar w1, [x0]`, is 0x88dffc01 -- ONE bit above it and
+  one bit below the 32-bit exclusive, which is the same size field in
+  a third spelling.
+
+     That is not a compiler shortcut.  On AArch64 the sequentially
+     consistent order on a SINGLE access is exactly acquire-or-
+     release: the extra constraint a seq_cst load carries over an
+     acquire load is on its relation to OTHER operations, and it is
+     discharged by the OTHER operations being acquire or release
+     too.  QUOTED (the Architecture Reference Manual's C/C++
+     mapping appendix, which is a mapping and not a proof), and the
+     MEASURED consequence is the table above: ZERO barriers in every
+     atomic in the corpus.
+
+  [MEASURED]  the only three barriers clang emits in the whole
+  corpus, and they are all in functions whose SOURCE asks for a
+  fence rather than for an ordered pair of accesses:
+     fence_seqcst   dmb	ish | ret
+     fence_acquire  dmb	ishld | ret
+     fence_release  dmb	ish | ret
+     and the asymmetry is the finding:  an ACQUIRE fence narrows to
+     `dmb ishld` -- the LOAD variant -- while a RELEASE fence is a
+     FULL `dmb ish` and is NOT narrowed to `dmb ishst`.  MEASURED,
+     and the course does not claim it is wrong: a release fence in
+     C11 has to order against later loads as well as later stores,
+     which is QUOTED, so the full barrier may be exactly what the
+     mapping requires.  What is measured is that the compiler
+     NARROWS ONE AND NOT THE OTHER, and a reader who expected
+     symmetry gets a measurement instead.
+
+  [MEASURED]  the barrier census over every file the build script
+  produces, which is the number the harness asserts as a SHAPE:
+     data_O0.s              3
+     data_O1.s              3
+     data_O2.s              3
+     data_Os.s              3
+     data_O2_novec.s        3
+     pair_base.s            0
+     pair_lse.s             0
+     15 barriers total, and every one is a __atomic_thread_fence.
+
+  -------------------------------------------------------------------------
+  WHAT THIS MEASUREMENT CANNOT SHOW
+  -------------------------------------------------------------------------
+    It cannot show that any of these programs is CORRECT.  Zero
+    barriers is what a correct AArch64 translation looks like and it
+    is also what a broken one looks like, and the difference is
+    invisible in the assembly: the broken version would have `ldr`
+    where this one has `ldar`, and `ldar` is right.  So the check a
+    reader can run is the POSITIVE one: this word decodes as an
+    acquire load, with bit 15 set, and that is a fact about bytes.
+    It cannot show that the WEAK model is what the hardware
+    implements.  That AArch64 allows the reordering this course
+    relies on is QUOTED; there is no second core here to observe it.
+    It cannot show a cost.  The x86-64 course measured MFENCE at
+    ~1.04x its own store floor in a two-thread ping-pong on two
+    pinned cores; there is no ping-pong here, there is no second
+    core, and there is no clock.  This course therefore does NOT
+    report a barrier cost, and says so on every page where a reader
+    would expect one.
+
+==============================================================================
+10  PSTATE.PAN: A REFUSAL AND A BIT PATTERN
+==============================================================================
+
+  [QUOTED]  the paragraph below is a manual claim, and every
+            sentence of it is one: the document and the section
+            are named in the text and the measurement is not.
+  The feature, QUOTED (ARM DDI 0597, the PSTATE pseudocode, and the
+  Privilege chapter of the Architecture Reference Manual): PAN --
+  Privilege Access Never -- is a bit in PSTATE that the exception level ABOVE
+  sets to forbid the level BELOW from executing SVC (the supervisor call
+  instruction) and from using SP_EL0, the stack pointer of the level below.  It
+  is the AArch64 answer to a question x86-64 answers with the IOPL/AC/VM flags
+  and a CPL check, and the difference in kind is that PAN is ONE BIT that
+  disables TWO things at once, at a cost of nothing on any access that is not
+  one of them.
+
+  That is quoted.  What CAN be measured here is the shape of it in the encoding,
+  and the measurement is a REFUSAL -- which is the right shape, because the
+  subject is a supervisor-to-user control and this host has no supervisor.
+
+instruction                   word         binary
+  ---------------------------- ----------- ------------------------------------
+  mrs x0, PSTATE.PAN           REFUSED     expected readable system r          
+  msr PSTATE.PAN, x1           REFUSED     expected writable system r          
+  msr pan, x1                  REFUSED     expected writable system r          
+  msr pstate, x1               REFUSED     expected writable system r          
+  mrs x0, SVE_VL               REFUSED     expected readable system r          
+  msr S3_3_C4_C0_0, x1         0xd51b4001  11010101000110110100000000000001    
+  msr S3_3_C4_C0_2, x1         0xd51b4041  11010101000110110100000001000001    
+  msr S3_3_C4_C0_4, x1         0xd51b4081  11010101000110110100000010000001    
+  msr S3_3_C4_C0_5, x1         0xd51b40a1  11010101000110110100000010100001    
+  mrs x0, ID_AA64PFR0_EL1      0xd5380400  11010101001110000000010000000000    
+  mrs x0, CTR_EL0              0xd53b0020  11010101001110110000000000100000    
+  mrs x0, FPCR                 0xd53b4400  11010101001110110100010000000000    
+  mrs x0, FPSR                 0xd53b4420  11010101001110110100010000100000    
+  mrs x0, NZCV                 0xd53b4200  11010101001110110100001000000000    
+  mrs x0, SP_EL0               0xd5384100  11010101001110000100000100000000    
+
+  [MEASURED]  5 of 15 refused, and both refusals are the same
+  refusal: "expected writable system register or pstate" and
+  "expected readable system register".  PSTATE.PAN and SVE_VL are
+  both privileged at EL0 and the assembler will not encode the name.
+
+  [MEASURED-ON-BYTES]  and the SAME BITS, under the raw name:
+     msr S3_3_C4_C0_2, x1  0xd51b4041   <- op2 = 0b010, and PSTATE.PAN
+     msr S3_3_C4_C0_0, x1  0xd51b4001   <- op2 = 0b000
+     mrs x0, S3_3_C4_C0_2  0xd53b4040   <- and the READ of the same field
+     msr xor mrs = 0x%08x  -> bit 21, the same bit the machine
+     course found for MRS against MSR, and the same bit that means
+     "this is a load" in the exclusive group and in the LSE group.
+     ONE bit position in this architecture means "this is a read" in
+     three unrelated groups, and a decoder that hard-codes it in one
+     of them is right by accident there and wrong in the other two.
+
+  [MEASURED]  the sweep of the PSTATE window, all eight op2 values,
+  so the field is a FIELD and not a name:
+     op2 = 0  0xd51b4001  xor 0x00000000
+     op2 = 1  0xd51b4021  xor 0x00000020
+     op2 = 2  0xd51b4041  xor 0x00000040
+     op2 = 3  0xd51b4061  xor 0x00000060
+     op2 = 4  0xd51b4081  xor 0x00000080
+     op2 = 5  0xd51b40a1  xor 0x000000a0
+     op2 = 6  0xd51b40c1  xor 0x000000c0
+     op2 = 7  0xd51b40e1  xor 0x000000e0
+     QUOTED: op2 = 0b010 is PSTATE.PAN.  MEASURED: it is one of EIGHT
+     values in a three-bit field, all eight of which the assembler
+     will encode under a raw name, and NONE of which it will name.
+     A system-register NAME is a table the assembler owns; the
+     ENCODING is five fields and belongs to nobody, which is why the
+     machine course could hand this file a decoder that names
+     `S3_3_C4_C0_0` and calls it nothing.
+
+  -------------------------------------------------------------------------
+  WHAT THIS MEASUREMENT CANNOT SHOW
+  -------------------------------------------------------------------------
+    It cannot show that PAN does anything.  It cannot set it, it
+    cannot read it, and there is no supervisor to set it.  What it
+    shows is that the control is a THREE-BIT FIELD inside a
+    FOUR-FIELD system-register window, that the assembler refuses
+    the friendly name and accepts the arithmetic one, and that the
+    two produce the same 32 bits.  The rest is quoted.
+    A raw system-register name is also a way to write an instruction
+    the assembler will not produce, so this section is a place where
+    "the assembler refused it" and "the assembler will not produce
+    that spelling" are two DIFFERENT claims, and the difference is
+    the whole of the second one.
+
+==============================================================================
+11  THE ROUND TRIP, AND ONE OF THE TWO READERS POISONED
+==============================================================================
+
+  Encode a corpus from the operand spec, decode it back with this file's
+  own decoder, and compare both with llvm-objdump-21.  Three parties, and the
+  third is the one that matters: an encoder and a decoder written from the same
+  table agree with each other by construction, and the x86-64 course retracted
+  exactly that claim (R9) after an encoder round-tripped 28 of 28 against its
+  own decoder and was wrong.
+
+  So the expected word for every entry below comes from the ASSEMBLER, and the
+  spec comes from the encoding tables transcribed by hand.  When those two
+  disagree, the file prints the disagreement by name.
+
+instruction                     table        spec         assembler    spec=tab   asm=tab   r1=r2
+  ------------------------------ ----------- ----------- ----------- --------- -------- --------
+  ldr b0, [x0]                   0x3d400000  0x3d400000  0x3d400000  yes       yes      yes     
+  ldr q0, [x0]                   0x3dc00000  0x3dc00000  0x3dc00000  yes       yes      yes     
+  str q0, [x0]                   0x3d800000  0x3d800000  0x3d800000  yes       yes      yes     
+  ldp q0, q1, [x0]               0xad400400  0xad400400  0xad400400  yes       yes      yes     
+  ldp d0, d1, [x0]               0x6d400400  0x6d400400  0x6d400400  yes       yes      yes     
+  ld1 {v0.16b}, [x0]             0x4c407000  0x4c407000  0x4c407000  yes       yes      yes     
+  ld1 {v0.4s}, [x0]              0x4c407800  0x4c407800  0x4c407800  yes       yes      yes     
+  ld2 {v0.16b, v1.16b}, [x0]     0x4c408000  0x4c408000  0x4c408000  yes       yes      yes     
+  ld4 {v0.16b, v1.16b, v2.16b,   0x4c400000  0x4c400000  0x4c400000  yes       yes      yes     
+  add v0.16b, v1.16b, v2.16b     0x4e228420  0x4e228420  0x4e228420  yes       yes      yes     
+  add v0.4s, v1.4s, v2.4s        0x4ea28420  0x4ea28420  0x4ea28420  yes       yes      yes     
+  add v0.2d, v1.2d, v2.2d        0x4ee28420  0x4ee28420  0x4ee28420  yes       yes      yes     
+  fadd s0, s1, s2                0x1e222820  0x1e222820  0x1e222820  yes       yes      yes     
+  fadd d0, d1, d2                0x1e622820  0x1e622820  0x1e622820  yes       yes      yes     
+  addv s0, v1.4s                 0x4eb1b820  0x4eb1b820  0x4eb1b820  yes       yes      yes     
+  addp d0, v1.2d                 0x5ef1b820  0x5ef1b820  0x5ef1b820  yes       yes      yes     
+  movi v0.4s, #0                 0x4f000400  0x4f000400  0x4f000400  yes       yes      yes     
+  movi v0.4s, #0xff              0x4f0707e0  0x4f0707e0  0x4f0707e0  yes       yes      yes     
+  movi v0.4s, #1, lsl #16        0x4f004420  0x4f004420  0x4f004420  yes       yes      yes     
+  movi v0.2d, #0xffff            0x6f00e460  0x6f00e460  0x6f00e460  yes       yes      yes     
+  ldxr w1, [x0]                  0x885f7c01  0x885f7c01  0x885f7c01  yes       yes      yes     
+  ldaxr w1, [x0]                 0x885ffc01  0x885ffc01  0x885ffc01  yes       yes      yes     
+  ldaxr x1, [x0]                 0xc85ffc01  0xc85ffc01  0xc85ffc01  yes       yes      yes     
+  stlxr w2, w1, [x0]             0x8802fc01  0x8802fc01  0x8802fc01  yes       yes      yes     
+  ldaxp x9, x8, [x0]             0xc87fa009  0xc87fa009  0xc87fa009  yes       yes      yes     
+  ldar x1, [x0]                  0xc8dffc01  0xc8dffc01  0xc8dffc01  yes       yes      yes     
+  stlr x1, [x0]                  0xc89ffc01  0xc89ffc01  0xc89ffc01  yes       yes      yes     
+  dmb sy                         0xd5033fbf  0xd5033fbf  0xd5033fbf  yes       yes      yes     
+  dmb ishld                      0xd50339bf  0xd50339bf  0xd50339bf  yes       yes      yes     
+  dmb ish                        0xd5033bbf  0xd5033bbf  0xd5033bbf  yes       yes      yes     
+  dsb sy                         0xd5033f9f  0xd5033f9f  0xd5033f9f  yes       yes      yes     
+  isb                            0xd5033fdf  0xd5033fdf  0xd5033fdf  yes       yes      yes     
+  clrex                          0xd5033f5f  0xd5033f5f  0xd5033f5f  yes       yes      yes     
+  msr S3_3_C4_C0_2, x1           0xd51b4041  0xd51b4041  0xd51b4041  yes       yes      yes     
+  cas w1, w2, [x0]               0x88a17c02  0x88a17c02  0x88a17c02  yes       yes      yes     
+  casal w1, w2, [x0]             0x88e1fc02  0x88e1fc02  0x88e1fc02  yes       yes      yes     
+  ldadd w1, w2, [x0]             0xb8210002  0xb8210002  0xb8210002  yes       yes      yes     
+  swp w1, w2, [x0]               0xb8218002  0xb8218002  0xb8218002  yes       yes      yes     
+  casp x0, x1, x2, x3, [x4]      0x48207c82  0x48207c82  0x48207c82  yes       yes      yes     
+  add z0.d, p0/m, z0.d, z1.d     0x04c00020  0x04c00020  0x04c00020  yes       yes      yes     
+  add z0.b, p0/m, z0.b, z1.b     0x04000020  0x04000020  0x04000020  yes       yes      yes     
+
+  [MEASURED]  41 entries, 0 where the spec, the transcribed table
+  and the assembler do not all agree, and 0 refused outright.
+  "spec=tab" is the self-consistency check and is nearly worthless on
+  its own.  "asm=tab" is the one that can fail, and "r1=r2" is the
+  question the whole course is about: do the two READERS of the same
+  word print the same instruction?
+
+  Now the poison, and this is the part that gives the number above its
+  meaning.  A cross-check that has never been seen to fail is a check with no
+  reason to be believed, and the number this course cares about most is a ZERO.
+  So: break the decoder on purpose, three different ways, and require each break
+  to move the number it claims to be testing.  Three, not one, because the first
+  version of this file had one and it could not fail -- see the note in the code
+  below, which is longer than the code.
+     [CLEAN]    1038 instructions read, 1031 NAMED by reader 1, 0 DISAGREEMENTS
+     [POISON A] m_exclusive removed: 1038 read, 970 named (-61), 0 disagreements (+0)
+     [POISON B] m_lse removed:       1038 read, 1031 named (+0), 5 disagreements (+5)
+                0x4862fc06  reader 1: ldaxp          reader 2: caspal
+                0x48227c06  reader 1: stxp           reader 2: casp
+                0x4862fc06  reader 1: ldaxp          reader 2: caspal
+                0xf8e10008  reader 1: ldur           reader 2: ldaddal
+     [POISON C] bit 0 of every word: 1038 read, 945 named (-86), 837 disagreements (+837)
+                the control is LIVE if each poison moved its own
+                number: named MOVED, disagreements MOVED.  Both must say
+                yes.  A control that cannot move the number it is
+                measuring is a comment that says the word POISONED,
+                which is what the encoding course retracted as R14.
+
+  [MEASURED]  and the coverage, run three times with three different
+  sets of models, because a coverage NUMBER is a number about a
+  CORPUS and a single one means nothing:
+
+dispatch                                  read      named     coverage
+  ---------------------------------------- -------- -------- ----------
+  the 14 models of THIS course             1038     1031     99.3%     
+  the 6 the machine course adds            1038     1024     98.7%     
+  the 21 the encoding course imports       1038     860      82.9%     
+
+  -------------------------------------------------------------------------
+  WHAT THIS MEASUREMENT CANNOT SHOW
+  -------------------------------------------------------------------------
+    It cannot show that either reader is RIGHT.  Two readers that
+    agree establish agreement, and both of these come from one LLVM
+    tree.  What the poison shows is not that the decoder is correct
+    but that the check is capable of failing, which is the only
+    reason to believe a zero.
+    It cannot show that the corpus is representative.  99%% coverage
+    of five object files compiled from two C files with one compiler
+    is a fact about those five object files, and the machine course
+    retracted the phrase "the declared subset" for exactly this
+    reason: a subset of NAMES, not of LENGTHS, over a corpus this
+    size.
+    It cannot show that the corpus CONTAINS the instructions it is
+    about.  That is a different claim and it is the one this file got
+    wrong: the exclusive-PAIR path was absent from every object file
+    for most of its life, and a coverage figure computed over what was
+    fed to it was 99%% while the instruction the concept is named for
+    was not in it.  A number about a pipeline is a number about the
+    pipeline.
+
+==============================================================================
+12  THE PROVENANCE TABLE
+==============================================================================
+
+  One line per claim, with the label it carries and the section that
+  establishes it.  The RATIO is the finding and it is not a disclaimer: the
+  subject of this course is a MACHINE, and the machine is the one thing this
+  host does not have, so the QUOTED third is the largest of the three.  What the
+  course CAN measure -- the encoding, the compiler, the assembler, the object
+  file -- is exactly what a learner writing a backend has to get right and
+  exactly what does not need a CPU.
+
+  The shape of the distribution is not random.  Sections 3, 6, 7, 8 and 11 are
+  almost entirely MEASURED-ON-BYTES, because they are about encodings; sections
+  2, 5 and 9 are mixed, because they are about what a compiler chooses; and the
+  LARGEST measured rows in the whole table are in sections 2, 4, 6 and 9 -- which
+  are the four the concepts are named for.
+
+concept       label              the claim                                                       section
+  ------------ ----------------- -------------------------------------------------------------- ---------
+  neon         MEASURED          the five views of one register are five 32-bit words differing in a total of two bit positions sec 2    
+  neon         MEASURED          the Q bit of an Advanced SIMD load/store single is bit 23, not bit 30 or 31 sec 2, 3 
+  neon         MEASURED-ON-BYTES the access size is bits[31:30] PLUS bit 23: three bits, five allocated values sec 2, 3 
+  neon         MEASURED-ON-BYTES the FP type field is bits[23:22] and `fadd s0` and `fadd d0` differ in one bit sec 2    
+  neon         MEASURED          `fadd h0, h1, h2` is REFUSED at baseline with "instruction requires: fullfp16" and assembles at +fp16 sec 2    
+  neon         MEASURED          the 128-bit form of the FP groups is a DIFFERENT encoding, six bits from `fadd s0` sec 2    
+  neon         QUOTED            the suffix on a v register REINTERPRETS and never converts     sec 2    
+  neon         QUOTED            there are 32 vector registers of 128 bits                      sec 2    
+  neon         MEASURED-ON-BYTES the lane index of DUP/INS/UMOV is bits[19:17] with bit 16 a constant zero sec 3    
+  neon         MEASURED          `ld1 {v0.b}[16]` is REFUSED: the after-element offset is four bits wide sec 3    
+  neon         MEASURED-ON-BYTES the structure load's element size is bits[15:14], ten bits from the single load's sec 3, 4 
+  neon         MEASURED          a structure load names a CONSECUTIVE list and every other register number is validated then discarded sec 3    
+  neon         MEASURED          `movi v0.2d, #1, lsl #N` is REFUSED for six values of N: the 64-bit form has no shift sec 3    
+  neonspace    MEASURED-ON-BYTES the Advanced SIMD three-same group puts size at bits[23:22] and Q at bit 30 sec 3, 4 
+  neonspace    MEASURED          the same four element sizes sit at three different bit positions in three groups sec 3    
+  neonspace    MEASURED-ON-BYTES the SVE data-processing word is 0x04c00020 at 128, 256, 512, 1024 and 2048 vector bits sec 4    
+  neonspace    MEASURED-ON-BYTES SVE has a two-bit size field and no vector-length field anywhere in the word sec 4    
+  neonspace    MEASURED          the class field bits[28:25] is shared by Advanced SIMD, FP, AES, SHA-2 and SVE sec 4    
+  neonspace    MEASURED          the SVE predicate field is four bits and the arithmetic form may use only p0..p7 sec 4    
+  neonspace    MEASURED          four refusals name four features: aes, rcpc, lse, fullfp16     sec 2, 4, 7
+  neonspace    QUOTED            an SVE implementation also has Advanced SIMD, on the same registers, and Z0's bottom 128 bits are V0 sec 4    
+  neonspace    QUOTED            the vector length is readable at run time from the vector length register sec 4    
+  neon         MEASURED          the vectorised sum_loop BODY is 6 instructions per 4 elements against the scalar 4 per 1 -- a ratio of 2.67 on a COUNT, and the only ratio-shaped figure in this course sec 5    
+  neon         MEASURED          the vectorised fsum_loop body is 18 instructions per 4 elements against the scalar 4 per 1: on this count the vectorised build is the WORSE one sec 5    
+  neon         MEASURED          a whole-function instruction count is larger for the vectorised build, because of the prologue and the tail sec 5    
+  neon         MEASURED-ON-BYTES `addp d0, v0.2d` is a separate instruction, not a loop         sec 5    
+  atomic       MEASURED-ON-BYTES acquire on an exclusive load is BIT 15 and it is one bit; bit 21 is the PAIR discriminator and is 0 in every single-register form sec 6    
+  atomic       MEASURED-ON-BYTES the exclusive size is bits[31:30], two bits, and the 32- and 64-bit forms are adjacent in it sec 6    
+  atomic       MEASURED          the retry is a BACKWARD branch, read out of the emitted assembly sec 6    
+  atomic       MEASURED          four C11 memory orders produce four instruction pairs differing in one bit each sec 6    
+  atomic       MEASURED          the 16-byte form is ldaxp/stlxp and seven instructions per attempt against the single word's four sec 6    
+  atomic       MEASURED          no clrex appears in any fetch-add or exchange body             sec 6    
+  atomic       QUOTED            an exclusive store may always fail and the architecture gives no way to make it not sec 6    
+  atomic       QUOTED            a status register comes back from the store, so the instruction cannot decide what to do about it sec 6    
+  atomic       MEASURED-ON-BYTES in CAS and CASP acquire is bit 22 and release is bit 15, and release is the TOP BIT OF THE OPCODE FIELD sec 7    
+  atomic       MEASURED-ON-BYTES in the LDADD family acquire is bit 23 and release is bit 22 -- not the two bits the CAS half uses sec 7    
+  atomic       MEASURED-ON-BYTES bit 21 is 1 in every word of BOTH halves, so it is a constant of the group and not an ordering bit sec 7    
+  atomic       MEASURED-ON-BYTES the 128-bit-ness of CASP is bit 23, which is the bit that says "acquire" in the LDADD family sec 7    
+  atomic       MEASURED-ON-BYTES the exclusive family encodes acquire as bit 15 ALONE, and so does LDAR/STLR sec 6, 7 
+  atomic       MEASURED          the same C with -march=armv8.1-a emits one cas where the baseline emits four instructions sec 7    
+  atomic       MEASURED          three memory orders produce two 128-bit instructions, and a 128-bit fetch-add is two 64-bit ldaddal sec 7    
+  atomic       MEASURED          cas takes FIVE operands and the three-operand form's diagnostic points at the memory operand sec 7    
+  atomic       MEASURED          casp, casp a, caspa, ldadd, swp and friends are refused at baseline with "instruction requires: lse" sec 7    
+  order        MEASURED-ON-BYTES the barrier option field is bits[11:8], four bits, twelve names sec 8    
+  order        MEASURED-ON-BYTES the barrier identity field is bits[7:5], three bits, three names, and dmb/dsb differ in one bit sec 8    
+  order        MEASURED          isb accepts ONE option and `isb sy` is the same word as `isb`  sec 8    
+  order        MEASURED          clrex is op2 = 0b010 in the same group and no barrier uses that value sec 8    
+  order        MEASURED          an acquire load and a seq_cst load are the SAME instruction, one ldar, and there is no dmb in either sec 9    
+  order        MEASURED          zero barriers appear in every atomic function of the corpus; all of them are __atomic_thread_fence sec 9    
+  order        MEASURED          an acquire fence narrows to dmb ishld and a release fence stays a full dmb ish sec 9    
+  order        MEASURED          msr xor mrs is bit 21 in the PSTATE window -- the same bit that is CONSTANT across the whole LSE group sec 10   
+  order        MEASURED          the two readers know different amounts about one register: objdump prints the op0 triple and this decoder prints PSTATE.PAN, and the assembler accepts only the triple sec 10   
+  order        MEASURED          PSTATE.PAN is REFUSED by name and S3_3_C4_C0_2 ACCEPTED, and the words are the same 32 bits sec 10   
+  order        QUOTED            PAN forbids the level below from using SVC and SP_EL0          sec 10   
+  order        QUOTED            DMB orders accesses, DSB waits for stores to become observable, ISB flushes the fetch side sec 8    
+  order        QUOTED            the AArch64 memory model is weak and the x86-64 model is strong, so the same C needs different instructions sec 9    
+  dataflow     MEASURED-ON-BYTES the encoder, the decoder and the assembler agree on the whole corpus of 41 entries sec 11   
+  dataflow     MEASURED          a cross-check is run three times with three poisons, one per number it reports, and each must move its own number sec 11   
+  dataflow     MEASURED          a normaliser that deletes an operand makes two readers agree by deleting the same operand, and that is where 85 real disagreements were hiding sec 11   
+  dataflow     MEASURED-ON-BYTES the 64-bit MOVI immediate is a BYTE MASK: bit j of the field is byte j of the value sec 3, 11
+  dataflow     MEASURED          a coverage number is a number about a corpus, so the loop is run three times with three dispatch sets sec 11   
+  dataflow     QUOTED            a system-register name is a table the assembler owns and the encoding is five fields sec 10   
+
+  33 MEASURED, 19 MEASURED-ON-BYTES, 10 QUOTED, 62 total
+  16% of the claims in this course are QUOTED
+
+  neon        10 MEASURED,  5 MEASURED-ON-BYTES,  2 QUOTED  (12% quoted)
+  neonspace    4 MEASURED,  3 MEASURED-ON-BYTES,  2 QUOTED  (22% quoted)
+  atomic       8 MEASURED,  7 MEASURED-ON-BYTES,  2 QUOTED  (12% quoted)
+  order        8 MEASURED,  2 MEASURED-ON-BYTES,  3 QUOTED  (23% quoted)
+  dataflow     3 MEASURED,  2 MEASURED-ON-BYTES,  1 QUOTED  (17% quoted)
+
+  Every claim on every page of this course carries one of these
+  three labels, and the page that says so is concept 5.
+
+==============================================================================
+13  THE RETRACTIONS
+==============================================================================
+
+  27 of them, and not one is a mistake about how a computer works --
+  which is now ELEVEN courses in a row.  They sort into five kinds, and the
+  counts are read off the list rather than written beside it, because the
+  first version of this paragraph printed the literal string "%d of them" and
+  a retraction list with a wrong summary is the failure the list exists to
+  catch.
+
+      about what an ENCODING is      14:  R1, R2, R3, R4, R5, R12, R16, R18, R19, R21, R23, R24, R25, R26
+      about what a COMPARISON is      1:  R22
+      about a COMPILER VERSION is     4:  R9, R11, R14, R15
+      about what an INSTRUMENT is     4:  R6, R8, R17, R27
+      about what a SPEC says          4:  R7, R10, R13, R20
+
+  R21 to R27 are the largest group in the list and the newest, and every one of
+  them was found by a single change: fixing a normaliser so that it stopped
+  DELETING operands.  Eighty-five real disagreements were sitting behind a
+  comparison that had stopped comparing.  That is the general form worth keeping
+  and it is the reason they are all here rather than folded into one line:
+  A CROSS-CHECK THAT HAS SILENTLY STOPPED COMPARING REPORTS THE SAME NUMBER AS
+  ONE THAT IS WORKING, and nothing in its output can tell the two apart.
+
+  27 of the 27 name a source that asserted the claim BEFORE this course existed
+  and are marked `ASSERTED BY` -- the section plan, or this course's own first
+  draft.  A retraction that does NOT name one would say `(no prior source)` and
+  mean it: a course disagreeing with itself is a different act from retracting a
+  document, and the file does not blend them.
+  ==============================================================================
+  R1   "the Q bit of a vector load is bit 30, the way it is in the Advanced SIMD three-same group"
+       -> in the single load/store form Q is BIT 23 and the size is bits[31:30] PLUS it
+  [WHAT WAS FOUND] assembled `ldr b0, [x0]` and `ldr q0, [x0]`, which differ in bit 23 and in no other bit
+  [WHY] a field is not a property of an architecture, it is a property of a GROUP, and the group has to be decoded first
+  [ASSERTED BY] docs/aarch64-section-plan.md, concept 18
+  ==============================================================================
+  R2   "a NEON instruction is one instruction with five widths"
+       -> the FP and Advanced SIMD arithmetic groups have a TYPE field of bits[23:22] and the 128-bit form is a DIFFERENT ENCODING, six bits away
+  [WHAT WAS FOUND] `fadd s0, s1, s2` is 0x1e222820 and `fadd v0.4s, v1.4s, v2.4s` is 0x4e22d420
+  [WHY] the suffix reinterprets, but only WITHIN a type; 128-bit arithmetic is a different group, not a different suffix
+  [ASSERTED BY] docs/aarch64-section-plan.md, concept 18
+  ==============================================================================
+  R3   "the element size of a vector instruction is one field"
+       -> THREE positions: bits[31:30] + bit 23 for the load, bits[23:22] for the arithmetic, bits[15:14] for the structure load
+  [WHAT WAS FOUND] a sweep of four element sizes in each of three groups, section 3
+  [WHY] one field per INSTRUCTION GROUP, and a decoder that has one field has one measurement and two answers
+  [ASSERTED BY] this course's own first draft of m_simd_ldst_single
+  ==============================================================================
+  R4   "the lane index of DUP/INS is a four-bit field written big-endian inside it"
+       -> it is bits[19:17], LSB-first, and bit 16 is a CONSTANT ZERO
+  [WHAT WAS FOUND] an eight-index sweep: index 1 moves bit 17, index 2 bit 18, index 4 bit 19, index 7 all three
+  [WHY] a sweep with three steps reports a field one bit too WIDE, which is the same mistake the encoding course made with imm16
+  [ASSERTED BY] this course's own first draft of m_simd_copy
+  ==============================================================================
+  R5   "the `ld1` after-element offset is a five-bit offset and can address all sixteen elements of a 128-bit register"
+       -> it is FOUR bits wide, so `ld1 {v0.b}[16]` is REFUSED and the highest addressable element is 15
+  [WHAT WAS FOUND] the diagnostic is "vector lane must be an integer in range [0, 15]"
+  [WHY] a register that is 128 bits wide has 16 byte lanes and the field has sixteen codes, and one of them is the base
+  [ASSERTED BY] docs/aarch64-section-plan.md, concept 20
+  ==============================================================================
+  R6   "`ld2`/`ld3`/`ld4` name four registers and so need a field for each"
+       -> they name ONE register and the rest are validated against the stride and thrown away
+  [WHAT WAS FOUND] `ld1 {v0.16b,v1.16b}` and `ld1 {v2.16b,v3.16b}` differ in bit 1 and nothing else, and `ld1 {v0.16b, v5.16b}` is REFUSED
+  [WHY] a de-interleaving load needs a BASE and a COUNT, not a list, and the assembler needs a stride check it has no other reason to write
+  [ASSERTED BY] this course's own measurement
+  ==============================================================================
+  R7   "SVE stores the vector length in the instruction because it can be as wide as 2048 bits"
+       -> it stores NO length at all: 0x04c00020 assembles for 128, 256, 512, 1024 and 2048 vector bits
+  [WHAT WAS FOUND] five compiles with -msve-vector-bits, five identical words
+  [WHY] the length is a property of the IMPLEMENTATION and is read at run time, and that is what makes the shared encoding space affordable
+  [ASSERTED BY] docs/aarch64-section-plan.md, concept 18
+  ==============================================================================
+  R8   "`casp` takes three operands, or the assembler refuses to encode it"
+       -> it takes FIVE -- two register pairs and the memory -- and the assembler encodes it; the three-operand form is refused with a diagnostic that points at the memory operand
+  [WHAT WAS FOUND] nine spellings of one mnemonic, and the one that works was found by reading a COMPILER'S OWN OUTPUT rather than the manual
+  [WHY] a diagnostic that points at the right operand is a diagnostic that will be believed, and this file believed it and reported a refusal
+  [ASSERTED BY] this course's own first draft of m_lse
+  ==============================================================================
+  R9   "a fetch-add written with C11 relaxed ordering is a different sequence from a sequentially consistent one"
+       -> all four orderings are the same four-instruction loop differing in one bit of the load and one of the store
+  [WHAT WAS FOUND] four functions in the corpus, four instruction pairs, two bits
+  [WHY] the ordering lives in the ACCESS MODES and nowhere else, which is the point of concept 4 and the thing x86-64 cannot say
+  [ASSERTED BY] docs/aarch64-section-plan.md, concept 21
+  ==============================================================================
+  R10   "a sequentially consistent load needs a wider instruction or a barrier after it"
+       -> a C11 seq_cst load and a C11 acquire load are the SAME `ldar` and there is no barrier
+  [WHAT WAS FOUND] load_seqcst and load_acq compile to one identical word at -O2, and the barrier census over every file is zero outside the fence functions
+  [WHY] on AArch64 the extra constraint a seq_cst load carries is discharged by the OTHER operations being acquire or release too, so the instruction needs nothing extra
+  [ASSERTED BY] this course's own measurement
+  ==============================================================================
+  R11   "a release fence is a narrower barrier than a sequentially consistent fence"
+       -> an ACQUIRE fence narrows (`dmb ishld`, the load variant) and a RELEASE fence does NOT (`dmb ish`)
+  [WHAT WAS FOUND] the three fence functions in the corpus, at -O2
+  [WHY] a C11 release fence must order against later LOADS as well as later stores, which is quoted, so the full barrier may be exactly right -- but "the compiler is symmetric" is a claim about a compiler, and a claim about a compiler is either measured or dropped
+  [ASSERTED BY] this course's own first draft of section 9
+  ==============================================================================
+  R12   "the barrier scope is a separate field from the barrier identity"
+       -> it is not separate, and the two are told apart: the identity is a THREE-bit op2 and the scope is a FOUR-bit CRm, and CRm is the field the machine course's model FIXES to 0b1111
+  [WHAT WAS FOUND] twelve options in four bits, and the sibling model names one of them
+  [WHY] a guard that is too narrow does not FAIL, it silently reduces the model, and the machine course already recorded the same shape in its HINT guard
+  [ASSERTED BY] this course's own measurement, extending a64sys.py
+  ==============================================================================
+  R13   "PSTATE.PAN is a system register the assembler can name"
+       -> the assembler REFUSES the name at EL0 and accepts the raw field name, and the two are the same 32 bits
+  [WHAT WAS FOUND] `msr PSTATE.PAN, x1` -> "expected writable system register or pstate"; `msr S3_3_C4_C0_2, x1` -> 0xd51b4041
+  [WHY] a supervisor-to-user control is not an EL0 instruction and a raw name is how you write one anyway, which is a fact about the assembler's policy rather than about the architecture
+  [ASSERTED BY] this course's own measurement
+  ==============================================================================
+  R14   "a 128-bit atomic exchange is one instruction with FEAT_LSE"
+       -> a 128-bit FETCH-ADD is two 64-bit `ldaddal`, and three memory orders collapse to two instructions
+  [WHAT WAS FOUND] `pair_fetch_add` in pair_lse.s
+  [WHY] LSE has a compare-and-swap for pairs and NO arithmetic for pairs, so a feature is not a blanket
+  [ASSERTED BY] this course's own measurement
+  ==============================================================================
+  R15   "an instruction count is a weaker stand-in for a speedup"
+       -> an instruction count can point in the OPPOSITE direction, and here it does: the vectorised sum_loop is LONGER than the scalar one
+  [WHAT WAS FOUND] a whole-function count at -O2 with and without -fno-vectorize
+  [WHY] the vectoriser pays for a prologue and an epilogue ONCE and the loop body n times, and a whole-function count cannot see which is which -- so the metric has to be named before it is quoted, and this course has no metric to replace it with
+  [ASSERTED BY] this course's own first draft of section 5
+  ==============================================================================
+  R16   "DMB, DSB and ISB are three words that differ in one field"
+       -> they differ in TWO fields: a three-bit identity and a four-bit scope, and the scope is the one that says what the barrier orders
+  [WHAT WAS FOUND] twelve options swept against `dmb sy`, section 8
+  [WHY] "one field" was inherited from the machine course's summary of its own model, and a model that fixes a field is a model that has not read it
+  [ASSERTED BY] docs/aarch64-section-plan.md, concept 21
+  ==============================================================================
+  R17   "a two-reader cross-check that agrees 100% is evidence the decoder is correct"
+       -> it is evidence the check is capable of running, and the only way to know that is to remove a model and watch the number move
+  [WHAT WAS FOUND] the poison in section 11
+  [WHY] inherited from the encoding course, which retracted its own 100% twice, and from the machine course, which retracted it a third time
+  [ASSERTED BY] docs/aarch64-section-plan.md, "Rules", rule 13
+  ==============================================================================
+  R18   "a structure load's register list is four bits wide because a pair is 8 x 4"
+       -> it is a FIVE-bit field holding the FIRST register, and a sweep of four starts (v0, v2, v4, v30) lands on 0, 1, 2 and 30
+  [WHAT WAS FOUND] the sweep, section 3, after a first version that read the field as four bits from a sweep that only visited even starts
+  [WHY] a sweep that visits only the values a form accepts measures a narrower field than the encoding has -- the same shape as the HINT guard one bit too narrow, and the same lesson
+  [ASSERTED BY] this course's own first draft of m_simd_structure
+  ==============================================================================
+  R19   "`movi v0.2d, #imm, lsl #n` assembles for the same shifts the 32-bit form takes"
+       -> it is REFUSED for all six of them: the 64-bit MOVI variant has a sixteen-bit immediate and NO shift
+  [WHAT WAS FOUND] six assembles, six refusals with the same diagnostic
+  [WHY] the shift is `immh*8` and the 64-bit form spends all eight of its size codes on the immediate width instead
+  [ASSERTED BY] this course's own first draft of m_simd_movi
+  ==============================================================================
+  R20   "a C11 sequential consistency order needs a barrier somewhere"
+       -> the whole corpus emits zero barriers outside the three functions whose source asks for a fence
+  [WHAT WAS FOUND] a census over seven generated .s files at four optimisation levels
+  [WHY] acquire and release are ACCESS MODES, and a mode is not a barrier, and x86-64 readers arriving here will look for an mfence that this architecture does not have
+  [ASSERTED BY] docs/aarch64-section-plan.md, "The no-duplication seam"
+  ==============================================================================
+  R21   "the LSE group encodes acquire as bit 22 and release as bit 21, once for the whole group"
+       -> CAS AND CASP: acquire is bit 22, release is bit 15.  LDADD AND ITS SIBLINGS: acquire is bit 23, release is bit 22.  Bit 21 is 1 in every word in both halves
+  [WHAT WAS FOUND] twenty-four assembles, four suffixes swept in each half, after the cross-check printed `ldadd` where the assembler prints `ldaddl`
+  [WHY] a wrong constant and a constant FIELD look identical until you sweep the suffix, and the wrong one promoted a relaxed atomic to a release one in a legal word with nothing wrong in it
+  [ASSERTED BY] this course's own first draft of m_lse
+  ==============================================================================
+  R22   "the corpus has no disagreements between the two readers"
+       -> it has EIGHTY-FIVE, and every one of them was a real decoder defect hidden behind a normaliser that split operands on a comma without looking at brackets, and then discarded the memory operand and every operand after the first
+  [WHAT WAS FOUND] the two-reader loop over five object files, after `parts = [m, rest]` became `parts = [m, rest] + parts[1:]` and `str.split(",")` became a bracket-aware split
+  [WHY] both readers lost the same operand, so they agreed; a cross-check that has thrown away the half of the instruction most likely to be wrong still reports zero, and the encoding course filed the same shape as R14 wearing a different hat
+  [ASSERTED BY] this course's own first draft of _norm
+  ==============================================================================
+  R23   "the scaled imm12 offset of a vector load is the access size in BITS"
+       -> it is the access size in BYTES: `str s0, [sp, #12]` is 0xbd000fe0 with imm12 = 3 and 3 x 4 = 12, and five sizes at one source offset of 4080 give imm12 = 4080, 2040, 1020, 510 and 255
+  [WHAT WAS FOUND] five assembles at one offset, plus the second reader printing 12 where the first printed 96
+  [WHY] a UNIT mistake produces a plausible number rather than an error, and a number that is eight times too large is still a number
+  [ASSERTED BY] this course's own first draft of m_simd_ldst_single
+  ==============================================================================
+  R24   "in CCMP the NZCV immediate is the second register field and the second operand is Rd"
+       -> the NZCV immediate is ALL FIVE BITS of bits[4:0] and the CONDITION is bits[15:12]; the second register is bits[20:16]
+  [WHAT WAS FOUND] four immediates (#0, #1, #8, #15 -> 0x...060, 0x...061, 0x...068, 0x...06f) and one condition (`ne` moves bit 12 alone)
+  [WHY] two adjacent fields, both printed by every disassembler, swapped by a model written from the shape of the SELECT family instead of from a word
+  [ASSERTED BY] this course's own first draft of m_ccmp
+  ==============================================================================
+  R25   "the lane index of the scalar element copy is `imm5 >> 1`"
+       -> imm5 = (esz/8) * (2*index + 1), so the index is half of one less than the field divided by the element size in bytes -- and the first version was right for NO arrangement in the table
+  [WHAT WAS FOUND] thirty assembles, every lane of all four arrangements; the second reader prints `v1.s[1]` where the first printed `v1.s[6]`
+  [WHY] a field whose value is not the field's contents makes a wrong NUMBER rather than a wrong name, and a number in the legal range is the one thing nothing downstream can notice
+  [ASSERTED BY] this course's own first draft of m_fp_copy_scalar
+  ==============================================================================
+  R26   "the 64-bit MOVI immediate is a number the decoder can decline to read when no field contains it"
+       -> it is a BYTE MASK: bit j of the eight-bit field is byte j of the 64-bit value, set meaning 0xff.  Forty probes, forty agreements
+  [WHAT WAS FOUND] the first version DECLINED the form and the comment gave a true reason about the wrong field (`bits[20:5]` is 0x0723, not 0xffff)
+  [WHY] a decoder that declines is the safest kind of wrong -- it can never print a false number -- and that is exactly why it is the kind that hides: a table showing `reader 1: (none)` looks like a known gap rather than an unasked question
+  [ASSERTED BY] this course's own first draft of m_simd_movi
+  ==============================================================================
+  R27   "removing one model from the dispatch poisons the cross-check"
+       -> it poisons ONE of the two numbers.  Removing `m_exclusive` moved the named count by 48 and the disagreement count by 0, and the sentence underneath the numbers claimed both had moved
+  [WHAT WAS FOUND] three poisons now, one per reported number, and each must move the number it claims to test or the run prints [POISON FAILED]
+  [WHY] a control that cannot move the number it is measuring is a comment that says the word POISONED, and the encoding course retracted exactly that
+  [ASSERTED BY] this course's own first draft of section 11
+  ==============================================================================
+
+  27 retractions.
+  27 of 27 name a source that asserted the claim before this course
+  existed (the section plan, or this course's own first draft), and
+  the rest say "(no prior source)" -- which is a course disagreeing
+  with itself, and a different act from retracting a document.
+
+  A course that reports ZERO retractions on a subject this size has
+  either not looked or has not been reading the documents it cites.
+  27 retractions.
+
+==============================================================================
+14  THE LIMITS, AND WHAT A READER CANNOT CONCLUDE
+==============================================================================
+
+  A limit that is a footnote is a limit that gets forgotten, so these are
+      STRUCTURES -- a list of 14, each with the instrument that would settle it --
+      and not prose.  Six of the fourteen are properties of the INSTRUMENT rather
+      than of the subject, and those are the six a reader is most likely to forget
+      they are reading.
+  * NOTHING IS EXECUTED
+    No machine, no emulator, no linker. Every figure is a bit pattern, a count of bit patterns, an arithmetic identity, or a refusal from a real assembler. No duration, no fault, no throughput, no portability claim. Settled by: an AArch64 board and four hours.
+  * THERE ARE NO TIMINGS, AND THE x86-64 FIGURES ARE REFUSED BY NAME
+    3.89x, 4.92x and 27.65x are NOT reproduced in any form, and the `simd` course's 2.54x and 21.20x are not either, because there is no AArch64 clock and because faking a counterpart is worse than admitting the absence. Where a page of this course would naturally carry a ratio it carries an instruction count and says so. Settled by: an AArch64 core.
+  * NO VECTOR INSTRUCTION EVER RUNS
+    So no lane was reinterpreted, no cross-lane reduction happened, and no register held 128 bits of anything. What is measured is that five names are five words differing in two bits. Settled by: a NEON core.
+  * NO EXCLUSIVE MONITOR EVER EXISTS
+    No store ever fails, no `cbnz` ever branches, and the necessity of the loop is quoted rather than observed. What is measured is that the compiler writes a backward branch and that a status register is where the decision comes from. Settled by: two AArch64 cores.
+  * NO BARRIER EVER ORDERS ANYTHING
+    No second core, no cache, no store buffer, no memory traffic. The four option bits are measured; that DSB waits for stores to become OBSERVABLE and DMB does not is QUOTED, and it is the single most important sentence on that page and the one no command here can confirm. Settled by: a two-thread ping-pong on two AArch64 cores.
+  * NO FEATURE BITS ARE READABLE
+    The ID registers that say whether an implementation has LSE, SVE, FP16 or AES are EL1 registers, and there is no EL1 here. So "is this word valid on the machine in front of me" is not a question this host can answer, and the four refusals that name features are the assembler's answer rather than the architecture's. Settled by: an EL1 reader.
+  * PSTATE.PAN IS MEASURED ONLY AS A REFUSAL AND A BIT PATTERN
+    The control cannot be read or written from EL0 and the assembler will not encode its name. What it does is QUOTED, in full, and no measurement on this page bears on it. Settled by: a supervisor.
+  * THE TWO READERS SHARE A SOURCE TREE
+    Both are LLVM 21.1.8, and there is no second AArch64 assembler on this host, so every "refusal" in this file is a refusal by one assembler at one version, and the cross-check establishes AGREEMENT and not correctness. Settled by: a GNU AArch64 assembler and a hardware disassembler.
+  * THE CORPUS IS FIVE OBJECT FILES FROM TWO C FILES
+    decoder, and the same loop is run three times with three dispatch sets for that reason. A real-world AArch64 binary would give a lower figure, and the unmodelled words would be the floating-point scalar families this course does not model. MEASURED, and it bit once: the exclusive PAIR path is not in the corpus at all for most of this file's life, because the only build of it went to an .s and never to an .o, so `m_lse` was reading `ldaxp` as `caspal` for a whole draft and no coverage number noticed. Settled by: any large AArch64 binary.
+  * A ZERO FROM A NORMALISER IS NOT A ZERO
+    Every number in section 11 is a number about a COMPARISON as well as about the decoder, and this file has now produced four normaliser bugs that each left the printed disagreement count at zero while eighty-five real defects sat behind it: a comma split that ignored brackets, an operand list truncated after its first element, a zero-offset rule written for the one spelling neither reader emits, and a shift-modifier rule for a spelling that does not exist. Not one of them printed a wrong word. All four made the file stop COMPARING, which is worse, because the number is believed. The harness therefore asserts that each poison moves the number it claims to test and prints [POISON FAILED] when one does not. Settled by: a normaliser whose rules are each printed with a count of how often they fired, where a rule that fires zero times is an error rather than a convenience.
+  * THE INSTRUCTION COUNTS ARE A COMPILER VERSION
+    clang 21.1.8 at -O0, -O1, -O2 and -Os, on one host. A different version, a different -march or a different loop body moves them, and the harness asserts SHAPES rather than values for exactly that reason. Settled by: a second compiler.
+  * THE SPECIFICATIONS ARE AN ORACLE AND WERE NOT CONSULTED HERE
+    No copy of DDI 0487, 0597, 0601 or 0602 was opened on this host. Every QUOTED claim carries document and section so it can be checked elsewhere, and the absence of the document is a limit rather than a paraphrase. Settled by: a copy of the manual.
+  * AN INSTRUCTION COUNT IS NOT A SPEEDUP
+    Section 5 measures one that points the WRONG WAY, and says so. Every count in this file is a compile-time property of bytes that were never executed, and the only honest use of one is to compare two builds of the SAME source at the SAME level. Settled by: a clock.
+  * THE SHIPPED OUTPUT IS WHAT THE HARNESS READS
+    a64data.out and run1.txt and run2.txt ship with the course, so crosscheck.py is runnable on a machine that never ran the assembler. A course whose claims can only be checked by first rebuilding its own artifact is a course whose claims are only verifiable on the machine that wrote them, which is the same mistake as quoting a remembered number wearing a different hat. Settled by: nothing; this one is done.
+
+  WHAT A READER THEREFORE CANNOT CONCLUDE FROM THIS COURSE
+
+    - That any instruction in it has ever run.
+    - That a wider vector is faster, or slower, than a narrower one, or than anything on any other architecture.
+    - That a seq_cst load is one instruction wide or four, or that a seq_cst store needs a barrier, or that the mapping is correct -- only that clang emits no barrier and that `ldar` decodes with bit 15 set.
+    - That an exclusive store ever fails, or that the loop is necessary, only that the compiler writes one.
+    - That DMB, DSB and ISB order anything, or that the four option bits mean what the manual says they mean.
+    - That this machine has LSE, SVE, FP16, AES or RCPC, since the ID registers are EL1 registers.
+    - That PSTATE.PAN does anything at all.
+    - That llvm-objdump agrees with silicon. It is a second READER and both readers come from one LLVM tree.
+    - That the coverage figures describe the architecture; they describe five object files compiled from two C files by one compiler.
+
+  WHAT A READER CAN CONCLUDE, AND CHECK, WITH A HEX EDITOR
+
+    - Every bit pattern in this course, in an object file on this disk.
+    - Every refusal, by running clang with the same flag.
+    - Every instruction count, in a .s file on this disk.
+    - Every field position, by re-running the sweep in section 3.
+    - The arithmetic: five vector lengths and one identical 32-bit word, two bits for five access sizes, four bits for twelve barrier options, and one bit for acquire.
+    - The three labels on every claim, which is a claim about a sentence and so is checkable by reading.
+
+  That is the shape of a course with no hardware: a small set of claims
+  you can check with a hex editor, and a larger set you have to take on the word
+  of a document -- and an exact statement of which is which.  A course WITH
+  hardware would have the second set too, labelled MEASURED, and would be worth
+  more for the parts that need it.
+
+  The constraint is the subject and not a limitation of the teaching.  This is a
+  course about a machine you cannot run, built the way a compiler author builds
+  one: from the encoding outward, with the specification as the oracle, the
+  compiler as the witness, and a label on every sentence that says which of the
+  two is speaking.

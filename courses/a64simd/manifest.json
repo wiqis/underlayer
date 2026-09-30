@@ -1,0 +1,82 @@
+{
+  "id": "a64simd",
+  "title": "The AArch64 Data Path: NEON, Atomics and Ordering",
+  "version": "1.0.0",
+  "description": "The fourth and last course of the AArch64 section, and the first in it to lead with a negative claim: there are NO TIMINGS anywhere. The x86-64 sibling measured 3.89x, 4.92x and 27.65x and not one of those has a counterpart here, because there is no AArch64 clock and faking a counterpart is worse than admitting the absence. What replaces the ratios is an instruction count, and section 5 measures one that points in the OPPOSITE direction to the one a reader expects: the vectorised sum_loop is 34 instructions against the scalar 12, because the vectoriser pays for a prologue and an epilogue ONCE while the loop body runs n times, and a whole-function count measures code that runs once. The subject matter is the data path -- what a register holds, how wide it is, how an atomic is written, and where a barrier ends up not being needed at all. Five views of one vector register, and the bit that separates 64 bits from 128 bits is BIT 23 rather than bit 30, so a field's position is a property of an instruction GROUP and not of an architecture. One 32-bit SVE word, five vector lengths from 128 to 2048 bits, and not one bit of difference -- the width is a property of the IMPLEMENTATION, read at run time, and that absence is the design rather than an omission. Acquire and release are ACCESS MODES: twelve functions performing C11 atomics emit THREE barriers, all three in functions whose source asked for a fence, and a C11 seq_cst load and a C11 acquire load are the SAME ldar. FEAT_LSE does not use one set of ordering bits for its group: CAS uses 22 and 15, LDADD uses 23 and 22, bit 21 is a constant of both, and CASP's 128-bit-ness is the bit that means acquire in the other half -- one bit, two meanings, no overlap. And the course's most useful finding is about its own tooling: seven of its twenty-seven retractions were found by one change to a comparison that had silently stopped comparing, because a normaliser was deleting operands from both readers before comparing them.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 5 concepts, reproduce the 268 checks in courses/a64simd/assets/samples/crosscheck.py against the shipped a64data.out -- which needs no toolchain at all -- then run courses/a64simd/assets/samples/build_samples.sh and confirm it prints 'samples built: 13 files'. The thirteen is load-bearing: the build script used to omit pair_base.o, so the two-reader pass never saw an ldaxp and a decoder read one as a casp for a whole draft while a 99 percent coverage figure printed the entire time. Then break the check deliberately: delete m_lse from the dispatch in a64data.py and confirm POISON B moves the DISAGREEMENT count from 0 to 5 while leaving the named count alone, which is the only control in this course that can detect a decoder whose wrong answers match the second reader's wrong answers.",
+  "min_score": 70,
+  "dependencies": [
+    "a64sys"
+  ],
+  "modules": [
+    {
+      "id": "neon",
+      "title": "The Vector Register File, and the Bit That Moves Per Group",
+      "concepts": [
+        "a64-neon",
+        "a64-neonspace"
+      ]
+    },
+    {
+      "id": "atomic",
+      "title": "Atomics and Ordering: Access Modes, and One Bit With Two Meanings",
+      "concepts": [
+        "a64-atomic",
+        "a64-order",
+        "a64-dataflow"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "a64-neon",
+      "title": "Thirty-Two Registers, Four Ways to Read One",
+      "module_id": "neon",
+      "description": "There are 32 vector registers of 128 bits and an instruction names a VIEW of one: the same 16 bytes as 16 bytes, 8 halfwords, 4 words or 2 doublewords, and the suffix REINTERPRETS and never converts. What is measured is that the encoding does not put the width in the same place twice. `ldr b0, [x0]` is 0x3d400000 and `ldr q0, [x0]` is 0x3dc00000, they differ in EXACTLY ONE BIT, and it is bit 23 -- not bit 30, which really is the Q bit in the three-same group two pages away. So the access size is bits[31:30] PLUS bit 23, three bits with five allocated values. The same trap twice more: `fadd s0,s1,s2` and `fadd d0,d1,d2` differ in bit 22 alone, so the float suffix is a TYPE at bits[23:22] -- and `fadd q0,q1,q2` does not exist at all, because 128 bits is not a type but a DIFFERENT ENCODING, `fadd v0.4s` at 0x4e22d420, six bits away from the scalar form. And the first refusal that names a feature: `fadd h0,h1,h2` is REFUSED at baseline with \"instruction requires: fullfp16\" and assembles at 0x1ee22820 with +fp16, two bits from the s form, so the encoding allocates four type codes and the baseline assembler will produce two.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "a64-neonspace",
+      "title": "The Shared Memory Space, and the Bit SVE Does Not Have",
+      "module_id": "neon",
+      "description": "Advanced SIMD, the FP extensions, SVE, SVE2 and the cryptographic extensions share ONE instruction encoding space and one set of registers, and the sharing is what makes the next measurement affordable. Compile `add z0.d, p0/m, z0.d, z1.d` at -msve-vector-bits of 128, 256, 512, 1024 and 2048 and all five words are 0x04c00020: a factor of SIXTEEN in vector length and not one bit of difference. SVE has no Q bit because an SVE vector is not a fixed 128 bits, so a bit that said 128 would be a lie; the width is a property of the IMPLEMENTATION and is read at run time from the vector length register. The field the size DOES live in is two bits at bits[23:22], immediately next to a six-bit operation field at bits[21:16] carrying twelve measured names. Z0 through Z31 is five bits, predicates are four bits addressing sixteen of which the arithmetic form may use eight -- and that restriction is enforced only by the assembler, which is a rule with no bytes behind it. Sharing is done by sharing a class field: bits[28:25] is 0b0111 for Advanced SIMD, FP, AES and SHA-2 and 0b0010 for SVE, and the class is shared whether or not every member of the space is present, which is why a decode is a function of the CPU.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "a64-atomic",
+      "title": "The Exclusive Monitor, and Why the Retry Is the Instruction",
+      "module_id": "atomic",
+      "description": "The store-exclusive reports SUCCESS OR FAILURE IN A REGISTER, and an instruction cannot act on its own output, so the only way to act on it is a branch -- which is the definition of a loop, and makes the retry structural rather than an optimisation artefact. MEASURED: the acquire/release bit is BIT 15 and it is one bit, the same bit in a load and a store and at every width, and the first five XORs of the family all give 0x00008000. And bit 21, which the first draft of this course called the acquire bit, is 0 in EVERY single-register word and 1 in EVERY pair word -- a constant across the family, which is the signature of a field you did not mean. FEAT_LSE replaces four instructions with one, and the same C at -O2 with and without -march=armv8.1-a gives inc_seq as `mov|ldaxr|add|stlxr|cbnz|ret` and then `mov|ldaddal|ret`. But the group's ordering bits are NOT one set: CAS has acquire at bit 22 and release at bit 15, LDADD has acquire at bit 23 and release at bit 22, bit 21 is 1 in all of them, and CASP's 128-bit-ness is bit 23 -- the bit that means acquire in the other half. That is retraction R21, and it was found by the cross-check printing `ldadd` where the assembler prints `ldaddl`.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "a64-order",
+      "title": "Acquire and Release Are Access Modes, Not Barriers",
+      "module_id": "atomic",
+      "description": "x86-64's model is strong and mostly implicit, with three fence opcodes for the exceptions. AArch64's is WEAK and the only tool for strengthening it is an ACCESS MODE on the access itself, so the same correct-looking C11 program needs different instructions and the compiler is what translates -- which makes the compiler's choices measurable. And what they measure is a zero: twelve functions performing C11 atomic operations emit THREE barriers, and all three are in functions whose source asks for a fence. A C11 acquire load and a C11 seq_cst load are the SAME instruction, one `ldar x0, [x0]`, and a release store and a seq_cst store are the same `stlr`; the extra constraint a seq_cst load carries is on its relation to OTHER operations and is discharged by those being acquire or release too. Among the three that do appear, an ACQUIRE fence narrows to `dmb ishld` and a RELEASE fence stays a full `dmb ish`, which is measured and not claimed to be wrong. The encoding half: DMB, DSB and ISB differ in TWO fields, not one -- a three-bit identity at bits[7:5] and a four-bit option at bits[11:8] carrying twelve names in sixteen codes, with the domain bits and the direction bits being the same four bits, and `ishld` being one of the combinations. ISB accepts one option. And CLREX is in the same group at an op2 value no barrier uses.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "a64-dataflow",
+      "title": "Decode the Data Path",
+      "module_id": "atomic",
+      "description": "The concept that makes the other four trustworthy, and the one that is last because a page that is mostly measurements is the page a reader is most likely to over-trust. Sixty-two claims with one of three labels, and the ratio is the finding: 33 MEASURED, 19 MEASURED-ON-BYTES, 10 QUOTED -- only 16 percent quoted, lower than the machine course's 54, because this course's subject is encodings and compilers, which is exactly what a host without hardware can measure. The round trip: 41 hand-transcribed encodings checked three ways -- a spec built from field positions times values, the transcribed table, and the assembler -- with 41 of 41 agreeing on all three. Then THREE poisons, one per reported number, each required to move the number it claims to test or the run prints [POISON FAILED], because the first version had one poison that moved the named count by 61 and the disagreement count by 0 while the sentence under the numbers claimed both had moved. And the course's most useful finding is about its own tooling: four normaliser bugs in one file each left the printed disagreement count at zero while eighty-five real decoder defects sat behind them. Not one printed a wrong word -- all four made the file stop COMPARING, which is worse, because the number is believed. Twenty-seven retractions in five kinds and fourteen limits, all printed rather than footnoted.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}

@@ -941,6 +941,49 @@ public namespace underlayer_web {
         return string()
     }
 
+    // The AArch64 DATA PATH: NEON, atomics and ordering.  Same fall-through
+    // contract: empty string for anything else.
+    //
+    // Placed IMMEDIATELY after the a64sys lookup because it shares the
+    // `a64-` prefix and it is the LAST course of that section, so the chain
+    // reads in section order.  The five ids below were checked by grepping
+    // every shipped manifest rather than by reading the section plan, and
+    // they DIFFER from the plan's names on purpose: the plan lists
+    // `a64-crypto-simd` and `a64-ldst`, and this course's brief names
+    // `a64-neonspace` and `a64-dataflow` instead.  The brief's names won for
+    // two reasons worth recording, because the choice was not cosmetic.
+    //
+    //   * `a64-ldst` describes a topic rather than a finding, and every
+    //     other concept id in this collection names what the reader is left
+    //     holding.  The structure-load content this id was going to carry
+    //     lives in `a64-neonspace`, because ld1/ld2/ld3/ld4 are in the same
+    //     opcode space as the rest of the vector file and the point of the
+    //     page is that one group has one Q bit at bits[11:10] while its
+    //     neighbours do not.
+    //   * `a64-dataflow` is the course's own word for what the artifact
+    //     does, and the artifact's 41-entry round trip is a data-flow check:
+    //     a spec, a table and an assembler, compared three ways.
+    //
+    // The order of these calls is the order in which a name was claimed, and
+    // a concept id is resolved GLOBALLY by render_concept() with no course in
+    // the key -- so a name reused here would shadow whatever course got it
+    // first, silently, with no diagnostic from anywhere.
+    public func render_a64simd_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var neon_id = std::string("a64-neon")
+        var neonspace_id = std::string("a64-neonspace")
+        var atomic_id = std::string("a64-atomic")
+        var order_id = std::string("a64-order")
+        var dataflow_id = std::string("a64-dataflow")
+
+        if(cid.equals(&neon_id)) { return underlayer_content::render_a64_neon() }
+        if(cid.equals(&neonspace_id)) { return underlayer_content::render_a64_neonspace() }
+        if(cid.equals(&atomic_id)) { return underlayer_content::render_a64_atomic() }
+        if(cid.equals(&order_id)) { return underlayer_content::render_a64_order() }
+        if(cid.equals(&dataflow_id)) { return underlayer_content::render_a64_dataflow() }
+        return string()
+    }
+
     // The x86-64 ABI. Same fall-through contract: empty string for anything
     // else.  `x86-calling` and its five siblings continue the `x86-` prefix
     // the assembly course already owns, and they are deliberately NOT
@@ -1134,6 +1177,15 @@ public namespace underlayer_web {
         // `a64-evidence` and the paragraph above says why.
         var a64sys_html = render_a64sys_concept(concept_id)
         if(a64sys_html.size() > 0) { return a64sys_html }
+        // The AArch64 data path: NEON, atomics and ordering.  Same
+        // fall-through contract, and placed IMMEDIATELY after the a64sys
+        // lookup because it shares the `a64-` prefix and is the last course
+        // of that section.  Five more ids, all checked against every shipped
+        // manifest, and two of them deliberately NOT the section plan's names
+        // -- the function above says why, and the reason is worth reading
+        // before anyone "fixes" them back.
+        var a64simd_html = render_a64simd_concept(concept_id)
+        if(a64simd_html.size() > 0) { return a64simd_html }
         // x86-64 ABI concepts; same fall-through contract.
         var x86abi_html = render_x86abi_concept(concept_id)
         if(x86abi_html.size() > 0) { return x86abi_html }

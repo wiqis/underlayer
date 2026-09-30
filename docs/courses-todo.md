@@ -108,9 +108,22 @@
 - [x] Learn AArch64 System Calls  — `a64sys`, concept `a64-syscall`
 - [x] Learn AArch64 Exceptions  — `a64sys`, concept `a64-exceptions`
 - [x] Learn AArch64 Interrupts  — `a64sys`, concept `a64-interrupts`
-- [ ] Learn AArch64 SIMD and NEON
-- [ ] Learn AArch64 Atomics
-- [ ] Learn AArch64 Memory Ordering
+- [x] Learn AArch64 SIMD and NEON  — `a64simd`, concept `a64-neon`. Five
+      views of one vector register, and the Q bit of a single load/store is
+      BIT 23 rather than bit 30 -- so a field's position is a property of an
+      instruction group and not of an architecture. `fadd q0` does not exist;
+      128-bit arithmetic is a different encoding six bits away.
+- [x] Learn AArch64 Atomics  — `a64simd`, concept `a64-atomic`. The retry is
+      a loop because the store-exclusive reports failure in a register and an
+      instruction cannot act on its own output. Acquire is BIT 15 in the
+      exclusive family; FEAT_LSE does NOT use one set of ordering bits for its
+      group (CAS: 22 and 15; LDADD: 23 and 22; bit 21 is a constant of both),
+      which the cross-check found and the course retracted as R21.
+- [x] Learn AArch64 Memory Ordering  — `a64simd`, concept `a64-order`. Twelve
+      functions performing C11 atomics emit THREE barriers, all three in
+      functions whose source asks for a fence, and a C11 seq_cst load and a
+      C11 acquire load are the SAME `ldar`. DMB/DSB/ISB differ in TWO fields,
+      and the four-bit option field is the one everybody forgets. No timings.
 - [x] Learn AArch64 Virtual Memory  — `a64sys`, concept `a64-virtual`
 - [x] Learn AArch64 Page Tables  — `a64sys`, concept `a64-pagetables`. The
       hinge into the ELF courses: `sh_addralign` carries the 2 MiB

@@ -89,6 +89,23 @@ PREFIXES = {
     "a64sys": ("a64_syscall.ch", "a64_exceptions.ch", "a64_interrupts.ch",
                "a64_virtual.ch", "a64_pagetables.ch", "a64_evidence.ch",
                "a64sys_landing.ch"),
+    # The FOURTH and LAST AArch64 course.  Five concepts plus a landing page,
+    # and every id is DISJOINT from the three AArch64 courses before it, which
+    # is the whole point: a concept id is resolved GLOBALLY by
+    # render_concept() in web/src/helpers.ch with no course in the key, so two
+    # courses cannot claim one name.  Two of these five are deliberately NOT
+    # the section plan's names (`a64-crypto-simd` and `a64-ldst`); the
+    # reasons are in web/src/helpers.ch and they are about what a concept id
+    # should name, not about availability.
+    #
+    # Its artifact is `a64data.py` and its output is `a64data.out`, so it
+    # needs its own OUTPUTS entry for the reason the second and third
+    # AArch64 courses did: a table that names one course's output file leaves
+    # the next course's pages silently checked against a file they do not
+    # belong to.  The quoted-block filter below learned about `./a64data.py`
+    # for the same reason it learned about `./a64dec.py` and `./a64abi.py`.
+    "a64simd": ("a64_neon.ch", "a64_neonspace.ch", "a64_atomic.ch",
+                "a64_order.ch", "a64_dataflow.ch", "a64simd_landing.ch"),
 }
 OUTPUTS = {
     "x86asm": "x86dec.out",
@@ -98,6 +115,7 @@ OUTPUTS = {
     "a64asm": "a64dec.out",
     "a64abi": "a64abi.out",
     "a64sys": "a64sys.out",
+    "a64simd": "a64data.out",
 }
 PREF = PREFIXES.get(COURSE, (COURSE[:3],))
 if not isinstance(PREF, tuple):
@@ -120,8 +138,21 @@ EXEMPT = {
     "243":  "the a64asm harness's own check count",
     "166":  "the a64abi harness's own check count",
     "210":  "the a64sys harness's own check count",
+    "268":  "the a64simd harness's own check count",
     "0x9f": "a hint encoding quoted in a64sys, present in a64sys.out",
 }
+
+# The command lines a quoted-output block may name.  A block that contains one
+# of these is showing recorded tool output; a block that contains none is the
+# author's own prose in a monospace box, and its decimals are arithmetic rather
+# than measurement.  This is the SAME list a course is added to twice -- once
+# here and once in PREFIXES -- and that duplication is deliberate rather than
+# unfortunate: a course is a PAGE SET and a COMMAND, and a tool that derived
+# one from the other would stop being able to check a course whose pages
+# quote a command no course name resembles.
+ARTIFACT_CMDS = ("./x86dec", "./sysdump", "./a64dec", "./a64abi", "./a64sys",
+                 "a64sys.py", "./a64data", "a64data.py", "crosscheck.py",
+                 "build_samples.sh")
 
 TICK = re.compile(r"(\d+\.\d{3}) ticks/op")
 HEX = re.compile(r"(0x[0-9a-f]{8,16})\b")
@@ -148,9 +179,13 @@ for name in sorted(os.listdir(os.path.join(ROOT, "content", "src"))):
         # filter was widened here anyway because a filter that passes by luck
         # is a filter that will fail by accident.  The check is now: does the
         # block contain a shell prompt or a known artifact command?
-        if "$ " not in b and "./x86dec" not in b and "./sysdump" not in b \
-                and "./a64dec" not in b and "./a64abi" not in b \
-                and "./a64sys" not in b and "a64sys.py" not in b \
+        # The artifact list is a growing TABLE rather than a growing
+        # condition, and it is a table because the condition form has now
+        # been extended four times and each extension is a chance to type a
+        # prefix that no page uses -- a filter that skips every page of the
+        # next course reports clean, which is the failure mode this whole
+        # tool exists to prevent.
+        if "$ " not in b and not any(k in b for k in ARTIFACT_CMDS) \
                 and "objdump" not in b:
             continue
         for pat, kind in ((TICK, "ticks/op"), (HEX, "hex"), (RATIO, "ratio")):

@@ -172,6 +172,47 @@ Ordering). ~5 concepts.
     AArch64 differs from x86-64 **in kind** rather than in detail, and the
     neutral courses taught the principle; this is the reference.
 
+### What shipped, and the two ids that changed
+
+**Course D (`a64simd`) is built and verified.** Five concepts, two modules,
+127 minutes, and it closes the section: all thirteen ARM64 roadmap items in
+`docs/courses-todo.md` are now `[x]`, and the four AArch64 courses are
+`a64asm` → `a64abi` → `a64sys` → `a64simd`.
+
+The concept list above is the PLAN and two of the five ids shipped under
+different names, both of which were deliberate and both of which are recorded
+where the ids are resolved (`web/src/helpers.ch`):
+
+| plan | shipped | why |
+|---|---|---|
+| 18. `a64-crypto-simd` | **`a64-neonspace`** | the plan's name describes a *topic* and every other concept id in this collection names what the reader is left *holding*. The concept's finding is the shared-memory-space measurement — five compiles at five vector lengths, five identical words — and `a64-neonspace` is what it establishes. |
+| 19. `a64-ldst` | *folded into* `a64-neonspace` | `ld1`/`ld2`/`ld3`/`ld4` are in the same opcode space as the rest of the vector file, and the page's whole point is that the structure load's size is `bits[11:10]` and its Q bit is bit 30 while the single load's size is `bits[31:30]` **plus** bit 23. Splitting them across two concepts would have separated the measurement from the comparison that makes it mean anything. |
+| 20. `a64-atomic` | `a64-atomic` | as planned |
+| 21. `a64-order` | `a64-order` | as planned |
+| — | **`a64-dataflow`** | the artifact concept, and named for what the artifact does: encode 41 entries from a field specification, decode them back, and compare three ways. The plan gives `a64-verify` to all three later courses; `a64asm` took it first, `a64sys` renamed to `a64-evidence`, and this is the third rename for the same reason — **a concept id is resolved GLOBALLY by `render_concept()` with no course in the key, so two courses cannot claim one name and the second one silently serves the first one's page.** |
+
+Two things this course found that the plan did not anticipate, and both are
+worth reading because they are about the *plan's own premises* rather than
+about the subject:
+
+1. **The plan's claim that the field map is the course's centre is right, and
+   the plan did not say that a field map is not enough.** Concept 1 measures
+   that a field's *position* differs per instruction group — bit 23 for a
+   vector load, bit 30 for a vector add, bits[11:10] for a structure load, and
+   **no bit at all** for an SVE vector length. So the thing a decoder author
+   needs is not a field map but a *group map*, and the two are different
+   artefacts.
+2. **The plan did not anticipate that the cross-check itself would be the
+   most defective thing in the course.** Seven of the twenty-seven retractions
+   were found by one change to a normaliser, and all seven were real decoder
+   defects that had been sitting behind a comparison which had silently
+   stopped comparing — the printed disagreement count was `0` the whole time.
+   The artifact now runs **three** poisons, one per reported number, and
+   requires each to move the number it claims to test. The plan's rule 13
+   (label every claim) is what made that visible: a page of measurements with
+   no labels is a page a reader over-trusts, and this course's own artifact
+   was the over-trusted thing.
+
 ## The no-duplication seam
 
 Seven neutral courses already taught these topics neutrally, plus the four
