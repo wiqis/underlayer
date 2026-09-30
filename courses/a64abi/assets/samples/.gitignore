@@ -1,0 +1,15 @@
+# Object files and generated assembly are NOT committed.  They are
+# reproducible from abi.c, frame.s, frame86.s, regs.s and align.s with one
+# command (./build_samples.sh), and a course whose numbers are only
+# checkable on the machine that produced them is a course whose numbers are
+# claims.
+*.o
+abi_*.s
+x86_*.s
+_probe.s
+_probe.o
+_p.s
+_p.o
+one.s
+one.o
+__pycache__/

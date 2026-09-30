@@ -867,6 +867,33 @@ public namespace underlayer_web {
         return string()
     }
 
+    // The AArch64 Procedure Call Standard.  Same fall-through contract: empty
+    // string for anything else.  Five ids, and the prefix is `a64-` again
+    // because the AArch64 assembly course already owns it and the ids are
+    // disjoint from its five.  Two of the names in the section plan for this
+    // course -- `a64-verify` for the artifact concept, which a64asm took
+    // first, and `a64-abi` for the course -- were checked against every
+    // shipped manifest before these five were chosen, and none of them is in
+    // use.  The check matters for the same reason it matters everywhere in
+    // this file: render_concept() resolves ids GLOBALLY with no course in the
+    // key, so a collision is silent and the first course to claim a name
+    // keeps it.
+    public func render_a64abi_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var aapcs_id = std::string("a64-aapcs")
+        var registers_id = std::string("a64-registers")
+        var frame_id = std::string("a64-frame")
+        var save_id = std::string("a64-save")
+        var unwind_id = std::string("a64-unwind")
+
+        if(cid.equals(&aapcs_id)) { return underlayer_content::render_a64_aapcs() }
+        if(cid.equals(&registers_id)) { return underlayer_content::render_a64_registers() }
+        if(cid.equals(&frame_id)) { return underlayer_content::render_a64_frame() }
+        if(cid.equals(&save_id)) { return underlayer_content::render_a64_save() }
+        if(cid.equals(&unwind_id)) { return underlayer_content::render_a64_unwind() }
+        return string()
+    }
+
     // The x86-64 ABI. Same fall-through contract: empty string for anything
     // else.  `x86-calling` and its five siblings continue the `x86-` prefix
     // the assembly course already owns, and they are deliberately NOT
@@ -1042,6 +1069,15 @@ public namespace underlayer_web {
         // prefix no other course uses.
         var a64asm_html = render_a64asm_concept(concept_id)
         if(a64asm_html.size() > 0) { return a64asm_html }
+        // The AArch64 Procedure Call Standard; same fall-through contract.
+        // Placed IMMEDIATELY after the a64asm lookup, because these two
+        // courses share a prefix and this one is the ABI half of the subject
+        // the other one is the encoding half of.  The order of these calls is
+        // the order in which a name was claimed, and the five ids below were
+        // checked against every other course in this directory first, so
+        // nothing here can shadow anything.
+        var a64abi_html = render_a64abi_concept(concept_id)
+        if(a64abi_html.size() > 0) { return a64abi_html }
         // x86-64 ABI concepts; same fall-through contract.
         var x86abi_html = render_x86abi_concept(concept_id)
         if(x86abi_html.size() > 0) { return x86abi_html }

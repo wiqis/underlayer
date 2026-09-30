@@ -1,0 +1,82 @@
+{
+  "id": "a64abi",
+  "title": "The AArch64 Procedure Call Standard",
+  "version": "1.0.0",
+  "description": "There is no AArch64 machine on the machine that wrote this course and no emulator, so not one instruction in it has been run and there are no timings anywhere -- and the two things the plan for this course got wrong are both numbers rather than shapes: the stack alignment rule is 16 bytes and not 128, and a 32-bit write to an AArch64 register is one bit and not a second register file. 36 of 36 argument placements audited by name at four optimisation levels; the 9th integer lands at [sp+0] because x30 holds the return address and there is nothing on the stack to skip. AArch64 has no red zone, the region below SP is the inactive region, and the cost is two instructions in every function with locals: 25 of 25 allocate a frame at -O0 against x86-64's 7. AAPCS64 preserves the bottom 64 bits of v8-v15 and not of v0-v7, clang uses the platform register x18 zero times, and NZCV has no mnemonic at all. The unwind table is 27.0% of .text at -O0 and 42.3% at -O2, and no function ever gains a CFI row while two of them double their rules.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 5 concepts, reproduce the 166 checks in courses/a64abi/assets/samples/crosscheck.py against the shipped a64abi.out -- which needs no toolchain at all -- then change one guard in a64abi.py, any guard, one bit, and make the poisoned cross-check in section 10 move by name: the named count must fall from 2078 to 1859 and the disagreement count must rise from 0 to 304.",
+  "min_score": 70,
+  "dependencies": [
+    "a64asm"
+  ],
+  "modules": [
+    {
+      "id": "call",
+      "title": "The Call: Who Passes What, and in Which Register",
+      "concepts": [
+        "a64-aapcs",
+        "a64-registers"
+      ]
+    },
+    {
+      "id": "frame",
+      "title": "The Frame: What the Callee Must Ask For, and What It Must Describe",
+      "concepts": [
+        "a64-frame",
+        "a64-save",
+        "a64-unwind"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "a64-aapcs",
+      "title": "The Calling Convention, and the Number That Was 128",
+      "module_id": "call",
+      "description": "The AAPCS64 says SP mod 16 = 0, in both 5.2.2.1 and 5.2.2.2, and the largest scale anywhere in the A64 load/store family is 16 -- so the reason the section plan gave, NEON's `LDP q0, q1`, implies 16 and not the 128 the same plan claimed. 36 of 36 argument placements audited by name at four optimisation levels, and the 9th integer lands at [sp + 0] because x30 holds the return address and there is no return address on the stack to skip. Then the check: walk every SP delta and test the running sum at every branch, and 0 of 151 branches are made with SP not a multiple of 16.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "a64-registers",
+      "title": "One Register, Two Names, and Three Things Called 31",
+      "module_id": "call",
+      "description": "Six w/x pairs of the same instruction, and every single one of them differs by exactly one bit: bit 31. A 32-bit write ZEROES the top half, so `mov w0, #-1` and `mov x0, #-1` are the same immediate in the same field and mean different things -- and the zero extension is not even an instruction on this architecture, it is what the other bit of the same word does for free. Register 31 is sp in a destination, xzr in a logical source, and the assembler REFUSES `str w0, [x31, #12]` rather than pretend the slot is a general register. `mov x0, sp` and `mov x0, xzr` look like one instruction and are in two different encoding groups.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "a64-frame",
+      "title": "No Red Zone, and the Two Instructions That Is Worth",
+      "module_id": "frame",
+      "description": "AArch64 has no red zone: AAPCS64 5.2.2.1 calls the region below SP the inactive region and forbids access to it, so every function that wants memory must ask. 25 of 25 functions allocate a frame at -O0 and 14 of 25 at -O1 and above, against 7 and then 5 for the same C on x86-64 -- and the nine extra are exactly the ones whose C asks for memory that does not fit in a register. Hand-written, the same leaf with a frame is 11 instructions on AArch64 and 8 on x86-64, and the difference is `sub sp, sp, #16` / `add sp, sp, #16`. Four of the five ways to move SP read AND write it in one instruction, so a counter that only counts `sub sp, sp, #N` misses all four.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "a64-save",
+      "title": "Callee-Saved, and the Count of Zero That Is Also a Rule",
+      "module_id": "frame",
+      "description": "x19-x28 and the bottom 64 bits of v8-v15 -- not v0-v7, which are the argument registers and are entirely caller-saved, and a course that got the range wrong would have to explain a callee saving the registers its arguments just arrived in. `many` saves all ten x19-x28 in five stp pairs at -O2 because there are seven caller-saved temporaries and twelve live values, so x19-x28 is what is left rather than a set of ten chosen registers; `fmany` saves d8-d15 and not q8-q15, obeying the clause exactly. The platform register x18 occurs zero times in the corpus because Linux does not reserve it, and NZCV occurs zero times because it has no mnemonic at all.",
+      "estimated_minutes": 25,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "a64-unwind",
+      "title": "The Frame in a Second Language, and the Shape That Was Not There",
+      "module_id": "frame",
+      "description": "One frame, described twice: 4 instructions on the left, 10 CFI directives on the right. And the measurement the course was written to make is not the one that happened -- no function ever gains a CFI row, nine of them go from 2 rows to 0, and what rises is the DW_CFA_offset rule count: `many` holds 4 rows and its FDE grows 40 to 64 bytes, `fmany` holds 4 rows and grows 36 to 76. Rows and rules move in OPPOSITE directions in the same function, so the information content is the product and optimisation moves the two against each other. And the table is a fixed fraction of the code: 27.0% of .text at -O0, 42.3% at -O2, because the cost is a function of the NUMBER OF FUNCTIONS.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}

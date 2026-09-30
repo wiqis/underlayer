@@ -1,0 +1,1417 @@
+============================================================================
+a64abi -- the artifact for "The AArch64 Procedure Call Standard"
+============================================================================
+THE METHOD IS FORCED AND IT IS STATED FIRST:
+  there is no AArch64 machine on this host, no AArch64 emulator and
+  no AArch64 linker, so NOT ONE INSTRUCTION IN THIS COURSE HAS
+  BEEN RUN and there are NO TIMINGS anywhere in this file or on any
+  of its five pages.  The x86-64 section measured a 4.92x and a
+  27.65x; nothing here has a counterpart and nothing here fakes one.
+
+  the two readers are the decoder in this file and llvm-objdump-21,
+  and every claim about bytes is read by both (MEASURED-ON-BYTES).
+  the specification is the ORACLE and the compiler is the TEST
+  SUBJECT, and every disagreement is printed as a RETRACTION in
+  section 11 and asserted as text by crosscheck.py.
+
+  every claim carries one of three labels: MEASURED,
+  MEASURED-ON-BYTES, QUOTED.
+============================================================================
+
+============================================================================
+   1  THE INSTRUMENT, AND WHAT IT IS NOT
+     printed before any measurement, because it decides what may be claimed
+============================================================================
+  host compiler   Ubuntu clang version 21.1.8 (6ubuntu1)
+  disassembler    Ubuntu LLVM version 21.1.8
+  readelf         Ubuntu LLVM version 21.1.8
+  host CPU        x86-64.  There is NO AArch64 silicon here.
+  AArch64 linker  ABSENT
+  AArch64 qemu    ABSENT
+
+     NOT ONE INSTRUCTION IN THIS COURSE HAS BEEN RUN. There is no AArch64
+     machine on this host, no AArch64 emulator, and no AArch64 linker, so
+     nothing here is a duration, a fault, a throughput or a portability
+     claim, and no page in this course contains one.
+
+     The x86-64 ABI course in the previous section measured a 4.92x and a
+     27.65x. Nothing in this section has a counterpart, because there is
+     no AArch64 clock to read. The one cross-architecture comparison in
+     this file -- section 7, the same C for both targets -- is a
+     COMPILE-TIME INSTRUCTION COUNT and it says so every time it appears.
+
+  Every claim in this file carries exactly one of three labels:
+
+    MEASURED           an experiment on the compiler, the object file or the
+                      bytes.  What the compiler chose, what the
+                      encoding says, what the unwind table holds.
+    MEASURED-ON-BYTES  a property of the emitted bytes, read TWICE -- by the
+                      decoder in this file and by llvm-objdump-21 --
+                      and the two readers compared word by word in
+                      section 10.
+    QUOTED             a manual claim, with the document and the section
+                      printed next to it, never mixed in with a
+                      measurement.
+
+  The two readers share a source tree.  clang assembled the corpus and
+  llvm-objdump-21 disassembled it, and both come from one LLVM.  The
+  cross-check in section 10 therefore establishes that this decoder
+  and one other piece of software agree on what the bytes mean -- NOT
+  that either agrees with the silicon.  Section 10 poisons the model
+  table to show the check can fail.
+
+
+============================================================================
+   2  THE SPECIFICATION, AS AN ORACLE
+     QUOTED, and printed before any measurement so a reader can check the oracle against a compiler in the hand
+============================================================================
+  AAPCS64 -- Procedure Call Standard for the Arm 64-bit Architecture,
+  ARM-software/abi-aa, release 2025Q4, date of issue 23 January 2026.
+  The whole of the following is QUOTED.  It is the ORACLE: the
+  compiler is the TEST SUBJECT, and every disagreement with these
+  sentences is printed as a retraction in section 11.
+
+  A.1      the Next General-purpose Register Number (NGRN) is set to zero
+           the Next General-purpose Register Number (NGRN) is set to zero
+  A.2      the Next SIMD and Floating-point Register Number (NSRN) is set t
+           the Next SIMD and Floating-point Register Number (NSRN) is set to
+           zero
+  A.4      the next stacked argument address (NSAA) is set to the current s
+           the next stacked argument address (NSAA) is set to the current
+           stack-pointer value (SP)
+  C.1      If the argument is an 8-bit, Half-, Single-, Double- or Quad-pre
+           If the argument is an 8-bit, Half-, Single-, Double- or
+           Quad-precision Floating-point or short vector type and the NSRN is
+           less than 8, then the argument is allocated to the least
+           significant bits of register v[NSRN]. The NSRN is incremented by
+           one.
+  C.9      If the argument is an Integral or Pointer Type, the size of the 
+           If the argument is an Integral or Pointer Type, the size of the
+           argument is less than or equal to 8 bytes and the NGRN is less
+           than 8, the argument is copied to the least significant bits in
+           x[NGRN]. The NGRN is incremented by one.
+  C.13     The NGRN is set to 8.
+           The NGRN is set to 8.
+  C.16     If the size of the argument is less than 8 bytes then the size o
+           If the size of the argument is less than 8 bytes then the size of
+           the argument is set to 8 bytes.
+  C.17     The argument is copied to memory at the adjusted NSAA.  The NSAA
+           The argument is copied to memory at the adjusted NSAA. The NSAA is
+           incremented by the size of the argument.
+  5.2.2.1  Additionally, at any point at which memory is accessed via SP, t
+           Additionally, at any point at which memory is accessed via SP, the
+           hardware requires that SP mod 16 = 0. The stack must be quad-word
+           aligned.
+  5.2.2.2  The stack must also conform to the following constraint at a pub
+           The stack must also conform to the following constraint at a
+           public interface: SP mod 16 = 0. The stack must be quad-word
+           aligned.
+  5.1.1    The first eight registers, r0-r7, are used to pass argument valu
+           The first eight registers, r0-r7, are used to pass argument values
+           into a subroutine and to return result values from a function.
+  6.1.2    The first eight registers, v0-v7, are used to pass argument valu
+           The first eight registers, v0-v7, are used to pass argument values
+           into a subroutine and to return result values from a function.
+  6.1.1    Registers r19-r29 and SP are Callee-saved.  All 64 bits of each 
+           Registers r19-r29 and SP are Callee-saved. All 64 bits of each
+           value stored in r19-r29 are Callee-saved.
+  6.1.2    Registers v8-v15 are Callee-saved and the remaining registers (v
+           Registers v8-v15 are Callee-saved and the remaining registers
+           (v0-v7, v16-v31) are Caller-saved. Additionally, only the bottom
+           64 bits of each value stored in v8-v15 need to be Callee-saved; it
+           is the responsibility of the caller to preserve larger values.
+  5.1.1    The role of register r18 is platform specific.  If a platform AB
+           The role of register r18 is platform specific. If a platform ABI
+           has need of a dedicated general-purpose register to carry
+           inter-procedural state then it should use this register for that
+           purpose. If the platform ABI has no such requirements, then it
+           should use r18 as an additional Caller-saved register.
+  5.2.3    Conforming code shall construct a linked list of stack-frames.  
+           Conforming code shall construct a linked list of stack-frames.
+           Each frame shall link to the frame of its caller by means of a
+           frame record of two 64-bit values on the stack.
+  5.1.1    The N, Z, C and V flags are undefined on entry to and return fro
+           The N, Z, C and V flags are undefined on entry to and return from
+           a public interface.
+
+  [QUOTED]         The alignment rule is SIXTEEN, in both places it is stated, and it
+     is stated TWICE -- once as a universal constraint and once at a
+     public interface -- which is a document telling you it matters
+     twice.
+
+  [QUOTED]         A.1 and A.2 are the WHOLE of the register-assignment rule for a
+     simple case, and the fact that they are TWO counters is the thing a
+     reader has to notice. C.1 reads NSRN and C.9 reads NGRN, and neither
+     mentions the other.
+
+
+============================================================================
+   3  THE ENCODING, AND THE SIX MODELS THIS COURSE HAD TO ADD
+     because the first model of a decoder is a list of the things it cannot name
+============================================================================
+  /home/wakaztahir/work/wiqis/Web/underlayer/courses/a64asm/assets/samples  (a64asm's decoder, imported)
+  21 models in it, 6 added here, 27 in this file.
+
+  Each model checks its own fixed bits first, so the dispatch is a
+  decision tree a reader can follow top to bottom.  The six this
+  course adds are the six the PROCEDURE CALL STANDARD needs and the
+  ENCODING course did not have:
+
+  model            the guard it checks                   
+  m_ldst_fp        bits[29:27] = 0b111, V = bit[26] = 1  
+                   SIMD&FP load/store single: the scaled 12-bit form at
+                   bits[25:24]=01 and the unscaled 9-bit form at 00. The
+                   scale is the register SIZE, so one source offset is
+                   three different fields for s, d and q.
+  m_ldlit_fp       bits[29:27] = 0b011, V = bit[26] = 1  
+                   LDR (literal) for s, d and q only: a 19-bit WORD offset,
+                   and b and h are refused by the assembler.
+  m_pair_fp        bits[29:27] = 0b101, V = bit[26] = 1  
+                   SIMD&FP load/store pair, three widths, and the largest
+                   scale in the whole load/store family is the q pair's 16.
+  m_fp_2src        bits[28:21] = 0b11110011, V = 1, 64-bit size
+                   Floating-point arithmetic: the (bits[15:10], bit 20)
+                   pair is what separates FMOV from FNEG and FABS from
+                   FSQRT.
+  m_fp_cvt         V = 1, and bit 28 = 1 or bits[29:24] = 0b011111
+                   FP<->integer conversion, and the 8-bit floating-point
+                   IMMEDIATE that is the only way to write a constant in
+                   one instruction.
+  m_addsub_ext     bits[28:24] = 0b01011, bits[23:21] = 0b001
+                   Add/subtract extended register, one bit at 21 from the
+                   shifted form, and the source is read as a W register
+                   whatever the destination is.
+
+  ------------------------------------------------------------------------
+  THE SWEEP: what the assembler accepts, and what it refuses.
+  ------------------------------------------------------------------------
+  source                  verdict   encoding      second read note
+  stp q0, q1, [sp]        ACCEPTED  0xad0007e0  stp	q0, q1 a q pair at offset 0
+  stp q0, q1, [sp, #16]   ACCEPTED  0xad0087e0  stp	q0, q1 a q pair at +16
+  stp q0, q1, [sp, #1008] ACCEPTED  0xad1f87e0  stp	q0, q1 the far end of the q pair range
+  stp q0, q1, [sp, #-1024] ACCEPTED  0xad2007e0  stp	q0, q1 the near end
+  stp q0, q1, [sp, #8]    REFUSED   -             -          index must be a multiple of 16 in range [-1024, 1008].
+  stp q0, q1, [sp, #1016] REFUSED   -             -          index must be a multiple of 16 in range [-1024, 1008].
+  stp d0, d1, [sp, #8]    ACCEPTED  0x6d0087e0  stp	d0, d1 a d pair at +8
+  stp d0, d1, [sp, #4]    REFUSED   -             -          index must be a multiple of 8 in range [-512, 504].
+  stp w0, w1, [sp, #4]    ACCEPTED  0x290087e0  stp	w0, w1 a w pair at +4
+  stp w0, w1, [sp, #2]    REFUSED   -             -          index must be a multiple of 4 in range [-256, 252].
+  stp b0, b1, [sp]        REFUSED   -             -          invalid operand for instruction
+  stp h0, h1, [sp]        REFUSED   -             -          invalid operand for instruction
+  str q0, [sp, #16]       ACCEPTED  0x3d8007e0  str	q0, [s a scaled q store
+  str q0, [sp, #8]        ACCEPTED  0x3c8083e0  stur	q0, [ a q store at +8 -- WATCH THIS ONE
+  str d0, [sp, #8]        ACCEPTED  0xfd0007e0  str	d0, [s a scaled d store
+  str s0, [sp, #4]        ACCEPTED  0xbd0007e0  str	s0, [s a scaled s store
+  stur q0, [sp, #8]       ACCEPTED  0x3c8083e0  stur	q0, [ the UNSCALED q store at +8
+  stur q0, [x1, #4]       ACCEPTED  0x3c804020  stur	q0, [ the unscaled q store at +4
+  stur q0, [x1, #508]     REFUSED   -             -          index must be an integer in range [-256, 255].
+  stur q0, [x1, #-256]    ACCEPTED  0x3c900020  stur	q0, [ the near end of the unscaled range
+  stur q0, [x1, #-264]    REFUSED   -             -          index must be an integer in range [-256, 255].
+  ldr q0, 8               ACCEPTED  0x9c000040  ldr	q0, 0x the literal load of a q
+  ldr b0, 8               REFUSED   -             -          invalid operand for instruction
+  fmov d0, #1.0           ACCEPTED  0x1e6e1000  fmov	d0, # the 8-bit floating-point immediate
+  fmov d0, #32.0          REFUSED   -             -          expected compatible register or floating-point constant
+  fmov d0, #2.0           ACCEPTED  0x1e601000  fmov	d0, # in range, one step down
+  add x1, x2, w3, uxtw    ACCEPTED  0x8b234041  add	x1, x2 the extended-register add
+  add x1, x2, w3, uxtx    REFUSED   -             -          expected '[su]xt[bhw]' with optional integer in range [0, 4]
+  str w0, [x31, #12]      REFUSED   -             -          invalid operand for instruction
+
+  [MEASURED]       17 accepted, 12 refused, and 7 distinct diagnostics.
+     The row to read twice is `str q0, [sp, #8]`. It is ACCEPTED and the
+     assembler does not complain, and it does not become an STR -- it
+     becomes a STUR, a DIFFERENT ENCODING in a different bit field,
+     because the scaled form cannot express an address that is not a
+     multiple of 16 and the unscaled form can. A reader who wrote `str
+     q0, [sp, #8]` and read the source back would conclude the machine
+     accepted a misaligned vector store, and the encoding says the
+     assembler went around the restriction instead.
+
+  [MEASURED]       The q PAIR range is [-1024, 1008] and not [-1024, 1024].  1008 is
+     63 x 16, and 64 x 16 = 1024 is one step past the end. A scaled field
+     has an UNSYMMETRIC reach and the assembler prints the asymmetry
+     rather than the maximum.
+
+  ------------------------------------------------------------------------
+  COVERAGE: the same corpus, the same two readers, before and after.
+  ------------------------------------------------------------------------
+  O0    741 instructions:  736 named with all 27 models,  548 with the 21 the encoding course had, so 188 are ADDED by this course.
+  O2    468 instructions:  462 named with all 27 models,  347 with the 21 the encoding course had, so 115 are ADDED by this course.
+
+  [MEASURED]       The classes the procedure call standard needs are exactly the ones
+     the encoding course declared out of scope. `a64-verify` says "the
+     subset is a subset of NAMES, not of LENGTHS" as a decoder caveat;
+     this course is where that sentence becomes load-bearing, because a
+     decoder that cannot name `stp q0, q1` cannot check the alignment
+     rule, and the alignment rule is what concept 1 of this course is
+     about.
+
+  still unmodelled at -O2, by class, and COUNTED rather than dropped:
+    Advanced SIMD                      6
+
+  [MEASURED]       Those are Advanced SIMD vector arithmetic and the FP conversions,
+     and they belong to the NEON course later in this section. An
+     unmodelled word still contributes exactly 4 bytes, which is the one
+     thing a fixed-width encoding gives you for free.
+
+
+============================================================================
+   4  THE ARGUMENT AUDIT
+     the specification is the oracle, the compiler is the test subject, and a disagreement is a retraction
+============================================================================
+     A census would say "eight registers were written before the call".
+     An AUDIT says which ARGUMENT was in which register, by name. The
+     corpus gives every argument its own `volatile` global with its own
+     immediate offset, so `ARGI[3]` is literally the `#24` in the
+     disassembly and no amount of cleverness on the compiler's part can
+     hide which value went where. Four optimisation levels, and the C is
+     identical in all four.
+
+  ------------------------------------------------------------------------
+  4A.  NINE INTEGER ARGUMENTS.  caller `c9`, callee `i9`.
+  ------------------------------------------------------------------------
+  level register args stacked, and where
+  O0    0:x0  1:x1  2:x2  3:x3  4:x4  5:x5  6:x6  7:x7  8:sp+0
+  O1    0:x0  1:x1  2:x2  3:x3  4:x4  5:x5  6:x6  7:x7  8:sp+0
+  O2    0:x0  1:x1  2:x2  3:x3  4:x4  5:x5  6:x6  7:x7  8:sp+0
+  Os    0:x0  1:x1  2:x2  3:x3  4:x4  5:x5  6:x6  7:x7  8:sp+0
+
+  [MEASURED]       36 of 36 argument placements agree with C.9, C.13 and C.17, at every level.
+
+     . The 9th argument is at [sp + 0] at the moment of the call, which is
+     . what A.4 says: "the next stacked argument address (NSAA) is set to the
+     . current stack-pointer value (SP)". There is no return address on the
+     . stack to skip -- x30 holds it -- so the first stacked argument is at
+     . offset ZERO and the AAPCS64 says so in one sentence instead of in a
+     . diagram. That is a difference in KIND from x86-64, where the return
+     . address is pushed and the first stack argument is at +8, and it is the
+     . reason every offset in this file is 8 lower than the x86-64 course
+     . printed.
+
+  ------------------------------------------------------------------------
+  4B.  NINE DOUBLE ARGUMENTS.  caller `cd9`, callee `d9`.
+  ------------------------------------------------------------------------
+  level which argument went to which d register
+  O0    0:d0  1:d1  2:d2  3:d3  4:d4  5:d5  6:d6  7:d7  8:stack@8
+  O1    0:d0  1:d1  2:d2  3:d3  4:d4  5:d5  6:d6  7:d7  8:stack@8
+  O2    0:d0  1:d1  2:d2  3:d3  4:d4  5:d5  6:d6  7:d7  8:stack@8
+  Os    0:d0  1:d1  2:d2  3:d3  4:d4  5:d5  6:d6  7:d7  8:stack@8
+
+  ------------------------------------------------------------------------
+  4C.  MIXED, AND THE TWO COUNTERS ARE INDEPENDENT.
+  ------------------------------------------------------------------------
+  O0   cm8  ints: 0->x0  1->x1  2->x2  3->x3
+            fps : 0->d0  1->d1  2->d2  3->d3   stacked at: none
+  O0   cm18 ints: 0->x0  1->x1  2->x2  3->x3  4->x4  5->x5  6->x6  7->x7
+            fps : 0->d0  1->d1  2->d2  3->d3  4->d4  5->d5  6->d6  7->d7   stacked at: [0, 8]
+  O1   cm8  ints: 0->x0  1->x1  2->x2  3->x3
+            fps : 0->d0  1->d1  2->d2  3->d3   stacked at: none
+  O1   cm18 ints: 0->x0  1->x1  2->x2  3->x3  4->x4  5->x5  6->x6  7->x7
+            fps : 0->d0  1->d1  2->d2  3->d3  4->d4  5->d5  6->d6  7->d7   stacked at: [0, 8]
+  O2   cm8  ints: 0->x0  1->x1  2->x2  3->x3
+            fps : 0->d0  1->d1  2->d2  3->d3   stacked at: none
+  O2   cm18 ints: 0->x0  1->x1  2->x2  3->x3  4->x4  5->x5  6->x6  7->x7
+            fps : 0->d0  1->d1  2->d2  3->d3  4->d4  5->d5  6->d6  7->d7   stacked at: [0, 8]
+  Os   cm8  ints: 0->x0  1->x1  2->x2  3->x3
+            fps : 0->d0  1->d1  2->d2  3->d3   stacked at: none
+  Os   cm18 ints: 0->x0  1->x1  2->x2  3->x3  4->x4  5->x5  6->x6  7->x7
+            fps : 0->d0  1->d1  2->d2  3->d3  4->d4  5->d5  6->d6  7->d7   stacked at: [0, 8]
+
+  [MEASURED]       In m8 the four integers went to x0,x1,x2,x3 and the four doubles
+     to d0,d1,d2,d3, in SOURCE ORDER, interleaved. Two rules that were
+     read as one hypothesis ("arguments go in order across both banks")
+     and the other ("each bank has its own counter") make the same
+     prediction here, so m8 alone does not separate them -- which is why
+     m18 exists, with nine of each so that the ninth integer and the
+     ninth double BOTH overflow and the order in the outgoing area is
+     then observable.
+
+     . m18 puts the 9th INTEGER at [sp+0] and the 9th DOUBLE at [sp+8], which
+     . is the order they appear in the parameter list and the order C.17 lays
+     . them out. The two sequences do not share a counter, so a mixed call
+     . can have arguments 8 and 9 in different banks at the same stack offset
+     . range -- and it is the SPECIFICATION that decides which of the two
+     . goes first, by processing the list left to right.
+
+  ------------------------------------------------------------------------
+  4D.  THE RESULT, AND THE INDIRECT RESULT REGISTER.
+  ------------------------------------------------------------------------
+  O0   r1     mul x0, x8, x9  add sp, sp, #16  ret
+  O0   r1d    fmul d0, d0, d1  add sp, sp, #16  ret
+  O0   rbig   add w8, w8, #1  add sp, sp, #32  ret
+  O1   r1     add x0, x0, x0, lsl #1  ret
+  O1   r1d    fmul d0, d0, d1  ret
+  O1   rbig   add x9, x9, #8  add x0, x0, #1  ret
+  O2   r1     add x0, x0, x0, lsl #1  ret
+  O2   r1d    fmul d0, d0, d1  ret
+  O2   rbig   add v2.2d, v0.2d, v2.2d  add v0.2d, v0.2d, v3.2d  ret
+  Os   r1     add x0, x0, x0, lsl #1  ret
+  Os   r1d    fmul d0, d0, d1  ret
+  Os   rbig   add v2.2d, v2.2d, v1.2d  add x9, x9, #16  ret
+
+  [MEASURED]       An integer result comes back in x0 and a double in d0 -- the
+     FIRST argument register, not a dedicated one. The AAPCS64 puts them
+     there with a sentence: "the result is returned in the same registers
+     as would be used for such an argument". A struct too large for a
+     register is different: the caller allocates the memory, the callee
+     gets its ADDRESS in x8, and `use_big` at -O2 is `mov x8, sp`
+     followed by `bl rbig`. x8 is the Indirect Result Location Register
+     and it is the one argument register with a job that is not passing
+     an argument.
+
+
+============================================================================
+   5  THE ALIGNMENT RULE, AND THE SIXTEEN IT ACTUALLY REQUIRES
+     the rule is QUOTED; the reason is MEASURED in the encoding; and the 128 in the section plan is a RETRACTION
+============================================================================
+  The rule, twice, in the words of the document:
+
+  5.2.2.1  Additionally, at any point at which memory is accessed via SP, the hardware requires that  SP mod 16 = 0.  The stack must be quad-word aligned.
+  5.2.2.2  The stack must also conform to the following constraint at a public interface:  SP mod 16 = 0.  The stack must be quad-word aligned.
+
+  [QUOTED]         SIXTEEN.  Not 128, not 64, not 8.  Sixteen, in both places.
+
+  ------------------------------------------------------------------------
+  5A.  WHY SIXTEEN, IN THE ENCODING'S OWN TERMS.
+  ------------------------------------------------------------------------
+  The largest scale anywhere in the A64 load/store family is 16, and
+  it is the scale of the 128-bit PAIR.  Three words, three scales:
+
+  word                   scale      imm field  reach
+  stp w0, w1, [sp]       x4         imm7 at 21:15 [-256, 252]
+  stp d0, d1, [sp]       x8         imm7 at 21:15 [-512, 504]
+  stp q0, q1, [sp]       x16        imm7 at 21:15 [-1024, 1008]
+  str q0, [sp]           x16        imm12 at 21:10 0 .. 65520
+  str d0, [sp]           x8         imm12 at 21:10 0 .. 32760
+  stur q0, [sp]          x16        imm9 at 20:12 [-256, 255], BYTES
+
+  [MEASURED-ON-BYTES] Those six ranges are the ASSEMBLER'S, read back from section 3.
+     And the maximum is 16, and it is the q pair's. So a 16-byte-aligned
+     SP satisfies every scaled form in the family without exception, and
+     the ABI asks for exactly 16. The section plan for this course said
+     the rule was 128 bytes and that the reason was NEON's `LDP q0, q1`
+     -- and the REASON is right and the NUMBER is wrong by a factor of
+     eight, because the reason implies the number. A stated reason that
+     does not imply the stated number is a reason invented after the
+     fact.
+
+  ------------------------------------------------------------------------
+  5B.  WHAT THIS FILE CANNOT SHOW, AND SAYS SO WHERE A READER
+       WOULD EXPECT A MEASUREMENT.
+  ------------------------------------------------------------------------
+     The AAPCS64 writes "the hardware requires that SP mod 16 = 0".
+     Whether a misaligned access through SP actually FAULTS is decided by
+     SCTLR_ELx.A, the alignment-check control bit, and a Linux EL0
+     process runs with that bit CLEAR -- which means on Linux the
+     requirement is a SOFTWARE contract that a compiler enforces, not a
+     hardware trap. This file can measure the ENCODING of the instruction
+     that reads the bit and it does, in section 5C. It cannot deliver the
+     fault, because there is no AArch64 machine here to fault on, and a
+     reader who took the word "requires" as "will trap" would be wrong on
+     the platform this compiles for.
+
+  source                   word       what the second reader says
+  mrs x0, sctlr_el1        0xd5381000  mrs	x0, SCTLR_EL1
+  msr sctlr_el1, x0        0xd5181000  msr	SCTLR_EL1, x0
+
+  [MEASURED-ON-BYTES] The encoding of the instruction that reads the alignment-check bit
+     is 0xd5381000. The FAULT is not measured, is not claimed, and is
+     named here as the boundary of this section rather than left for a
+     reader to discover.
+
+  ------------------------------------------------------------------------
+  5C.  THE ALIGNMENT ARITHMETIC THE COMPILER EMITS, WHICH IS A
+       REAL AND CHECKABLE THING IN A FIXED-WIDTH STREAM.
+  ------------------------------------------------------------------------
+  The rule is SP mod 16 = 0 at a public interface, and a `bl` IS a
+  public interface.  So for every function: walk the SP deltas in
+  order, and check the running sum at EVERY branch.  That is STRICTLY
+  MORE than the rule asks for -- a conditional branch inside a
+  function is not a public interface and does not change SP -- and a
+  check that is stronger than the specification is worth more than one
+  that is exactly as strong, because it cannot be defeated by a case
+  the specification does not mention.  A fixed-width instruction
+  stream has no length arithmetic to get wrong, so this is arithmetic
+  over the emitted immediates and not a simulation.
+
+  lvl  function   SP deltas, in order            sum      mod 16   branches
+  O0   i9         -80 +80                        0        0        no branch
+  O0   d9         -80 +80                        0        0        no branch
+  O0   m8         -64 +64                        0        0        no branch
+  O0   m18        -144 +144                      0        0        no branch
+  O0   r1         -16 +16                        0        0        no branch
+  O0   r1d        -16 +16                        0        0        no branch
+  O0   rbig       -32 +32                        0        0        .LBB6_1@-32,.LBB6_2@-32,.LBB6_3@-32,.LBB6_1@-32
+  O0   c9         -32 +32                        0        0        i9@-32
+  O0   cd9        -32 +32                        0        0        d9@-32
+  O0   cm8        pre-16 post16                  0        0        m8@-16
+  O0   cm18       -32 +32                        0        0        m18@-32
+  O0   use_ret    -32 +32                        0        0        r1@-32
+  O0   use_retd   -32 +32                        0        0        r1d@-32
+  O0   use_big    -96 +96                        0        0        rbig@-96
+  O0   leaf_reg   -16 +16                        0        0        no branch
+  O0   leaf_spill -48 +48                        0        0        no branch
+  O0   inner      -32 +32                        0        0        no branch
+  O0   nonleaf    -48 +48                        0        0        inner@-48
+  O0   big_frame  -96 +96                        0        0        .LBB18_1@-96,.LBB18_2@-96,.LBB18_3@-96,.LBB18_1@-96,.LBB18_5@-96,.LBB18_6@-96,.LBB18_7@-96,.LBB18_5@-96
+  O0   leaf_vec   -48 +48                        0        0        no branch
+  O0   sink       -16 +16                        0        0        no branch
+  O0   many       -128 +128                      0        0        sink@-128,sink@-128,sink@-128,sink@-128,sink@-128,sink@-128,sink@-128,sink@-128,sink@-128,sink@-128,sink@-128,sink@-128
+  O0   fsink      -16 +16                        0        0        no branch
+  O0   fmany      -112 +112                      0        0        fsink@-112,fsink@-112,fsink@-112,fsink@-112,fsink@-112,fsink@-112,fsink@-112,fsink@-112,fsink@-112,fsink@-112
+  O0   va         -320 +320                      0        0        .LBB24_1@-320,.LBB24_2@-320,.LBB24_3@-320,.LBB24_4@-320,.LBB24_6@-320,.LBB24_6@-320,.LBB24_7@-320,.LBB24_8@-320,.LBB24_10@-320,.LBB24_10@-320,.LBB24_11@-320,.LBB24_1@-320
+  O2   c9         -32 +32                        0        0        i9@-32
+  O2   cd9        -32 +32                        0        0        d9@-32
+  O2   cm18       -32 +32                        0        0        m18@-32
+  O2   use_ret    pre-16 post16                  0        0        r1@-16
+  O2   use_retd   pre-16 post16                  0        0        r1d@-16
+  O2   use_big    -80 +80                        0        0        rbig@-80
+  O2   leaf_spill -32 +32                        0        0        no branch
+  O2   inner      -16 +16                        0        0        no branch
+  O2   nonleaf    -32 +32                        0        0        inner@-32
+  O2   big_frame  -64 post64                     0        0        no branch
+  O2   leaf_vec   -16 post16                     0        0        no branch
+  O2   many       -112 +112                      0        0        sink@-112,sink@-112,sink@-112,sink@-112,sink@-112,sink@-112,sink@-112,sink@-112,sink@-112,sink@-112,sink@-112,sink@-112
+  O2   fmany      -96 +96                        0        0        fsink@-96,fsink@-96,fsink@-96,fsink@-96,fsink@-96,fsink@-96,fsink@-96,fsink@-96,fsink@-96,fsink@-96
+  O2   va         -224 +224                      0        0        .LBB24_4@-224,.LBB24_11@-224,.LBB24_3@-224
+
+  [MEASURED]       Every SP movement in the corpus at all four levels leaves SP a
+     multiple of 16, and 0 of the 151 branches are made with SP not a
+     multiple of 16. That is an arithmetic identity over the immediates
+     the compiler emitted, not a measurement of behaviour: nobody ran
+     anything, and the sum is the check.
+
+     . The deallocation is often FUSED into the last load -- `ldr x0, [sp],
+     . #16` is one instruction that reads a value and gives the bytes back --
+     . and a count of `add sp, sp, #N` alone undercounts the functions that
+     . deallocate this way. The first version of this table counted only the
+     . explicit form and reported 9 functions with no deallocation at -O2,
+     . which was wrong for 3 of them.
+
+
+============================================================================
+   6  ONE REGISTER, TWO NAMES, AND TWO ZEROS
+     this is a CORRECTNESS TRAP and it is fully measurable at the byte level, not a curiosity
+============================================================================
+  ------------------------------------------------------------------------
+  6A.  x0 AND w0 ARE THE SAME REGISTER, AND THE ONLY BIT THAT
+       SEPARATES THEM IS BIT 31.
+  ------------------------------------------------------------------------
+  Six pairs, same operand, w against x.  The column that matters is
+  the XOR: one bit every time.
+
+  the w form             the x form             w word       x word       xor
+  mov w0, #1             mov x0, #1             0x52800020   0xd2800020   0x80000000
+  add w0, w0, #1         add x0, x0, #1         0x11000400   0x91000400   0x80000000
+  sub w0, w0, w1         sub x0, x0, x1         0x4b010000   0xcb010000   0x80000000
+  mov w0, w1             mov x0, x1             0x2a0103e0   0xaa0103e0   0x80000000
+  mov w0, #-1            mov x0, #-1            0x12800000   0x92800000   0x80000000
+  mov w0, wzr            mov x0, xzr            0x2a1f03e0   0xaa1f03e0   0x80000000
+
+  [MEASURED-ON-BYTES] 6 pairs, 1 differing bit in every pair, and it is bit 31 -- `sf`,
+     the size field. Six pairs, three of them arithmetic and three of
+     them a move, and the count of differing bits is the same for all six
+     -- so this is not a coincidence of two particular opcodes and it is
+     a property of the register file and not of any instruction.
+
+     This is not a curiosity and the course will not treat it as one,
+     because of the fifth row. `mov w0, #-1` and `mov x0, #-1` are the
+     SAME immediate in the SAME field, and they mean different things:
+     the w form leaves x0 = 0x00000000FFFFFFFF and the x form leaves x0 =
+     0xFFFFFFFFFFFFFFFF. The top half of a register has no name of its
+     own, so a 32-bit write to it is a ZERO EXTENSION, and a zero
+     extension is not free -- on this architecture it is not even an
+     instruction, it is what the OTHER bit of the same word does for
+     free. x86-64 has 32 registers and 64-bit writes that leave the top
+     half alone, and the 32-bit operations there are a separate register
+     file rather than a width of one.
+
+
+  ------------------------------------------------------------------------
+  6B.  REGISTER NUMBER 31 IS THREE DIFFERENT THINGS.
+  ------------------------------------------------------------------------
+  The same five bits, read out of the same words, in three slots.
+
+  source                   word       Rd/Rt    Rn       what the reader calls it
+  add sp, sp, #16          0x910043ff 31       31       add	sp, sp, #0x10
+  str w0, [sp, #12]        0xb9000fe0 0        31       str	w0, [sp, #0xc]
+  cbz w31, T               0x3400001f 31       0        cbz	wzr, 0x0 <.text>
+  cbz x31, T               0xb400001f 31       0        cbz	xzr, 0x0 <.text>
+  add x1, xzr, x1          0x8b0103e1 1        31       add	x1, xzr, x1
+  mov x0, sp               0x910003e0 0        31       mov	x0, sp
+  mov x0, xzr              0xaa1f03e0 0        31       mov	x0, xzr
+  add wsp, wsp, #16        0x110043ff 31       31       add	wsp, wsp, #0x10
+
+  [MEASURED-ON-BYTES] Register 31 appears in the field bits[4:0] as sp, in bits[9:5] as
+     the zero register in CBZ, and as sp in a load's base -- and the
+     ASSEMBLER WILL NOT LET YOU NAME IT in the base slot at all. `str w0,
+     [x31, #12]` is refused with "invalid operand for instruction",
+     because in that slot 31 is not a general register and the assembly
+     language does not pretend otherwise. A decoder that prints x31 in a
+     base slot is not making a naming choice; it is reading a field the
+     encoding has already given a different meaning.
+
+     The two rows that are worth reading twice are `mov x0, sp` and `mov
+     x0, xzr`. They LOOK like the same instruction -- both move a
+     constant into x0 -- and they are not even in the same encoding
+     group. The first is ADD (immediate) with Rn = 31 meaning the stack
+     pointer; the second is ORR (shifted register) with Rn = 31 meaning
+     zero. Same 5-bit field, same architecture, two groups, two answers,
+     and the assembler prints the two names without the reader ever
+     seeing that the field is shared.
+
+
+============================================================================
+   7  NO RED ZONE, AND WHAT THAT COSTS
+     counted in INSTRUCTIONS, because there is no clock to count anything else with
+============================================================================
+  ------------------------------------------------------------------------
+  7A.  THE FRAME CENSUS, PER FUNCTION, PER LEVEL.
+  ------------------------------------------------------------------------
+     AArch64 has no red zone: the AAPCS64 defines the region below SP as
+     the INACTIVE region and says "No thread is permitted to access (for
+     reading or for writing) the inactive region of S" (5.2.2.1). Every
+     function that wants memory therefore has to ASK for it, and this
+     table is the count of who asked. A pre-indexed `[sp, #-N]!` counts
+     as an allocation, because it is one -- a count of `sub sp, sp, #N`
+     alone misses every function that fused the allocation into a save.
+
+  lvl  function     insns  alloc   free    pre   post frame?
+  O0   i9              34      1      1      0      0 yes
+  O0   d9              34      1      1      0      0 yes
+  O0   m8              29      1      1      0      0 yes
+  O0   m18             61      1      1      0      0 yes
+  O0   r1               7      1      1      0      0 yes
+  O0   r1d              7      1      1      0      0 yes
+  O0   rbig            22      1      1      0      0 yes
+  O0   c9              21      1      1      0      0 yes
+  O0   cd9             21      1      1      0      0 yes
+  O0   cm8             19      0      0      1      1 yes
+  O0   cm18            34      1      1      0      0 yes
+  O0   use_ret         10      1      1      0      0 yes
+  O0   use_retd        11      1      1      0      0 yes
+  O0   use_big         13      1      1      0      0 yes
+  O0   leaf_reg        16      1      1      0      0 yes
+  O0   leaf_spill      22      1      1      0      0 yes
+  O0   inner           11      1      1      0      0 yes
+  O0   nonleaf         17      1      1      0      0 yes
+  O0   big_frame       40      1      1      0      0 yes
+  O0   leaf_vec        18      1      1      0      0 yes
+  O0   sink             9      1      1      0      0 yes
+  O0   many            84      1      1      0      0 yes
+  O0   fsink           10      1      1      0      0 yes
+  O0   fmany           81      1      1      0      0 yes
+  O0   va             110      1      1      0      0 yes
+  O2   i9              13      0      0      0      0 NO
+  O2   d9              13      0      0      0      0 NO
+  O2   m8              11      0      0      0      0 NO
+  O2   m18             23      0      0      0      0 NO
+  O2   r1               2      0      0      0      0 NO
+  O2   r1d              3      0      0      0      0 NO
+  O2   rbig            17      0      0      0      0 NO
+  O2   c9              19      1      1      0      0 yes
+  O2   cd9             19      1      1      0      0 yes
+  O2   cm8             13      0      0      0      0 NO
+  O2   cm18            31      1      1      0      0 yes
+  O2   use_ret          6      0      0      1      1 yes
+  O2   use_retd         7      0      0      1      1 yes
+  O2   use_big         11      1      1      0      0 yes
+  O2   leaf_reg         4      0      0      0      0 NO
+  O2   leaf_spill      14      1      1      0      0 yes
+  O2   inner            7      1      1      0      0 yes
+  O2   nonleaf         14      1      1      0      0 yes
+  O2   big_frame       32      1      0      0      1 yes
+  O2   leaf_vec        10      1      0      0      1 yes
+  O2   sink             5      0      0      0      0 NO
+  O2   many            67      1      1      0      0 yes
+  O2   fsink            5      0      0      0      0 NO
+  O2   fmany           54      1      1      0      0 yes
+  O2   va              68      1      1      0      0 yes
+
+  O0   25 of 25 functions allocate a frame at all.
+  O1   14 of 25 functions allocate a frame at all.
+  O2   14 of 25 functions allocate a frame at all.
+  Os   14 of 25 functions allocate a frame at all.
+
+     . The -O0 row is the interesting one and the reason is not obvious: a
+     . LEAF with no frame at -O0 is rare, because clang -O0 spills every
+     . parameter to the stack before the body. `leaf_reg` at -O2 is four
+     . instructions with no `sub sp` at all, and `leaf_spill` at -O2 is a
+     . LEAF that has to allocate, because it has three `volatile` locals and
+     . there is nowhere else for them to go. On x86-64 `leaf_spill` at -O2 is
+     . 10 instructions and allocates NOTHING.
+
+  ------------------------------------------------------------------------
+  7B.  THE SAME C, BOTH TARGETS, INSTRUCTION COUNTS.
+       THIS IS A COMPILE-TIME COMPARISON AND NOT A TIMING ONE.
+  ------------------------------------------------------------------------
+  There is no AArch64 clock on this host, so the x86-64 numbers in
+  the previous section have nothing to be compared with and are NOT
+  reproduced here in any form.  What CAN be compared is the number of
+  instructions a compiler emits, and that is a property of a
+  COMPILER VERSION rather than of an architecture.
+
+  function    what it is                                 AArch64   x86-64   x86 / a64
+  leaf_reg    a leaf with pure register arithmetic       4         6        1.500
+  leaf_spill  a leaf with three volatile locals          14        12       0.857
+  inner       a leaf, not inlined                        7         6        0.857
+  nonleaf     calls inner, one volatile local            14        12       0.857
+  big_frame   eight volatile array elements              32        25       0.781
+  i9          the nine-integer callee                    13        14       1.077
+  d9          the nine-double callee                     13        12       0.923
+  m8          four integers and four doubles             11        10       0.909
+  m18         nine integers and nine doubles             23        20       0.870
+  va          a variadic function                        68        62       0.912
+  many        twelve values live across twelve calls     67        66       0.985
+  fmany       ten doubles live across ten calls          54        50       0.926
+
+  WHOLE CORPUS all 25 functions of abi.c at -O2           468       423      0.904
+
+  And the shape, which is the part that does not depend on the
+  compiler's mood: how many functions of the same 25 allocate.
+
+  level    a64: with a frame x86: with a frame a64 mean frame x86 mean frame
+  O0       25 of 25       7 of 25        63 bytes       67 bytes
+  O1       14 of 25       5 of 25        55 bytes       56 bytes
+  O2       14 of 25       5 of 25        55 bytes       56 bytes
+  Os       14 of 25       5 of 25        55 bytes       54 bytes
+
+  WHICH functions, because a count of two overlapping sets is the
+  least informative thing a reader can be handed:
+
+  O0   a64 only: big_frame cd9 cm8 d9 fsink i9 inner leaf_reg leaf_spill leaf_vec m18 m8 r1 r1d rbig sink use_ret use_retd x86 only: (none)                   both: 7
+  O1   a64 only: big_frame cd9 inner leaf_spill leaf_vec many nonleaf use_ret use_retd x86 only: (none)                   both: 5
+  O2   a64 only: big_frame cd9 inner leaf_spill leaf_vec many nonleaf use_ret use_retd x86 only: (none)                   both: 5
+  Os   a64 only: big_frame cd9 inner leaf_spill leaf_vec many nonleaf use_ret use_retd x86 only: (none)                   both: 5
+
+  [MEASURED]       The whole-corpus ratio is a property of clang 21.1.8 and of a
+     25-function corpus, and the file says so at the point where it is
+     printed. What the census establishes, at every level and without a
+     clock, is the SHAPE. The x86-64 half allocates in 5 of the 25 at
+     every level above -O0 and the AArch64 half in 14, and the nine extra
+     are the ones whose C asks for memory that does not fit in a
+     register: a volatile local, a volatile array, a value that must
+     survive a call. On x86-64 those go into the 128 bytes below SP. On
+     AArch64 they cost a `sub` and an `add`.
+
+  ------------------------------------------------------------------------
+  7C.  THE SAME FUNCTION, HAND-WRITTEN, BOTH ARCHITECTURES,
+       AND THE DIFFERENCE IS TWO INSTRUCTIONS.
+  ------------------------------------------------------------------------
+  AArch64  a64_leaf_noframe / a64_leaf_frame
+    a64_leaf_noframe     3 instructions, 0 of them touch the stack pointer
+      mul	x8, x1, x0
+      madd	x0, x0, x8, x8
+      ret
+    a64_leaf_frame       11 instructions, 8 of them touch the stack pointer
+      sub	sp, sp, #0x10
+      str	x0, [sp, #0x8]
+      str	x1, [sp]
+      ldr	x8, [sp, #0x8]
+      ldr	x9, [sp]
+      add	x8, x8, x9
+      ldr	x0, [sp, #0x8]
+      ldr	x9, [sp]
+      add	x0, x8, x9
+      add	sp, sp, #0x10
+      ret
+
+  x86-64   x86_leaf_noframe / x86_leaf_frame
+    x86_leaf_noframe     3 instructions, 0 of them touch the stack pointer
+      imulq	%rsi, %rax
+      addq	%rdi, %rax
+      retq
+    x86_leaf_frame       8 instructions, 6 of them touch the stack pointer
+      movq	%rdi, -0x8(%rsp)
+      movq	%rsi, -0x10(%rsp)
+      movq	-0x8(%rsp), %rax
+      addq	-0x10(%rsp), %rax
+      movq	-0x8(%rsp), %rcx
+      addq	-0x10(%rsp), %rcx
+      addq	%rcx, %rax
+      retq
+
+  [MEASURED-ON-BYTES] The AArch64 leaf with a frame has `sub sp, sp, #16` and `add sp,
+     sp, #16` in it. The x86-64 leaf with a frame has NEITHER: it writes
+     at -8(%rsp) and -16(%rsp) and %rsp never moves. Both are the same C,
+     hand-translated to be the same C, and the difference is a sentence
+     in a document about a region of memory 128 bytes wide. That is the
+     whole cost of having no red zone, and it is two instructions in
+     every function that has locals -- which is every function that is
+     not a leaf of pure arithmetic.
+
+  ------------------------------------------------------------------------
+  7D.  THE ONE FORM THAT HIDES AN ALLOCATION: PRE- AND
+       POST-INDEX.
+  ------------------------------------------------------------------------
+  form                     reads and writes           allocates
+  stp x29, x30, [sp, #-16]! two registers, and SP      0xa9bf7bfd
+  str x0, [sp, #-16]!      one register, and SP       0xf81f0fe0
+  ldr x0, [sp], #16        one register, and SP       0xf84107e0
+  ldp x29, x30, [sp], #16  two registers, and SP      0xa8c17bfd
+  sub sp, sp, #16          nothing but SP             0xd10043ff
+
+  [MEASURED-ON-BYTES] Four of those five are ONE instruction that does two jobs, and a
+     frame counter that only counts `sub sp` misses all four. This is
+     x86-64's `leave` in a different costume: x86 needs a separate `movq
+     %rsp, %rbp; popq %rbp` to undo the frame, and AArch64 folds the
+     deallocation into the last load.
+
+
+============================================================================
+   8  CALLEE-SAVED, READ OUT OF THE COMPILER
+     x19-x28, v8-v15, the platform register, and a rule the plan got wrong
+============================================================================
+  ------------------------------------------------------------------------
+  8A.  WHAT THE DOCUMENT SAYS.  Three rows that are easy to get
+       wrong and one that everybody gets wrong.
+  ------------------------------------------------------------------------
+  6.1.1    Registers r19-r29 and SP are Callee-saved. All 64 bits of each value
+           stored in r19-r29 are Callee-saved.
+  6.1.2    Registers v8-v15 are Callee-saved and the remaining registers
+           (v0-v7, v16-v31) are Caller-saved. Additionally, only the bottom 64
+           bits of each value stored in v8-v15 need to be Callee-saved; it is
+           the responsibility of the caller to preserve larger values.
+  5.1.1    The role of register r18 is platform specific. If a platform ABI has
+           need of a dedicated general-purpose register to carry
+           inter-procedural state then it should use this register for that
+           purpose. If the platform ABI has no such requirements, then it
+           should use r18 as an additional Caller-saved register.
+
+  [QUOTED]         x19-x28, plus x29 and x30 and SP, all 64 bits.
+     v8-v15, and ONLY THE BOTTOM 64 BITS of each. That last clause is the
+     one that gets dropped: it is not that v8-v15 must be preserved, it
+     is that the top 64 bits of them are the CALLER'S problem, and a
+     compiler that saves `q8` when it only needed `d8` has obeyed the
+     standard and wasted a store.
+
+  ------------------------------------------------------------------------
+  8B.  WHAT THE COMPILER DID.  `many` keeps twelve values live
+       across twelve calls, so it has to reach past the seven
+       caller-saved temporaries x9-x15.
+  ------------------------------------------------------------------------
+  O0   many   gpr: saved none           restored none          
+  O0   fmany  gpr: saved none           restored none          
+  O1   many   gpr: saved x19-x28        restored x19-x28       
+  O1   fmany  gpr: saved none           restored none             |  fp: saved d8-d15       restored d8-d15      
+  O2   many   gpr: saved x19-x28        restored x19-x28       
+  O2   fmany  gpr: saved none           restored none             |  fp: saved d8-d15       restored d8-d15      
+  Os   many   gpr: saved x19-x28        restored x19-x28       
+  Os   fmany  gpr: saved none           restored none             |  fp: saved d8-d15       restored d8-d15      
+
+  [MEASURED]       `many` at -O2 saves x19-x28 -- all ten -- in FIVE stp pairs, and
+     restores them in five ldp pairs. Twenty instructions, ten of them
+     pairs, to hold twelve values across twelve calls. The reason it
+     needs ten callee-saved registers is a COUNT and not a preference:
+     there are seven caller-saved temporaries in the integer bank
+     (x9-x15) and twelve values that must survive a call, so five of them
+     have nowhere else to live. x19-x28 is not a set of ten chosen
+     registers; it is what is left.
+
+     . `fmany` is the one that matters for the v8-v15 clause: it saves
+     . d8-d15, the 64-bit VIEW, not q8-q15. The compiler obeyed the "bottom
+     . 64 bits" rule exactly, and a reader who assumed it would save 128-bit
+     . registers would read the disassembly and conclude the compiler had
+     . made an error.
+
+  ------------------------------------------------------------------------
+  8C.  THE PLATFORM REGISTER x18, AND A RULE THAT DOES NOT EXIST.
+  ------------------------------------------------------------------------
+  The AAPCS64 says, of r18: the role is PLATFORM SPECIFIC, and the
+  platform ABI specification must document it.  Linux does not
+  reserve it, so on Linux it is an ordinary caller-saved temporary.
+
+  [MEASURED]       Occurrences of w18/x18 in the whole corpus at all four levels: 0.
+
+
+  ------------------------------------------------------------------------
+  8D.  THE FLAG REGISTER, OR THE ABSENCE OF ONE.
+  ------------------------------------------------------------------------
+  The AAPCS64, on NZCV: "The N, Z, C and V flags are undefined on
+  entry to and return from a public interface."  Undefined, not
+  preserved and not destroyed: a callee may leave them in any state
+  and the caller may not read them across a call.
+
+  [MEASURED]       mrs/msr of a flag register in the corpus: 0.  There are none, and
+     there is no assembly mnemonic for "save the flags" on this
+     architecture, because the flags live in no register that a normal
+     instruction can name. x86-64's answer is PUSHFQ, one instruction
+     that writes 8 bytes onto the stack, and the x86abi course counted
+     271 of them in 94 functions. AArch64's answer is that there is
+     nothing to count: the flags are a side effect of a bit in an
+     instruction, and the sentence that makes them not your problem is a
+     sentence rather than a store.
+
+
+============================================================================
+   9  CFI: THE FRAME IN A SECOND LANGUAGE
+     the same frame, described twice, in two vocabularies, and the ratio between them is the measurement
+============================================================================
+  ------------------------------------------------------------------------
+  9A.  THE TWO LANGUAGES, SIDE BY SIDE, FOR ONE FUNCTION.
+  ------------------------------------------------------------------------
+  `nonleaf` at -O0.  Left: the instructions.  Right: the CFI that
+  describes the same frame to something that was not there when the
+  function ran.
+
+  sub sp, sp, #48                                .cfi_startproc
+  stp x29, x30, [sp, #32]                        .cfi_def_cfa_offset 48
+  add x29, sp, #32                               .cfi_def_cfa w29, 16
+  stur x0, [x29, #-8]                            .cfi_offset w30, -8
+  str x1, [sp, #16]                              .cfi_offset w29, -16
+  ldur x8, [x29, #-8]                            .cfi_def_cfa wsp, 48
+  ldr x9, [sp, #16]                              .cfi_def_cfa_offset 0
+  subs x8, x8, x9                                .cfi_restore w30
+  str x8, [sp, #8]                               .cfi_restore w29
+  ldr x0, [sp, #8]                               .cfi_endproc
+  ldur x1, [x29, #-8]                            
+  bl inner                                       
+  ldr x8, [sp, #8]                               
+  add x0, x0, x8                                 
+  ldp x29, x30, [sp, #32]                        
+  add sp, sp, #48                                
+  ret                                            
+
+  [MEASURED]       Both columns describe ONE frame.  The left is 4 instructions; the
+     right is 10 directives, and the right one is what a debugger, a
+     profiler and an exception unwinder read. This is the same phenomenon
+     the x86abi course found and called a second language, and on this
+     architecture it is more clearly a second language because the two
+     vocabularies share almost no symbols: `.cfi_def_cfa_offset 48` is
+     `sub sp, sp, #48` in English, and `.cfi_offset w30, -8` is the fact
+     that the return address is in a register and was written to the
+     stack.
+
+  ------------------------------------------------------------------------
+  9B.  THE REGISTER RULES, READ OUT OF THE EMITTED .eh_frame.
+  ------------------------------------------------------------------------
+  O0    25 FDEs, 21 DW_CFA_offset, 70 CFA changes, 21 restores
+          71 advance_loc opcodes, one per CFI ROW
+  lvl  at       bytes    rows     offsets  cfa      restores
+  O0   0        20       2        0        2        0
+  O0   24       20       2        0        2        0
+  O0   48       20       2        0        2        0
+  O0   72       24       2        0        2        0
+  O0   100      20       2        0        2        0
+  O0   124      20       2        0        2        0
+  O0   148      20       2        0        2        0
+  O0   172      36       4        2        4        2
+  O0   212      36       4        2        4        2
+  O0   252      36       4        2        4        2
+  O0   292      36       4        2        4        2
+  O0   332      36       4        2        4        2
+  O0   372      36       4        2        4        2
+  O0   412      36       4        2        4        2
+  ...  and 11 more
+  O2    25 FDEs, 28 DW_CFA_offset, 46 CFA changes, 28 restores
+          46 advance_loc opcodes, one per CFI ROW
+  lvl  at       bytes    rows     offsets  cfa      restores
+  O2   0        16       0        0        0        0
+  O2   20       16       0        0        0        0
+  O2   40       16       0        0        0        0
+  O2   60       16       0        0        0        0
+  O2   80       16       0        0        0        0
+  O2   100      16       0        0        0        0
+  O2   120      16       0        0        0        0
+  O2   140      36       4        2        4        2
+  O2   180      36       4        2        4        2
+  O2   220      16       0        0        0        0
+  O2   240      36       4        2        4        2
+  O2   280      36       4        2        4        2
+  O2   320      36       4        2        4        2
+  O2   360      36       4        2        4        2
+  ...  and 11 more
+
+  [MEASURED]       A CFI ROW is one DW_CFA_advance_loc, and it is the unit that
+     matters: the unwind table is a piecewise-constant description of the
+     frame, and a row is the interval over which it is constant. The CIE
+     at the top of every .eh_frame carries the first row for free -- one
+     instruction, "DW_CFA_def_cfa: reg31 +0", for the whole object -- and
+     every function after that pays for its own.
+
+  ------------------------------------------------------------------------
+  9C.  THE INFORMATION-CONTENT RATIO, WHICH IS THE MEASUREMENT.
+  ------------------------------------------------------------------------
+     How many CFI rows does a given function need, and how does that
+     change with optimisation level? That is the question this course was
+     written to ask, and the answer is not the one it was written
+     expecting, so the whole table is printed and the surprise is
+     measured rather than narrated.
+
+  Every function, both levels, and the three numbers that matter.
+  ROWS is the number of points at which the frame changes shape.
+  RULES is the number of DW_CFA_offset entries -- how many
+  registers the table says where to find.  BYTES is the FDE.
+
+  function    -O0  insn/rows/rules/bytes   -O2  insn/rows/rules/bytes   what happened
+  i9          34 / 2 / 0 / 20              13 / 0 / 0 / 16              table shrank -4 bytes, rows -2
+  d9          34 / 2 / 0 / 20              13 / 0 / 0 / 16              table shrank -4 bytes, rows -2
+  m8          29 / 2 / 0 / 20              11 / 0 / 0 / 16              table shrank -4 bytes, rows -2
+  m18         61 / 2 / 0 / 24              23 / 0 / 0 / 16              table shrank -8 bytes, rows -2
+  r1          7 / 2 / 0 / 20               2 / 0 / 0 / 16               table shrank -4 bytes, rows -2
+  r1d         7 / 2 / 0 / 20               3 / 0 / 0 / 16               table shrank -4 bytes, rows -2
+  rbig        22 / 2 / 0 / 20              17 / 0 / 0 / 16              table shrank -4 bytes, rows -2
+  c9          21 / 4 / 2 / 36              19 / 4 / 2 / 36              identical
+  cd9         21 / 4 / 2 / 36              19 / 4 / 2 / 36              identical
+  cm8         19 / 4 / 2 / 36              13 / 0 / 0 / 16              table shrank -20 bytes, rows -4
+  cm18        34 / 4 / 2 / 36              31 / 4 / 2 / 36              identical
+  use_ret     10 / 4 / 2 / 36              6 / 4 / 2 / 36               identical
+  use_retd    11 / 4 / 2 / 36              7 / 4 / 2 / 36               identical
+  use_big     13 / 4 / 2 / 36              11 / 4 / 2 / 36              identical
+  leaf_reg    16 / 2 / 0 / 20              4 / 0 / 0 / 16               table shrank -4 bytes, rows -2
+  leaf_spill  22 / 2 / 0 / 20              14 / 2 / 0 / 20              identical
+  inner       11 / 2 / 0 / 20              7 / 2 / 0 / 20               identical
+  nonleaf     17 / 4 / 2 / 36              14 / 4 / 2 / 36              identical
+  big_frame   40 / 2 / 0 / 20              32 / 2 / 0 / 20              identical
+  leaf_vec    18 / 2 / 0 / 20              10 / 2 / 0 / 20              identical
+  sink        9 / 2 / 0 / 20               5 / 0 / 0 / 16               table shrank -4 bytes, rows -2
+  many        84 / 4 / 2 / 40              67 / 4 / 12 / 64             TABLE GREW +24 bytes, rows +0
+  fsink       10 / 2 / 0 / 20              5 / 0 / 0 / 16               table shrank -4 bytes, rows -2
+  fmany       81 / 4 / 2 / 36              54 / 4 / 10 / 76             TABLE GREW +40 bytes, rows +0
+  va          110 / 3 / 1 / 32             68 / 2 / 0 / 24              table shrank -8 bytes, rows -1
+
+  lvl  FDEs       rows       rules      insns      rows per function
+  O0   25         71         21         741        2.84
+  O1   25         46         36         444        1.84
+  O2   25         46         36         468        1.84
+  Os   25         46         36         449        1.84
+
+  [MEASURED]       THE SHAPE THIS COURSE WAS WRITTEN TO FIND IS NOT IN HERE,
+     and the first draft of this section asserted one. The plan and the
+     brief for this course both said a function "that needs 3 rows at -O0
+     and 9 at -O2 is saying something". Not one function in this corpus
+     does that. The row count is 0, 2, 3 or 4 at every level, and every
+     function either holds its row count or LOSES rows: 9 functions go
+     from 2 to 0, `cm8` goes from 4 to 0, and `va` goes from 3 to 2. A
+     predicted shape that the measurement does not contain is a
+     retraction and not a nuance, and R7 is that retraction.
+
+  [MEASURED]       What IS in here is a different and better shape, and it is about
+     RULES rather than ROWS. `many` holds its 4 rows from -O0 to -O2 and
+     its table grows from 40 to 64 bytes, because at -O0 it saves x30 and
+     x29 and at -O2 it saves ten callee-saved registers as well and every
+     one of them needs a DW_CFA_offset that says where to find it.
+     `fmany` does the same thing in the vector bank: 36 to 76 bytes for
+     the same 4 rows, because d8-d15 became eight more rules. So the row
+     count says how many TIMES the frame changes and the rule count says
+     how much STATE it has, and only the second one went up.
+
+  [MEASURED]       And `va` is the opposite, in both columns: 3 rows and 32 bytes at
+     -O0, 2 rows and 24 bytes at -O2. The -O0 prologue is a `str x30,
+     [sp, #304]`, an `add x8, sp, #112` and a `str x8, [sp, #40]` --
+     three separate changes of the frame. The -O2 prologue is one `sub
+     sp, sp, #224` and one `add sp, sp, #224`, and a frame that is
+     entered once and left once needs a description of the interval
+     between them and almost nothing else.
+
+  [MEASURED]       So the information content of an unwind table is neither the
+     frame nor the row count. It is the number of points at which the
+     frame changes shape TIMES the number of registers whose location it
+     states, and optimisation moves those two in opposite directions in
+     the same function: `many` holds its rows and doubles its rules, `va`
+     halves its rows and its bytes together. The harness asserts the
+     direction of both and not their values, because every one of these
+     numbers is a property of a compiler version and not of a standard.
+
+
+  ------------------------------------------------------------------------
+  9D.  THE SECTION SIZES, WHICH ARE THE OTHER HALF OF THE RATIO.
+  ------------------------------------------------------------------------
+  lvl  .text bytes    .eh_frame      ratio          functions
+  O0   2964           800            27.0%          25
+  O1   1776           792            44.6%          25
+  O2   1872           792            42.3%          25
+  Os   1796           792            44.1%          25
+
+  [MEASURED]       The unwind table is a fixed fraction of the code and it does NOT
+     shrink when the code does. At -O0 the object spends 27.0% of .text
+     in .eh_frame and at -O2 it spends 42.3%, because the same 25
+     functions need the same 25 FDEs whether each is 34 instructions or
+     13. The per-function floor is a CIE reference, an FDE header and at
+     least one row, and no amount of optimisation removes it. Halving the
+     code moved the table from 27.0% to 42.3% of it -- which is the whole
+     information-content argument in one line: the cost of the second
+     language is a function of the NUMBER OF FUNCTIONS, not of the amount
+     of code in them.
+
+  ------------------------------------------------------------------------
+  9E.  WHAT A SECOND LANGUAGE MEANS HERE THAT IT DID NOT MEAN
+       ON x86-64.
+  ------------------------------------------------------------------------
+     On x86-64 the CFA is a register plus a number, and the number
+     changes whenever the frame does -- `.cfi_def_cfa_offset`,
+     `.cfi_def_cfa rsp, 8`, `.cfi_def_cfa rbp, 16`. On AArch64 the same
+     first form appears, and so does the second, and the register is not
+     a convention: it is r29 and it is the register the ABI NAMES as the
+     frame pointer in 5.2.3. The CFI is not describing a convention the
+     compiler chose; it is reporting which of the four levels of
+     frame-record conformance the platform mandated, and the reader can
+     look up the level. The second language has a vocabulary the first
+     language is quoted from.
+  ------------------------------------------------------------------------
+  9F.  THE SECOND READER'S OWN ACCOUNT OF THE SAME TABLE,
+       PRINTED VERBATIM.
+  ------------------------------------------------------------------------
+  .eh_frame section at offset 0x7e8 address 0x0:
+    [0x0] CIE length=16
+      version: 1
+      augmentation: zR
+      code_alignment_factor: 1
+      data_alignment_factor: -4
+      return_address_register: 30
+  
+      Program:
+        DW_CFA_def_cfa: reg31 +0
+  
+    [0x14] FDE length=16 cie=[0x0]
+      initial_location: 0x0
+      address_range: 0x34 (end : 0x34)
+  
+      Program:
+        DW_CFA_nop:
+        DW_CFA_nop:
+        DW_CFA_nop:
+  
+    [0x28] FDE length=16 cie=[0x0]
+      initial_location: 0x34
+      address_range: 0x34 (end : 0x68)
+  
+      Program:
+        DW_CFA_nop:
+        DW_CFA_nop:
+        DW_CFA_nop:
+  
+    [0x3c] FDE length=16 cie=[0x0]
+      initial_location: 0x68
+      address_range: 0x2c (end : 0x94)
+  
+      Program:
+
+  [MEASURED-ON-BYTES] The `return_address_register: 30` and the `data_alignment_factor:
+     -4` and the `DW_CFA_def_cfa: reg31 +0` are QUOTED-OUT-OF-THE-BYTES:
+     they are in the .eh_frame section, this file read them with
+     `struct.unpack_from`, and llvm-readdump read them with a different
+     program. reg31 is the stack pointer and it is the same number 31
+     that section 6 showed being three different things in three
+     different instruction slots -- which is the hinge between the two
+     concepts, and the reason the two pages are adjacent in the course.
+
+
+============================================================================
+  10  TWO READERS, AND THEN ONE OF THEM POISONED
+     a check that has never failed is not a check
+============================================================================
+  Two readers over four objects:
+    reader 1: the decoder in this file, 27 models
+    reader 2: llvm-objdump-21 --triple=aarch64 -d
+
+  2102 instructions read, 2078 NAMED by reader 1, 0 disagreements.
+
+  What the two printers disagreed about, and the rule that resolved
+  each class of it.  A cross-check that reaches agreement by
+  applying transformations nobody wrote down is a cross-check whose
+  remaining failures cannot be diagnosed, so the rules are listed
+  with the number of instructions each one touched:
+
+  117     bl +0                          -> bl T
+  97      ret                            -> ret
+  84      fadd d0, d0, d1                -> fadd d0, d0, d1
+  48      fadd d8, d8, d0                -> fadd d8, d8, d0
+  44      add x8, x8, x9                 -> add x8, x8, x9
+  44      sub sp, sp, #0x20              -> sub sp, sp, 32
+  44      add sp, sp, #0x20              -> add sp, sp, 32
+  42      add x8, x8, #0x0               -> add x8, x8, 0
+  40      add x29, sp, #0x10             -> add x29, sp, 16
+  35      adrp x8, +0                    -> adrp x8, 0
+  35      adrp x8, 0x0 <i9>              -> adrp x8, 0
+  34      adrp x9, +0                    -> adrp x9, 0
+  34      adrp x9, 0x0 <i9>              -> adrp x9, 0
+  27      ldr x8, [sp, #8]               -> ldr x8, [sp, 8]
+  3334    and 1116 more distinct transformations
+
+  and 0 instructions that no rule resolved.
+
+  [MEASURED-ON-BYTES] 2078 of 2078 named instructions agree, which is the number a cross-check is supposed to produce and the number that is worth nothing on its own.
+     Getting here took five runs and the first one reported 1232
+     disagreements out of 2086, and every one of them was a real defect:
+     a guard that did not fix bits[25:24], a pair model that read the
+     width from bits[29:28] instead of bits[31:30] and printed `stp d15,
+     d14` for `stp q15, q14`, a floating-point immediate whose fraction
+     was five bits wide instead of four and printed 2.0 for 1.0, a MOVN
+     that complemented without sign-extending, and a register-offset form
+     that concatenated two register fields into the number 150. The list
+     is the argument for this section: a check that has never failed is
+     not a check, and a check that has failed five times has found five
+     bugs that no amount of reading would have.
+
+     And 100% is still not a proof, because both readers come from one
+     LLVM tree and a decoder that is wrong in the same way as its oracle
+     is not a check. The control is a POISON: break one model on purpose
+     and the number has to MOVE BY NAME.
+
+  ------------------------------------------------------------------------
+  THE POISON.  A temporary file is written, one guard is changed by
+  one bit, and the SAME loop is run again.
+  ------------------------------------------------------------------------
+  With the poison in: 1859 named, 304 DISAGREEMENTS, and the first few
+  by name:
+    0xfd0027e0  reader 1 says stur     d0, [sp, #0]        reader 2 says str	d0, [sp, #0x48]
+    0xfd0023e1  reader 1 says stur     d1, [sp, #0]        reader 2 says str	d1, [sp, #0x40]
+    0xfd001fe2  reader 1 says stur     d2, [sp, #0]        reader 2 says str	d2, [sp, #0x38]
+    0xfd001be3  reader 1 says stur     d3, [sp, #0]        reader 2 says str	d3, [sp, #0x30]
+    0xfd0017e4  reader 1 says stur     d4, [sp, #0]        reader 2 says str	d4, [sp, #0x28]
+    0xfd0013e5  reader 1 says stur     d5, [sp, #0]        reader 2 says str	d5, [sp, #0x20]
+    0xfd000fe6  reader 1 says stur     d6, [sp, #0]        reader 2 says str	d6, [sp, #0x18]
+    0xfd000be7  reader 1 says stur     d7, [sp, #0]        reader 2 says str	d7, [sp, #0x10]
+    0xfd4027e0  reader 1 says stur     d0, [sp, #0]        reader 2 says ldr	d0, [sp, #0x48]
+    0xfd000120  reader 1 says stur     d0, [x9, #0]        reader 2 says str	d0, [x9]
+
+  [MEASURED-ON-BYTES] The named count moved from 2078 to 1859 -- 219 instructions the clean
+     table claimed are no longer claimed by the same table, and the
+     disagreement count moved from 0 to 304. A harness that only ever
+     reads the 100% teaches its reader that the number is a constant of
+     the universe, and the whole reason the encoding course retracted its
+     own cross-check twice is that it had a harness of exactly that
+     shape.
+
+  ------------------------------------------------------------------------
+  THE MODEL TABLE, WHICH IS WHAT WAS POISONED.
+  ------------------------------------------------------------------------
+  model            the guard it checks                     
+  m_ldst_fp        bits[29:27] = 0b111, V = bit[26] = 1    
+  m_ldlit_fp       bits[29:27] = 0b011, V = bit[26] = 1    
+  m_pair_fp        bits[29:27] = 0b101, V = bit[26] = 1    
+  m_fp_2src        bits[28:21] = 0b11110011, V = 1, 64-bit size
+  m_fp_cvt         V = 1, and bit 28 = 1 or bits[29:24] = 0b011111
+  m_addsub_ext     bits[28:24] = 0b01011, bits[23:21] = 0b001
+  m_adr            bits[28:24] = 0b10000, op = bit 31      
+  m_addsub_imm     bits[28:24] = 0b10001                   
+  m_logical_imm    bits[28:23] = 0b100100                  
+  m_movewide       bits[28:23] = 0b100101                  
+  m_bitfield       bits[28:23] = 0b100110                  
+  m_extr           bits[28:23] = 0b100111                  
+  m_bcond          bits[31:24] = 0b01010100                
+  m_b_bl           bits[30:26] = 0b00101                   
+  m_cbz            bits[30:25] = 0b011010                  
+  m_tbz            bits[30:25] = 0b011011                  
+  m_br_blr_ret     bits[31:23] = 0b110101100, opc = bits[22
+  m_hint           bits[31:5] = 0xd503201f >> 5            
+  m_ldst_uimm      bits[29:27] = 0b111, bits[26:24] = 0b001
+  m_ldst_uimm9     bits[29:27] = 0b111, bits[26:24] = 0b000
+  m_ldst_pair      bits[29:27] = 0b101                     
+  m_addsub_shifted bits[28:24] = 0b01011                   
+  m_logical_shifted bits[28:24] = 0b01010                   
+  m_condselect     bits[28:21] = 0b11010100                
+  m_3src           bits[30:24] = 0b0011011                 
+  m_2src           bits[30:21] = 0b0011010110              
+  m_clz_rev        bits[30:21] = 0b1011010110              
+
+  27 models and 27 claims, and the two numbers are printed together
+  because a model with no claim is a model nobody can check.
+
+  The six added here go at the FRONT of the dispatch.  Each has a
+  guard that is more specific than anything the base file claims, and
+  reordering the list changes what the decoder resolves in an
+  overlap.  That is a design decision and not a refactor, and it is
+  the first thing a reader should be able to disagree with.
+
+
+============================================================================
+  11  RETRACTIONS
+     printed in full, and asserted as TEXT by the harness
+============================================================================
+  Each of these was asserted in a draft, in docs/aarch64-section-
+  plan.md, or in the brief for this course, and then failed to
+  survive either a quotation of the specification or a measurement.
+  None of them was softened.  crosscheck.py asserts the TEXT of
+  every one, so a retraction can be neither quietly dropped nor
+  edited into being right.
+
+  R1  the claim
+       the AAPCS64 stack alignment rule is 128 bytes
+       ----------------------------WHAT WAS FOUND----------------------------
+       the rule is 16 bytes, and the encoding's largest load/store scale is
+       16, which is where the number comes from
+       ---------------------------------WHY----------------------------------
+       docs/aarch64-section-plan.md and the brief for this course both say
+       "the 128-byte stack alignment rule, which exists because of NEON's LDP
+       q0, q1". The AAPCS64 (2025Q4) says SP mod 16 = 0 in BOTH 5.2.2.1 and
+       5.2.2.2, and the SVE variant (ARM_100986_0000_00) says the same. A
+       `stp q0, q1` needs 16 bytes of alignment and no more, which the
+       assembler states in its own diagnostic. 128 is the x86-64 red zone
+       size, and the reason it appears in AArch64 discussions at all is the
+       APPLE platform ABI's 128-byte red zone, which is a different quantity
+       about a different region of memory.
+
+  R2  the claim
+       a 32-bit write to an AArch64 register is a separate bank, so the two
+       widths cost nothing to keep apart
+       ----------------------------WHAT WAS FOUND----------------------------
+       the two widths are ONE register and ONE bit, and the 32-bit form
+       ZEROES the top half -- so keeping the top half alive costs an explicit
+       construction, not a separate name
+       ---------------------------------WHY----------------------------------
+       a decoder that models w0-x30 and x0-x30 as two 32-register banks gets
+       the register NUMBERS right and the SEMANTICS wrong, and it gets them
+       wrong silently: every value it computes is a valid value, and the
+       wrong one is exactly the value a 32-bit programmer would have got on a
+       machine with two banks.
+
+  R3  the claim
+       the 128 bytes is an AArch64 stack alignment rule
+       ----------------------------WHAT WAS FOUND----------------------------
+       the 128 bytes is an APPLE platform-ABI RED ZONE, and the AAPCS64 stack
+       alignment rule is 16 bytes; the AAPCS64 has no red zone at all and
+       says the region below SP may not be accessed
+       ---------------------------------WHY----------------------------------
+       two different quantities about two different regions of memory,
+       conflated by the number 128. The Apple red zone is BELOW SP and is 128
+       bytes; the AAPCS64 alignment rule is ABOUT SP and is 16 bytes. A
+       course that used the red zone's number for the alignment rule would
+       also have had to conclude AArch64 HAS a red zone, which is the
+       opposite of the truth and is the finding section 7A is built on.
+
+  R4  the claim
+       the AAPCS64 preserves the lower 64 bits of v0-v7
+       ----------------------------WHAT WAS FOUND----------------------------
+       it preserves the lower 64 bits of v8-v15; v0-v7 are the ARGUMENT and
+       RESULT registers and are entirely Caller-saved
+       ---------------------------------WHY----------------------------------
+       docs/aarch64-section-plan.md says "the lower 64 bits of `v0`-`v7`" and
+       the AAPCS64 6.1.2 says "Registers v8-v15 are Callee-saved ... only the
+       bottom 64 bits of each value stored in v8-v15 need to be
+       Callee-saved". The consequence is not a detail: v0-v7 are where a
+       double argument arrives, so a callee is free to destroy all of them,
+       and a course that got the range wrong would have had to explain a
+       callee saving the registers its arguments just arrived in.
+
+  R5  the claim
+       the AAPCS64 platform register r18 is preserved across a call that uses
+       the stack
+       ----------------------------WHAT WAS FOUND----------------------------
+       there is no such rule. The AAPCS64 says the role of r18 is platform
+       specific and that the platform ABI specification must document it, and
+       it says nothing conditional on the stack. The rule in the plan is an
+       AARCH32 and x86-64 idea: on 32-bit Arm r13 is the platform register
+       and software that uses it must save it around a call that might touch
+       the stack, and on Windows x64 the TIB lives in the GS segment rather
+       than a register at all.
+       ---------------------------------WHY----------------------------------
+       docs/aarch64-section-plan.md and the brief for this course both say
+       "it is preserved only across a call that uses the stack -- measure how
+       often the compiler saves it". The measurement is the way to find out:
+       clang on Linux saves it ZERO times in a corpus of 25 functions at four
+       optimisation levels, because there is nothing to save. A conditional
+       rule that a compiler never implements is indistinguishable from a rule
+       that does not exist, and the measurement is what tells them apart.
+
+  R6  the claim
+       AArch64 has a flags register that has to be saved like any other
+       ----------------------------WHAT WAS FOUND----------------------------
+       NZCV is not a general register, has no mnemonic, and is explicitly
+       UNDEFINED across a public interface, so there is nothing to save and
+       no instruction to save it with
+       ---------------------------------WHY----------------------------------
+       the plan lists "no flags register to save separately" as one of the
+       differences worth building on and that is right, but the phrasing in
+       the brief -- "no flags register to save SEPARATELY" -- reads as though
+       there is one to save. There is not. The measurable consequence is a
+       COUNT OF ZERO, and a course that asserted a cost without printing the
+       zero would be describing an optimisation rather than a fact.
+
+  R7  the claim
+       a function that needs 3 CFI rows at -O0 and 9 at -O2 is the
+       characteristic example, and the row count rises with optimisation
+       ----------------------------WHAT WAS FOUND----------------------------
+       no function in the corpus does that. Row counts are 0, 2, 3 or 4 at
+       every level; nine functions go from 2 rows to 0, and no function goes
+       UP in rows. What goes up is the number of DW_CFA_offset RULES: `many`
+       holds 4 rows and its FDE grows from 40 to 64 bytes, and `fmany` holds
+       4 rows and grows from 36 to 76
+       ---------------------------------WHY----------------------------------
+       docs/aarch64-section-plan.md and the brief for this course both
+       offered the 3-to-9 shape as the interesting measurement of the CFI
+       concept. It reads well and it is not what the compiler does. The
+       measurement that IS there is better -- the row count and the rule
+       count move in OPPOSITE directions in the same function -- and it took
+       a second experiment to find, because the first one counted rows and
+       stopped.
+
+  7 retractions.  A course that reports zero of them on a subject
+  this size has either not looked or has not been reading the
+  documents it cites.
+
+============================================================================
+  12  LIMITS
+     what this file cannot show, in its own words
+============================================================================
+  NOTHING IS EXECUTED
+       There is no AArch64 machine on this host, no AArch64 emulator and no
+       AArch64 linker. Not one instruction has been run, so nothing here is a
+       duration, a fault, a throughput or a portability claim, and the x86-64
+       course's 4.92x and 27.65x have no counterpart here and are NOT
+       reproduced in any form. The one cross-architecture comparison, in
+       section 7, is a COMPILE-TIME INSTRUCTION COUNT.
+
+  THE ALIGNMENT FAULT IS NOT MEASURED
+       Whether a misaligned access through SP traps is decided by
+       SCTLR_ELx.A, and a Linux EL0 process runs with that bit clear, so on
+       Linux the requirement is a software contract. This file measures the
+       ENCODING of the instruction that reads the bit (0xd5381000) and does
+       not claim the fault. The AAPCS64 says "the hardware requires"; the
+       hardware CAN require it and on this platform does not.
+
+  THE DECODER IS A SUBSET OF NAMES
+       Advanced SIMD vector arithmetic and the FP conversions are not
+       modelled. The subset is a subset of NAMES and not of LENGTHS: an
+       unmodelled word is COUNTED and still contributes exactly 4 bytes,
+       which is the one thing a fixed-width encoding gives you for free. A
+       cross-check that reported unmodelled words as failures would be
+       reporting its own declared scope as a bug.
+
+  THE TWO READERS SHARE A SOURCE
+       clang assembled the corpus and llvm-objdump-21 disassembled it, and
+       both come from one LLVM tree. The cross-check establishes that this
+       decoder and one other piece of software AGREE on what the bytes mean.
+       It does not establish that either agrees with the silicon, and the
+       poison in section 10 is the only thing that shows the check can fail
+       at all.
+
+  THE SPECIFICATION IS AN ORACLE, NOT A MEASUREMENT
+       Section 2 is QUOTED and every other section is measured, and the two
+       are printed separately so a reader can check one against the other
+       with the compiler out of the way. A course that blended them would be
+       unable to say which of its sentences a reader should distrust if the
+       compiler changed.
+
+  THE COMPILER IS THE TEST SUBJECT, NOT THE ARCHITECTURE
+       Every "what the compiler chose" number is a property of clang 21.1.8
+       and of a 25-function corpus of ordinary C. The register ASSIGNMENT is
+       the specification's and will not change; the frame SIZES, the row
+       counts and the instruction counts are the compiler's and will. The
+       harness asserts the first as exact values and the second as shapes,
+       and says which is which in every table.
+
+  THE ENCODER IS ONE ASSEMBLER
+       There is no second AArch64 assembler on this host. Every refusal in
+       this file is one assembler's, and a boundary is a property of the
+       encoder as much as of the encoding. Where a boundary is quoted, the
+       diagnostic is printed verbatim so a reader can see whose boundary it
+       is.
+
+  THE ARCHITECTURAL MANUAL IS NOT CITED DIRECTLY
+       The encoding claims are read out of an assembler and cross-read
+       against a disassembler, and the register and stack claims are quoted
+       from the AAPCS64 (release 2025Q4) and the SVE variant
+       (ARM_100986_0000_00) with section numbers. The architectural reference
+       manual was not consulted, and a claim that needs it -- the fault
+       behaviour in section 5B most of all -- is marked as not measured
+       rather than argued from memory.
+
+  NO CORPUS IS A DISTRIBUTION
+       Twenty-five functions of ordinary C is a sample of what clang chose,
+       not a census of what compilers choose. Every count in this file is a
+       count OF THIS CORPUS and the tables say so, because a census column is
+       the only thing that tells a checker which examines nothing from one
+       that found nothing.
+
+
