@@ -118,6 +118,17 @@ PREFIXES = {
     # a file they do not belong to.
     "rvasm": ("rv_isa.ch", "rv_encoding.ch", "rv_compressed.ch",
               "rv_immediate.ch", "rv_verify.ch", "rvasm_landing.ch"),
+    # The RISC-V section's SECOND course, and it needs its own entry for the
+    # same reason every course above does: a course absent from PREFIXES
+    # passes this tool WITHOUT BEING CHECKED, which is the one failure mode
+    # the tool exists to prevent.  Note the id collision this entry has to
+    # avoid -- `rv_compressed.ch` belongs to `rvasm` and is listed there, and
+    # this course's page of the same subject is `rv_compressed_cost.ch` with
+    # the `_cost` suffix, because render_concept() resolves ids GLOBALLY and
+    # two pages cannot both be `rv-compressed`.  The tuple here lists only
+    # THIS course's six files.
+    "rvabi": ("rv_calling.ch", "rv_noflags.ch", "rv_registers.ch",
+              "rv_compressed_cost.ch", "rvabi_landing.ch"),
 }
 OUTPUTS = {
     "x86asm": "x86dec.out",
@@ -129,6 +140,12 @@ OUTPUTS = {
     "a64sys": "a64sys.out",
     "a64simd": "a64data.out",
     "rvasm": "rvdec.out",
+    # This course's artifact is `rvabi.py` and its output is `rvabi.out`, and
+    # it is a DIFFERENT file from every name above.  Without this entry a
+    # table that named only `rvdec.out` would check this course's pages
+    # against the encoding course's recording -- and the two share a
+    # `rv_compressed` subject, so the numbers are similar enough to pass.
+    "rvabi": "rvabi.out",
 }
 PREF = PREFIXES.get(COURSE, (COURSE[:3],))
 if not isinstance(PREF, tuple):
@@ -154,6 +171,7 @@ EXEMPT = {
     "268":  "the a64simd harness's own check count",
     "128":  "the rvasm harness's own check count, which the artifact cannot "
             "print because the harness counts itself after the run",
+    "171":  "the rvabi harness's own check count, for the same reason",
     "0x9f": "a hint encoding quoted in a64sys, present in a64sys.out",
     "0x80aa": "a c.mv encoding quoted on the rv-compressed page; it is in "
               "rvdec.out inside section 4C's refusal table",
@@ -173,7 +191,7 @@ EXEMPT = {
 # quote a command no course name resembles.
 ARTIFACT_CMDS = ("./x86dec", "./sysdump", "./a64dec", "./a64abi", "./a64sys",
                  "a64sys.py", "./a64data", "a64data.py", "./rvdec",
-                 "rvdec.py", "crosscheck.py",
+                 "rvdec.py", "./rvabi", "rvabi.py", "crosscheck.py",
                  "build_samples.sh")
 
 TICK = re.compile(r"(\d+\.\d{3}) ticks/op")
@@ -182,12 +200,22 @@ RATIO = re.compile(r"(\d+\.\d{2})x\b")
 
 fails = 0
 checked = 0
+# HOW MUCH WAS LOOKED AT, and this is printed because the tool's worst failure
+# mode is silent: a course absent from PREFIXES visits no files, extracts no
+# tokens, and prints "0 not in <output>" -- which reads exactly like a clean
+# course.  A tool that cannot say how much of the corpus it examined is a tool
+# whose "ALL CONSISTENT" is not evidence of anything.  So the counts of FILES
+# and of QUOTED BLOCKS are reported, and a course that adds pages without
+# adding itself to PREFIXES shows up here as a file count that did not move.
+files_seen = 0
+blocks_quoted = 0
 
 for name in sorted(os.listdir(os.path.join(ROOT, "content", "src"))):
     if not name.endswith(".ch"):
         continue
     if name not in PREF:
         continue
+    files_seen += 1
     path = os.path.join(ROOT, "content", "src", name)
     body = open(path, errors="replace").read()
     # Only look inside the quoted-output blocks.  A page's PROSE also contains
@@ -210,6 +238,7 @@ for name in sorted(os.listdir(os.path.join(ROOT, "content", "src"))):
         if "$ " not in b and not any(k in b for k in ARTIFACT_CMDS) \
                 and "objdump" not in b:
             continue
+        blocks_quoted += 1
         for pat, kind in ((TICK, "ticks/op"), (HEX, "hex"), (RATIO, "ratio")):
             for m in pat.finditer(b):
                 tok = m.group(0) if kind == "ratio" else m.group(1)
@@ -221,8 +250,20 @@ for name in sorted(os.listdir(os.path.join(ROOT, "content", "src"))):
                     fails += 1
 
 print("")
-print("check_quotes: %d tokens from quoted output blocks, %d not in %s"
-      % (checked, fails, os.path.basename(OUT)))
+print("check_quotes: %d of %s's %d page files, %d of their quoted blocks, "
+      "%d tokens, %d not in %s"
+      % (files_seen, COURSE, len(PREF), blocks_quoted, checked, fails,
+         os.path.basename(OUT)))
+if files_seen != len(PREF):
+    print("PROBLEM: %d of the %d files listed in PREFIXES for %s are not on "
+          "disk, or a page was added without being listed -- and a course "
+          "with nothing to check prints the same line as a clean one."
+          % (files_seen, len(PREF), COURSE))
+    fails += 1
+if blocks_quoted == 0:
+    print("PROBLEM: no quoted block in %s names a command, so nothing was "
+          "checked at all" % COURSE)
+    fails += 1
 if fails:
     print("PROBLEMS: a concept quotes a number the recorded run does not contain.")
 else:

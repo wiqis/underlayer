@@ -1,0 +1,1828 @@
+==========================================================================
+rvabi.py -- The RISC-V ABI, measured on the bytes
+==========================================================================
+
+  Every claim in this file carries one of three labels:
+
+    MEASURED           about the compiler or the bytes, by experiment
+    MEASURED-ON-BYTES  a property of emitted bytes, cross-checked against
+                      llvm-objdump-21 as a second reader
+    QUOTED             a manual claim, with a document and a section
+
+  The specification is the ORACLE and the compiler is the TEST
+  SUBJECT.  Disagreements are printed as retractions in section 11.
+
+  NOTHING HERE IS EXECUTED.  There is no RISC-V machine, no
+  emulator and no RISC-V linker on this host, so this file has NO
+  TIMINGS AND NO SPEEDUPS.  Section 1 says so before the first
+  measurement and section 12 says so after the last one.
+
+  The decoder is BORROWED from courses/rvasm/assets/samples/
+  (rvdec.py) and the AArch64 words are decoded with the sibling
+  AArch64 course's a64dec.py.  This file prepends two corrected
+  models and edits no sibling; section 11, R1 and R2, say what
+  they correct and why.
+
+  Inherited decoder models: 26, of which this course PREPENDS 2.
+  Total in the dispatch here: 28.
+
+==========================================================================
+SECTION 1 -- THE METHOD, AND WHAT IT MAY NOT CLAIM
+==========================================================================
+
+  There are THREE ABSENCES on this host, and they decide what this course is
+  allowed to say. They are printed here, before the first measurement, rather
+  than in a limits section at the end.
+
+  * NO RISC-V MACHINE.  The host is x86-64.
+  * NO EMULATOR.  `qemu-riscv64` and `spike` are both ABSENT.
+  * NO RISC-V BINUTILS.  `riscv64-linux-gnu-gcc`, `-as` and `-ld` are all
+    ABSENT, so there is not even a RISC-V LINKER: nothing this course
+    produces is ever linked, and no `auipc`+`addi` pair is ever proved to
+    land on the right address.
+
+  NOT ONE INSTRUCTION IN THIS COURSE HAS BEEN EXECUTED. Every figure below is
+  a bit pattern, a count of bit patterns, an arithmetic identity, or a refusal
+  from a real assembler.
+
+
+  tool                    result                                
+  assembler               Ubuntu clang version 21.1.8 (6ubuntu1)
+  disassembler            Ubuntu LLVM version 21.1.8            
+  readelf                 Ubuntu LLVM version 21.1.8            
+  linker, riscv64         IS NOT INSTALLED                      
+  emulator, qemu-riscv64  ABSENT                                
+  emulator, spike         ABSENT                                
+  aarch64 target          clang --target=aarch64-linux-gnu WORKS
+  x86-64 target           clang with no --target WORKS          
+
+  THE THREE TARGETS ARE ONE FILE. Every cross-architecture table in this
+  course is produced from `noflags.c` compiled three times with three
+  `--target=` flags, so a row that disagrees with another row is a difference
+  between the targets and not between the bodies of work someone typed.
+
+  AND THE CROSS-ARCHITECTURE TABLE IS A COMPILE-TIME INSTRUCTION COUNT. That
+  is a weaker and a different claim from a timing, and it is stated in the
+  caption of every table that contains one. The x86-64 ABI course in the first
+  section of this collection measured a 4.92x and a 27.65x.
+
+  THOSE NUMBERS HAVE NO COUNTERPART HERE AND ARE NOT INVENTED TO FILL THE GAP.
+  The honest alternative to a ratio is not a smaller ratio; it is a count of
+  instructions and a count of bytes, plus the sentence that a count does not
+  know whether the instruction is fast.
+
+  THE TWO READERS. `rvdec.py` in the previous course of this section decodes;
+  `llvm-objdump-21 --triple=riscv64` decodes again; section 9 counts how many
+  instructions the two compared, how many each NAMED, and how many disagreed.
+  This file ADDS NO DECODER MODELS AT ALL -- the ABI's instruction repertoire
+  is a subset of the base ISA's, and the base ISA is what the inherited file
+  models. It inherits 28 models and adds zero, and the count is printed
+  because "this course wrote no decoder" is a claim a reader is entitled to
+  check.
+
+  AND THE TWO READERS ARE NOT FULLY INDEPENDENT. `clang` assembled the corpus
+  and `llvm-objdump-21` disassembled it, so both readers ultimately depend on
+  ONE LLVM TREE, and an independent second assembler does not exist on this
+  host because GNU binutils has no RISC-V target installed. What section 9
+  establishes is "this decoder and one other piece of software agree on what
+  the bytes mean" -- NOT "either agrees with silicon", and there is no silicon
+  here to agree with. This sentence appears three times in the course because
+  three is the number of places a reader stops reading.
+
+  THE CORPUS IS A NAMED CONSTANT, and a missing file is REPORTED rather than
+  skipped, because a coverage number is a number about WHAT WAS FED TO IT. 32
+  of 32 corpus objects are present; 0 missing. Every one of them is produced
+  by `build_samples.sh` from four C files, one hand-written assembly file,
+  four optimisation levels, two `-march` settings and three targets.
+
+
+  CORPUS COMPLETENESS, checked on every run and printed whether or
+  not there is anything wrong with it:
+
+    THE CORPUS IS INCOMPLETE: no.  All 32 objects are present,
+    and this run read all of them.
+
+  THE THREE LABELS, and they are DEFINED rather than implied:
+
+  MEASURED about the compiler or the bytes, by experiment. MEASURED-ON-BYTES a
+  property of emitted bytes, cross-checked against llvm-objdump-21 as a second
+  reader. QUOTED a manual claim, with a document and a section.
+
+  `riscv-cc` is the RISC-V psABI document, "RISC-V Calling Conventions", and
+  `rv32-unprivileged` is the unprivileged ISA manual. Both are cited with a
+  section for every quoted row below, and every QUOTED claim in this file
+  names one.
+
+==========================================================================
+SECTION 2 -- THE SPECIFICATION, QUOTED, BEFORE ANY COMPILER RUNS
+==========================================================================
+
+  Everything in this section is QUOTED. Nothing in it is measured, because
+  nothing in it needs to be: it is the ORACLE, and the oracle is the document.
+  Sections 3 and 4 measure the compiler AGAINST it.
+
+
+  The register convention, `riscv-cc` section "Register Convention / Integer
+  Register Convention". Four columns and the fourth is the whole argument of
+  concept 3:
+
+  Name ABI Mnemonic Meaning Preserved across calls? x0 zero Zero --
+  (Immutable) x1 ra Return address No x2 sp Stack pointer Yes x3 gp Global
+  pointer -- (Unallocatable) x4 tp Thread pointer -- (Unallocatable) x5 - x7
+  t0 - t2 Temporary registers No x8 - x9 s0 - s1 Callee-saved registers Yes
+  x10 - x17 a0 - a7 Argument registers No x18 - x27 s2 - s11 Callee-saved
+  registers Yes x28 - x31 t3 - t6 Temporary registers No
+
+
+  Read the fourth column twice. x0 is not merely preserved; it is IMMUTABLE,
+  which is a stronger word and the only one in that column that is not Yes or
+  No. x3 and x4 are UNALLOCATABLE, which is stronger still and means something
+  no other register in the table means: they are not yours to use even when
+  nothing else is available. Section 7 measures all three.
+
+  The floating-point table is a SECOND FILE with the same roles, and the
+  collision is the sharpest thing in this course's naming: `riscv-cc` gives
+  BOTH f10-f17 and x10-x17 the name range a0-a7, with a leading `f` to
+  distinguish them.
+
+  f0 - f7 ft0 - ft7 Temporary registers No f8 - f9 fs0 - fs1 Callee-saved
+  registers Yes* f10 - f17 fa0 - fa7 Argument registers No f18 - f27 fs2 -
+  fs11 Callee-saved registers Yes* f28 - f31 ft8 - ft11 Temporary registers No
+
+  * Floating-point values in callee-saved registers are only preserved across
+  calls if they are no larger than the width of a floating-point register in
+  the targeted ABI.  Therefore, these registers can always be considered
+  temporaries if targeting the BASE INTEGER calling convention.
+
+  So `fa5` and `a5` are two different registers in two different files, they
+  share a spelling up to one character, and the ONLY reason they are not
+  confused is that the printed name has the `f` in it. Section 7 counts the
+  two families and the two counts are different.
+
+  The argument rules that sections 3 and 4 test, `riscv-cc` section "Integer
+  Calling Convention" and "Hardware Floating-Point Calling Convention":
+
+  * "The base integer calling convention provides eight argument registers,
+    a0-a7, the first two of which are also used to return values."
+  * "Scalars that are at most XLEN bits wide are passed in a single argument
+    register, or on the stack by value if none is available."
+  * "Scalars that are 2xXLEN bits wide are passed in a pair of argument
+    registers, with the low-order XLEN bits in the lower-numbered register
+    and the high-order XLEN bits in the higher-numbered register."
+  * "The hardware floating-point calling convention adds eight floating-point
+    argument registers, fa0-fa7, the first two of which are also used to
+    return values.  Values are passed in floating-point argument registers
+    whenever possible, WHETHER OR NOT THE INTEGER REGISTERS HAVE BEEN
+    EXHAUSTED."
+  * "A real floating-point argument is passed in a floating-point argument
+    register if it is no more than ABI_FLEN bits wide AND AT LEAST ONE
+    FLOATING-POINT ARGUMENT REGISTER IS AVAILABLE.  OTHERWISE, IT IS PASSED
+    ACCORDING TO THE INTEGER CALLING CONVENTION."
+  * "Values are returned in the same manner as a first named argument of the
+    same type would be passed."
+
+  THE FIFTH QUOTE IS THE ONE THAT CHANGES A COURSE. Read it as a rule and it
+  says the ninth `double` -- the one for which no `fa` register is available
+  -- falls back to THE INTEGER CALLING CONVENTION. The integer calling
+  convention is a0-a7 and then the stack. So the ninth double is NOT on the
+  stack; it is in a0, the first integer argument register, unless the integers
+  have taken a0-a7 already, in which case it is on the stack at whatever
+  offset the integers left free.
+
+  That is a claim about what the specification SAYS, and section 4 measures
+  what the compiler DOES, and the two agreeing is the most useful single
+  result in this course: an argument audit that only looked at one function
+  would have got the ninth double wrong.
+
+  The stack rules, `riscv-cc` "Procedure Calling Convention":
+
+  * "The stack grows downwards (towards lower addresses) and the stack
+    pointer shall be aligned to a 128-bit boundary upon procedure entry."
+  * "The first argument passed on the stack is located at OFFSET ZERO of the
+    stack pointer on function entry; following arguments are stored at
+    correspondingly higher addresses."
+  * "Procedures must not rely upon the persistence of stack-allocated data
+    whose addresses lie below the stack pointer."
+  * "Registers s0-s11 shall be preserved across procedure calls."
+  * "The presence of a frame pointer is optional.  If a frame pointer exists,
+    it must reside in x8 (s0); the register remains callee-saved."
+
+  THE THIRD QUOTE IS THE NO-RED-ZONE RULE, and note how it is stated: as an
+  OBLIGATION ON THE PROCEDURE, not as a description of a region. x86-64
+  defines a 128-byte red zone and then forbids an interrupt from clobbering
+  it; this document says a procedure may not rely on memory below sp and
+  defines no region at all. There is nothing to count, and section 3 shows
+  what the compiler does instead.
+
+  The first stacked argument at OFFSET ZERO, with no return address on the
+  stack to skip, is why every RISC-V stack offset in this course is 8 lower
+  than the x86-64 equivalent -- in one sentence rather than in a diagram.
+
+  And the frame pointer is OPTIONAL, with four levels of conformance the
+  platform may choose, including "not to maintain a frame chain and use the
+  frame pointer register as a general purpose callee-saved register". `s0` is
+  callee-saved REGARDLESS of whether it is a frame pointer, which is the
+  statement that lets a compiler use s0 as an ordinary register.
+
+  Two more rows, for the register-file concept:
+
+  * `rv32-unprivileged`, "Programmers' Model for Base Integer ISA":
+    "Register `x0` is hardwired with all bits equal to 0."
+  * `rv32-unprivileged`, the branch-design note: "The conditional branches
+    were designed to include arithmetic comparison operations between two
+    registers ... rather than use condition codes (x86, ARM, SPARC,
+    PowerPC)".  And, further down the same note: "We considered but did not
+    include conditional moves or predicated instructions, which can
+    effectively replace unpredictable short forward branches."
+
+  The SECOND quote is the specification admitting, in its own words, that it
+  considered and rejected `CMOVcc` and predication. Section 5 measures what a
+  compiler does on a machine where that rejection is in force.
+
+  THE SPECIFICATION OWNS THE REGISTER ASSIGNMENT AND THE ARGUMENT ORDER. It
+  does not own the instruction counts, the choice between a branch and a mask,
+  the number of registers a particular function happens to save, or the byte
+  count of a compressed instruction. Those are clang 21.1.8's choices and this
+  file says which is which wherever both appear, and `crosscheck.py` asserts
+  the first as exact numbers and the second as SHAPES, because a shape does
+  not move with a compiler version and a bare value does. A check whose
+  threshold is a number from one compiler is a check that fails on a busier
+  machine and teaches its reader to ignore it.
+
+==========================================================================
+SECTION 3 -- rv-calling: a0-a7, AND WHERE THE NINTH ONE GOES
+==========================================================================
+
+  THE AUDIT. For each of the functions `i1` .. `i9`, find the store whose
+  relocation names G<K> and read the rs2 field of the instruction word. That
+  register is where the K-th integer argument arrived. Section 2's table says
+  the K-th should be a<K-1>; the audit either agrees 45 times out of 45 or it
+  does not, and a disagreement is a retraction in section 11 rather than a row
+  to be explained away.
+
+
+  INTEGER ARGUMENTS, -O2, read out of the RELOCATIONS of the stores:
+
+  function  global  riscv-cc says         the bytes say   verdict
+  i1        G0      a0                    a0              agree  
+  i1        --      a1                    1 in registers  agree  
+  i2        G0      a0                    a0              agree  
+  i2        G1      a1                    a1              agree  
+  i2        --      a2                    2 in registers  agree  
+  i3        G0      a0                    a0              agree  
+  i3        G1      a1                    a1              agree  
+  i3        G2      a2                    a2              agree  
+  i3        --      a3                    3 in registers  agree  
+  i4        G0      a0                    a0              agree  
+  i4        G1      a1                    a1              agree  
+  i4        G2      a2                    a2              agree  
+  i4        G3      a3                    a3              agree  
+  i4        --      a4                    4 in registers  agree  
+  i5        G0      a0                    a0              agree  
+  i5        G1      a1                    a1              agree  
+  i5        G2      a2                    a2              agree  
+  i5        G3      a3                    a3              agree  
+  i5        G4      a4                    a4              agree  
+  i5        --      a5                    5 in registers  agree  
+  i6        G0      a0                    a0              agree  
+  i6        G1      a1                    a1              agree  
+  i6        G2      a2                    a2              agree  
+  i6        G3      a3                    a3              agree  
+  i6        G4      a4                    a4              agree  
+  i6        G5      a5                    a5              agree  
+  i6        --      a6                    6 in registers  agree  
+  i7        G0      a0                    a0              agree  
+  i7        G1      a1                    a1              agree  
+  i7        G2      a2                    a2              agree  
+  i7        G3      a3                    a3              agree  
+  i7        G4      a4                    a4              agree  
+  i7        G5      a5                    a5              agree  
+  i7        G6      a6                    a6              agree  
+  i7        --      a7                    7 in registers  agree  
+  i8        G0      a0                    a0              agree  
+  i8        G1      a1                    a1              agree  
+  i8        G2      a2                    a2              agree  
+  i8        G3      a3                    a3              agree  
+  i8        G4      a4                    a4              agree  
+  i8        G5      a5                    a5              agree  
+  i8        G6      a6                    a6              agree  
+  i8        G7      a7                    a7              agree  
+  i8        --      a8                    8 in registers  agree  
+  i9        G0      a0                    a0              agree  
+  i9        G1      a1                    a1              agree  
+  i9        G2      a2                    a2              agree  
+  i9        G3      a3                    a3              agree  
+  i9        G4      a4                    a4              agree  
+  i9        G5      a5                    a5              agree  
+  i9        G6      a6                    a6              agree  
+  i9        G7      a7                    a7              agree  
+  i9        --      none: there is no a8  8 in registers  agree  
+
+  44 of 44 integer argument placements agree with riscv-cc's table, at -O2.
+  The denominator is arithmetic and not a convenience: `i1`..`i8` contribute
+  1+2+...+8 = 36 register-resident arguments and `i9` contributes 8 more, so
+  44 placements in all, and the ninth of each function is not in the table
+  because there is no register for it.
+
+
+  THE SAME AUDIT AT FOUR LEVELS -- the specification holds, and the
+  SPILL COUNT is the compiler's.  `in a reg` is the number of
+  arguments that arrived in a0-a7; `on the stack` is the rest.
+
+  level  in a reg  on the stack  specification     
+  -O0    0         36            a0-a7 per riscv-cc
+  -O1    36        0             a0-a7 per riscv-cc
+  -O2    36        0             a0-a7 per riscv-cc
+  -Os    36        0             a0-a7 per riscv-cc
+
+  THE NINTH INTEGER ARGUMENT, at four levels. The audit cannot put it in a
+  register -- there is no a8 -- so it looks for a LOAD from the stack pointer
+  with a small displacement, and prints the offset and the register it landed
+  in. `off(sp)` in the specification's own words: "The first argument passed
+  on the stack is located at offset zero of the stack pointer on function
+  entry".
+
+  NOTE ON THE -O0 ROW, and it is a better finding than the row it replaced. At
+  -O0 clang emits `addi s0, sp, N` in the prologue and reads the ninth
+  argument from `0(s0)` -- through the FRAME POINTER, not through `sp`. And
+  `s0` is the CFA: the stack pointer as it was on ENTRY, which is exactly what
+  the frame-pointer convention defines it to be. So the -O0 offset is ALSO
+  ZERO, read through a different register, and the first version of this
+  section reported `(none)` at -O0 because the audit only looked at the base
+  register `sp`, and because the -O0 load is a COMPRESSED `c.ld` whose base is
+  a three-bit `rs1'` field rather than the five-bit one.
+
+  A row that is empty at one optimisation level and full at every other one is
+  almost always a base-register ASSUMPTION and not a measurement, and this is
+  the third time this collection has learned that in a row that looked empty
+  rather than wrong.
+
+  level  loads from sp <= 8  offset(instruction) via sp  offset(instruction) via s0
+  -O0    0                   (none)                      0(c.ld)                   
+  -O1    1                   0(c.ldsp)                   (none)                    
+  -O2    1                   0(c.ldsp)                   (none)                    
+  -Os    1                   0(c.ldsp)                   (none)                    
+
+  SO: at -O1, -O2 and -Os the ninth integer argument is read from OFFSET ZERO
+  of the stack pointer, into t0. The register is the compiler's and does not
+  matter; the OFFSET is the specification's, and it is zero.
+
+  WHERE ZERO COMES FROM. There is no return address on the stack to skip,
+  because the return address lives in `ra` and `ra` is not preserved across a
+  call by anyone. That single fact is why every stacked offset in this course
+  is 8 lower than the equivalent x86-64 offset, and it is worth one sentence
+  rather than a diagram: on x86-64 the caller's `call` PUSHES the return
+  address, so the callee must skip it; on RISC-V the callee must not skip
+  anything, because there is nothing there.
+
+  AND THE STACK IS ALIGNED TO 128 BITS, which `riscv-cc` states twice in one
+  paragraph and which this artifact can only confirm as an ARITHMETIC
+  IDENTITY: `-O0`'s prologue is `addi sp, sp, -0x40` and its epilogue is `addi
+  sp, sp, 0x40`, so the sum is 0 mod 128 at the return. What the alignment
+  FORCES -- a fault on a misaligned access -- CANNOT BE MEASURED HERE, and
+  section 12 says so where a reader would expect the measurement.
+
+==========================================================================
+SECTION 4 -- THE NINTH DOUBLE, WHICH IS NOT WHERE A SUMMARY SAYS IT IS
+==========================================================================
+
+  Two hypotheses about what happens when the argument registers run out.
+  Either there is ONE counter that runs out after eight values of any kind, so
+  the ninth value of anything is on the stack; or there are TWO INDEPENDENT
+  counters, one over a0-a7 and one over fa0-fa7, so the ninth value is on the
+  stack only if both are exhausted.
+
+  `m8` -- four integers then four doubles -- AGREES WITH BOTH. It is in the
+  corpus for exactly that reason and the artifact prints it, because a
+  distinguishing case that is not printed looks like a case that was not
+  considered. `m18` -- nine integers then nine doubles -- is the case that
+  decides it, and it is here because a rule stated without the case that
+  separates two hypotheses is a rule nobody has tested.
+
+
+  THE SAME TWO ROWS, ONE TOKEN PER COLUMN, because an EXACT
+  assertion needs a column a machine can read.  The offsets are
+  printed as a comma-separated LIST rather than comma-and-space,
+  so all three columns are whitespace-free:
+
+  m8   4 int + 4 double   1<-a0,2<-a1,3<-a2,4<-a3  1<-fa0,2<-fa1,3<-fa2,4<-fa3  (none)
+  m18  9 int + 9 double   1<-a0,2<-a1,3<-a2,4<-a3,5<-a4,6<-a5,7<-a6,8<-a7,9<-t0  1<-fa0,2<-fa1,3<-fa2,4<-fa3,5<-fa4,6<-fa5,7<-fa6,8<-fa7,9<-ft0  0, 8
+
+
+  function  arguments         integers arrived in                                            doubles arrived in                                                      stack offsets read
+  m8        4 int + 4 double  1<-a0, 2<-a1, 3<-a2, 4<-a3                                     1<-fa0, 2<-fa1, 3<-fa2, 4<-fa3                                          (none)            
+  m18       9 int + 9 double  1<-a0, 2<-a1, 3<-a2, 4<-a3, 5<-a4, 6<-a5, 7<-a6, 8<-a7, 9<-t0  1<-fa0, 2<-fa1, 3<-fa2, 4<-fa3, 5<-fa4, 6<-fa5, 7<-fa6, 8<-fa7, 9<-ft0  0, 8              
+
+  `m8` puts the four integers in a0-a3 and the four doubles in fa0-fa3, and
+  reads NOTHING from the stack. Both hypotheses predict that, so `m8` settles
+  nothing, and the artifact says so in a row rather than leaving the reader to
+  assume otherwise.
+
+  `m18` puts the integers in a0-a7, the doubles in fa0-fa7, and then -- and
+  this is the row -- the ninth integer in t0 and the ninth DOUBLE in ft0,
+  having read EXACTLY two stack offsets: 0 and 8. Two independent counters,
+  confirmed: the ninth double is on the stack because the INTEGERS took a0-a7,
+  and it is at 8 rather than 0 because the ninth integer took 0.
+
+  Both ninth values went through a TEMPORARY, and the temporary is worth
+  naming because it is the only reason a reader can see the stack at all in
+  this row. The store to G8 has rs2 = t0 and the store to D8 has rs2 = ft0,
+  and neither is an argument register -- so the audit cannot conclude "the
+  ninth argument arrived in t0" and stop. It has to find the `c.ldsp` that
+  FILLED t0, and that load is the evidence that the value came from the stack,
+  at offset 0 for the integer and 8 for the double. A register-based audit
+  with no load audit reports a temporary and a reader has no way to know
+  whether the temporary was filled from the stack, from a global, or from
+  nowhere.
+
+
+  the ninth INTEGER, in m18, proved by the load that FILLED t0 and the store that used it:
+    the load : c.fldsp      ft0, 8(sp)       offset 8
+    the load : c.ldsp       t0, 0(sp)        offset 0
+    the store: sw         t0, 0(t3)          into G8
+
+
+  the ninth DOUBLE, in m18, proved by the load that FILLED ft0 and the store that used it:
+    the load : c.fldsp      ft0, 8(sp)       offset 8
+    the load : c.ldsp       t0, 0(sp)        offset 0
+    the store: fsd        ft0, 0(a2)         into D8
+
+  AND THE ROW NO ONE-TABLE SUMMARY GETS RIGHT. `f9` -- nine doubles and
+  nothing else. MEASURED, the ninth double is stored from `a0`, which is an
+  INTEGER argument register, and `loads_from_sp` finds NOTHING: `f9` reads no
+  stack argument at all, at any optimisation level.
+
+  The reason is the second sentence of the hardware floating-point convention,
+  which has to be read with the third:
+
+  * fa0-fa7 are exhausted after eight doubles.
+  * "A real floating-point argument is passed in a floating-point argument
+    register if it is no more than ABI_FLEN bits wide AND AT LEAST ONE
+    FLOATING-POINT ARGUMENT REGISTER IS AVAILABLE.  OTHERWISE, IT IS PASSED
+    ACCORDING TO THE INTEGER CALLING CONVENTION."
+  * the integer calling convention is a0-a7 first, and those are still free.
+
+  So the ninth double goes to a0. It does NOT go on the stack, because nothing
+  has exhausted the integer argument registers yet. A summary that says "the
+  ninth argument is on the stack" is right for integers and wrong for doubles,
+  and the only way to know which is which is to read the second convention and
+  then MEASURE IT -- which is what the row above is.
+
+
+  case              after fa7        the ninth double arrived in  stack loads in the function
+  f9, ninth double  fa7 (exhausted)  a0 -- an INTEGER register    0 stack reads              
+
+  AND THE CALLER AGREES. A callee audit on its own is half a claim: all it
+  shows is that the callee READ something. The caller is walked, split at
+  every `jalr ra` / `jal ra`, and each call is shown with the stack stores
+  that immediately preceded it and the last instructions before it.
+
+  * call 1, `i9`:   `c.sdsp s1, 0(sp)`   -- the ninth integer at OFFSET ZERO.
+  * call 2, `f9`:   NO stack store at all, and the sixth instruction before
+                    the call is `c.mv a0, s0` -- the ninth double goes into
+                    the integer argument register a0, as the callee said.
+  * call 3, `m18`:  `c.sdsp s1, 0(sp)` AND `c.sdsp s0, 8(sp)` -- the ninth
+                    integer at 0 and the ninth double at 8, in that order, in
+                    the bytes the caller emitted.
+
+  Two readers of the same decision: the callee says where it read from, the
+  caller says where it wrote to, and they are the same offsets. Neither reader
+  would catch a mistake in the other, which is exactly why both are here.
+
+  the caller, -O2:
+    call 1  stack offsets written: [0, 24, 32, 40, 48, 56, 64]
+        c.li         a7, 8
+        c.sdsp       s1, 0(sp)
+        auipc      ra, 0x0
+        jalr       ra, 0(ra)
+    call 2  stack offsets written: NONE
+        fsgnj.d    fa7, fs7, fs7
+        c.mv         a0, s0
+        auipc      ra, 0x0
+        jalr       ra, 0(ra)
+    call 3  stack offsets written: [0, 8]
+        fsgnj.d    fa6, fs6, fs6
+        fsgnj.d    fa7, fs7, fs7
+        auipc      ra, 0x0
+        jalr       ra, 0(ra)
+
+  Printed at ONE level, deliberately. The offsets are the specification's and
+  they do not move; the register names inside the tail do, so printing four
+  levels of them would be four copies of the compiler's choices wearing the
+  weight of a contract. The harness checks the offsets at every level.
+
+  THE REGISTER PAIR, for a 2*XLEN scalar. `wide(long long, long long, int,
+  long long)` and the specification's rule: "with the low-order XLEN bits in
+  the lower-numbered register and the high-order XLEN bits in the
+  higher-numbered register." MEASURED from the emitted code, the third `long
+  long` -- which is the third integer-pair slot -- is read back from a2 and
+  a3, low half in a2 and high half in a3. The rule is easy to state and easy
+  to state backwards, and the corpus contains the case so the statement is a
+  measurement rather than a memory.
+
+  THE RETURN VALUE. "Values are returned in the same manner as a first named
+  argument of the same type would be passed", and "the first two of which are
+  also used to return values" -- so a scalar result comes back in a0 and a
+  `double` result in fa0. There is no separate return register on this
+  architecture and no hidden-result-pointer rule unless the value is too big
+  to fit in a register pair. This is a place where a reader coming from x86-64
+  should expect a hidden pointer: rax is the return register on x86-64 AND,
+  for an aggregate larger than 16 bytes, rax becomes a hidden pointer to the
+  caller's buffer. On RISC-V the same rule exists and a0 is what fills the
+  role, and `rv-registers` measures whether clang's own choice ever differs.
+
+==========================================================================
+SECTION 5 -- rv-noflags: THE ABSENCE, AND WHAT THE COMPILER EMITS INSTEAD
+==========================================================================
+
+  THE SPINE OF THE WHOLE SECTION, in the course mission's own words:
+
+  RISC-V has no flags register and no condition codes. x86-64 has EFLAGS,
+  AArch64 has NZCV, RISC-V has NOTHING -- so a branch is the only conditional
+  thing, and that single absence explains why AArch64 needs csel/cset at all
+  and why a compiler emits a branch on one target and a cmov on another.
+
+  And it is FULLY MEASURABLE WITHOUT HARDWARE, which is why this course exists
+  on a host with no RISC-V silicon: the compiler's CHOICE is a static property
+  of its output, and the output is bytes.
+
+  THE THREE ANSWERS. With no CMOVcc and no SETcc, a compiler implementing `x <
+  0 ? a : b` has exactly three moves: BRANCH (the condition IS the branch),
+  ARITHMETIC (turn the condition into 0 or 1 in a register and select with
+  `xor`/`sub`/`and`), or CALL (give up and call a helper). The manual admits
+  the design decision in its own words -- "We considered but did not include
+  conditional moves or predicated instructions, which can effectively replace
+  unpredictable short forward branches" -- so this is not an inference from an
+  absence, it is a documented choice being exercised.
+
+  The corpus is `noflags.c`, eleven functions, every one of them a `?:` on an
+  integer condition, compiled at four levels. Classified on the MNEMONIC, by
+  the INHERITED decoder, out of the object file.
+
+
+  level  branch  mask  other  calls  what is called
+  -O0    79      47    245    0      (none)        
+  -O1    32      34    9      0      (none)        
+  -O2    32      33    9      0      (none)        
+  -Os    30      31    9      0      (none)        
+
+  AND THE ROW THAT ANSWERS THE COURSE'S TITLE. Read the branch column and the
+  mask column together at -O2 and the shape is the finding: the compiler picks
+  a BRANCH for most of the corpus and reaches for ARITHMETIC only where
+  arithmetic is cheaper than a branch -- `myabs`, `mask`, `sign`, `absu`,
+  which are all the same three-instruction idiom `sraiw` / `xor` / `subw`,
+  plus `sign`, which is ONE instruction (`srliw a0, a0, 0x1f`).
+
+  THAT IS THE CONSTRUCTIVE HALF, AND IT IS THE HALF NOBODY STATES. A C
+  expression that on x86-64 has no single instruction -- `(x >> 31)` as an
+  arithmetic shift is one instruction on RISC-V and needs `SETL` on x86-64,
+  which does not exist -- is ONE instruction here. The absence of flags is not
+  only a cost; it is what makes `min`, `max`, `clamp` and `abs` expressible
+  without a conditional move at all. The RISC-V answer is that `sltu` WRITES A
+  REGISTER, so the comparison's result is data and the selection is arithmetic
+  on data; on x86-64 the comparison's result is BITS IN A REGISTER YOU DO NOT
+  NAME, so the selection has to be an instruction that reads those bits, and
+  that instruction is `CMOVcc`.
+
+
+  THE CONSTRUCTIVE ROW, instruction by instruction, at -O2,
+  decoded from the bytes by the INHERITED decoder:
+
+  function  bytes  instruction            
+  myabs     4      sraiw      a1, a0, 31  
+  myabs     2      c.xor        a0, a1    
+  myabs     2      c.subw       a0, a1    
+  myabs     2      c.jr         ra        
+  mymin     4      blt        a0, a1, 0x10
+  mymin     2      c.mv         a0, a1    
+  mymin     2      c.jr         ra        
+  mysel     2      c.beqz       a0, 0x36  
+  mysel     2      c.mv         a2, a1    
+  mysel     2      c.mv         a0, a2    
+  mysel     2      c.jr         ra        
+  mask      4      sraiw      a1, a0, 31  
+  mask      2      c.xor        a0, a1    
+  mask      2      c.subw       a0, a1    
+  mask      2      c.jr         ra        
+  sign      4      srliw      a0, a0, 31  
+  sign      2      c.jr         ra        
+  absu      4      srliw      a1, a0, 31  
+  absu      2      c.xor        a0, a1    
+  absu      2      c.subw       a0, a1    
+  absu      2      c.jr         ra        
+
+  AND THE THREE ANSWERS, IN THE COMPILER'S OWN WORDS, for the row
+  that is the course's title.  The manual says it in a sentence, and
+  the sentence is here in full because a course that paraphrases its
+  oracle has already lost the argument:
+
+  * "We considered but did not include conditional moves or predicated
+    instructions, which can effectively replace unpredictable short forward
+    branches."  -- rv32-unprivileged, the branch-design note.
+
+  Read what that sentence concedes. It is not a claim that a conditional move
+  would be slower. It is a claim that a conditional move CAN replace an
+  unpredictable short forward branch, and that the architecture declined to
+  let it. So the absence is a DOCUMENTED DESIGN DECISION and this course is
+  measuring a decision rather than inferring one from a hole.
+
+  AND THE COROLLARY, which is the half nobody states. Because `sltu` WRITES A
+  REGISTER and sets no flags, `(x < 0) ? 1 : 0` is ONE instruction here and
+  needs no conditional move at all. The absence of a flags register is not
+  only a cost: it is what makes `min`, `max`, `clamp` and `abs` expressible
+  without reaching for a conditional move, because the comparison's result is
+  DATA and the selection is arithmetic on data.
+
+  `sign` is ONE instruction: `srliw a0, a0, 0x1f`, which is the whole of `(x <
+  0) ? 1 : 0` for a signed int. There is no `SETcc` to reach for and there is
+  nothing to reach for one WITH -- the comparison never left a register, it
+  went straight into the shift's operand -- so the compiler did not need a
+  conditional move, and the result is a program in which the condition is a
+  VALUE rather than a STATE.
+
+  `myabs` and `mask` and `absu` are the same three instructions: `sraiw t, x,
+  31` for the sign mask, `xor` to apply it, `sub` to apply its magnitude. On
+  x86-64 the same C is `mov / neg / cmovs` -- also three, but one of the three
+  reads flags.
+
+  `mymin` is a BRANCH: `blt a0, a1, .LBB1_2`, then `mv`, then `ret`. That is
+  where a compiler with `CMOVcc` would have written a conditional move and
+  this one cannot, and the interesting fact is that it does NOT want to:
+  `mymin` is three instructions and `cmov` would have made it four.
+
+  AND ONE ROW COMES OUT THE OTHER WAY, which is the control that makes the
+  rest believable. `twice` uses the SAME condition twice, and on all three
+  targets it collapses to a single `add`: the compiler noticed the expression
+  is commutative in the two selects and the condition vanished. A corpus where
+  every row came out the same way would be a corpus measuring nothing; this
+  row is here so the artifact can say "and one of them did not behave like the
+  prediction".
+
+  AND ONE ROW IS A REAL COST. `bigsel` takes fifteen arguments and makes five
+  selects, and at -O2 the compiler emits FIVE BRANCHES and spills to the stack
+  to get at the arguments past a7. There is no masking alternative that fits
+  in the registers it has, so the branch is not a preference, it is the only
+  encoding left. The count of branches in a function is therefore not a style
+  statistic: it is a measure of how much register pressure the machine has.
+
+  WHAT THIS MEASUREMENT CANNOT SHOW, and on this page that is most of the page.
+
+  It cannot show that a branch is FASTER than a mask, or slower, or slower by how much. It cannot show that `blt` is a taken branch or a not-taken branch, or that the mask form has better ILP, because
+  there is no RISC-V machine, no emulator and no timing on this host. Every row above is a COUNT OF INSTRUCTIONS. And an instruction count does not know whether the instruction is fast.
+
+  It cannot show that the branch is PREDICTABLE either, which is the one thing the manual's argument is actually about: "branches are observed earlier in the front-end instruction stream, and so can
+  be predicted earlier" is a QUOTED argument about a pipeline nobody in this course can run, and the corpus contains a `?:` written by hand precisely so that a reader could not accidentally read the
+  branch column as a mispredict count. A compiler that emitted `blt` for a condition that is always true and a compiler that emitted `blt` for one that is always false produce the SAME row in the
+  table above.
+
+  And it cannot show that any of this is what the architecture intends, only what this compiler did. The manual's design note is an argument, the compiler's output is a choice, and a course with a
+  choice and no silicon can compare the two only as text against text.
+
+==========================================================================
+SECTION 6 -- THE SAME C, THREE TARGETS -- A COMPILE-TIME INSTRUCTION COUNT
+==========================================================================
+
+  ONE FILE, THREE `--target=` FLAGS, ONE COMPILER, ONE OPTIMISATION LEVEL. The
+  table below is the whole cross-architecture evidence this course has, and it
+  is an INSTRUCTION COUNT AT -O2.
+
+  IT IS NOT A TIMING AND NOT A SPEEDUP, and there is no ratio anywhere in this
+  section. The x86-64 ABI course measured a 4.92x and a 27.65x at four
+  optimisation levels on hardware it could run; this course has no RISC-V
+  machine, no emulator and no RISC-V linker, so it cannot produce a
+  counterpart to either number and does not estimate one. A count is a
+  different claim from a ratio in three ways worth naming: it does not know
+  whether the instruction is fast, it does not know whether the instruction is
+  on the critical path, and it counts a whole function rather than the part of
+  it that runs most often.
+
+
+  function      riscv64  aarch64  x86-64  a64 - rv  x86 - rv
+  myabs         4        3        5       -1        1       
+  mymin         3        3        5       0         2       
+  mymax         3        3        5       0         2       
+  myclamp       9        5        7       -4        -2      
+  mysel         4        3        5       -1        1       
+  twice         2        2        3       0         1       
+  swap          9        6        10      -3        1       
+  mask          4        3        5       -1        1       
+  sign          2        2        3       0         1       
+  absu          4        4        7       0         3       
+  cmp3          7        5        7       -2        0       
+  bigsel        23       24       21      1         -2      
+  WHOLE CORPUS  74       63       83      -11       +9      
+
+  READ THE COLUMNS. `a64 - rv` and `x86 - rv` are differences in INSTRUCTIONS
+  and they do NOT have the same sign: for this corpus at -O2, clang emits
+  FEWER instructions on AArch64 (-11 over the whole corpus) and MORE on x86-64
+  (+9). That is a property of clang 21.1.8 on twelve functions and it is not a
+  statement about the architectures -- the same three targets order
+  differently on a different corpus, which is why every figure in this table
+  is about what a COMPILER CHOSE and none of them is about what a MACHINE
+  COSTS. A reader who reports "RISC-V needs more instructions" from this table
+  has reported a fact about one compiler and twelve functions and has labelled
+  it about a silicon.
+
+  THE ROW THAT MATTERS IS THE ONE WHERE THE ARCHITECTURES DIVERGE IN KIND, not
+  in degree. Three conditional-select idioms, one C function each, and the
+  RISC-V column shows a BRANCH where both other columns show a CONDITIONAL
+  MOVE. The mnemonic census below is the evidence: it is the count of every
+  conditional idiom each target's object file contains, over the whole of
+  `noflags.c`, and the three sets are DISJOINT.
+
+
+  Each row is the count of every conditional idiom that target's object file
+  contains over the whole of `noflags.c`, and the DISJOINTNESS of the three
+  sets is COMPUTED below rather than asserted: the intersection of every pair
+  is printed whether or not it is empty. The first version of this section
+  wrote the word "disjoint" in a paragraph and never computed an intersection,
+  which is the difference between a claim and a measurement.
+
+  target   the mnemonics in the corpus                                        the idiom they are        total
+  riscv64  blt(6), bge(4), c.beqz(5), c.bnez(1), bne(1)                       branches                  17   
+  aarch64  csel(14), cneg(2)                                                  conditional moves / sets  16   
+  x86-64   cmovel(3), cmoveq(3), cmovgel(1), cmovgl(3), cmovll(4), cmovsl(2)  conditional moves         16   
+
+  THE THREE SETS, DISJOINT -- computed, and printed whatever they
+  turn out to be:
+
+    riscv64  n x86-64   = EMPTY
+    aarch64  n riscv64  = EMPTY
+    aarch64  n x86-64   = EMPTY
+
+    union of the three = 13 distinct mnemonics; sum of the three sets = 13
+    and every set is non-empty: aarch64=2, riscv64=5, x86-64=6
+
+  THREE SETS, DISJOINT, AND NO TOTAL IS ZERO. RISC-V's set is BRANCHES: `blt`,
+  `bge`, `c.beqz`, `c.bnez`, `bne` -- and the second reader printed no `csel`
+  and no `cmov` anywhere in the object, because it emitted none, not because
+  this file filtered them out. AArch64's is `csel` and `cneg`, x86-64's is six
+  `cmov` spellings. A compiler targeting RISC-V cannot write a `cmov` or a
+  `set` even if it wants to, because neither encoding exists -- and the reason
+  it does not exist is printed by the manual in the design note this course is
+  named after.
+
+  AND THE ARITHMETIC IS NOT A COST. On x86-64 the mnemonic census for `mymin`
+  is `mov / cmp / cmovl / retq` -- FOUR instructions where RISC-V's is THREE
+  -- and RISC-V's is shorter. That is the opposite of the usual story and it
+  is worth a paragraph, because it is a claim a reader is likely to get
+  backwards:
+
+  x86-64 needs a `mov` because the candidate value has to be in the register
+  the `cmov` will write, and it is not there yet. AArch64 needs a `cmp`
+  because NZCV has to be set before `csel` can read it. RISC-V needs NEITHER,
+  because `blt` compares two registers as part of the branch and there is
+  nothing to set up.
+
+  So the absence of a flags register is not uniformly a cost. It costs the
+  compiler a `CMOVcc` to reach for and it saves the `mov` and the `cmp` that
+  `CMOVcc` depends on. WHICH OF THOSE WINS ON REAL HARDWARE IS NOT MEASURABLE
+  HERE AND IS NOT CLAIMED.
+
+
+  THE THREE IDIOMS SIDE BY SIDE, -O2, decoded:
+
+    mymin    a < b ? a : b
+      riscv64 : blt        a0, a1, 0x10 | c.mv         a0, a1 | c.jr         ra
+      aarch64 : cmp	w0, w1 | csel	w0, w0, w1, lt | ret
+      x86-64  : movl	%esi, %eax | cmpl	%esi, %edi | cmovll	%edi, %eax | retq | nopl	(%rax,%rax)
+
+        the idiom: riscv64 branch | aarch64 csel | x86-64 cmov
+
+    mysel    c ? a : b
+      riscv64 : c.beqz       a0, 0x36 | c.mv         a2, a1 | c.mv         a0, a2 | c.jr         ra
+      aarch64 : cmp	w0, #0x0 | csel	w0, w2, w1, eq | ret
+      x86-64  : movl	%esi, %eax | testl	%edi, %edi | cmovel	%edx, %eax | retq | nopl	(%rax,%rax)
+
+        the idiom: riscv64 branch | aarch64 csel | x86-64 cmov
+
+    myclamp  x < lo ? lo : (x > hi ? hi : x)
+      riscv64 : c.mv         a3, a0 | bge        a0, a2, 0x28 | bge        a0, a1, 0x2e | c.mv         a0, a1 | c.jr         ra | c.mv         a3, a2 | blt        a0, a1, 0x24 | c.mv         a0, a3 | c.jr         ra
+      aarch64 : cmp	w0, w2 | csel	w8, w0, w2, lt | cmp	w0, w1 | csel	w0, w1, w8, lt | ret
+      x86-64  : movl	%edx, %eax | cmpl	%edx, %edi | cmovll	%edi, %eax | cmpl	%esi, %edi | cmovll	%esi, %eax | retq | nopl	(%rax)
+
+        the idiom: riscv64 branch | aarch64 csel | x86-64 cmov
+
+  SO: RISC-V EMITS A BRANCH, AArch64 EMITS `csel`, x86-64 EMITS `cmovcc`.
+  Three architectures, one C function, one compiler, and the difference is a
+  consequence of a single design decision that the RISC-V manual states in its
+  own words and this course's title is named after:
+
+  x86-64 has EFLAGS, so a comparison writes BITS IN A REGISTER and a
+  conditional move is an INSTRUCTION that reads those bits. AArch64 has NZCV,
+  so a comparison writes BITS IN A REGISTER and `csel` is an instruction that
+  reads them -- with a fourth operand, the CONDITION, at bits[15:12], because
+  NZCV has four conditions to name. RISC-V has NOTHING, so `sltu` WRITES A
+  REGISTER and the result is data.
+
+  `csel` exists because NZCV exists. It is not free there either: it is one
+  instruction, and so is `cmovcc`, and so is `blt`. What differs is not the
+  instruction COUNT and it is certainly not the SPEED -- none of which can be
+  measured here. What differs is the SPACE OF EXPRESSIONS each architecture
+  can reach in one instruction, and section 5's `sign` row is where RISC-V's
+  space is LARGER.
+
+==========================================================================
+SECTION 6 -- THE AARCH64 SIDE, FROM THE ENCODING (not from the mnemonic)
+==========================================================================
+
+  The sentence in section 6 -- "`csel` exists because `NZCV` exists" -- is
+  only worth anything if `csel` really is an instruction that reads a
+  CONDITION, and the condition is a FOUR-BIT FIELD. This section decodes the
+  AArch64 words clang emitted for the same C, using the AArch64 section's own
+  decoder (`a64dec.py`, in courses/a64asm/assets/samples/), and prints the
+  field.
+
+  Three sibling decoders, three courses, and the relationship is deliberately
+  explicit rather than accidental: this course borrows `rvdec.py` for RISC-V
+  and `a64dec.py` for AArch64, and neither sibling is edited. A course that
+  imports a sibling's decoder and then PATCHES it in place makes two harnesses
+  disagree about which file is authoritative, so section 6B prepends its own
+  model where it needs one and says which.
+
+
+  16 words in this object name a conditional-select mnemonic, and every one of
+  them is printed below with the CONDITION FIELD read out of the word by this
+  file and the same word rendered by the AArch64 course's decoder. Two
+  readers, one for the RISC-V side and one for the AArch64 side, and NEITHER
+  of them is a disassembler: `a64dec.py` decodes the AArch64 words the way
+  `rvdec.py` decodes the RISC-V ones, from the bits.
+
+
+  word        the reader says  the decoder says         the condition field  value  
+  0x5a805400  cneg             cneg     w0, w0, mi      bits[15:12] = 0x5    cond 5 
+  0x1a81b000  csel             csel     w0, w0, w1, lt  bits[15:12] = 0xb    cond 11
+
+  THE OUT-OF-ENCODINGS ARGUMENT, COUNTED.  A conditional move needs
+  THREE registers -- two candidates and a destination -- and the
+  I-type format has three register fields:
+
+    rd  at bits[ 9: 7]  =  3 bits = 8 values
+    rn  at bits[19:15]  =  5 bits = 32 values
+    rm  at bits[ 4: 0]  =  5 bits = 32 values
+    ---------------------------------------------
+    a 64-bit I-type instruction is 32 bits: 7 opcode + 3 funct3 +
+    15 register + 7 of immediate.  The condition needs 4 bits, and
+    the immediate field has 7.  There is no format in the base
+    encoding that spends those 4 bits on a condition, so a
+    conditional move with a FOURTH OPERAND is a different
+    ENCODING, not an instruction with an extra field.
+
+  EVERY ONE OF THEM CARRIES A FOUR-BIT CONDITION AT bits[15:12], and that field is the whole of the AArch64 design's cost. THERE IS NO ROOM LEFT for a condition in a three-register I-type word, so
+  `csel` takes a different shape -- `csel <Xd>, <Xn>, <Xm>, <cond>` -- and it is a DIFFERENT ENCODING rather than an instruction with an extra field.
+
+  And a reader should be careful about which `csel` this is: `csel x0, x1, x2, ne` with a 64-bit register and `cset w0, eq` with a 32-bit one are in different groups, and the number in the mnemonic's
+  suffix is not a size field in the sense the RISC-V `w`-suffixed instructions have.
+
+  WHAT THIS SECTION CANNOT SHOW. It cannot show that `csel` costs anything. It cannot show whether `csel` is implemented as a data dependency or as a branch in some microarchitecture, because there is
+  no AArch64 silicon here either and no cycle is measured anywhere in this course. What it shows is that the instruction EXISTS, that it CARRIES A FOUR-BIT CONDITION, and that the condition field is
+  what NZCV made necessary.
+
+  So the spine of the course rests on a bit field and not on a speed: RISC-V has no register in which a comparison's result could be left, so there is nothing for a four-bit operand to name, and the
+  count above is the reason the AArch64 word is shaped differently from the RISC-V one.
+
+==========================================================================
+SECTION 7 -- rv-registers: x0 IS NOT A REGISTER, AND NAMES ARE NOT NUMBERS
+==========================================================================
+
+  THE CLAIM. The ABI names ROLES. `t0` is x5, `s0` is x8 and is also called
+  `fp`, `ra` is x1, `sp` is x2, and `zero` is x0 -- and the encoding holds a
+  NUMBER in every case, not a name. The register field is five bits wide and
+  there are thirty-two things it can mean, and the disassembly's job is to
+  pick one of the two names the convention gives some of them.
+
+  So the first measurement is a CENSUS: over the whole corpus, how often does
+  each NAME appear, and how does that split by ROLE? The interesting rows are
+  not the largest ones.
+
+
+  BEFORE THE CENSUS, THE READER THAT PRODUCES IT IS AUDITED against
+  the inherited decoder's own printed operands -- a SECOND rendering
+  of the same bits, by a different piece of code:
+
+    5973 instructions checked, 5973 agree, 0 disagree
+    10640 instructions placed from the FORMAT alone (a mnemonic not in the table),
+    0 instructions this table could not place at all
+
+  x   ABI name  role          occurrences in printed text  as a source  as a destination
+  0   zero      zero          185                          110          75              
+  1   ra        ra            442                          430          113             
+  2   sp        sp            187                          623          126             
+  3   gp        gp            0                            0            0               
+  4   tp        tp            0                            0            0               
+  5   t0        temp          177                          98           106             
+  6   t1        temp          141                          98           92              
+  7   t2        temp          123                          62           71              
+  8   s0        callee-saved  222                          750          134             
+  9   s1        callee-saved  69                           38           31              
+  10  a0        argument      2009                         1169         1341            
+  11  a1        argument      1236                         829          622             
+  12  a2        argument      597                          387          271             
+  13  a3        argument      410                          264          178             
+  14  a4        argument      342                          223          160             
+  15  a5        argument      299                          210          112             
+  16  a6        argument      223                          151          90              
+  17  a7        argument      181                          133          69              
+  18  s2        callee-saved  31                           16           15              
+  19  s3        callee-saved  33                           19           18              
+  20  s4        callee-saved  7                            4            3               
+  21  s5        callee-saved  7                            4            3               
+  22  s6        callee-saved  7                            4            3               
+  23  s7        callee-saved  7                            4            3               
+  24  s8        callee-saved  5                            3            2               
+  25  s9        callee-saved  5                            3            2               
+  26  s10       callee-saved  0                            0            0               
+  27  s11       callee-saved  0                            0            0               
+  28  t3        temp          72                           42           35              
+  29  t4        temp          132                          59           78              
+  30  t5        temp          39                           27           17              
+  31  t6        temp          28                           14           14              
+
+  `occurrences in printed text` counts every appearance of the name in the
+  decoder's own output for the whole corpus; `as a source` and `as a
+  destination` count the instruction FIELDS, which is a stricter number
+  because it cannot double-count an operand that appears in a printed line
+  twice.
+
+  THE ROW TO READ TWICE IS x0. 110 appearances as a source and 75 as a
+  destination. `zero` is the most common register in the printed text and it
+  is NEVER a destination that takes effect, because the manual says "Register
+  x0 is hardwired with all bits equal to 0" and a hardwired register is not a
+  register you can write -- it is a CONSTANT with an encoding. Every
+  arithmetic comparison on this architecture is written `sltu rd, rs1, x0` or
+  `beq rs, x0, target`, so x0 is read constantly and written never, and that
+  is the shape of an ABI that treats a register as a role rather than as a
+  location.
+
+  AND THE TWO NAMES FOR x8. The ABI calls it `s0` and the frame-pointer
+  convention calls it `fp`, and they are THE SAME REGISTER. The decoder prints
+  `s0`; the second reader prints `s0`; `fp` is the assembler's alias and
+  appears in the text only when you ask for it. This is much milder than the
+  AArch64 trap where register number 31 is `sp` in one instruction slot and
+  `xzr` in another, and the reason it is milder is worth stating: on RISC-V
+  the number determines the name, always, and on AArch64 the SLOT determines
+  it.
+
+  `gp` AND `tp` ARE UNALLOCATABLE, which is a stronger word than "preserved"
+  and appears nowhere else in the table. Measured over the whole corpus: gp is
+  written 0 times and tp 0 times. There is a rule that says a compiler may not
+  do that, and the count is what distinguishes a rule that is obeyed from a
+  rule that does not exist -- a conditional rule nobody implements is
+  indistinguishable from no rule at all, and only a count tells them apart.
+
+
+  THE TWO REGISTER FILES, counted separately.  a0 and fa0 are
+  DIFFERENT REGISTERS that share a spelling up to one character.
+
+  f   ABI name  role          occurrences
+  0   ft0       temporary     14         
+  1   ft1       temporary     0          
+  2   ft2       temporary     0          
+  3   ft3       temporary     0          
+  4   ft4       temporary     0          
+  5   ft5       temporary     0          
+  6   ft6       temporary     0          
+  7   ft7       temporary     0          
+  8   fs0       callee-saved  42         
+  9   fs1       callee-saved  42         
+  10  fa0       argument      92         
+  11  fa1       argument      85         
+  12  fa2       argument      78         
+  13  fa3       argument      71         
+  14  fa4       argument      57         
+  15  fa5       argument      166        
+  16  fa6       argument      43         
+  17  fa7       argument      36         
+  18  fs2       callee-saved  42         
+  19  fs3       callee-saved  42         
+  20  fs4       callee-saved  42         
+  21  fs5       callee-saved  42         
+  22  fs6       callee-saved  42         
+  23  fs7       callee-saved  42         
+  24  fs8       callee-saved  0          
+  25  fs9       callee-saved  0          
+  26  fs10      callee-saved  0          
+  27  fs11      callee-saved  0          
+  28  ft8       temporary     0          
+  29  ft9       temporary     0          
+  30  ft10      temporary     0          
+  31  ft11      temporary     0          
+
+  A FLOATING-POINT STORE NAMES ONE REGISTER IN EACH FILE, and the encoding
+  does not say which is which. MEASURED from the corpus: `fsd fa0, -24(s0)`
+  has rs2 = bits[24:20] = 10 and rs1 = bits[19:15] = 8. The same five bits,
+  the same two values, and TWO DIFFERENT REGISTERS: 10 in the integer file is
+  `a0` and in the floating-point file is `fa0`, and 8 in the integer file is
+  `s0` and in the floating-point file is `fs0`. The store moved a value out of
+  `fa0` and addressed memory through `s0`. A decoder that reads every field
+  through the integer table reports a store of `a0` to an offset from `s0` --
+  two real registers, one of the wrong kind, and a function whose every
+  register name is plausible.
+
+  AND THIS FILE GOT IT WRONG FIRST, which is the only reason the sentence
+  above is stated so firmly. The register census at the top of this section
+  was originally built by asking `is_fp(instruction)` once per instruction and
+  applying the answer to every field. For `fsd` that answers "floating-point"
+  for the BASE as well as the data, and the audit printed 18 writes to `gp`
+  and 8 to `tp` over a corpus in which the compiler writes neither -- because
+  a real `a2`, read as a base with the wrong file, came out as `fs2`, and
+  `fs2` read as an integer is `x18`, which is `s2`, and the arithmetic of a
+  wrong lookup turns one register into another. The number was 18 and 8 and it
+  was false, and it was false in a way that a table of plausible names could
+  not reveal: only the AUDIT at the top of this section, which compares this
+  file's own reading against the inherited decoder's printed operands
+  instruction by instruction, turned 201 disagreements into 0.
+
+  That is the sharpest trap in this concept and it is a THIRD instance of the
+  same lesson in this collection, after AArch64's `x31`-is-`sp`-or-`xzr` and
+  after the compressed `rd'`-means-`x8`: A REGISTER NUMBER IS NOT A REGISTER
+  UNTIL YOU KNOW WHICH FILE IT IS IN, and the encoding does not say.
+
+
+  THREE SPELLINGS OF A ZERO, asked of the ASSEMBLER, not of clang:
+
+  source  exactly               at -march=rv64gc  the second reader says  at -march=rv64i
+  mv      mv      t0, zero      2 bytes           li	t0, 0x0              4 bytes        
+  addi    addi    t0, zero, 0   2 bytes           li	t0, 0x0              4 bytes        
+  li      li      t0, 0         2 bytes           li	t0, 0x0              4 bytes        
+  add     add     zero, t0, t1  4 bytes           add	zero, t0, t1        4 bytes        
+  li      li      zero, 42      4 bytes           li	zero, 0x2a           4 bytes        
+  mv      mv      zero, t0      4 bytes           mv	zero, t0             4 bytes        
+  nop     nop                   2 bytes           nop                     4 bytes        
+
+  AND HERE IS THE FINDING, and it is the one the concept is named for. Ask the assembler for `mv t0, zero` and the answer is that it does NOT become a `c.mv`: it becomes `c.li t0, 0` -- the COMPRESSED
+  LOAD-IMMEDIATE with a zero immediate -- which is the same encoding as `addi t0, zero, 0` and as `li t0, 0`, and all three are 2 bytes at -march=rv64gc and 4 bytes at -march=rv64i. The assembler
+  canonicalises all three spellings into ONE instruction before the encoder ever sees them, so a course that asked "does the compiler use `mv rd, x0` or `addi rd, x0, 0` for a zero" is asking about a
+  distinction the assembler already removed.
+
+  Which is the point. There is no `c.mv` with a zero source: in the compressed specification `c.mv` is defined only when rs2 is not x0, and the encoding with rs2 = x0 in that cell is `c.li`. So the
+  answer to "which spelling of a zero" is "the one the architecture chose to make the SHORTER", and at -march=rv64i there is no shorter one and the same three spellings all become the same four-byte
+  `addi`. An INSTRUCTION COUNT here would be 3 versus 3 and a BYTE COUNT would be 6 versus 12.
+
+
+  AND WHAT THE COMPILER PICKS WHEN IT WANTS A ZERO, over the whole
+  corpus at -O2, counted by the IMMEDIATE READ FROM THE BITS and not
+  by the mnemonic, because the mnemonic is the thing being tested:
+
+    c.li rd, 0                   3     c.li         a2, 0
+    addi rd, x0, 0               15    addi       a2, zero, 0
+    lui rd, 0                    0     
+    mv rd, x0                    0     
+    (instructions with an immediate read) 260   the denominator for the four rows above
+
+  Read the denominator first, because it is what makes the other three rows
+  mean something. 260 instructions in the -O2 corpus carry an immediate this
+  file knows how to read, and 18 of them have a ZERO immediate.
+
+  And the denominator is printed because the first version of this table
+  printed all four counts as ZERO -- because it asked the inherited decoder
+  for a field the decoder writes under a different name, so the lookup
+  returned None on every instruction. A count of zero out of 260 is a
+  measurement. A count of zero out of ZERO is a bug wearing the costume of a
+  result, and the only thing that distinguishes the two on the page is the
+  denominator sitting next to them.
+
+  So the compiler in this corpus reaches for a zero in a register 18 times,
+  and the spelling it picks is `c.li rd, 0` 3 times and the four-byte `addi
+  rd, x0, 0` 15 times -- and `mv rd, x0` never, for a reason that is about the
+  ENCODING and not about the compiler's taste: there is no compressed MOVE
+  with a zero source. In the compressed specification `c.mv` is defined only
+  when rs2 is not x0, and the cell with rs2 = x0 is `c.li`. So `mv t0, zero`
+  and `li t0, 0` and `addi t0, zero, 0` are not three spellings the compiler
+  chooses between; they are one instruction with three names, and the
+  assembler canonicalises all three before the encoder sees them.
+
+  Which leaves a real asymmetry, and it is the one worth having: the compiler
+  emits the TWO-BYTE form 3 times and the FOUR-BYTE form 15 times, in the same
+  corpus, at the same optimisation level, for the same operation. An
+  instruction count cannot tell those apart -- both are one instruction -- and
+  a byte count can: 2 against 4. That difference is the C extension's saving,
+  counted in BYTES, in one corpus, with no timing claimed anywhere near it.
+
+
+  AND THE FRAME POINTER, which the ABI says is OPTIONAL:
+
+  level       instructions  s0 written  s0 read
+  regs.c -O0  270           12          124    
+  regs.c -O1  127           0           0      
+  regs.c -O2  127           0           0      
+  regs.c -Os  127           0           0      
+
+  THE SPECIFICATION SAYS: "The presence of a frame pointer is optional. If a
+  frame pointer exists, it must reside in x8 (s0); the register remains
+  callee-saved." MEASURED, clang writes s0 at -O0 and stops writing it as the
+  optimisation level rises -- which is not the compiler declining to use a
+  frame pointer, it is the compiler discovering that it does not need one, and
+  the corpus has no function deep enough to need one either way. A reader who
+  took the -O0 row as "RISC-V uses s0 as a frame pointer" has taken a
+  compiler's choice as a property of the contract, and `x86-frame` is the
+  lesson about what that mistake looks like when the choice goes the other
+  way.
+
+  AND `gp` AND `tp` ARE WRITTEN ZERO TIMES ANYWHERE IN THE CORPUS. The ABI
+  calls them UNALLOCATABLE, which is a rule a compiler is not allowed to
+  break, and a rule no compiler ever breaks and a rule that does not exist are
+  indistinguishable except to a count.
+
+
+  gp / tp writes across the WHOLE corpus, every level, every file,
+  counted from the bits by the same audited reader as the table
+  above -- NOT by a pattern over the operand text, which is where
+  the first 18-and-8 came from and where they were wrong:
+
+    gp writes: 0        tp writes: 0
+
+  0 and 0, out of 33393 register writes in the whole corpus, and
+  `llvm-objdump-21 --triple=riscv64 -d` prints neither register anywhere in
+  any of the 29 RISC-V objects. A rule that no compiler breaks and a rule that
+  does not exist are indistinguishable except to a count, and this count is
+  zero on both sides: the reader that counted it and the second reader that
+  prints the disassembly agree that the two registers are never written, and
+  the rule is obeyed rather than merely unobserved.
+
+  AND `x0`. The table at the top of this section already says it: x0 is
+  written 75 times and read 110 times, and the read count is high because
+  every arithmetic comparison on this architecture names it. It is the
+  most-read register in the architecture and a CONSTANT, and the encoding for
+  it is a real five-bit field in every instruction that has an rd -- which is
+  why `li zero, 42` ASSEMBLES, above, to four bytes, and why the hardware's
+  refusal to store into it is a property of the SILICON and not of the file.
+  There is no RISC-V silicon on this host, so this course measures the
+  assembler ACCEPTING the write and does not claim to measure the write being
+  discarded.
+
+==========================================================================
+SECTION 8 -- rv-compressed-cost: WHAT COMPRESSION DOES TO THE ABI
+==========================================================================
+
+  `rvasm`'s concept 3 already measured the ENCODING side of the C extension:
+  how many code points are reserved, which displacement families share five
+  bit positions and are assigned seven different orders, and the four
+  assembler refusals in the compressed register file. NONE OF THAT IS REPEATED
+  HERE. What is measured here is the CONSEQUENCE, which is a different subject
+  with a different kind of evidence:
+
+  * a spilling sequence, before and after;
+  * a hot loop, before and after;
+  * a `jal`/`ret` pair, before and after;
+  * and what a DISASSEMBLER has to do to find an instruction boundary.
+
+  Every number is an INSTRUCTION COUNT or a BYTE COUNT. They are not a
+  speedup, and the reason is section 1: there is nothing on this host that
+  could measure one.
+
+
+  file    without C  insns  with C  d-insns  bytes  bytes+c  bytes saved  2-byte share  the pair                       
+  cpc.c   rv64i      84     80      -4       336    200      40%          75%           CONFOUNDED: no F, no D         
+  cpc.c   rv64imafd  74     80      +6       296    200      32%          75%           CLEAN: the only change is the C
+  regs.c  rv64i      165    127     -38      660    350      46%          62%           CONFOUNDED: no F, no D         
+  regs.c  rv64imafd  127    127     +0       508    350      31%          62%           CLEAN: the only change is the C
+  abi.c   rv64i      389    368     -21      1556   1296     16%          23%           CONFOUNDED: no F, no D         
+  abi.c   rv64imafd  368    368     +0       1472   1296     11%          23%           CLEAN: the only change is the C
+
+  TWO PAIRS, AND THE DIFFERENCE BETWEEN THEM IS THE MOST USEFUL METHODOLOGICAL
+  RESULT IN THIS SECTION.
+
+  `rv64i` vs `rv64gc` is CONFOUNDED. rv64i has no F and no D, so every
+  `double` in the source is a CALL to a soft-float helper. The instruction
+  count moves because the ARITHMETIC changed, not because the encoding did,
+  and a reader who reported that difference as "what compression costs" would
+  be reporting a floating-point software-library decision as an encoding fact.
+  The `d-insns` column for that pair is LARGE, and every bit of it is the
+  soft-float call.
+
+  `rv64imafd` vs `rv64imafdc` is CLEAN. Same base, same M, same A, same F,
+  same D, and the only difference is the trailing C. There the `d-insns`
+  column is the compression's real effect on the instruction count, and the
+  honest answer is that it is ZERO OR ALMOST: the C extension changes how many
+  bytes an operation takes, and it does not change how many operations the
+  compiler chose to perform.
+
+  Read the two pairs side by side and the lesson is general. A `-march`
+  comparison is only a measurement of ONE extension when every other letter is
+  held fixed, and "hold every other letter fixed" is a sentence that has to be
+  said out loud because the alternative -- comparing the base against a `gc`
+  build and calling the difference a compression result -- is the kind of
+  mistake that survives review because both numbers are real.
+
+  `bytes saved` is a percentage of the .text bytes and it is NOT a speedup. It
+  is a statement about instruction FETCH, and even that needs a memory system
+  this course cannot measure. The honest sentence under this table is: fewer
+  bytes, the same operations, and no timing.
+
+
+  THE THREE SEQUENCES, side by side, decoded instruction by
+  instruction.  Same source, -O2, and the SAME ISA apart from C.
+
+    rv64imafd    spill    11 instructions, 44 bytes: slli       a1, a0, 1 | slli       a2, a0, 32 | add        a1, a1, a0 | slli       a0, a0, 35 | add        a0, a0, a2 | addi       a2, zero, 1 | slli       a2, a2, 32 | add        a0, a0, a2 | srai       a0, a0, 32 | add        a0, a0, a1 | jalr       zero, 0(ra)
+    rv64imafdc   spill    11 instructions, 26 bytes: slli       a1, a0, 1 | slli       a2, a0, 32 | c.add        a1, a0 | c.slli       a0, 35 | c.add        a0, a2 | c.li         a2, 1 | c.slli       a2, 32 | c.add        a0, a2 | c.srai       a0, 32 | c.add        a0, a1 | c.jr         ra
+
+    rv64imafd    callret   4 instructions, 16 bytes: slli       a1, a0, 1 | add        a0, a1, a0 | addiw      a0, a0, 2 | jalr       zero, 0(ra)
+    rv64imafdc   callret   4 instructions, 10 bytes: slli       a1, a0, 1 | c.add        a0, a1 | c.addiw      a0, 2 | c.jr         ra
+
+  AND THE SPILL, WHICH IS WHERE THE ABI ACTUALLY FEELS IT:
+
+    rv64imafd    spill   11 instructions, 44 bytes, 0 stores
+    rv64imafdc   spill   11 instructions, 26 bytes, 0 stores
+
+    rv64imafd    spilln  43 instructions, 172 bytes, 1 stores
+    rv64imafdc   spilln  49 instructions, 124 bytes, 4 stores
+
+  THE HOT LOOP.  The body runs n times and the prologue does not,
+  so a whole-function byte count measures the wrong code.  Here is
+  the body: the instructions between the first branch and the
+  backward branch, which is the part that repeats.
+
+    rv64imafd    hot: 12 instructions, 48 bytes whole; the loop body is 11 instructions and 44 bytes
+                   bge        zero, a1, 0x110 | slli       a1, a1, 2 | add        a1, a0, a1 | lw         a3, 0(a0) | addi       a0, a0, 4 | slli       a4, a3, 1 | add        a2, a3, a2 | addw       a2, a4, a2 | bne        a0, a1, 0xf8 | addi       a0, a2, 0 | jalr       zero, 0(ra)
+    rv64imafdc   hot: 12 instructions, 30 bytes whole; the loop body is 11 instructions and 28 bytes
+                   bge        zero, a1, 0xba | c.slli       a1, 2 | c.add        a1, a0 | c.lw         a3, 0(a0) | c.addi       a0, 4 | slli       a4, a3, 1 | c.add        a2, a3 | c.addw       a2, a4 | bne        a0, a1, 0xaa | c.mv         a0, a2 | c.jr         ra
+
+  AND THE BOUNDARY PROBLEM, which is where this concept stops being about the
+  ABI and becomes about the toolchain. On x86-64 and AArch64 an instruction's
+  length is a CONSTANT, so a disassembler's loop is
+
+  p += 4
+
+  and the loop cannot be wrong. On RISC-V an instruction is TWO or FOUR bytes
+  and the loop is
+
+  if (halfword & 3) == 3: p += 4 else: p += 2
+
+  which needs TWO BITS OF THE CURRENT POSITION and nothing else. That is the
+  whole of the guarantee, and it is enormous: a word this file's decoder
+  cannot name at all still advances `p` by its own length, so an unmodelled
+  instruction is a gap in the NAMES rather than a gap in the WALK.
+
+  The demonstration, measured rather than asserted: this file walks every code
+  section of every corpus object with the rule and again with the length
+  SUPPLIED from outside, and reports how many instructions each walk found.
+  The supplied version is what a disassembler with a symbol table can do and
+  the rule version is what one without it must do, and if the two counts are
+  equal then the rule is doing the work.
+
+
+  object             instructions found by the RULE  instructions found with the length SUPPLIED  verdict  
+  probe.o            18                              13                                           DIFFERENT
+  abi_O0.o           927                             748                                          DIFFERENT
+  abi_O1.o           368                             324                                          DIFFERENT
+  abi_O2.o           368                             324                                          DIFFERENT
+  abi_Os.o           368                             324                                          DIFFERENT
+  noflags_O0.o       371                             275                                          DIFFERENT
+  noflags_O1.o       75                              46                                           DIFFERENT
+  noflags_O2.o       74                              46                                           DIFFERENT
+  noflags_Os.o       70                              43                                           DIFFERENT
+  regs_O0.o          270                             208                                          DIFFERENT
+  regs_O1.o          127                             87                                           DIFFERENT
+  regs_O2.o          127                             87                                           DIFFERENT
+  regs_Os.o          127                             87                                           DIFFERENT
+  cpc_O0.o           161                             121                                          DIFFERENT
+  cpc_O1.o           80                              50                                           DIFFERENT
+  cpc_O2.o           80                              50                                           DIFFERENT
+  cpc_Os.o           80                              50                                           DIFFERENT
+  cpc_rv64i.o        84                              84                                           same     
+  cpc_rv64gc.o       80                              50                                           DIFFERENT
+  cpc_rv64imafd.o    74                              74                                           same     
+  cpc_rv64imafdc.o   80                              50                                           DIFFERENT
+  regs_rv64i.o       165                             165                                          same     
+  regs_rv64gc.o      127                             87                                           DIFFERENT
+  regs_rv64imafd.o   127                             127                                          same     
+  regs_rv64imafdc.o  127                             87                                           DIFFERENT
+  abi_rv64i.o        389                             389                                          same     
+  abi_rv64gc.o       368                             324                                          DIFFERENT
+  abi_rv64imafd.o    368                             368                                          same     
+  abi_rv64imafdc.o   368                             324                                          DIFFERENT
+
+  6048 instructions found by the two-bit rule and 5012 found with the length
+  handed in, across 29 code sections of 29 objects. THEY DISAGREE, and the
+  table above says where.
+
+  So the rule is load-bearing and it is the only thing standing between a
+  disassembler and a corpus of nonsense, and it is TWO BITS. A reader who
+  arrives from AArch64 -- where the loop is `p += 4` and cannot be wrong --
+  has to learn this first and has to learn it from an ENCODING rather than
+  from an argument, because there is no RISC-V machine here to run the wrong
+  answer on. That is why this course has no timings and this section still has
+  a finding: the cost of compression is measurable in bytes and the cost of
+  NOT having compression is measurable in a two-bit rule, and neither of them
+  needs hardware.
+
+==========================================================================
+SECTION 9 -- TWO READERS ON THE SAME BYTES
+==========================================================================
+
+  Every instruction in the RISC-V corpus is decoded TWICE: once by the
+  inherited decoder and once by `llvm-objdump-21 --triple=riscv64`. Four
+  numbers, and the three that matter are not the first:
+
+  * how many instructions the reader PRINTED and this file COMPARED;
+  * how many of them this file NAMED (an unmodelled word is counted, never
+    dropped);
+  * how many DISAGREED -- and, if any did, each one PRINTED BY NAME, because
+    a number of eleven is a bug report and a list of eleven is a diagnosis.
+
+  AND THE FIRE TABLE IS PRINTED WHETHER OR NOT THERE IS ANYTHING TO PUT IN IT.
+  A normalisation table that appears only on failure is a table this file's
+  own harness can only ever check on a broken artifact, and a check that runs
+  on failure and not on success is a check that has been false the whole time.
+  This collection has now been bitten by that three times.
+
+
+  6048  instructions the second reader printed, and this file compared
+  5973  of them this file NAMES
+  75  unmodelled -- counted, never dropped
+  0  where the two readers disagree on the LENGTH
+
+  0  DISAGREE
+
+  6048 instructions, 5973 named, 0 disagreements, 0 length disagreements. ZERO disagreements over 5973 named instructions, and ZERO length disagreements over the same 6048.
+
+
+  THE NORMALISATION FIRE TABLE, pre-seeded with every rule at zero,
+  and printed WHETHER OR NOT there is anything to put in it:
+
+  51 rules, 38 fired, 13 matched nothing
+
+  DEAD RULES, AND WHY EACH ONE IS DEAD.  A rule with no line
+  here is reported as INVESTIGATE rather than assumed innocent:
+
+    c.and                  0   no 3-register bitwise and survives -O1 in this corpus
+    c.andi                 0   no 3-register andi survives -O1 in this corpus
+    c.ebreak               0   nothing in the corpus traps
+    c.jalr                 0   every indirect call here is `jalr ra` from an `auipc` pair
+    c.lui                  0   no small-immediate lui survives -O1 in this corpus
+    c.or                   0   no 3-register bitwise or survives -O1 in this corpus
+    csr name               0   the corpus has no CSR access at all
+    csrr alias             0   the corpus has no CSR access at all
+    csrw alias             0   the corpus has no CSR access at all
+    jr                     0   clang spells every indirect jump `ret` or `jalr`, never `jr`
+    neg                    0   no `neg` in four C files; the compiler spells it `sub rd, x0, rs`
+    rdcycle                0   nothing in the corpus reads a cycle counter
+    zext.b                 0   no byte-extension in the corpus
+
+  every rule that fired, with its count, so the reader can judge
+  each one:
+    register name          19299
+    float register         1860
+    c.ldst                 603
+    c.add                  398
+    ret                    344
+    li alias               322
+    c.jr                   272
+    c.li                   231
+    mv alias               226
+    branch target          178
+    jump target            118
+    fmv.d alias            96
+    c.addi16sp             88
+    c.mv                   86
+    c.addw                 78
+    j                      59
+    c.j                    59
+    c.addi4spn             48
+    c.slli                 42
+    c.subw                 37
+    c.addi                 33
+    c.addiw                31
+    jalr no displacement   29
+    beqz                   23
+    c.beqz                 23
+    c.xor                  11
+    c.srai                 10
+    sext.w                 7
+    blez                   7
+    bltz alias             7
+    c.sub                  6
+    bnez                   5
+    c.srli                 4
+    c.bnez                 2
+    bgez alias             2
+    nop                    1
+    c.nop                  1
+    seqz alias             1
+
+  every rule that fired, with its count, so the reader can judge
+  each one:
+    register name          19299
+    float register         1860
+    c.ldst                 603
+    c.add                  398
+    ret                    344
+    li alias               322
+    c.jr                   272
+    c.li                   231
+    mv alias               226
+    branch target          178
+    jump target            118
+    fmv.d alias            96
+    c.addi16sp             88
+    c.mv                   86
+    c.addw                 78
+    j                      59
+    c.j                    59
+    c.addi4spn             48
+    c.slli                 42
+    c.subw                 37
+    c.addi                 33
+    c.addiw                31
+    jalr no displacement   29
+    beqz                   23
+    c.beqz                 23
+    c.xor                  11
+    c.srai                 10
+    sext.w                 7
+    blez                   7
+    bltz alias             7
+    c.sub                  6
+    bnez                   5
+    c.srli                 4
+    c.bnez                 2
+    bgez alias             2
+    nop                    1
+    c.nop                  1
+    seqz alias             1
+
+  The rule table is INHERITED from `rvdec.py` rather than rewritten, and
+  inheriting it is the right call for a second reason this section makes worth
+  stating: a normaliser that DELETES an operand makes two readers agree by
+  deleting the same operand, and the agreement is then evidence about the
+  normaliser rather than about either decoder. Every rule in that table
+  EXPANDS -- it turns a printed line into a line with the same or more
+  information in it -- which is a design property rather than a patch, and it
+  is why the count of disagreements here is a count about the DECODERS.
+
+==========================================================================
+SECTION 10 -- FOUR POISONS, AND EACH ONE HAS TO MOVE ITS OWN NUMBER
+==========================================================================
+
+  A control that cannot be made to fail is a comment that says the word
+  POISONED. This collection has paid for that lesson three times -- the
+  AArch64 data-path course's cross-check reported ZERO disagreements over a
+  corpus where eighty-five instructions genuinely disagreed, and every one of
+  the four bugs had made the comparison VACUOUS rather than wrong; and the
+  first RISC-V course shipped a poison whose victim had no corpus footprint,
+  so it could not move anything. So each of the four below names the number it
+  tests, runs the SAME loop over the SAME bytes, prints the DELTA as a number,
+  and prints [POISON FAILED] if the delta is zero.
+
+  The victims are chosen FROM THE CORPUS and not from a list of interesting
+  models, because a poison whose victim owns no words in this corpus is a
+  poison that cannot move a number no matter what it prints.
+
+  POISON 1 -- remove BOTH corrections this file prepends,
+              `m_shiftw_fixed` and `m_shift_imm_fixed`, in one
+              step.  It claims TWO numbers, because it is the one
+              a reader actually wants: what is this course's own
+              contribution to the disagreement count and to the
+              unmodelled count, measured rather than asserted.
+              Poison 2 then removes ONE of them, to show which of
+              the two numbers each one owns.
+
+    BEFORE: 5973 named, 0 disagree, 75 unmodelled
+    AFTER : 5937 named, 6 disagree, 111 unmodelled
+    DELTA: named -36, disagreements +6, unmodelled +36
+    VERDICT: POISON 1 FIRED
+
+  POISON 2 -- remove `m_shift_imm_fixed` ALONE, the corrected
+              slli/srli/srai.  It claims the UNMODELLED count and
+              only that one, and the reason it can only claim that
+              one is worth stating: removing it does NOT create a
+              disagreement, it creates a HOLE.  The inherited model
+              it replaces cannot NAME an RV64 shift of 32 or more,
+              so the words go from "named and agreeing" to
+              "unmodelled and counted" -- and the cross-check
+              reports ZERO disagreements on a corpus where it has
+              just lost 36 instructions.  That is the exact shape
+              of the AArch64 data-path bug this section exists
+              against, and it is why the UNMODELLED count is a
+              first-class number here and not a footnote.
+
+    BEFORE: 5973 named, 0 disagree, 75 unmodelled
+    AFTER : 5937 named, 0 disagree, 111 unmodelled
+    DELTA: named -36, disagreements +0, unmodelled +36
+    VERDICT: POISON 2 FIRED
+
+  POISON 3 -- hand the instruction LENGTH in from outside, as a
+              disassembler with a symbol table can, and compare the
+              instruction count against the two-bit rule.  The
+              number it must move is the COUNT ITSELF: with the
+              length supplied the rule is no longer being tested
+              by anything, and a rule nothing tests is a comment.
+
+    instructions found by the RULE      : 6048
+    instructions found with length GIVEN: 5012
+    DELTA: -1036
+    VERDICT: POISON 3 FIRED
+
+  POISON 4 -- break the CHECK, not the decoder.  Every real
+              disagreement is listed by name, and then an
+              AArch64-shaped normaliser -- one that KEEPS the
+              mnemonic and the FIRST operand and DELETES the rest
+              -- is applied to both sides.  The number it must move
+              is the number of disagreements that DISAPPEAR.
+
+    real disagreements planted (last operand changed): 5641
+    of those, the working cross-check CATCHES           : 5641
+    of those, the broken rule makes DISAPPEAR           : 4420
+    DELTA: 4420 of the 5641 planted disagreements were HIDDEN
+    VERDICT: POISON 4 FIRED
+
+  FOUR POISONS, FOUR CLAIMED NUMBERS, FOUR NON-ZERO DELTAS:
+
+  poison 1 claims the DISAGREEMENT count and the UNMODELLED count together,
+  and moved them by +6 and +36 poison 2 claims the UNMODELLED count and moved
+  it by +36 poison 3 claims the INSTRUCTION COUNT and moved it by -1036 poison
+  4 claims the VISIBILITY of the check and hid 4420 of 5641
+
+  AND THE FIRST DELTA IS THE ONE TO READ TWICE, because it moves two numbers
+  in OPPOSITE directions and both moves are correct. Removing the corrections
+  takes 36 instructions from the NAMED column -- they stop being named -- and
+  puts 6 into the DISAGREE column, because the six `sraiw`/`srliw` words the
+  other correction owns are still named, just wrongly. One correction loses
+  words and the other corrupts them, which is the whole argument for counting
+  the unmodelled words rather than trusting the zero.
+
+  A poison that cannot move must say so, and this file prints [POISON FAILED]
+  and stops. It did that twice during this course's development, both times
+  for a reason that was about the POISON and not about the decoder: once
+  because the victim was named with a different underscore than the model it
+  was supposed to remove, so nothing was removed and every delta was correctly
+  zero; and once because the planted differences went into the FIRST operand,
+  which the broken normaliser also keeps, so the control was measuring the
+  wrong thing. Both are printed rather than quietly fixed, because a course
+  that retracts a number is worth more than a course that has only ever
+  produced right ones.
+
+  And the one worth reading twice is poison 4, because it is the only one that
+  is about the CHECK rather than about the decoder, and because it is the
+  shape of the bug that made this collection's most confident number
+  meaningless: a normaliser that removes information makes two readers agree
+  by removing the same information, and the agreement is then evidence about
+  the normaliser. A cross-check can compare six thousand real instructions,
+  agree on every one of them, and still be measuring nothing. The only way to
+  know whether yours can is to make it fail on purpose and watch it.
+
+==========================================================================
+SECTION 11 -- TWELVE RETRACTIONS
+==========================================================================
+
+  Twelve of them, in the order this course met them. `crosscheck.py` asserts
+  the TEXT of every one of them, because a retraction that is quietly deleted
+  is the one failure no number in this file can catch.
+
+  Ten of the twelve are about a DECODER or an INSTRUMENT and two are about a
+  COMPARISON, and that ratio is the shape of this subject: the calling
+  convention is a document you can quote and the compiler is a thing you can
+  measure, so the disagreements live in the machinery and the specification is
+  almost always right.
+
+  Nothing here is a mistake about how a computer works. That is eleven courses
+  in a row, and it is the most interesting thing about the list: the RISC-V
+  ABI did not surprise this course once. What surprised it was a three-bit
+  register field (R1, R2), a correction registered under the wrong opcode
+  (R3), a `-march` pair with two letters changed (R6), and the belief that a
+  three-register load names the same register twice (R5 and the register
+  census in section 7, which is why that table is preceded by its own audit).
+
+
+  R1  CLAIMED: the inherited decoder reads `sraiw a1, a0, 31` correctly
+     it prints 1055, because the inherited `i_shiftw_immm` reads the whole
+                TWELVE-BIT I immediate for a field that is FIVE bits wide.
+                0x41f5559b: llvm-objdump-21 says `sraiw a1, a0, 0x1f`, this file
+                said `sraiw a1, a0, 1055`. The inherited corpus never contained an
+                `sraiw` that was not also a `srliw` with a lucky value, so the bug
+                was right by coincidence on every word it was tested on. Corrected
+                by a model PREPENDED in THIS file, not by editing the sibling.
+
+  R2  CLAIMED: the inherited decoder names every RV64 shift-immediate
+         it does not. It reads `inst[31:25]` as `funct7`, which is the RV32 reading, and on RV64 that field is `shamt[5]`, the TOP BIT OF THE AMOUNT rather than a selector -- so EVERY shift by 32 to 63 decoded to
+                NOTHING. 0x02051613 is `slli a2, a0, 0x20` and the inherited file reported it as unmodelled. The fix is that `inst[31:26] is 000000 for slli/srli and 010000 for srai`, and the amount is six bits at
+                inst[25:20]. Measured delta of the correction: 36 words named that were not named before.
+
+  R3  CLAIMED: a correction registered against opcode 0x13 fixes R1
+     it fixes NOTHING, and it is in this file because the failure mode is worth
+                more than the fix. `slliw`/`srliw`/`sraiw` are opcode 0x1b; 0x13 is
+                OP-IMM and holds `slli`/`srli`/`srai`. The first version of the
+                correction was inserted under 0x13, never fired, and the original
+                symptom persisted -- and a correction that does not run has the same
+                observable behaviour as the bug it was fixing.
+
+  R4  CLAIMED: the ninth argument is on the stack
+     that is right for INTEGERS and wrong for DOUBLES, and the difference is the
+                second calling convention rather than a special case. With fa0-fa7
+                exhausted and a0-a7 free, the ninth `double` is passed "according to
+                the integer calling convention" and arrives in a0. `f9` reads NO
+                stack argument at any optimisation level. With the integers also
+                exhausted -- `m18` -- the ninth double is at 8(sp), because the
+                ninth integer took 0(sp). Two independent counters, and the second
+                one only shows up in the mixed case.
+
+  R5  CLAIMED: adding the C extension changes bytes and not instructions
+     false for the third file, and the reason is a register constraint and not
+                an encoding. The CLEAN pair (`rv64imafd` against `rv64imafdc`) says
+                +0 for `regs.c` and +0 for `abi.c` and +6 for `cpc.c`: the
+                compressed forms have register constraints -- three bits, x8 to x15
+                -- that the register allocator has to respect, and respecting them
+                changes what it emits. So the claim is true for two files of three
+                and false for the third. The CONFOUNDED pair (rv64i against rv64gc)
+                says something completely different -- -38 for `regs.c` -- and every
+                bit of that is the SOFT-FLOAT library and not the encoding.
+
+  R6  CLAIMED: `rv64i` against `rv64gc` measures what compression costs
+     it does not, and this is the most transferable retraction in the file. The
+                two settings differ in F, D and C at once, and the largest
+                difference in the table is the F/D removal turning every `double`
+                into a call. A `-march` comparison is a measurement of ONE extension
+                only when every other letter is held fixed, and the artifact now
+                builds a clean pair for exactly that reason.
+
+  R7  CLAIMED: a callee that spills one callee-saved register does less work than one that spills eight
+     MEASURED, the opposite. The C extension gives the stack-pointer-relative
+                stores a SIX-bit displacement with no scaling in some classes and a
+                two-byte encoding, so `spilln` stores 4 values at rv64imafdc and 2
+                at rv64imafd for a frame that is SMALLER in the uncompressed build.
+                The compressed encoding is not uniformly shorter per operation: it
+                is shorter per operation THAT IT ENCODES, and the register allocator
+                reacts to that by storing differently.
+
+  R8  CLAIMED: the caller audit can read the callee's register choices
+     it cannot, and the first version of it printed nonsense. At -O0 clang
+                spills every argument to the caller's own frame, so the list of
+                stack stores before the call is empty and the ninth argument is
+                nowhere to be found. The audit is printed at -O2 and the -O0 row is
+                not counted.
+
+  R9  CLAIMED: the compression cost is a percentage
+     no figure in this course is a percentage of anything a machine does. The
+                `bytes saved` column is a ratio of two byte counts from one compiler
+                and it is labelled as such in the caption of the table it is in. A
+                percentage of bytes is not a percentage of time and this file does
+                not print one.
+
+  R10  CLAIMED: this course can compare its three targets for speed
+     IT IS NOT MEASURED, and the file says so in section 1, in section 5 and in
+                section 6 rather than in a limits section at the end. There is no
+                RISC-V machine, no emulator and no RISC-V linker on this host; there
+                is no AArch64 machine either; and the 4.92x and the 27.65x the
+                x86-64 ABI course measured were measured ON HARDWARE IT COULD RUN.
+                The three-target table is an INSTRUCTION COUNT and every caption on
+                it says so, and no ratio appears anywhere in this course.
+
+  R11  CLAIMED: a dead normalisation rule is a broken normalisation rule
+         on this corpus, thirteen of the inherited rules do not fire and NOT ONE of them is broken. A zero from a normaliser is not a zero from a decoder. This corpus emits no `neg`, no `jr`, no CSR access, no
+                `c.lui` and no 3-register bitwise operation, and a normaliser only ever sees the words a corpus happens to contain. A harness that asserts "zero dead rules" against a corpus that does not contain the
+                spellings fails on a healthy artifact and trains its reader to ignore it. Every dead rule now carries a one-line reason and a rule with no reason prints as INVESTIGATE. And the same sentence holds one
+                level further out: a zero from a normaliser is not a zero from the machine either, because there is no machine on this host for any of it to be a zero about.
+
+  R12  CLAIMED: the first version of this course's poison 2 proved the correction unnecessary
+     it proved nothing, and the file said so. The poison named its victim
+                `m_shiftimm_fixed` while the model is registered as
+                `m_shift_imm_fixed`, so the filter removed nothing, every delta was
+                zero, and the verdict was CORRECT. A control that did not run and a
+                control that ran and found nothing are the same number and two
+                different bugs, and the distinction is now made in the code rather
+                than in a comment.
+
+==========================================================================
+SECTION 12 -- WHAT THIS FILE CANNOT SHOW, AND WHERE EVERY CLAIM CAME FROM
+==========================================================================
+
+  Twelve limits, and they are printed in the artifact's own words so that a
+  reader who copies a number out of this file cannot lose the sentence that
+  limits it. A limit that is stated in a document nobody opens is not a limit;
+  it is a disclaimer.
+
+
+  1. NO TIMING. No cycle, no latency, no throughput, no speedup, no ratio
+     of anything a machine did. There is no RISC-V machine, no emulator and
+     no RISC-V linker on this host, so every figure is a bit pattern, a
+     count of bit patterns, an arithmetic identity, or a refusal from a
+     real assembler.
+  2. NOTHING IS EXECUTED. Not one instruction in this course has run. A
+     branch that this file counts as a BRANCH has never been taken.
+  3. NOTHING IS LINKED. There is no RISC-V `ld`, so no `auipc`+`addi` pair
+     is proved to land on the right address and no `.text` byte offset is
+     proved to become the virtual address a relocation will produce.
+  4. NO PAGE WALK, NO CACHE, NO TLB, NO BRANCH PREDICTOR. The manual
+     argues for its branch design in terms of front-end prediction; this
+     course quotes the argument and measures nothing about it.
+  5. THE STACK ALIGNMENT RULE IS AN ARITHMETIC IDENTITY ONLY. "aligned to
+     a 128-bit boundary upon procedure entry" is QUOTED; that -O0's
+     prologue and epilogue sum to zero mod 128 is MEASURED; that a
+     misaligned access FAULTS cannot be measured here and is not claimed.
+  6. NO RED ZONE, BUT NO MEASUREMENT OF ONE EITHER. The rule is QUOTED --
+     "Procedures must not rely upon the persistence of stack-allocated data
+     whose addresses lie below the stack pointer" -- and section 3 shows
+     that every spilled argument costs an explicit frame. What an INTERRUPT
+     does to that memory is a property of the platform and is not
+     measurable here.
+  7. X0 IS HARDWIRED TO ZERO IN THE SPECIFICATION AND IN THE SILICON, AND
+     THE ONLY PART THIS COURSE MEASURES IS THE ENCODING. This limit
+     separates two things a reader is likely to run together. The ENCODING
+     is five bits in every instruction that has an rd, it is a real field,
+     and `li zero, 42` ASSEMBLES to four bytes: this course measures that
+     and prints it. The SILICON is a hardwired zero and a write to x0 is
+     discarded whatever the encoding says, and that is a property of
+     hardware this host does not have, so no claim is made about it. The
+     two are separable because the ENCODING is readable on this host and
+     the SILICON is not: a file can contain an instruction whose
+     architectural effect is nothing, and a decoder that cannot tell which
+     instructions those are is not wrong about the bits -- it is silent
+     about the silicon.
+  8. THE TWO READERS SHARE AN ASSEMBLER. `clang` assembled the corpus and
+     `llvm-objdump-21` disassembled it, so both come from one LLVM tree,
+     and GNU binutils has no RISC-V target installed. What section 9
+     establishes is "this decoder and one other piece of software agree on
+     what the bytes mean" -- NOT "either agrees with silicon".
+  9. EVERY REGISTER ASSIGNMENT IS THE SPECIFICATION'S AND EVERY
+     INSTRUCTION COUNT IS CLANG 21.1.8'S. crosscheck.py asserts the first
+     as exact numbers and the second as shapes, because a shape does not
+     move with a compiler version and a bare value does.
+  10. THE AArch64 SIDE IS DECODED BY A DIFFERENT DECODER FROM A DIFFERENT
+     COURSE, and only for the words `noflags.c` produced. "csel exists" is
+     a fact about the encoding; "csel is cheap" is not a fact about
+     anything this file can reach.
+  11. NOTHING GENERALISES FROM AN EMPTY ROW. Every distribution here is a
+     distribution of what clang chose for four files of ordinary C at one
+     version on one host, and a row with nothing in it is a statement about
+     that corpus and not about the architecture.
+  12. A CROSS-CHECK THAT AGREES IS NOT PROOF. Section 10 exists because the
+     AArch64 data-path course reported ZERO disagreements over a corpus
+     where eighty-five instructions genuinely disagreed, and the only way
+     to know whether a cross-check can fail is to make it fail on purpose.
+
+  THE PROVENANCE TABLE. Every claim class in this course and which of the
+  three labels it carries, so that a claim cannot acquire a label
+  retroactively and a reader can check a category he can find. The three
+  QUOTED sources are named with a section each; the MEASURED-ON-BYTES rows
+  name the FIELD or the FILE the bytes were read out of, because "measured on
+  bytes" is only a label if it says WHICH bytes.
+
+
+  label              the claim                                                        where it came from                                                                                      
+  QUOTED             the register table, the argument rules, the two counters         riscv-cc, Register Convention and Procedure Calling Convention                                          
+  QUOTED             "offset zero of the stack pointer on function entry"             riscv-cc, Procedure Calling Convention                                                                  
+  QUOTED             "Procedures must not rely upon ... below the stack pointer"      riscv-cc, Procedure Calling Convention -- the NO-RED-ZONE rule                                          
+  QUOTED             "The presence of a frame pointer is optional"                    riscv-cc, Frame Pointer Convention                                                                      
+  QUOTED             gp and tp are UNALLOCATABLE                                      riscv-cc, Integer Register Convention, fourth column                                                    
+  QUOTED             "We considered but did not include conditional moves"            rv32-unprivileged, the branch-design note                                                               
+  QUOTED             "rather than use condition codes (x86, ARM, SPARC, PowerPC)"     rv32-unprivileged, the branch-design note                                                               
+  QUOTED             "Register x0 is hardwired with all bits equal to 0"              rv32-unprivileged, Programmers' Model for Base Integer ISA                                              
+  MEASURED-ON-BYTES  every argument placement in section 3                            the store's relocation chain, read out of the ELF symbol and relocation tables by hand                  
+  MEASURED-ON-BYTES  the ninth integer at 0(sp)                                       a `c.ldsp rd, 0(sp)` in the callee and a `c.sdsp rs, 0(sp)` in the caller, both at every level above -O0
+  MEASURED-ON-BYTES  the ninth double in a0, and at 8(sp) when the integers are gone  the rs2 field of the store to D8, in `f9` and in `m18`                                                  
+  MEASURED-ON-BYTES  the register pair's low half in the lower-numbered register      the base register of the third `long long` in `wide`                                                    
+  MEASURED           the branch/mask/call classification in section 5                 the mnemonic of every instruction in `noflags.c` at four levels                                         
+  MEASURED-ON-BYTES  `sign` is one instruction                                        srliw a0, a0, 0x1f at -O2, decoded from cpc.o/noflags_O2.o                                              
+  MEASURED           the three-target instruction counts                              one source file, three `--target=` flags, one compiler version                                          
+  MEASURED-ON-BYTES  `csel` carries a four-bit condition                              a64dec.py decoding the words clang emitted, plus the reader                                             
+  MEASURED           x0 appears as a source and never as an effective destination     a census of the rd/rs1/rs2 fields over the whole corpus                                                 
+  MEASURED           gp and tp are written zero times                                 the same census, restricted to the two unallocatable registers                                          
+  MEASURED-ON-BYTES  `mv t0, zero` is `c.li t0, 0`                                    three assembler probes at rv64gc and at rv64i                                                           
+  MEASURED           the two-byte and four-byte spellings of a zero                   the decoded immediate across the whole corpus at -O2                                                    
+  MEASURED-ON-BYTES  the byte counts in section 8                                     the executable section sizes, and the length of every instruction                                       
+  MEASURED           the confound between rv64i and rv64gc                            two -march pairs, one confounded and one clean, on the same source                                      
+  MEASURED           the length rule is load-bearing                                  the same walk run with the length supplied from outside                                                 
+  MEASURED-ON-BYTES  the two-reader agreement in section 9                            this file's decoder against llvm-objdump-21, 5973 named instructions                                    
+  MEASURED-ON-BYTES  the sraiw/slli corrections R1 and R2                             0x41f5559b and 0x02051613, read out of cpc_rv64imafd.o                                                  
+
+  25 rows: 7 MEASURED, 10 MEASURED-ON-BYTES, 8 QUOTED.
+
+  And that ratio is worth a sentence, because it is the inverse of the ratio
+  in the AArch64 section's privileged course and the reason is the subject. A
+  calling convention is a CONTRACT between compilers, and a contract is
+  something you can quote exactly and check a compiler against; an instruction
+  encoding is something you can only measure, because the thing being measured
+  is what one compiler did with it. So on a course about a contract the QUOTED
+  third is the largest, and the number of MEASURED-ON-BYTES rows is large for
+  a second reason: this course needed the ELONGATION OF A RELOCATION CHAIN to
+  turn "which register holds argument three" from a reading of assembly text
+  into a reading of bytes, and three hops of `auipc` -> `c.lw`... no: of
+  `auipc` -> `.Lpcrel_hi0` -> the store is the measurement, and it is
+  byte-level because the alternative is a regex over a text file that nothing
+  else in this collection has checked.
+
+  WHAT THE COURSE OWES ITS SIBLINGS, and does not re-teach:
+
+  * why a contract exists at all, and why a callee saves registers --
+    `/courses/x86abi/lessons/x86-calling` and `/courses/x86abi/lessons/x86-saved`
+  * what a frame is for, and what a frame pointer is for --
+    `/courses/x86abi/lessons/x86-frame` and `/courses/a64abi/lessons/a64-frame`
+  * the same contract for AArch64, and the two independent argument counters
+    as AArch64 states them -- `/courses/a64abi/lessons/a64-aapcs`
+  * the register file as a partitioned namespace on another architecture --
+    `/courses/a64abi/lessons/a64-registers`
+  * the ENCODING side of the C extension -- reserved code points, the seven
+    permutations, the four assembler refusals --
+    `/courses/rvasm/lessons/rv-compressed`
+  * the six formats, the field map, and the immediates --
+    `/courses/rvasm/lessons/rv-encoding`
+  * what a two-reader check is for, and the vocabulary this course borrows
+    for its own -- `/courses/rvasm/lessons/rv-verify`
+  * what an object file IS -- `/courses/exe/lessons/exe-frontend`
+
+  Verified present before linking, every one of them.
+
+==========================================================================
+END OF REPORT -- 12 sections, 12 limits, 12 retractions, 4 poisons.
+==========================================================================

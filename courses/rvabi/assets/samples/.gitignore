@@ -1,0 +1,38 @@
+# The rvabi sample directory tracks its OUTPUT and ignores its INPUTS.
+#
+# The distinction is the whole point of the course: a number in the prose is
+# a claim about BYTES, so the bytes' derived report is committed and the
+# things that make the bytes are not.  A reader can check every figure in the
+# course against rvabi.out, run1.txt and run2.txt WITHOUT installing a
+# cross-compiler -- which on this host means without clang, without a riscv64
+# target and without a RISC-V linker, none of which are needed because nothing
+# in this course is ever executed.
+#
+# A reader who wants to re-derive them runs build_samples.sh and needs clang
+# with a riscv64 and an aarch64 target plus llvm-objdump-21.  There is still
+# no RISC-V BINUTILS on this host, so there is no second, independent
+# assembler: the two readers ultimately depend on ONE LLVM TREE, and the
+# artifact says so in section 1 rather than implying an independence it does
+# not have.
+#
+# So: the recorded runs are tracked, the objects are not.  They are large,
+# they are binary, and they are reproducible from four text files with one
+# command.
+
+# Object files.  All of these are outputs of build_samples.sh -- the four C
+# corpora at four levels, the same three at four -march settings, the
+# aarch64 and x86-64 builds of the same C, and the hand-written probe.  The
+# `*.o` pattern is listed once as a pattern and every name is NOT listed
+# again, because a name that appears in two places is a name that eventually
+# disagrees with itself.
+*.o
+
+# The disassembler's own listing, for the same reason: it is derived, and it
+# is the SECOND reader's opinion of a file this course also reads by hand.
+*_objdump.txt
+
+# Python bytecode.  Present on disk because rvabi.py imports the sibling
+# course's rvdec.py, and the import writes this directory's cache; it is never
+# an input to anything.
+__pycache__/
+*.pyc

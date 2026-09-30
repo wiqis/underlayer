@@ -1038,6 +1038,51 @@ public namespace underlayer_web {
         return string()
     }
 
+    // The RISC-V ABI.  Four concepts, and the id scheme is `rv-` prefixed for
+    // the reason `render_rvasm_concept` above records at length: render_concept()
+    // resolves concept ids GLOBALLY with no course in the key, so two courses
+    // cannot share a name and the sibling section already owns `rv-verify`,
+    // `rv-isa`, `rv-encoding`, `rv-compressed` and `rv-immediate`.  Everything
+    // here is therefore `rv-` plus a word the encoding course does not use,
+    // and the four ids are:
+    //
+    //   rv-calling          a0-a7, and where the ninth argument goes.  NOT
+    //                       `rv-arguments` and NOT `rv-abi`, because `rv-abi`
+    //                       is the COURSE and a concept must not shadow its
+    //                       own course id, and because the page's content is
+    //                       one specific argument -- the ninth -- and where it
+    //                       lands is the whole of it.
+    //   rv-noflags          the section's spine: no flags register, no
+    //                       condition codes, no CMOVcc and no SETcc.  Named
+    //                       for the ABSENCE rather than for the mechanism,
+    //                       because the course title is "the Register That
+    //                       Isn't There" and the mechanism on the other two
+    //                       targets (a cmov) is the thing the absence removes.
+    //   rv-registers        the register file as roles, x0, and the two
+    //                       files.  Not `rv-regs`, which the encoding course
+    //                       would have wanted for the field map.
+    //   rv-compressed-cost  what compression does to the ABI and to
+    //                       disassembly.  NOT a repeat of `rv-compressed`:
+    //                       that page measured the ENCODING (reserved code
+    //                       points, the seven permutations, the four
+    //                       assembler refusals) and this one measures the
+    //                       CONSEQUENCE (a spill, a hot loop, a call/return
+    //                       pair, and the two-bit length rule).  The `-cost`
+    //                       suffix is what keeps the two apart.
+    public func render_rvabi_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var calling_id = std::string("rv-calling")
+        var noflags_id = std::string("rv-noflags")
+        var registers_id = std::string("rv-registers")
+        var cost_id = std::string("rv-compressed-cost")
+
+        if(cid.equals(&calling_id)) { return underlayer_content::render_rv_calling() }
+        if(cid.equals(&noflags_id)) { return underlayer_content::render_rv_noflags() }
+        if(cid.equals(&registers_id)) { return underlayer_content::render_rv_registers() }
+        if(cid.equals(&cost_id)) { return underlayer_content::render_rv_compressed_cost() }
+        return string()
+    }
+
     // The x86-64 ABI. Same fall-through contract: empty string for anything
     // else.  `x86-calling` and its five siblings continue the `x86-` prefix
     // the assembly course already owns, and they are deliberately NOT
@@ -1273,6 +1318,16 @@ public namespace underlayer_web {
         // `render_rvasm_concept` says why this one gets it.
         var rvasm_html = render_rvasm_concept(concept_id)
         if(rvasm_html.size() > 0) { return rvasm_html }
+        // The RISC-V section's second course: the ABI.  Checked AFTER
+        // `render_rvasm_concept` on purpose -- the encoding course is the one
+        // that has been here longest, and the two overlap on the word
+        // `compressed` (`rv-compressed` versus `rv-compressed-cost`), so the
+        // older resolver must get first refusal on any id both could match.
+        // Every id this one claims was read out of the file above rather than
+        // assumed, because a collision here does not 404: it silently serves
+        // another course's page under this course's URL.
+        var rvabi_html = render_rvabi_concept(concept_id)
+        if(rvabi_html.size() > 0) { return rvabi_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

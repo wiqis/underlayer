@@ -136,7 +136,7 @@
 - [x] Learn RISC-V ISA
 - [x] Learn RISC-V Assembly
 - [x] Learn RISC-V Instruction Encoding
-- [ ] Learn RISC-V Calling Conventions
+- [x] Learn RISC-V Calling Conventions
 - [ ] Learn RISC-V Privilege Specification
 - [ ] Learn RISC-V Virtual Memory
 - [ ] Learn RISC-V Interrupts

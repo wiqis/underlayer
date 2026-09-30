@@ -1,0 +1,73 @@
+{
+  "id": "rvabi",
+  "title": "The RISC-V ABI, and the Register That Isn't There",
+  "version": "1.0.0",
+  "description": "RISC-V has no flags register and no condition codes. x86-64 has EFLAGS, AArch64 has NZCV, RISC-V has nothing -- and that single absence explains why AArch64 needs csel at all, why a compiler emits a branch on one target and a cmov on another, and why the register list this course counts has no entry for 'the condition'. The calling convention is a contract between compilers, so it can be quoted exactly and then tested: 44 of 44 integer argument placements agree with riscv-cc, and the row a summary gets wrong is the ninth DOUBLE, which arrives in a0 -- an INTEGER register -- because the hardware floating-point convention falls back to the integer one. Two independent argument counters, proved by a function with nine integers then nine doubles, which reads offsets 0 and 8 and nothing else. The three targets' conditional idioms are 17 branches, 16 csel/cneg and 16 cmov, and the three sets are DISJOINT -- computed, not asserted. There are NO TIMINGS: no RISC-V machine, no emulator, no RISC-V linker, so every figure is a bit pattern, a count of bit patterns, an arithmetic identity, or a refusal from a real assembler, and the x86-64 section's 4.92x and 27.65x have no counterpart here and are not invented.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 4 concepts, reproduce the 171 checks in courses/rvabi/assets/samples/crosscheck.py against the shipped rvabi.out, then break one of the four numbers a poison claims -- remove a prepended correction, or break the two-bit length rule -- and watch the delta move by name. The two-bit `(\\\\S+)` in the m18 check was a real harness bug and is documented where it was fixed.",
+  "min_score": 70,
+  "dependencies": [
+    "elf",
+    "rvasm"
+  ],
+  "modules": [
+    {
+      "id": "call",
+      "title": "The Contract: What Two Compilers Agree On",
+      "concepts": [
+        "rv-calling"
+      ]
+    },
+    {
+      "id": "condition",
+      "title": "The Absence: What Is Missing, and What It Buys",
+      "concepts": [
+        "rv-noflags",
+        "rv-registers",
+        "rv-compressed-cost"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "rv-calling",
+      "title": "The Calling Convention",
+      "module_id": "call",
+      "description": "a0-a7 for integers, fa0-fa7 for doubles, a0 and fa0 for the return value, s0-s11 preserved across a call, t0-t6 and a0-a7 not, ra and sp privileged, and the first stacked argument at offset ZERO because there is no return address on the stack to skip. Measured against the specification, not quoted: 44 of 44 register-resident integer argument placements agree at -O2, read out of the RELOCATION each store carries rather than out of a text file. The row no summary gets right is the ninth DOUBLE -- with fa0-fa7 exhausted it goes to a0, an INTEGER register, and f9 reads no stack argument at any level, because the hardware floating-point convention falls back to the integer one. And m18, nine integers then nine doubles, is the case that decides whether there is one counter or two: two, and the ninth double is at 8(sp) because the ninth integer took 0(sp).",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "rv-noflags",
+      "title": "No Flags Register, No Condition Codes, No CMOV",
+      "module_id": "condition",
+      "description": "The section's spine, and the manual admits the decision in its own words: 'We considered but did not include conditional moves or predicated instructions, which can effectively replace unpredictable short forward branches.' So the absence is a documented choice, not an inference from a hole. MEASURED over eleven functions of `?:` at four optimisation levels: the compiler picks a BRANCH for most of the corpus, reaches for ARITHMETIC only where arithmetic is cheaper, and emits no CMOVcc and no SETcc because neither exists. And the half nobody states: because sltu WRITES A REGISTER, `(x < 0) ? 1 : 0` is ONE instruction -- `srliw a0, a0, 31` -- where x86-64 would need a SETL that does not exist. The three targets' idioms are 17 branches, 16 csel/cneg and 16 cmov, and the three sets are DISJOINT, computed pairwise and printed.",
+      "estimated_minutes": 27,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "rv-registers",
+      "title": "The Register File as Roles, Not Numbers",
+      "module_id": "condition",
+      "description": "The ABI names ROLES: t0 is x5, s0 is x8 and is also called fp, ra is x1, sp is x2, zero is x0, and gp and tp are UNALLOCATABLE -- a stronger word than preserved, measured at 0 writes across the whole corpus. x0 is hardwired to zero, so `li zero, 42` ASSEMBLES to four real bytes and the discard is a property of silicon this host does not have. And there are two register FILES, not one: `fsd fa0, -24(s0)` names one register in each, the same five bits, and a reader that picks the wrong file reports a real register of the wrong kind with no other symptom. Which is why the census is preceded by its own audit: 5,973 instructions checked against a second rendering, and the first version of this reader answered 'which file' once per instruction and got 18 writes to gp over a corpus with none.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "rv-compressed-cost",
+      "title": "What Compression Does to the ABI and to Disassembly",
+      "module_id": "condition",
+      "description": "`rvasm`'s concept 3 already measured the ENCODING; this measures the CONSEQUENCE. A spill: 11 instructions and 44 bytes become 11 and 26. A call/return pair: 4 and 16 become 4 and 10. And the methodological result that matters more than either: `rv64i` against `rv64gc` is CONFOUNDED -- it also removes F and D, so every `double` becomes a soft-float CALL, and the -38 it reports is the library and not the encoding. The clean pair is `rv64imafd` against `rv64imafdc`, and there the instruction delta is +0, +0 and +6: the C extension changes how many BYTES an operation takes and almost never how many operations. Then the boundary problem, which is rvdec.py's central problem and this section's: instructions are 2 or 4 bytes, so you cannot find a boundary by knowing the length, only by reading two bits of the current position -- 6,048 instructions found by the rule against 5,012 with the length handed in.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}
