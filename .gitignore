@@ -38,3 +38,8 @@ tools/scratch/*
 # globally rather than parked in the scratch directory.
 __pycache__/
 *.py[cod]
+
+# A course exe writes ./output relative to its CWD, so running one from the
+# repo root scatters pages into a top-level output/. courses/*/output/ is the
+# real location; this top-level one is always a mistake.
+/output/
