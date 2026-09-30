@@ -1,0 +1,45 @@
+# The rvasm sample directory tracks its OUTPUT and ignores its INPUTS.
+#
+# The distinction is the whole point of the course: a number in the prose is
+# a claim about bytes, so the BYTES are committed and the things that make the
+# bytes are not.  A reader can check every figure in the course against
+# rvdec.out, run1.txt and run2.txt without installing a cross-compiler.  A
+# reader who wants to re-derive them runs build_samples.sh and needs clang
+# with a riscv64 target and llvm-objdump-21 -- and this host is the one place
+# in the whole collection where even THAT is not enough, because the second
+# reader is LLVM too, so the two readers share an assembler.  The artifact
+# says so in section 10 rather than implying an independence it does not have.
+#
+# So: the recorded runs are tracked, the objects are not.  They are large,
+# they are binary, and they are reproducible from two text files with one
+# command.
+
+# Object files.  All of these are outputs of build_samples.sh.  The `*.o`
+# pattern is listed once as a pattern and every name is NOT listed again,
+# because a name that appears in two places is a name that eventually
+# disagrees with itself.
+*.o
+
+# The disassembler's own listing, for the same reason: it is derived.
+*_objdump.txt
+
+# The scratch files the measurement driver assembles.  rvdec.py writes
+# _a.s/_a.o for a single-instruction probe, _b.s/_b.o for a batch, _w.s/_w.o
+# for a word asked about in isolation, and _space.s/_space.o for the 49,152
+# half-word enumeration of section 6 -- which is the largest file this script
+# ever produces and the reason the enumeration is worth committing an OUTPUT
+# for.  None of them is an input to anything; they are deleted and rewritten
+# dozens of times per run.
+_a.s
+_a.o
+_b.s
+_b.o
+_w.s
+_w.o
+_space.s
+_space.o
+
+# Python bytecode.  Present on disk because rvdec.py has been imported by
+# diagnostics during development; it is never an input.
+__pycache__/
+*.pyc

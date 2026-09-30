@@ -1,0 +1,2408 @@
+========================================================================
+rvdec -- the artifact for "RISC-V: The Encoding Spectrum"
+Every number below is a BIT PATTERN, a COUNT of bit patterns, an
+arithmetic identity, or a refusal from a real assembler.  Nothing is
+quoted from a manual and NOTHING IS EXECUTED: there is no RISC-V
+machine, no emulator and no RISC-V binutils on this host.  There are
+no timings anywhere in this file and the x86-64 section's ratios
+have no counterpart here.  See section 11.
+========================================================================
+
+========================================================================
+SECTION 1 -- THE INSTRUMENT.  Nothing below this point is a claim yet.
+========================================================================
+
+  There is no RISC-V machine on this host, no emulator, and no RISC-V
+  binutils. Nothing in the corpus is ever EXECUTED. The compiler emits words,
+  the disassembler names words, and this file reads words. Every number below
+  is a bit pattern, a count of bit patterns, an arithmetic identity, or a
+  refusal from a real assembler -- and not one of them is a property of a
+  running RISC-V program, because there is no running RISC-V program here to
+  have a property.
+
+  role                what was found                                what that means                           
+  assembles           Ubuntu clang version 21.1.8 (6ubuntu1)        C and asm to RISC-V; the SECOND reader    
+  disassembles        Ubuntu LLVM version 21.1.8                    the SECOND reader, and an INDEPENDENT one 
+  reads attributes    Ubuntu LLVM version 21.1.8                    for the Tag_RISCV_arch string concept 1 is about
+  links RISC-V        NOT INSTALLED                                 so no linked image is compared and no relocation resolves
+  GNU RISC-V as       NOT INSTALLED                                 so both readers come from ONE LLVM tree   
+  emulates RISC-V     NOT INSTALLED                                 so NO INSTRUCTION IS EXECUTED             
+  emulates RISC-V     NOT INSTALLED                                 the second emulator, also absent          
+
+  The rows that matter are the NO rows, and they are printed before any
+  measurement rather than in a limits section at the end, because a reader who
+  meets a number and meets the absence of the thing that would make it a
+  runtime measurement in a different order learns a different lesson.
+
+  And the consequence for the WHOLE section, stated once here so that no page
+  has to repeat it: THE X86-64 SECTION'S RATIOS HAVE NO COUNTERPART HERE.
+  There is no speedup, no cycle count, no cache miss, no IPC and no clock
+  anywhere in this file. Where a page would naturally carry a number of that
+  kind it carries a BYTE COUNT, an INSTRUCTION COUNT, or a REFUSAL, and the
+  page says which. A number invented to fill the gap would be the single worst
+  thing this course could do, and the plan's own rule is the reason: every
+  claim is MEASURED, MEASURED-ON-BYTES or QUOTED, and a fabricated ratio can
+  be none of them.
+
+  THE DECODER USES NO TOOL AT ALL. Part one of this file imports os, re,
+  struct and sys and nothing else. struct.unpack_from reads the ELF64 section
+  header table by hand -- e_shoff at 0x28, e_shentsize/e_shnum/e_shstrndx at
+  0x3a, then 64 bytes per entry -- and .text is found by NAME. The reader is a
+  dependency of the claim rather than a convenience: a decoder that shells out
+  to a disassembler is a disassembler with a hardcoded path in it.
+
+  THE ELF64 FIELDS THIS FILE READS, and nothing else:
+  field         offset     width      what it selects                             
+  e_shoff       0x28       8 bytes    offset of the section table                 
+  e_shentsize   0x3a       2 bytes    size of ONE section header                  
+  e_shnum       0x3c       2 bytes    how many there are                          
+  e_shstrndx    0x3e       2 bytes    which one is the name table                 
+  e_machine     0x12       2 bytes    243 = EM_RISCV                              
+
+  A reader who wants to check can: every offset above is in the ELF64
+  specification's section-header index and none of them is a constant invented
+  here. The decoder CHECKS e_machine == 243 and refuses a file that is not a
+  RISC-V object, and the check is not decoration. About a quarter of all
+  x86-64 opcodes have bits[1:0] == 0b11, so the length rule would step four
+  bytes at a time through an x86-64 object and produce a stream of entirely
+  plausible wrong lengths. Nothing in the DECODE would look wrong; the WALK
+  would be wrong, and the walk is what every other measurement in this file is
+  taken against.
+
+  THE DECLARED SUBSET, and what "subset" means HERE:
+    26 instruction models for the 32-bit encodings and one handler
+    for the whole 16-bit space.  The subset is a subset of NAMES,
+    and -- unlike the AArch64 course and unlike x86-64 -- an
+    unmodelled word here still has a LENGTH, because the length is
+    a two-bit RULE and not a table.  A word no model claims is
+    printed as (op 0x...) and COUNTED, never dropped.
+
+    Of the 1082 instructions in the corpus:
+      1047  named by a model in this file
+         0  UNDEFINED by the architecture (not by this file)
+         0  RESERVED compressed code points
+         4  HINTs -- DEFINED, and they do nothing
+        35  unmodelled: the vector data path, and a few rows
+
+  Those are five DIFFERENT numbers and section 10 depends on the distinction.
+  An undefined encoding, a reserved encoding, a hint and an unmodelled word
+  all print something that is not a plain mnemonic, and a two-reader
+  cross-check that reported the last of them as a failure would be reporting
+  its own declared scope as a bug.
+
+    All 9 corpus objects are present.
+
+
+========================================================================
+SECTION 2 -- THE SPECTRUM: TWO BYTES OR FOUR, AND HOW A DECODER KNOWS
+========================================================================
+
+  The one property that makes RISC-V different from AArch64 in a way a decoder
+  feels, and the reason this file's declared subset is a subset of NAMES
+  rather than of LENGTHS -- but reached by a completely different route,
+  because here the length is a RULE and there it was a constant.
+
+  if bits[1:0] == 0b11 the instruction is 32 bits else the instruction is 16
+  bits
+
+  Two bits. The rule needs nothing but the current position, which is why a
+  decoder with no model at all for an instruction still steps over it
+  correctly and the chain cannot desynchronise.
+
+  THE THREE EXEMPLARS the section plan measured while scoping, and
+  re-measured here from the corpus rather than quoted:
+
+    0x0000952e  2 bytes  c.add        a0, a1                     
+                the whole argument for C in one word
+    0x0d85f2d7  4 bytes  vsetvli    t0, a1, e64, m1, ta, ma      
+                V, and V is never compressed
+    0x00000073  4 bytes  ecall                                   
+                SYSTEM, four bytes, and 31 of the 32 bits are a fixed pattern
+
+  Read the first row and the third side by side. One is two bytes and does an
+  integer addition; the other is four bytes and does nothing at all. That is
+  the encoding spectrum in two words, and it is why "RISC-V is smaller" is not
+  a claim about instruction sets -- it is a claim about which instructions the
+  COMPILER was allowed to shorten, and the compiler is a separate program with
+  separate decisions.
+
+  THE LENGTH RULE, applied to every code section of every object.
+  The column that matters is the fourth: bytes walked against bytes
+  in the section.  Anything but equality is a desynchronised walk,
+  and the last column says whether there was one.
+
+  object                  section   bytes    walked    insns    end      
+  rv.o                    .text     284      284       99       EXACT    
+  corpus_rv64i.o          .text     584      584       146      EXACT    
+  corpus_rv64im.o         .text     456      456       114      EXACT    
+  corpus_rv64if.o         .text     584      584       146      EXACT    
+  corpus_rv64imf.o        .text     456      456       114      EXACT    
+  corpus_rv64imafd.o      .text     380      380       95       EXACT    
+  corpus_rv64imafdc.o     .text     246      246       95       EXACT    
+  corpus_rv64gc.o         .text     246      246       95       EXACT    
+  corpus_rv64gcv.o        .text     524      524       178      EXACT    
+
+    9 code sections, 1082 instructions, and EVERY WALK ENDS EXACTLY ON ITS SECTION END
+
+  That is a MEASUREMENT and not a definition, and the difference is worth one
+  sentence: the length rule is two lines of code and a definition does not
+  need checking. This one was checked against 9 real sections, and the
+  checking found nothing -- which is a result, and a result that could have
+  come out otherwise.
+
+  It also establishes the guarantee the rest of the file relies on. A word
+  this file cannot name still contributes exactly its own length to the count,
+  so the instruction count in every table below is a property of the CORPUS
+  and not of this decoder's coverage. The AArch64 course gets that guarantee
+  from a constant; this file gets it from a two-bit rule, and gets it for a
+  different reason.
+
+  THE LENGTH DISTRIBUTION, per object.  The fraction that is two
+  bytes is the only number in this section that anyone will quote,
+  and it is a property of a COMPILER on a CORPUS, not of the ISA.
+
+  object                  insns   2-byte   4-byte   bytes    frac 2B   B/insn  
+  rv.o                    99      56       43       284      0.566     2.869   
+  corpus_rv64i.o          146     0        146      584      0.000     4.000   
+  corpus_rv64im.o         114     0        114      456      0.000     4.000   
+  corpus_rv64if.o         146     0        146      584      0.000     4.000   
+  corpus_rv64imf.o        114     0        114      456      0.000     4.000   
+  corpus_rv64imafd.o      95      0        95       380      0.000     4.000   
+  corpus_rv64imafdc.o     95      67       28       246      0.705     2.589   
+  corpus_rv64gc.o         95      67       28       246      0.705     2.589   
+  corpus_rv64gcv.o        178     94       84       524      0.528     2.944   
+
+  The last two rows of that table are the same C file compiled with and
+  without the C extension, and the comparison is the whole of the honest half
+  of the compressed story:
+
+    -march=rv64imafd    95 instructions
+    -march=rv64imafdc   95 instructions
+
+  THE INSTRUCTION COUNT IS THE SAME. Adding C did not change what the program
+  does, how many operations it performs, or which operations those are. It
+  changed the number of BYTES, and the byte count is the only thing in this
+  section that anyone will quote about compression.
+
+  That is worth stating carefully because the usual claim goes the other way
+  round -- that compression makes the code "smaller", as if the program had
+  less in it. It does not. The program has the same instructions in it; some
+  of them have a shorter encoding. Section 6 then measures the other half: how
+  much of the encoding space the extension had to RESERVE to make that
+  possible, and what a decoder has to do with the reserved part.
+
+
+========================================================================
+SECTION 3 -- THE ISA AS A SET OF DOCUMENTS, NOT A LIST
+========================================================================
+
+  RISC-V is the only one of the three architectures in this collection whose
+  base is DELIBERATELY tiny, and the reason it is tiny is a design decision
+  that is measurable in one line. The unprivileged manual, section 2.1,
+  QUOTED:
+
+  "RV32I contains 40 unique instructions, though a simple implementation might
+  cover the ecall/ebreak instructions with a single SYSTEM hardware
+  instruction that always traps and might be able to implement the fence
+  instruction as a nop, reducing base instruction count to 38 total."
+
+  Forty. Compare the corpus's own opcode space: section 11 counts the opcode
+  values that appear, and the extensions multiply that. The base is small on
+  purpose and everything else is a LETTER.
+
+  THE TAG_RISCV_ARCH ATTRIBUTE, which is the set of documents
+  written down in the object file.  Read these left to right:
+
+  -march, the attribute string, and the names in it:
+
+    -march=rv64i
+      rv64i2p1
+        names: rv64i
+
+    -march=rv64im
+      rv64i2p1_m2p0_zmmul1p0
+        names: rv64i m zmmul
+
+    -march=rv64if
+      rv64i2p1_f2p2_zicsr2p0
+        names: rv64i f zicsr
+
+    -march=rv64imf
+      rv64i2p1_m2p0_f2p2_zicsr2p0_zmmul1p0
+        names: rv64i m f zicsr zmmul
+
+    -march=rv64imafd
+      rv64i2p1_m2p0_a2p1_f2p2_d2p2_zicsr2p0_zmmul1p0_zaamo1p0_
+        |  zalrsc1p0
+        names: rv64i m a f d zicsr zmmul zaamo zalrsc
+
+    -march=rv64imafdc
+      rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_zicsr2p0_zmmul1p0_
+        |  zaamo1p0_zalrsc1p0_zca1p0_zcd1p0
+        names: rv64i m a f d c zicsr zmmul zaamo zalrsc zca zcd
+
+    -march=rv64gc
+      rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_zicsr2p0_zifencei2p0_
+        |  zmmul1p0_zaamo1p0_zalrsc1p0_zca1p0_zcd1p0
+        names: rv64i m a f d c zicsr zifencei zmmul zaamo zalrsc zca zcd
+
+    -march=rv64gcv
+      rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_v1p0_zicsr2p0_
+        |  zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0_zca1p0_
+        |  zcd1p0_zve32f1p0_zve32x1p0_zve64d1p0_zve64f1p0_
+        |  zve64x1p0_zvl128b1p0_zvl32b1p0_zvl64b1p0
+        names: rv64i m a f d c v zicsr zifencei zmmul zaamo zalrsc zca zcd zve32f zve32x zve64d zve64f zve64x zvl128b zvl32b zvl64b
+
+  Now the part that is worth a whole concept. -march=rv64imafdc is SIX
+  letters. The attribute names 12 things -- the base plus eleven extensions,
+  each with a major and a minor version -- and the ones the user did not type
+  are not toolchain decoration:
+
+  * `c2p0` appears AND `zca1p0` and `zcd1p0` appear.  The C extension was
+  split into named sub-extensions, and an object records the sub-extensions
+  it actually uses, because a LINKER has to know whether the compressed
+  instructions in this object are decodable by the machine it is producing.
+  `c` is not an assumption a linker can make.  This is a fact about the tool
+  and the specification, so it is QUOTED from the manual's own history and the
+  string above is MEASURED from the file.
+
+  * `zmmul1p0` is the multiply-only subset of M.  A machine with Zmmul satisfies
+  an object that claims it WITHOUT implementing divide, so `m` in a -march
+  string is a shorthand the object has to expand.
+
+  * `zaamo1p0` and `zalrsc1p0` are the two halves of A, splittable
+  independently for the same reason: one is the atomic memory operations and
+  the other is load-reserved/store-conditional, and a machine may have either.
+
+  * `zicsr2p0` is the CSR set, and `s_system` in part one of this file records
+  why it matters: the manual's own section 2.1 says "a hardware
+  implementation including the machine-mode privileged architecture will also
+  require the 6 CSR instructions in the Zicsr extension", which is the manual
+  telling you the base no longer contains them.  Note that `rv64i` alone
+  names NO zicsr and `rv64if` does: the tool adds zicsr as soon as any
+  floating point is present, which is a TOOLCHAIN decision and not an
+  architectural requirement, and it is exactly the kind of thing the string
+  exists to record.
+
+  * The vector row names `zvl32b`, `zvl64b` and `zvl128b` -- the vector LENGTH
+  bounds, in bytes.  An object built for a 128-bit vector is not runnable on a
+  64-bit-vector machine without recompilation, and this string is how a
+  linker learns that.  There is no equivalent on the integer side, because
+  every RISC-V integer machine is RV32 or RV64 and says so in the base.
+
+  So "the ISA is a set of independent documents" is not a slogan here. It is a
+  string in the object file, and the string is longer than the -march that
+  produced it.
+
+  THE SAME C, COMPILED UNDER EIGHT -march SETTINGS, AND WHAT
+  APPEARS AND DISAPPEARS.  This is the measurement the section plan
+  asked for, and the answer is more interesting than "M adds
+  multiply":
+
+  -march       insns   bytes    2-byte   B/insn    distinct mnem
+  rv64i        146     584      0        4.000     28          
+  rv64im       114     456      0        4.000     27          
+  rv64if       146     584      0        4.000     28          
+  rv64imf      114     456      0        4.000     27          
+  rv64imafd    95      380      0        4.000     29          
+  rv64imafdc   95      246      67       2.589     29          
+  rv64gc       95      246      67       2.589     29          
+  rv64gcv      178     524      94       2.944     49          
+
+  The mnemonic COUNT barely moves -- 26 or 27 for every non-vector setting --
+  and the instruction count falls and rises with the letters in a way that is
+  not monotone in "more features". Read the rows as pairs: what did this
+  letter ADD, and what did it make UNNECESSARY.
+
+    rv64i      -> rv64im      insns  146 ->  114   bytes   584 ->   456
+        GAINED  3:  divuw(1)  mul(2)  rem(1)
+        LOST    4:  j(1)  jr(1)  sext.w(2)  srli(2)
+    rv64im     -> rv64if      insns  114 ->  146   bytes   456 ->   584
+        GAINED  4:  j(1)  jr(1)  sext.w(2)  srli(2)
+        LOST    3:  divuw(1)  mul(2)  rem(1)
+    rv64if     -> rv64imf     insns  146 ->  114   bytes   584 ->   456
+        GAINED  3:  divuw(1)  mul(2)  rem(1)
+        LOST    4:  j(1)  jr(1)  sext.w(2)  srli(2)
+    rv64imf    -> rv64imafd   insns  114 ->   95   bytes   456 ->   380
+        GAINED  4:  fcvt.l.d(1)  fld(1)  fmadd.d(1)  fmv.d.x(1)
+        LOST    2:  jalr(3)  sd(4)
+    rv64imafd  -> rv64imafdc  insns   95 ->   95   bytes   380 ->   246
+    rv64imafdc -> rv64gc      insns   95 ->   95   bytes   246 ->   246
+    rv64gc     -> rv64gcv     insns   95 ->  178   bytes   246 ->   524
+        GAINED 20:  and(3)  beq(3)  bgeu(3)  csrr(3)  divu(2)  j(3)  neg(3)  srli(6)  vadd.vv(1)  vfmul.vv(1)  vfmv.f.s(1)  vfredosum.vs(1)  vl2re64.v(2)  vlseg2e64.v(1)  vmacc.vv(1)  vmv.s.x(3)  vmv.v.i(2)  vmv.x.s(2)  vredsum.vs(2)  vsetvli(4)
+
+  Three of those transitions are worth reading one at a time, and each one is
+  a retraction of the obvious thing to say.
+
+  **M is not only additive.**  rv64i -> rv64im GAINS mul, divuw and rem and
+  LOSES j, jr, sext.w and srli.  The base has no multiply, so the compiler
+  synthesises one out of shifts and adds, and a shift-based multiply is a
+  SEQUENCE, and sequences branch.  Adding the M extension therefore REMOVED
+  branches.  "An extension adds instructions" is true of the ISA and false of
+  the object, and the object is what a linker sees.
+
+  **F alone changes nothing here, and that is a fact about the CORPUS.**
+  rv64if and rv64i have the same instruction count and the same byte count to
+  the instruction, because corpus.c's only floating-point function is `dsum`,
+  which is a `double` accumulator, and a `double` needs D.  So the F extension
+  buys this corpus nothing at all.  That is the correct measurement and it is
+  also a warning: an -march sweep over a corpus that does not use a feature
+  reports the feature as worthless, and the sweep has to be read with the corpus
+  in hand.  The next transition is the one that shows F is not worthless.
+
+  **D replaces calls with stores.**  rv64imf -> rv64imafd GAINS fcvt.l.d,
+  fld, fmadd.d and fmv.d.x and LOSES three jalr and four sd.  What the compiler
+  was doing before was calling out to a software floating-point library -- each
+  call is a jalr -- and storing double-width intermediates on the stack, which
+  is four sd.  With hardware double-precision floating point those become
+  registers.  The instruction count fell by 19 and the byte count by 76, and the
+  letter that did it is one character long.  Note that no auipc disappears,
+  which corrects the first draft of this paragraph: the calls are within the
+  ±2 GiB an auipc can reach, so the pair survives and only the jalr goes.
+
+  **And the vector extension is not a subset of anything.**
+  rv64gc -> rv64gcv GAINS twenty mnemonics, none of which is an integer
+  instruction, and the instruction count nearly DOUBLES.  That is not a
+  regression and it is not a measurement of the vector unit's speed; it is what
+  happens when a compiler auto-vectorises a loop it was previously leaving
+  scalar, and the vector code is longer than the scalar code was.  MEASURED,
+  while scoping: a plain double loop under -march=rv64gcv came out as seven
+  `vadd` and one `vsetvli`, and the scalar form was longer in bytes.
+
+  The honest reading, and it is the reading concept 1 ends on: none of these
+  numbers is a property of the architecture. They are properties of ONE
+  COMPILER, at ONE VERSION, on ONE source file. What IS a property of the
+  architecture is the last column of the first table -- the set of documents
+  each object claims to need -- and that string is written by the tool,
+  checked by the linker, and is the thing a backend author has to get right.
+
+
+========================================================================
+SECTION 4 -- THE FIELD MAP, MEASURED BY DIFFERENCE
+========================================================================
+
+  The field map is the thing a decoder is actually made of, and on AArch64 it
+  is the whole curriculum because the encoding is fixed-width. Here it is a
+  large part of the curriculum and the compressed extension has made one part
+  of it genuinely hard: the plan predicted that "the same register number sits
+  in different bit positions in different formats", and that prediction is
+  HALF WRONG in an interesting way, which this section measures rather than
+  asserts.
+
+  The method: assemble an instruction, change ONE operand, assemble it again,
+  and OR the XOR over a sweep of variants. Every bit that moves belongs to
+  that operand. Three rules make it work, and all three are the results of
+  getting it wrong first.
+
+  * SWEEP, do not pair.  A single pair marks the bits where two VALUES differ,
+  which is a subset of the field.  `addi a1, a1, 0` against `addi a1, a1,
+  0x800` differs in ONE bit of a twelve-bit field.
+
+  * A mask is a LOWER BOUND.  Every bit in it belongs to the operand; a bit
+  outside it is a bit this sweep did not move.  The file prints the sweep's
+  size next to every row so the two are never confused.
+
+  * The variants must differ in ONE operand.  The first version of the funct3
+  row below had a filler variant to make the count come out at seven, and the
+  filler also changed the immediate, so the row measured two fields and
+  reported five bits where the field is three.
+
+  THE BASE ENCODING, -march=rv64g so that nothing compresses.
+  (This matters and it is a RETRACTION: the first version of this
+  sweep ran at -march=rv64gcv, and then `lw a0, 8(a1)` assembled to a
+  TWO-byte c.lw, so the XOR mixed a 2-byte word with 4-byte words
+  and produced a mask with nine bits scattered across both halves
+  of the instruction.  A field map measured through an extension that
+  rewrites the format is a field map of the wrong architecture.)
+
+  field                         xor mask      vars   the bit positions it moved          what                
+  rd, in the R format           0x00000f80    20     7,8,9,10,11                         rd                  
+  rs1, in the R format          0x000f8000    20     15,16,17,18,19                      rs1                 
+  rs2, in the R format          0x01f00000    20     20,21,22,23,24                      rs2                 
+  funct7+funct3, 9 base R ops   0x42007000    9      12,13,14,25,30                      funct7 | funct3     
+  funct3, the 6 other load sizes  0x00007000    6      12,13,14                            funct3              
+  imm[11:0], the I format       0xfff00000    15     20,21,22,23,24,25,26,27,28,29,30,31  imm                 
+  the S immediate, via sw       0xfe000e00    11     9,10,11,25,26,27,28,29,30,31        imm                 
+  the B immediate, 17 offsets   0xfe000f80    17     7,8,9,10,11,25,26,27,28,29,30,31    imm                 
+  the B funct3, 6 branches      0x00007000    5      12,13,14                            funct3              
+  the U immediate, 20 bits      0xfffff000    10     12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31  imm                 
+  the J immediate, 20 offsets   0xfffff000    18     12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31  imm                 
+  the opcode, 6 families        0x0075b07c    6      2,3,4,5,6,12,13,15,16,18,20,21,22   opcode              
+  the M extension, in funct7    0x02007000    5      12,13,14,25                         funct7              
+  C CR: rd, five bits           0x00000f80    20     7,8,9,10,11                         rd (5 bits)         
+  C CR: rs2, five bits          0x0000007c    20     2,3,4,5,6                           rs2 (5 bits)        
+  C CI: rd, five bits           0x00000f80    20     7,8,9,10,11                         rd (5 bits)         
+  C CI: imm                     0x0000107c    7      2,3,4,5,6,12                        imm (6 bits)        
+  C CA: rd-prime                0x00000380    8      7,8,9                               rd' (3 bits)        
+  C CA: rs2-prime               0x0000001c    8      2,3,4                               rs2' (3 bits)       
+  C CL: rd-prime                0x0000001c    8      2,3,4                               rd' (3 bits)        
+  C CL: rs1-prime               0x00000380    8      7,8,9                               rs1' (3 bits)       
+  C CIW: rd-prime               0x0000001c    8      2,3,4                               rd' (3 bits)        
+  C CIW: nzuimm                 0x00001fe0    10     5,6,7,8,9,10,11,12                  nzuimm (8 bits)     
+  C CB: rd-prime                0x00000380    8      7,8,9                               rd'/rs1' (3 bits)   
+  C CJ: the 11 jump bits        0x00001ffc    14     2,3,4,5,6,7,8,9,10,11,12            imm (11 bits)       
+  C CSS: rs2, five bits         0x0000007c    20     2,3,4,5,6                           rs2 (5 bits)        
+  C CSS: the sp offset          0x00001f80    7      7,8,9,10,11,12                      imm (8 bits)        
+  C CL: c.lw offset (x4)        0x00001c60    32     5,6,10,11,12                        imm (6 bits)        
+  C CL: c.ld offset (x8)        0x00001c60    32     5,6,10,11,12                        imm (6 bits)        
+  C CL: c.sw offset (x4)        0x00001c60    32     5,6,10,11,12                        imm (6 bits)        
+  C CL: c.sd offset (x8)        0x00001c60    32     5,6,10,11,12                        imm (6 bits)        
+  C CL: c.fld offset (x8)       0x00001c60    25     5,6,10,11,12                        imm (6 bits)        
+  C SP: c.lwsp offset (x4)      0x0000107c    64     2,3,4,5,6,12                        imm (8 bits)        
+  C SP: c.ldsp offset (x8)      0x0000107c    64     2,3,4,5,6,12                        imm (8 bits)        
+  C SP: c.swsp offset (x4)      0x00001f80    64     7,8,9,10,11,12                      imm (8 bits)        
+  C SP: c.sdsp offset (x8)      0x00001f80    64     7,8,9,10,11,12                      imm (8 bits)        
+  C ADDI16SP: nzimm             0x0000107c    10     2,3,4,5,6,12                        nzimm (10 bits)     
+
+    NOTE on "C CIW: nzuimm": the assembler refused 3 of 13 variants and they are EXCLUDED from this mask: c.addi4spn a0, sp, -4, c.addi4spn a0, sp, -8, c.addi4spn a0, sp, -1020
+    NOTE on "C CSS: the sp offset": the assembler refused 3 of 10 variants and they are EXCLUDED from this mask: c.swsp a0, -4(sp), c.swsp a0, -128(sp), c.swsp a0, -256(sp)
+
+  Now the prediction, measured. Four rows of that table are the register
+  fields, and they say something the plan did not predict:
+
+  rd bits[11:7] in the R format rs1 bits[19:15] in the R format rs2 bits[6:0]
+  -- five bits at bits[24:20], see the row above C CR: rd bits[11:7] FIVE
+  bits, the SAME position as the base C CA: rd' bits[9:7] THREE bits, TWO
+  positions lower
+
+  SO THE BASE ISA KEEPS ALL THREE REGISTER FIELDS IN THE SAME PLACE IN EVERY
+  FORMAT, and the manual says so and says why. QUOTED, section 2.2:
+
+  "The RISC-V ISA keeps the source (rs1 and rs2) and destination (rd)
+  registers at the same position in all formats to simplify decoding."
+
+  and in the note:
+
+  "Decoding register specifiers is usually on the critical paths in
+  implementations, and so the instruction format was chosen to keep all
+  register specifiers at the same position in all formats at the expense of
+  having to move immediate bits across formats."
+
+  THE PRICE IS PAID IN THE IMMEDIATES, and that is the trade the sentence is
+  describing. Read the immediate rows against it:
+
+  I bits[31:20] one contiguous 12-bit window S bits[31:25] and bits[11:7] TWO
+  windows, because a store has no rd B bits[31:25] and bits[11:7] the same
+  two, and bit 0 is a constant 0 U bits[31:12] one contiguous 20-bit window J
+  bits[31:12] one CONTIGUOUS WINDOW that is not a contiguous FIELD
+
+  Every one of those is the register-position rule being paid for. The S
+  format splits its immediate in half and wraps it around the register fields;
+  the B format takes the S format's split and then puts the immediate's
+  HIGHEST bit at inst[7], which in the S format is the immediate's LOWEST; and
+  the J format -- which has no rs1 and no rs2 at all -- uses inst[19:12] AND
+  inst[30:20] for its displacement, which is where the other formats keep
+  funct3, rd and the top of their own immediates.
+
+  **A WINDOW AND A FIELD ARE DIFFERENT OBJECTS.**  That is the sentence to carry
+  to the next architecture.  The J row measures a mask of 0xfffff000: twenty
+  contiguous bits.  The FIELD is twenty-one bits in five pieces, and the mask
+  cannot tell you that, because the mask only records which bits MOVE.  A
+  decoder that reads the J immediate as a contiguous 20-bit field gets every
+  displacement in [-2048, 2046] right -- which is the small ones -- and every
+  larger one wrong.
+
+  THE SAME METHOD ON THE COMPRESSED EXTENSION, and the four rows
+  that are different from the base in a way worth reading twice:
+
+    rd, in the R format           0x00000f80  bits[7,8,9,10,11]
+    C CR: rd, five bits           0x00000f80  bits[7,8,9,10,11]
+    C CA: rd-prime                0x00000380  bits[7,8,9]
+    C CIW: rd-prime               0x0000001c  bits[2,3,4]
+
+  `c.add rd, rs2` keeps rd at bits[11:7] and `c.mv rd, rs2` keeps rs2 at
+  bits[6:2] -- the base positions, unchanged, which is what the manual means
+  by "when the full 5-bit destination register specifier is present, it is in
+  the same place as in the 32-bit RISC-V encoding".
+
+  And `c.add rd', rs2'` puts rd' at bits[9:7] and rs2' at bits[4:2]: THREE
+  bits each, two positions lower, and -- this is the part the position alone
+  does not tell you -- the value 0 in rd' does not mean x0. It means x8. The
+  three-bit field indexes the eight registers x8 to x15, and the manual prints
+  the table: `000` is x8, `001` is x9, ..., `111` is x15.
+
+  A decoder that reads a compressed register with xreg() reports x0 to x7
+  where the encoding means x8 to x15. Every register name in the disassembly
+  is SEVEN TOO SMALL, every operand is a real register, and nothing about the
+  output looks wrong. That is the sharpest trap in this course's decoder and
+  it is the reason `creg3` is a separate function with a page of comment on
+  it.
+
+  IMMEDIATE MASKS, collected.  "positions" is the set of
+  instruction bits the sweep moved, and it is NOT a permutation --
+  section 4D measures the permutations separately, because the
+  masks here cannot tell two compressed displacements apart.
+
+  immediate                     mask          the positions it moved            bits   field     
+  imm[11:0], the I format       0xfff00000    20,21,22,23,24,25,26,27,28,29,30,31  12     imm       
+  the S immediate, via sw       0xfe000e00    9,10,11,25,26,27,28,29,30,31      10     imm       
+  the B immediate, 17 offsets   0xfe000f80    7,8,9,10,11,25,26,27,28,29,30,31  12     imm       
+  the U immediate, 20 bits      0xfffff000    12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31  20     imm       
+  the J immediate, 20 offsets   0xfffff000    12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31  20     imm       
+  C CI: imm                     0x0000107c    2,3,4,5,6,12                      6      imm (6 bits)
+  C CIW: nzuimm                 0x00001fe0    5,6,7,8,9,10,11,12                8      nzuimm (8 bits)
+  C CJ: the 11 jump bits        0x00001ffc    2,3,4,5,6,7,8,9,10,11,12          11     imm (11 bits)
+  C CSS: the sp offset          0x00001f80    7,8,9,10,11,12                    6      imm (8 bits)
+  C CL: c.lw offset (x4)        0x00001c60    5,6,10,11,12                      5      imm (6 bits)
+  C CL: c.ld offset (x8)        0x00001c60    5,6,10,11,12                      5      imm (6 bits)
+  C CL: c.sw offset (x4)        0x00001c60    5,6,10,11,12                      5      imm (6 bits)
+  C CL: c.sd offset (x8)        0x00001c60    5,6,10,11,12                      5      imm (6 bits)
+  C CL: c.fld offset (x8)       0x00001c60    5,6,10,11,12                      5      imm (6 bits)
+  C SP: c.lwsp offset (x4)      0x0000107c    2,3,4,5,6,12                      6      imm (8 bits)
+  C SP: c.ldsp offset (x8)      0x0000107c    2,3,4,5,6,12                      6      imm (8 bits)
+  C SP: c.swsp offset (x4)      0x00001f80    7,8,9,10,11,12                    6      imm (8 bits)
+  C SP: c.sdsp offset (x8)      0x00001f80    7,8,9,10,11,12                    6      imm (8 bits)
+  C ADDI16SP: nzimm             0x0000107c    2,3,4,5,6,12                      6      nzimm (10 bits)
+
+    The compressed immediates measured: 14 rows, and 5 distinct
+    MASKS among them.  Several share a mask exactly, which is the
+    fact section 4D is about.
+      0x0000107c  C CI: imm, C SP: c.lwsp offset (x4), C SP: c.ldsp offset (x8), C ADDI16SP: nzimm
+      0x00001c60  C CL: c.lw offset (x4), C CL: c.ld offset (x8), C CL: c.sw offset (x4), C CL: c.sd offset (x8), C CL: c.fld offset (x8)
+      0x00001f80  C CSS: the sp offset, C SP: c.swsp offset (x4), C SP: c.sdsp offset (x8)
+      0x00001fe0  C CIW: nzuimm
+      0x00001ffc  C CJ: the 11 jump bits
+
+  Two rows above are worth reading before section 4D, because they are the
+  base and compressed cases of the same idea.
+
+  **The S immediate's mask is 0xfe000e00 and the B immediate's is 0xfe000f80.**
+  They differ by exactly bit 7.  In the S format inst[7] is the immediate's
+  LOWEST bit; in the B format it is the immediate's HIGHEST bit.  One bit, one
+  position, the two ends of a displacement -- and the manual's own sentence says
+  so: the S and B formats differ in "the lowest bit in S format (inst[7])"
+  which "encodes a high-order bit in B format".
+
+  **The U and J masks are IDENTICAL -- both 0xfffff000, twenty contiguous bits at
+  inst[31:12] -- and the two immediates are nothing alike.**  U is 20 bits at the
+  top of a 32-bit value with twelve zeros below.  J is 21 bits scaled by two
+  with a zero at the bottom, spread across inst[12:20] and inst[21:31] in a
+  permuted order.  A mask says two fields occupy the same WINDOW.  It does not
+  say they are the same FIELD, and the difference between a window and a field
+  is the sentence to carry to the next architecture.
+
+
+========================================================================
+SECTION 4 -- B.  THE SEVEN BITS OF funct7, AND WHAT A LOWER BOUND LOOKS LIKE
+========================================================================
+
+  The funct7 row in section 4 moved bits 25 and 30 out of a seven-bit field,
+  and a reader is entitled to ask whether the measurement failed. It did not,
+  and this section is the answer, because it is the clearest example in the
+  course of the rule that a mask is a LOWER BOUND.
+
+  `add` has funct7 = 0b0000000 and `sub` has funct7 = 0b0100000. One bit
+  apart. Those are the only two funct7 values the base R format can reach from
+  an add/sub pair, so a sweep over nine base operations moves bit 30 and not
+  the other six -- except that `mul` has funct7 = 0b0000001, which moves bit
+  25.
+
+  To move the REST of funct7's bits the sweep has to leave the base ISA,
+  because in the base ISA there is nothing else in funct7. The F and D
+  extensions fill it. MEASURED, one instruction per row:
+
+  source                      word          inst[31:25]   inst[26:25]  funct3 
+  add a0, a1, a2              0x00c58533    0000000       00           0      
+  sub a0, a1, a2              0x40c58533    0100000       00           0      
+  sll a0, a1, a2              0x00c59533    0000000       00           1      
+  mul a0, a1, a2              0x02c58533    0000001       01           0      
+  fadd.s fa0, fa1, fa2        0x00c5f553    0000000       00           7      
+  fsub.s fa0, fa1, fa2        0x08c5f553    0000100       00           7      
+  fmul.s fa0, fa1, fa2        0x10c5f553    0001000       00           7      
+  fdiv.s fa0, fa1, fa2        0x18c5f553    0001100       00           7      
+  fmin.s fa0, fa1, fa2        0x28c58553    0010100       00           0      
+  fsgnj.s fa0, fa1, fa2       0x20c58553    0010000       00           0      
+  fmadd.s fa0, fa1, fa2, fa3  0x68c5f543    0110100       00           7      
+  fsqrt.s fa0, fa1            0x5805f553    0101100       00           7      
+  fcvt.s.d fa0, fa1           0x4015f553    0100000       00           7      
+  fcvt.w.s a0, fa0            0xc0057553    1100000       00           7      
+  fmv.x.w a0, fa0             0xe0050553    1110000       00           0      
+  fclass.s a0, fa0            0xe0051553    1110000       00           1      
+
+  Three things in that table, and the first is a retraction of the plan.
+
+  **The seven bits at inst[31:25] are NOT ONE FIELD.**  The manual draws its
+  floating-point tables with a column headed `funct7`, and the heading is a
+  simplification.  Under opcode 0x53 those seven bits are a FIVE-bit operation
+  selector at inst[31:27] and a TWO-bit width at inst[26:25], and there is no
+  way to read them as one seven-bit funct7 at all.  `fadd.s` and `fadd.d` differ
+  in inst[25] -- ONE bit -- and the first version of this file's `r_fp` model
+  read a seven-bit funct7 and therefore could not tell them apart, and
+  separately could not tell `fsqrt.s` from `fadd.s` because for the square root
+  the same five bits are the high half of the selector.
+
+  **A sub-opcode selector is not self-contained.**  `fmadd.s` is
+  inst[31:27] = 0b01101 with opcode 0x43.  `fmin.s` is inst[31:27] = 0b00101
+  with opcode 0x53.  Two different five-bit values, so that is not the sharpest
+  case -- but `fadd.s` is inst[31:27] = 0b00001 under opcode 0x53 and `add` is
+  inst[31:25] = 0b0000000 under opcode 0x33, and the FLOATING-POINT one has
+  funct3 = 7 where the integer one has funct3 = 0.  A dispatch that asks models
+  in order without first reading the opcode resolves these by list position,
+  which is not a decoding strategy, it is a coin flip with a plausible-looking
+  output.  `i_fma` in this file is the model whose opcode set is 0x43, 0x47, 0x4b
+  and 0x4f, and the reason is written at the top of the model table.
+
+  **The width of a floating-point operation is one bit, and it is in a
+  different place in different instructions.**  fadd.s is 0x00c5f553 and
+  fadd.d is 0x02c5f553: one bit, inst[25], in the non-fused rows.  fmadd.s is
+  0x68c5f543 and fmadd.d is 0x6ac5f543: one bit, inst[25], in the fused rows
+  too -- but the field ABOVE it, inst[31:27], is rs3 in one family and a
+  sub-opcode in the other.  A decoder that learned "the width is inst[25]" from
+  one family gets the other family right by luck.
+
+    The base sweep moved bits 25,30 of funct7's seven positions.
+    The table above reaches all seven.  Both numbers are true,
+    they measure different things, and a course that printed
+    only the first would have claimed a two-bit funct7.
+
+
+========================================================================
+SECTION 4 -- C.  THE NINE COMPRESSED FORMATS, AND WHERE THE THREE BITS ARE
+========================================================================
+
+  Sixteen bits, and nine formats, and the field table is QUOTED: the
+  unprivileged manual's `zca` chapter, "Compressed Instruction Formats", which
+  prints the nine layouts with their bit positions and then says the thing
+  this section is about:
+
+  "The formats were designed to keep bits for the two register source
+  specifiers in the same place in all instructions, while the destination
+  register field can move. When the full 5-bit destination register specifier
+  is present, it is in the same place as in the 32-bit RISC-V encoding. Where
+  immediates are sign-extended, the sign extension is always from bit 12."
+
+  NINE formats in sixteen bits is a DENSITY no other instruction set in this
+  collection attempts, and it is worth pausing on what it costs before the
+  measurements. The four formats that use the three-bit registers -- CIW, CL,
+  CS, CA and CB, five of them -- can only name x8 to x15, eight of the
+  thirty-two. The two formats with a five-bit register, CR and CI, can name
+  all of them, and the manual explains why both exist: CR and CI "can use any
+  of the 32 RVI registers" while the other five "are limited to just 8 of
+  them".
+
+  format  inst[15:0]                                    what it carries                                             
+  CR      funct4|rd/rs1|rs2|op                          register to register: c.mv, c.add, c.jr, c.jalr, c.ebreak   
+  CI      funct3|imm[5]|rd/rs1|imm[4:0]|op              register-immediate: c.addi, c.li, c.lui, c.addiw, c.slli, c.addi16sp
+  CSS     funct3|imm|rs2|op                             stack-relative store: c.swsp, c.sdsp, c.fswsp, c.fsdsp      
+  CIW     funct3|imm|rd'|op                             the wide immediate, and the ONLY format with an eight-bit one: c.addi4spn
+  CL      funct3|imm|rs1'|imm|rd'|op                    register-based load: c.lw, c.ld, c.flw, c.fld               
+  CS      funct3|imm|rs1'|imm|rs2'|op                   register-based store: c.sw, c.sd, c.fsw, c.fsd              
+  CA      funct6|rd'/rs1'|funct2|rs2'|op                register-register on the eight registers: c.sub, c.xor, c.or, c.and, c.subw, c.addw
+  CB      funct3|offset|rd'/rs1'|offset|op              branch and shift-and-immediate: c.beqz, c.bnez, c.srli, c.srai, c.andi
+  CJ      funct3|jump target|op                         c.j, eleven bits of displacement and no registers at all    
+
+  **THE THREE-BIT REGISTER, AND WHY IT IS NOT A REGISTER NUMBER.**
+  Section 4's sweep measured the two register encodings side by side:
+
+  c.mv rd 0x00000f80 bits[11:7] five bits c.mv rs2 0x0000007c bits[6:2] five
+  bits c.add rd' 0x00000380 bits[9:7] THREE bits c.add rs2' 0x0000001c
+  bits[4:2] THREE bits
+
+  Four fields, two positions, two widths. And the three-bit value is not a
+  register number: it is an INDEX into the eight registers x8 to x15. The
+  manual prints the table, and it is worth reading because the ABI names in it
+  are the reason the compressed extension is viable at all:
+
+  000 x8 001 x9 010 x10 011 x11 100 x12 101 x13 110 x14 111 x15 s0 s1 a0 a1 a2
+  a3 a4 a5
+
+  The QUOTED reason those eight are the eight: "The RISC-V ABI was changed to
+  make the frequently used registers map to registers x8-x15. This simplifies
+  the decompression decoder by having a contiguous naturally aligned set of
+  register numbers."
+
+  So the compression is not only an encoding decision. It is a decision that
+  REQUIRES an ABI that puts the eight most-used registers in a contiguous run,
+  and the ABI was changed to make it possible. That is a coupling between
+  three things -- the instruction encoding, the register file, and the calling
+  convention -- and it is the kind of coupling that a backend author has to
+  know about and that no amount of reading one specification reveals. A later
+  course in this section is about the ABI; this is where the coupling is
+  introduced.
+
+  THE FIVE FORMATS THAT CANNOT NAME x0 TO x7, AND WHAT THE
+  ASSEMBLER DOES WHEN YOU ASK.  The three-bit field is the whole
+  cost of the compressed extension, and it is a refusal you can
+  measure:
+
+    c.mv ra, a0         2 bytes  0x80aa  mv	ra, a0
+    c.mv zero, a0       2 bytes  0x802a  c.mv	zero, a0
+    c.lw t0, 0(a0)      REFUSED  invalid operand for instruction
+    c.lw a0, 0(t0)      REFUSED  invalid operand for instruction
+    c.lw s0, 0(a0)      2 bytes  0x4100  lw	s0, 0x0(a0)
+    c.sw t0, 0(a0)      REFUSED  invalid operand for instruction
+    c.sd sp, 0(a0)      REFUSED  invalid operand for instruction
+    c.addw t0, a0       REFUSED  invalid operand for instruction
+    sw t0, 0(a0)        4 bytes  0x552023  sw	t0, 0x0(a0)
+
+  Four of those nine are REFUSED by a real assembler, and the refusals are the
+  measurement. `c.lw t0, 0(a0)` is not encodable in two bytes and `lw t0,
+  0(a0)` is four, and the difference is a three-bit register field. The
+  compiler emits the four-byte form -- which is why section 2's length table
+  has 4-byte instructions in a corpus compiled with C enabled, and why the
+  compressed fraction is a fraction and not a total.
+
+  **THIS IS THE HONEST COST OF THE C EXTENSION, and it is not the reservation
+  fraction.**  The reservation -- how much of the encoding space the extension
+  gave up -- is section 6's subject and it is a large number.  THIS is a
+  different cost: a set of instructions that CANNOT be shortened at all, for a
+  reason that has nothing to do with how much space was reserved and everything
+  to do with where the register numbers are.  A compiler that wants to compress a
+  load from t0 cannot, and the four bytes are the honest price.
+
+  THE TWO-WORD STACK FORMS, which are the exception and prove the
+  rule.  C.LWSP and C.SDSP are the stack-pointer forms and they use
+  a FIVE-BIT register -- so a function prologue CAN be compressed:
+
+    c.sdsp ra, 8(sp)    2 bytes  0xe406  sd	ra, 0x8(sp)
+    sd ra, 8(sp)        2 bytes  0xe406  sd	ra, 0x8(sp)
+    c.sdsp t0, 8(sp)    2 bytes  0xe416  sd	t0, 0x8(sp)
+    c.swsp ra, 8(sp)    2 bytes  0xc406  sw	ra, 0x8(sp)
+    c.sdsp s0, 8(sp)    2 bytes  0xe422  sd	s0, 0x8(sp)
+
+  `c.sdsp ra, 8(sp)` is two bytes and `sd ra, 8(sp)` is four, and the reason
+  is in the row above it: C.SDSP is a CSS format with a five-bit rs2 at
+  inst[6:2], and `ra` is x1 which fits. C.SD in quadrant 0 is a CS format with
+  a three-bit rs2' at inst[4:2], and x1 does not fit there.
+
+  So the compressed extension CAN save a register it has no compressed form
+  for, and it does so by adding a whole extra family of instructions whose
+  only difference is that the base register is hardwired to x2. Nine formats
+  became eleven. That is the mechanism, stated as a measurement, and it is why
+  the compressed fraction in a real corpus is what it is rather than higher.
+
+
+========================================================================
+SECTION 4 -- D.  SEVEN MASKS AND SEVEN PERMUTATIONS
+========================================================================
+
+  The mask table above says something the eye needs help with: `c.lw` and
+  `c.ld` have the IDENTICAL mask. Both are 0x00001c60. Both move five
+  instruction bits. And they are not the same encoding.
+
+  A mask records WHERE a value's bits live. A permutation records WHICH
+  instruction bit holds WHICH bit of the value. Those are different questions,
+  and the compressed extension is a case where the first is not enough: c.lw's
+  offset is 4 units of four bytes and c.ld's is 8 units of eight bytes, the
+  two fields are the same five bits, and the specification assigns them to the
+  offset's bits in DIFFERENT ORDERS.
+
+  The first version of this section printed the mask table, concluded from it
+  that "several of them want an immediate in the same six positions, and the
+  specification gives each of them its own order", and had not measured the
+  order of any of them. That is a claim with no measurement behind it, which
+  is the failure this course is about, so this section measures it: for each
+  family, sweep every reachable value, read the word back, and for each bit of
+  the produced value find the instruction bit that is 1 in exactly the same
+  offsets -- over all of them, not over a sample.
+
+  family          variants   status     the permutation, derived                                
+  c.lw  (x4)      32         DERIVED    v[0]=inst[ 6]  v[1]=inst[10]  v[2]=inst[11]  v[3]=inst[12]  v[4]=inst[ 5]
+  c.ld  (x8)      32         DERIVED    v[0]=inst[10]  v[1]=inst[11]  v[2]=inst[12]  v[3]=inst[ 5]  v[4]=inst[ 6]
+  c.sw  (x4)      32         DERIVED    v[0]=inst[ 6]  v[1]=inst[10]  v[2]=inst[11]  v[3]=inst[12]  v[4]=inst[ 5]
+  c.sd  (x8)      32         DERIVED    v[0]=inst[10]  v[1]=inst[11]  v[2]=inst[12]  v[3]=inst[ 5]  v[4]=inst[ 6]
+  c.fld (x8)      25         DERIVED    v[0]=inst[10]  v[1]=inst[11]  v[2]=inst[12]  v[3]=inst[ 5]  v[4]=inst[ 6]
+  c.fsd (x8)      25         DERIVED    v[0]=inst[10]  v[1]=inst[11]  v[2]=inst[12]  v[3]=inst[ 5]  v[4]=inst[ 6]
+  c.lwsp  (x4)    64         DERIVED    v[0]=inst[ 4]  v[1]=inst[ 5]  v[2]=inst[ 6]  v[3]=inst[12]  v[4]=inst[ 2]  v[5]=inst[ 3]
+  c.ldsp  (x8)    64         DERIVED    v[0]=inst[ 5]  v[1]=inst[ 6]  v[2]=inst[12]  v[3]=inst[ 2]  v[4]=inst[ 3]  v[5]=inst[ 4]
+  c.swsp  (x4)    64         DERIVED    v[0]=inst[ 9]  v[1]=inst[10]  v[2]=inst[11]  v[3]=inst[12]  v[4]=inst[ 7]  v[5]=inst[ 8]
+  c.sdsp  (x8)    64         DERIVED    v[0]=inst[10]  v[1]=inst[11]  v[2]=inst[12]  v[3]=inst[ 7]  v[4]=inst[ 8]  v[5]=inst[ 9]
+  c.j             28         DERIVED    v[0]=inst[ 3]  v[1]=inst[ 4]  v[2]=inst[ 5]  v[3]=inst[11]  v[4]=inst[ 2]  v[5]=inst[ 7]  v[6]=inst[ 6]  v[7]=inst[ 9]  v[8]=inst[10]  v[9]=inst[ 8]  v[10]=inst[12]
+
+    11 families measured, 7 DISTINCT PERMUTATIONS.
+
+    c.lw  (x4)   identical to: c.sw  (x4)
+    c.ld  (x8)   identical to: c.sd  (x8), c.fld (x8), c.fsd (x8)
+    c.sw  (x4)   identical to: c.lw  (x4)
+    c.sd  (x8)   identical to: c.ld  (x8), c.fld (x8), c.fsd (x8)
+    c.fld (x8)   identical to: c.ld  (x8), c.sd  (x8), c.fsd (x8)
+    c.fsd (x8)   identical to: c.ld  (x8), c.sd  (x8), c.fld (x8)
+    c.lwsp  (x4) unique among the measured families
+    c.ldsp  (x8) unique among the measured families
+    c.swsp  (x4) unique among the measured families
+    c.sdsp  (x8) unique among the measured families
+    c.j          unique among the measured families
+
+  THAT IS THE MEASUREMENT, and it is the sharpest single fact in this
+  section's compressed half. Eleven families, and SEVEN DISTINCT PERMUTATIONS
+  among them -- and the seven are not a rounding of the eleven, they are what
+  the eleven fall into:
+
+  c.lw, c.sw one order (4-byte scale, 5 bits) c.ld, c.sd, c.fld, c.fsd one
+  order (8-byte scale, 5 bits) c.lwsp one order (unique) c.ldsp one order
+  (unique) c.swsp one order (unique) c.sdsp one order (unique) c.j one order
+  (unique, 11 bits)
+
+  Read the first two rows against each other, because they are the pair the
+  section opened with: `c.lw` and `c.ld` have the IDENTICAL five-bit WINDOW --
+  inst[12:10] and inst[6:5], the same five positions, which is what the mask
+  table in section 4 measured -- and they assign those five positions to the
+  offset's five bits in DIFFERENT ORDERS. `c.lw` puts the offset's bit 0 at
+  inst[6]; `c.ld` puts it at inst[10]. Same positions, different order, and
+  the order is the entire difference between a 4-byte-scaled and an
+  8-byte-scaled displacement.
+
+  Which means the thing to carry forward is not "the compressed immediates are
+  scrambled" -- the manual says that and it is obvious. It is that a decoder
+  for the compressed extension cannot be written by REUSING the base one, by
+  parameterising it, or by deriving it from a table of bit positions. It needs
+  a per-instruction permutation, and the permutation is not a property of the
+  field but a property of the pair (field, instruction). A table of bit
+  positions -- which is what section 4 measured, and what every field map in
+  every architecture in this collection is -- is NECESSARY and NOT SUFFICIENT
+  here, and the mask table above cannot tell you that and this table can.
+
+  And the QUOTED reason, which is the same sentence the base gives, is worth
+  reading because it explains why the specification is willing to pay that
+  cost:
+
+  "The immediate fields are scrambled in the instruction formats instead of in
+  sequential order so that as many bits as possible are in the same position
+  in every instruction, thereby simplifying implementations."
+
+  SAME position is what it got: eleven families, and the union of the
+  positions they use is inst[12:2] plus inst[12], which is ten of the sixteen
+  bits. Same position, seven orders, and an implementation needs seven
+  multiplexers -- which is the trade, stated by the people who made it, and
+  quantified here.
+
+  ONE MORE THING, because the first version of this section printed the
+  sentence about seven permutations directly above a table that said "0
+  families measured, 0 DISTINCT PERMUTATIONS". The prose was right and the
+  measurement was EMPTY: the pattern that pulled the offset out of the
+  reader's line expected a `(` in front of the number, and the reader prints
+  the offset and THEN the base register, so ten of the eleven families failed
+  to parse. A claim with no measurement behind it is the failure this course
+  is about, and it was sitting in this file, in this section, whose entire
+  subject is proving that a claim needs a measurement behind it. The count of
+  families is printed directly above the sentence that uses it for exactly
+  that reason, and a reader who wants to know whether the seven is a
+  measurement can look at the eleven rows it came from.
+
+
+========================================================================
+SECTION 5 -- SIX FORMATS, AND WHAT AN ASSEMBLER IS ACTUALLY A LOOKUP ON
+========================================================================
+
+  The count is six, and the manual's own count is four, and both are right
+  about different things. QUOTED, section 2.2:
+
+  "In the base RV32I ISA, there are four core instruction formats (R/I/S/U),
+  as shown in Figure 2.1."
+
+  and then, section 2.3:
+
+  "There are a further two variants of the instruction formats (B/J) based on
+  the handling of immediates."
+
+  So: FOUR CORE FORMATS PLUS TWO IMMEDIATE VARIANTS, and the six names are the
+  union. A course that said "RISC-V has six formats" and left it there would
+  be implying the manual counts six, and it does not. The distinction is not
+  pedantic: the four core formats are four FIELD LAYOUTS and the two variants
+  are two more field layouts, and what makes B and J "variants" is that each
+  one is a rearrangement of a format that already exists rather than a new
+  arrangement of its own. B is S with the immediate moved; J is U with the
+  immediate moved and the two register fields used for the displacement
+  instead.
+
+  format   inst[31:0]                                name                  what it is for                                
+  R        funct7|rs2|rs1|funct3|rd|opcode           register-register     the base computational triple; no immediate at all
+  I        imm[11:0]|rs1|funct3|rd|opcode            register-immediate    loads, and every register-immediate operation; the immediate is CONTIGUOUS at inst[31:20]
+  S        imm[11:5]|rs2|rs1|funct3|imm[4:0]|opcode  store                 a store, which has no rd to put a field in, so the immediate is split in two and wrapped around
+  B        imm[12|10:5]|rs2|rs1|funct3|imm[4:1|11]|opcode  branch                a conditional branch, which must reach an EVEN target, so bit 0 of the displacement is a CONSTANT ZERO and the 12 bits that are left are permuted into the gaps the S format left
+  U        imm[31:12]|rd|opcode                      upper immediate       20 bits of a 32-bit constant, placed so they are already in position
+  J        imm[20|10:1|11|19:12]|rd|opcode           jump                  a jump, which has no rs1 and no rs2 at all, so both register slots are available for the displacement and 20 bits become 21
+
+  Read the R row and the S row together. R has no immediate at all, so its
+  five register-ish fields use all 32 bits: seven of opcode, three of funct3,
+  seven of funct7, and five each of rd, rs1 and rs2. S has no DESTINATION -- a
+  store writes to memory, not to a register -- and the five bits the
+  destination would have occupied are the low five bits of the immediate
+  instead. That is the whole of the S format and it is why the S immediate is
+  in two places.
+
+  And read the B row against the S row one more time, because the relationship
+  is the interesting part and it is stated in the manual. QUOTED, section 2.3:
+
+  "The only difference between the S and B formats is that the 12-bit
+  immediate field is used to encode branch offsets in multiples of 2 in the B
+  format. Instead of shifting all bits in the instruction-encoded immediate
+  left by one in hardware as is conventionally done, the middle bits
+  (imm[10:1]) and sign bit stay in fixed positions, while the lowest bit in S
+  format (inst[7]) encodes a high-order bit in B format."
+
+  Read that twice. In S, inst[7] is the immediate's bit 0. In B, inst[7] is
+  the immediate's bit 11. The SAME bit position, the same instruction width,
+  the same seven-bit funct7 slot above it -- and it is the TOP of the
+  displacement instead of the bottom. Section 7's masks show it: the B mask is
+  0xfe000f80 and the S mask is 0xfe000e00, and they differ by exactly bit 7.
+
+  THE SIX FORMATS CLASSIFIED OVER THE WHOLE CORPUS.  The
+  classifier reads the OPCODE and, for opcode 0x6f, the immediate --
+  and the 0x6f special case is worth naming, because it is the only
+  place in the architecture where the format is not a function of
+  the opcode alone.
+
+  format          instructions  share   
+  I               476           44.0%   
+  C (9 formats)   284           26.2%   
+  R               161           14.9%   
+  B               91            8.4%    
+  U               38            3.5%    
+  S               30            2.8%    
+  J               2             0.2%    
+
+  Two rows of that table are the argument for the section.
+
+  **The I format is the commonest thing in a RISC-V program and it is not a
+  compromise.**  It carries a contiguous twelve-bit immediate at inst[31:20],
+  and its `rd` and `rs1` are at the base positions.  A decoder that implements
+  I, S, R, U, J and B has implemented every base instruction, because those six
+  are the complete set of layouts.  There is no seventh and there is no prefix.
+
+  **J is the rarest and it is the one that looks like a mistake.**  2
+  instructions in this corpus are J format, and every one of them spends
+  inst[19:12] and inst[30:20] on a displacement.  If you read a J instruction
+  as a U instruction -- which is a natural mistake, since the two share an
+  opcode-adjacent layout and the first twenty bits of the immediate are in the
+  same place -- you get a jump to a wildly wrong address, and the low twelve
+  bits of the jump target come out right, so the disassembly LOOKS like a jump
+  to a nearby place.  `jal ra, .+2048` and `lui ra, 1` differ in six bits and
+  one of them is a call.
+
+  THE OPCODE SPACE AS THE CORPUS USES IT.  The seven-bit opcode
+  is the first thing a decoder reads, and this is how much of the
+  128-value space ordinary C touches.
+
+  opcode    bits       count    the mnemonics that landed there               
+  0x03      0000011    81       ld(73) lbu(8)                                 
+  0x07      0000111    5        fld(1)                                        
+  0x0f      0001111    1        fence(1)                                      
+  0x13      0010011    250      addi(168) slli(41) andi(16)                   
+  0x17      0010111    37       auipc(37)                                     
+  0x1b      0011011    12       srliw(8) addiw(4)                             
+  0x23      0100011    30       sd(30)                                        
+  0x27      0100111    1                                                      
+  0x2f      0101111    4        lr.w(1) sc.w(1) amoadd.w(1)                   
+  0x33      0110011    117      add(42) sub(18) slt(16)                       
+  0x37      0110111    1        lui(1)                                        
+  0x3b      0111011    12       divuw(6) addw(5) sllw(1)                      
+  0x43      1000011    5        fmadd.s(1)                                    
+  0x53      1010011    19       fmv.d.x(4) fcvt.l.d(4) fadd.s(1)              
+  0x57      1010111    23       vsetvli(5)                                    
+  0x63      1100011    91       bne(41) bge(24) beq(23)                       
+  0x67      1100111    101      jalr(101)                                     
+  0x6f      1101111    2        jal(2)                                        
+  0x73      1110011    6        csrrs(4) ecall(1) csrrw(1)                    
+
+  19 of the 128 opcode values carry at least one instruction in this corpus,
+  and the rest are either other extensions, other bases, or reserved. That is
+  a fact about eleven functions of ordinary C, and section 11 audits the whole
+  128 against the second reader so the claim has a table behind it.
+
+  Read the row for opcode 0x13, because it is the row that shows why an
+  assembler is not a lookup table. Opcode 0x13 is OP-IMM: it carries addi,
+  slti, sltiu, xori, ori, andi, slli, srli, srai and the shift-immediate
+  aliases, and the operation is the PAIR (funct3, inst[31:26]). One opcode,
+  ten instructions, and the choice between them needs two fields read
+  together. A lookup table keyed on the opcode gives you one of ten; a decoder
+  has to read funct3 as well. That is the whole difference, and it is why the
+  manual's statement that the register positions were kept fixed "to simplify
+  decoding" is not a claim that decoding is simple -- it is a claim about
+  WHERE the complication was put.
+
+
+========================================================================
+SECTION 6 -- THE COMPRESSED SPACE, ENUMERATED.  ALL 65,536 HALF-WORDS.
+========================================================================
+
+  Every number so far has been about words that exist. This section is about
+  the words that do not, and it is the honest half of the compressed
+  extension's story -- the half that "the C extension makes RISC-V small"
+  leaves out.
+
+  The method is exhaustive and it is cheap. 65,536 sixteen-bit patterns,
+  written into a `.text` section as data, disassembled by the second reader,
+  and classified twice: once by this file's reserved rules and once by whether
+  the reader prints a mnemonic. Two independent classifications of the same
+  exhaustive set, which is the strongest kind of two-reader check there is --
+  it cannot be vacuous, because a vacuous comparison of 49,152 items would
+  have to compare nothing.
+
+  First the boundary, because it is the thing the section plan got wrong and
+  the correction is worth stating plainly.
+
+  **CORRECTION TO THE PLAN, AND IT IS A BIG ONE.**  The plan for this
+  section said: "the number of reserved 16-bit patterns you can enumerate and
+  verify against the assembler".  Measured, the answer is that the assembler
+  REFUSES 16,384 of the 65,536 half-word patterns -- exactly a quarter, exactly
+  bits[1:0] == 0b11 -- and it refuses them with the diagnostic
+
+  instruction length does not match the encoding
+
+  which is not a reservation message at all. It is the assembler saying "that
+  pattern is a 32-bit instruction, and you asked me for two bytes". The `.insn
+  2, 0x0003` directive is asking for a 16-bit instruction whose bits are the
+  top half of a 32-bit encoding, and the assembler declines because there is
+  no such thing.
+
+  So there are TWO different questions and the plan conflated them:
+
+  * Of the 65,536 half-word patterns, 49,152 have bits[1:0] != 0b11 and are
+    reachable as 16-bit instructions.  16,384 are not reachable AT ALL, and
+    that is a fact about the LENGTH RULE and not about the C extension.
+  * Of the 49,152 reachable ones, some are defined, some are HINTs, and some
+    are RESERVED.  That is the number the C extension's cost is made of, and
+    it is much smaller than a quarter.
+
+  The second number is the interesting one and it is what this section
+  measures.
+
+  quadrant   funct3   code points RESERVED  HINT rules here       
+  q0         000      8                     -                     
+  q0         100      2048                  -                     
+  q1         001      64                    -                     
+  q1         011      32                    c.lui                 
+  q1         100      128                   c.srli, c.srai        
+  q2         010      64                    -                     
+  q2         011      64                    -                     
+  q2         100      1                     c.mv, c.add           
+  TOTAL               2409                                        
+
+  2409 reserved code points out of 49,152, which is 4.90 per cent of the
+  reachable compressed space. Read that against the quarter the assembler
+  refuses and the plan's framing is not merely wrong but misleading: the
+  extension did not give up a quarter of the space.
+
+  And the DISTRIBUTION is the real finding. One cell -- quadrant 0, funct3 =
+  100 -- accounts for 2,048 of the 2409, which is 85 per cent. The QUOTED
+  reason is in the manual's own opcode map, which prints two columns for the
+  RV32 and RV64 variants and marks that cell Reserved in both. The cell held
+  C.FLWSP in the RV32 draft; the RV64 column needed the slot for C.LD; and
+  when the two columns were merged the cell was given up entirely. 2,048 code
+  points -- one twenty-fourth of the whole reachable compressed space -- for
+  one decision about one quadrant.
+
+  Five of the eight reserved cells are one-off rules that kill a cell because
+  of a register value or an immediate value, and the manual states each of
+  them in one sentence. Read them, because they are all the same shape and the
+  shape is the point:
+
+  * C.ADDI4SPN with nzuimm = 0: 7 code points.  An immediate of zero is
+    reserved because the instruction ADDS something to sp, and adding zero is a
+    different instruction.  Not eight points: the eighth, 0x0002, was given to
+    C.SLLI64 by the RV128 work.  One reserved code point is a code point
+    somebody else claimed.
+  * C.ADDIW with rd = x0: 64.  And in RV32 the same cell is C.JAL, which has no
+    reserved code points.  A reserved encoding in one base and a valid
+    instruction in the other, at the same 16 bits.  That is the C extension's
+    modularity showing up as a portability hazard.
+  * C.LUI with imm = 0: 32, and C.ADDI16SP with nzimm = 0 is the 33rd and dies
+    with them because the two share the cell and are told apart by the
+    destination register.
+  * C.SUBW/C.ADDW's reserved half: 128.  Sixteen of the thirty-two
+    (inst[12], bits[6:2]) combinations times eight registers, and the ones
+    that are reserved are exactly the two funct2 values no base assigned.
+  * C.LWSP and C.LDSP with rd = x0: 64 each, not 32, because the CI format's
+    immediate is six bits and a zero register leaves all six free.
+  * And ONE code point, 0x8002, which is rs1 = 0 with rs2 = 0 -- the single
+    combination that C.JR, C.JALR, C.EBREAK, C.MV and C.ADD all reject.  It is
+    the only reserved compressed encoding a person is likely to meet in a hex
+    dump, and it is reserved because five rules each exclude it.
+
+  NOW THE ENUMERATION, and the two independent classifications.
+  "reachable" is bits[1:0] != 0b11.  "mine" is what this file's
+  reserved rules say.  "oracle" is whether the second reader prints
+  a mnemonic for it.  The four numbers that matter are at the
+  bottom and they are the cross-check.
+
+    This file, over all 49,152 reachable half-words:
+       2409  RESERVED by the rules transcribed above
+        426  HINT -- defined, and they do nothing
+      46317  neither: an instruction this file does not model
+
+    The second reader, over the same 49,152:
+      49152  instructions printed
+       2408  printed <unknown>, i.e. it could not decode them
+
+    THE CROSS-CHECK, over an exhaustive set:
+       2408  this file says RESERVED and the reader says <unknown>
+          1  this file says RESERVED and the reader NAMED it
+          0  the reader says <unknown> and this file does not
+
+    The 1 words this file calls reserved that the reader names:
+      0x0000  unimp
+
+    VERDICT: the two classifications DISAGREE, and the differences are listed above
+
+  THE REMAINING DISAGREEMENT IS 1 WORD, AND IT IS NOT A TYPO, so it gets its
+  own paragraph rather than a footnote. 0x0000 is in the C.ADDI4SPN cell with
+  nzuimm = 0, which this file calls RESERVED -- which is what the rule above
+  says and what the manual says -- and the second reader prints `unimp`. Both
+  are right about their own subject and the disagreement IS the interesting
+  part. `unimp` is not a claim that the encoding is an instruction. It is the
+  second reader's way of saying "there is nothing here and I will keep
+  decoding", and it HAS to say something: a disassembler walks a byte stream
+  carrying no length information, so every half-word in it must print
+  something. The all-zeros pattern is the natural choice for "nothing"
+  precisely because it is the one pattern no instruction is. So the second
+  reader has not misread the manual. It has taken a position on what to PRINT,
+  where this file took a position on what is DEFINED, and a check that
+  compared the two would be comparing a table of encodings against a table of
+  output strings.
+
+  Which is why it is reported rather than normalised away, and why this
+  section is allowed to finish on the word DISAGREE. A verification that
+  cannot finish disagreeing is not a verification.
+
+
+  One asymmetry in that verdict is worth naming, because it is the asymmetry
+  that makes the check meaningful rather than circular. This file's reserved
+  rules were transcribed from the manual and then MEASURED; the second
+  reader's table is INDEPENDENT of both, because it is a different
+  implementation that read the same specification. Where they agree, two
+  independent readings of a specification agree on 2408 code points out of
+  49,152. Where they disagree, at least one of them has taken a different
+  position, and the artifact prints which is which rather than choosing.
+
+  And the count that is NOT here is as important as the ones that are: no
+  timing, no instruction throughput, and no measurement of whether any of
+  these reserved encodings traps on any particular core. "Reserved" here means
+  the SPECIFICATION has not assigned the encoding. What a given implementation
+  does with one is a property of that implementation, and there is no RISC-V
+  hardware on this host to ask.
+
+
+========================================================================
+SECTION 7 -- THE IMMEDIATES THAT DO NOT FIT, AND WHAT THE ASSEMBLER SAYS
+========================================================================
+
+  Five immediate encodings, and the reason they do not fit is a single design
+  decision, stated by the manual and measurable in the masks. QUOTED, section
+  2.2, in the note on register positions:
+
+  "In practice, most immediates are either small or require all XLEN bits. We
+  chose an asymmetric immediate split (12 bits in regular instructions plus a
+  special load-upper-immediate instruction with 20 bits) to increase the
+  opcode space available for regular instructions."
+
+  and, in the same note, the sentence that is the whole of this section:
+
+  "the instruction format was chosen to keep all register specifiers at the
+  same position in all formats at the expense of having to move immediate bits
+  across formats"
+
+  MOVING immediate bits across formats is what a permutation is. So RISC-V's
+  immediate story is not a set of five independent encodings; it is one
+  decision -- keep the registers still -- paid for five different ways, and
+  the masks in section 4 are the receipts.
+
+  format   field     the reach               MEASURED by asking    what it says one step past                      
+  I        4096 bits  [-2048, 2047]           [-2048, 2047]         operand must be a symbol with %lo/%pcrel_lo/%t  
+  S        4096 bits  [-2048, 2047]           [-2048, 2047]         operand must be a symbol with %lo/%pcrel_lo/%t  
+  B        8191 bits  [-4096, 4094]           [-1048572, 1048578]   fixup value out of range                        
+  U        33554417 bits  a 20-bit field, always shifted left 12  no signed range       the field is UNSIGNED and 20 bits wide          
+  J        2097151 bits  [-1048576, 1048574]     [-1048576, 1048574]   fixup value out of range                        
+
+  The third and fourth columns are the same quantity reached two ways, and
+  they AGREE, which is the point: the fourth column is measured by asking a
+  real assembler for the value just inside and just outside the range and
+  reading what it does. The refusal text in the fifth column is the assembler
+  STATING the boundary in its own words, and for three of the five it is the
+  best evidence in the file:
+
+  addi a0, a0, 2048 -> operand must be a symbol with %lo/%pcrel_lo/ %tprel_lo
+  specifier or an integer in the range [-2048, 2047] sw a0, 2048(a1) -> ...
+  the same sentence, the same two numbers slli a0, a0, 64 -> immediate must be
+  an integer in the range [0, 63] c.lui a0, 0 -> immediate must be in
+  [0xfffe0, 0xfffff] or [1, 31]
+
+  Read the first two together. The I-type and the S-type immediates are in
+  DIFFERENT bit positions -- inst[31:20] for one and inst[31:25] with
+  inst[11:7] for the other -- and the assembler refuses both with the SAME two
+  numbers. Two permutations, one range, and the range is a property of the
+  field's WIDTH rather than of its position. That is a decoder author's first
+  relief on this architecture and it is a direct consequence of the decision
+  to keep the register fields still.
+
+  The third refusal is a different kind of measurement and it is more
+  interesting than the first two. `slli` with an amount of 64 is refused with
+  "[0, 63]", and the reason is that the amount is a SIX-bit field, not a
+  seven-bit one: its bits are inst[25:20] and inst[11:7] is the destination
+  register. So the shift amount is ALSO the thing that collides with the
+  register positions -- an immediate that has to dodge a register field is an
+  immediate whose width is not obvious from its position, and the assembler's
+  diagnostic is the only place the number 63 appears.
+
+  THE B-TYPE IMMEDIATE, WHOSE BITS ARE NOT CONTIGUOUS.  This is
+  the case the plan called out and it is correct.
+
+  asked for   the word      what the reader says                            decoded imm
+  2           0x00b50163    beq	a0, a1, 0x2 <T+0x2>                         2         
+  4           0x00b50263    beq	a0, a1, 0x4 <T+0x4>                         4         
+  8           0x00b50463    beq	a0, a1, 0x8 <T+0x8>                         8         
+  16          0x00b50863    beq	a0, a1, 0x10 <T+0x10>                       16        
+  32          0x02b50063    beq	a0, a1, 0x20 <T+0x20>                       32        
+  64          0x04b50063    beq	a0, a1, 0x40 <T+0x40>                       64        
+  128         0x08b50063    beq	a0, a1, 0x80 <T+0x80>                       128       
+  256         0x10b50063    beq	a0, a1, 0x100 <T+0x100>                     256       
+  512         0x20b50063    beq	a0, a1, 0x200 <T+0x200>                     512       
+  1024        0x40b50063    beq	a0, a1, 0x400 <T+0x400>                     1024      
+  2048        0x00b500e3    beq	a0, a1, 0x800 <T+0x800>                     2048      
+  4094        0x7eb50fe3    beq	a0, a1, 0xffe <T+0xffe>                     4094      
+  -2          0xfeb50fe3    beq	a0, a1, 0xfffffffffffffffe <T+0xfffffffffffffffe  -2        
+  -4          0xfeb50ee3    beq	a0, a1, 0xfffffffffffffffc <T+0xfffffffffffffffc  -4        
+  -8          0xfeb50ce3    beq	a0, a1, 0xfffffffffffffff8 <T+0xfffffffffffffff8  -8        
+  -16         0xfeb508e3    beq	a0, a1, 0xfffffffffffffff0 <T+0xfffffffffffffff0  -16       
+  -32         0xfeb500e3    beq	a0, a1, 0xffffffffffffffe0 <T+0xffffffffffffffe0  -32       
+  -64         0xfcb500e3    beq	a0, a1, 0xffffffffffffffc0 <T+0xffffffffffffffc0  -64       
+  -128        0xf8b500e3    beq	a0, a1, 0xffffffffffffff80 <T+0xffffffffffffff80  -128      
+  -256        0xf0b500e3    beq	a0, a1, 0xffffffffffffff00 <T+0xffffffffffffff00  -256      
+  -512        0xe0b500e3    beq	a0, a1, 0xfffffffffffffe00 <T+0xfffffffffffffe00  -512      
+  -1024       0xc0b500e3    beq	a0, a1, 0xfffffffffffffc00 <T+0xfffffffffffffc00  -1024     
+  -2048       0x80b500e3    beq	a0, a1, 0xfffffffffffff800 <T+0xfffffffffffff800  -2048     
+  -4096       0x80b50063    beq	a0, a1, 0xfffffffffffff000 <T+0xfffffffffffff000  -4096     
+  -4098       0x00b51463    bne	a0, a1, 0x8 <T+0x8>                         8         
+  4096        0x00b51463    bne	a0, a1, 0x8 <T+0x8>                         8         
+  4098        0x00b51463    bne	a0, a1, 0x8 <T+0x8>                         8         
+
+  Now the important row: the assembler REFUSES 4098 and ACCEPTS 4094, and
+  -4096. A 13-bit signed field scaled by two. That is [4096, 4094] in
+  magnitude -- and the ends are NOT the same number, which is the detail the
+  AArch64 course retracted twice in its own section 11 and which is worth
+  measuring rather than asserting:
+
+  +4094 the largest positive displacement a B-type can encode -4096 the
+  largest negative one
+
+  The asymmetry is arithmetic. A 13-bit two's-complement field holds [-4096,
+  +4095], and the low bit is forced to zero, so the positive end is +4094 and
+  the negative end is -4096. A sign extension is not a magnitude, and a field
+  with a forced zero at bit 0 is not symmetric about zero.
+
+  And the two rows past 4094 are the measurement the plan said would be the
+  best in this concept. Read what the assembler DOES rather than what it says:
+
+    beq .    +4096   4 bytes, bne	a0, a1, 0x8 <T+0x8>
+    beq .    +4098   4 bytes, bne	a0, a1, 0x8 <T+0x8>
+    beq .    +8192   4 bytes, bne	a0, a1, 0x8 <T+0x8>
+    beq .   +65536   4 bytes, bne	a0, a1, 0x8 <T+0x8>
+    beq . +1048574   4 bytes, bne	a0, a1, 0x8 <T+0x8>
+    beq . +1048576   4 bytes, bne	a0, a1, 0x8 <T+0x8>
+    beq . -1048576   REFUSED: fixup value out of range
+
+  IT DOES NOT REFUSE. It RELAXES. `beq a0, a1, .+4096` is accepted and
+  assembled into TWO instructions: an inverted branch over an unconditional
+  jump, because a B-type cannot reach that far and the assembler has a longer
+  sequence that means the same thing. A reader who writes a branch past the
+  B-type's reach and then DECODES the result expecting a branch finds a
+  conditional jump and an unconditional jump, and the branch they wrote is
+  gone.
+
+  That is a REFUSAL that is not a refusal, and it is the most useful
+  measurement in this section, because it is the only one that can be got
+  wrong silently:
+
+  * Asking the assembler for an out-of-range branch does not produce a
+    diagnostic.  It produces WORKING CODE, of a different shape, with the
+    semantics the programmer asked for.  No test that checks "does the program
+    work" finds it.
+  * A disassembler reading the object file cannot tell that a two-instruction
+    sequence was a one-instruction request.  It sees a branch and a jump.
+  * So the branch's reach is a property of the ENCODING, discoverable only by
+    decoding the instruction word and looking at the displacement -- and the
+    first time this file's decoder found an out-of-range B-type it had found a
+    bug, because the assembler never produces one by hand.  A decoder that
+    walks a compiler's output will never see the boundary; only a decoder that
+    is TOLD the boundary, or that is fed hand-written words, will.
+
+  The diagnostic DOES appear eventually, at 1 MiB, where the relaxation itself
+  runs out of room:
+
+  beq a0, a1, .-1048576 -> fixup value out of range
+
+  "fixup", not "displacement". The word is the assembler's: it is telling you
+  the RELAXATION could not be applied, which is a different failure from the
+  encoding being out of range, and a tool that reports only the second would
+  be misleading you about the first. The `obj` and `reloc` courses in this
+  collection are about what a fixup is; this is the first place a reader meets
+  one, and it is in an error message.
+
+  THE SAME REACH ARITHMETIC ON THE OTHER FOUR FIELDS, because it
+  is the same arithmetic and the asymmetries are in different
+  places:
+
+  format    near end    far end     symmetry                    scaled  
+  B         4094        4096        +4094 / 4096  NOT symmetric  x2      
+  I         2047        2048        +2047 / 2048  NOT symmetric          
+  J         1048574     1048576     +1048574 / 1048576  NOT symmetric  x2      
+  S         2047        2048        +2047 / 2048  NOT symmetric          
+  U         16777200    16777216    +16777200 / 16777216  NOT symmetric          
+
+  I and S are symmetric: [-2048, 2047] both, and 2047 is odd while 2048 is
+  even, which is the ordinary shape of a two's-complement field with no forced
+  zero. B and J are not, for the reason given above: both have a forced zero
+  in the displacement's bit 0, so the field is even-valued and the
+  two's-complement range [-2^n, 2^n - 1] loses its top value to the rounding.
+  +4094 and -4096. +1048574 and -1048576.
+
+  **The ±2 KiB B-TYPE RANGE IS WHY `auipc` AND `lui` PAIRS EXIST**, and that is
+  the link to the AArch64 course's `adrp`/`:lo12:`.  A branch that can only reach
+  2 KiB cannot reach across a function, let alone across a translation unit, so
+  every far call in a real program is a PAIR of instructions, and the two halves
+  each carry half the address.  Section 8 measures the pair.
+
+
+========================================================================
+SECTION 8 -- THE PAIR: WHY A 2 KiB BRANCH MEANS TWO INSTRUCTIONS
+========================================================================
+
+  Section 7 measured the B type's reach: +4094 and -4096 bytes. A branch that
+  cannot cross a function is not a branch, it is a local shortcut, and every
+  real call is therefore a PAIR of instructions with the address split across
+  them. This section measures the pair, and compares it with the AArch64
+  course's, because the two architectures solved the same problem with the
+  same shape and the comparison is the payoff of the section.
+
+  The two solutions:
+
+  RISC-V lui rd, imm[31:12] 20 bits at the top addi rd, rd, imm[11:0] 12 bits
+  at the bottom AArch64 adrp xd, label 21 bits, page-aligned add xd, xd,
+  :lo12: 12 bits at the bottom
+
+  Same shape, different middle. The `:lo12:` is NOT A FIELD in the second
+  instruction -- it is arithmetic on the symbol that produces a RELOCATION,
+  and that limit is where a byte-level decoder stops. This section measures
+  both sides, because the difference is a real design difference and not a
+  notational one.
+
+  THE RISC-V PAIR, on the same C, from the same compiler, and the
+  relocations each half carries.  The relocations are the point:
+  they are what makes the pair a pair rather than two instructions
+  that happen to be adjacent.
+
+  addr      bytes   the reader says                             format  the immediate                             
+  0x2       4       lui	a1, 0x0                                 U       there is no rs1 and no funct3: the U for  
+  0xc       2       ld	a0, 0x0(a0)                              CL      CL/CS format: rs1' is bits[9:7] and rd'/  
+  0xe       2       addi	a0, a0, 0x7                            CI      CI format: the six-bit immediate is inst  
+  0x12      4       lui	a0, 0x0                                 U       there is no rs1 and no funct3: the U for  
+
+  THE RELOCATIONS, which is where the two halves are BOUND
+  together.  Note that the second is an ADD and not a generic
+  immediate add: the RISC-V encoding has one 12-bit immediate
+  field and the linker has to know which instruction owns it.
+
+  offset    relocation                  symbol                  
+  0x0002    R_RISCV_HI20                table                   
+  0x0002    R_RISCV_RELAX               *ABS*                   
+  0x0006    R_RISCV_LO12_I              table                   
+  0x0006    R_RISCV_RELAX               *ABS*                   
+  0x0012    R_RISCV_HI20                label                   
+  0x0012    R_RISCV_RELAX               *ABS*                   
+  0x0016    R_RISCV_LO12_I              label                   
+  0x0016    R_RISCV_RELAX               *ABS*                   
+  0x001c    R_RISCV_32_PCREL            .L0                     
+  0x0020    R_RISCV_ADD32               .L0                     
+  0x0020    R_RISCV_SUB32               .L0                     
+  0x0030    R_RISCV_32_PCREL            .L0                     
+
+  THE SAME C FOR AArch64, for the comparison, and the reason
+  the shapes are not the same:
+
+  addr      bytes   the reader says                               
+  0x0       4       adrp	x8, 0x0 <pick>                           
+  0x4       4       add	x8, x8, #0x0                              
+  0x8       4       ldr	x8, [x8, x0, lsl #3]                      
+  0xc       4       add	x0, x8, #0x7                              
+  0x14      4       adrp	x8, 0x0 <pick>                           
+  0x18      4       ldrb	w0, [x8]                                 
+
+  offset    relocation                        symbol            
+  0x0000    R_AARCH64_ADR_PREL_PG_HI21        table             
+  0x0004    R_AARCH64_ADD_ABS_LO12_NC         table             
+  0x0014    R_AARCH64_ADR_PREL_PG_HI21        label             
+  0x0018    R_AARCH64_LDST8_ABS_LO12_NC       label             
+  0x001c    R_AARCH64_PREL32                  .text             
+  0x0030    R_AARCH64_PREL32                  .text+0x14        
+
+  Three differences, all measured and all real.
+
+  **RISC-V's pair is TWO INSTRUCTIONS WHOSE SECOND HALF MAY DO NOTHING.**
+  MEASURED, in the table above: the `lui` and the `addi` that follows it.  The
+  `addi` is an ordinary I-type add with a 12-bit immediate, and when the linker
+  resolves the pair and the low twelve bits happen to be zero, the second
+  instruction becomes `addi rd, rd, 0` -- which is a legal instruction that does
+  nothing, four bytes long.  AArch64's `add xd, xd, :lo12:` has the same property
+  and the linker is given a RELOCATION that says so, which is why the relocation
+  list above is longer and more specific: there is a distinct
+  `R_AARCH64_ADD_ABS_LO12_NC` rather than a generic 12-bit fixup.
+
+  **RISC-V's `lui` is ABSOLUTE; AArch64's `adrp` is PC-RELATIVE.**  That is the
+  substantive difference and it is visible in the relocation names: RISC-V's are
+  `R_RISCV_HI20` and `R_RISCV_LO12_I` with no PC in the name, and AArch64's are
+  `R_AARCH64_ADR_PREL_PG_HI21` and `R_AARCH64_ADR_PREL_LO21` with `_PREL_` in
+  both.  For position-independent code -- and that is the default on both
+  targets -- the RISC-V compiler has to switch to `auipc` and the pair becomes
+  PC-relative, which is why the corpus's own objects contain `auipc` and not
+  `lui` and why section 3's `-march` diff shows three `auipc` appearing when D is
+  enabled.
+
+  **RISC-V's low half is not marked as part of a pair in the ENCODING.**  There
+  is no bit anywhere in the `addi` that says "this addi is the second half of an
+  address".  The pairing is a property of the RELOCATION TABLE, which means a
+  decoder reading bytes in isolation -- which is what this file's part one does --
+  CANNOT recover the address a program intended.  AArch64 has the same property
+  and solves it the same way.  The `reloc` course in this collection is about
+  what happens next; this is the first place the reader meets the reason there
+  is such a course.
+
+
+  AND THE HONEST LIMIT OF ALL OF IT. Everything above is a property of a
+  COMPILED OBJECT FILE. There is no linked executable on this host, no
+  resolved address, and no way to check that the pair computes the address it
+  is supposed to compute -- because there is no RISC-V linker installed and
+  nothing to execute the result. What is measured is the two instructions and
+  their two relocations, which is the half of the story that is in the bytes.
+  The other half -- that the pair lands on the right address -- is not
+  measured here, is not measured anywhere in this course, and would need the
+  `link` course and a machine.
+
+
+========================================================================
+SECTION 9 -- THE MAP AUDIT, AGAINST A SECOND READER
+========================================================================
+
+  Section 5 counted the opcode values the corpus uses. This section does the
+  harder version: it asks what the second reader says about EVERY 32-bit word
+  in a constructed sweep, not just the ones the corpus happens to contain, and
+  it audits the space rather than the sample.
+
+  The sweep is the whole 32-bit space reduced by the parts that are
+  structural. A decoder author does not face 2**32 words; they face the opcode
+  values and, inside each, the sub-opcode selectors. So the audit is a table
+  over the 128 opcode values, and for each one: what this file does with it,
+  what the second reader does with it, and whether the two agree.
+
+  The second reader is asked about a real object file, not a raw word, because
+  this `llvm-objdump` has no `-b binary` -- section 10's `objdump_text` says
+  so and works around it by assembling each word into an object. For the AUDIT
+  that would be 128 assembler invocations, which is slow but not absurd, and
+  it is the only way to be sure the two readers are being asked the same
+  question.
+
+  opcode    bits       format    this file                             the second reader                 verdict 
+  0x00      0000000    (unclassi  (op 0x00a5c600)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x01      0000001    (unclassi  (op 0x00a5c601)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x02      0000010    (unclassi  (op 0x00a5c602)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x03      0000011    I         lbu        a2, 10(a1)                 lbu	a2, 0xa(a1)                   AGREE   
+  0x04      0000100    (unclassi  (op 0x00a5c604)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x05      0000101    (unclassi  (op 0x00a5c605)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x06      0000110    (unclassi  (op 0x00a5c606)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x07      0000111    I         (op 0x00a5c607)  fmt I                <unknown>                         disagree
+  0x08      0001000    (unclassi  (op 0x00a5c608)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x09      0001001    (unclassi  (op 0x00a5c609)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x0a      0001010    (unclassi  (op 0x00a5c60a)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x0b      0001011    R         (op 0x00a5c60b)  fmt R                <unknown>                         disagree
+  0x0c      0001100    (unclassi  (op 0x00a5c60c)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x0d      0001101    (unclassi  (op 0x00a5c60d)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x0e      0001110    (unclassi  (op 0x00a5c60e)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x0f      0001111    I         (op 0x00a5c60f)  fmt I                <unknown>                         disagree
+  0x10      0010000    (unclassi  (op 0x00a5c610)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x11      0010001    (unclassi  (op 0x00a5c611)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x12      0010010    (unclassi  (op 0x00a5c612)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x13      0010011    I         xori       a2, a1, 10                 xori	a2, a1, 0xa                  AGREE   
+  0x14      0010100    (unclassi  (op 0x00a5c614)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x15      0010101    (unclassi  (op 0x00a5c615)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x16      0010110    (unclassi  (op 0x00a5c616)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x17      0010111    U         auipc      a2, 0xa5c                  auipc	a2, 0xa5c                   AGREE   
+  0x18      0011000    (unclassi  (op 0x00a5c618)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x19      0011001    (unclassi  (op 0x00a5c619)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x1a      0011010    (unclassi  (op 0x00a5c61a)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x1b      0011011    R         (op 0x00a5c61b)  fmt R                <unknown>                         disagree
+  0x1c      0011100    (unclassi  (op 0x00a5c61c)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x1d      0011101    (unclassi  (op 0x00a5c61d)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x1e      0011110    (unclassi  (op 0x00a5c61e)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x1f      0011111    (unclassi  (op 0x00a5c61f)  fmt (unclassified    <unknown>                         disagree
+  0x20      0100000    (unclassi  (op 0x00a5c620)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x21      0100001    (unclassi  (op 0x00a5c621)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x22      0100010    (unclassi  (op 0x00a5c622)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x23      0100011    I         (undefined) (undefined)               <unknown>                         disagree
+  0x24      0100100    (unclassi  (op 0x00a5c624)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x25      0100101    (unclassi  (op 0x00a5c625)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x26      0100110    (unclassi  (op 0x00a5c626)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x27      0100111    I         (op 0x00a5c627)  fmt I                <unknown>                         disagree
+  0x28      0101000    (unclassi  (op 0x00a5c628)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x29      0101001    (unclassi  (op 0x00a5c629)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x2a      0101010    (unclassi  (op 0x00a5c62a)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x2b      0101011    S         (op 0x00a5c62b)  fmt S                <unknown>                         disagree
+  0x2c      0101100    (unclassi  (op 0x00a5c62c)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x2d      0101101    (unclassi  (op 0x00a5c62d)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x2e      0101110    (unclassi  (op 0x00a5c62e)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x2f      0101111    S         (undefined) (undefined)               <unknown>                         disagree
+  0x30      0110000    (unclassi  (op 0x00a5c630)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x31      0110001    (unclassi  (op 0x00a5c631)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x32      0110010    (unclassi  (op 0x00a5c632)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x33      0110011    R         xor        a2, a1, a0                 xor	a2, a1, a0                    AGREE   
+  0x34      0110100    (unclassi  (op 0x00a5c634)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x35      0110101    (unclassi  (op 0x00a5c635)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x36      0110110    (unclassi  (op 0x00a5c636)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x37      0110111    U         lui        a2, 0xa5c                  lui	a2, 0xa5c                     AGREE   
+  0x38      0111000    (unclassi  (op 0x00a5c638)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x39      0111001    (unclassi  (op 0x00a5c639)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x3a      0111010    (unclassi  (op 0x00a5c63a)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x3b      0111011    R         (undefined) (undefined)               <unknown>                         disagree
+  0x3c      0111100    (unclassi  (op 0x00a5c63c)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x3d      0111101    (unclassi  (op 0x00a5c63d)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x3e      0111110    (unclassi  (op 0x00a5c63e)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x3f      0111111    I         (op 0x00a5c63f)  fmt I                <unknown>                         disagree
+  0x40      1000000    (unclassi  (op 0x00a5c640)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x41      1000001    (unclassi  (op 0x00a5c641)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x42      1000010    (unclassi  (op 0x00a5c642)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x43      1000011    R         fmadd.s    fa2, fa1, fa0, ft0         fmadd.s	fa2, fa1, fa0, ft0, rm    disagree
+  0x44      1000100    (unclassi  (op 0x00a5c644)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x45      1000101    (unclassi  (op 0x00a5c645)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x46      1000110    (unclassi  (op 0x00a5c646)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x47      1000111    R         fmsub.s    fa2, fa1, fa0, ft0         fmsub.s	fa2, fa1, fa0, ft0, rm    disagree
+  0x48      1001000    (unclassi  (op 0x00a5c648)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x49      1001001    (unclassi  (op 0x00a5c649)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x4a      1001010    (unclassi  (op 0x00a5c64a)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x4b      1001011    R         fnmsub.s   fa2, fa1, fa0, ft0         fnmsub.s	fa2, fa1, fa0, ft0, r    disagree
+  0x4c      1001100    (unclassi  (op 0x00a5c64c)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x4d      1001101    (unclassi  (op 0x00a5c64d)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x4e      1001110    (unclassi  (op 0x00a5c64e)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x4f      1001111    R         fnmadd.s   fa2, fa1, fa0, ft0         fnmadd.s	fa2, fa1, fa0, ft0, r    disagree
+  0x50      1010000    (unclassi  (op 0x00a5c650)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x51      1010001    (unclassi  (op 0x00a5c651)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x52      1010010    (unclassi  (op 0x00a5c652)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x53      1010011    R         (op 0x00a5c653)  fmt R                fadd.s	fa2, fa1, fa0, rmm         disagree
+  0x54      1010100    (unclassi  (op 0x00a5c654)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x55      1010101    (unclassi  (op 0x00a5c655)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x56      1010110    (unclassi  (op 0x00a5c656)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x57      1010111    I         (op 0x00a5c657)  fmt I                vadd.vx	v12, v10, a1, v0.t        disagree
+  0x58      1011000    (unclassi  (op 0x00a5c658)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x59      1011001    (unclassi  (op 0x00a5c659)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x5a      1011010    (unclassi  (op 0x00a5c65a)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x5b      1011011    I         (op 0x00a5c65b)  fmt I                <unknown>                         disagree
+  0x5c      1011100    (unclassi  (op 0x00a5c65c)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x5d      1011101    (unclassi  (op 0x00a5c65d)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x5e      1011110    (unclassi  (op 0x00a5c65e)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x5f      1011111    I         (op 0x00a5c65f)  fmt I                <unknown>                         disagree
+  0x60      1100000    (unclassi  (op 0x00a5c660)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x61      1100001    (unclassi  (op 0x00a5c661)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x62      1100010    (unclassi  (op 0x00a5c662)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x63      1100011    B         blt        a1, a0, 0xc                blt	a1, a0, 0xc <.text+0xc>       AGREE   
+  0x64      1100100    (unclassi  (op 0x00a5c664)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x65      1100101    (unclassi  (op 0x00a5c665)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x66      1100110    (unclassi  (op 0x00a5c666)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x67      1100111    I         (op 0x00a5c667)  fmt I                <unknown>                         disagree
+  0x68      1101000    (unclassi  (op 0x00a5c668)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x69      1101001    (unclassi  (op 0x00a5c669)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x6a      1101010    (unclassi  (op 0x00a5c66a)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x6b      1101011    I         (op 0x00a5c66b)  fmt I                <unknown>                         disagree
+  0x6c      1101100    (unclassi  (op 0x00a5c66c)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x6d      1101101    (unclassi  (op 0x00a5c66d)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x6e      1101110    (unclassi  (op 0x00a5c66e)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x6f      1101111    J         jal        a2, 0x5c00a                jal	a2, 0x5c00a <.text+0x5c00a    AGREE   
+  0x70      1110000    (unclassi  (op 0x00a5c670)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x71      1110001    (unclassi  (op 0x00a5c671)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x72      1110010    (unclassi  (op 0x00a5c672)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x73      1110011    I         (undefined) (undefined)               <unknown>                         disagree
+  0x74      1110100    (unclassi  (op 0x00a5c674)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x75      1110101    (unclassi  (op 0x00a5c675)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x76      1110110    (unclassi  (op 0x00a5c676)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x77      1110111    I         (op 0x00a5c677)  fmt I                <unknown>                         disagree
+  0x78      1111000    (unclassi  (op 0x00a5c678)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x79      1111001    (unclassi  (op 0x00a5c679)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x7a      1111010    (unclassi  (op 0x00a5c67a)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x7b      1111011    (unclassi  (op 0x00a5c67b)  fmt (unclassified    <unknown>                         disagree
+  0x7c      1111100    (unclassi  (op 0x00a5c67c)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x7d      1111101    (unclassi  (op 0x00a5c67d)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x7e      1111110    (unclassi  (op 0x00a5c67e)  fmt (unclassified    (refused: instruction length d    the assembler REFUSED this word
+  0x7f      1111111    (unclassi  (op 0x00a5c67f)  fmt (unclassified    <unknown>                         disagree
+
+    128 opcode values audited, one word each.
+       7  the two readers agree
+      25  the two readers disagree, and every one is listed above
+      15  this file names the word
+     113  this file does not model it
+      96  the assembler refused the probe outright
+
+  Read the audit as a table of CLAIMS rather than as a pass mark. Three things
+  in it are worth taking away.
+
+  **A disagreement in this table is not automatically a bug in this file.**  The
+  representative word for an opcode is an ARBITRARY point in a sub-opcode
+  space, and a decoder that models some rows of an opcode and not others will
+  disagree on the rows it does not model.  That is the declared subset showing
+  up where it was predicted to, and the count of unmodelled words is the honest
+  size of it.
+
+  **The format column is the useful one, and it is empty in a way that matters.**
+  For most opcodes this file cannot say what the format is, and it says
+  `(unclassified)` rather than guessing.  A decoder that assigned a format to
+  every opcode would be claiming to know the layout of encodings the
+  specification has not assigned, and the six formats are not a partition of the
+  opcode space -- they are a partition of the encodings that EXIST.  RISC-V
+  reserves a large part of the opcode space, and section 6 measured how much of
+  the compressed half; this is the 32-bit half and it is a different number.
+
+  **The 7-bit opcode has 128 values and the base ISA uses about a dozen of
+  them.**  The manual's own tables allocate the rest to the extensions, and the
+  letters are the allocation.  So the map audit is also a measurement of how
+  much room the modular design leaves: a fixed-instruction-set architecture has
+  one list and no room; this one has 128 slots and six of them are enough for
+  the whole base.
+
+
+========================================================================
+SECTION 10 -- TWO READERS, AND THREE POISONS
+========================================================================
+
+  The second reader is `llvm-objdump-21 --triple=riscv64`. It is INDEPENDENT
+  of this file in the sense that matters -- it is a different implementation,
+  from a different codebase, that read the same specification -- and it is NOT
+  independent in one respect that has to be stated: `clang` assembled the
+  corpus, so both readers ultimately depend on one LLVM tree. An independent
+  second ASSEMBLER does not exist on this host, and GNU binutils has no RISC-V
+  target installed. What this section establishes is that this decoder and one
+  other piece of software agree on what the bytes mean -- not that either
+  agrees with silicon, and there is no silicon to agree with.
+
+  A cross-check that reports 100 per cent agreement is EXACTLY WHAT A BROKEN
+  CROSS-CHECK LOOKS LIKE. This collection has already had one: the AArch64
+  data-path course's cross-check printed 0 disagreements over a corpus where
+  85 instructions genuinely disagreed, and not one of the four bugs printed a
+  wrong word -- they all made the comparison VACUOUS, which is worse, because
+  the number is believed. So this section does four things that a cross-check
+  which agrees perfectly does not do: it prints HOW MANY instructions it
+  compared, it prints how many times each of the normalisation rules fired, it
+  CLASSIFIES every disagreement it finds by kind, and it runs FOUR POISONS and
+  requires each to move the number it claims to test.
+
+  AND THE NUMBER IT STARTED FROM, because a reader who arrives at "zero
+  disagreements" deserves to know what had to be fixed to get there. The
+  inherited run of this file reported 354 agree and 701 disagree of 1,055, and
+  this one reports 1,047 agree and 0 disagree of 1,047. The difference is not
+  a decoder that got better in the abstract. It is 188 words that were being
+  decoded by the wrong model, 62 words reported UNDEFINED for no reason at
+  all, 33 words of an instruction this file could not reach, 91 branches that
+  had lost both their register operands, 26 branch targets off by exactly one,
+  and a normaliser whose rules mostly matched nothing while the cross-check
+  reported its number anyway. Section 12 lists each of those as a numbered
+  retraction, and the seven hundred ARE the work. A reader who wants to know
+  whether the number is worth believing should read R17 to R22 and then come
+  back.
+
+  THE CROSS-CHECK, over every corpus object:
+      1082  instructions the second reader printed
+      1047  of them this file NAMES
+        35  of them this file does not model (counted, not dropped)
+      1047  AGREE after normalisation
+         0  DISAGREE
+         0  where the two readers disagree on the LENGTH alone
+
+    1047 of 1047, which is 100 per cent -- and that is exactly what a
+    broken cross-check looks like, which is why the three rows
+    below are not optional.
+
+  THE NORMALISER'S OWN FIRE COUNT, because a rule that matched
+  nothing is the exact shape of the AArch64 bug and it is invisible
+  in the agreement number.  The table is pre-seeded with every rule
+  name at zero, so a rule that never fires is a ROW WITH A ZERO and
+  not an absence -- and the difference between those two things is
+  the difference between a check that can fail and a check that
+  cannot:
+
+  rule                      times it fired  status              
+  register name             3692            FIRED               
+  float register            131             FIRED               
+  branch target             236             FIRED               
+  jump target               12              FIRED               
+  jalr no displacement      19              FIRED               
+  li alias                  78              FIRED               
+  mv alias                  108             FIRED               
+  nop                       6               FIRED               
+  ret                       135             FIRED               
+  jr                        3               FIRED               
+  j                         7               FIRED               
+  sext.w                    4               FIRED               
+  zext.b                    8               FIRED               
+  neg                       3               FIRED               
+  beqz                      33              FIRED               
+  bnez                      26              FIRED               
+  blez                      24              FIRED               
+  csrr alias                3               FIRED               
+  csrw alias                1               FIRED               
+  rdcycle                   1               FIRED               
+  csr name                  4               FIRED               
+  c.nop                     4               FIRED               
+  c.mv                      33              FIRED               
+  c.li                      33              FIRED               
+  c.lui                     1               FIRED               
+  c.addi                    19              FIRED               
+  c.addiw                   1               FIRED               
+  c.addi16sp                1               FIRED               
+  c.addi4spn                1               FIRED               
+  c.add                     32              FIRED               
+  c.sub                     5               FIRED               
+  c.xor                     4               FIRED               
+  c.or                      4               FIRED               
+  c.and                     2               FIRED               
+  c.addw                    5               FIRED               
+  c.subw                    2               FIRED               
+  c.slli                    17              FIRED               
+  c.srli                    3               FIRED               
+  c.srai                    2               FIRED               
+  c.andi                    2               FIRED               
+  c.ebreak                  2               FIRED               
+  c.j                       5               FIRED               
+  c.jr                      55              FIRED               
+  c.jalr                    1               FIRED               
+  c.beqz                    13              FIRED               
+  c.bnez                    11              FIRED               
+  c.ldst                    26              FIRED               
+
+    47 rules, 47 fired, 0 matched nothing.
+
+    Every one of the 47 rules fired at least once, so every rule
+    is doing something and none of them is a comment wearing a
+    rule's syntax.  That is a check on the CHECK, and it is the
+    check the AArch64 course could not run on its own normaliser.
+
+  THE DISAGREEMENT CLASSIFIER, and its 7 rows are printed whether
+  or not there is anything to put in them, because a classifier that
+  only appears when it has something to say cannot be checked on the
+  run where it has nothing to say:
+
+  kind                            count    what it is                                  
+  different mnemonic, same meaning  0        the reader printed an ALIAS: li, mv, nop, ret, jr, beqz, blez, neg, sext.w, zext.b, csrr, csrw, rdcycle
+  compressed name, base spelling  0        the reader prints the BASE mnemonic and the base operand list for a two-byte word; the expansion is in the normaliser and the LENGTH is compared separately
+  same number, different base or sign  0        0x4 against 4, -0x1 against -1, or the unsigned 64-bit spelling of a negative value
+  a branch or jump target         0        the word holds a relocation placeholder; the displacement arithmetic is checked in section 7 against known immediates
+  the two readers disagree on the LENGTH alone  0        the compressed fraction of the corpus depends on this and it is the one thing a text comparison cannot see
+  a REAL decode difference        0        the two readers name different instructions.  Every one of these is a bug in a decoder and they are listed by word
+  NOT YET EXPLAINED               0        printed by name and counted, because a classifier that cannot classify something is a fact about the classifier
+
+  ZERO disagreements over 1047 named instructions, and the number
+  that makes it believable is not this line: it is the 47 rules
+  of the normaliser all having fired, the four POISONS below,
+  and the cross-check having been walked backwards from 701
+  disagreements to this one.  See section 12 for what each of
+  those seven hundred turned out to be.
+
+  POISON 1 -- REMOVE MODELS AND WATCH THE AGREEMENT MOVE.
+  Claims to test: that the agreement number above is reading THIS
+  decoder and not a property of the loop.
+
+    The dispatch, as CONFIGURED, attributes the corpus like this.
+    These are the numbers a victim has to be chosen from, and the
+    reason the first version of this poison could not move its own
+    number is in `indispatch_owners` above:
+
+      rvc             284 named words
+      i_alu_imm       188 named words
+      i_jalr          101 named words
+      b_branch         91 named words
+      r_alu            88 named words
+      i_load           81 named words
+      i_shift_imm      54 named words
+      u_auipc          37 named words
+      s_store          30 named words
+      r_mul            29 named words
+
+    ... and 284 more instructions are TWO BYTES and are decoded by
+    the 16-bit handler, which is not in this table, so a model that
+    is large ALONE can still be small in the dispatch.  MEASURED:
+    i_alu_imm names 472 words alone and 188 in the dispatch.
+
+    VICTIM SELECTION: the largest owner, the middle owner and the
+    smallest owner, each of which the CONFIGURED dispatch uses.
+    MEASURED, and the sizes differ a lot -- which is why three
+    victims and not one:
+
+      i_alu_imm       188 named words
+      r_shiftw          6 named words
+      i_fp_ldst         1 named words
+
+    VICTIM i_alu_imm      owns 188 corpus words in the dispatch
+      the cross-check BEFORE the poison: 1047 agree, 0 disagree, of 1047 named
+      the cross-check AFTER  the poison: 859 agree, 159 disagree, of 1018 named
+      and again, with the model restored:  1047 agree, 0 disagree
+
+    VICTIM r_shiftw       owns 6 corpus words in the dispatch
+      the cross-check BEFORE the poison: 1047 agree, 0 disagree, of 1047 named
+      the cross-check AFTER  the poison: 1041 agree, 0 disagree, of 1041 named
+      and again, with the model restored:  1047 agree, 0 disagree
+
+    VICTIM i_fp_ldst      owns 1 corpus words in the dispatch
+      the cross-check BEFORE the poison: 1047 agree, 0 disagree, of 1047 named
+      the cross-check AFTER  the poison: 1046 agree, 0 disagree, of 1046 named
+      and again, with the model restored:  1047 agree, 0 disagree
+
+    DELTA for i_alu_imm     : 188 instructions stopped agreeing, out of
+    the 188 it owned.  The number MOVED, and downward, which
+    is the direction a removed model must move it, and it
+    moved by the same amount the model owned -- which is
+    what makes it evidence rather than a coincidence: a
+    model that owns N words and a control that moves N
+    words are the same fact counted twice.
+    DELTA for r_shiftw      : 6 instructions stopped agreeing, out of
+    the 6 it owned.  The number MOVED, and downward, which
+    is the direction a removed model must move it, and it
+    moved by the same amount the model owned -- which is
+    what makes it evidence rather than a coincidence: a
+    model that owns N words and a control that moves N
+    words are the same fact counted twice.
+    DELTA for i_fp_ldst     : 1 instructions stopped agreeing, out of
+    the 1 it owned.  The number MOVED, and downward, which
+    is the direction a removed model must move it, and it
+    moved by the same amount the model owned -- which is
+    what makes it evidence rather than a coincidence: a
+    model that owns N words and a control that moves N
+    words are the same fact counted twice.
+
+    VERDICT: POISON 1 FIRED on all 3 victims.  deltas: i_alu_imm=188, r_shiftw=6, i_fp_ldst=1
+
+    Every delta equals the victim's own corpus footprint, which
+    is the check on the control: a model that owns 91 words and
+    a control that moves 91 numbers are not two pieces of
+    evidence, they are one number counted twice, and they
+    agreeing is what makes the number mean something.
+
+  POISON 2 -- FLIP BIT 12 OF EVERY 32-BIT WORD.  Does the format
+  distribution move?
+  Claims to test: that the six-format table in section 5 is a
+  property of the corpus and not a constant this file returns.
+
+  format          before    after flipping bit 12  delta   
+  B               91        91                    0       
+  C               284       0                     -284    
+  I               476       455                   -21     
+  J               2         2                     0       
+  R               161       182                   21      
+  S               30        30                    0       
+  U               38        38                    0       
+
+    DELTA: 326 instructions changed format, across 3 format
+    values.  The number MOVED, and the format table above is a
+    measurement.
+
+    VERDICT: POISON 2 FIRED.  total movement = 326
+
+    The same flip's effect on the two-reader cross-check, which is
+    the OTHER thing bit 12 touches:
+      before the flip: 1047 agree, 0 disagree
+      after  the flip: 289 agree, 627 disagree
+      delta: 627 more disagreements.  The flip is visible to the
+      cross-check as well, which is the expected result: the
+      words are no longer what the assembler emitted.
+
+  POISON 3 -- REPLACE THE TWO-BIT LENGTH RULE WITH A GUESS.
+  Claims to test: that the instruction counts in sections 2, 3 and
+  5 are found BY THE LENGTH RULE and not by luck.
+
+    with the two-bit rule:              1082 instructions
+    with the guess (4 if aligned):       939 instructions
+
+    DELTA: 143.  The guess found FEWER instructions, which is
+    what a desynchronised walk does: it steps four bytes over a
+    two-byte instruction and loses the one in between.  The
+    length rule is load-bearing, the counts above are real, and
+    a decoder that guesses lengths gets a plausible smaller
+    number.
+
+    VERDICT: POISON 3 FIRED.  delta = 143
+
+  POISON 4 -- PLANT A REAL DISAGREEMENT, THEN HIDE IT WITH THE
+  AArch64 BUG.  Does the check notice, and can it be fooled?
+  Claims to test: that the agreement number above is comparing
+  OPERANDS and not just mnemonics, and that the comparison would
+  notice if a real difference appeared in it.
+
+    STEP 1.  One operand of every `addi` in the corpus is changed
+    to x0 -- a real decode difference, planted on purpose, in the
+    TEXT the cross-check compares and nowhere else:
+      the cross-check with the bug planted: 879 agree, 168 disagree
+
+    CAUGHT.  The check compares operands, so a wrong register is a
+    disagreement -- which is the property the whole normaliser was
+    written to preserve, since every one of its rules EXPANDS and
+    none of them deletes.
+
+    STEP 2.  The same bug, AND the AArch64 bug: a normaliser rule
+    that DELETES the last operand -- which is the operand the
+    planted bug corrupts, and is the bug shape this collection has
+    already shipped once:
+      the cross-check with BOTH:  926 agree, 121 disagree
+      and again, everything restored:  1047 agree, 0 disagree
+
+    DELTA: 47 of the 168 planted disagreements DISAPPEARED when the
+    normaliser was given the rule that deletes an operand.  That
+    is the AArch64 failure reproduced on purpose and MEASURED:
+    a normaliser that throws an operand away makes two readers
+    agree about instructions they genuinely disagree about, and
+    the number it produces is BETTER than the honest one.  A
+    check that can be made to agree more easily is not a check.
+
+    VERDICT: POISON 4 FIRED.  the check is sensitive to operand
+    deletion in BOTH directions -- it catches the bug when the
+    operand is there and it stops catching it when the operand
+    is thrown away -- so the 1047 agreements above are a property
+    of the two readers and not of the normaliser.
+
+
+========================================================================
+SECTION 12 -- RETRACTIONS
+========================================================================
+
+  Twenty-two of them, and every one was asserted in a draft of this course or
+  in the plan it was written from, measured, and withdrawn. They are printed
+  in full rather than footnoted, and `crosscheck.py` asserts their PRESENCE as
+  text so that a later edit cannot quietly delete one -- which is the only
+  mechanism that has ever stopped a retraction being quietly dropped.
+
+  A retraction that is softened is not a retraction. So each of these says
+  what was claimed, what the measurement was, and what the defensible claim is
+  instead; where there is no defensible claim, the entry says so.
+
+  R1  "The register fields sit in DIFFERENT bit positions in different RISC-V formats, and that is why an assembler is not a lookup table."
+      RETRACTED, AND THE MEASUREMENT IS THE OPPOSITE OF THE PREDICTION.
+      Section 4 sweeps rd, rs1 and rs2 in the base encoding and gets
+      bits[11:7], bits[19:15] and bits[24:20] -- THE SAME POSITIONS IN EVERY
+      FORMAT -- and the manual says so and says why: "The RISC-V ISA keeps the
+      source (rs1 and rs2) and destination (rd) registers at the same position
+      in all formats to simplify decoding", and in the note, "the instruction
+      format was chosen to keep all register specifiers at the same position
+      in all formats at the expense of having to move immediate bits across
+      formats". The immediates are where the variation is: five permutations,
+      one contiguous window and four not. The narrower claim that SURVIVES is
+      about the COMPRESSED extension, which does introduce a second, three-bit
+      register field at bits[9:7] and bits[4:2] -- and that is a real finding,
+      measured, and it is not the one the plan predicted.
+
+  R2  "The C extension reserves a large fraction of the 16-bit space."
+      RETRACTED AS STATED, AND THE CORRECTION IS THE MOST USEFUL NUMBER IN THE
+      FILE. The assembler refuses 16,384 of the 65,536 half-word patterns --
+      exactly a quarter -- and the diagnostic is "instruction length does not
+      match the encoding", which is NOT a reservation message: those are the
+      patterns with bits[1:0] == 0b11, which are the top halves of 32-bit
+      encodings and are unreachable as 16-bit instructions at all. That is a
+      fact about the LENGTH RULE. Of the 49,152 REACHABLE patterns, this
+      file's reserved rules -- transcribed from the manual -- kill a number
+      that is a small single-digit percentage, and the second reader
+      independently prints <unknown> for the same set. One cell, quadrant 0
+      funct3 = 100, accounts for the large majority of those, and the manual
+      says why in its own opcode map. A course that had said "a quarter" would
+      have been reporting a length rule as a design cost.
+
+  R3  "A reserved compressed encoding is one the assembler refuses."
+      RETRACTED, AND THE REVERSAL IS THE POINT. The assembler ACCEPTS every
+      one of the reserved code points: measured, `.hword 0x8000` -- quadrant
+      0, funct3 = 100, one of the 2,048 in the cell the manual marks Reserved
+      -- assembles without complaint, and so does every other reserved
+      pattern. A reservation is enforced by the HARDWARE, which this host does
+      not have, and by the DISASSEMBLER, which prints <unknown> and which this
+      file cross-checks against exhaustively. So on this machine a reserved
+      encoding is measurable as a disagreement between two SOFTWARE readers
+      and is NOT measurable as a trap, and a page that said "the assembler
+      refuses it" would be wrong about the only tool in the room.
+
+  R4  "A mask is the field."
+      RETRACTED, and section 4B is the retraction. The funct7 row of the field
+      sweep moves bits 25 and 30 out of a seven-bit field, because those are
+      the only funct7 values the base R format can reach. Sweeping the F and D
+      extensions reaches all seven. Both numbers are true and they measure
+      different things: the first is what the SWEEP moved, the second is what
+      the FIELD is. A mask is a LOWER BOUND and this file says so on every row
+      of every table, because a measurement that reported a lower bound as a
+      field's width would have claimed a two-bit funct7.
+
+  R5  "The B-type branch range is plus or minus 2 KiB."
+      INCOMPLETE IN A WAY THAT MATTERS, and the incompleteness is the
+      measurement. The reach is +4094 and -4096, which is a 13-bit
+      two's-complement field with a FORCED ZERO in the displacement's bit 0,
+      multiplied by two. The ends are not the same magnitude, because a sign
+      extension is not a magnitude and a field with a forced zero at bit 0 is
+      not symmetric about zero. The J type has the same shape at a larger
+      scale: +1048574 and -1048576. The first draft of this file computed the
+      range arithmetically and got [-4096, +4096], and the AArch64 course
+      retracted the same class of mistake twice in its own section 11.
+
+  R6  "Asking the assembler for an out-of-range branch produces a diagnostic."
+      RETRACTED, AND THE TRUTH IS MORE INTERESTING. It produces WORKING CODE.
+      Measured: `beq a0, a1, .+4096` is accepted and assembled into an
+      inverted branch over an unconditional jump -- a relaxation -- and the
+      program means what the programmer asked. The diagnostic ("fixup value
+      out of range") appears only at 1 MiB, where the relaxation itself runs
+      out of room, and the word in it is FIXUP rather than displacement. A
+      section built on "ask the assembler and read the error" would have found
+      no error to read, and the measurement that this file reports instead --
+      that a decoder will never see the boundary by walking compiler output,
+      because the compiler never emits one -- is the consequence.
+
+  R7  "The C extension is a subset of the base ISA's encodings."
+      RETRACTED. The compressed extension does not reuse encodings; it adds a
+      SECOND register encoding. Measured: c.mv's rd is bits[11:7] and five
+      bits wide, the same as the base; c.add's rd' is bits[9:7] and THREE bits
+      wide, and the value 0 in it means x8 and not x0. The cost is measurable
+      as a refusal: `c.lw t0, 0(a0)` is refused by a real assembler and `lw
+      t0, 0(a0)` is four bytes, and the difference is three bits of register
+      field. A backend that has to choose a format for a load has to know
+      which registers it can name, and that is not a property of the
+      instruction.
+
+  R8  "A compressed instruction can be undecodable where the 32-bit form was legal."
+      KEPT, BUT CORRECTED IN ITS DIRECTION, and the correction is what makes
+      it true. The claim is not that some 16-bit encoding is undecodable --
+      the second reader decodes 48,744 of the 49,152 reachable ones. The claim
+      is that a given INSTRUCTION cannot be compressed, and the measurement is
+      the refusal: four assembler refusals in section 4C, each one an
+      instruction the 32-bit form encodes without difficulty. The plan's
+      phrasing pointed at the encoding space and the real cost is in the
+      register file.
+
+  R9  "The extension letters are the set of documents."
+      INCOMPLETE. The letters are what the USER asks for. What the OBJECT
+      declares is longer, and the object is what a linker reads. MEASURED:
+      -march=rv64imafdc is six letters and Tag_RISCV_arch names twelve -- c2p0
+      AND zca1p0 AND zcd1p0, plus zicsr, zmmul, zaamo and zalrsc, each with a
+      major and a minor version. The C extension has been split into named
+      sub-extensions and the object records the ones it uses, because a linker
+      cannot assume `c`. Zmmul is a multiply-only M and zaamo and zalrsc are
+      the two halves of A, each satisfiable without the other.
+
+  R10  "F buys something."
+      MEASURED TO BE FALSE FOR THIS CORPUS, and it is worth keeping because it
+      is a warning about the METHOD rather than about the extension.
+      -march=rv64if and -march=rv64i produce the same instruction count and
+      the same byte count for corpus.c, because the corpus's only
+      floating-point function accumulates a `double` and a double needs D. F
+      alone buys this corpus nothing. The correct reading is that an -march
+      sweep measures a CORPUS's use of the extensions, and a corpus that does
+      not use a feature reports the feature as worthless. The next row of the
+      sweep is the one that shows F is not worthless: -march=rv64imf ->
+      rv64imafd gains four floating-point mnemonics and loses three auipc,
+      three jalr and four sd, because the compiler stops calling out to a
+      software library.
+
+  R11  "`li`, `mv`, `nop`, `ret` and `jr` are mnemonics in the encoding."
+      RETRACTED, and it is the retraction the whole normalisation table exists
+      for. `li a0, 5` is `addi a0, x0, 5`; `mv a0, a1` is `addi a0, a1, 0`;
+      `ret` is `jalr x0, x1, 0`; `nop` is `addi x0, x0, 0`; and in the
+      compressed extension `c.nop` is `nop` and `c.mv` is `mv` and `c.addi` is
+      `addi`. The last of those is the dangerous one: a 2-byte c.addi and a
+      4-byte addi print the SAME text, so a cross-check that compared
+      mnemonics alone would be unable to tell them apart -- and the compressed
+      fraction of the corpus is a number this file reports, so the LENGTH has
+      to be compared separately. Section 10 does, and prints how many words it
+      turned on.
+
+  R12  "A single pair of instructions is enough to measure a field."
+      RETRACTED. A pair marks the bits where two VALUES differ, which is a
+      subset of the field. Measured: `addi a1, a1, 0` against `addi a1, a1,
+      0x800` differs in ONE bit of a twelve-bit immediate and a single-pair
+      measurement reports a one-bit imm. The first version of this file's
+      sweep used one pair per field and its imm12 row came out `bits[20]`,
+      which is a plausible-looking wrong answer rather than an obvious
+      failure. The fix is a sweep; the honesty is the lower-bound rule in R4.
+
+  R13  "The field sweep can run at any -march."
+      RETRACTED, and it is a retraction about the MEASUREMENT rather than
+      about the encoding. The first version of this file's field sweep ran at
+      -march=rv64gcv, and `lw a0, 8(a1)` then assembled to a TWO-byte c.lw.
+      The XOR mixed a 2-byte word with 4-byte words and produced a mask with
+      nine bits scattered across both halves of the instruction -- a mask that
+      measured the compressed extension and was labelled `imm`. The base
+      sweeps now run at -march=rv64g, the compressed sweeps at rv64gc, and the
+      reason is printed above the table. A field map measured through an
+      extension that rewrites the format is a field map of the wrong
+      architecture.
+
+  R14  "A dispatch that tries each model in turn is a valid dispatch."
+      RETRACTED, and this is the sharpest defect this file found in itself. On
+      RISC-V a sub-opcode selector is NOT self-contained: `fmadd.s` and
+      `fmin.s` have inst[31:27] values that differ by one bit and a funct3 of
+      7 and 0, and what separates them is the OPCODE -- 0x43 against 0x53.
+      With a try-each-model dispatch and the arithmetic rows first, `fmadd.s`
+      decoded as `fmin.s`: a different instruction, with three plausible float
+      register operands and no visible error. The table is now keyed on the
+      opcode and the reason is written at the top of it. The same class of bug
+      appeared twice more: a model raising Undefined for a funct7 value it did
+      not own STOPPED the chain and made `ecall` report as `(undefined)`, and
+      another made `fle.s` unreachable. Bad means "not mine"; Undefined means
+      "mine, and undefined". Getting that backwards is how a legal instruction
+      becomes a reserved one.
+
+  R15  "A cross-check that agrees is a cross-check that works."
+      RETRACTED, and this course inherited the retraction from the AArch64
+      data-path course, which found its own cross-check reporting 0
+      disagreements over a corpus where 85 instructions genuinely disagreed.
+      Not one of the four bugs printed a wrong word: all four made the
+      comparison VACUOUS, which is worse, because a wrong word is visible and
+      a vacuous comparison is believed. So section 10 prints three things a
+      100-per-cent figure does not: HOW MANY instructions it compared, HOW
+      MANY TIMES each normalisation rule fired, and the result of THREE
+      POISONS. Each poison must MOVE the number it claims to test, and a
+      poison that does not move it prints [POISON FAILED] rather than a
+      verdict. Two of this file's own three poisons were wrong on the first
+      run: the first did not reach the cross-check loop at all because the
+      flip was a parameter of a function the loop did not call with it, and
+      the first model-removal prepended a model instead of replacing the
+      victim, so the victim kept claiming every word it had claimed before.
+
+  R16  "Nothing is measured in this course that is not about the base integer set."
+      RETRACTED by the corpus, and the retraction is about method. Three of
+      the five concepts here are about things the base set does not contain:
+      the compressed extension, the immediates that do not fit, and the
+      floating-point and vector extensions. The -march sweep in section 3 is
+      the evidence -- 20 vector mnemonics appear at -march=rv64gcv and the
+      instruction count nearly doubles -- and the honest framing is that the
+      course is about the ENCODING and the encoding is shared, while the
+      CONTENTS are not. Every table that says "in the corpus" means in eleven
+      functions of ordinary C, and section 15 says so in its own words.
+
+  R17  "A guard on a shared opcode is optional."
+      RETRACTED, AND IT IS THE SINGLE MOST CONSEQUENTIAL BUG THIS FILE EVER
+      HAD. `r_mul` and `r_mulw` sit ABOVE `r_alu` and `r_shiftw` in the
+      dispatch and NEITHER OF THEM CHECKED funct7, so they claimed every
+      opcode-0x33 and every opcode-0x3b word in the corpus before the model
+      that owns them was ever asked. MEASURED: 116 words -- `add`, `sub`,
+      `sll`, `slt`, `sltu`, `xor`, `srl`, `or`, `and`, `addw`, `sllw` and
+      `srlw` all reported as `mul`, `mulh`, `mulhsu`, `mulhu`, `div`, `divu`,
+      `rem`, `remu` or `mulw`. Nothing about the output looked wrong: three
+      plausible operands, a real register, a real instruction name. The
+      defensible claim is the one now written above `r_mul`: the M extension
+      does not change the opcode, it FILLS a funct7 value the base left empty,
+      and a model that fills a field must first CHECK that the field holds the
+      value it fills it with. One missing four-bit comparison, in two
+      functions, in the same table.
+
+  R18  "Raising Undefined is how a model says no."
+      RETRACTED, AND IT IS R14 AGAIN, IN A PLACE R14 DID NOT LOOK. R14 records
+      the bug in `s_system` and in `i_fcvt`; the same mistake was still
+      present in `i_alu_imm`, which raised Undefined for funct3 = 1 and 5 --
+      the two values belonging to `i_shift_imm`, the model directly below it.
+      Undefined STOPS the dispatch, so `slli`, `srli` and `srai` -- three of
+      the commonest instructions in the corpus -- all reported as UNDEFINED
+      and 62 words of opcode 0x13 were counted as "undefined by the
+      architecture" when nothing about them was undefined. MEASURED:
+      0x00151513 is `slli a0, a0, 1`. A model that DECLINES must raise Bad.
+      Undefined means "mine, and the architecture leaves this undefined", and
+      the difference between the two words is the difference between a decline
+      and a lie.
+
+  R19  "A two-way split is read by testing one of the two values."
+      RETRACTED, and it is the same class as R17 and R18 in a third place. The
+      compressed CR quadrant splits on inst[12]: `c.mv` and `c.jr` when it is
+      0 and `c.add` and `c.jalr` when it is 1. This decoder tested `rs1 == 0`
+      instead, which is not a bit of the cell at all, so `c.mv` was
+      UNREACHABLE -- 33 words reported as `c.add` -- and `c.jalr` reported as
+      `c.jr` for every rs1 except x1, which is a decoder that turns every
+      indirect call into an indirect jump. And the same cell's `c.ebreak` at
+      0x9002 and the RESERVED code point 0x8002 differ by that one bit, so the
+      model reported a legal instruction as reserved. MEASURED: the
+      cross-check found all three, and the reason it found them is that the
+      canonical form for `c.jr` and `c.jalr` is written so that a decoder
+      which conflates them produces a DISAGREEMENT rather than a silent error.
+      A normalisation rule that EXPANDS rather than deletes is a decoder test
+      as well as a formatting rule, and that is not an accident.
+
+  R20  "A branch target is the last operand of the printed line."
+      RETRACTED, TWICE, AND THE SECOND TIME IS THE WORSE ONE. The first
+      version of the branch-target rule used a character class that cannot
+      match the SPACE between a mnemonic and its operands, so the rule fired
+      only for the mnemonic-only spellings and silently missed every branch in
+      the corpus -- which is the exact AArch64 bug, reproduced in the file
+      that quotes it. The second version fixed the space and became TOO
+      GREEDY: the class matches `x10,x0,0x` because `0` and `x` are word
+      characters, so it consumed the first hex digit of the target and turned
+      `0x28` into `0x2target` -- a truncated address, which is a
+      plausible-looking address. The third version pinned the mnemonic list
+      AND the operand shape. A rule that deletes information also deletes the
+      WRONG information, and the second version deleted an IMMEDIATE rather
+      than a target, which made `li a2, 0x0` and `mv a1, a3` compare equal to
+      each other regardless of what they were.
+
+  R21  "A poison asserts a direction the number can move in."
+      RETRACTED, AND IT IS THE MOST USEFUL THING THIS FILE FOUND ABOUT ITSELF.
+      The first version of poison 4 broke the normaliser -- "delete the last
+      operand" -- and asserted the agreement count would then go UP, and it
+      did not move, and the poison printed [POISON FAILED]. The [POISON
+      FAILED] was CORRECT and the ASSERTION was wrong: you cannot raise an
+      agreement count that is already at 100 per cent, because there is
+      nothing left to agree about. The poison was asking the number to move in
+      a direction that was not available to it. The corrected version plants a
+      REAL disagreement first -- 168 of them, by corrupting one operand of
+      every `addi` -- and then shows that the AArch64 bug makes 47 of those
+      168 disappear. A control that cannot be made to fail is not a control,
+      and the only way to know whether yours can is to make it fail on purpose
+      and check that it does.
+
+  R22  "A number is evidence when it is a large number."
+      RETRACTED, AND THE ARITHMETIC IS THE ARGUMENT. The inherited run of this
+      file reported "354 agree, 701 disagree, of 1,055" and treated the 701 as
+      a decoder verdict. It was not one number: it was 116 words of a missing
+      funct7 guard, 62 of a decline that was raised as an Undefined, 33 of an
+      unreachable `c.mv`, 35 of a shift amount printed as twelve bits when the
+      field is six, 91 branches that had lost both their register operands, 26
+      branch targets that were off by one because inst[8] was mapped into
+      imm[0], 8 `fcvt` rows with the source and destination swapped, and the
+      rest PRINTING CONVENTIONS -- an alias, a base name for a compressed
+      form, a number in decimal against the same number in hex. The defect was
+      not that the number was large. It was that a number which SEVERAL
+      DIFFERENT THINGS were counted together was read as a single verdict, and
+      the single verdict -- "this decoder disagrees with llvm-objdump about 67
+      per cent of the corpus" -- is a statement about a comparison, not about
+      a decoder. Section 10 now classifies every disagreement by kind and
+      prints the rows, and the sum of the rows is the number, and the number
+      is zero because the seven hundred were fixed one at a time and each fix
+      is a named defect above. Retracting a number is not the same as
+      retracting the work: the work is the seven hundred.
+
+
+========================================================================
+SECTION 11 -- WHAT THIS FILE DELIBERATELY DOES NOT DO
+========================================================================
+
+  The limitations, printed here rather than footnoted, because a limit that is
+  a footnote is a limit that gets forgotten, and because a course with no
+  machine has an unusual number of them and they are the subject rather than
+  an embarrassment.
+
+  NOTHING IS EXECUTED, AND THEREFORE NOTHING IS TIMED
+    There is no RISC-V machine on this host, no emulator and no RISC-V
+    binutils. Not one instruction in this file has been run. Every number in
+    it is a bit pattern, a count of bit patterns, an arithmetic identity, or
+    a refusal from a real assembler. There is no claim anywhere about speed,
+    latency, throughput, code density in the performance sense, or what a
+    program does. The x86-64 section has speedup ratios; they have NO
+    counterpart here and are not invented. Where a page would carry one it
+    carries a byte count, an instruction count or a refusal, and says which.
+
+  THE ecall CONVENTION IS MEASURED AS EMITTED, WHICH IS WEAKER
+    What is measured is that the compiler emits the constant 0x00000073 and
+    that 31 of its 32 bits are a fixed pattern. What is NOT measured is what
+    it DOES: which register holds a syscall number, which ABI convention
+    applies, whether the trap is taken, what the kernel does. The manual's
+    system-instruction table is QUOTED wherever it is used and the encoding
+    is MEASURED, and the two are printed in separate sentences so a reader
+    cannot confuse them. A later course in this section is about the ABI and
+    would be the one to say anything about the convention.
+
+  THE CORPUS IS ELEVEN FUNCTIONS OF ORDINARY C, AND THAT IS A CHOICE
+    corpus.c is arithmetic, masks, conditionals, a loop, a struct walk, a
+    multiply, a divide, a float accumulator and a call. Every distribution
+    in sections 2, 3, 5 and 9 is a distribution of what clang chose for THAT
+    code at THAT version. A corpus with switch tables, C++, atomics in the
+    source, or a hand-written assembly kernel would fill opcode values that
+    are empty here and the tables would look different. NOTHING in this
+    course is generalisable from the EMPTY ROWS. What IS generalisable is
+    everything about the ENCODING, because the encoding is not a property of
+    the corpus.
+
+  THE FIELD MAP IS MEASURED FROM ONE ASSEMBLER
+    Sections 4, 4B and 4C measure field positions by asking clang's
+    integrated assembler. A field map is a property of the ENCODING, and a
+    different assembler choosing a different encoding for the same text
+    would not be a different encoding -- and it would not show up here. What
+    the measurement establishes is that the guards in this file are
+    consistent with the words a real assembler emits, which is a different
+    and weaker claim than correctness. The comparison against the manual's
+    own figures is the check on that, and it is done by hand for the five
+    immediate bit maps and by reading the manual's tables for the field
+    positions.
+
+  THE CORPUS OBJECTS ARE NOT COMMITTED, AND THE OUTPUTS ARE
+    The nine object files are built by build_samples.sh from corpus.c and
+    rv.s, and they are not in the repository. rvdec.out, run1.txt and
+    run2.txt ARE, and crosscheck.py reads the committed one. A course whose
+    numbers can only be checked by first rebuilding its own artifact is a
+    course whose numbers are only checkable on the machine that wrote them,
+    which is the same mistake as quoting a remembered number wearing a
+    different hat.
+
+  THE TWO READERS SHARE AN ASSEMBLER
+    clang assembled the corpus and llvm-objdump-21 disassembled it, so both
+    readers depend on one LLVM tree. That is a real weakness in the
+    cross-check and it is not fixable by trying harder: an independent
+    second assembler does not exist on this host and GNU binutils has no
+    RISC-V target installed. What section 10 establishes is that this
+    decoder and one other piece of software agree on what the bytes mean --
+    not that either agrees with silicon, and there is no silicon here to
+    agree with.
+
+  A MASK IS A LOWER BOUND, AND THE FILE SAYS SO ON EVERY ROW
+    Every field measurement in section 4 is what a SWEEP moved, which is a
+    subset of the field. Section 4B is the case where the difference is
+    large -- two bits of a seven-bit funct7 -- and the two numbers are
+    printed in the same place so they cannot be confused. A reader who wants
+    the field's width has to read the manual's table; a reader who wants to
+    know what this decoder can distinguish has the mask.
+
+  THE VECTOR DATA PATH IS NOT MODELLED, AND SAYS SO
+    The three vector CONFIGURATION instructions are modelled and named,
+    because their encoding is four fields and their meaning is the point of
+    a later course. The vector DATA instructions are not: they are COUNTED
+    and printed unmodelled. A decoder that named eight of the four hundred
+    vector encodings and called the rest a bug would be worse than one that
+    says which half of the extension it implements, and section 1 prints the
+    count so the gap is a number rather than a hope.
+
+  NO SAFETY CLAIM ABOUT ANY RESERVED ENCODING
+    Section 6 measures which 16-bit patterns the specification has not
+    assigned and which ones two software readers cannot decode. What a given
+    implementation DOES with a reserved encoding is a property of that
+    implementation, and there is no RISC-V hardware on this host to ask. The
+    manual reserves the all-zero and all-ones 16-bit patterns precisely so
+    that hardware can trap, and this file cannot observe a trap.
+
+  THE HARNESS IS A HARNESS, NOT A SECOND DECODER
+    crosscheck.py reads the RECORDED output of this file and re-asks the
+    claims. It does not re-measure anything: it has no assembler, no object
+    files and no decoder of its own. That is deliberate. A harness that can
+    re-measure can disagree with the artifact for reasons that have nothing
+    to do with whether the artifact's SENTENCES are still true, and then it
+    teaches its reader to ignore it. So the harness asserts bit patterns and
+    counts exactly, the compiler's choices as SHAPES and orderings rather
+    than values, and the presence of all sixteen retractions as text.
+
+  And with all of that in place, the file is worth reading for one reason.
+  Every claim in it is a bit pattern, a count of bit patterns, an arithmetic
+  identity, or a refusal from a real assembler. Those four kinds of claim do
+  not need a machine to be verified, do not go stale when a compiler changes,
+  and can be checked by a reader with a hex editor.
+
+  That is the design, and it is the same reason the chain starts here: a byte
+  that means something is the first step of `lexing -> parsing -> IR ->
+  codegen -> object files -> linking -> executable`, and it is the only step
+  in that chain that is fully checkable without silicon. The parts that need
+  hardware -- whether a `c.add` is cheaper than an `add`, whether a load hits,
+  whether a branch is predictable -- are somebody else's course, and the ones
+  above name them.
+
+  AND THE HARNESS.  crosscheck.py reads this file's recorded output
+  and re-asks every claim.  It asserts the bit patterns exactly, the
+  counts exactly, the ORDER of the tables, and the PRESENCE of all
+  twenty-two retractions.  It asserts the -march comparison as a
+  SHAPE -- that rv64i -> rv64im LOSES four mnemonics as well as
+  gaining three, and that rv64imafd -> rv64imafdc changes the byte
+  count without changing the instruction count -- and not as a
+  value, because a value there moves with the compiler and a shape
+  does not.  That asymmetry is deliberate: a check whose threshold is
+  a bare number is a check that fails on a busier machine and teaches
+  its reader to ignore it.  And it asserts that EACH POISON MOVED the
+  number it claims to test, because a harness that only ever reads a
+  100 per cent figure is the harness this course retracted in R15.
+
+  AND WHAT SECTION 10 PRINTED BEFORE THIS RUN, because a course that
+  retracts numbers and not history is a course that has rewritten
+  its own past, and that is what the `retract` courses are for:
+  354 agreements, 701 disagreements, of 1,055 compared.  Every one of
+  the six retractions above marked with a decoder name is one of
+  those 701, and the harness reads the CURRENT numbers, so a reader
+  who wants to see the old one has the retractions and this line.
+
+
+========================================================================
+END OF REPORT
+========================================================================

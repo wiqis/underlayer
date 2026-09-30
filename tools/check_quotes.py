@@ -106,6 +106,18 @@ PREFIXES = {
     # for the same reason it learned about `./a64dec.py` and `./a64abi.py`.
     "a64simd": ("a64_neon.ch", "a64_neonspace.ch", "a64_atomic.ch",
                 "a64_order.ch", "a64_dataflow.ch", "a64simd_landing.ch"),
+    # The RISC-V section's FIRST course.  Five concepts plus a landing page,
+    # and every id is `rv-` prefixed for the reason the AArch64 comment above
+    # gives: a concept id is resolved GLOBALLY by render_concept() in
+    # web/src/helpers.ch with no course in the key, and the section plan
+    # reuses `rv-verify` in TWO of its four courses (rvasm and rvpriv), so
+    # only one of them can have it and the other has to be named for what it
+    # does.  It needs its own OUTPUTS entry because its artifact is
+    # `rvdec.py` and its output is `rvdec.out`, and a table that names one
+    # course's output leaves the next course's pages silently checked against
+    # a file they do not belong to.
+    "rvasm": ("rv_isa.ch", "rv_encoding.ch", "rv_compressed.ch",
+              "rv_immediate.ch", "rv_verify.ch", "rvasm_landing.ch"),
 }
 OUTPUTS = {
     "x86asm": "x86dec.out",
@@ -116,6 +128,7 @@ OUTPUTS = {
     "a64abi": "a64abi.out",
     "a64sys": "a64sys.out",
     "a64simd": "a64data.out",
+    "rvasm": "rvdec.out",
 }
 PREF = PREFIXES.get(COURSE, (COURSE[:3],))
 if not isinstance(PREF, tuple):
@@ -139,7 +152,15 @@ EXEMPT = {
     "166":  "the a64abi harness's own check count",
     "210":  "the a64sys harness's own check count",
     "268":  "the a64simd harness's own check count",
+    "128":  "the rvasm harness's own check count, which the artifact cannot "
+            "print because the harness counts itself after the run",
     "0x9f": "a hint encoding quoted in a64sys, present in a64sys.out",
+    "0x80aa": "a c.mv encoding quoted on the rv-compressed page; it is in "
+              "rvdec.out inside section 4C's refusal table",
+    "0x552023": "the 4-byte `sw` the rv-compressed page contrasts against a "
+                "refused `c.sw`; section 4C prints it",
+    "0x00b5": "the B-type words on the rv-immediate page, printed in full by "
+              "section 7's offset table",
 }
 
 # The command lines a quoted-output block may name.  A block that contains one
@@ -151,7 +172,8 @@ EXEMPT = {
 # one from the other would stop being able to check a course whose pages
 # quote a command no course name resembles.
 ARTIFACT_CMDS = ("./x86dec", "./sysdump", "./a64dec", "./a64abi", "./a64sys",
-                 "a64sys.py", "./a64data", "a64data.py", "crosscheck.py",
+                 "a64sys.py", "./a64data", "a64data.py", "./rvdec",
+                 "rvdec.py", "crosscheck.py",
                  "build_samples.sh")
 
 TICK = re.compile(r"(\d+\.\d{3}) ticks/op")

@@ -984,6 +984,60 @@ public namespace underlayer_web {
         return string()
     }
 
+    // The RISC-V section's FIRST course: the encoding itself.  Same
+    // fall-through contract: empty string for anything else.
+    //
+    // EVERY id is `rv-` prefixed, and the reason is the rule this function
+    // keeps re-learning: a concept id is resolved GLOBALLY with no course in
+    // the key, so two courses cannot share a name.  `rv-` collides with
+    // nothing in the twenty-nine courses above, which was checked by reading
+    // this file rather than by hoping.  It is also a prefix the section's
+    // other three courses (`rvabi`, `rvpriv`, `rvat`) can continue, and
+    // that matters NOW rather than later: the section plan gives the id
+    // `rv-verify` to BOTH this course and the privileged-architecture
+    // course, and whichever is built second has to be named for something
+    // else.  This one takes `rv-verify` because its artifact IS a
+    // verification -- two readers, 47 normalisation rules and four
+    // poisons -- and the privileged course will have to find a different
+    // name for the map audit it also wants to call `rv-verify`.
+    //
+    // The five ids and what each one names, since the naming is a decision
+    // and not a lookup:
+    //
+    //   rv-isa         the documents.  Not `rv-isa-intro`, because the
+    //                  content is not an introduction: it is the -march
+    //                  sweep, and the finding is that M is not additive.
+    //   rv-encoding    the six formats and the field map.  Not
+    //                  `rv-formats`, because the content is the field map
+    //                  and the formats are its vehicle -- and because
+    //                  `rv-encoding` says what the reader is left holding
+    //                  rather than what the page is about.
+    //   rv-compressed  the C extension, and specifically its COST.  The
+    //                  obvious name is `rv-compression` and it is worse,
+    //                  because the page's sharpest content is the 2,409
+    //                  reserved code points and the four assembler
+    //                  refusals, and neither is a compression.
+    //   rv-immediate   the immediates that do not fit.  The plan's name and
+    //                  the obvious one, and it survives because there is
+    //                  exactly one thing the page is about.
+    //   rv-verify      the decoder, the two-reader cross-check and the
+    //                  four poisons.
+    public func render_rvasm_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var isa_id = std::string("rv-isa")
+        var encoding_id = std::string("rv-encoding")
+        var compressed_id = std::string("rv-compressed")
+        var immediate_id = std::string("rv-immediate")
+        var verify_id = std::string("rv-verify")
+
+        if(cid.equals(&isa_id)) { return underlayer_content::render_rv_isa() }
+        if(cid.equals(&encoding_id)) { return underlayer_content::render_rv_encoding() }
+        if(cid.equals(&compressed_id)) { return underlayer_content::render_rv_compressed() }
+        if(cid.equals(&immediate_id)) { return underlayer_content::render_rv_immediate() }
+        if(cid.equals(&verify_id)) { return underlayer_content::render_rv_verify() }
+        return string()
+    }
+
     // The x86-64 ABI. Same fall-through contract: empty string for anything
     // else.  `x86-calling` and its five siblings continue the `x86-` prefix
     // the assembly course already owns, and they are deliberately NOT
@@ -1209,6 +1263,16 @@ public namespace underlayer_web {
         // a concept id gets.
         var x86simd_html = render_x86simd_concept(concept_id)
         if(x86simd_html.size() > 0) { return x86simd_html }
+        // The RISC-V section's first course: the encoding itself.  Same
+        // fall-through contract.  `rv-` collides with nothing above, which
+        // was checked by reading this file rather than by assuming it, and
+        // the prefix is one the section's other three courses can continue.
+        // This one also takes `rv-verify`, which the plan gives to the
+        // privileged course as well -- so whichever of the two is built
+        // second has to be named for something else, and the note above
+        // `render_rvasm_concept` says why this one gets it.
+        var rvasm_html = render_rvasm_concept(concept_id)
+        if(rvasm_html.size() > 0) { return rvasm_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

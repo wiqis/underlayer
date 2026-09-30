@@ -1,0 +1,82 @@
+{
+  "id": "rvasm",
+  "title": "RISC-V: The Encoding Spectrum",
+  "version": "1.0.0",
+  "description": "An instruction is two bytes or four and the two bits that say which are the two bits that say 'this is a 32-bit instruction' -- so a decoder with no model for a word still steps over it correctly, and every other problem follows from that one fact. The base ISA keeps all three register fields at the same bit position in every format and pays for it by scattering the immediates; the compressed extension adds a SECOND, three-bit register encoding whose value 0 means x8; the B-type displacement's high bit lives in the slot the S format uses for its low bit; and 2,409 of the 49,152 reachable half-words are reserved, not the quarter the plan assumed. 1,047 instructions decoded twice with zero disagreements, and the seven hundred that had to be fixed to get there are the work: 116 words decoded by a model with no funct7 guard, 91 branches that had lost both their register operands, and a cross-check that reported 67% disagreement as if it were one number rather than seven different things counted together.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 5 concepts, reproduce the 128 checks in courses/rvasm/assets/samples/crosscheck.py against the shipped rvdec.out, then break one thing the cross-check depends on -- a funct7 guard, the space in a normalisation pattern, or the last operand of an instruction -- and make the number in section 10 move by name",
+  "min_score": 70,
+  "dependencies": [
+    "elf"
+  ],
+  "modules": [
+    {
+      "id": "isa",
+      "title": "The Documents: What the Instructions Are",
+      "concepts": [
+        "rv-isa"
+      ]
+    },
+    {
+      "id": "encoding",
+      "title": "The Encoding: What the Bytes Are",
+      "concepts": [
+        "rv-encoding",
+        "rv-compressed",
+        "rv-immediate",
+        "rv-verify"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "rv-isa",
+      "title": "A Set of Documents, Not a List",
+      "module_id": "isa",
+      "description": "The base is 40 instructions and everything else is a letter, which is usually said as a slogan and is measurable in one table. The same eleven functions compiled under eight -march settings: M is not additive (rv64i -> rv64im GAINS mul, divuw and rem and LOSES j, jr, sext.w and srli, because a shift-multiply is a SEQUENCE and sequences branch), F buys this corpus nothing at all, D replaces three calls and four stores with four floating-point instructions, and V GAINS twenty mnemonics and nearly DOUBLES the instruction count. And the object file names twelve things when the user typed six letters.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "rv-encoding",
+      "title": "Six Formats and Four Field Positions",
+      "module_id": "encoding",
+      "description": "The plan predicted the register fields move between formats; measured, they do not, and the manual says why and says what pays for it. rd is bits[11:7] in every format, rs1 bits[19:15], rs2 bits[24:20] -- and the S format splits its immediate in two to keep them there. The seven bits of funct7 are not one field either: under opcode 0x53 they are a five-bit selector and a two-bit width, and a sweep over the base ISA moves two of the seven while a sweep over F and D reaches all seven, which is what a LOWER BOUND means. And the compressed extension's rd' is a DIFFERENT register encoding: three bits, two positions lower, and its value 0 means x8.",
+      "estimated_minutes": 30,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "rv-compressed",
+      "title": "The Extension That Halves Instructions, and the One That Breaks Them",
+      "module_id": "encoding",
+      "description": "The plan said the C extension reserves a large fraction of the 16-bit space. The assembler refuses exactly a quarter of the 65,536 half-words -- and that is the LENGTH RULE, not a reservation: 16,384 patterns have bits[1:0] == 0b11 and are the top halves of 32-bit encodings. Of the 49,152 REACHABLE ones, 2,409 are reserved: 4.90 per cent, and one cell is 85 per cent of it. The other cost is in the register file and it is a refusal you can read: c.lw t0, 0(a0) is not encodable in two bytes and lw t0, 0(a0) is four. Eleven families of displacement share five bit positions and are assigned SEVEN different orders, measured rather than asserted.",
+      "estimated_minutes": 27,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "rv-immediate",
+      "title": "The Immediates That Do Not Fit",
+      "module_id": "encoding",
+      "description": "Five immediate encodings and one decision behind them: keep the registers still, and pay for it by moving immediate bits across formats. I-type is twelve contiguous bits at inst[31:20]; S-type splits the same twelve around the register fields; B-type is not contiguous at all and its HIGHEST bit lives in inst[7], which is the S format's LOWEST; J-type has no rs1 and no rs2, so it spends both on the displacement and gets 21 bits. The reach is +4094 and -4096, not +-2 KiB, and asking the assembler for a branch at +4096 does not produce a diagnostic -- it produces an inverted branch over a jump, which is working code of a different shape.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "rv-verify",
+      "title": "Decode It Yourself, Twice, and Poison It",
+      "module_id": "encoding",
+      "description": "1,082 instructions, 1,047 named, 0 disagreements -- and the number that makes it worth reading is not the 0. It is that 47 normalisation rules all FIRE (a rule that matches nothing is the exact shape of the AArch64 bug, and four of them were dead on the first run of the new normaliser), that four POISONS each move the number they claim to test, and that the run started at 354 agree and 701 disagree. 701 was not one number: 116 words decoded by a model with no funct7 guard, 62 reported UNDEFINED because a decline was raised as a definition, 33 words of an unreachable c.mv, 91 branches that had lost both their registers.",
+      "estimated_minutes": 20,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}
