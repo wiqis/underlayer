@@ -374,6 +374,54 @@ concepts are about register files, encodings, atomics and cross-checks, and
 splitting it into a course of its own would have produced a course about one
 barrier field and no reason to read it.
 
+### The RISC-V section is also four courses, and the third one changed what an absence is
+
+Added 2026-10-01, in the same additive form as the AArch64 note above and for
+the same reason: the paragraphs earlier in this document are the ones the
+section was planned under, and they stay.
+
+`docs/riscv-section-plan.md` collapsed the **nine** RISC-V roadmap items into
+one course of ~18 concepts and then, on the founder's ruling that a course must
+be finishable, split them into four:
+
+| course | resolves | concepts | minutes |
+|---|---|---|---|
+| `rvasm` | ISA, Assembly, Instruction Encoding | 5 | 127 |
+| `rvabi` | Calling Conventions | 4 | 101 |
+| `rvpriv` | Privilege Specification, Virtual Memory, Interrupts | 4 | 101 |
+| `rvat` | Atomics, Vector Extension | 4 | 101 |
+
+All nine roadmap items are now ticked: 17 concepts, 430 minutes. **All three
+architecture halves are now four courses each**, and the practical consequence
+generalises past ARM64: **a roadmap item is not a course, and neither is an
+architecture.** "RISC-V" was never one course's worth of material; it was 430
+minutes of four.
+
+What the section added that the other two did not is a progression in **what a
+missing machine takes away**, and it is worth recording because the mission's
+rule 1 ("does this help someone understand something deeply") is answered
+differently by each course. `rvabi` lost the ability to **time**. `rvpriv` lost
+the ability to **observe the subject at all** — a privileged architecture is
+largely a document, so not one instruction in that course has been run, and
+`ecall` is labelled MEASURED-AS-EMITTED on every page that mentions it.
+`rvat` lost the ability to **compare rates**, and so its contrast with x86-64
+and AArch64 is a COUNT against a COUNT and never a ratio: zero instructions in
+its corpus take a lock prefix, against nine operations plus a reservation pair
+that are atomic with no prefix at all, so the zero has a denominator instead of
+being an absence.
+
+The finding that generalises to the whole collection is the last one. Across
+these four courses and their accumulated retractions, **not one
+retraction is a mistake about how a computer works.** They are: a bit number
+read out of a register instead of remembered, a call count taken by a method
+that could not see a call, a section header counted as an instruction, and a
+harness check that contradicted itself in two adjacent lines. A course that
+retracts the specification it was built from — `rvat` retracts the brief's own
+headline claim that the compiler emits `amoswap.w` in place of a hand-rolled
+compare-exchange, because there is no `cmpxchg` in the base A extension to
+trade against — and keeps the specification is doing the work this collection
+exists to do.
+
 Two things the mission's own rules gained from the section, both of which were
 already required and are now checkable:
 

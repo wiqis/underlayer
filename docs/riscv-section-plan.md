@@ -186,3 +186,60 @@ exists because the AArch64 data-path course found its own cross-check
 printing 0 disagreements over a corpus where 85 instructions genuinely
 disagreed — not one of the four bugs printed a wrong word, they all made
 the comparison vacuous.
+
+## COMPLETE — the section shipped as four courses, not one
+
+Verified 2026-10-01. All nine `## RISC-V` items in `docs/courses-todo.md`
+are `[x]`, and the concepts planned here arrived as **17 across four
+sequential courses**, each finishable on its own — 17, not the ~18 in the
+header above, for the reason in the paragraph below:
+
+| Course | Id | Concepts | Modules | Minutes | Roadmap items closed |
+|---|---|---|---|---|---|
+| RISC-V: The Encoding Spectrum | `rvasm` | 5 | 2 | 127 | 1 ISA, 2 Assembly, 3 Instruction Encoding |
+| The RISC-V ABI, and the Register That Isn't There | `rvabi` | 4 | 2 | 101 | 4 Calling Conventions |
+| The RISC-V Privileged Architecture | `rvpriv` | 4 | 2 | 101 | 5 Privilege, 6 Virtual Memory, 7 Interrupts |
+| RISC-V Atomics and the Vector Extension | `rvat` | 4 | 2 | 101 | 8 Atomics, 9 Vector Extension |
+
+Four hundred and thirty minutes, 17 concept routes, four landing pages, all
+200 against a live server.
+
+**One planned id was deliberately not taken.** This plan names
+`rv-vector-mask` a fifth page of course D. It was not used, and the reason is
+the measurement rather than a schedule: the mask is **one bit** at inst[25],
+proved by eleven pairs that all XOR to exactly `0x02000000`, and the mask
+*register* is not in the encoding at all. A page named after a field that the
+encoding does not contain would have inverted its own finding, so the
+material is inside `rv-vector` and `rv-dataflow` and the id stays free.
+
+**Rules 13-15 held in all four.** Every claim in every artifact carries one
+of the three labels and the harness counts all three; every concept id was
+grepped before use, which is why `rv-verify` is `rvasm`'s and this section's
+own artifact pages are `rv-boundary`, `rv-amo`, `rv-fence`, `rv-vector` and
+`rv-dataflow`; and every course runs four poisons with the reported number
+required to move. `rvat`'s fire table went further than the rule asks and
+labelled its one dead rule **NEVER FIRED** rather than leaving a zero in the
+table, because an inherited table carrying rules this corpus does not
+exercise is not a healthy table.
+
+**The finding that outlasts the section.** All four courses inherited the same
+premise — no RISC-V machine, no emulator, no RISC-V linker — and each of them
+lost something different, in this order: `rvabi` lost the ability to
+**time**; `rvpriv` lost the ability to **observe the subject at all**;
+`rvat` lost the ability to **compare rates**, so its x86-64 and AArch64
+contrast is a COUNT against a COUNT and never a ratio. What survives in all
+four is the part a compiler author needs, and in every case that part is a
+bit pattern, a count of bit patterns, an arithmetic identity, or a refusal
+from a real assembler. The x86-64 section's measured ratios and the AArch64
+section's measured latencies have **no counterpart here and were not invented
+to fill the gap** — stated in the header of each artifact, in section 1, in
+the caption of every cross-architecture table, and in the first unit of each
+landing page.
+
+**Where the working notes are.** `courses/rvasm/research.md`,
+`courses/rvabi/research.md`, `courses/rvpriv/research.md`,
+`courses/rvat/research.md` — sources, decisions, and the claims that were
+retracted before a page was written. The numbers in all four are
+reproducible from the shipped `.out` files, and the harnesses that check them
+live beside them: 370 checks for `rvat`, 398 for `rvpriv`, plus a corruption
+suite per course that proves the harness can fail.

@@ -144,6 +144,18 @@ PREFIXES = {
     # two entries above.
     "rvpriv": ("rv_modes.ch", "rv_paging.ch", "rv_traps.ch",
                "rv_boundary.ch", "rvpriv_landing.ch"),
+    # The RISC-V section's FOURTH and LAST course, and the one this tool
+    # matters most for.  Four concepts plus a landing page, and every id is
+    # DISJOINT from the three RISC-V courses above it -- which is the whole
+    # point, because render_concept() resolves ids GLOBALLY with no course in
+    # the key.  §KEEP§THE THREE RETIRED-IDS ARE WORTH NAMING HERE, BECAUSE TWO OF
+    # THEM ARE PREFIXES OF LIVE ONES: `x86-atom` OPENS `x86-atomics` AND
+    # `rv-noflag` OPENS `rv-noflags`, SO A LINK CHECK THAT USED A SUBSTRING
+    # WOULD REJECT THIS COURSE FOR LINKING TO A PAGE ONE CHARACTER LONGER THAN
+    # AN ID IT HAS RETIRED.  §KEEP§A NEGATIVE THAT CANNOT BE SATISFIED BY THE
+    # ARTIFACT IT IS WRITTEN FOR IS NOT A NEGATIVE; IT IS A BUG WEARING ONE.
+    "rvat": ("rv_amo.ch", "rv_fence.ch", "rv_vector.ch", "rv_dataflow.ch",
+             "rvat_landing.ch"),
 }
 OUTPUTS = {
     "x86asm": "x86dec.out",
@@ -171,6 +183,16 @@ OUTPUTS = {
     # than an obvious miss, which is the failure mode this table exists to
     # prevent.
     "rvpriv": "rvpriv.out",
+    # This course's artifact is `rvat.py` and its output is `rvat.out`, and it
+    # is a DIFFERENT file from every name above.  This entry matters more than
+    # the rvpriv one did, because of a coincidence worth recording: §KEEP§BOTH
+    # OUTPUT FILES CONTAIN THE SAME TWO HEX WORDS -- `0x00b6252f` (amoadd.w) AND
+    # `0x0330000f` (fence rw, rw) -- SO A PAGE THAT QUOTED THE WRONG ONE WOULD
+    # FIND MOST OF ITS HEX TOKENS PRESENT.  §KEEP§A MISSING ENTRY HERE PRODUCES A
+    # QUIET PARTIAL PASS RATHER THAN AN OBVIOUS MISS, WHICH IS THE FAILURE MODE
+    # THIS TABLE EXISTS TO PREVENT, AND IT IS WHY THE CHECK BELOW REPORTS HOW MANY
+    # TOKENS IT EXAMINED.
+    "rvat": "rvat.out",
 }
 PREF = PREFIXES.get(COURSE, (COURSE[:3],))
 if not isinstance(PREF, tuple):
@@ -221,7 +243,13 @@ EXEMPT = {
 ARTIFACT_CMDS = ("./x86dec", "./sysdump", "./a64dec", "./a64abi", "./a64sys",
                  "a64sys.py", "./a64data", "a64data.py", "./rvdec",
                  "rvdec.py", "./rvabi", "rvabi.py", "crosscheck.py",
-                 "build_samples.sh", "./rvpriv", "rvpriv.py")
+                 "build_samples.sh", "./rvpriv", "rvpriv.py",
+                 # The RISC-V section's fourth course, and its pages quote
+                 # `rvat.py` with a `$` prompt, which the prompt test alone
+                 # would catch -- and the command is listed anyway for the
+                 # reason the comment above this tuple gives: a filter that
+                 # passes by luck is a filter that will fail by accident.
+                 "rvat.py", "./rvat", "corrupt.py")
 
 TICK = re.compile(r"(\d+\.\d{3}) ticks/op")
 HEX = re.compile(r"(0x[0-9a-f]{8,16})\b")

@@ -1,0 +1,79 @@
+{
+  "id": "rvat",
+  "title": "RISC-V Atomics and the Vector Extension",
+  "version": "1.0.0",
+  "description": "RISC-V has no implicit lock ANYWHERE. x86-64's LOCK is a property of the ENCODING -- twenty-two spellings this host's assembler accepts against the SDM's quoted eighteen -- and forgetting it is silent, because the instruction still assembles and simply is not atomic. RISC-V's atomics are a third instruction group under their own opcode, each one atomic because of what it IS, and the honest way to state that is to count both sides: zero instructions in this corpus take a lock prefix, against nine operations plus a reservation pair that are atomic with no prefix at all. And the ordering model is DEFINED IN TERMS OF fence rather than as a baseline with barriers as an escape hatch: four fields (fm, pred, succ, rs1, rd), fifteen named spellings of the two four-bit sets with the sixteenth printed as a hole the assembler will not spell, and the compiler's own translation of the six C11 strengths printed as a table -- including ACQ_REL becoming fence.tso, a DIFFERENT INSTRUCTION, and SEQ_CST becoming fence rw, rw. lr/sc is a retry loop by construction, and the brief's headline claim that the compiler emits amoswap.w in place of a hand-rolled compare-exchange is RETRACTED: it emits one instruction for the one-instruction operation and the loop for the loop-requiring one, and there is no cmpxchg in the base A extension to trade against. The central experiment needs no timing at all -- the same C11 file at rv64im and rv64ima, one letter apart, is a library call without the extension and inline instructions with it. The vector extension is a different design rather than a wider register: vsetvli programmes element width, register-group count and the tail and mask policies at run time, which is how one fixed 32-bit encoding describes a vector whose length is not in the instruction at all. Eighteen retractions, nineteen limits, four poisons, and a 58-row measured/quoted boundary printed as a table rather than a disclaimer.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 4 concepts, reproduce the 370 checks in courses/rvat/assets/samples/crosscheck.py against the shipped rvat.out, then run courses/rvat/assets/samples/corrupt.py -- which corrupts the recorded report thirty-four ways and asserts that every corruption is CAUGHT, because a harness whose checks have never been seen to fail is a rubric rather than a harness. The 370 includes twenty pinned claim sentences and three six-item bullets in the two scope lists, because a scope list you can soften without editing a test is not a scope list. There are no timings in this course and there is no way to make one: no RISC-V machine, no emulator, no RISC-V linker.",
+  "min_score": 70,
+  "dependencies": [
+    "elf",
+    "rvasm",
+    "rvabi",
+    "rvpriv",
+    "simd",
+    "smp",
+    "x86simd",
+    "a64simd"
+  ],
+  "modules": [
+    {
+      "id": "atomic",
+      "title": "The Reservation, and the Fence That Defines the Model",
+      "concepts": [
+        "rv-amo",
+        "rv-fence"
+      ]
+    },
+    {
+      "id": "vector",
+      "title": "The Configuration Instruction, and the Data Path It Configures",
+      "concepts": [
+        "rv-vector",
+        "rv-dataflow"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "rv-amo",
+      "title": "The Reservation, and Why the Retry Is the Instruction",
+      "module_id": "atomic",
+      "description": "MEASURED-ON-BYTES, QUOTED for the reservation rules, and the division is the boundary of the whole concept. THERE IS NO IMPLICIT LOCK ANYWHERE IN RISC-V, and the zero is not an absence of features: it is a design decision, and the way to tell the difference is to count the OTHER side -- nine operations plus a reservation pair at two widths and four orderings, atomic with no prefix, against zero. The assembler refuses the literal word `lock` as an unknown token rather than as a bad operand, which is a fact about the assembler and not about the architecture. Then the encoding: eleven funct5 values in one opcode, 0101111, laid out in fours rather than evenly, with the twenty-one unnamed codes printed as holes because a table with a gap and a table with a hole are different tables. The `.w`/`.d` suffix is ONE BIT of funct3 -- twelve pairs, every one XORing to exactly 0x1000 -- and a suffix is not a type. aq is inst[26] and rl is inst[25], adjacent, and the proof is the XOR: one value for aq across the whole corpus, one for rl, one for the pair, and the three are ADDITIVE, which is what makes them two fields rather than one field with three values. `lr` requires rs2 = 0 and the assembler ENFORCES it, with a diagnostic about syntax whose cause is semantics. And the compiler emits `lr.w.aqrl` / `sc.w.rl` with a branch between them, seven instructions for one attempt.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "rv-fence",
+      "title": "fence, and an Ordering Model Defined in Terms of It",
+      "module_id": "atomic",
+      "description": "The finding is a shape and not a number: RISC-V's memory ordering model is not a baseline that barriers override, and it is not a set of access modes. It is DEFINED as a relation between two four-bit SETS inside one instruction, and the third is the only one of the three in which the fence is the primitive rather than the exception. The four fields, read out of every fence in the corpus with the spelling REBUILT from the decoded bits rather than copied from the reader, so the two columns are independent and the table can carry a measurement. Two reserved fields -- rs1 and rd -- zero in every word the assembler emits, and the manual REQUIRES the zeroes rather than the assembler happening to emit them. Fifteen named spellings of the two sets, every non-empty subset of {i,o,r,w}, with the sixteenth printed as a hole the assembler will not spell at all. Then the compiler's translation of the six C11 strengths: CONSUME and ACQUIRE are the same four bits and the course says so rather than pretending otherwise, ACQ_REL becomes fence.tso -- a DIFFERENT INSTRUCTION with fm = 1000 -- and SEQ_CST becomes fence rw, rw. An acquire load and a seq_cst load are the SAME `lw`, byte for byte, and the extra constraint is discharged by ordering the NEIGHBOURS: two fences for one load.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "rv-vector",
+      "title": "vsetvli and the Four Fields It Carries",
+      "module_id": "vector",
+      "description": "ONE FIXED 32-BIT INSTRUCTION DESCRIBES A VECTOR AND THE LENGTH IS NOT IN THIS INSTRUCTION AT ALL. `vsetvli` carries four things -- element width, register-group count, and the tail and mask policies -- plus an ABSENCE, the length, which arrives as an AVL in inst[19:15] and comes out in a CSR the instruction does not contain. The compiler proves it: it emits `csrr a7, vlenb`, an ordinary Zicsr read, because the length is a property of the implementation and the implementation publishes it in a register. The four fields are decomposed by XOR against a fixed base, thirteen probes, and zimm[10:8] is measured as 0b000 in all 120 reachable vsetvli -- three bits of an eleven-bit field that no reachable instruction uses, which is what `rvasm` measured first and what this page builds on rather than repeats. Three configuration instructions told apart by TWO bits and nothing else, and the same inst[19:15] is a register in two of them and a five-bit immediate in the third. Then the honest half: the tail-undisturbed policy is a LIBRARY CONTRACT MADE OF BITS, the specification declines to require the agnostic pattern to be deterministic, and the compiler picks the fast one in 31 of the corpus's 120 configurations. THE FAST CHOICE IS NOT THE PORTABLE ONE, and the only way a reader learns that is by decoding two bits.",
+      "estimated_minutes": 27,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "rv-dataflow",
+      "title": "Decode the Data Path",
+      "module_id": "vector",
+      "description": "The mask is ONE BIT at inst[25] in three different instruction groups -- arithmetic, unit-stride load, unit-stride store -- and eleven pairs XOR to exactly 0x02000000 with zero exceptions, which is what makes `vm` a field of the WORD rather than of one instruction class. Bit 25 is 'release' in an atomic and 'mask agnostic' in a vector word, and the two are in different opcodes so they never collide. The mask REGISTER is not in the encoding: v0 is the only one it can name, and the assembler states that property in its own diagnostic. The weaker claim is the correct one -- a mask PRODUCER may write any register, and only v0 can then be used as a mask -- and the register group is an ALIGNMENT CONSTRAINT on an allocator rather than a scalar, proved by a refusal. Then what the compiler emits: instruction counts at five optimisation levels with and without the vector extension, and the finding that -O1 vectorises nothing, -Os vectorises two of four functions, and -O2 and -O3 produce byte-identical assembly -- while -Os is smaller in CODE SIZE and emits MORE vector instructions than -O2, because the vector body replaces a loop. Plus two readers on the same bytes, the unmodelled count printed BESIDE the disagreement count, four poisons that each move one column and claim the other stays put, and the measured/quoted boundary with eighteen retractions.",
+      "estimated_minutes": 22,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}

@@ -1,0 +1,2409 @@
+==========================================================================
+rvat.py -- RISC-V atomics, ordering and vectors, measured on the bytes
+==========================================================================
+
+  Every claim in this file carries one of three labels:
+
+    MEASURED           about the compiler or the bytes, by experiment
+    MEASURED-ON-BYTES  a property of emitted bytes, cross-checked against
+                      llvm-objdump-21 as a second reader
+    QUOTED             a manual claim, with a document and a section
+
+  The two documents every QUOTED row names:
+    rv32-unpriv  Volume I, the unprivileged architecture, v20260120
+                 chapters 2, 12, 17, 18 and 30
+    riscv-cc     the RISC-V ISA Calling Convention, v20230911
+
+  NOTHING HERE IS EXECUTED.  There is no RISC-V machine, no emulator
+  and no RISC-V linker on this host, so NO RESERVATION IS EVER HELD,
+  NO AMO IS EVER OBSERVED TO BE ATOMIC, NO FENCE IS EVER OBSERVED TO
+  ORDER ANYTHING, AND NO VECTOR INSTRUCTION IS EVER RUN.  There are
+  NO TIMINGS and NO SPEEDUPS anywhere in this file.  THE
+  SIBLINGS THAT MEASURED RATIOS MEASURED THEM ON HARDWARE AND THIS
+  ONE HAS NO HARDWARE, SO THE RATIOS HAVE NO COUNTERPART HERE AND
+  ARE NOT INVENTED TO FILL THE GAP.  Section 1 says so before the
+  first measurement and section 14 says so after the last one.
+
+  The decoder is BORROWED from courses/rvasm/assets/samples/
+  (rvdec.py) and this file PREPENDS FOUR models of its own.
+  `m_setivli` names vsetivli and vsetvl, which the inherited decoder
+  cannot; `m_vector_mask` names the vector DATA path, which it
+  declines; `m_amo_order` READS inst[26] and inst[25], which it never
+  looks at; and `m_fence_sets` renders the fence sets as letters and
+  names fence.tso, which it calls `fence`.  It edits no sibling;
+  section 13's R1, R2 and R3 say what each one adds and why the
+  sibling is untouched.
+
+  Inherited decoder models: 26, of which this course PREPENDS 4.
+  Total in the dispatch here: 30.
+
+==========================================================================
+SECTION 1 -- THE METHOD, AND WHAT IT MAY NOT CLAIM
+==========================================================================
+
+  There are FOUR ABSENCES on this host and this course's is a THIRD kind, which is worth being explicit about because the two RISC-V courses before it had different ones.
+
+  * NO RISC-V MACHINE.  The host is x86-64.
+  * NO EMULATOR.  qemu-riscv64 ABSENT, and spike ABSENT.
+  * NO RISC-V LINKER.  `riscv64-linux-gnu-ld IS NOT INSTALLED` on this host, and
+    neither are `riscv64-linux-gnu-gcc` or `riscv64-linux-gnu-as`, so there is
+    not even a RISC-V LINKER to produce a running image.
+  * NO SECOND ASSEMBLER.  GNU binutils has no RISC-V target here, so both
+    readers of the two-reader check come from ONE LLVM TREE.
+
+  NOTHING IN THIS COURSE IS EVER EXECUTED, AND NOT ONE INSTRUCTION IN IT HAS BEEN RUN. NO RESERVATION IS EVER HELD. NO STORE-CONDITIONAL IS EVER OBSERVED TO SUCCEED OR TO FAIL. NO AMO IS EVER OBSERVED
+  TO BE ATOMIC. NO FENCE IS EVER OBSERVED TO ORDER ANYTHING. NO VECTOR INSTRUCTION IS EVER EXECUTED, so `vl` is never set by anything except a word in a file.
+
+  AND THIS IS THE THIRD KIND OF ABSENCE IN THIS SECTION, AND THE THREE ARE NOT INTERCHANGEABLE. The ABI course lost the ability to TIME. The privileged course lost the ability to OBSERVE THE SUBJECT
+  and got a CSR address in its place. This one loses the ability to OBSERVE WHETHER ANY OF ITS INSTRUCTIONS DOES THE THING IT EXISTS TO DO -- because an atomic instruction is a PROMISE about
+  observable behaviour and a fence is a RELATION between two sets of operations, and neither promise nor relation is a bit pattern.
+
+  THE SIBLINGS THAT MEASURED TIMINGS ARE THE ONES THAT HAD A MACHINE, AND THEIR NUMBERS HAVE NO COUNTERPART HERE AND ARE NOT INVENTED TO FILL THE GAP. `simd` and `smp` taught vectors and ordering
+  neutrally and measured speedups. `x86simd` measured a lost-update count on real hardware and found retraction 18 in it. `a64simd` measured 3.89x, 4.92x and 27.65x. THE HONEST ALTERNATIVE TO A RATIO
+  IS NOT A SMALLER RATIO -- IT IS AN INSTRUCTION COUNT, A BYTE COUNT, A BIT POSITION, AND THE SENTENCE THAT A COUNT DOES NOT KNOW WHETHER THE INSTRUCTION IS FAST.
+
+  WHAT SURVIVES IS EXACTLY THE PART A COMPILER AUTHOR NEEDS, and it is a lot: the atomic encoding and its two ordering bits, the compiler's decision about whether to emit an atomic at all, the four
+  fields of `fence` and the fifteen spellings of its two sets, the four fields of `vsetvli` and the bit that is constant zero across all of them, the one-bit mask in three instruction groups, and what
+  the compiler emits for a vectorised loop at four optimisation levels.
+
+  Every claim below carries one of three labels and they are the section plan's rule 13: MEASURED, MEASURED-ON-BYTES, QUOTED. A label rendered two ways is not a label.
+
+
+  THE TWO DOCUMENTS, and the short names every QUOTED row uses:
+
+  rv32-unpriv RISC-V Instruction Set Manual, Volume I: Unprivileged
+  Architecture, v20260120 -- chapter 12 ("A", version 2.1), chapter 17
+  (RVWMO), chapter 18 ("Ztso"), chapter 30 ("V") riscv-cc RISC-V ISA Calling
+  Convention, v20230911
+
+  And one thing this course does NOT do that its two siblings did: it does not
+  shell out to a disassembler to obtain bytes. The second reader's LISTINGS
+  are committed (`amo_objdump.txt`, `fence_objdump.txt`, `vec_objdump.txt`,
+  `amo_a_O2_objdump.txt`, `amo_noa_O2_objdump.txt`, `fence_c_O2_objdump.txt`)
+  so a reader with a hex editor and no cross-compiler can check every byte
+  claim in the course. A course whose numbers are only checkable on the
+  machine that wrote them is a course whose numbers are claims.
+
+
+  THE CORPUS IS INCOMPLETE: no.  All 26 objects are present.
+  Objects: 26.  Hand-written corpora: 3.  C corpora: 23.
+  Decoder models inherited: 26, of which this course PREPENDS 4.
+  Total in the dispatch here: 30.
+
+==========================================================================
+SECTION 2 -- THE ZERO -- NO IMPLICIT LOCK, AND WHAT IT COSTS TO SAY SO
+==========================================================================
+
+  THE MISSION DOCUMENT CALLS THIS THE "DIFFERS IN KIND" POINT, AND THE PLACE TO PROVE IT IS HERE, BEFORE ANY INSTRUCTION IS NAMED.
+
+  x86-64 has a LOCK PREFIX. It is a property of the ENCODING, not of a separate instruction group: eighteen instructions accept it, the memory form of `xchg` is implicitly locked with or without it,
+  and FORGETTING IT IS SILENT -- the instruction still assembles, still runs, and is simply not atomic. ON x86-64 THE ATOMICITY OF AN ORDINARY ARITHMETIC INSTRUCTION DEPENDS ON A PREFIX THAT IS NOT
+  PART OF THE INSTRUCTION, AND A PROGRAMMER WHO OMITS IT GETS NO DIAGNOSTIC.
+
+  RISC-V has no such thing. There is no prefix, there is no flag, and there is no implicit lock on any instruction. The atomics are a THIRD INSTRUCTION GROUP under their own opcode, and each one is
+  atomic because of what it IS.
+
+  And the honest way to state that is to count both sides, because "zero against eighteen" is a number a reader should be able to check.
+
+
+  THE RISC-V SIDE.  The count of instructions in this corpus that
+  take a lock prefix, measured by asking the assembler for one.
+
+  assembled?  the instruction asked for        what came back                       
+  0x00c58533  add a0, a1, a2                   an ordinary register-register add    
+  0x00004188  lw a0, 0(a1)                     an ordinary load                     
+  0x0000c188  sw a0, 0(a1)                     an ordinary store                    
+  0x00b6252f  amoadd.w a0, a1, (a2)            an AMO, which is atomic anyway       
+  0x1005a52f  lr.w a0, (a1)                    load-reserved, which is atomic anyway
+  0x0330000f  fence rw, rw                     the ordering fence                   
+  0x0d85f2d7  vsetvli t0, a1, e64, m1, ta, ma  a vector configuration               
+  REFUSED     lock add a0, a1, a2              unexpected token                     
+  REFUSED     lock lw a0, 0(a1)                unexpected token                     
+
+  2 of the 9 candidates the assembler REFUSED, and every refusal
+  involving the literal word `lock` is a refusal of the PREFIX
+  ITSELF:
+
+    `lock` is not a mnemonic, a modifier or a reserved word on
+    this target.  It is a token the assembler does not know, and
+    the diagnostic is `unexpected token`.
+
+  THE COUNT: 0 instructions in the RISC-V corpus take a lock prefix.
+
+  THE ZERO IS NOT AN ABSENCE OF FEATURES.  It is a DESIGN
+  DECISION, and the way to tell the difference is to count the OTHER
+  side: how many instructions ARE atomic with no prefix at all.  
+  On x86-64 the count of "instructions that need a prefix to become
+  atomic" is a list of ORDINARY ARITHMETIC and the prefix is a
+  MODIFIER.  On RISC-V the atomics are a separate group under their
+  own opcode and the prefix count is zero because there is nothing to
+  modify -- and that is why a RISC-V binary can be disassembled by a
+  tool that has never been told what atomicity is.
+
+  THE x86-64 SIDE, MEASURED rather than quoted, because a contrast
+  with an unmeasured number in it is a footnote.
+
+  #   instruction  encoding
+  1   addq                 
+  2   adcq                 
+  3   andq                 
+  4   orq                  
+  5   sbbq                 
+  6   subq                 
+  7   xorq                 
+  8   cmpq                 
+  9   testq                
+  10  notq                 
+  11  negq                 
+  12  incl                 
+  13  decl                 
+  14  xaddq                
+  15  cmpxchgq             
+  16  xchgq                
+  17  btsq                 
+  18  btrq                 
+  19  btcq                 
+  20  cmpxchg8b            
+  21  cmpxchg16b           
+  22  btq                  
+
+  22 lock-prefixed instructions assembled, and 0 unprefixed
+  line in the file.  The DISTINCT mnemonics among them are 22:
+    adc add and bt btc btr bts cmp cmpxchg cmpxchg16b cmpxchg8b decl incl neg not or sbb sub test xadd xchg xor
+
+  AND THE ONE WITH NO LOCK IS IN THE LIST ABOVE ANYWAY,
+  BECAUSE THE ASSEMBLER ACCEPTS `lock bt` -- and `bt` is
+  not one of the SDM's eighteen, so what this file measures is
+  what THIS ASSEMBLER ACCEPTS rather than what the architecture
+  defines.  MEASURED, AND IT IS THE TRAP THIS
+  WHOLE COURSE EXISTS TO NAME:
+
+
+  THE STRUCTURAL POINT, and it is the one a reader should carry out of the page: the reason x86-64's list is eighteen ORDINARY instructions and RISC-V's is thirteen ATOMIC ones is not a difference of
+  list length. It is that x86-64 made atomicity a PROPERTY OF AN EXISTING INSTRUCTION and RISC-V made it a CATEGORY OF INSTRUCTION. A PROPERTY AND A CATEGORY ARE DIFFERENT OBJECTS, AND THE DIFFERENCE
+  IS VISIBLE IN WHAT HAPPENS WHEN YOU FORGET: on x86-64 forgetting is silent, and on RISC-V forgetting is not possible, because there is nothing to forget -- the ordinary add is not atomic and never
+  claims to be, and the atomic is a different instruction with a different name that a reader can see in a disassembly and check in a review.
+
+
+  AND THE COST OF THE DESIGN IS WORTH NAMING, because a course that only advertises is not a reference. PUTTING THE ATOMICS IN THEIR OWN GROUP COSTS THE PROGRAMMER something specific, and the honest
+  name for it is that it costs the programmer the ordinary-operator shortcut, so the replacement is a retry loop that has to be written by hand. Compare-exchange is two words of x86 assembly with a
+  `lock` prefix; on RISC-V it is a `lr`/`sc` pair inside a loop, because there is no `cmpxchg` in the base A extension at all. A DESIGN THAT REMOVES A SILENT FAILURE ALSO REMOVES A SHORTCUT, AND THE
+  HONEST FORM OF THE TRADE IS TO NAME BOTH SIDES RATHER THAN TO COUNT THE FEATURES. Section 5 measures the loop the compiler emits for it and section 6 measures the case where it emits a library call
+  instead, and the whole of the difference between those two sections is ONE LETTER in a command line.
+
+
+==========================================================================
+SECTION 3 -- THE ELEVEN OPERATIONS, AND THE ONE BIT THAT IS THE WIDTH
+==========================================================================
+
+  MEASURED-ON-BYTES. Everything in this section is read out of a real object a real assembler produced, and the second reader confirms the words.
+
+  The A extension is ONE opcode, 0101111, and inside it a FIVE-BIT funct5 at inst[31:27]. Eleven of the thirty-two funct5 values are named. The next two bits, inst[26] and inst[25], are the ordering,
+  and section 4 reads them. Then the three register fields, then a THREE-BIT funct3 of which only TWO values are AMO widths -- 010 is a word and 011 is a doubleword.
+
+  AND HERE IS THE FIRST REAL FINDING, which is that the width is ONE BIT. `amoadd.w` and `amoadd.d` are the same instruction with the same operands and they differ by exactly 0x1000, which is bit 12
+  -- the LOW bit of funct3. THE `.w` AND `.d` SUFFIXES LOOK LIKE A TYPE AND THEY ARE A SINGLE BIT, AND A FIELD WITH TWO NAMES IS NOT A TYPE, IT IS A BIT WITH TWO SPELLINGS. Compare `fadd.s` against
+  `fadd.d` in the sibling AArch64 material, which is also one bit -- and the reason it is worth knowing is that a bit with two names is a bit a decoder can read with one table.
+
+
+  THE ELEVEN OPERATIONS AT BOTH WIDTHS, read out of amo.o and paired
+  with `amo.s` BY POSITION -- which is CHECKED, not assumed.
+
+  operation  word        assembled  funct5  funct3  aq  rl  bytes
+  amoadd     0x00b6252f  amoadd.w   00000   2       0   0   4    
+  amoadd     0x00b6352f  amoadd.d   00000   3       0   0   4    
+  amoswap    0x08b6252f  amoswap.w  00001   2       0   0   4    
+  amoswap    0x08b6352f  amoswap.d  00001   3       0   0   4    
+  amoxor     0x20b6252f  amoxor.w   00100   2       0   0   4    
+  amoxor     0x20b6352f  amoxor.d   00100   3       0   0   4    
+  amoand     0x60b6252f  amoand.w   01100   2       0   0   4    
+  amoand     0x60b6352f  amoand.d   01100   3       0   0   4    
+  amoor      0x40b6252f  amoor.w    01000   2       0   0   4    
+  amoor      0x40b6352f  amoor.d    01000   3       0   0   4    
+  amomin     0x80b6252f  amomin.w   10000   2       0   0   4    
+  amomin     0x80b6352f  amomin.d   10000   3       0   0   4    
+  amomax     0xa0b6252f  amomax.w   10100   2       0   0   4    
+  amomax     0xa0b6352f  amomax.d   10100   3       0   0   4    
+  amominu    0xc0b6252f  amominu.w  11000   2       0   0   4    
+  amominu    0xc0b6352f  amominu.d  11000   3       0   0   4    
+  amomaxu    0xe0b6252f  amomaxu.w  11100   2       0   0   4    
+  amomaxu    0xe0b6352f  amomaxu.d  11100   3       0   0   4    
+  lr         0x1005a52f  lr.w       00010   2       0   0   4    
+  lr         0x1005b52f  lr.d       00010   3       0   0   4    
+  sc         0x18b6252f  sc.w       00011   2       0   0   4    
+  sc         0x18b6352f  sc.d       00011   3       0   0   4    
+  amoswap    0x0805a52f  amoswap.w  00001   2       0   0   4    
+  amoswap    0x0805b52f  amoswap.d  00001   3       0   0   4    
+  amoadd     0x00b6202f  amoadd.w   00000   2       0   0   4    
+  amoor      0x40b6252f  amoor.w    01000   2       0   0   4    
+
+  11 distinct operations, 11 distinct funct5 values, 2 widths,
+  4 bytes for every one of them, which is the arithmetic of an R
+  format with three register fields and nothing else.
+
+  THE WIDTH IS ONE BIT.  Every `.w`/`.d` pair in the corpus, XORed:
+
+  the pair               XOR         bits that moved  reading         
+  amoadd.w / amoadd.d    0x00001000  1                bit 12 of funct3
+  amoswap.w / amoswap.d  0x00001000  1                bit 12 of funct3
+  amoxor.w / amoxor.d    0x00001000  1                bit 12 of funct3
+  amoand.w / amoand.d    0x00001000  1                bit 12 of funct3
+  amoor.w / amoor.d      0x00001000  1                bit 12 of funct3
+  amomin.w / amomin.d    0x00001000  1                bit 12 of funct3
+  amomax.w / amomax.d    0x00001000  1                bit 12 of funct3
+  amominu.w / amominu.d  0x00001000  1                bit 12 of funct3
+  amomaxu.w / amomaxu.d  0x00001000  1                bit 12 of funct3
+  lr.w / lr.d            0x00001000  1                bit 12 of funct3
+  sc.w / sc.d            0x00001000  1                bit 12 of funct3
+  amoswap.w / amoswap.d  0x00001000  1                bit 12 of funct3
+
+  12 of 12 pairs XOR to exactly 0x1000.
+
+  A SUFFIX IS NOT A TYPE.  On x86-64 the LOCK is a prefix and
+  the width is a suffix, and the two are DIFFERENT MECHANISMS; on
+  RISC-V the ordering is two bits INSIDE the word and the width is
+  one more, and both of them are ordinary fields of an ordinary
+  encoding.  THAT IS WHY A RISC-V ATOMIC INSTRUCTION IS FOUR
+  BYTES AND AN x86-64 LOCKED ONE IS ONE TO FOUR PLUS A PREFIX: THE
+  PREFIX IS AN EXTRA BYTE THE DECODER HAS TO RECOGNISE BEFORE IT
+  CAN KNOW THE LENGTH.
+
+  THE FIVE-BIT FIELD HAS ELEVEN NAMES AND TWENTY-ONE HOLES, and the
+  holes are printed rather than omitted, because a table with a gap
+  and a table with a hole are different tables.
+
+  0b00000 = 0      amoadd                             
+  0b00001 = 1      amoswap                            
+  0b00010 = 2      lr                                 lr
+  0b00011 = 3      sc                                 sc
+  0b00100 = 4      amoxor                             
+  0b00101 = 5      (no name in the A extension)       
+  0b00110 = 6      (no name in the A extension)       
+  0b00111 = 7      (no name in the A extension)       
+  0b01000 = 8      amoor                              
+  0b01001 = 9      (no name in the A extension)       
+  0b01010 = 10     (no name in the A extension)       
+  0b01011 = 11     (no name in the A extension)       
+  0b01100 = 12     amoand                             
+  0b01101 = 13     (no name in the A extension)       
+  0b01110 = 14     (no name in the A extension)       
+  0b01111 = 15     (no name in the A extension)       
+  0b10000 = 16     amomin                             
+  0b10001 = 17     (no name in the A extension)       
+  0b10010 = 18     (no name in the A extension)       
+  0b10011 = 19     (no name in the A extension)       
+  0b10100 = 20     amomax                             
+  0b10101 = 21     (no name in the A extension)       
+  0b10110 = 22     (no name in the A extension)       
+  0b10111 = 23     (no name in the A extension)       
+  0b11000 = 24     amominu                            
+  0b11001 = 25     (no name in the A extension)       
+  0b11010 = 26     (no name in the A extension)       
+  0b11011 = 27     (no name in the A extension)       
+  0b11100 = 28     amomaxu                            
+  0b11101 = 29     (no name in the A extension)       
+  0b11110 = 30     (no name in the A extension)       
+  0b11111 = 31     (no name in the A extension)       
+
+  11 named of 32, so 21 unnamed, and 2 of the eleven are the
+  reservation pair -- which is why the A extension is not "eleven
+  atomics" but "nine atomics and a two-instruction construct that no
+  single instruction is".
+
+  THE ELEVEN funct5 VALUES ARE NOT EVENLY SPACED, and the spacing is
+  a history rather than an accident of a field map:
+
+    0b00000 -> 0b00001   gap 1
+    0b00001 -> 0b00010   gap 1
+    0b00010 -> 0b00011   gap 1
+    0b00011 -> 0b00100   gap 1
+    0b00100 -> 0b01000   gap 4
+    0b01000 -> 0b01100   gap 4
+    0b01100 -> 0b10000   gap 4
+    0b10000 -> 0b10100   gap 4
+    0b10100 -> 0b11000   gap 4
+    0b11000 -> 0b11100   gap 4
+
+  AND THE FOUR BITWISE OPERATIONS ARE 0, 4, 8 and 12 -- a stride of
+  FOUR -- while the four ORDERING comparisons are 16, 20, 24 and 28.
+  THE BITS ARE GROUPED IN FOURS, WHICH IS A SIGN THAT THE
+  SIGNED AND UNSIGNED HALVES SHARE A SLOT AND THE ENCODER GAVE EACH
+  HALF A NIBBLE, AND A READER WHO EXPECTS ELEVEN EVENLY SPACED VALUES
+  WILL WRITE A DECODER WITH ELEVEN CASES WHERE THREE WOULD DO.
+
+  And the reservations sit at 2 and 3, INSIDE the stride-4 block,
+  between the arithmetic pair and the bitwise block.  THE TWO
+  INSTRUCTIONS THAT ARE NOT ATOMIC OPERATIONS ARE THE TWO THAT
+  IMPLEMENT A CONSTRUCT, AND THE ENCODER PUT THEM WHERE A CONSTRUCT
+  BELONGS: next to each other, at 2 and 3, in the first sixteen.
+
+==========================================================================
+SECTION 4 -- aq AND rl ARE TWO ADJACENT BITS, AND THE XOR PROVES IT
+==========================================================================
+
+  MEASURED-ON-BYTES, and this is the section's cleanest single result.
+
+  The A extension spends FIVE bits at inst[31:27] on WHICH OPERATION to
+  perform and TWO MORE at inst[26] and inst[25] on how it is ordered. The bits
+  are adjacent. `aq` is inst[26] and `rl` is inst[25], and there is no shift
+  and no scrambling between them and their positions in the mnemonic -- which
+  is the opposite of the immediates in the base ISA, where the S format splits
+  one twelve-bit immediate across inst[31:25] and inst[11:7].
+
+  The measurement is an XOR. Take an instruction, set `aq`, subtract -- and
+  the answer is a single bit. Do it at both widths, on all three of
+  load-reserved, store-conditional and the AMOs, and every single XOR is the
+  same two numbers.
+
+
+  EVERY aq XOR IN THE CORPUS.  Each row is one instruction, the same
+  instruction with `.aq`, and the two words side by side.
+
+  with            with it / without      XOR         bits  which bits    
+  amoadd.w.aq     0x04b6252f/0x00b6252f  0x04000000  1     bit 26        
+  amoadd.w.rl     0x02b6252f/0x00b6252f  0x02000000  1     bit 25        
+  amoadd.w.aqrl   0x06b6252f/0x00b6252f  0x06000000  2     bit 25, bit 26
+  amoadd.d.aq     0x04b6352f/0x00b6352f  0x04000000  1     bit 26        
+  amoadd.d.rl     0x02b6352f/0x00b6352f  0x02000000  1     bit 25        
+  amoadd.d.aqrl   0x06b6352f/0x00b6352f  0x06000000  2     bit 25, bit 26
+  amoswap.w.aq    0x0cb6252f/0x08b6252f  0x04000000  1     bit 26        
+  amoswap.w.rl    0x0ab6252f/0x08b6252f  0x02000000  1     bit 25        
+  amoswap.w.aqrl  0x0eb6252f/0x08b6252f  0x06000000  2     bit 25, bit 26
+  lr.w.aq         0x1405a52f/0x1005a52f  0x04000000  1     bit 26        
+  lr.w.rl         0x1205a52f/0x1005a52f  0x02000000  1     bit 25        
+  lr.w.aqrl       0x1605a52f/0x1005a52f  0x06000000  2     bit 25, bit 26
+  lr.d.aq         0x1405b52f/0x1005b52f  0x04000000  1     bit 26        
+  lr.d.aqrl       0x1605b52f/0x1005b52f  0x06000000  2     bit 25, bit 26
+  sc.w.aq         0x1cb6252f/0x18b6252f  0x04000000  1     bit 26        
+  sc.w.rl         0x1ab6252f/0x18b6252f  0x02000000  1     bit 25        
+  sc.w.aqrl       0x1eb6252f/0x18b6252f  0x06000000  2     bit 25, bit 26
+  sc.d.aq         0x1cb6352f/0x18b6352f  0x04000000  1     bit 26        
+  sc.d.rl         0x1ab6352f/0x18b6352f  0x02000000  1     bit 25        
+  sc.d.aqrl       0x1eb6352f/0x18b6352f  0x06000000  2     bit 25, bit 26
+
+  THE SET OF aq XORs OVER THE WHOLE CORPUS: 0x04000000
+  THE SET OF rl XORs OVER THE WHOLE CORPUS: 0x02000000
+  THE SET OF aqrl XORs OVER THE WHOLE CORPUS: 0x06000000
+
+  ONE NUMBER FOR aq AND ONE FOR rl, ACROSS EVERY OPERATION, AT
+  EVERY WIDTH, ON ALL THREE KINDS OF INSTRUCTION.  THE aq BIT
+  IS BIT 26 AND THE rl BIT IS BIT 25, AND THEY ARE ADJACENT, AND
+  THAT IS THE WHOLE ENCODING.  IT IS NOT A PREFIX, IT IS NOT A
+  SECOND INSTRUCTION, AND IT COSTS TWO OF THE THIRTY-TWO BITS OF A
+  FOUR-BYTE WORD.
+
+  AND THE THREE ARE ADDITIVE, which is the cheapest possible proof
+  that they are TWO FIELDS and not one field with three values:
+
+  instruction             word        XOR with the plain form  bits moved
+  amoadd.w a0, a1, (a2)   0x00b6252f  0x00000000               0         
+  amoadd.d a0, a1, (a2)   0x00b6352f  0x00000000               0         
+  amoswap.w a0, a1, (a2)  0x08b6252f  0x00000000               0         
+  amoswap.d a0, a1, (a2)  0x08b6352f  0x00000000               0         
+  amoxor.w a0, a1, (a2)   0x20b6252f  0x00000000               0         
+  amoxor.d a0, a1, (a2)   0x20b6352f  0x00000000               0         
+  amoand.w a0, a1, (a2)   0x60b6252f  0x00000000               0         
+  amoand.d a0, a1, (a2)   0x60b6352f  0x00000000               0         
+  amoor.w a0, a1, (a2)    0x40b6252f  0x00000000               0         
+  amoor.d a0, a1, (a2)    0x40b6352f  0x00000000               0         
+  amomin.w a0, a1, (a2)   0x80b6252f  0x00000000               0         
+  amomin.d a0, a1, (a2)   0x80b6352f  0x00000000               0         
+  amomax.w a0, a1, (a2)   0xa0b6252f  0x00000000               0         
+  amomax.d a0, a1, (a2)   0xa0b6352f  0x00000000               0         
+  amominu.w a0, a1, (a2)  0xc0b6252f  0x00000000               0         
+  amominu.d a0, a1, (a2)  0xc0b6352f  0x00000000               0         
+  amomaxu.w a0, a1, (a2)  0xe0b6252f  0x00000000               0         
+  amomaxu.d a0, a1, (a2)  0xe0b6352f  0x00000000               0         
+  lr.w a0, (a1)           0x1005a52f  0x00000000               0         
+  lr.d a0, (a1)           0x1005b52f  0x00000000               0         
+  sc.w a0, a1, (a2)       0x18b6252f  0x00000000               0         
+  sc.d a0, a1, (a2)       0x18b6352f  0x00000000               0         
+  amoswap.w a0, x0, (a1)  0x0805a52f  0x00000000               0         
+  amoswap.d a0, x0, (a1)  0x0805b52f  0x00000000               0         
+  amoadd.w x0, a1, (a2)   0x00b6202f  0x00000000               0         
+  amoor.w a0, a1, (a2)    0x40b6252f  0x00000000               0         
+
+  THE XORs ARE ADDITIVE -- aq|rl is the bitwise OR of the two
+  single-bit XORs and NOT A THIRD BIT -- AND ADDITIVITY IS WHAT MAKES
+  THEM FIELDS.  A DECODER CAN RECOVER A TWO-BIT FIELD BY OR-ing
+  TWO SINGLE-BIT MASKS, AND CANNOT RECOVER A SINGLE FIELD WITH FOUR
+  VALUES THAT WAY, SO THE MEASUREMENT IS NOT JUST A CONFIRMATION OF
+  THE POSITIONS, IT IS THE PROOF THAT THESE ARE TWO FIELDS.
+
+  WHAT THE TWO BITS ARE FOR is QUOTED, and the quotation is the
+  point rather than the padding:
+
+    rv32-unpriv, chapter 12, section 12.1.1:
+      "If only the aq bit is set, the atomic memory operation is
+       treated as an acquire access...  If only the rl bit is set,
+       the atomic memory operation is treated as a release access.
+       If both the aq and rl bits are set, the atomic memory
+       operation is sequentially consistent..."
+
+  SO THE FOUR SPELLINGS ARE FOUR SEMANTICS AND THE ENCODING
+  SPENDS TWO BITS ON ALL FOUR.  Compare the other two architectures
+  in this collection, where the SAME four semantics are reachable
+  but by DIFFERENT MECHANISMS: x86-64 spells sequentially consistent
+  as an unprefixed `xchg` and puts no bits in the instruction at all,
+  and AArch64 spells acquire and release as ACCESS MODES on the
+  instruction itself -- `ldar` and `stlr` are different opcodes from
+  `ldr` and `str` -- and spells sequentially consistent as a
+  COMBINATION of the two.  RISC-V SPENDS TWO BITS WHERE AARCH64
+  SPENDS TWO OPCODES AND x86-64 SPENDS NOTHING, AND THE REASON IS THAT
+  RISC-V DID NOT WANT A FOURTH INSTRUCTION GROUP.  THE THREE
+  COURSES SPEND DIFFERENT THINGS ON THE SAME FOUR SEMANTICS, AND A
+  THIRD OF THE QUESTION IS WHICH OF THE THREE IS CHEAPEST TO DECODE.
+
+  AND THE SAME FOUR SEMANTICS ARE REACHABLE WITH A FENCE INSTEAD,
+  which is the thing that makes the RISC-V model different IN KIND
+  rather than in degree.  The manual says it outright:
+
+    rv32-unpriv, chapter 12, section 12.1.4:
+      "Although the FENCE R, RW instruction suffices to implement
+       the acquire operation and FENCE RW, W suffices to implement
+       release, both imply additional unnecessary ordering as
+       compared to AMOs with the corresponding aq or rl bit set."
+
+  SO A RISC-V ATOMIC IS A FENCE WITH THE UNNECESSARY PART
+  REMOVED, AND THE TWO BITS ARE WHERE THE REMOVAL IS RECORDED.  
+  THAT IS WHY `lr.w.aqrl` AND `fence r, rw` ARE NOT TWO WAYS OF
+  SAYING THE SAME THING, AND WHY THE COURSE HAS TO MEASURE BOTH
+  SIDES RATHER THAN CHOOSING ONE: a reader who only ever reads the
+  fence form will not notice that the bits exist, and a reader who
+  only ever reads the bits will not know what relation between two
+  sets of operations the fence form is expressing.
+
+  MEASURED, to close the loop: the compiler emits BOTH.  Section 6
+  counts the `fence` instructions in fence_c_O2.o and section 5
+  counts the `.aq`/`.rl` suffixes in amo_a_O2.o, and neither count is
+  zero.
+
+==========================================================================
+SECTION 5 -- lr AND sc -- WHY THE RETRY IS THE INSTRUCTION
+==========================================================================
+
+  MEASURED-ON-BYTES for the encodings, QUOTED for the reservation rules, and the division is not a convenience -- it is the boundary of the whole concept.
+
+  x86-64 has a compare-and-swap. `cmpxchg` with a `lock` prefix is ONE instruction and it either swaps or does not, and a loop around it is a performance habit rather than a requirement. RISC-V HAS NO
+  COMPARE-AND-SWAP IN THE BASE A EXTENSION AT ALL. WHAT IT HAS IS TWO INSTRUCTIONS THAT MUST BE USED IN PAIRS AND THAT REPORT FAILURE IN A REGISTER, AND A PAIR THAT REPORTS FAILURE TO A CALLER WHO
+  MUST BRANCH IS NOT A PAIR, IT IS A LOOP.
+
+  So the retry is not syntax around the instruction. THE RETRY IS NOT SYNTAX AROUND THE INSTRUCTION -- IT IS WHAT THE INSTRUCTION IS, AND THERE IS NO ONE-INSTRUCTION FORM OF COMPARE-AND-SWAP FOR IT TO
+  BE SYNTAX AROUND.
+
+
+  THE TWO HALVES, as the assembler spells them and as the bits read
+  them.  `lr` is funct5 = 0b00010 with rs2 FORCED TO ZERO; `sc` is
+  funct5 = 0b00011 with a real rs2.
+
+  assembled  word        funct5  rs2  rs1  rd  funct3
+  lr.w       0x1005a52f  00010   0    11   10  2     
+  lr.d       0x1005b52f  00010   0    11   10  3     
+  sc.w       0x18b6252f  00011   11   12   10  2     
+  sc.d       0x18b6352f  00011   11   12   10  3     
+
+  rs2 = 0 ON EVERY lr AND rs2 = 11 ON EVERY sc, AND THAT IS
+  NOT A CONVENTION: A DECODER THAT DOES NOT CHECK IT WILL NAME
+  `lr.w` WITH A NON-ZERO rs2, WHICH IS A WORD THE ARCHITECTURE DOES
+  NOT DEFINE.  AN rs2 FIELD THAT IS ALWAYS ZERO IN ONE INSTRUCTION
+  AND ALWAYS MEANINGFUL IN THE NEXT IS NOT AN UNUSED FIELD, IT IS A
+  CONSTRAINT THE ENCODER ENFORCES AND THE DECODER MUST CHECK.
+
+  AND THE ASSEMBLER ENFORCES IT, which is a measurement and not a
+  quotation:
+
+  the instruction asked for  result   what it is testing                 the assembler's own words                     
+  lr.w a0, a1, (a2)          REFUSED  lr with a THIRD operand            expected '(' or optional integer offset       
+  lr.d a0, a1, (a2)          REFUSED  the same at the other width        expected '(' or optional integer offset       
+  sc.w a0, (a1)              REFUSED  sc with only TWO operands          invalid operand for instruction               
+  amoadd.w a0, (a1)          REFUSED  an AMO with only TWO operands      invalid operand for instruction               
+  lr.w.t a0, (a1)            REFUSED  a MASKED lr, which does not exist  unrecognized instruction mnemonic, did you mea
+  sc.w.t a0, a1, (a2)        REFUSED  a MASKED sc, which does not exist  unrecognized instruction mnemonic, did you mea
+  amoadd.b a0, a1, (a2)      REFUSED  a BYTE AMO, which is Zabha         instruction requires the following: 'Zabha' (B
+
+  `lr.w` WITH A THIRD OPERAND IS REFUSED WITH "EXPECTED '(' OR
+  OPTIONAL INTEGER OFFSET" -- WHICH IS THE ASSEMBLER SAYING THE
+  INSTRUCTION HAS NO rs2 TO GIVE, NOT THAT THE SYNTAX IS WRONG.  
+  A REFUSAL IS THE CHEAPEST PROOF THAT A CONSTRAINT IS REAL, AND THIS
+  ONE IS ALSO A REMINDER THAT A DIAGNOSTIC ABOUT SPELLING CAN BE
+  A DIAGNOSTIC ABOUT SEMANTICS.
+
+  AND `amoadd.b` IS REFUSED WITH "INSTRUCTION REQUIRES THE FOLLOWING:
+  'Zabha'" -- so the byte-width AMO is not missing from RISC-V, it
+  is in a DIFFERENT EXTENSION, and the assembler names the extension
+  rather than saying the instruction does not exist.  THE
+  DIAGNOSTIC NAMES THE LETTER THAT WOULD MAKE IT WORK, WHICH IS A
+  BETTER ERROR THAN "UNKNOWN INSTRUCTION" AND A REMINDER THAT THE
+  ISA IS A SET OF DOCUMENTS.
+
+  THE LOOP, MEASURED.  `amo_cas_loop` in amo.c is a hand-written
+  `do { } while` around a C11 compare-exchange, and this is what
+  clang 21.1.8 emits for it at -march=rv64ima -O2.
+
+  word        mnemonic   operands                     bytes
+  0x0005869b  sext.w     a3, a1                       4    
+  0x160525af  lr.w.aqrl  a1, (a0)                     4    
+  0xfed59ce3  bne        a1, a3, 0x40 <amo_cas_loop>  4    
+  0x1ac5272f  sc.w.rl    a4, a2, (a0)                 4    
+  0xfe071ae3  bnez       a4, 0x44 <amo_cas_loop+0x4>  4    
+  0x00068513  mv         a0, a3                       4    
+  0x00008067  ret                                     4    
+
+  7 instructions: 1 lr, 1 sc, 2 branches, and the rest is the
+  comparison of the loaded value against the expected one.
+
+  THE LOOP IS IN THE OUTPUT.  There is no library call and no
+  function boundary: the four instructions that implement one attempt
+  are the four instructions the source asked for, and the BRANCH
+  AFTER THE `sc` IS THE RETRY.  THE COMPILER DID NOT CHOOSE A
+  COMPARE-AND-SWAP BECAUSE THERE IS NOT ONE TO CHOOSE.  THERE IS NO
+  `cmpxchg` IN THE BASE A EXTENSION, SO THE ONLY WAY TO EXPRESS
+  COMPARE-AND-SWAP IS TO WRITE THE LOOP -- AND THAT IS A DIFFERENT
+  KIND OF DIFFERENCE FROM x86-64, WHERE THE COMPILER HAS A
+  COMPARE-AND-SWAP AND CHOOSES ACCORDING TO COST.
+
+  AND THE `.aqrl` ON THE lr AND THE `.rl` ON THE sc ARE NOT A
+  TYPO.  MEASURED: the two halves of a sequentially consistent pair
+  do NOT both get both bits, and that asymmetry is the whole of the
+  model --
+
+    0x160525af  lr.w.aqrl    aq=1 rl=1
+    0x1ac5272f  sc.w.rl      aq=0 rl=1
+
+  THE ACQUIRE BIT GOES ON THE LOAD AND THE RELEASE BIT GOES ON
+  THE STORE, AND NOT THE OTHER WAY ROUND, AND THE MANUAL SAYS WHY:
+
+    rv32-unpriv, chapter 12, section 12.1.2:
+      "...software should not set the rl bit on an LR instruction
+       unless the aq bit is also set, nor should software set the aq
+       bit on an SC instruction unless the rl bit is also set.  LR.rl
+       and SC.aq..."
+
+  So `lr.w.aqrl` and `sc.w.rl` is the CORRECT spelling of a
+  sequentially consistent pair and the compiler got it right, and
+  the reason it matters is that the two-bit field admits four
+  combinations and only three of the four are meaningful on each
+  instruction.  A TWO-BIT FIELD WITH FOUR VALUES AND THREE OF
+  THEM VALID ON HALF THE INSTRUCTIONS IS A FIELD WHOSE VALIDITY
+  DEPENDS ON A NEIGHBOUR FIELD, AND A DECODER THAT READS IT WITHOUT
+  READING WHICH INSTRUCTION IT IS ON WILL NAME FOUR THINGS THAT
+  ARE TWO.
+
+  THE `__sync` SPELLING, for contrast, because it costs the compiler
+  MORE and the reason is a signature difference rather than a
+  hardware difference:
+
+  word        mnemonic   operands                      bytes
+  0x160526af  lr.w.aqrl  a3, (a0)                      4    
+  0xfeb69ee3  bne        a3, a1, 0x5c <sync_cas_loop>  4    
+  0x1ac5272f  sc.w.rl    a4, a2, (a0)                  4    
+  0xfe071ae3  bnez       a4, 0x5c <sync_cas_loop>      4    
+  0x00100513  li         a0, 0x1                       4    
+  0x00008067  ret                                      4    
+
+  6 instructions, 1 lr and 1 sc -- so 1 ATTEMPTS are spelled out
+  where the __atomic spelling needed one.  THE REASON IS THAT
+  __sync_bool_compare_and_swap TAKES NO EXPECTED-OUT POINTER: the
+  compiler cannot learn the memory word's value from a failed
+  attempt, so it RELOADS it and compares again.  SAME
+  HARDWARE, SAME INSTRUCTION PAIR, TWO INSTRUCTIONS PER ATTEMPT
+  AGAINST ONE, AND THE DIFFERENCE IS ENTIRELY IN THE CALLING
+  CONVENTION OF THE SOURCE LANGUAGE.
+
+  THE RESERVATION ITSELF IS QUOTED, and this is the honest boundary
+  of the whole concept:
+
+    rv32-unpriv, chapter 12, section 12.1.2, on what SC must do:
+      "The SC must fail if the address is not within the reservation
+       set of the most recent LR in program order.  The SC must fail
+       if a store to the reservation set from another hart can be
+       observed to occur between the LR and SC."
+
+    and on what may sit between them:
+      "The invalidation of a hart's reservation when it executes an
+       LR or SC imply that a hart can only hold ONE RESERVATION AT A
+       TIME, and that an SC can only pair with the most recent LR,"
+       and LR with the next following SC, in program order."
+
+    and on the guarantee that makes the loop TERMINATE rather than spin,
+    which is the question a reader of a retry loop asks next.  The
+    manual's eventuality guarantee (rv32-unpriv, chapter 12, section
+    12.1.3) is PARAPHRASED here rather than quoted, because the
+    sentence is long and the part that matters is short: a CONSTRAINED
+    sequence of LR/SC pairs -- constrained to the pair, with nothing
+    else between the two halves -- must eventually make progress.
+
+  AND THAT LAST CLAUSE IS THE WHOLE CALLING-CONVENTION ARGUMENT,
+  BECAUSE THE CONSTRAINT IS WHAT THE CONVENTION HAS TO PROTECT: a call,
+  a second `lr`, or anything else between the halves is what turns a
+  GUARANTEED-TO-PROGRESS LOOP INTO AN UNBOUNDED ONE.  THE PROGRESS
+  GUARANTEE IS QUOTED HERE AND NOT MEASURED, BECAUSE IT IS A STATEMENT
+  ABOUT WHAT AN IMPLEMENTATION MUST DO, AND NO IMPLEMENTATION ON THIS
+  HOST HAS BEEN ASKED.
+  ONE RESERVATION PER HART. THAT IS THE RULE THAT MAKES THE LOOP COST SOMETHING AND IT IS NOT IN THE ENCODING: `lr` does not name a reservation and `sc` does not name one either, and two `lr`
+  instructions in one function INVALIDATE EACH OTHER, so the compiler must not keep a value in a register across an `lr` -- because keeping it in a register is not what invalidates it, but CALLING A
+  FUNCTION is, and a function call in the middle of a pair kills the reservation.
+
+  AND THAT IS A DIFFERENT CONSTRAINT FROM x86-64'S, WHERE THE LOCK IS HELD FOR THE DURATION OF ONE INSTRUCTION AND A SEQUENCE LOCK NEEDS AN EXPLICIT DANCE. HERE THE RESERVATION SPANS INSTRUCTIONS, SO
+  ANYTHING THAT CAN INTERRUPT OR CALL IS A HAZARD, AND THE MANUAL SAYS THE MITIGATION OUT LOUD: "A store-conditional instruction to a SCRATCH WORD of memory should be used to forcibly invalidate any
+  existing load reservation: during a preemptive context switch, and if necessary when changing virtual to physical address mappings."
+
+  MEASURED, AND THIS IS THE LINE THE COURSE WILL NOT CROSS: none of the rules above has been OBSERVED, because no reservation is ever held on this host. There is no hart here to hold one, no other
+  hart to invalidate it, and no scheduler to preempt the thread between the two halves. What is measured is that clang emits an `lr.w.aqrl` and an `sc.w.rl` with a branch between them, which is a fact
+  about a compiler and not a fact about an atomic.
+
+
+==========================================================================
+SECTION 6 -- THE COMPILER'S DECISION -- ONE LETTER, TWO DIFFERENT ANSWERS
+==========================================================================
+
+  MEASURED, and it is the course's central experiment because it needs no timing at all.
+
+  The same C11 source, compiled twice. The ONLY difference is the letter `a` in -march. AND THE WHOLE DIFFERENCE IN THE OUTPUT IS VISIBLE IN A DISASSEMBLY, WITH NO EXECUTION AND NO CYCLE COUNT
+  ANYWHERE.
+
+  This is the measurement that makes "atomics are the compiler's choice" mean something. A reader can see, without a benchmark, that with the extension the compiler INLINES a four-instruction retry
+  loop and without it the compiler CALLS A LIBRARY FUNCTION -- and that the library function is named `__atomic_compare_exchange_4`, which is itself the clearest possible statement of the width story:
+  the name has a 4 in it because the width is a template parameter in the fallback path and a bit in the hardware path.
+
+  THAT IS THE SAME WIDTH STORY AS SECTION 3 ARRIVING FROM THE OTHER DIRECTION. ONE BIT AT inst[12] WHEN THE EXTENSION IS PRESENT, AND A TEMPLATE PARAMETER IN A SYMBOL NAME WHEN IT IS NOT.
+
+
+  WITH the A extension  (-march=rv64ima)
+
+  function               instr  lr  sc  amo*  call  fence
+  amo_cas_loop           7      1   1   0     0     0    
+  amo_exchange_relaxed   2      0   0   1     0     0    
+  amo_exchange_seqcst    2      0   0   1     0     0    
+  amo_fetch_add_relaxed  2      0   0   1     0     0    
+  amo_fetch_add_seqcst   2      0   0   1     0     0    
+  amo_load_acquire       3      0   0   0     0     1    
+  amo_or_relaxed         2      0   0   1     0     0    
+  amo_store_release      3      0   0   0     0     1    
+  sync_cas_loop          6      1   1   0     0     0    
+
+    TOTAL 29 instructions: 2 lr, 2 sc, 5 amo*, 0 CALLS.
+
+  WITHOUT it          (-march=rv64im) 
+
+  function               instr  lr  sc  amo*  call  fence
+  amo_cas_loop           25     0   0   0     1     0    
+  amo_exchange_relaxed   9      0   0   0     1     0    
+  amo_exchange_seqcst    9      0   0   0     1     0    
+  amo_fetch_add_relaxed  9      0   0   0     1     0    
+  amo_fetch_add_seqcst   9      0   0   0     1     0    
+  amo_load_acquire       9      0   0   0     1     0    
+  amo_or_relaxed         9      0   0   0     1     0    
+  amo_store_release      8      0   0   0     1     0    
+  sync_cas_loop          24     0   0   0     1     0    
+
+    TOTAL 111 instructions: 0 lr, 0 sc, 0 amo*, 9 CALLS.
+
+  THE CALL COLUMN IS COUNTED FROM THE RELOCATION TABLE, NOT FROM A
+  MNEMONIC, AND THE DIFFERENCE MATTERS: a call in a RELOCATABLE RISC-V
+  OBJECT IS AN `auipc`/`jalr` PAIR WHOSE TARGET IS NAMED IN A
+  RELOCATION, so there is no `call` pseudo-instruction to count and the
+  first version of this table printed ZERO CALLS FOR BOTH BUILDS while
+  the sentence under it said every atomic without the letter is a call.
+  A TABLE THAT SAYS ZERO BESIDE A SENTENCE SAYING "EVERY ONE" IS A
+  TABLE THAT HAS MEASURED THE WRONG INSTRUCTION, AND IT IS THE MOST
+  DANGEROUS KIND OF WRONG BECAUSE THE SENTENCE IS CORRECT.
+
+  AND THE CALLERS ARE NAMED, because the width is in the NAME and that
+  is the same width story the encoding tells:
+
+    __atomic_compare_exchange_4
+    __atomic_exchange_4
+    __atomic_fetch_add_4
+    __atomic_fetch_or_4
+    __atomic_load_4
+    __atomic_store_4
+
+  THE SAME TABLE, AS A DIFFERENCE, because the interesting number is
+  not either column:
+
+  function               instr with -> without  delta  atomic instr with  atomic instr OR call without  inlined only with a
+  amo_cas_loop           7 -> 25                +18    2                  1                                                
+  amo_exchange_relaxed   2 -> 9                 +7     1                  1                                                
+  amo_exchange_seqcst    2 -> 9                 +7     1                  1                                                
+  amo_fetch_add_relaxed  2 -> 9                 +7     1                  1                                                
+  amo_fetch_add_seqcst   2 -> 9                 +7     1                  1                                                
+  amo_load_acquire       3 -> 9                 +6     0                  1                             yes                
+  amo_or_relaxed         2 -> 9                 +7     1                  1                                                
+  amo_store_release      3 -> 8                 +5     0                  1                             yes                
+  sync_cas_loop          6 -> 24                +18    2                  1                                                
+
+  MEASURED: without the letter, every C11 atomic in the file is
+  a CALL; with it, none is.  THE COMPILER DOES NOT "PREFER" ONE
+  FORM.  IT HAS ONE FORM AND THE FORM IS A FUNCTION OF THE -march
+  STRING.  THAT IS THE PAYLOAD OF THE WHOLE A EXTENSION AS A
+  COMPILER INTERFACE: THE INSTRUCTION IS NOT A BETTER WAY TO DO IT,
+  IT IS THE ONLY WAY TO DO IT WITHOUT A CALL, AND WHETHER THE CALL
+  HAPPENS IS DECIDED BEFORE THE COMPILER LOOKS AT YOUR CODE.
+
+  AND THE ROW THAT IS WORTH READING TWICE IS `amo_exchange_seqcst`,
+  which is ONE instruction when the extension is there:
+
+    0x0eb5252f  amoswap.w.aqrl     aq=1 rl=1
+    0x00008067  ret                aq=0 rl=0
+
+  `amoswap.w.aqrl` -- FOUR BYTES, no prefix, no branch, no loop.
+  AND THE HARDCODED CLAIM THIS COURSE WAS WRITTEN AGAINST WAS
+  THAT THE COMPILER WOULD EMIT `amoswap.w` "INSTEAD OF A HAND-ROLLED
+  COMPARE-EXCHANGE".  IT DOES NOT, BECAUSE THE HAND-ROLLED
+  COMPARE-EXCHANGE IS NOT AN ALTERNATIVE TO BE TRADED AWAY -- IT IS
+  THE ONLY WAY TO EXPRESS COMPARE-AND-SWAP, AND `amoswap` IS A
+  DIFFERENT OPERATION THAT DOES NOT COMPARE.  THE COMPILER EMITS THE
+  ONE INSTRUCTION FOR THE ONE-INSTRUCTION OPERATION AND THE LOOP FOR
+  THE LOOP-REQUIRING ONE, AND THE CORRECTION IS PRINTED BESIDE THE
+  ORIGINAL CLAIM rather than quietly dropped.
+
+  THE `-march` SWEEP, so "the extension is one letter" is a TABLE.
+  AND THE ISA STRING IS PRINTED BESIDE IT, because the string
+  is what a build system records and a reader checking the record
+  will read the string first.
+
+  -march     atomic instructions  library calls  the ISA string                                                                                  
+  rv64i      0                    9              rv64i2p1                                                                                        
+  rv64im     0                    9              rv64i2p1_m2p0_zmmul1p0                                                                          
+  rv64ima    9                    0              rv64i2p1_m2p0_a2p1_zmmul1p0_zaamo1p0_zalrsc1p0                                                  
+  rv64imac   9                    0              rv64i2p1_m2p0_a2p1_c2p0_zmmul1p0_zaamo1p0_zalrsc1p0_zca1p0                                      
+  rv64imafd  9                    0              rv64i2p1_m2p0_a2p1_f2p2_d2p2_zicsr2p0_zmmul1p0_zaamo1p0_zalrsc1p0                               
+  rv64gc     9                    0              rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0_zca1p0_zcd1p0
+
+  `rv64im` HAS ZERO ATOMIC INSTRUCTIONS AND `rv64ima` HAS 9,
+  AND THE ISA STRING RECORDS IT CORRECTLY IN BOTH CASES, WHICH IS
+  THE OPPOSITE OF THE FINDING IN THE PREVIOUS COURSE.  THE
+  PREVIOUS COURSE SHOWED THAT THE ARCHITECTURE STRING DOES NOT NOTICE
+  WHEN YOU USE Zicsr WITHOUT ASKING FOR IT; HERE IT NOTICES THE A
+  EXTENSION PERFECTLY, BECAUSE `a` IS A LETTER IN THE REQUEST AND
+  ZICSR IS NOT.  THE STRING RECORDS THE REQUEST, AND WHERE A
+  FEATURE CAN BE USED WITHOUT BEING NAMED, THE STRING IS A RECORD OF
+  INTENT RATHER THAN OF CONTENT -- AND A READER WHO KNOWS WHICH OF
+  THE TWO THEY ARE LOOKING AT KNOWS WHAT IT CAN TRUST.
+
+  AND `rv64imac` VERSUS `rv64imafd` is the compression confound from
+  the sibling ABI course, kept here deliberately so the table shows
+  what a confounded pair looks like: the atomic count is IDENTICAL
+  across both, so this pair is CLEAN on the subject being measured, and
+  the ABI course's pair was not.
+
+  THE CONFINEMENT OF THE COMPARISON, which is limit 13 in the artifact's
+  own words and is worth repeating here because the table is easy to
+  over-read: rv64im is the BASE for this experiment and
+  `rv64ima` is the base plus ONE letter, so the difference table carries
+  exactly one variable.  The four rows above it are NOT the experiment --
+  `rv64i` is included to show that even a bare base emits no atomic and
+  no call, and `rv64imac` and `rv64imafd` are there to show that adding
+  `c` and then `f`/`d` adds nothing to the count.  THE POLICY FOR
+  THE FOUR-SYMBOL COMPARISON IS THAT A ROW IS A MEASUREMENT IF IT DIFFERS
+  BY ONE LETTER OR SOMETHING ELSE, AND BY ONE LETTER IS THE ONLY VERSION
+  OF THAT SENTENCE THAT MEANS ANYTHING.  A DIRTY ROW IS KEPT AND
+  LABELLED RATHER THAN DELETED, BECAUSE A TABLE WITH NO CONFOUNDED ROWS IN
+  IT IS A TABLE NOBODY HAS LOOKED FOR THEM IN.
+
+==========================================================================
+SECTION 7 -- fence -- FOUR FIELDS, FIFTEEN SPELLINGS, ONE DEFINITION
+==========================================================================
+
+  THIS IS THE SECTION THE COURSE IS ABOUT, and the finding is not a number but a SHAPE: RISC-V's memory ordering model is not a baseline that barriers override, and it is not a set of access modes. It
+  is DEFINED as a relation between two four-bit SETS inside one instruction.
+
+  * x86-64 gives you total store order and lets a barrier do more.  The
+    baseline is the common case and the exceptions are opt-in.
+  * AArch64 gives every access a MODE -- `ldr`, `ldar`, `stlr` -- so the
+    ordering is a property of each access and `dmb` is the coarse barrier.
+  * RISC-V gives you a RELAXED baseline, two bits per atomic, and ONE
+    instruction whose entire content is "these operations, relative to those".
+
+  THE THREE ARE NOT THREE DEGREES OF THE SAME IDEA. A baseline-and- escape model is a claim about what happens when you do nothing; an access-mode model is a claim about what each instruction means;
+  and a predecessor/successor model is a claim about a RELATION BETWEEN TWO SETS. The third is the only one in which the fence is the primitive rather than the escape hatch, and IT IS A DIFFERENCE OF
+  FORM: a reader who knows what one fence does on RISC-V can predict what every other ordering operation does, because every other one of them is a fence with a part removed. There is no such
+  reduction available in the other two directions, and that asymmetry is the whole point.
+
+
+
+  THE FOUR FIELDS, read out of every fence in the corpus.  The word
+  comes FIRST and the full spelling second, because the spelling is
+  what the encoding implies and the word is what came back.
+
+  word        the spelling      fm      pred       succ       rs1  rd  funct3  the assembler printed
+  0x0ff0000f  fence iorw, iorw  0b0000  iorw = 15  iorw = 15  0    0   0                            
+  0x0ff0000f  fence iorw, iorw  0b0000  iorw = 15  iorw = 15  0    0   0                            
+  0x0220000f  fence r, r        0b0000  r = 2      r = 2      0    0   0       r, r                 
+  0x0110000f  fence w, w        0b0000  w = 1      w = 1      0    0   0       w, w                 
+  0x0330000f  fence rw, rw      0b0000  rw = 3     rw = 3     0    0   0       rw, rw               
+  0x0230000f  fence r, rw       0b0000  r = 2      rw = 3     0    0   0       r, rw                
+  0x0320000f  fence rw, r       0b0000  rw = 3     r = 2      0    0   0       rw, r                
+  0x0120000f  fence w, r        0b0000  w = 1      r = 2      0    0   0       w, r                 
+  0x0210000f  fence r, w        0b0000  r = 2      w = 1      0    0   0       r, w                 
+  0x0130000f  fence w, rw       0b0000  w = 1      rw = 3     0    0   0       w, rw                
+  0x0310000f  fence rw, w       0b0000  rw = 3     w = 1      0    0   0       rw, w                
+  0x0f20000f  fence iorw, r     0b0000  iorw = 15  r = 2      0    0   0       iorw, r              
+  0x02f0000f  fence r, iorw     0b0000  r = 2      iorw = 15  0    0   0       r, iorw              
+  0x0f10000f  fence iorw, w     0b0000  iorw = 15  w = 1      0    0   0       iorw, w              
+  0x01f0000f  fence w, iorw     0b0000  w = 1      iorw = 15  0    0   0       w, iorw              
+  0x0880000f  fence i, i        0b0000  i = 8      i = 8      0    0   0       i, i                 
+
+  ... 23 more rows, of which the two non-fence ones are printed below.
+
+  THE TWO WORDS THAT SHARE THE OPCODE AND ARE NOT ORDERING FENCES:
+
+    0x0000100f  fence.i    funct3 = 1, so fm/pred/succ are RESERVED
+    0x8330000f  fence.tso  fm = 1000, pred = RW, succ = RW
+              and the fm field is the ONLY difference from
+              `fence rw, rw`, which is 0x0330000f
+
+  EVERY ONE OF THOSE WORDS HAS rs1 = 0 AND rd = 0, AND THAT IS
+  NOT A COINCIDENCE: the manual reserves both fields for finer-grain
+  fences in future extensions, says base implementations SHALL ignore
+  them, and says standard software SHALL ZERO them.  TWO
+  RESERVED FIELDS IN AN INSTRUCTION WHOSE OTHER TWO FIELDS CARRY THE
+  WHOLE MODEL IS THE TELL THAT THE ENCODING WAS DESIGNED FOR A
+  FUTURE NOBODY HAS BUILT YET.
+
+  THE FIFTEEN SPELLINGS, because "the sets are NAMED and not
+  arbitrary" is a claim about the ASSEMBLER and this measures it.
+
+  bits    value  the name  an instruction the assembler emitted
+  0b0001  1      w         fence                               
+  0b0010  2      r         fence                               
+  0b0011  3      rw        fence                               
+  0b0100  4      o         fence                               
+  0b0101  5      ow        fence                               
+  0b0110  6      or        fence                               
+  0b0111  7      orw       fence                               
+  0b1000  8      i         fence                               
+  0b1001  9      iw        fence                               
+  0b1010  10     ir        fence                               
+  0b1011  11     irw       fence                               
+  0b1100  12     io        fence                               
+  0b1101  13     iow       fence                               
+  0b1110  14     ior       fence                               
+  0b1111  15     iorw      fence                               
+
+  15 distinct predecessor codes reached, of the 16 the field can hold.
+
+  AND THE SIXTEENTH IS THE EMPTY SET, WHICH THE ASSEMBLER WILL
+  NOT SPELL AT ALL -- `fence` with an empty operand list is REFUSED
+  with "too few operands for instruction".  SO THE FIELD HAS SIXTEEN
+  VALUES, FIFTEEN OF THEM HAVE NAMES, AND ONE OF THEM IS NOT
+  REACHABLE BY NAME.  THAT IS WHY THE TABLE HAS A ROW PRINTED AS A
+  HOLE RATHER THAN A GAP: a reader who has not seen the sixteenth
+  value cannot know whether it is reserved or merely unused, and
+  those are different things to a decoder.
+
+  AND THE FOUR LETTERS ARE NOT INTERCHANGEABLE, which is the part
+  that makes the sets a SET and not a mask: `i` is device input and
+  `o` is device output and `r` is a memory read and `w` is a memory
+  write, and the manual separates the two DOMAINS deliberately --
+
+    rv32-unpriv, chapter 2.7:
+      "The address space is divided by the execution environment
+       into memory and I/O domains, and the FENCE instruction
+       provides options to order accesses to one or both of these
+       two address domains."
+
+  SO `fence r, w` AND `fence io, io` ARE NOT TWO SPELLINGS OF
+  ONE THING WITH DIFFERENT AMOUNTS OF IT.  THEY ORDER DIFFERENT
+  DOMAINS.  A FOUR-BIT FIELD WHOSE FOUR BITS ARE TWO PAIRS
+  FROM TWO INDEPENDENT AXES IS NOT A FOUR-STATE ENUMERATION, IT IS
+  TWO TWO-STATE ENUMERATIONS, AND A DECODER THAT TREATS IT AS ONE
+  WILL EVENTUALLY HAVE TO SAY "iorw" WHEN IT MEANS "both domains,
+  everything".
+
+  35 ordering fences at fm = 0000, 2 fence.tso at fm = 1000, and 2 fence.i at funct3 = 1.  THREE INSTRUCTIONS, ONE OPCODE,
+  AND THE ORDERING IS BY funct3 AND BY fm -- so a decoder that
+  dispatches on the opcode ALONE gets the wrong one of the three, and
+  this course's `m_fence_sets` exists because the inherited decoder
+  names two of them correctly for the wrong reason.
+  2 fence.i at funct3 = 1.  THREE INSTRUCTIONS, ONE OPCODE,
+  AND THE ORDERING IS BY funct3 AND BY fm -- so a decoder that
+  dispatches on the opcode ALONE gets the wrong one of the three, and
+  this course's `m_fence_sets` exists because the inherited decoder
+  names two of them correctly for the wrong reason.
+
+  AND WHAT THE COMPILER CHOSE, because the model being definitional
+  is a fact about the ISA and the model being USED is a fact about
+  clang 21.1.8, and a course that conflates them is making a claim
+  about one from evidence for the other.
+
+  function         instr  fences  what it emitted              
+  .Lpcrel_hi0      3      0       NONE                         
+  fence_acqrel     2      1       fence.tso (bare)             
+  fence_acquire    2      1       fence (r, rw)                
+  fence_consume    2      1       fence (r, rw)                
+  fence_relaxed    1      0       NONE                         
+  fence_release    2      1       fence (rw, w)                
+  fence_seqcst     2      1       fence (rw, rw)               
+  load_acquire     3      1       fence (r, rw)                
+  load_consume     3      1       fence (r, rw)                
+  load_relaxed     2      0       NONE                         
+  load_seqcst      4      2       fence (rw, rw); fence (r, rw)
+  observe          4      1       fence (r, rw)                
+  publish          1      1       fence (rw, w)                
+  rmw_acqrel       2      0       NONE                         
+  rmw_acquire      2      0       NONE                         
+  rmw_release      2      0       NONE                         
+  rmw_seqcst       2      0       NONE                         
+  store_relaxed    2      0       NONE                         
+  store_release    3      1       fence (rw, w)                
+  store_seqcst     4      2       fence (rw, w); fence (rw, rw)
+  sync_full_fence  2      1       fence (rw, rw)               
+
+  8 of the 21 functions emitted NO fence at all.
+
+  AND THE THREE C11 FENCE STRENGTHS, which is where a compiler stops
+  choosing and starts TRANSLATING.  The table above says what each
+  function emitted; the mapping that produced those words is this,
+  and it is worth printing in its own right because the fence it asks
+  for is not always the fence whose spelling matches its name:
+
+    __ATOMIC_CONSUME  -> fence r, rw      the same four bits as acquire
+    __ATOMIC_ACQUIRE  -> fence r, rw
+    __ATOMIC_RELEASE  -> fence rw, w
+    __ATOMIC_ACQ_REL  -> fence.tso        a DIFFERENT INSTRUCTION, fm = 1000
+    __ATOMIC_SEQ_CST  -> fence rw, rw
+    __ATOMIC_RELAXED  -> no instruction at all
+
+  CONSUME AND ACQUIRE ARE THE SAME FOUR BITS, so the C11
+  distinction between them is not representable in this encoding and
+  the compiler does not pretend otherwise -- it emits one word for
+  both.  ACQ_REL EMITS fence.tso AND SEQ_CST EMITS fence rw, rw,
+  and the FIRST of those is the one a reader is least likely to expect:
+  an acquire-release fence, whose spelling names a barrier, compiles
+  to an instruction that is not `fence` at all.  THE THREE
+  FORMULATIONS ARE A DIFFERENCE OF FORM AND NOT OF DEGREE, AND THE
+  PROOF IS THAT ONE OF THEM HAS A DIFFERENT MNEMONIC.
+  `fence_relaxed` IS A BARE `ret`.  A RELAXED FENCE IS NOT A
+  NO-OP INSTRUCTION, IT IS THE ABSENCE OF ONE, AND A FUNCTION THAT
+  CONSISTS OF A SINGLE RETURN IS A CORRECT COMPILATION OF A FUNCTION
+  THAT ASKS FOR NOTHING.  THAT IS ALSO THE FIRST PLACE IN THIS
+  COURSE WHERE A COMPILER REMOVED SOMETHING BY BEING CORRECT, AND IT
+  IS WORTH NAMING BECAUSE THE PREVIOUS COURSE MEASURED DEAD-CODE
+  ELIMINATION AT -O1 AND RETRACTED IT FOR CALLING IT A CONVENTION.
+  Here the elision IS the answer: relaxed means no ordering, and the
+  encoding for "no ordering" is no instruction.
+
+  AND THE ROW THAT IS THE CROSS-ARCHITECTURE PAYOFF IS
+  `load_acquire` AGAINST `load_seqcst`.  AN ACQUIRE LOAD AND A
+  SEQUENTIALLY CONSISTENT LOAD ARE THE SAME `lw` -- four bytes, one
+  opcode, byte-for-byte -- MEASURED, and the difference is discharged
+  by a FENCE beside it.
+  ON AArch64 THE SAME TWO C11 OPERATIONS ARE `ldar` AND `ldar`,
+  i.e. THE SAME INSTRUCTION, and on x86-64 they are both a plain
+  `mov` and the difference is a `mfence` or nothing at all.  
+  RISC-V PUTS THE ORDERING IN A SEPARATE INSTRUCTION BECAUSE ITS
+  MODEL SAYS ORDERING IS A RELATION BETWEEN TWO SETS AND NOT A
+  PROPERTY OF AN ACCESS -- SO A SEQ_CST LOAD IS AN ACQUIRE LOAD AND
+  SOMETHING ELSE, RATHER THAN A DIFFERENT ACCESS WITH A DIFFERENT
+  NAME.
+
+  AND MEASURED, THE SOMETHING ELSE IS A SECOND FENCE:
+  `load_seqcst` emits `fence rw, rw` before the load and `fence r, rw`
+  after it, so TWO fences for ONE load, and the section table above
+  says why: the extra constraint a seq_cst load carries is on its
+  relation to OTHER operations, and it is discharged by ordering the
+  neighbours rather than by changing the load.  THIS IS THE
+  WHOLE ARGUMENT IN TWO SENTENCES: A LOOP THAT HAS TO BE SPELLED OUT
+  BY HAND IS THE PRICE OF A MODEL WHOSE UNIT OF ORDERING IS AN
+  INSTRUCTION, AND THE PRICE IS PAID IN WORDS ONCE PER SITE.
+
+==========================================================================
+SECTION 8 -- vsetvli AND THE FOUR FIELDS IT CARRIES
+==========================================================================
+
+  MEASURED-ON-BYTES, and the finding is the course's sharpest encoding result: ONE FIXED 32-BIT INSTRUCTION DESCRIBES A VECTOR AND THE LENGTH IS NOT IN THIS INSTRUCTION AT ALL.
+
+  That sounds like a defect and it is the design. `vsetvli` carries FOUR things -- the element width (SEW), the register-group multiplier (LMUL), and the two agnostic/undisturbed policies for the tail
+  and the mask -- and it carries a FIFTH thing that is not a field but an ABSENCE: the length. The requested length is AVL, it arrives in inst[19:15], and the length that comes out lives in a CSR
+  called `vl` that the instruction does not contain.
+
+  SO THE INSTRUCTION IS A DESCRIPTION AND NOT A VALUE: it says what KIND of vector to use, and the machine says how many elements that is. That is how one encoding serves a machine with 128-bit
+  vectors and a machine with 1024-bit vectors -- there is nothing in the word to disagree about.
+
+
+  THE 112 VARIANTS, SWEPT, AND THEN FIVE MORE.  Four element widths x
+  seven register-group multipliers x two tail policies x two mask
+  policies is 112, with rs1 and rd held constant; the corpus adds five
+  AVL forms and three partial-policy forms on top, and the two groups
+  are COUNTED SEPARATELY because only the first is a sweep.
+
+  120 vsetvli instructions, 112 DISTINCT zimm values.
+  THE MAP IS A BIJECTION OVER WHAT THE ASSEMBLER WILL EMIT --
+  EXCEPT FOR 8, AND THE EXCEPTION IS THE POINT.  120 instructions, 112
+  DISTINCT VALUES, so 8 instructions SHARE a value with another.  
+  EVERY ONE OF THEM IS A PARTIAL-POLICY FORM: `vsetvli t0, a1, e32, m1`
+  AND `vsetvli t0, a1, e32, m1, ta` AND `vsetvli t0, a1, e8, m8, tu`
+  ARE NOT THREE NEW CONFIGURATIONS.  THEY ARE THE SAME WORDS AS
+  THEIR FULLY-SPELLED SIBLINGS, WITH THE MISSING FLAGS DEFAULTED --
+  TO `tu, mu`, WHICH IS ALREADY IN THE SWEEP.  A BIJECTION OVER A
+  FIELD IS ONLY TRUE OF THE VALUES THE INSTRUCTION CAN CARRY, AND A
+  SYNTAX THAT ADDS SPELLINGS DOES NOT ADD VALUES.
+
+  So the whole reachable vtype space of the assembler is 2^6 = 64
+  values and the ELEVEN-BIT FIELD IS NOT TIGHT: three of its bits never
+  move and two more are only reachable through the register forms of
+  the instruction rather than through an immediate.  That is not waste
+  -- the reserved bits are what a future extension is entitled to
+  spend without moving a bit anyone already uses -- but it is worth
+  knowing that a decoder written from the field width alone would
+  carry eight impossible cases.
+
+  THE FOUR FIELDS, EACH ISOLATED BY AN XOR.  One variant is the
+  base and each row changes exactly one thing.
+
+  the variant      zimm[10:0]   XOR against e8/m1/tu/mu  bits moved  which                 
+  e8, m1, tu, mu   00000000000  0x00000000               0                                 
+  e16, m1, tu, mu  00000001000  0x00800000               1           bit 23                
+  e32, m1, tu, mu  00000010000  0x01000000               1           bit 24                
+  e64, m1, tu, mu  00000011000  0x01800000               2           bit 23, bit 24        
+  e8, m2, tu, mu   00000000001  0x00100000               1           bit 20                
+  e8, m4, tu, mu   00000000010  0x00200000               1           bit 21                
+  e8, m8, tu, mu   00000000011  0x00300000               2           bit 20, bit 21        
+  e8, mf8, tu, mu  00000000101  0x00500000               2           bit 20, bit 22        
+  e8, mf4, tu, mu  00000000110  0x00600000               2           bit 21, bit 22        
+  e8, mf2, tu, mu  00000000111  0x00700000               3           bit 20, bit 21, bit 22
+  e8, m1, ta, mu   00001000000  0x04000000               1           bit 26                
+  e8, m1, tu, ma   00010000000  0x08000000               1           bit 27                
+  e8, m1, ta, ma   00011000000  0x0c000000               2           bit 26, bit 27        
+
+  READ OFF THAT TABLE AND THE FIELD MAP IS EXACTLY WHAT THE
+  SPECIFICATION DRAWS, AND IT IS WORTH DRAWING OUT BECAUSE THE
+  THREE BITS THAT NEVER MOVE ARE THE POINT:
+
+      vma       zimm[7]      one bit, the MASK policy
+      vta       zimm[6]      one bit, the TAIL policy
+      vsew[2:0] zimm[5:3]    three bits, the ELEMENT WIDTH
+      vlmul[2:0]zimm[2:0]    three bits, the REGISTER GROUP
+      RESERVED  zimm[10:8]   THREE BITS THAT NO REACHABLE vsetvli USES
+
+  MEASURED: zimm[10:8] is 0b000 in all 120 `vsetvli` in the corpus, of
+  which 112 are the sweep and 8 are the AVL and partial-policy forms,
+  and the
+  table above isolates a field in 6 of its 12 rows with a SINGLE-bit
+  XOR -- one per field, four fields -- and the rows that move two or
+  three bits are the rows that change a THREE-BIT field at once.
+
+  THREE BITS OF AN ELEVEN-BIT FIELD THAT NO REACHABLE vsetvli USES,
+  AND A FIELD MAP MEASURED BY SWEEP RECORDS WHICH BITS MOVE --
+  SO THREE BITS THAT NEVER MOVE LOOK EXACTLY LIKE THREE BITS THAT DO.
+  THE FIRST VERSION OF THE INHERITED DECODER PRINTED
+  `zimm11=0b00011011000` AND ITS COMMENT CLAIMED THE ELEMENT WIDTH
+  LIVED IN "THREE BITS OF THE FIELD" -- AND THE COMMENT WAS RIGHT
+  ABOUT ITS DATA AND WRONG ABOUT WHAT THE DATA MEANT, BECAUSE IT
+  NEVER SAID WHICH THREE.  A COMMENT THAT GIVES THE WIDTH OF A
+  FIELD WITHOUT GIVING ITS POSITION IS A COMMENT THAT CANNOT BE
+  CHECKED AGAINST THE FIELD.
+
+  The three bits are not WASTED, they are RESERVED, and the manual
+  says what they are for --
+
+    rv32-unpriv, chapter 30, Table 48 (vtype register layout):
+        XLEN-1  vill      Illegal value if set
+        XLEN-2:8  0       Reserved if non-zero
+             7  vma       Vector mask agnostic
+             6  vta       Vector tail agnostic
+           5:3  vsew[2:0] Selected element width (SEW) setting
+           2:0  vlmul[2:0]Vector register group multiplier
+
+  THE RESERVED BITS ARE AT THE TOP AND `vill` IS ABOVE THEM, SO
+  A FUTURE EXTENSION THAT WANTS A FIELD GETS THE SPACE WITHOUT MOVING
+  ANY EXISTING BIT -- WHICH IS WHAT A FIXED 32-BIT ENCODING HAS TO
+  BE DESIGNED FOR AND WHAT x86-64 COULD NOT DO, BECAUSE ITS INSTRUCTION
+  LENGTH IS VARIABLE AND ITS PREFIXES ARE NOT FIELDS AT ALL.
+
+  AND THE LENGTH IS NOT IN THE INSTRUCTION, which is the finding the
+  whole section exists for.  Three measured rows:
+
+  word        the instruction              rd        rs1       what the manual says the AVL encoding means
+  0x0d807557  a0, zero, e64, m1, ta, ma    rd = x10  rs1 = x0  AVL = ~0, set vl to VLMAX                  
+  0x0d807057  zero, zero, e64, m1, ta, ma  rd = x0   rs1 = x0  AVL = the value in vl, KEEP the old vl     
+  0x01107557  a0, zero, e32, m2, tu, mu    rd = x10  rs1 = x0  AVL = ~0, set vl to VLMAX                  
+
+  THREE ROWS, THREE DIFFERENT MEANINGS, AND THE MECHANISM IS
+  TWO BITS OF REGISTER NUMBER.  THAT IS THE SAME TWO-BIT
+  ARGUMENT AS inst[31:30] CHOOSING WHICH CONFIGURATION INSTRUCTION
+  THIS IS, AND IT IS THE THIRD TIME IN THIS COURSE THAT A COUPLE OF
+  BITS OF REGISTER IDENTITY CARRY A THREE-WAY SELECTION.  A
+  REGISTER NUMBER IS NORMALLY A NAME AND HERE IT IS A SWITCH, WHICH
+  IS WHY NO DECODER CAN TREAT rd AND rs1 AS OPERANDS WITHOUT READING
+  WHICH INSTRUCTION IT IS LOOKING AT FIRST.
+
+    rv32-unpriv, chapter 30, section 31.6.2, Table 49:
+        rd    rs1   AVL value              Effect on vl
+        -     !x0   Value in x[rs1]        Normal strip mining
+        !x0   x0    ~0                     Set vl to VLMAX
+        x0    x0    Value in vl register   Keep existing vl
+
+  And the VLMAX row is the one the COMPILER USES, which is the
+  measurement in section 10:
+
+    117 of the 120 vsetvli in the corpus name a register, and 3 ask
+    for VLMAX by putting x0 in rs1.
+
+  THE THREE CONFIGURATION INSTRUCTIONS, told apart by inst[31:30] and
+  by nothing else.  One word of each, the whole spelling, and the two
+  bits that choose between them:
+
+  word         the instruction, as it disassembles  inst[31:30]  inst[19:15]  at     
+  0x0c55f2d7   vsetvli    t0, a1, e8, mf8, ta, ma  0b00        11          0x0    
+  0x0455f2d7   vsetvli    t0, a1, e8, mf8, ta, mu  0b00        11          0x4    
+  0x0855f2d7   vsetvli    t0, a1, e8, mf8, tu, ma  0b00        11          0x8    
+  0x0055f2d7   vsetvli    t0, a1, e8, mf8, tu, mu  0b00        11          0xc    
+  0x0c65f2d7   vsetvli    t0, a1, e8, mf4, ta, ma  0b00        11          0x10   
+  0x0465f2d7   vsetvli    t0, a1, e8, mf4, ta, mu  0b00        11          0x14   
+  0x0865f2d7   vsetvli    t0, a1, e8, mf4, tu, ma  0b00        11          0x18   
+  0x0065f2d7   vsetvli    t0, a1, e8, mf4, tu, mu  0b00        11          0x1c   
+  0x0c75f2d7   vsetvli    t0, a1, e8, mf2, ta, ma  0b00        11          0x20   
+  0x0475f2d7   vsetvli    t0, a1, e8, mf2, ta, mu  0b00        11          0x24   
+  0x0875f2d7   vsetvli    t0, a1, e8, mf2, tu, ma  0b00        11          0x28   
+  0x0075f2d7   vsetvli    t0, a1, e8, mf2, tu, mu  0b00        11          0x2c   
+  0x0c05f2d7   vsetvli    t0, a1, e8, m1, ta, ma   0b00        11          0x30   
+  0x0405f2d7   vsetvli    t0, a1, e8, m1, ta, mu   0b00        11          0x34   
+  0x0805f2d7   vsetvli    t0, a1, e8, m1, tu, ma   0b00        11          0x38   
+  0x0005f2d7   vsetvli    t0, a1, e8, m1, tu, mu   0b00        11          0x3c   
+  0x0c15f2d7   vsetvli    t0, a1, e8, m2, ta, ma   0b00        11          0x40   
+  0x0415f2d7   vsetvli    t0, a1, e8, m2, ta, mu   0b00        11          0x44   
+  0x0815f2d7   vsetvli    t0, a1, e8, m2, tu, ma   0b00        11          0x48   
+  0x0015f2d7   vsetvli    t0, a1, e8, m2, tu, mu   0b00        11          0x4c   
+  0x0c25f2d7   vsetvli    t0, a1, e8, m4, ta, ma   0b00        11          0x50   
+  0x0425f2d7   vsetvli    t0, a1, e8, m4, ta, mu   0b00        11          0x54   
+  0x0825f2d7   vsetvli    t0, a1, e8, m4, tu, ma   0b00        11          0x58   
+  0x0025f2d7   vsetvli    t0, a1, e8, m4, tu, mu   0b00        11          0x5c   
+  0x0c35f2d7   vsetvli    t0, a1, e8, m8, ta, ma   0b00        11          0x60   
+  0x0435f2d7   vsetvli    t0, a1, e8, m8, ta, mu   0b00        11          0x64   
+  0x0835f2d7   vsetvli    t0, a1, e8, m8, tu, ma   0b00        11          0x68   
+  0x0035f2d7   vsetvli    t0, a1, e8, m8, tu, mu   0b00        11          0x6c   
+  0x0cd5f2d7   vsetvli    t0, a1, e16, mf8, ta, ma  0b00        11          0x70   
+  0x04d5f2d7   vsetvli    t0, a1, e16, mf8, ta, mu  0b00        11          0x74   
+  0x08d5f2d7   vsetvli    t0, a1, e16, mf8, tu, ma  0b00        11          0x78   
+  0x00d5f2d7   vsetvli    t0, a1, e16, mf8, tu, mu  0b00        11          0x7c   
+  0x0ce5f2d7   vsetvli    t0, a1, e16, mf4, ta, ma  0b00        11          0x80   
+  0x04e5f2d7   vsetvli    t0, a1, e16, mf4, ta, mu  0b00        11          0x84   
+  0x08e5f2d7   vsetvli    t0, a1, e16, mf4, tu, ma  0b00        11          0x88   
+  0x00e5f2d7   vsetvli    t0, a1, e16, mf4, tu, mu  0b00        11          0x8c   
+  0x0cf5f2d7   vsetvli    t0, a1, e16, mf2, ta, ma  0b00        11          0x90   
+  0x04f5f2d7   vsetvli    t0, a1, e16, mf2, ta, mu  0b00        11          0x94   
+  0x08f5f2d7   vsetvli    t0, a1, e16, mf2, tu, ma  0b00        11          0x98   
+  0x00f5f2d7   vsetvli    t0, a1, e16, mf2, tu, mu  0b00        11          0x9c   
+  0x0c85f2d7   vsetvli    t0, a1, e16, m1, ta, ma  0b00        11          0xa0   
+  0x0485f2d7   vsetvli    t0, a1, e16, m1, ta, mu  0b00        11          0xa4   
+  0x0885f2d7   vsetvli    t0, a1, e16, m1, tu, ma  0b00        11          0xa8   
+  0x0085f2d7   vsetvli    t0, a1, e16, m1, tu, mu  0b00        11          0xac   
+  0x0c95f2d7   vsetvli    t0, a1, e16, m2, ta, ma  0b00        11          0xb0   
+  0x0495f2d7   vsetvli    t0, a1, e16, m2, ta, mu  0b00        11          0xb4   
+  0x0895f2d7   vsetvli    t0, a1, e16, m2, tu, ma  0b00        11          0xb8   
+  0x0095f2d7   vsetvli    t0, a1, e16, m2, tu, mu  0b00        11          0xbc   
+  0x0ca5f2d7   vsetvli    t0, a1, e16, m4, ta, ma  0b00        11          0xc0   
+  0x04a5f2d7   vsetvli    t0, a1, e16, m4, ta, mu  0b00        11          0xc4   
+  0x08a5f2d7   vsetvli    t0, a1, e16, m4, tu, ma  0b00        11          0xc8   
+  0x00a5f2d7   vsetvli    t0, a1, e16, m4, tu, mu  0b00        11          0xcc   
+  0x0cb5f2d7   vsetvli    t0, a1, e16, m8, ta, ma  0b00        11          0xd0   
+  0x04b5f2d7   vsetvli    t0, a1, e16, m8, ta, mu  0b00        11          0xd4   
+  0x08b5f2d7   vsetvli    t0, a1, e16, m8, tu, ma  0b00        11          0xd8   
+  0x00b5f2d7   vsetvli    t0, a1, e16, m8, tu, mu  0b00        11          0xdc   
+  0x0d55f2d7   vsetvli    t0, a1, e32, mf8, ta, ma  0b00        11          0xe0   
+  0x0555f2d7   vsetvli    t0, a1, e32, mf8, ta, mu  0b00        11          0xe4   
+  0x0955f2d7   vsetvli    t0, a1, e32, mf8, tu, ma  0b00        11          0xe8   
+  0x0155f2d7   vsetvli    t0, a1, e32, mf8, tu, mu  0b00        11          0xec   
+  0x0d65f2d7   vsetvli    t0, a1, e32, mf4, ta, ma  0b00        11          0xf0   
+  0x0565f2d7   vsetvli    t0, a1, e32, mf4, ta, mu  0b00        11          0xf4   
+  0x0965f2d7   vsetvli    t0, a1, e32, mf4, tu, ma  0b00        11          0xf8   
+  0x0165f2d7   vsetvli    t0, a1, e32, mf4, tu, mu  0b00        11          0xfc   
+  0x0d75f2d7   vsetvli    t0, a1, e32, mf2, ta, ma  0b00        11          0x100  
+  0x0575f2d7   vsetvli    t0, a1, e32, mf2, ta, mu  0b00        11          0x104  
+  0x0975f2d7   vsetvli    t0, a1, e32, mf2, tu, ma  0b00        11          0x108  
+  0x0175f2d7   vsetvli    t0, a1, e32, mf2, tu, mu  0b00        11          0x10c  
+  0x0d05f2d7   vsetvli    t0, a1, e32, m1, ta, ma  0b00        11          0x110  
+  0x0505f2d7   vsetvli    t0, a1, e32, m1, ta, mu  0b00        11          0x114  
+  0x0905f2d7   vsetvli    t0, a1, e32, m1, tu, ma  0b00        11          0x118  
+  0x0105f2d7   vsetvli    t0, a1, e32, m1, tu, mu  0b00        11          0x11c  
+  0x0d15f2d7   vsetvli    t0, a1, e32, m2, ta, ma  0b00        11          0x120  
+  0x0515f2d7   vsetvli    t0, a1, e32, m2, ta, mu  0b00        11          0x124  
+  0x0915f2d7   vsetvli    t0, a1, e32, m2, tu, ma  0b00        11          0x128  
+  0x0115f2d7   vsetvli    t0, a1, e32, m2, tu, mu  0b00        11          0x12c  
+  0x0d25f2d7   vsetvli    t0, a1, e32, m4, ta, ma  0b00        11          0x130  
+  0x0525f2d7   vsetvli    t0, a1, e32, m4, ta, mu  0b00        11          0x134  
+  0x0925f2d7   vsetvli    t0, a1, e32, m4, tu, ma  0b00        11          0x138  
+  0x0125f2d7   vsetvli    t0, a1, e32, m4, tu, mu  0b00        11          0x13c  
+  0x0d35f2d7   vsetvli    t0, a1, e32, m8, ta, ma  0b00        11          0x140  
+  0x0535f2d7   vsetvli    t0, a1, e32, m8, ta, mu  0b00        11          0x144  
+  0x0935f2d7   vsetvli    t0, a1, e32, m8, tu, ma  0b00        11          0x148  
+  0x0135f2d7   vsetvli    t0, a1, e32, m8, tu, mu  0b00        11          0x14c  
+  0x0dd5f2d7   vsetvli    t0, a1, e64, mf8, ta, ma  0b00        11          0x150  
+  0x05d5f2d7   vsetvli    t0, a1, e64, mf8, ta, mu  0b00        11          0x154  
+  0x09d5f2d7   vsetvli    t0, a1, e64, mf8, tu, ma  0b00        11          0x158  
+  0x01d5f2d7   vsetvli    t0, a1, e64, mf8, tu, mu  0b00        11          0x15c  
+  0x0de5f2d7   vsetvli    t0, a1, e64, mf4, ta, ma  0b00        11          0x160  
+  0x05e5f2d7   vsetvli    t0, a1, e64, mf4, ta, mu  0b00        11          0x164  
+  0x09e5f2d7   vsetvli    t0, a1, e64, mf4, tu, ma  0b00        11          0x168  
+  0x01e5f2d7   vsetvli    t0, a1, e64, mf4, tu, mu  0b00        11          0x16c  
+  0x0df5f2d7   vsetvli    t0, a1, e64, mf2, ta, ma  0b00        11          0x170  
+  0x05f5f2d7   vsetvli    t0, a1, e64, mf2, ta, mu  0b00        11          0x174  
+  0x09f5f2d7   vsetvli    t0, a1, e64, mf2, tu, ma  0b00        11          0x178  
+  0x01f5f2d7   vsetvli    t0, a1, e64, mf2, tu, mu  0b00        11          0x17c  
+  0x0d85f2d7   vsetvli    t0, a1, e64, m1, ta, ma  0b00        11          0x180  
+  0x0585f2d7   vsetvli    t0, a1, e64, m1, ta, mu  0b00        11          0x184  
+  0x0985f2d7   vsetvli    t0, a1, e64, m1, tu, ma  0b00        11          0x188  
+  0x0185f2d7   vsetvli    t0, a1, e64, m1, tu, mu  0b00        11          0x18c  
+  0x0d95f2d7   vsetvli    t0, a1, e64, m2, ta, ma  0b00        11          0x190  
+  0x0595f2d7   vsetvli    t0, a1, e64, m2, ta, mu  0b00        11          0x194  
+  0x0995f2d7   vsetvli    t0, a1, e64, m2, tu, ma  0b00        11          0x198  
+  0x0195f2d7   vsetvli    t0, a1, e64, m2, tu, mu  0b00        11          0x19c  
+  0x0da5f2d7   vsetvli    t0, a1, e64, m4, ta, ma  0b00        11          0x1a0  
+  0x05a5f2d7   vsetvli    t0, a1, e64, m4, ta, mu  0b00        11          0x1a4  
+  0x09a5f2d7   vsetvli    t0, a1, e64, m4, tu, ma  0b00        11          0x1a8  
+  0x01a5f2d7   vsetvli    t0, a1, e64, m4, tu, mu  0b00        11          0x1ac  
+  0x0db5f2d7   vsetvli    t0, a1, e64, m8, ta, ma  0b00        11          0x1b0  
+  0x05b5f2d7   vsetvli    t0, a1, e64, m8, ta, mu  0b00        11          0x1b4  
+  0x09b5f2d7   vsetvli    t0, a1, e64, m8, tu, ma  0b00        11          0x1b8  
+  0x01b5f2d7   vsetvli    t0, a1, e64, m8, tu, mu  0b00        11          0x1bc  
+  0xcd0072d7   vsetivli   t0, 0x0, e32, m1, ta, ma  0b11        0           0x1c0  
+  0xcd00f2d7   vsetivli   t0, 0x1, e32, m1, ta, ma  0b11        1           0x1c4  
+  0xcd0f72d7   vsetivli   t0, 0x1e, e32, m1, ta, ma  0b11        30          0x1c8  
+  0xcd0ff2d7   vsetivli   t0, 0x1f, e32, m1, ta, ma  0b11        31          0x1cc  
+  0xc03072d7   vsetivli   t0, 0x0, e8, m8, tu, mu  0b11        0           0x1d0  
+  0xc59ff2d7   vsetivli   t0, 0x1f, e64, m2, ta, mu  0b11        31          0x1d4  
+  0x80c5f2d7   vsetvl     t0, a1, a2               0b10        11          0x1d8  
+  0x80c072d7   vsetvl     t0, zero, a2             0b10        0           0x1dc  
+  0x8005f2d7   vsetvl     t0, a1, zero             0b10        11          0x1e0  
+  0x0d85f557   vsetvli    a0, a1, e64, m1, ta, ma  0b00        11          0x1e4  
+  0x0d807557   vsetvli    a0, zero, e64, m1, ta, ma  0b00        0           0x1e8  
+  0x0d807057   vsetvli    zero, zero, e64, m1, ta, ma  0b00        0           0x1ec  
+  0x0115f557   vsetvli    a0, a1, e32, m2, tu, mu  0b00        11          0x1f0  
+  0x01107557   vsetvli    a0, zero, e32, m2, tu, mu  0b00        0           0x1f4  
+  0x0105f2d7   vsetvli    t0, a1, e32, m1, tu, mu  0b00        11          0x1f8  
+  0x0505f2d7   vsetvli    t0, a1, e32, m1, ta, mu  0b00        11          0x1fc  
+  0x0035f2d7   vsetvli    t0, a1, e8, m8, tu, mu   0b00        11          0x200  
+
+  inst[31:30] IS VSETVLI WHEN IT IS 0b00, 0b10 IS VSETVL, and 0b11
+  IS VSETIVLI.  TWO BITS, THREE INSTRUCTIONS, AND NO THIRD
+  DISCRIMINATOR ANYWHERE: the other twenty-nine bits of all three are
+  laid out the same way, which is why one table above can hold a
+  vsetvli and a vsetivli and the only thing that distinguishes them is
+  the top two.
+
+  AND inst[19:15] IS A REGISTER IN vsetvli AND IN vsetvl, AND A
+  FIVE-BIT IMMEDIATE HERE AND A REGISTER IN BOTH OF ITS SIBLINGS -- that
+  is, inst[19:15] IS A FIVE-BIT IMMEDIATE HERE AND A REGISTER IN BOTH
+  OF ITS SIBLINGS.  MEASURED: `vsetivli t0, 31` and `vsetivli t0, 0`
+  differ by XOR 0x00078000, which is bits 14 and 15 -- the LOW TWO
+  BITS of the five-bit field.  A FIELD WHOSE MEANING IS A
+  FUNCTION OF A NEIGHBOUR IS NOT A REGISTER, AND THE BASE ISA'S FIELD
+  MAP AND THE VECTOR EXTENSION'S DISAGREE ABOUT inst[19:15] AND BOTH
+  ARE RIGHT ABOUT THEIR OWN INSTRUCTION.
+
+  AND THE INHERITED DECODER GOT THIS WRONG IN A WAY THAT
+  LOOKED RIGHT.  ITS DISPATCH READS `f5 >> 2` ON FUNCT5 =
+  inst[31:27], WHICH IS inst[31:29] -- THREE BITS -- AND COMPARES
+  AGAINST 0b00, 0b10 AND 0b11.
+  0b10 and 0b11.  So it names `vsetvli`, whose inst[31:30] and
+  inst[31:29] both happen to be 000, and DECLINES `vsetivli`
+  (inst[31:29] = 110, so the test gives 6) and `vsetvl`
+  (inst[31:29] = 100, so the test gives 4).  IT NAMES THE ONE
+  INSTRUCTION WHERE TWO BITS AND THREE BITS AGREE, AND A MODEL THAT
+  IS CORRECT BY COINCIDENCE ON ONE CASE IS A MODEL WHOSE OTHER TWO
+  CASES ARE ALSO COINCIDENCES.  THE FIX IS TO READ THE TWO BITS
+  THE DOCUMENT SAYS TO READ, AND Section 13's R1 is the whole of it:
+  the defect is in the SIBLING's code, it is published rather than
+  patched across the course boundary, and the repair is PREPENDED in
+  THIS file.
+
+  THE TAIL AND MASK POLICIES, which are the honest half of this
+  concept and the reason portable vector code is hard.
+
+    rv32-unpriv, chapter 30, section 31.3.4.3:
+        vta vma  Tail Elements      Inactive Elements
+         0   0    undisturbed       undisturbed
+         0   1    undisturbed       agnostic
+         1   0    agnostic          undisturbed
+         1   1    agnostic          agnostic
+
+  TWO INDEPENDENT BITS, FOUR COMBINATIONS, AND THE ONE ON THE
+  RIGHT IS "AGNOSTIC", WHICH MEANS THE HARDWARE MAY LEAVE THE TAIL
+  ALONE OR MAY OVERWRITE IT WITH ALL ONES, AT ITS DISCRETION, AND THE
+  MANUAL IS EXPLICIT THAT THE PATTERN IS NOT REQUIRED TO BE
+  DETERMINISTIC: "each destination element can be either left
+  undisturbed or overwritten with 1s, in any combination, and the
+  pattern ... is not required to be deterministic when the
+  instruction is executed with the same inputs."
+
+  THAT IS A LIBRARY CONTRACT MADE OF BITS, AND IT IS THE ONE
+  PLACE IN THE VECTOR EXTENSION WHERE THE ANSWER IS "THE HARDWARE MAY
+  DO EITHER".  PORTABLE VECTOR CODE MUST THEREFORE CHOOSE
+  `tu`/`mu` UNLESS IT KNOWS THE TARGET, AND EVERY PERFORMANCE-MINDED
+  VECTOR LOOP WANTS `ta`/`ma`, SO THE FAST VERSION IS NOT THE
+  PORTABLE ONE AND THE ENCODING IS WHERE THAT DECISION IS VISIBLE.
+
+  AND WHAT THE ASSEMBLER DOES WHEN THE FLAGS ARE OMITTED, which is the
+  one measurement in this section that is about the TOOLCHAIN rather
+  than about the manual:
+
+
+  THE SPECIFICATION SAYS THE FLAGS ARE MANDATORY AND THAT
+  OMITTING THEM IS DEPRECATED -- AND THE ASSEMBLER ACCEPTS THEM AND
+  DEFAULTS TO `tu, mu`, WHICH IS THE CONSERVATIVE POLICY.  THE
+  SPECIFICATION ALSO SAYS "THE DEFAULT SHOULD PERHAPS BE
+  TAIL-AGNOSTIC/MASK-AGNOSTIC", AND THE ASSEMBLER DISAGREED WITH THE
+  SPECIFICATION'S OWN SUGGESTION AND KEPT THE HISTORICAL DEFAULT.
+  THAT IS THE RIGHT CHOICE AND IT IS WORTH NAMING WHY: A DEFAULT
+  THAT CHANGES BEHAVIOUR SILENTLY IS WORSE THAN A DEPRECATION, AND A
+  PROGRAM THAT SAYS NOTHING ABOUT ITS TAIL SHOULD NOT GET THE FAST
+  ONE.
+
+  And the reason the policies EXIST is also in the manual, and it is
+  a microarchitectural reason rather than a language one:
+
+    "The agnostic policy was added to accommodate machines with
+     vector register renaming.  With an undisturbed policy, all
+     elements would have to be read from the old physical
+     destination vector register to be copied into the new one."
+
+  MEASURED, in the corpus: how does the compiler choose?
+
+  tail  mask  how many of the corpus's vsetvli
+  ta    ma    31                              
+  ta    mu    29                              
+  tu    ma    28                              
+  tu    mu    32                              
+
+  31 of 120 are tail-AGNOSTIC and mask-AGNOSTIC.
+
+  AND THAT IS THE FAST CHOICE, NOT THE PORTABLE ONE, SO THE
+  COMPILER IS MAKING A NON-PORTABLE CHOICE IN ITS DEFAULT OUTPUT AND
+  THE ONLY WAY A READER LEARNS THAT IS BY DECODING TWO BITS.  
+  THE PORTABILITY PROBLEM IN THE VECTOR EXTENSION IS NOT THE
+  INSTRUCTION SET -- IT IS TWO BITS THAT THE SPECIFICATION DELIBERATELY
+  LEAVES UNDETERMINED, AND A COMPILER THAT PICKS THE FAST ONE BY
+  DEFAULT.
+
+  AND THE FLAGS ARE MANDATORY NOW, which the assembler enforces and
+  which is a small history worth one paragraph because it is visible
+  in a REFUSAL:
+
+    vsetvli t0, a1, e32, m1                  ACCEPTED
+    vsetvli t0, a1, e32, m1, ta              ACCEPTED
+    vsetvli t0, a1, e32, m1, xx, ma          REFUSED: operand must be e[8|16|32|64],m[1|2|4|8|f2|f4|f8],[t
+    vsetvli t0, a1, e1024, m1, ta, ma        REFUSED: operand must be e[8|16|32|64],m[1|2|4|8|f2|f4|f8],[t
+    vsetvli t0, a1, e32, m16, ta, ma         REFUSED: operand must be e[8|16|32|64],m[1|2|4|8|f2|f4|f8],[t
+
+    rv32-unpriv, chapter 30, section 31.3.4.3: "The assembly syntax
+    adds TWO MANDATORY FLAGS to the vsetvli instruction ... Prior to
+    v0.9, when these flags were not specified on a vsetvli, they
+    defaulted to mask-undisturbed/tail-undisturbed.  The use of
+    vsetvli without these flags is deprecated."
+
+  SO THE DEFAULTS CHANGED AND THE CHANGE WAS MADE BY REMOVING THE
+  DEFAULT, WHICH IS A BETTER ANSWER THAN CHANGING IT: a program that
+  SAYS NOTHING now gets a diagnostic, and a program that says `tu`
+  means it.  THAT IS THE ONLY WAY TWO SPECIFICATION VERSIONS CAN
+  DISAGREE WITHOUT A COMPILER BEING UNABLE TO TELL WHICH IS WHICH.
+
+==========================================================================
+SECTION 9 -- THE MASK IS ONE BIT IN THREE GROUPS -- AND THE REGISTER IS NOT IN THE WORD
+==========================================================================
+
+  MEASURED-ON-BYTES, and this is the section with the cleanest table in the course: ELEVEN PAIRS OF INSTRUCTIONS, EACH PAIR THE SAME INSTRUCTION WITH AND WITHOUT A MASK, AND EVERY XOR IS 0x02000000.
+
+  AND ELEVEN IS NOT TWENTY-TWO, WHICH IS HOW THE COURSE WAS FIRST WRITTEN. The first draft of this section claimed twenty-two pairs, having counted three arithmetic forms at TWO widths when the corpus
+  contains one width per arithmetic form. A COUNT THAT CANNOT COME OUT THE SAME TWICE IS A COUNT OF SOMETHING ELSE, AND THE CHEAPEST TEST FOR IT IS TO PRINT THE TABLE AND COUNT THE ROWS -- WHICH THE
+  FIRST DRAFT DID NOT, BECAUSE IT PRINTED THE CLAIM INSTEAD OF THE EVIDENCE FOR IT.
+
+  One bit. In an arithmetic instruction, in a unit-stride load and in a unit-stride store. AND THE MASK REGISTER ITSELF IS NOT IN THE ENCODING: `vm` is a single bit that says "use v0", and v0 is the
+  ONLY mask register the encoding can name. There is no vd field for the mask and no register field for it, because the extension has one mask register.
+
+  That is a different design from x86-64, where a mask is an ordinary vector register (`vle` with a mask pointer in `k1`), and a different one from NEON predication, where the mask IS the vector
+  register.
+
+
+
+  THE ELEVEN XORs.  Each row is a pair of ADJACENT instructions in
+  vec.s -- unmasked, then masked -- XORed.
+
+  instruction  the masked form    XOR         bits  which 
+  vadd.vv      v1, v2, v3, v0.t   0x02000000  1     bit 25
+  vadd.vi      v1, v2, 0x7, v0.t  0x02000000  1     bit 25
+  vadd.vx      v1, v2, a0, v0.t   0x02000000  1     bit 25
+  vle8.v       v1, (a0), v0.t     0x02000000  1     bit 25
+  vle16.v      v1, (a0), v0.t     0x02000000  1     bit 25
+  vle32.v      v1, (a0), v0.t     0x02000000  1     bit 25
+  vle64.v      v1, (a0), v0.t     0x02000000  1     bit 25
+  vse8.v       v1, (a0), v0.t     0x02000000  1     bit 25
+  vse16.v      v1, (a0), v0.t     0x02000000  1     bit 25
+  vse32.v      v1, (a0), v0.t     0x02000000  1     bit 25
+  vse64.v      v1, (a0), v0.t     0x02000000  1     bit 25
+
+  11 pairs, 11 of them XOR to exactly 0x02000000, 0 exceptions.
+
+  ONE BIT, ELEVEN TIMES, IN THREE INSTRUCTION GROUPS.
+  THE MASK
+  IS NOT A PROPERTY OF THE VECTOR EXTENSION OR OF THE DATA PATH OR OF
+  ONE INSTRUCTION CLASS -- IT IS A PROPERTY OF A WORD, AND THE WORD
+  IS THE ONLY THING THE THREE GROUPS SHARE.
+
+  AND THE BIT IS 25, WHICH IS ALSO WHERE `rl` LIVES IN AN AMO.  
+  BIT 25 IS "RELEASE" IN AN ATOMIC AND "MASK AGNOSTIC" IN A VECTOR
+  INSTRUCTION, AND THE TWO MEANINGS ARE IN DIFFERENT OPCODES SO THEY
+  NEVER COLLIDE.  A BIT POSITION IS A PROPERTY OF AN
+  INSTRUCTION GROUP AND NOT OF AN ARCHITECTURE -- WHICH IS THE SAME
+  FINDING THE AARCH64 COURSE REACHED FROM THE OTHER DIRECTION, WHERE
+  BIT 23 IS "128-BIT ATOMIC" IN ONE GROUP AND "ACQUIRE" IN ANOTHER,
+  AND THAT FINDING COST THAT COURSE A RETRACTION.
+
+  THE MASK REGISTER IS v0 AND ONLY v0, and the assembler REFUSES the
+  obvious alternative, which is a better measurement than a claim:
+
+    vadd.vv v1, v2, v3, v0.t         ACCEPTED, 0x002180d7
+    vadd.vv v1, v2, v3, v1.t         REFUSED: operand must be v0.t
+    vle32.v v1, (a0), v0.t           ACCEPTED, 0x00056087
+    vle32.v v1, (a0), v1.t           REFUSED: operand must be v0.t
+    vmv.v.i v1, 5, v0.t              REFUSED: invalid operand for instruction
+    vl2r.v v8, (a0), v0.t            REFUSED: invalid operand for instruction
+
+  "OPERAND MUST BE v0.t" IS A REFUSAL THAT STATES A PROPERTY OF
+  THE ENCODING IN THE DIAGNOSTIC.  THE ASSEMBLER IS TELLING
+  THE PROGRAMMER SOMETHING TRUE ABOUT THE HARDWARE -- ONE MASK
+  REGISTER EXISTS AND IT IS v0 -- AND IT IS DOING IT IN A FORM THAT
+  CANNOT BE MISREAD AS A SPELLING RULE.
+
+  So the masked form is the SAME INSTRUCTION with one bit changed and
+  a register the encoding does not name.  A MASK REGISTER THAT
+  IS NOT IN THE ENCODING IS WHY A DECODER CAN NAME TWICE AS MANY
+  VECTOR INSTRUCTIONS AS IT HAS OPERANDS TO PRINT: the space of
+  (instruction, mask register) PAIRS is not in the word, and a
+  decoder that tried to model it would find 32 times as many cases as
+  there are bits.
+
+  AND `v0` IS A DESTINATION AS WELL AS A SOURCE, which is measured by
+  the corpus containing mask PRODUCERS:
+
+  instruction  word        vd  operands   
+  vmsne.vi     0x66103057  0   v0, v1, 0x0
+  vmsne.vi     0x6611b057  0   v0, v1, 0x3
+  vlm.v        0x02b50107  2   v2, (a0)   
+
+  AND HERE IS THE PART THAT IS EASY TO GET WRONG IN THE OTHER
+  DIRECTION, SO IT IS MEASURED RATHER THAN ASSERTED.  A
+  MASK-PRODUCING INSTRUCTION CAN WRITE ANY VECTOR REGISTER, NOT ONLY
+  v0 -- MEASURED: `vmsne.vi v1, v2, 0` ASSEMBLES -- AND THE ONLY ONE OF
+  THOSE THAT CAN THEN BE USED AS A MASK IS v0.  SO THE CONSTRAINT
+  IS NOT "MASKS ARE v0" BUT "MASKS ARE v0 AND MASKS ARE PRODUCED BY
+  ORDINARY VECTOR REGISTERS", WHICH IS A WEAKER CLAIM AND THE CORRECT
+  ONE.  A REGISTER ALLOCATOR MUST THEREFORE KEEP v0 OUT OF THE
+  GENERAL POOL -- not because writing it is illegal, but because
+  anything it writes will eventually be used as a mask, and that is a
+  CONSTRAINT ON THE ALLOCATOR AND NOT ON THE INSTRUCTION.
+
+  The first draft of this section said "v0 is the only mask register
+  the encoding can name, therefore a register allocator cannot treat
+  a mask as a distinct kind of thing" -- and the first half is right
+  and the inference is wrong, because a mask REGISTER and a mask
+  PRODUCER are different things and the assembler accepts a producer
+  writing any register.  A TRUE PREMISE WITH A FALSE INFERENCE
+  IS HARDER TO CATCH THAN A FALSE PREMISE, BECAUSE THE FALSE HALF IS
+  THE SECOND HALF.
+
+  AND THE REGISTER GROUP, which is what LMUL buys and which is the
+  other half of what a `vsetvli` carries.
+
+  instruction  word        nf at [31:29]  registers  vs2/vd  operands
+  vl1r.v       0x02850087  0b000          1          8       v1, (a0)
+  vl2r.v       0x22850407  0b001          2          8       v8, (a0)
+  vl4r.v       0x62850407  0b011          4          8       v8, (a0)
+  vl8r.v       0xe2850407  0b111          8          8       v8, (a0)
+  vl2re64.v    0x22857407  0b001          2          8       v8, (a0)
+  vs1r.v       0x028500a7  0b000          1          8       v1, (a0)
+  vs2r.v       0x22850427  0b001          2          8       v8, (a0)
+  vs4r.v       0x62850427  0b011          4          8       v8, (a0)
+  vs8r.v       0xe2850427  0b111          8          8       v8, (a0)
+
+  nf IS THREE BITS AT THE TOP OF THE WORD AND IT IS THE NUMBER
+  OF REGISTERS MINUS ONE: 0, 1, 3 and 7 for one, two, four and eight.
+  A GROUP OF FOUR IS NOT A WIDER REGISTER.  IT IS FOUR REGISTERS
+  THE INSTRUCTION ADDRESSES TOGETHER, AND THE ASSEMBLER PROVES IT BY
+  REFUSING A GROUP THAT DOES NOT START ALIGNED:
+
+    vl2r.v v1, (a0)          REFUSED
+    vl2r.v v8, (a0)          ACCEPTED
+    vl4r.v v8, (a0)          ACCEPTED
+    vl8r.v v8, (a0)          ACCEPTED
+    vs2r.v v1, (a0)          REFUSED
+    vs2r.v v8, (a0)          ACCEPTED
+
+  SO LMUL IS NOT A SCALAR AND IT IS NOT A WIDER REGISTER.  IT
+  IS AN ALIGNMENT CONSTRAINT ON A REGISTER ALLOCATOR, AND THE ENCODER
+  ENFORCES IT BY REFUSING A WORD.  A SCALAR ENABLES LOOP
+  UNROLLING WITH NO ALIGNMENT CONSTRAINT, SO THE THREE-BIT nf FIELD
+  IS THE PRICE OF NOT HAVING A LOWER BOUND ON WHAT A VECTOR REGISTER
+  IS.
+
+  MEASURED, and the compiler pays it: the `vsum_d` loop in section 10
+  uses LMUL = 2 and emits `vl2re64.v v8` and `vfredosum.vs`, so the
+  group start is v8 rather than v0 -- and v0 is taken, because the
+  reduction needs it.  A REGISTER GROUP THAT MUST START ON A
+  BOUNDARY AND A RESERVED REGISTER AT ZERO ARE THE SAME CONSTRAINT
+  SEEN FROM TWO SIDES.
+
+==========================================================================
+SECTION 10 -- WHAT THE COMPILER EMITS, AND WHAT IT CANNOT RUN
+==========================================================================
+
+  MEASURED, and this section is where a reader who has just come from `simd` will be most disoriented, so the disorientation is named up front.
+
+  `simd` measured a speedup. `smp` measured one too. `a64simd` measured three speedups of its own and led with the refusal to invent replacements. THIS COURSE HAS NO TIMING OF ANY KIND AND THE REASON
+  IS NOT MODESTY: there is no RISC-V machine, no emulator and no RISC-V linker on this host, so not one of the instructions in section 8 has ever been EXECUTED.
+
+  What replaces a ratio is a count, and a count is a weaker thing in a specific way that is worth stating precisely rather than apologising for. AN INSTRUCTION COUNT DOES NOT KNOW WHETHER THE
+  INSTRUCTION IS FAST. It knows what the compiler DID, which is a fact, and it does not know what the hardware did with it, which was the other half.
+
+  The design of the experiment is the point, so it is worth one sentence: both builds keep the `c` extension and differ ONLY in the `v`. An earlier draft compared `rv64g` against `rv64gcv` and had to
+  retract the number, because dropping `c` as well as adding `v` confounds two variables -- which is the lesson the sibling ABI course recorded as its own R7.
+
+
+  THE LOOP COUNTS.  Four functions, four optimisation levels, with
+  and without the `v`.  Instruction counts and vector counts.
+
+  function  -O0 no v  -O1 no v  -O2 no v  -O3 no v  -Os no v  -O0 +v  -O1 +v  -O2 +v  -O3 +v  -Os +v 
+  vadd_d    36        12        12        12        12        37      12      53 +4v  53 +4v  12     
+  vmac_l    37        13        13        13        13        38      13      47 +7v  47 +7v  29 +12v
+  vmul_s8   35        11        11        11        11        36      11      51 +4v  51 +4v  11     
+  vsum_d    35        13        13        13        12        36      13      40 +4v  40 +4v  29 +9v 
+
+  -O1 DOES NOT VECTORISE THIS CORPUS AT ALL, -Os VECTORISES TWO
+  OF THE FOUR FUNCTIONS, AND -O2 AND -O3 VECTORISE ALL FOUR.
+  MEASURED: 0 vector instructions at -O1, 19 at -O2, 19 at -O3 and
+  21 at -Os.  AND -Os IS SMALLER THAN -O2, WHICH IS NOT THE
+  USUAL STORY: -Os IS A SIZE OPTIMISATION AND THE VECTORISER IS A
+  PROFITABILITY DECISION, SO THE TWO DISAGREE.  A LEVEL OF -O
+  NAMES AN OPTIMISATION GOAL AND NOT A CAPABILITY, AND THE VECTORISER
+  IS THE MOST CAPABILITY-SENSITIVE PASS IN THE COMPILER.
+
+  CODE SIZE: 191 instructions at -O2 against 81 at -Os, over the
+  same four functions.  SO THE SIZE GOAL AND THE VECTOR GOAL
+  DISAGREE IN OPPOSITE DIRECTIONS ON THE SAME FOUR FUNCTIONS, AND
+  NEITHER -O LEVEL IS THE OTHER ONE WITH A DIFFERENT NAME.
+
+  AND -O2 AND -O3 ARE THE SAME ASSEMBLY, which is a measurement and
+  not an expectation:
+
+    vadd_d     IDENTICAL
+    vmac_l     IDENTICAL
+    vmul_s8    IDENTICAL
+    vsum_d     IDENTICAL
+
+  SO THERE IS NOTHING TO COMPARE BETWEEN -O2 AND -O3 ON THIS
+  CORPUS, AND A READER WHO REPORTS A DIFFERENCE BETWEEN THEM HAS
+  FOUND A DIFFERENT CORPUS.  TWO OPTIMISATION LEVELS THAT
+  AGREE ON A FILE ARE A MEASUREMENT ABOUT THE FILE AND NOT ABOUT THE
+  LEVELS.
+
+  AND THE ONE THAT PROVES THE LENGTH IS NOT IN THE INSTRUCTION: the
+  compiler READS IT FROM A CSR.  MEASURED:
+
+    -O2  vadd_d   0xc22028f3  csrr a7, vlenb
+    -O2  vmac_l   0xc22026f3  csrr a3, vlenb
+    -O2  vmul_s8  0xc2202873  csrr a6, vlenb
+    -O2  vsum_d   0xc22026f3  csrr a3, vlenb
+    -Os  vmac_l   0xc22022f3  csrr t0, vlenb
+    -Os  vsum_d   0xc22028f3  csrr a7, vlenb
+
+  `csrr a7, vlenb` -- A CSR READ, AN ORDINARY Zicsr INSTRUCTION,
+  THE SAME ENCODING AS `csrr a7, cycle` WITH A DIFFERENT NUMBER.  AND
+  THE VECTOR LENGTH IS NOT IN ANY VECTOR INSTRUCTION, BECAUSE IT IS A
+  PROPERTY OF THE IMPLEMENTATION AND THE IMPLEMENTATION PUBLISHES IT
+  IN A REGISTER.
+
+    rv32-unpriv, chapter 30, section 31.3.6: "The XLEN-bit-wide
+    read-only CSR vlenb holds the value VLEN/8, i.e., the vector
+    register length in BYTES.  The value in vlenb is a design-time
+    constant in any implementation."
+
+  The CSR number is measurable, and it is in the RANGE THE PRIVILEGED
+  COURSE ALREADY DECOMPOSED, which is a nice piece of the section
+  fitting together:
+
+    0xc22028f3  csrr a7, vlenb
+      csr = inst[31:20] = 0xc22   funct3 = 2 (CSRRs)   rd = 17
+      csr[11:10] = 0b11  accessibility: READ-ONLY
+      csr[9:8]   = 0b00  lowest privilege: U
+      the same three fields the privileged course printed for `mtvec`
+
+  SO A PROGRAM CAN FIND OUT HOW WIDE THE VECTOR UNIT IS BY
+  READING A CSR, AND THE ANSWER IS A RUNTIME VALUE FROM A READ-ONLY
+  REGISTER -- WHICH IS EXACTLY WHAT "the length is a property of the
+  implementation" MEANS IN AN ENCODING.  A FIXED 32-BIT
+  INSTRUCTION DESCRIBES A VECTOR OF ANY LENGTH BECAUSE THE LENGTH IS
+  NOT IN THE INSTRUCTION AND IS PUBLISHED ELSEWHERE.
+
+  AND THE TAIL, which is where the runtime length becomes CODE.  The
+  scalar prologue is not dead weight -- IT IS THE REMAINDER, and it is
+  the loop the vector loop cannot run:
+
+    -O2     vadd_d     53 instr: 47 scalar, 1 vsetvli, 4 vector data
+                    the vector data: vl2re64.v vl2re64.v vfadd.vv vs2r.v
+    -O2     vmac_l     47 instr: 37 scalar, 1 vsetvli, 7 vector data
+                    the vector data: vmv.v.i vl2re64.v vl2re64.v vmacc.vv vmv.s.x vredsum.vs vmv.x.s
+    -O2     vmul_s8    51 instr: 45 scalar, 1 vsetvli, 4 vector data
+                    the vector data: vl2r.v vl2r.v vmul.vv vs2r.v
+    -O2     vsum_d     40 instr: 32 scalar, 2 vsetvli, 4 vector data
+                    the vector data: vmv.s.x vl2re64.v vfredosum.vs vfmv.f.s
+
+  THE VECTOR LOOP IS STRAIGHT-LINE.  There is no branch inside
+  it and no tail check: the compiler has already computed the trip
+  count as a multiple of the elements per vector, so the vector body
+  runs a whole number of times and the REMAINDER IS A SEPARATE SCALAR
+  LOOP.  IT IS THE REMAINDER, NOT DEAD WEIGHT, and the reason it
+  is worth this much space is that IT IS THE TAIL-HANDLING CODE THE
+  SECTION PROMISED.  AND IT IS NOT IN THE VECTOR LOOP AT ALL --
+  IT IS BESIDE IT, AND THAT IS WHY THE SCALAR COUNT IS NOT ZERO EVEN
+  WHEN THERE ARE VECTOR INSTRUCTIONS.  A REMAINDER HANDLED INSIDE
+  THE VECTOR LOOP AND A REMAINDER HANDLED BESIDE IT ARE DIFFERENT
+  PROGRAMS WITH THE SAME OUTPUT, AND ONLY THE SECOND ONE CAN IGNORE
+  WHAT THE TAIL POLICY DOES.
+
+  AND IT IS THE ANSWER TO THE PORTABILITY QUESTION FROM SECTION
+  8 WITHOUT BEING AN ANSWER TO IT.  The tail is handled by arithmetic
+  on the trip count and a scalar loop, which works on EVERY
+  IMPLEMENTATION REGARDLESS OF WHETHER `ta` OR `tu` WAS REQUESTED --
+  AND THAT IS EXACTLY WHY REQUESTING `ta` IS SAFE HERE AND NOT SAFE
+  EVERYWHERE.  THE COMPILER GETS PORTABILITY NOT FROM THE POLICY
+  BITS BUT FROM NOT DEPENDING ON THE TAIL, AND A READER WHO SEES
+  `ta, ma` IN THE ENCODING HAS LEARNED NOTHING ABOUT WHICH OF THE TWO
+  STRATEGIES WAS USED.
+
+  WHAT THIS SECTION CANNOT SAY, and it is most of what a reader wants:
+
+    * That any vector instruction is FASTER than the scalar loop it replaces.  No instruction in this course has run and no timing exists anywhere in this file.
+    * What VLEN IS on any real machine.  `vlenb` is read by the compiler and its VALUE is in no file here; a VLEN of 128 and a VLEN of 1024 would both produce this assembly.
+    * Whether the vectorised loop is CORRECT.  Nothing was executed, so no output was compared against anything.
+    * Whether `ta` on this hardware overwrites the tail with ones or leaves it alone.  The manual permits both and this host has no vector hardware to be permissive or not on.
+    * How much of the element count per iteration depends on VLEN.  The compiler emits a division and a multiply by a value read at run time, which is a fact about the CODE and not about the answer.
+
+==========================================================================
+SECTION 11 -- TWO READERS ON THE SAME BYTES
+==========================================================================
+
+  The decoder that produced sections 2 through 10 is checked by a second reader -- `llvm-objdump-21` -- against this file's own decoder, over the whole corpus.
+
+  AND BOTH READERS COME FROM ONE LLVM TREE, because `clang` assembled the corpus and GNU binutils has no RISC-V target on this host. So what this section establishes is "this decoder and one other
+  piece of software agree on what the bytes mean" -- and NOT "either agrees with silicon". That is a limit and it is limit 11, and it is the reason the two-reader result is a result about software.
+
+
+    2197  instructions the second reader printed
+    2147  of them this file NAMES
+      50  unmodelled -- counted, never dropped
+       0  where the two readers disagree on the LENGTH
+
+       0  DISAGREE
+
+  THE CLASSIFIER, run on every run:
+
+    NOTHING TO CLASSIFY -- and that is a run where the classifier
+    RAN and found nothing, which is not the same as a run where
+    it never ran, and the difference is why it lives on the main
+    path rather than in the failure branch.
+
+  THE FIRE TABLE, pre-seeded so a rule that never fires is a row with
+  a zero rather than an absence:
+
+  normalisation rule                                           times it fired  verdict    
+  negative immediate, decimal on both sides                    247             fired      
+  c.li and li are one instruction                              39              fired      
+  vsetivli immediate, decimal against 0x-hex                   6               fired      
+  bare fence and fence with explicit sets are one instruction  2               fired      
+  fence.tso with and without its sets is one instruction       7               fired      
+  vsetvli suffix order, aqrl and rl-aq are one spelling        0               NEVER FIRED
+
+    6 rules, 5 fired, 1 matched nothing
+
+  AND THE INHERITED TABLE beside it, because this course BORROWS the
+  normaliser rather than forking it and a borrowed table with no
+  numbers next to it is a table a reader cannot check:
+
+    47 rules INHERITED from rvdec.py, 28 fired on this corpus and 19
+    are DEAD -- which is EXPECTED and is not a defect: this corpus is
+    one third vector and two thirds C, so the rules about floating
+    point and about the A64 forms have nothing to bite on.  A
+    DEAD RULE IN AN INHERITED TABLE IS A RULE FOR A CORPUS THIS
+    COURSE DOES NOT HAVE, AND THE INVERTED CONDITION IS THE CORRECT
+    ONE HERE: THIS COURSE'S OWN SIX RULES ARE PRE-SEEDED AND THE
+    HEALTHY STATE IS ZERO DEAD AMONG THEM.
+
+  AND THE FIRE TABLE IS WHAT MAKES "ZERO DISAGREEMENTS" A RESULT
+  RATHER THAN AN ABSENCE, BECAUSE IT SHOWS THE COMPARISON DID
+  SOMETHING.  WITHOUT THE FIRST RULE, `fence` AND `fence rw, rw`
+  WOULD BE COUNTED AS DISAGREEMENTS -- A SPELLING DIFFERENCE AND NOT A
+  MISREAD -- AND THE DISAGREEMENT COUNT WOULD BE A NUMBER ABOUT HOW
+  THE ASSEMBLER PRINTS THINGS RATHER THAN ABOUT WHETHER EITHER READER
+  IS RIGHT.
+
+  THE UNMODELLED COUNT IS PRINTED BESIDE THE DISAGREEMENT COUNT and
+  not in a footnote, for the reason the sibling course recorded as a
+  retraction: a model can be removed, become unreachable, or be
+  shadowed, and every word it owned can end up named by something
+  else at the same address -- so a check that watched only the
+  disagreement count would call the result progress when it is the
+  reverse of progress.  A CROSS-CHECK THAT COUNTS AGREEMENTS AND
+  ONE THAT COUNTS HOLES ARE MEASURING DIFFERENT THINGS, AND PRINTING
+  ONLY ONE OF THEM IS HOW A DECODER DELETES A MODEL WITHOUT ANYBODY
+  NOTICING.
+
+  50 UNMODELLED WORDS IS AN HONEST NUMBER FOR THIS CORPUS: THE
+  VECTOR EXTENSION HAS SEVERAL HUNDRED ENCODINGS AND THIS FILE
+  NAMES THE THREE CONFIGURATION INSTRUCTIONS, THE MASK BIT IN THREE
+  GROUPS AND THE REGISTER GROUP, AND COUNTS THE REST.  A
+  DECODER THAT NAMED EVERY VECTOR WORD AND GOT ONE WRONG WOULD BE A
+  WORSE DECODER THAN ONE THAT SAYS WHICH HALF OF THE EXTENSION IT
+  IMPLEMENTS -- AND THE HALF IT IMPLEMENTS IS THE HALF THE FOUR
+  CONCEPT PAGES MAKE CLAIMS ABOUT.
+
+  AND THE ORDER OF THOSE RULES IS ITSELF A FINDING, so it is printed
+  rather than left in a comment: A NORMALISER'S RULES HAVE AN
+  ORDER AND THE ORDER IS INVISIBLE IN THE RULES THEMSELVES.  Three of
+  this course's own rules run BEFORE the inherited normaliser, on the
+  RAW printed text, and two run AFTER it, on its OUTPUT -- and the
+  reason is a shape rather than a preference.  THE INHERITED
+  FUNCTION HANDLES A NEGATIVE IMMEDIATE INCONSISTENTLY BETWEEN ITS OWN
+  TWO RULES: IT PRINTS `li a3, -1` AS HEX AND `c.li a3, -1` IN DECIMAL,
+  SO A CORRECTION APPLIED AFTER IT CANNOT UNDO THE DAMAGE AND A RULE
+  WRITTEN AGAINST ITS OUTPUT MATCHES NOTHING.  THIS IS THE SIXTH
+  TIME THIS COLLECTION HAS PAID FOR A NORMALISATION RULE THAT MATCHED
+  NOTHING, AND THE FIRE TABLE ABOVE IS HOW THE NEXT ONE GETS CAUGHT:
+  a rule with a zero beside it is visible and a rule that was never
+  written is not.  THE SECOND REVERSED SIDE IS THE OTHER HALF OF
+  THE SAME ARGUMENT: THE INHERITED FUNCTION REMOVES THE SPACE BETWEEN A
+  MNEMONIC AND ITS FIRST OPERAND, SO `fence iorw, iorw` ARRIVES AS
+  `fenceiorw,iorw` AND A RULE MATCHING `\s+` MATCHES NOTHING ON ALL
+  113 OF THEM.
+
+  AND THE FIRE TABLE IS A TABLE OF NORMALISATION, NOT OF
+  MODELLING -- which is worth saying because the two are easy to
+  confuse, and a reader who has just read 50 unmodelled words could
+  reasonably think the table above is about them.  It is not: those
+  words are unmodelled because no model claims them, and the table
+  counts fixes applied to words that WERE named.
+
+  TWO REPAIRS TO THE INHERITED DECODER, and both are visible here
+  because a repair nobody can see is a repair nobody can check:
+
+  THE FIRST IS THE LOAD-MODE FIELD.  A unit-stride load and a
+  WHOLE-REGISTER load differ by inst[24:20] -- lumop -- and the
+  inherited decoder read only the width, so it said `vle8.v` where the
+  second reader said `vl1r.v`, and lumop = 01000 IS THE WHOLE-REGISTER
+  FORM.  ONE FIVE-BIT FIELD IN A UNIT-STRIDE LOAD CARRIES THREE
+  INSTRUCTION NAMES, AND A DECODER THAT READS ONLY THE WIDTH GETS ALL
+  ELEVEN WRONG WHILE BEING RIGHT ABOUT EVERY FIELD IT DID READ.  
+  INCOMPLETE IS HARDER TO NOTICE THAN WRONG, BECAUSE NOTHING IN THE
+  OUTPUT LOOKS BROKEN -- IT LOOKS LIKE A SPELLING DIFFERENCE.
+
+  THE SECOND IS THE DISPATCH GUARD AGAINST THE CONFIGURATION
+  INSTRUCTIONS, and it is here because the first version of this
+  course's own vector model did not have it.  `vsetvli t0, a1, e8,
+  mf8, ta, ma` is 0x0c55f2d7, and its funct6 -- inst[31:26] -- is
+  0b000011, WHICH IS OPFVV.  A MODEL THAT DISPATCHES ON THE
+  funct6 ALONE CLAIMS THE CONFIGURATION INSTRUCTIONS, and the first run
+  of the cross-check reported 112 of them as `vadd.vi v5, v5, 11,
+  v0.t`.  THE FIX IS TO READ THE COARSEST SELECTOR FIRST: the
+  guard is inst[31:30] == 0b01, because the OP-V DATA encoding has
+  bits[31:30] = 01 and the three configuration instructions have 00, 10
+  and 11.  A MODEL MUST READ THE COARSEST SELECTOR BEFORE THE
+  FINEST ONE, AND A MODEL THAT SKIPS A LEVEL IN THE DISPATCH WILL
+  EVENTUALLY CLAIM A WORD AT THE FINER LEVEL THAT IS NOT AT THE
+  COARSER ONE.  THIS IS THE ENCODING COURSE'S OWN FINDING, AND
+  IT BIT THIS FILE TWICE: the inherited decoder read THREE bits where
+  the encoding has TWO, and this model read SIX where it had to read
+  TWO FIRST.
+
+==========================================================================
+SECTION 12 -- FOUR POISONS, AND EACH ONE HAS TO MOVE ITS OWN NUMBER
+==========================================================================
+
+  A control that cannot be made to fail is a comment that says the word POISONED. THIS COLLECTION HAS PAID FOR THAT LESSON REPEATEDLY: THE AARCH64 DATA-PATH COURSE'S CROSS-CHECK REPORTED ZERO
+  DISAGREEMENTS OVER A CORPUS WHERE EIGHTY-FIVE INSTRUCTIONS GENUINELY DISAGREED, AND EVERY ONE OF THE FOUR BUGS HAD MADE THE COMPARISON VACUOUS RATHER THAN WRONG. NOT ONE PRINTED A BAD WORD. THEY ALL
+  STOPPED THE COMPARISON HAPPENING.
+
+  So each of the four below names the number it tests, runs the SAME loop over the SAME bytes, prints the DELTA as a number, and prints [POISON FAILED] if the delta is zero.
+
+
+  POISON 1 -- remove THIS COURSE'S OWN `m_vector_mask`, the model
+              that names the vector DATA path.  It claims TWO
+              numbers -- the NAMED count and the UNMODELLED count --
+              and it claims a ZERO for the DISAGREEMENT count, which
+              is the interesting part: removing this model creates a
+              HOLE and not a WRONG ANSWER, because there is nothing
+              behind it in the dispatch that can name a vector data
+              word.  A HOLE AND A WRONG ANSWER LOOK IDENTICAL IN
+              A CROSS-CHECK THAT ONLY COUNTS AGREEMENTS, AND THE POISON
+              BELOW IS THE OTHER ONE.
+
+    BEFORE: 2147 named, 0 disagree, 50 unmodelled
+    AFTER : 2100 named, 0 disagree, 97 unmodelled
+    DELTA: named -47, disagreements +0, unmodelled +47
+    VERDICT: POISON 1 FIRED
+
+  THE UNMODELLED COUNT RISES BY EXACTLY THE NUMBER OF WORDS THE MODEL OWNED, WHICH IS THE PROOF THAT IT OWNED THEM. A MODEL THAT OWNS NOTHING IN A CORPUS CANNOT BE POISONED, AND THAT IS WHY THE VICTIM
+  IS CHOSEN FROM THE CORPUS AND NOT FROM A LIST OF INTERESTING MODELS: this file's `m_amo_order` owns far fewer words and `m_fence_sets` fewer still, so they are poison 2's victim instead.
+
+
+  POISON 2 -- remove `m_amo_order`, the model that READS inst[26] and
+              inst[25].  The inherited `a_amo` is still in the
+              dispatch and it does not read those bits, so removing
+              this one does NOT create a hole -- it creates a WRONG
+              ANSWER.  THE WORDS STOP BEING NAMED CORRECTLY AND
+              BECOME NAMED INCORRECTLY: THE UNMODELLED COUNT DOES NOT
+              MOVE AT ALL, BECAUSE SOMETHING ELSE STILL NAMES THEM,
+              AND THE DISAGREEMENT COUNT RISES BY THE NUMBER THAT
+              SOMETHING ELSE GETS WRONG.
+
+  THAT IS THE MIRROR OF POISON 1 AND IT IS WHY BOTH COLUMNS ARE
+  PRINTED BESIDE EACH OTHER.  POISON 1 MOVED THE UNMODELLED COLUMN
+  AND NOT THE DISAGREEMENT COLUMN; POISON 2 MOVED THE DISAGREEMENT
+  COLUMN AND NOT THE UNMODELLED ONE.  A CROSS-CHECK THAT COUNTS
+  ONLY AGREEMENTS CALLS BOTH OF THEM A PASS, BECAUSE IN BOTH CASES THE
+  INSTRUCTION IS STILL "COMPARED" AND IN BOTH CASES THE COMPARISON
+  FOUND NOTHING TO SAY.  A CHECK THAT COUNTS AGREEMENTS AND ONE
+  THAT COUNTS HOLES ARE MEASURING DIFFERENT THINGS, AND TWO POISONS
+  THAT MOVE ONE COLUMN EACH ARE THE PROOF THAT THEY ARE.  THE
+  NAMED COUNT IS A THIRD COLUMN AND IT MOVES IN BOTH POISONS, WHICH IS
+  WHY IT IS NOT THE COLUMN THE VERDICT READS: a number that moves
+  every time cannot distinguish the two failures.
+
+    BEFORE: 2147 named, 0 disagree, 50 unmodelled
+    AFTER : 2147 named, 72 disagree, 50 unmodelled
+    DELTA: named +72, disagreements +72, unmodelled +0
+    VERDICT: POISON 2 FIRED
+
+    AND THE FIRST DISAGREEMENTS IT PRODUCES, so the failure is
+    READABLE rather than only countable:
+      0x04b6252f  mine amoadd.w   a0, a1, (a2)        second reader amoadd.w.aq a0, a1, (a2)
+      0x02b6252f  mine amoadd.w   a0, a1, (a2)        second reader amoadd.w.rl a0, a1, (a2)
+      0x06b6252f  mine amoadd.w   a0, a1, (a2)        second reader amoadd.w.aqrl a0, a1, (a2)
+      0x04b6352f  mine amoadd.d   a0, a1, (a2)        second reader amoadd.d.aq a0, a1, (a2)
+
+  POISON 3 -- CLEAR inst[26] and inst[25] in every A-extension word in
+              the corpus and ask the decoder whether the mnemonic
+              moved.  The number it must move is the count of words
+              whose suffix CHANGED.  A FIELD POSITION CLAIMED IN
+              PROSE AND NOT MEASURED IS A FIELD POSITION THAT CAN BE
+              WRONG WITHOUT ANYTHING LOOKING WRONG -- AND THIS IS THE
+              POISON THAT SECTION 4's TABLE DEPENDS ON.
+
+    A-extension words that CARRIED .aq or .rl                  : 28
+    whose decoded mnemonic CHANGED when aq/rl were cleared    : 28
+    whose decoded mnemonic did NOT change                     : 0
+    DELTA: 28 of 28 words moved, 0 did not
+    VERDICT: POISON 3 FIRED
+
+  AND THE `still` COLUMN MUST BE ZERO, NOT NON-ZERO.  A poison
+  whose victim moves SOME words and not others is a poison that has
+  found a partial reader -- which is the class of bug where a decoder
+  reads a field correctly in the instruction the author tested and
+  not in the eleven others.  EXACT CLAIMS HAVE ONE HONEST
+  TREATMENT, AND A COUNT THAT IS "MOSTLY MOVED" IS NOT A COUNT.
+
+  AND THE DENOMINATOR IS THE WORDS THAT CARRIED A SUFFIX, which is a
+  DECISION, and it is the first thing to check when a number looks
+  wrong.  A COUNT OF INSTANCES THAT COULD NOT HAVE MOVED,
+  DIVIDED INTO A TOTAL THAT INCLUDES THEM, IS A NUMBER ABOUT THE
+  POISON AND NOT ABOUT THE FIELD.
+
+  POISON 4 -- break the CHECK, not the decoder.  Every instruction this
+              file can name is listed, and then an AArch64-shaped
+              normaliser -- one that KEEPS the mnemonic and the FIRST
+              operand and DELETES the rest -- is applied to both sides
+              of a PLANTED set of real disagreements.  The number it
+              must move is the number of disagreements that
+              DISAPPEAR.
+
+    real disagreements planted (last operand changed): 1933
+    of those, the working cross-check CATCHES           : 1933
+    of those, the broken rule makes DISAPPEAR           : 1448
+    DELTA: 1448 of the 1933 planted disagreements were HIDDEN
+    VERDICT: POISON 4 FIRED
+
+FOUR POISONS, FOUR CLAIMED NUMBERS, FOUR NON-ZERO DELTAS:
+
+* poison 1 claims the NAMED and the UNMODELLED counts, and moved them
+            by -47 and +47 -- and it claims the DISAGREEMENT count
+            stays at +0, which is a claim as load-bearing as either
+            of the two that moved
+* poison 2 claims the DISAGREEMENT count, and moved it by +72 while
+            claiming the UNMODELLED count stays at +0
+* poison 3 claims the ORDERING-BIT POSITIONS, and moved 28 of 28 with
+            0 unmoved
+* poison 4 claims the VISIBILITY of the check, and hid 1448 of 1933
+
+AND THE PAIR WORTH READING TOGETHER IS POISON 1 AND POISON 2,
+BECAUSE THEY MOVE DIFFERENT COLUMNS AND EACH CLAIMS THE OTHER'S
+COLUMN STAYS PUT.  POISON 1 SAYS A MISSING MODEL MAKES A HOLE;
+POISON 2 SAYS A SUPERSEDED MODEL MAKES A MISTAKE.  THE SAME
+REMOVAL, IN TWO DIFFERENT PLACES IN THE DISPATCH, PRODUCES A NUMBER
+THAT RISES AND A NUMBER THAT DOES NOT -- AND A CROSS-CHECK THAT
+PRINTED ONLY THE FIRST WOULD REPORT PROGRESS FOR BOTH.
+
+A poison that cannot move must say so, and this file prints the
+string [POISON FAILED] beside the verdict and stops.  A control that did not
+run and a control that ran and found nothing are the same number and
+two different bugs, and the distinction is made in the return value
+rather than in a comment nobody reads.  THE STRING IS NOT ON A
+  LINE OF ITS OWN, BECAUSE A READER GREPPING FOR IT WANTS THE VERDICT
+  AND NOT THE PARAGRAPH THAT EXPLAINS WHY IT EXISTS.
+
+==========================================================================
+SECTION 13 -- EIGHTEEN RETRACTIONS
+==========================================================================
+
+  Eighteen of them, and every one was asserted in a draft of this course or in the brief it was written from, measured, and withdrawn. They are printed in full rather than footnoted, and
+  `crosscheck.py` asserts their TEXT so that a later edit cannot quietly delete one -- which is the only mechanism that has ever stopped a retraction being quietly dropped.
+
+  Six of the 18 are about a READER or an INSTRUMENT, five are about a COMPARISON, three are about a CLAIM THAT WAS TRUE BUT INCOMPLETE, and four are about the SUBJECT. THE ONES THAT ARE ABOUT THE
+  SUBJECT ARE THE ONES WORTH READING TWICE, BECAUSE A LIST THAT IS UNIFORMLY ONE THING IS A LIST NOBODY READ.
+
+
+  R1  CLAIMED: the inherited decoder names the three vector configuration instructions, because it says they are told apart by inst[31:30]
+        SOURCE: this course's own first run of section 11, which reported the inherited decoder naming ten `vsetvli` and nothing else -- and the code it read is the SIBLING's `rvdec.py`, which this course borrows rather than forks
+         it computes inst[31:29] -- THREE BITS -- and compares against 0b00, 0b10 and 0b11, so it names `vsetvli` and DECLINES `vsetivli` and `vsetvl`. `vsetvli` is the one instruction whose inst[31:30] and
+                inst[31:29] both happen to be 000, and the other two fail the test by a margin of one bit: `vsetivli` at inst[31:29] = 110 gives 6, `vsetvl` at 100 gives 4, and neither is 3 or 2. IT NAMES THE ONE
+                INSTRUCTION WHERE TWO BITS AND THREE BITS AGREE AND DECLINES THE TWO WHERE THEY DISAGREE, AND A MODEL THAT IS CORRECT BY COINCIDENCE ON ONE CASE IS A MODEL WHOSE OTHER TWO CASES ARE ALSO COINCIDENCES.
+                This is the sibling course's code and the defect is PUBLISHED rather than patched across the course boundary; the fix is a model PREPENDED in this file.
+
+  R2  CLAIMED: the inherited decoder reads the A extension's two ordering bits
+        SOURCE: this course's own first cross-check, whose agreement count was too high and whose cause was found by XORing two amo words; again the code is the SIBLING's, and the inherited `a_amo` it borrows is the model that does not read the two bits
+         it does not READ them -- it never looks at inst[26] and inst[25] at all, so `amoadd.w`, `amoadd.w.aq`, `amoadd.w.rl` and `amoadd.w.aqrl` all render as THE SAME STRING. The words differ; the output does not.
+                A DECODER THAT DOES NOT READ A FIELD RENDERS TWO INSTRUCTIONS IDENTICALLY, AND A CROSS-CHECK THAT COMPARES RENDERINGS WILL CALL THAT AGREEMENT. THIS IS THE SAME SHAPE AS THE AArch64 DATA PATH'S
+                VACUOUS CROSS-CHECK AND THE OPPOSITE OF ITS SYMPTOM: there the comparison was vacuous and the words were right; here the words are wrong and the comparison is honest. Both are found the same way, by
+                asking whether the two sides COULD disagree.
+
+  R3  CLAIMED: the inherited decoder names `fence.tso`
+        SOURCE: this course's own first run of section 11 -- and the defect is in the SIBLING's decoder rather than in this file's
+         it names it `fence`. `s_fence` reads fm and prints it as a number and gives every word with opcode 0x0f and funct3 = 0 the name `fence`, so fm = 1000 comes back as `fence` with fm = 8 in its field list. A
+                DECODER REPORTING AN INSTRUCTION AS THE WRONG INSTRUCTION OF THE SAME FAMILY IS A WORSE FAILURE THAN ONE THAT DECLINES IT, BECAUSE THE WORSE FAILURE STILL PRODUCES A CONFIDENT STRING. And this
+                course's own poison 1 would have caught it if the corpus had contained one `fence.tso` -- it did, and the inherited decoder named it.
+
+  R4  CLAIMED: the inherited decoder's `s_misc_mem` names `fence.i` correctly, so nothing needs fixing there
+        SOURCE: this course's own first reading of the inherited `s_misc_mem`, which looked correct
+         it names it correctly and for the WRONG REASON, and that is worth a paragraph. `fence.i` is funct3 = 1 at the same opcode as the ordering fence, so `s_fence` declines it (it requires funct3 = 0) and
+                `s_misc_mem` catches it. The inherited decoder therefore prints the right name and reads fm, pred and succ on it -- and fm, pred and succ are RESERVED in `fence.i`, so all three come back as 0 and a
+                reader who does not know that will read them as an ordering statement that nothing needs ordering. RIGHT FOR THE WRONG REASON IS A FAILURE THAT A COMPARISON CANNOT FIND AND ONLY A DOMAIN EXPERT CAN,
+                WHICH MAKES IT MORE DANGEROUS THAN AN OUTRIGHT ERROR RATHER THAN LESS.
+
+  R5  CLAIMED: the compile-time comparison shows the compiler emitting `amoswap.w` in a loop instead of a hand-rolled compare-exchange
+        SOURCE: the brief this course was written from, which named this as the course's headline measurement
+         IT DOES NOT, AND THE CLAIM WAS WRONG in a way that is worth keeping because the wrongness is instructive. THE HAND-ROLLED COMPARE-EXCHANGE IS NOT AN ALTERNATIVE TO BE TRADED AWAY -- IT IS THE ONLY WAY TO
+                EXPRESS COMPARE-AND-SWAP, BECAUSE THERE IS NO `cmpxchg` IN THE BASE A EXTENSION AT ALL, AND `amoswap` IS A DIFFERENT OPERATION THAT DOES NOT COMPARE. The compiler emits the ONE INSTRUCTION for the
+                ONE-INSTRUCTION OPERATION (`amoswap.w.aqrl` for __atomic_exchange_n) and the LOOP for the loop-requiring one, and there is no trade to make. A COURSE THAT NAMES A COMPILER DECISION WITHOUT CHECKING
+                WHETHER THE DECISION EXISTS INCREASES THE GAP BETWEEN WHAT THE COMPILER CAN DO AND WHAT THE COURSE CLAIMS IT DOES.
+
+  R6  CLAIMED: the vectorised loop is measured against the scalar loop at `rv64g` and `rv64gcv`
+        SOURCE: this course's own first draft of section 10's table
+         that comparison is CONFOUNDED and its numbers were retracted before they were ever printed. `rv64g` and `rv64gcv` differ in TWO letters, and THAT PAIR DIFFERS IN `c` AND `v` AT ONCE -- so every difference in
+                the table was a difference between adding a vector unit and removing compression. The clean pair is `rv64gc` against `rv64gcv`, which differ in exactly one letter and keep the `c` extension on both
+                sides. THIS IS THE SIBLING ABI COURSE'S OWN FINDING, WHERE THE SAME CONFOUND PRODUCED A -38 THAT WAS THE LIBRARY AND NOT THE ENCODING, AND THE GENERALISATION IS: A -march SWEEP THAT DIFFERS IN MORE
+                THAN ONE LETTER IS NOT AN EXPERIMENT ABOUT EITHER.
+
+  R7  CLAIMED: the vector register group is a scalar, so the assembler's refusal of `vl2r.v v1` is a spelling rule
+        SOURCE: this course's own first draft of section 9, which described the group as a scalar
+         IT IS AN ALIGNMENT CONSTRAINT, and the refusal is the evidence. `vl2r.v v8` assembles and `vl2r.v v1` does not, and the difference is that a group of two must start at an even register. LMUL IS NOT A SCALAR
+                AND NOT A WIDER REGISTER -- IT IS A CONSTRAINT ON WHERE A REGISTER GROUP MAY BEGIN, WHICH IS A CONSTRAINT ON A REGISTER ALLOCATOR AND NOT ON A NUMBER. A REFUSAL IS THE CHEAPEST PROOF THAT A CONSTRAINT
+                IS REAL AND IT IS ALSO THE PROOF THAT THE CONSTRAINT IS NOT ABOUT SYNTAX.
+
+  R8  CLAIMED: the twelve C11 functions in `fence.c` emit twelve fences
+        SOURCE: this course's own first draft of section 7, whose table had a zero in it and no explanation
+         they emit fewer than twelve INSTRUCTIONS, and the shortest is a single `ret`. `__atomic_thread_fence(__ATOMIC_RELAXED)` compiles to NO INSTRUCTION, because a relaxed fence asks for nothing and the encoding
+                for nothing is no instruction. The first draft of the table reported zero fences for that row as a COUNT and the surrounding prose said the compiler had "not emitted anything visible", which is true
+                and is not the interesting half. A RELAXED FENCE IS NOT A NO-OP INSTRUCTION, IT IS THE ABSENCE OF ONE, AND A FUNCTION THAT CONSISTS OF A SINGLE RETURN IS A CORRECT COMPILATION OF A FUNCTION THAT ASKS
+                FOR NOTHING. THIS IS ALSO THE FIRST PLACE IN THIS COURSE WHERE A COMPILER REMOVED SOMETHING BY BEING CORRECT, AND IT IS WORTH NAMING BECAUSE THE SIBLING COURSE MEASURED DEAD-CODE ELIMINATION AT -O1
+                AND RETRACTED IT FOR CALLING IT A CONVENTION.
+
+  R9  CLAIMED: an acquire load and a sequentially consistent load are the same instruction
+        SOURCE: this course's own first draft of section 7, which showed the load column only
+         THEY ARE THE SAME INSTRUCTION AND THE SAME FENCE PLUS ANOTHER FENCE, so the first version of the table showed one `lw` for each and read the difference off the load alone. MEASURED: `load_acquire` is `lw`
+                with one `fence r, rw` after it, and `load_seqcst` is `fence rw, rw`, `lw`, `fence r, rw` -- TWO fences for ONE load. THE EXTRA CONSTRAINT A SEQ_CST LOAD CARRIES IS ON ITS RELATION TO OTHER
+                OPERATIONS, SO IT IS DISCHARGED BY ORDERING THE NEIGHBOURS AND NOT BY CHANGING THE LOAD. IT IS STILL TRUE THAT THE LOADS ARE IDENTICAL, AND THE FIRST VERSION OF THE CLAIM WAS TRUE AND INCOMPLETE,
+                WHICH IS A DISTINCTION WORTH NAMING: A CLAIM THAT IS TRUE AND HAS A QUALIFIER HIDING IN THE NEXT COLUMN IS A CLAIM THAT HAS BEEN HALF-WRITTEN.
+
+  R10  CLAIMED: this course can say what an atomic instruction DOES
+        SOURCE: this course's own first draft of section 5
+         IT IS NOT MEASURED, and the file says so in its header, in section 1, at the end of every affected section, and in the table in section 15 rather than in a disclaimer. No reservation is ever held, no AMO is
+                ever observed to be atomic, no fence is ever observed to order anything, and no vector instruction is ever executed. AN ATOMIC INSTRUCTION IS A PROMISE ABOUT OBSERVABLE BEHAVIOUR, AND EVERY
+                MEASUREMENT AVAILABLE ON THIS HOST IS A MEASUREMENT ABOUT THE PROMISE'S TEXT: THE BIT THAT CARRIES IT, THE PAIR THAT IMPLEMENTS IT, AND THE COMPILER'S CHOICE ABOUT WHETHER TO EMIT IT AT ALL. WHAT IS
+                MEASURED IS THAT CLANG EMITS `lr.w.aqrl` AND `sc.w.rl` WITH A BRANCH BETWEEN THEM; WHAT IS NOT MEASURED IS THAT ANY OF IT WORKS.
+
+  R11  CLAIMED: the ordering model is a difference of degree from x86-64's and AArch64's, because all three are memory models with barriers
+        SOURCE: `docs/course-mission.md`, which says "differs in kind" and supplies no mechanism
+         it is a difference of FORM and the section says so. x86-64 describes a BASELINE that barriers can override; AArch64 gives each ACCESS a MODE, so `ldar` and `ldr` are different opcodes; RISC-V defines the
+                model AS A RELATION BETWEEN TWO NAMED SETS in one instruction. A BASELINE AND AN ESCAPE HATCH IS A CLAIM ABOUT WHAT HAPPENS WHEN YOU DO NOTHING; AN ACCESS MODE IS A CLAIM ABOUT WHAT EACH INSTRUCTION
+                MEANS; A PREDECESSOR/SUCCESSOR PAIR IS A CLAIM ABOUT A RELATION BETWEEN TWO SETS. THE THIRD IS THE ONLY ONE IN WHICH THE FENCE IS THE PRIMITIVE RATHER THAN THE EXCEPTION, AND THAT IS A DIFFERENT KIND
+                OF DIFFERENCE AND NOT A DIFFERENT DEGREE OF THE SAME ONE.
+
+  R12  CLAIMED: the twelve named `fence.tso` words in the corpus prove the compiler emits it
+        SOURCE: this course's own first draft of section 7, which counted the corpus
+         they prove the CORPUS contains it, which is not the same claim, and the first version of section 7 counted corpus occurrences and called the total a compiler statistic. The two were separated by assembling
+                ONE fence line at a time and asking which word came back: the compiler emits `fence.tso` for exactly one of the six C11 fence strengths, `__ATOMIC_ACQ_REL`, and `fence rw, rw` for `__ATOMIC_SEQ_CST`.
+                A NUMBER ABOUT WHAT WAS FED TO IT IS NOT A NUMBER ABOUT WHAT WAS CHOSEN, AND THE TWO ARE THE SAME FAILURE THIS SECTION'S CORPUS-COMPLETENESS CHECK GUARDS AGAINST.
+
+  R13  CLAIMED: `fence.tso` is a weaker barrier than `fence rw, rw` on every implementation, so emitting it is a request
+        SOURCE: this course's own first draft of section 7, which had the direction of the superset backwards
+         the manual says something STRONGER and more interesting than that, and the first version had it backwards in a way that would have been a good saying and a false one. THE MANUAL SAYS THAT an implementation
+                may ignore `fm`: "Because FENCE RW,RW IMPOSES A SUPERSET OF THE ORDERINGS THAT FENCE.TSO IMPOSES, IT IS CORRECT TO IGNORE THE fm FIELD AND IMPLEMENT FENCE.TSO AS FENCE RW,RW." SO FENCE.TSO IS A
+                REQUEST FOR A WEAKER BARRIER THAN THE ONE IT IS SPELLED LIKE, AND A BASE IMPLEMENTATION IS EXPLICITLY PERMITTED TO GIVE THE STRONGER ONE -- WHICH MEANS "fence.tso" IS NOT PORTABLE ADVICE AND ALSO NOT
+                A WEAKER BARRIER, AND THE ONLY HONEST THING TO SAY IS BOTH.
+
+  R14  CLAIMED: the vector extension's tail policy is a performance detail
+        SOURCE: this course's own first draft of section 8, which called the policy a performance detail
+         IT IS A LIBRARY CONTRACT MADE OF BITS, and the specification says the outcome is not even deterministic. "EACH DESTINATION ELEMENT CAN BE EITHER LEFT UNDISTURBED OR OVERWRITTEN WITH 1S, IN ANY COMBINATION,
+                AND THE PATTERN OF UNDISTURBED OR OVERWRITTEN WITH 1S IS NOT REQUIRED TO BE DETERMINISTIC WHEN THE INSTRUCTION IS EXECUTED WITH THE SAME INPUTS." SO THE FAST POLICY IS NOT THE PORTABLE ONE, AND THE
+                COMPILER PICKS THE FAST ONE BY DEFAULT, AND THE ONLY WAY A READER LEARNS THAT IS BY DECODING TWO BITS. THE PORTABILITY PROBLEM IN THE VECTOR EXTENSION IS NOT THE INSTRUCTION SET -- IT IS TWO BITS THE
+                SPECIFICATION DELIBERATELY LEAVES UNDETERMINED.
+
+  R15  CLAIMED: a `vsetvli` sweep of 112 variants shows eleven bits in use
+        SOURCE: this course's own first sweep, which counted bits SET in any variant rather than bits that MOVE
+         it shows EIGHT, because zimm[10:8] is constant zero in every reachable variant -- three bits of an eleven-bit field that no `vsetvli` the assembler will emit ever uses. THE RESERVED BITS ARE NOT WASTED, AND
+                THE INHERITED DECODER'S OWN COMMENT ABOUT THE ELEMENT WIDTH IS A LIVING EXAMPLE: IT SAID "THREE BITS OF THE FIELD" WITH FOUR CORRECT zimm STRINGS AND NEVER SAID WHICH THREE. A FIELD MAP MEASURED BY
+                SWEEP RECORDS WHICH BITS MOVE, AND THREE BITS THAT NEVER MOVE LOOK EXACTLY LIKE THREE BITS THAT DO. A COMMENT THAT GIVES THE WIDTH OF A FIELD WITHOUT GIVING ITS POSITION IS A COMMENT THAT CANNOT BE
+                CHECKED AGAINST THE FIELD.
+
+  R16  CLAIMED: the corpus's `fence` rows all have `rs1 = rd = 0` because the assembler emits zeroes there
+        SOURCE: this course's own first reading of the fence field table
+         THEY HAVE ZEROES BECAUSE THE MANUAL REQUIRES THEM TO: "The unused fields in the FENCE instructions -- rs1 and rd -- are reserved for finer-grain fences in future extensions. For forward compatibility, base
+                implementations shall ignore these fields, and standard software shall ZERO these fields." TWO RESERVED FIELDS IN AN INSTRUCTION WHOSE OTHER TWO FIELDS CARRY THE WHOLE MODEL IS THE TELL THAT THE
+                ENCODING WAS DESIGNED FOR A FUTURE NOBODY HAS BUILT YET. The first draft said the zeroes were a property of the assembler, which is true and is not why.
+
+  R17  CLAIMED: the two readers agreeing means this decoder is right
+        SOURCE: this course's own first draft of section 11, which said "the two readers agree"
+         it means THIS decoder and one other piece of software from the SAME LLVM TREE agree. `clang` assembled the corpus and `llvm-objdump-21` disassembled it, and GNU binutils has no RISC-V target on this host, so
+                THE TWO READERS SHARE AN ASSEMBLER, AND A CROSS-CHECK BETWEEN ONE TOOLCHAIN'S OUTPUT AND ITS OWN VIEW OF THAT OUTPUT CANNOT FIND A BUG IN THE SHARED ASSUMPTIONS. THE CORRECTION IS NOT "DO NOT TRUST
+                THE CROSS-CHECK" BUT "SAY WHAT IT PROVES": this file and one other piece of software agree about what the bytes mean, and NOT that either agrees with silicon. AND THAT SENTENCE IS LIMIT 11, IN THE
+                ARTIFACT'S OWN WORDS, BECAUSE A LIMIT PRINTED ONCE AT THE END IS A LIMIT THAT GETS SKIMMED PAST.
+
+  R18  CLAIMED: the lock-prefix count on RISC-V is zero because the assembler refuses `lock`
+        SOURCE: this course's own first draft of section 2, which printed the zero without the other count
+         the assembler refusing `lock` is a fact about the ASSEMBLER, and the claim needs to be about the ARCHITECTURE. The measurement that carries the claim is the OTHER count: zero instructions in the corpus need
+                a prefix to become atomic, against nine operations plus a reservation pair at two widths and four orderings that are atomic with no prefix at all. "ZERO" IS AN ABSENCE OF FEATURES IF YOU PRINT IT
+                ALONE AND A DESIGN DECISION IF YOU PRINT IT BESIDE THE COUNT IT REPLACED. THE DIFFERENCE BETWEEN x86-64 AND RISC-V IS NOT THAT ONE HAS EIGHTEEN AND THE OTHER NONE -- IT IS THAT x86-64 MADE ATOMICITY A
+                PROPERTY OF AN EXISTING INSTRUCTION AND RISC-V MADE IT A CATEGORY OF INSTRUCTION.
+
+THE CLAIM THAT TIES THE LIST TOGETHER is at the end of it:
+
+  NOTHING HERE IS A MISTAKE ABOUT HOW A COMPUTER WORKS.  That is
+  EIGHTEEN COURSES IN A ROW, and it is the most interesting thing
+  about the list.  The RISC-V atomics, fence and vector extension did
+  not surprise this course once.  What surprised it was a two-bit
+  field two of whose four values are invalid on half the
+  instructions that carry it, a decoder that computed three bits
+  where the encoding has two, a bit that is "release" in one opcode
+  and "mask" in another, a policy the specification declines to make
+  deterministic, and a tail policy the compiler picks the fast way by
+  default.
+
+EIGHTEEN COURSES IN A ROW, AND EVERY SINGLE RETRACTION IS A
+DISCOVERY ABOUT THE MACHINERY BUILT TO READ THE HARDWARE.
+
+==========================================================================
+SECTION 14 -- THE MEASURED/QUOTED BOUNDARY, THE LIMITS, AND WHERE EVERY CLAIM CAME FROM
+==========================================================================
+
+  Everything in the last thirteen sections carries one of three labels, and on most pages you would be forgiven for not noticing. This section prints all of them, in one table, with the count -- and
+  the COUNT is the finding, because this is a course about ENCODINGS and about a COMPILER'S CHOICES, and those are exactly the two things a host without hardware can measure.
+
+  THE RATIO IS NOT A QUALITY SCORE. It is a map of the subject. The neutral courses `simd` and `smp` and the per-architecture courses `x86simd` and `a64simd` all had hardware, so their quoted thirds
+  are smaller for the same reason: what a document says is not measurable on a host with no machine, and what IS measurable -- a bit position, a field map, an instruction count, a refusal -- is the
+  part a compiler author needs and the part a page-table writer needs.
+
+
+  label              the claim                                                                                                                      where it came from                                                                                                     
+  MEASURED-ON-BYTES  the A extension is one opcode, 0101111                                                                                         inst[6:0] of every word in amo.o, cross-checked against llvm-objdump-21                                                
+  MEASURED-ON-BYTES  eleven operations at two widths, eleven distinct funct5 values                                                                 inst[31:27] of 18 words in amo.o                                                                                       
+  MEASURED-ON-BYTES  twenty-one of the thirty-two funct5 values are unnamed                                                                         a full sweep of inst[31:27] printed in full, holes included                                                            
+  MEASURED-ON-BYTES  the eleven funct5 values are grouped in fours                                                                                  the gaps between consecutive named values, printed                                                                     
+  MEASURED-ON-BYTES  the two reservation instructions sit at 2 and 3                                                                                inst[31:27] of the four lr/sc words in amo.o                                                                           
+  MEASURED-ON-BYTES  the width is ONE BIT of funct3                                                                                                 twelve .w/.d XOR pairs in amo.o, every one 0x1000                                                                      
+  MEASURED-ON-BYTES  aq is inst[26] and rl is inst[25]                                                                                              every .aq/.rl/.aqrl XOR in amo.o: two distinct values                                                                  
+  MEASURED-ON-BYTES  the three ordering XORs are ADDITIVE                                                                                           aq|rl against the plain form, compared with the two single-bit XORs                                                    
+  MEASURED           lr requires rs2 = 0 and the assembler enforces it                                                                              a refusal probe: `lr.w a0, a1, (a2)`                                                                                   
+  MEASURED           the AMO width pair is a TEMPLATE PARAMETER in the fallback path                                                                the symbol name in amo_noa_O2.o, read out of the disassembly                                                           
+  MEASURED           zero RISC-V instructions take a lock prefix                                                                                    nine assembler probes including the literal word `lock`                                                                
+  MEASURED           no instruction is implicitly locked                                                                                            the count beside it: nine operations plus a pair, atomic with no prefix                                                
+  MEASURED           x86-64 accepts twenty-two lock-prefixed spellings                                                                              llvm-mc-21 assembling lock86.s, and its own encodings                                                                  
+  MEASURED           the assembler ACCEPTS `lock bt`, which the SDM refuses                                                                         one line of lock86.s, with its encoding [0xf0,0x48,0x0f,0xa3,0x18]                                                     
+  QUOTED             the SDM names eighteen instructions that accept LOCK                                                                           the sibling x86-64 course, quoting the SDM; it is a quoted number and this course does not restate it as a measurement 
+  QUOTED             and xchg is implicitly locked with or without the prefix                                                                       the SDM, quoted in the sibling course: "REGARDLESS OF THE PRESENCE OR ABSENCE OF THE LOCK prefix"                      
+  QUOTED             aq, rl and the four C11 semantics                                                                                              rv32-unpriv chapter 12, section 12.1.1                                                                                 
+  QUOTED             the reservation set rules, and one reservation per hart                                                                        rv32-unpriv chapter 12, section 12.1.2                                                                                 
+  QUOTED             the scratch-word rule for forcibly invalidating a reservation                                                                  rv32-unpriv chapter 12, section 12.1.2                                                                                 
+  QUOTED             a byte-width AMO exists, in Zabha, and not in the base A extension                                                             rv32-unpriv chapter 12, which documents Zabha beside Zaamo and Zalrsc; the assembler names the extension in its refusal
+  QUOTED             the eventuality guarantee for constrained LR/SC loops                                                                          rv32-unpriv chapter 12, section 12.1.3                                                                                 
+  QUOTED             LR.rl and SC.aq are not to be set without the other bit                                                                        rv32-unpriv chapter 12, section 12.1.2                                                                                 
+  QUOTED             FENCE R,RW suffices for acquire and FENCE RW,W for release, at extra ordering                                                  rv32-unpriv chapter 12, section 12.1.4                                                                                 
+  MEASURED           fence carries fm, pred, succ, rs1 and rd                                                                                       inst[31:28], [27:24], [23:20], [19:15] and [11:7] of 34 words                                                          
+  QUOTED             rs1 and rd are reserved and standard software shall zero them                                                                  rv32-unpriv chapter 2.7, "The unused fields in the FENCE instructions -- rs1 and rd"                                   
+  QUOTED             the memory and I/O domains are two axes, not one                                                                               rv32-unpriv chapter 2.7                                                                                                
+  MEASURED-ON-BYTES  fence.tso is fm = 1000 with pred = RW and succ = RW                                                                            inst[31:28] of the two 0x8330000f words in fence.o                                                                     
+  QUOTED             an implementation may implement FENCE.TSO as FENCE RW,RW                                                                       rv32-unpriv chapter 2.7, Table 4 and the paragraph after it                                                            
+  MEASURED           the accepted spellings of pred and succ are fifteen of sixteen                                                                 fifteen assembler probes, one per non-empty subset of {i,o,r,w}                                                        
+  MEASURED           the empty set is not spellable                                                                                                 a refusal probe on `fence` with an empty operand                                                                       
+  MEASURED           a relaxed C11 fence emits NO instruction                                                                                       the body of f_relaxed in fence_c_O2.o                                                                                  
+  MEASURED           CONSUME and ACQUIRE emit the same four bits                                                                                    the fence words of f_consume and f_acquire, XORed                                                                      
+  MEASURED           ACQ_REL emits fence.tso and SEQ_CST emits fence rw, rw                                                                         the fence words of the two functions in fence_c_O2.o                                                                   
+  MEASURED           an acquire load and a seq_cst load are the same `lw`                                                                           the load word in l_acquire and l_seqcst, compared byte for byte                                                        
+  MEASURED           and a seq_cst load carries TWO fences                                                                                          the fence count in l_seqcst, which is 2                                                                                
+  MEASURED-ON-BYTES  vsetvli, vsetivli and vsetvl are told apart by inst[31:30]                                                                     inst[31:30] of three configuration words in vec.o                                                                      
+  MEASURED-ON-BYTES  zimm is eleven bits at inst[30:20] and zimm[10:8] is constant zero                                                             112 assembled variants swept, 112 distinct values, 3 bits never moving                                                 
+  MEASURED-ON-BYTES  the four vtype fields and their widths                                                                                         thirteen XOR probes against a fixed base variant, in the table in section 8                                            
+  QUOTED             AVL is encoded in two bits of register identity                                                                                rv32-unpriv chapter 30, Table 49; and the three rows MEASURED in section 8                                             
+  QUOTED             the length is in the CSR vl and the byte length in vlenb                                                                       rv32-unpriv chapter 30, sections 31.3.6 and 31.6                                                                       
+  MEASURED-ON-BYTES  vlenb is CSR 0xC22 and is read-only from U-mode                                                                                inst[31:20] of 0xc22028f3, decomposed with the privileged course's own field map                                       
+  MEASURED-ON-BYTES  the mask is one bit at inst[25] in three instruction groups                                                                    eleven adjacent-pair XORs in vec.o, all 0x02000000                                                                     
+  MEASURED           the only mask register the encoding can name is v0                                                                             a refusal probe: "operand must be v0.t"                                                                                
+  MEASURED-ON-BYTES  v0 is a destination as well as a mask source                                                                                   inst[11:7] of the vmsne.vi and vlm.v words in vec.o                                                                    
+  MEASURED-ON-BYTES  nf at inst[31:29] is the register group count                                                                                  the eight whole-register load and store words in vec.o                                                                 
+  MEASURED           a register group must start on a group boundary                                                                                a refusal probe: `vl2r.v v1` refused, `vl2r.v v8` accepted                                                             
+  QUOTED             the tail and mask policies, and their four combinations                                                                        rv32-unpriv chapter 30, section 31.3.4.3 and its table                                                                 
+  QUOTED             the agnostic pattern is not required to be deterministic                                                                       rv32-unpriv chapter 30, section 31.3.4.3                                                                               
+  QUOTED             the tail and mask flags are mandatory in the assembly syntax                                                                   rv32-unpriv chapter 30, section 31.3.4.3                                                                               
+  QUOTED             the vtype register layout, with vill above three reserved bits                                                                 rv32-unpriv chapter 30, Table 48, printed beside the measured sweep                                                    
+  QUOTED             the agnostic policy exists to accommodate vector register renaming                                                             rv32-unpriv chapter 30, the vtype discussion                                                                           
+  QUOTED             the value in vlenb is a design-time constant in any implementation                                                             rv32-unpriv chapter 30, section 31.3.6                                                                                 
+  MEASURED           and the compiler emits `ta, ma` in 31 of the corpus's 120 vsetvli                                                              zimm[7] and zimm[6] of every vsetvli in vec.o, counted, and the other three combinations are in the table in section 8 
+  MEASURED           -O1 emits no vector instruction, -Os emits 21 and -O2 and -O3 emit 19                                                          the vector instruction count in 20 objects                                                                             
+  MEASURED           -Os is smaller than -O2 in code size while emitting MORE vector instructions, and -O2 and -O3 produce identical assembly here  word-by-word comparison of four functions at the two levels, and the per-level instruction totals printed in section 10
+  MEASURED           the compiler reads the vector length with csrr a7, vlenb                                                                       the CSR read in three of the four vectorised functions                                                                 
+  MEASURED-ON-BYTES  the two readers agree on the whole corpus                                                                                      this file's decoder against llvm-objdump-21, over every object                                                         
+  MEASURED-ON-BYTES  and this file declines to name the rest of the vector data path                                                                the UNMODELLED count, printed beside the disagreement count                                                            
+
+  58 rows: 20 MEASURED, 18 MEASURED-ON-BYTES, 20 QUOTED.
+
+  AT 65 PER CENT THE MEASURED AND MEASURED-ON-BYTES THIRDS ARE A MAJORITY OF THIS COURSE'S CLAIMS, AND THAT IS A STATEMENT ABOUT THE SUBJECT AND NOT ABOUT CARE. 38 OF 58 ROWS ARE MEASURED OR
+  MEASURED-ON-BYTES AGAINST 31 OF 57 IN `a64sys` AND 23 OF 44 IN `rvpriv`.
+
+  AND THE COMPARISON CUTS BOTH WAYS, SO BOTH HALVES ARE PRINTED. THIS COURSE'S QUOTED FRACTION IS 34 PER CENT, a64sys's IS 54 PER CENT AND rvpriv's IS 52 PER CENT. SO THE RISC-V PRIVILEGED COURSE'S
+  QUOTED THIRD IS THE LARGEST IN THE SECTION AND A COURSE THAT CLAIMED OTHERWISE WOULD BE MAKING A NUMBER UP.
+
+  The reason this course's quoted third is the SMALLEST in the RISC-V section is not that it depends less on a document. It is that there was MORE TO MEASURE: the AMO encodings, the two ordering bits
+  as an XOR, the thirteen XOR probes that decompose `vtype`, the eleven mask XORs, the fifteen fence spellings, the -march experiment and the twenty objects of compiler output -- none of which
+  `rvpriv` had a reason to touch, because its subject is a CSR address and a page table rather than an instruction that has to be FAST.
+
+  THE SUBJECT IS AN ENCODING AND A COMPILER'S CHOICE. WHAT AN ENCODING IS AND WHAT A COMPILER CHOSE ARE EXACTLY WHAT A HOST WITHOUT HARDWARE CAN MEASURE, AND THE RATIO ABOVE IS A MAP OF THE SUBJECT
+  RATHER THAN A DISCLAIMER. IT IS PRINTED AS A TABLE BECAUSE A PERCENTAGE IN A SENTENCE IS A NUMBER NOBODY CAN CHECK.
+
+
+  Nineteen limits, and they are printed in the artifact's own words so that a
+  reader who copies a number out of this file cannot lose the sentence that
+  limits it. The first three decide what every other one may say.
+
+
+  1. NO TIMING. No cycle, no latency, no throughput, no speedup, no ratio
+     of anything a machine did. There is no RISC-V machine, no emulator and
+     no RISC-V linker on this host, so every figure is a bit pattern, a
+     count of bit patterns, an arithmetic identity, or a refusal from a
+     real assembler. The `simd` and `smp` courses measured speedups on
+     hardware, `x86simd` measured a lost-update count, and `a64simd`
+     measured 3.89x, 4.92x and 27.65x; those have NO COUNTERPART HERE AND
+     ARE NOT INVENTED TO FILL THE GAP.
+  2. NOTHING IS EXECUTED. Not one instruction in this course has run. A
+     compare-exchange in section 5 has never exchanged; it is four words a
+     compiler emitted and a disassembly that named them.
+  3. NO RESERVATION IS EVER HELD, NO STORE-CONDITIONAL IS EVER OBSERVED TO
+     SUCCEED OR TO FAIL, NO AMO IS EVER OBSERVED TO BE ATOMIC, NO FENCE IS
+     EVER OBSERVED TO ORDER ANYTHING AND NO VECTOR INSTRUCTION IS EVER
+     EXECUTED. Five separate absences, and each one is a separate thing
+     this course would otherwise be able to say.
+  4. THE RESERVATION RULES ARE QUOTED AND NOT MEASURED. What is measured
+     is that `lr` is funct5 = 0b00010 with rs2 forced to zero, that the
+     assembler REFUSES `lr.w a0, a1, (a2)` with "expected '(' or optional
+     integer offset", and that clang emits `lr.w.aqrl` and `sc.w.rl` with a
+     branch between them. What is NOT measured is that the reservation is
+     held, that the SC fails when it should, that one reservation per hart
+     is enforced, or that a call in the middle of a pair invalidates
+     anything.
+  5. THE ORDERING MODEL IS DEFINED BY A DOCUMENT AND THE ENFORCEMENT IS
+     SILICON. The four fields of `fence` and the fifteen spellings of its
+     two sets are measured on words. Whether `fence rw, w` orders a store
+     before a load on any real machine is QUOTED, and there is no hart here
+     to be ordered.
+  6. fence.tso IS A REQUEST AND WHETHER THE REQUEST IS HONOURED IS A
+     PROPERTY OF THE IMPLEMENTATION. It is measured that the compiler emits
+     it for `__ATOMIC_ACQ_REL`, that it is fm = 1000 with pred = RW and
+     succ = RW, and that the manual says it is "correct to ignore the fm
+     field and implement FENCE.TSO as FENCE RW,RW". Whether the machine
+     gives the weaker or the stronger barrier is not observable here.
+  7. THE VECTOR LENGTH IS NOT MEASURED. `vlenb` is 0xC22 and clang emits
+     `csrr a7, vlenb`; its VALUE is in no file on this host. A machine with
+     128-bit vectors and a machine with 1024-bit vectors both produce this
+     assembly, and that is the point of the design rather than a gap in it.
+  8. THE TAIL AND MASK POLICIES ARE MEASURED AS BITS AND NOT AS BEHAVIOUR.
+     It is measured that the compiler emits `ta, ma` and that the policy
+     bits are zimm[7] and zimm[6]. Whether an agnostic tail is overwritten
+     with ones or left alone is a property of silicon this host does not
+     have, and the specification explicitly declines to require
+     determinism.
+  9. THE VECTORISED LOOPS HAVE NOT BEEN RUN AND MAY NOT BE CORRECT.
+     Nothing was executed, so no output was compared against anything, and
+     the instruction counts in section 10 are counts of what a compiler
+     emitted.
+  10. THE TWO READERS SHARE AN ASSEMBLER. `clang` assembled the corpus and
+     `llvm-objdump-21` disassembled it, so both come from one LLVM tree,
+     and GNU binutils has no RISC-V target installed on this host. What
+     section 11 establishes is "this decoder and one other piece of
+     software agree on what the bytes mean" -- NOT "either agrees with
+     silicon".
+  11. THE SOURCE/DISASSEMBLY PAIRING IN THE THREE HAND-WRITTEN CORPORA IS
+     POSITIONAL, AND THE FILE CHECKS IT. `amo.s`, `fence.s` and `vec.s` are
+     straight-line lists of one instruction per line with no labels inside
+     the instruction run, so source line N is word N. The count is asserted
+     on every run and a file that changed shape would fail loudly rather
+     than silently mis-pair every field in the course.
+  12. THE x86-64 LOCK LIST IS QUOTED FOR ITS EIGHTEEN AND MEASURED FOR WHAT
+     THIS ASSEMBLER ACCEPTS. The SDM's list is the oracle and `llvm-mc-21`
+     is the instrument, and the two DISAGREE about `lock bt`, which this
+     host's assembler accepts and the SDM refuses. The disagreement is the
+     finding and it is why the contrast is a toolchain measurement and not
+     a count of architectural features.
+  13. THE `-march` COMPARISON IS ONE LETTER AND NOT TWO. The vector counts
+     in section 10 are `rv64gc` against `rv64gcv`, which differ in `v` only
+     and keep `c` on both sides. The atomics comparison is `rv64im` against
+     `rv64ima`. An earlier draft used `rv64g` against `rv64gcv` and
+     retracted the number, because that pair differs in `c` and `v` at
+     once.
+  14. EVERY INSTRUCTION COUNT AND EVERY FUNCTION IS CLANG 21.1.8'S.
+     `crosscheck.py` asserts the encodings, the bit positions, the field
+     positions and the two-reader agreement as exact quantities, and the
+     instruction counts and the compiler's choices as shapes and orderings,
+     because a shape does not move with a compiler and a bare value does.
+  15. THE VECTOR DATA PATH IS ONE QUARTER MODELLED AND THE REST IS COUNTED.
+     This file models the three configuration instructions, the mask bit in
+     three groups and the register group; the remaining vector encodings
+     are declined and COUNTED, and a decoder that named all of them and got
+     one wrong would be worse than one that says which half it implements.
+  16. THE INHERITED DECODER IS BORROWED AND NOT FORKED, AND THREE OF THE
+     FOUR PREPENDED MODELS ARE REPAIRS TO GAPS IN IT. R1, R2 and R3 name
+     the defects and they live in the SIBLING's code. The sibling is
+     untouched, for the reason the sibling set out: a course that quietly
+     patches a neighbour to make its own numbers work is a course whose
+     numbers are not measurements any more.
+  17. NOTHING GENERALISES FROM AN EMPTY ROW. Every distribution here is a
+     distribution of what clang chose for a handful of files at one version
+     on one host, and a row with nothing in it is a statement about that
+     corpus and not about the architecture.
+  18. A CROSS-CHECK THAT AGREES IS NOT PROOF. Section 12 exists because the
+     AArch64 data-path course reported ZERO disagreements over a corpus
+     where eighty-five instructions genuinely disagreed, and the only way
+     to know whether a cross-check can fail is to make it fail on purpose.
+  19. THE SPECIFICATIONS ARE AN ORACLE, NOT A MEASUREMENT. Quoting is not
+     verifying. The two documents -- `rv32-unpriv` and `riscv-cc` -- were
+     read and every QUOTED row names one of them with a chapter, and a
+     reader who wants to disagree with a QUOTED row has the citation to
+     disagree with.
+
+  A LIST OF NINETEEN LIMITS says what this file declines to do. A LIST OF WHAT
+  A READER THEREFORE CANNOT CONCLUDE is a different thing, and it is the one
+  that protects the reader rather than the file: the limits are this course's
+  promises and the cannot-list is the set of sentences that would be FALSE if
+  a reader carried the promises in one direction rather than the other. It is
+  printed beside the limits, not in a footnote, because a footnote is a place
+  where a scope statement goes to be skipped.
+
+
+  * That any atomic instruction is ATOMIC. What is measured is the
+    encoding and what the compiler emitted. Atomicity is a promise about
+    observable behaviour and no behaviour has been observed.
+  * That a store-conditional ever FAILS, or ever succeeds. The rules that
+    say when it must fail are QUOTED from chapter 12 and there is no hart
+    here to fail on anything.
+  * That `fence rw, w` ORDERS anything. What is measured is that the
+    assembler accepts the spelling, that pred is 0011 and succ is 0001,
+    and that the manual calls it a relation between two sets. Whether a
+    store is observed before a load is a question about silicon.
+  * That `fence.tso` is a WEAKER barrier than `fence rw, rw`. The manual
+    permits an implementation to ignore `fm` and implement it as `fence
+    rw, rw`, so it may be either, and which one a machine does is not
+    observable here.
+  * That the vector loop is FASTER than the scalar loop it replaces. No
+    vector instruction in this course has run and no timing exists
+    anywhere in this file.
+  * What VLEN IS on any machine. `vlenb` is read by the compiler and its
+    value is in no file on this host.
+  * Whether an AGNOSTIC tail is overwritten with ones. The specification
+    explicitly declines to require determinism, so there is no correct
+    answer to check against.
+  * That the vectorised loops are CORRECT. Nothing was executed, so no
+    output was compared against anything.
+  * That `llvm-objdump-21` agrees with the silicon. Section 11
+    establishes that this file's decoder and one other piece of software
+    from the same LLVM tree agree on what the bytes mean. That is a fact
+    about two programs and not about a processor.
+
+  AND HERE IS THE OTHER HALF, because a course that prints only a cannot-list teaches its reader that the subject is unknowable, which is the opposite of what 58 measured bit patterns are for.
+
+
+  * Every bit pattern in this course is byte-for-byte reproducible from
+    the files in this directory and the exact clang invocation section 1
+    prints, and the six second-reader listings are committed so a reader
+    with a hex editor and no cross-compiler can check all of it.
+  * That `aq` is inst[26] and `rl` is inst[25], measured as one XOR per
+    pair over the whole corpus with a single result for each, and that the
+    three XORs are ADDITIVE -- which is what makes them two fields and not
+    one field with four values.
+  * That the `.w` and `.d` suffixes are ONE BIT of funct3, measured as
+    nine XORs that are all exactly 0x1000.
+  * That `lr` requires rs2 = 0 and the assembler ENFORCES it, measured by
+    a refusal whose diagnostic is about syntax and whose cause is
+    semantics.
+  * That `fence` carries four fields, two of which are reserved and zero
+    in every word the assembler emits, and that the predecessor and
+    successor sets have FIFTEEN named spellings out of sixteen codes.
+  * That there is no implicit lock anywhere in RISC-V, measured as a
+    count of zero against the OTHER count -- nine operations plus a
+    reservation pair at two widths and four orderings -- rather than as an
+    absence.
+  * That the compiler's atomic code is a LIBRARY CALL without the `a`
+    letter and INLINE INSTRUCTIONS with it, one letter apart, with the
+    call's own name carrying the width.
+  * That zimm[10:8] is constant zero across all 112 reachable `vsetvli`
+    variants, which is a measurement about which bits MOVE rather than
+    about which bits are set in some example.
+  * That the mask is one bit in three instruction groups and the mask
+    register is NOT in the encoding, with the assembler naming that
+    property in a diagnostic.
+  * That the compiler reads the vector length from a CSR, and that -O2
+    and -O3 produce byte-identical assembly for this corpus.
+  * Every limit on this page, which are the sentences that make the other
+    nineteen safe to say.
+
+  THE TWO LISTS ARE THE SAME ABSENCES SEEN FROM OPPOSITE SIDES, AND THE SECOND IS LONGER -- 11 items against 9 -- WHICH IS THE POINT: there is more that can be read off bytes than there is that can be
+  said about behaviour. A reader who finishes this file able to state the second list precisely and the first list vaguely HAS IT EXACTLY BACKWARDS.
+
+
+  WHAT THE COURSE OWES ITS SIBLINGS, and does not re-teach. Every link was
+  verified present by a live route check, and the identical list is in
+  `crosscheck.py`, which asserts both that each id IS present and that each id
+  this course has ALREADY RETIRED is ABSENT -- because a positive list passes
+  on any set of ids that exist and says nothing about the ones that do not,
+  and the previous course in this section shipped four ids that 404'd while
+  its own artifact said every one of them had been verified.
+
+  * what a race is and what "atomic" has to mean for it -- the neutral course:
+    /courses/smp/lessons/smp-atomic, /courses/smp/lessons/smp-ordering
+  * what a vector lane is, and what a reduction is -- the neutral course:
+    /courses/simd/lessons/simd-width, /courses/simd/lessons/simd-reduce
+  * why a vectorised loop needs a remainder, and why it is hard to do
+    portably -- /courses/simd/lessons/simd-boundaries
+  * what the vectoriser does and does not do
+      /courses/simd/lessons/simd-compiler
+  * the SAME SUBJECT on x86-64, where it IS measurable on hardware:
+    /courses/x86simd/lessons/x86-atomics, /courses/x86simd/lessons/x86-order
+  * the SAME SUBJECT on AArch64, where acquire and release are ACCESS MODES
+    rather than two bits -- /courses/a64simd/lessons/a64-atomic,
+    /courses/a64simd/lessons/a64-order
+  * and the section's spine, why there are no condition codes:
+    /courses/rvabi/lessons/rv-noflags
+
+  Verified present by a live route check, every one of them, and asserted both
+  ways in `crosscheck.py`.
+
+
+==========================================================================
+END OF REPORT -- 14 sections, 19 limits, 18 retractions, 4 poisons, 58 provenance rows
+  NONE of them is a mistake about how a computer works.  That is EIGHTEEN courses in a row.
+==========================================================================

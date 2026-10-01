@@ -1,0 +1,133 @@
+
+amo_noa_O2.o:	file format elf64-littleriscv
+
+Disassembly of section .text:
+
+0000000000000000 <amo_fetch_add_seqcst>:
+       0: ff010113     	addi	sp, sp, -0x10
+       4: 00113423     	sd	ra, 0x8(sp)
+       8: 00500613     	li	a2, 0x5
+       c: 00000097     	auipc	ra, 0x0
+      10: 000080e7     	jalr	ra <amo_fetch_add_seqcst+0xc>
+      14: 0005051b     	sext.w	a0, a0
+      18: 00813083     	ld	ra, 0x8(sp)
+      1c: 01010113     	addi	sp, sp, 0x10
+      20: 00008067     	ret
+
+0000000000000024 <amo_fetch_add_relaxed>:
+      24: ff010113     	addi	sp, sp, -0x10
+      28: 00113423     	sd	ra, 0x8(sp)
+      2c: 00000613     	li	a2, 0x0
+      30: 00000097     	auipc	ra, 0x0
+      34: 000080e7     	jalr	ra <amo_fetch_add_relaxed+0xc>
+      38: 0005051b     	sext.w	a0, a0
+      3c: 00813083     	ld	ra, 0x8(sp)
+      40: 01010113     	addi	sp, sp, 0x10
+      44: 00008067     	ret
+
+0000000000000048 <amo_exchange_seqcst>:
+      48: ff010113     	addi	sp, sp, -0x10
+      4c: 00113423     	sd	ra, 0x8(sp)
+      50: 00500613     	li	a2, 0x5
+      54: 00000097     	auipc	ra, 0x0
+      58: 000080e7     	jalr	ra <amo_exchange_seqcst+0xc>
+      5c: 0005051b     	sext.w	a0, a0
+      60: 00813083     	ld	ra, 0x8(sp)
+      64: 01010113     	addi	sp, sp, 0x10
+      68: 00008067     	ret
+
+000000000000006c <amo_exchange_relaxed>:
+      6c: ff010113     	addi	sp, sp, -0x10
+      70: 00113423     	sd	ra, 0x8(sp)
+      74: 00000613     	li	a2, 0x0
+      78: 00000097     	auipc	ra, 0x0
+      7c: 000080e7     	jalr	ra <amo_exchange_relaxed+0xc>
+      80: 0005051b     	sext.w	a0, a0
+      84: 00813083     	ld	ra, 0x8(sp)
+      88: 01010113     	addi	sp, sp, 0x10
+      8c: 00008067     	ret
+
+0000000000000090 <amo_store_release>:
+      90: ff010113     	addi	sp, sp, -0x10
+      94: 00113423     	sd	ra, 0x8(sp)
+      98: 00300613     	li	a2, 0x3
+      9c: 00000097     	auipc	ra, 0x0
+      a0: 000080e7     	jalr	ra <amo_store_release+0xc>
+      a4: 00813083     	ld	ra, 0x8(sp)
+      a8: 01010113     	addi	sp, sp, 0x10
+      ac: 00008067     	ret
+
+00000000000000b0 <amo_load_acquire>:
+      b0: ff010113     	addi	sp, sp, -0x10
+      b4: 00113423     	sd	ra, 0x8(sp)
+      b8: 00200593     	li	a1, 0x2
+      bc: 00000097     	auipc	ra, 0x0
+      c0: 000080e7     	jalr	ra <amo_load_acquire+0xc>
+      c4: 0005051b     	sext.w	a0, a0
+      c8: 00813083     	ld	ra, 0x8(sp)
+      cc: 01010113     	addi	sp, sp, 0x10
+      d0: 00008067     	ret
+
+00000000000000d4 <amo_or_relaxed>:
+      d4: ff010113     	addi	sp, sp, -0x10
+      d8: 00113423     	sd	ra, 0x8(sp)
+      dc: 00000613     	li	a2, 0x0
+      e0: 00000097     	auipc	ra, 0x0
+      e4: 000080e7     	jalr	ra <amo_or_relaxed+0xc>
+      e8: 0005051b     	sext.w	a0, a0
+      ec: 00813083     	ld	ra, 0x8(sp)
+      f0: 01010113     	addi	sp, sp, 0x10
+      f4: 00008067     	ret
+
+00000000000000f8 <amo_cas_loop>:
+      f8: fd010113     	addi	sp, sp, -0x30
+      fc: 02113423     	sd	ra, 0x28(sp)
+     100: 02813023     	sd	s0, 0x20(sp)
+     104: 00913c23     	sd	s1, 0x18(sp)
+     108: 01213823     	sd	s2, 0x10(sp)
+     10c: 00060413     	mv	s0, a2
+     110: 00050493     	mv	s1, a0
+     114: 00058913     	mv	s2, a1
+     118: 00b12623     	sw	a1, 0xc(sp)
+     11c: 00c10593     	addi	a1, sp, 0xc
+     120: 00500693     	li	a3, 0x5
+     124: 00500713     	li	a4, 0x5
+     128: 00048513     	mv	a0, s1
+     12c: 00040613     	mv	a2, s0
+     130: 00000097     	auipc	ra, 0x0
+     134: 000080e7     	jalr	ra <amo_cas_loop+0x38>
+     138: 00c12583     	lw	a1, 0xc(sp)
+     13c: 00050063     	beqz	a0, 0x13c <amo_cas_loop+0x44>
+     140: 00090513     	mv	a0, s2
+     144: 02813083     	ld	ra, 0x28(sp)
+     148: 02013403     	ld	s0, 0x20(sp)
+     14c: 01813483     	ld	s1, 0x18(sp)
+     150: 01013903     	ld	s2, 0x10(sp)
+     154: 03010113     	addi	sp, sp, 0x30
+     158: 00008067     	ret
+
+000000000000015c <sync_cas_loop>:
+     15c: fd010113     	addi	sp, sp, -0x30
+     160: 02113423     	sd	ra, 0x28(sp)
+     164: 02813023     	sd	s0, 0x20(sp)
+     168: 00913c23     	sd	s1, 0x18(sp)
+     16c: 01213823     	sd	s2, 0x10(sp)
+     170: 00060413     	mv	s0, a2
+     174: 00058493     	mv	s1, a1
+     178: 00050913     	mv	s2, a0
+     17c: 00912623     	sw	s1, 0xc(sp)
+     180: 00c10593     	addi	a1, sp, 0xc
+     184: 00500693     	li	a3, 0x5
+     188: 00500713     	li	a4, 0x5
+     18c: 00090513     	mv	a0, s2
+     190: 00040613     	mv	a2, s0
+     194: 00000097     	auipc	ra, 0x0
+     198: 000080e7     	jalr	ra <sync_cas_loop+0x38>
+     19c: 00050063     	beqz	a0, 0x19c <sync_cas_loop+0x40>
+     1a0: 00100513     	li	a0, 0x1
+     1a4: 02813083     	ld	ra, 0x28(sp)
+     1a8: 02013403     	ld	s0, 0x20(sp)
+     1ac: 01813483     	ld	s1, 0x18(sp)
+     1b0: 01013903     	ld	s2, 0x10(sp)
+     1b4: 03010113     	addi	sp, sp, 0x30
+     1b8: 00008067     	ret

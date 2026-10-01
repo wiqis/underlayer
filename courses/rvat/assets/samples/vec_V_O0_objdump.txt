@@ -1,0 +1,159 @@
+
+vec_V_O0.o:	file format elf64-littleriscv
+
+Disassembly of section .text:
+
+0000000000000000 <vadd_d>:
+       0: 7139         	addi	sp, sp, -0x40
+       2: fc06         	sd	ra, 0x38(sp)
+       4: f822         	sd	s0, 0x30(sp)
+       6: 0080         	addi	s0, sp, 0x40
+       8: fea43423     	sd	a0, -0x18(s0)
+       c: feb43023     	sd	a1, -0x20(s0)
+      10: fcc43c23     	sd	a2, -0x28(s0)
+      14: fcd43823     	sd	a3, -0x30(s0)
+      18: 4501         	li	a0, 0x0
+      1a: fca43423     	sd	a0, -0x38(s0)
+      1e: a009         	j	0x20 <vadd_d+0x20>
+      20: fc843503     	ld	a0, -0x38(s0)
+      24: fd043583     	ld	a1, -0x30(s0)
+      28: 02b55b63     	bge	a0, a1, 0x5e <vadd_d+0x5e>
+      2c: a009         	j	0x2e <vadd_d+0x2e>
+      2e: fe843503     	ld	a0, -0x18(s0)
+      32: fc843583     	ld	a1, -0x38(s0)
+      36: 058e         	slli	a1, a1, 0x3
+      38: 952e         	add	a0, a0, a1
+      3a: 211c         	fld	fa5, 0x0(a0)
+      3c: fe043503     	ld	a0, -0x20(s0)
+      40: 952e         	add	a0, a0, a1
+      42: 2118         	fld	fa4, 0x0(a0)
+      44: 02e7f7d3     	fadd.d	fa5, fa5, fa4
+      48: fd843503     	ld	a0, -0x28(s0)
+      4c: 952e         	add	a0, a0, a1
+      4e: a11c         	fsd	fa5, 0x0(a0)
+      50: a009         	j	0x52 <vadd_d+0x52>
+      52: fc843503     	ld	a0, -0x38(s0)
+      56: 0505         	addi	a0, a0, 0x1
+      58: fca43423     	sd	a0, -0x38(s0)
+      5c: b7d1         	j	0x20 <vadd_d+0x20>
+      5e: fc040113     	addi	sp, s0, -0x40
+      62: 70e2         	ld	ra, 0x38(sp)
+      64: 7442         	ld	s0, 0x30(sp)
+      66: 6121         	addi	sp, sp, 0x40
+      68: 8082         	ret
+
+000000000000006a <vsum_d>:
+      6a: 7139         	addi	sp, sp, -0x40
+      6c: fc06         	sd	ra, 0x38(sp)
+      6e: f822         	sd	s0, 0x30(sp)
+      70: 0080         	addi	s0, sp, 0x40
+      72: fea43423     	sd	a0, -0x18(s0)
+      76: feb43023     	sd	a1, -0x20(s0)
+      7a: fcc43c23     	sd	a2, -0x28(s0)
+      7e: 4501         	li	a0, 0x0
+      80: fca43823     	sd	a0, -0x30(s0)
+      84: fca43423     	sd	a0, -0x38(s0)
+      88: a009         	j	0x8a <vsum_d+0x20>
+      8a: fc843503     	ld	a0, -0x38(s0)
+      8e: fd843583     	ld	a1, -0x28(s0)
+      92: 02b55763     	bge	a0, a1, 0xc0 <vsum_d+0x56>
+      96: a009         	j	0x98 <vsum_d+0x2e>
+      98: fe843503     	ld	a0, -0x18(s0)
+      9c: fc843583     	ld	a1, -0x38(s0)
+      a0: 058e         	slli	a1, a1, 0x3
+      a2: 952e         	add	a0, a0, a1
+      a4: 2118         	fld	fa4, 0x0(a0)
+      a6: fd043787     	fld	fa5, -0x30(s0)
+      aa: 02e7f7d3     	fadd.d	fa5, fa5, fa4
+      ae: fcf43827     	fsd	fa5, -0x30(s0)
+      b2: a009         	j	0xb4 <vsum_d+0x4a>
+      b4: fc843503     	ld	a0, -0x38(s0)
+      b8: 0505         	addi	a0, a0, 0x1
+      ba: fca43423     	sd	a0, -0x38(s0)
+      be: b7f1         	j	0x8a <vsum_d+0x20>
+      c0: fd043787     	fld	fa5, -0x30(s0)
+      c4: fe043503     	ld	a0, -0x20(s0)
+      c8: a11c         	fsd	fa5, 0x0(a0)
+      ca: fc040113     	addi	sp, s0, -0x40
+      ce: 70e2         	ld	ra, 0x38(sp)
+      d0: 7442         	ld	s0, 0x30(sp)
+      d2: 6121         	addi	sp, sp, 0x40
+      d4: 8082         	ret
+
+00000000000000d6 <vmul_s8>:
+      d6: 7139         	addi	sp, sp, -0x40
+      d8: fc06         	sd	ra, 0x38(sp)
+      da: f822         	sd	s0, 0x30(sp)
+      dc: 0080         	addi	s0, sp, 0x40
+      de: fea43423     	sd	a0, -0x18(s0)
+      e2: feb43023     	sd	a1, -0x20(s0)
+      e6: fcc43c23     	sd	a2, -0x28(s0)
+      ea: fcd43823     	sd	a3, -0x30(s0)
+      ee: 4501         	li	a0, 0x0
+      f0: fca43423     	sd	a0, -0x38(s0)
+      f4: a009         	j	0xf6 <vmul_s8+0x20>
+      f6: fc843503     	ld	a0, -0x38(s0)
+      fa: fd043583     	ld	a1, -0x30(s0)
+      fe: 02b55d63     	bge	a0, a1, 0x138 <vmul_s8+0x62>
+     102: a009         	j	0x104 <vmul_s8+0x2e>
+     104: fe843503     	ld	a0, -0x18(s0)
+     108: fc843603     	ld	a2, -0x38(s0)
+     10c: 9532         	add	a0, a0, a2
+     10e: 00054503     	lbu	a0, 0x0(a0)
+     112: fe043583     	ld	a1, -0x20(s0)
+     116: 95b2         	add	a1, a1, a2
+     118: 0005c583     	lbu	a1, 0x0(a1)
+     11c: 02b5053b     	mulw	a0, a0, a1
+     120: fd843583     	ld	a1, -0x28(s0)
+     124: 95b2         	add	a1, a1, a2
+     126: 00a58023     	sb	a0, 0x0(a1)
+     12a: a009         	j	0x12c <vmul_s8+0x56>
+     12c: fc843503     	ld	a0, -0x38(s0)
+     130: 0505         	addi	a0, a0, 0x1
+     132: fca43423     	sd	a0, -0x38(s0)
+     136: b7c1         	j	0xf6 <vmul_s8+0x20>
+     138: fc040113     	addi	sp, s0, -0x40
+     13c: 70e2         	ld	ra, 0x38(sp)
+     13e: 7442         	ld	s0, 0x30(sp)
+     140: 6121         	addi	sp, sp, 0x40
+     142: 8082         	ret
+
+0000000000000144 <vmac_l>:
+     144: 7139         	addi	sp, sp, -0x40
+     146: fc06         	sd	ra, 0x38(sp)
+     148: f822         	sd	s0, 0x30(sp)
+     14a: 0080         	addi	s0, sp, 0x40
+     14c: fea43423     	sd	a0, -0x18(s0)
+     150: feb43023     	sd	a1, -0x20(s0)
+     154: fcc43c23     	sd	a2, -0x28(s0)
+     158: 4501         	li	a0, 0x0
+     15a: fca43823     	sd	a0, -0x30(s0)
+     15e: fca43423     	sd	a0, -0x38(s0)
+     162: a009         	j	0x164 <vmac_l+0x20>
+     164: fc843503     	ld	a0, -0x38(s0)
+     168: fd843583     	ld	a1, -0x28(s0)
+     16c: 02b55d63     	bge	a0, a1, 0x1a6 <vmac_l+0x62>
+     170: a009         	j	0x172 <vmac_l+0x2e>
+     172: fe843503     	ld	a0, -0x18(s0)
+     176: fc843583     	ld	a1, -0x38(s0)
+     17a: 00359613     	slli	a2, a1, 0x3
+     17e: 9532         	add	a0, a0, a2
+     180: 6108         	ld	a0, 0x0(a0)
+     182: fe043583     	ld	a1, -0x20(s0)
+     186: 95b2         	add	a1, a1, a2
+     188: 618c         	ld	a1, 0x0(a1)
+     18a: 02b505b3     	mul	a1, a0, a1
+     18e: fd043503     	ld	a0, -0x30(s0)
+     192: 952e         	add	a0, a0, a1
+     194: fca43823     	sd	a0, -0x30(s0)
+     198: a009         	j	0x19a <vmac_l+0x56>
+     19a: fc843503     	ld	a0, -0x38(s0)
+     19e: 0505         	addi	a0, a0, 0x1
+     1a0: fca43423     	sd	a0, -0x38(s0)
+     1a4: b7c1         	j	0x164 <vmac_l+0x20>
+     1a6: fd043503     	ld	a0, -0x30(s0)
+     1aa: fc040113     	addi	sp, s0, -0x40
+     1ae: 70e2         	ld	ra, 0x38(sp)
+     1b0: 7442         	ld	s0, 0x30(sp)
+     1b2: 6121         	addi	sp, sp, 0x40
+     1b4: 8082         	ret

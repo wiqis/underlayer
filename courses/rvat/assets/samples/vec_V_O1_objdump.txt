@@ -1,0 +1,61 @@
+
+vec_V_O1.o:	file format elf64-littleriscv
+
+Disassembly of section .text:
+
+0000000000000000 <vadd_d>:
+       0: 00d05e63     	blez	a3, 0x1c <vadd_d+0x1c>
+       4: 068e         	slli	a3, a3, 0x3
+       6: 96b2         	add	a3, a3, a2
+       8: 211c         	fld	fa5, 0x0(a0)
+       a: 2198         	fld	fa4, 0x0(a1)
+       c: 02e7f7d3     	fadd.d	fa5, fa5, fa4
+      10: a21c         	fsd	fa5, 0x0(a2)
+      12: 0621         	addi	a2, a2, 0x8
+      14: 05a1         	addi	a1, a1, 0x8
+      16: 0521         	addi	a0, a0, 0x8
+      18: fed618e3     	bne	a2, a3, 0x8 <vadd_d+0x8>
+      1c: 8082         	ret
+
+000000000000001e <vsum_d>:
+      1e: 00c05e63     	blez	a2, 0x3a <vsum_d+0x1c>
+      22: 060e         	slli	a2, a2, 0x3
+      24: 962a         	add	a2, a2, a0
+      26: f20007d3     	fmv.d.x	fa5, zero
+      2a: 2118         	fld	fa4, 0x0(a0)
+      2c: 0521         	addi	a0, a0, 0x8
+      2e: 02e7f7d3     	fadd.d	fa5, fa5, fa4
+      32: fec51ce3     	bne	a0, a2, 0x2a <vsum_d+0xc>
+      36: a19c         	fsd	fa5, 0x0(a1)
+      38: 8082         	ret
+      3a: f20007d3     	fmv.d.x	fa5, zero
+      3e: a19c         	fsd	fa5, 0x0(a1)
+      40: 8082         	ret
+
+0000000000000042 <vmul_s8>:
+      42: 02d05063     	blez	a3, 0x62 <vmul_s8+0x20>
+      46: 96b2         	add	a3, a3, a2
+      48: 00054703     	lbu	a4, 0x0(a0)
+      4c: 0005c783     	lbu	a5, 0x0(a1)
+      50: 02e78733     	mul	a4, a5, a4
+      54: 00e60023     	sb	a4, 0x0(a2)
+      58: 0605         	addi	a2, a2, 0x1
+      5a: 0585         	addi	a1, a1, 0x1
+      5c: 0505         	addi	a0, a0, 0x1
+      5e: fed615e3     	bne	a2, a3, 0x48 <vmul_s8+0x6>
+      62: 8082         	ret
+
+0000000000000064 <vmac_l>:
+      64: 4681         	li	a3, 0x0
+      66: 00c05d63     	blez	a2, 0x80 <vmac_l+0x1c>
+      6a: 060e         	slli	a2, a2, 0x3
+      6c: 962e         	add	a2, a2, a1
+      6e: 6118         	ld	a4, 0x0(a0)
+      70: 619c         	ld	a5, 0x0(a1)
+      72: 05a1         	addi	a1, a1, 0x8
+      74: 02e78733     	mul	a4, a5, a4
+      78: 96ba         	add	a3, a3, a4
+      7a: 0521         	addi	a0, a0, 0x8
+      7c: fec599e3     	bne	a1, a2, 0x6e <vmac_l+0xa>
+      80: 8536         	mv	a0, a3
+      82: 8082         	ret

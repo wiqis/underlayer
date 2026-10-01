@@ -1,0 +1,93 @@
+
+vec_V_Os.o:	file format elf64-littleriscv
+
+Disassembly of section .text:
+
+0000000000000000 <vadd_d>:
+       0: 00d05e63     	blez	a3, 0x1c <vadd_d+0x1c>
+       4: 068e         	slli	a3, a3, 0x3
+       6: 96b2         	add	a3, a3, a2
+       8: 211c         	fld	fa5, 0x0(a0)
+       a: 2198         	fld	fa4, 0x0(a1)
+       c: 02e7f7d3     	fadd.d	fa5, fa5, fa4
+      10: a21c         	fsd	fa5, 0x0(a2)
+      12: 0621         	addi	a2, a2, 0x8
+      14: 05a1         	addi	a1, a1, 0x8
+      16: 0521         	addi	a0, a0, 0x8
+      18: fed618e3     	bne	a2, a3, 0x8 <vadd_d+0x8>
+      1c: 8082         	ret
+
+000000000000001e <vsum_d>:
+      1e: 04c05d63     	blez	a2, 0x78 <vsum_d+0x5a>
+      22: 4681         	li	a3, 0x0
+      24: c22028f3     	csrr	a7, vlenb
+      28: 57fd         	li	a5, -0x1
+      2a: 0028d813     	srli	a6, a7, 0x2
+      2e: 17fe         	slli	a5, a5, 0x3f
+      30: 00c802b3     	add	t0, a6, a2
+      34: 0d907757     	vsetvli	a4, zero, e64, m2, ta, ma
+      38: 5e07c457     	vmv.v.x	v8, a5
+      3c: 41000733     	neg	a4, a6
+      40: fff28793     	addi	a5, t0, -0x1
+      44: 8ff9         	and	a5, a5, a4
+      46: 42006557     	vmv.s.x	v10, zero
+      4a: 00189713     	slli	a4, a7, 0x1
+      4e: 5208a657     	vid.v	v12
+      52: 05907057     	vsetvli	zero, zero, e64, m2, ta, mu
+      56: 82c6c757     	vsaddu.vx	v14, v12, a3
+      5a: 6ae64057     	vmsltu.vx	v0, v14, a2
+      5e: 9e80b757     	vmv2r.v	v14, v8
+      62: 00057707     	vle64.v	v14, (a0), v0.t
+      66: 96c2         	add	a3, a3, a6
+      68: 0ee51557     	vfredosum.vs	v10, v14, v10
+      6c: 953a         	add	a0, a0, a4
+      6e: fed792e3     	bne	a5, a3, 0x52 <vsum_d+0x34>
+      72: 42a017d7     	vfmv.f.s	fa5, v10
+      76: a019         	j	0x7c <vsum_d+0x5e>
+      78: f20007d3     	fmv.d.x	fa5, zero
+      7c: a19c         	fsd	fa5, 0x0(a1)
+      7e: 8082         	ret
+
+0000000000000080 <vmul_s8>:
+      80: 02d05063     	blez	a3, 0xa0 <vmul_s8+0x20>
+      84: 96b2         	add	a3, a3, a2
+      86: 00054703     	lbu	a4, 0x0(a0)
+      8a: 0005c783     	lbu	a5, 0x0(a1)
+      8e: 02e78733     	mul	a4, a5, a4
+      92: 00e60023     	sb	a4, 0x0(a2)
+      96: 0605         	addi	a2, a2, 0x1
+      98: 0585         	addi	a1, a1, 0x1
+      9a: 0505         	addi	a0, a0, 0x1
+      9c: fed615e3     	bne	a2, a3, 0x86 <vmul_s8+0x6>
+      a0: 8082         	ret
+
+00000000000000a2 <vmac_l>:
+      a2: 06c05063     	blez	a2, 0x102 <vmac_l+0x60>
+      a6: 4681         	li	a3, 0x0
+      a8: c22022f3     	csrr	t0, vlenb
+      ac: 0022d813     	srli	a6, t0, 0x2
+      b0: 00c808b3     	add	a7, a6, a2
+      b4: 410007b3     	neg	a5, a6
+      b8: 18fd         	addi	a7, a7, -0x1
+      ba: 00f8f7b3     	and	a5, a7, a5
+      be: 0d907757     	vsetvli	a4, zero, e64, m2, ta, ma
+      c2: 5e003457     	vmv.v.i	v8, 0x0
+      c6: 00129713     	slli	a4, t0, 0x1
+      ca: 5208a557     	vid.v	v10
+      ce: 82a6c657     	vsaddu.vx	v12, v10, a3
+      d2: 6ac64057     	vmsltu.vx	v0, v12, a2
+      d6: 9e80b657     	vmv2r.v	v12, v8
+      da: 00057707     	vle64.v	v14, (a0), v0.t
+      de: 0005f407     	vle64.v	v8, (a1), v0.t
+      e2: 96c2         	add	a3, a3, a6
+      e4: 95ba         	add	a1, a1, a4
+      e6: a6c72457     	vmadd.vv	v8, v14, v12
+      ea: 953a         	add	a0, a0, a4
+      ec: fed791e3     	bne	a5, a3, 0xce <vmac_l+0x2c>
+      f0: 5cc40457     	vmerge.vvm	v8, v12, v8, v0
+      f4: 42006557     	vmv.s.x	v10, zero
+      f8: 02852457     	vredsum.vs	v8, v8, v10
+      fc: 42802557     	vmv.x.s	a0, v8
+     100: 8082         	ret
+     102: 4501         	li	a0, 0x0
+     104: 8082         	ret

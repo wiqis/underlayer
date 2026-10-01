@@ -165,8 +165,60 @@
        decomposition, `stvec`'s mode and base alignment, the cause-number-
        equals-bit rule measured on the compiler's `ori` immediates, and the
        read-modify-write race named and labelled a quoted consequence.
-- [ ] Learn RISC-V Atomics
-- [ ] Learn RISC-V Vector Extension
+- [x] Learn RISC-V Atomics
+       `rv-amo` and `rv-fence`, same course, `rvat` "RISC-V Atomics and the
+       Vector Extension", 4 concepts in 2 modules, 101 minutes, and the FOURTH
+       and last of the four `docs/riscv-section-plan.md` splits, so all nine
+       RISC-V roadmap items are now ticked. No timings here either, but the
+       comparison with the two architectures that CAN be timed is the
+       concept, so the honest form of it is a COUNT and not a ratio: zero
+       instructions in the corpus take a lock prefix, against nine operations
+       plus a reservation pair that are atomic with no prefix at all. The
+       x86-64 side is measured rather than quoted and the SDM's eighteen
+       locked instructions are quoted **and disclaimed** against the 22
+       spellings this host's assembler actually accepts, the trap being
+       `lock bt` -- a form no vendor documents and every assembler takes.
+       `amo`: one opcode 0101111, 11 funct5 values, 21 unnamed holes printed
+       as holes; `.w`/`.d` is ONE BIT of funct3 (12 pairs, all XOR 0x1000);
+       `aq` = inst[26], `rl` = inst[25], adjacent, and the three XORs are
+       ADDITIVE, which is what makes them two fields and not one field with
+       three values. The CENTRAL EXPERIMENT needs no clock at all: the same
+       C11 file at `rv64ima` is 29 instructions, 2 lr, 2 sc, 5 amo*, **0
+       calls**, and at `rv64im` it is 111 instructions, 0 lr, 0 sc, 0 amo*
+       and **9 calls** to `__atomic_*_4` -- one letter apart. That call
+       count was measured wrong first: it counted a `call` MNEMONIC that
+       cannot exist in a relocatable object, so it printed zero against 111
+       instructions without noticing its own method was vacuous, and it now
+       counts `R_RISCV_CALL_PLT` relocations instead. `fence`: the ordering
+       model is DEFINED as a relation between two four-bit sets inside one
+       instruction, which is neither x86-64's TSO baseline nor AArch64's
+       access modes; 35 fences at fm=0000, 2 `fence.tso`, 2 `fence.i`, 15
+       named spellings of 16 codes with the 16th a hole, and CONSUME and
+       ACQUIRE the same four bits -- plus ACQ_REL becoming `fence.tso`, a
+       DIFFERENT INSTRUCTION.
+- [x] Learn RISC-V Vector Extension
+       Same course, `rv-vector` and `rv-dataflow`: ONE FIXED 32-BIT
+       INSTRUCTION DESCRIBES A VECTOR AND THE LENGTH IS NOT IN THIS
+       INSTRUCTION AT ALL -- `vsetvli` carries SEW, LMUL and the tail/mask
+       policies, and the length arrives as an AVL in inst[19:15] and comes
+       back out of a CSR the instruction does not contain, which the compiler
+       proves by emitting `csrr a7, vlenb` (0xC22, read-only from U-mode).
+       120 `vsetvli`, 112 distinct zimm, `zimm[10:8]` = 0b000 in all 120.
+       The mask is ONE BIT at inst[25] across three instruction groups --
+       11 pairs, every XOR exactly 0x02000000 -- and the mask REGISTER is
+       not in the encoding, which the assembler says in its own diagnostic.
+       Levels: -O1 vectorises nothing, -O2 and -O3 are BYTE-IDENTICAL, -Os
+       emits MORE vector instructions than -O2 (21 against 19) while being
+       SMALLER in code size (81 instructions against 191), because the vector
+       body replaces a loop. Two readers on the same bytes: 2,197
+       instructions, 2,147 named, **50 unmodelled** printed BESIDE the
+       disagreement count, 0 disagreements, and 6 fire-table rules of which
+       5 fire and **1 is dead by design** and labelled NEVER FIRED. Four
+       poisons, each moving one column and claiming the other stays put.
+       58 provenance rows with the count printed (20 MEASURED, 18
+       MEASURED-ON-BYTES, 20 QUOTED), 19 limits, 18 retractions, and the
+       two scope lists at 9 cannot-conclude against 11 can-conclude -- the
+       second being the longer one IS the finding.
 
 
 ## Memory

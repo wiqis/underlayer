@@ -1,0 +1,174 @@
+
+vec.o:	file format elf64-littleriscv
+
+Disassembly of section .text:
+
+0000000000000000 <.text>:
+       0: 0c55f2d7     	vsetvli	t0, a1, e8, mf8, ta, ma
+       4: 0455f2d7     	vsetvli	t0, a1, e8, mf8, ta, mu
+       8: 0855f2d7     	vsetvli	t0, a1, e8, mf8, tu, ma
+       c: 0055f2d7     	vsetvli	t0, a1, e8, mf8, tu, mu
+      10: 0c65f2d7     	vsetvli	t0, a1, e8, mf4, ta, ma
+      14: 0465f2d7     	vsetvli	t0, a1, e8, mf4, ta, mu
+      18: 0865f2d7     	vsetvli	t0, a1, e8, mf4, tu, ma
+      1c: 0065f2d7     	vsetvli	t0, a1, e8, mf4, tu, mu
+      20: 0c75f2d7     	vsetvli	t0, a1, e8, mf2, ta, ma
+      24: 0475f2d7     	vsetvli	t0, a1, e8, mf2, ta, mu
+      28: 0875f2d7     	vsetvli	t0, a1, e8, mf2, tu, ma
+      2c: 0075f2d7     	vsetvli	t0, a1, e8, mf2, tu, mu
+      30: 0c05f2d7     	vsetvli	t0, a1, e8, m1, ta, ma
+      34: 0405f2d7     	vsetvli	t0, a1, e8, m1, ta, mu
+      38: 0805f2d7     	vsetvli	t0, a1, e8, m1, tu, ma
+      3c: 0005f2d7     	vsetvli	t0, a1, e8, m1, tu, mu
+      40: 0c15f2d7     	vsetvli	t0, a1, e8, m2, ta, ma
+      44: 0415f2d7     	vsetvli	t0, a1, e8, m2, ta, mu
+      48: 0815f2d7     	vsetvli	t0, a1, e8, m2, tu, ma
+      4c: 0015f2d7     	vsetvli	t0, a1, e8, m2, tu, mu
+      50: 0c25f2d7     	vsetvli	t0, a1, e8, m4, ta, ma
+      54: 0425f2d7     	vsetvli	t0, a1, e8, m4, ta, mu
+      58: 0825f2d7     	vsetvli	t0, a1, e8, m4, tu, ma
+      5c: 0025f2d7     	vsetvli	t0, a1, e8, m4, tu, mu
+      60: 0c35f2d7     	vsetvli	t0, a1, e8, m8, ta, ma
+      64: 0435f2d7     	vsetvli	t0, a1, e8, m8, ta, mu
+      68: 0835f2d7     	vsetvli	t0, a1, e8, m8, tu, ma
+      6c: 0035f2d7     	vsetvli	t0, a1, e8, m8, tu, mu
+      70: 0cd5f2d7     	vsetvli	t0, a1, e16, mf8, ta, ma
+      74: 04d5f2d7     	vsetvli	t0, a1, e16, mf8, ta, mu
+      78: 08d5f2d7     	vsetvli	t0, a1, e16, mf8, tu, ma
+      7c: 00d5f2d7     	vsetvli	t0, a1, e16, mf8, tu, mu
+      80: 0ce5f2d7     	vsetvli	t0, a1, e16, mf4, ta, ma
+      84: 04e5f2d7     	vsetvli	t0, a1, e16, mf4, ta, mu
+      88: 08e5f2d7     	vsetvli	t0, a1, e16, mf4, tu, ma
+      8c: 00e5f2d7     	vsetvli	t0, a1, e16, mf4, tu, mu
+      90: 0cf5f2d7     	vsetvli	t0, a1, e16, mf2, ta, ma
+      94: 04f5f2d7     	vsetvli	t0, a1, e16, mf2, ta, mu
+      98: 08f5f2d7     	vsetvli	t0, a1, e16, mf2, tu, ma
+      9c: 00f5f2d7     	vsetvli	t0, a1, e16, mf2, tu, mu
+      a0: 0c85f2d7     	vsetvli	t0, a1, e16, m1, ta, ma
+      a4: 0485f2d7     	vsetvli	t0, a1, e16, m1, ta, mu
+      a8: 0885f2d7     	vsetvli	t0, a1, e16, m1, tu, ma
+      ac: 0085f2d7     	vsetvli	t0, a1, e16, m1, tu, mu
+      b0: 0c95f2d7     	vsetvli	t0, a1, e16, m2, ta, ma
+      b4: 0495f2d7     	vsetvli	t0, a1, e16, m2, ta, mu
+      b8: 0895f2d7     	vsetvli	t0, a1, e16, m2, tu, ma
+      bc: 0095f2d7     	vsetvli	t0, a1, e16, m2, tu, mu
+      c0: 0ca5f2d7     	vsetvli	t0, a1, e16, m4, ta, ma
+      c4: 04a5f2d7     	vsetvli	t0, a1, e16, m4, ta, mu
+      c8: 08a5f2d7     	vsetvli	t0, a1, e16, m4, tu, ma
+      cc: 00a5f2d7     	vsetvli	t0, a1, e16, m4, tu, mu
+      d0: 0cb5f2d7     	vsetvli	t0, a1, e16, m8, ta, ma
+      d4: 04b5f2d7     	vsetvli	t0, a1, e16, m8, ta, mu
+      d8: 08b5f2d7     	vsetvli	t0, a1, e16, m8, tu, ma
+      dc: 00b5f2d7     	vsetvli	t0, a1, e16, m8, tu, mu
+      e0: 0d55f2d7     	vsetvli	t0, a1, e32, mf8, ta, ma
+      e4: 0555f2d7     	vsetvli	t0, a1, e32, mf8, ta, mu
+      e8: 0955f2d7     	vsetvli	t0, a1, e32, mf8, tu, ma
+      ec: 0155f2d7     	vsetvli	t0, a1, e32, mf8, tu, mu
+      f0: 0d65f2d7     	vsetvli	t0, a1, e32, mf4, ta, ma
+      f4: 0565f2d7     	vsetvli	t0, a1, e32, mf4, ta, mu
+      f8: 0965f2d7     	vsetvli	t0, a1, e32, mf4, tu, ma
+      fc: 0165f2d7     	vsetvli	t0, a1, e32, mf4, tu, mu
+     100: 0d75f2d7     	vsetvli	t0, a1, e32, mf2, ta, ma
+     104: 0575f2d7     	vsetvli	t0, a1, e32, mf2, ta, mu
+     108: 0975f2d7     	vsetvli	t0, a1, e32, mf2, tu, ma
+     10c: 0175f2d7     	vsetvli	t0, a1, e32, mf2, tu, mu
+     110: 0d05f2d7     	vsetvli	t0, a1, e32, m1, ta, ma
+     114: 0505f2d7     	vsetvli	t0, a1, e32, m1, ta, mu
+     118: 0905f2d7     	vsetvli	t0, a1, e32, m1, tu, ma
+     11c: 0105f2d7     	vsetvli	t0, a1, e32, m1, tu, mu
+     120: 0d15f2d7     	vsetvli	t0, a1, e32, m2, ta, ma
+     124: 0515f2d7     	vsetvli	t0, a1, e32, m2, ta, mu
+     128: 0915f2d7     	vsetvli	t0, a1, e32, m2, tu, ma
+     12c: 0115f2d7     	vsetvli	t0, a1, e32, m2, tu, mu
+     130: 0d25f2d7     	vsetvli	t0, a1, e32, m4, ta, ma
+     134: 0525f2d7     	vsetvli	t0, a1, e32, m4, ta, mu
+     138: 0925f2d7     	vsetvli	t0, a1, e32, m4, tu, ma
+     13c: 0125f2d7     	vsetvli	t0, a1, e32, m4, tu, mu
+     140: 0d35f2d7     	vsetvli	t0, a1, e32, m8, ta, ma
+     144: 0535f2d7     	vsetvli	t0, a1, e32, m8, ta, mu
+     148: 0935f2d7     	vsetvli	t0, a1, e32, m8, tu, ma
+     14c: 0135f2d7     	vsetvli	t0, a1, e32, m8, tu, mu
+     150: 0dd5f2d7     	vsetvli	t0, a1, e64, mf8, ta, ma
+     154: 05d5f2d7     	vsetvli	t0, a1, e64, mf8, ta, mu
+     158: 09d5f2d7     	vsetvli	t0, a1, e64, mf8, tu, ma
+     15c: 01d5f2d7     	vsetvli	t0, a1, e64, mf8, tu, mu
+     160: 0de5f2d7     	vsetvli	t0, a1, e64, mf4, ta, ma
+     164: 05e5f2d7     	vsetvli	t0, a1, e64, mf4, ta, mu
+     168: 09e5f2d7     	vsetvli	t0, a1, e64, mf4, tu, ma
+     16c: 01e5f2d7     	vsetvli	t0, a1, e64, mf4, tu, mu
+     170: 0df5f2d7     	vsetvli	t0, a1, e64, mf2, ta, ma
+     174: 05f5f2d7     	vsetvli	t0, a1, e64, mf2, ta, mu
+     178: 09f5f2d7     	vsetvli	t0, a1, e64, mf2, tu, ma
+     17c: 01f5f2d7     	vsetvli	t0, a1, e64, mf2, tu, mu
+     180: 0d85f2d7     	vsetvli	t0, a1, e64, m1, ta, ma
+     184: 0585f2d7     	vsetvli	t0, a1, e64, m1, ta, mu
+     188: 0985f2d7     	vsetvli	t0, a1, e64, m1, tu, ma
+     18c: 0185f2d7     	vsetvli	t0, a1, e64, m1, tu, mu
+     190: 0d95f2d7     	vsetvli	t0, a1, e64, m2, ta, ma
+     194: 0595f2d7     	vsetvli	t0, a1, e64, m2, ta, mu
+     198: 0995f2d7     	vsetvli	t0, a1, e64, m2, tu, ma
+     19c: 0195f2d7     	vsetvli	t0, a1, e64, m2, tu, mu
+     1a0: 0da5f2d7     	vsetvli	t0, a1, e64, m4, ta, ma
+     1a4: 05a5f2d7     	vsetvli	t0, a1, e64, m4, ta, mu
+     1a8: 09a5f2d7     	vsetvli	t0, a1, e64, m4, tu, ma
+     1ac: 01a5f2d7     	vsetvli	t0, a1, e64, m4, tu, mu
+     1b0: 0db5f2d7     	vsetvli	t0, a1, e64, m8, ta, ma
+     1b4: 05b5f2d7     	vsetvli	t0, a1, e64, m8, ta, mu
+     1b8: 09b5f2d7     	vsetvli	t0, a1, e64, m8, tu, ma
+     1bc: 01b5f2d7     	vsetvli	t0, a1, e64, m8, tu, mu
+     1c0: cd0072d7     	vsetivli	t0, 0x0, e32, m1, ta, ma
+     1c4: cd00f2d7     	vsetivli	t0, 0x1, e32, m1, ta, ma
+     1c8: cd0f72d7     	vsetivli	t0, 0x1e, e32, m1, ta, ma
+     1cc: cd0ff2d7     	vsetivli	t0, 0x1f, e32, m1, ta, ma
+     1d0: c03072d7     	vsetivli	t0, 0x0, e8, m8, tu, mu
+     1d4: c59ff2d7     	vsetivli	t0, 0x1f, e64, m2, ta, mu
+     1d8: 80c5f2d7     	vsetvl	t0, a1, a2
+     1dc: 80c072d7     	vsetvl	t0, zero, a2
+     1e0: 8005f2d7     	vsetvl	t0, a1, zero
+     1e4: 0d85f557     	vsetvli	a0, a1, e64, m1, ta, ma
+     1e8: 0d807557     	vsetvli	a0, zero, e64, m1, ta, ma
+     1ec: 0d807057     	vsetvli	zero, zero, e64, m1, ta, ma
+     1f0: 0115f557     	vsetvli	a0, a1, e32, m2, tu, mu
+     1f4: 01107557     	vsetvli	a0, zero, e32, m2, tu, mu
+     1f8: 0105f2d7     	vsetvli	t0, a1, e32, m1, tu, mu
+     1fc: 0505f2d7     	vsetvli	t0, a1, e32, m1, ta, mu
+     200: 0035f2d7     	vsetvli	t0, a1, e8, m8, tu, mu
+     204: 022180d7     	vadd.vv	v1, v2, v3
+     208: 002180d7     	vadd.vv	v1, v2, v3, v0.t
+     20c: 0223b0d7     	vadd.vi	v1, v2, 0x7
+     210: 0023b0d7     	vadd.vi	v1, v2, 0x7, v0.t
+     214: 022540d7     	vadd.vx	v1, v2, a0
+     218: 002540d7     	vadd.vx	v1, v2, a0, v0.t
+     21c: 02050087     	vle8.v	v1, (a0)
+     220: 00050087     	vle8.v	v1, (a0), v0.t
+     224: 02055087     	vle16.v	v1, (a0)
+     228: 00055087     	vle16.v	v1, (a0), v0.t
+     22c: 02056087     	vle32.v	v1, (a0)
+     230: 00056087     	vle32.v	v1, (a0), v0.t
+     234: 02057087     	vle64.v	v1, (a0)
+     238: 00057087     	vle64.v	v1, (a0), v0.t
+     23c: 020500a7     	vse8.v	v1, (a0)
+     240: 000500a7     	vse8.v	v1, (a0), v0.t
+     244: 020550a7     	vse16.v	v1, (a0)
+     248: 000550a7     	vse16.v	v1, (a0), v0.t
+     24c: 020560a7     	vse32.v	v1, (a0)
+     250: 000560a7     	vse32.v	v1, (a0), v0.t
+     254: 020570a7     	vse64.v	v1, (a0)
+     258: 000570a7     	vse64.v	v1, (a0), v0.t
+     25c: 02850087     	vl1r.v	v1, (a0)
+     260: 22850407     	vl2r.v	v8, (a0)
+     264: 62850407     	vl4r.v	v8, (a0)
+     268: e2850407     	vl8r.v	v8, (a0)
+     26c: 22857407     	vl2re64.v	v8, (a0)
+     270: 028500a7     	vs1r.v	v1, (a0)
+     274: 22850427     	vs2r.v	v8, (a0)
+     278: 62850427     	vs4r.v	v8, (a0)
+     27c: e2850427     	vs8r.v	v8, (a0)
+     280: 66103057     	vmsne.vi	v0, v1, 0x0
+     284: 6611b057     	vmsne.vi	v0, v1, 0x3
+     288: 02b50107     	vlm.v	v2, (a0)
+     28c: 5e02b0d7     	vmv.v.i	v1, 0x5
+     290: 5e0100d7     	vmv.v.v	v1, v2
+     294: 42102557     	vmv.x.s	a0, v1
+     298: 420560d7     	vmv.s.x	v1, a0
+     29c: 8082         	ret

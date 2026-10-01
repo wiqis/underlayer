@@ -1133,6 +1133,37 @@ public namespace underlayer_web {
         return string()
     }
 
+    // RISC-V atomics, the ordering fence, and the vector extension.  Same
+    // fall-through contract: empty string for anything else.
+    //
+    // EVERY ID IS `rv-` PREFIXED AND ALL FOUR WERE CHECKED AGAINST THIS FILE
+    // BEFORE ANY OF THEM WAS WRITTEN, rather than after.  The reason is in the
+    // note above `render_rvasm_concept` and it is worth restating at the LAST
+    // course of the section rather than only at the first: a concept id is
+    // resolved GLOBALLY by render_concept() with no course in the key, so a
+    // collision does not 404.  It serves the wrong page silently, under this
+    // course's URL, with no diagnostic from anywhere.  A collection that has
+    // had that happen once stops trusting grep after the fact and starts
+    // reading before.
+    //
+    // TAKEN ALREADY, and none of these four may be used: `rv-verify`,
+    // `rv-isa`, `rv-encoding`, `rv-compressed`, `rv-immediate` (rvasm);
+    // `rv-calling`, `rv-noflags`, `rv-registers`, `rv-compressed-cost` (rvabi);
+    // `rv-modes`, `rv-paging`, `rv-traps`, `rv-boundary` (rvpriv).
+    public func render_rvat_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var amo_id = std::string("rv-amo")
+        var fence_id = std::string("rv-fence")
+        var vector_id = std::string("rv-vector")
+        var dataflow_id = std::string("rv-dataflow")
+
+        if(cid.equals(&amo_id)) { return underlayer_content::render_rv_amo() }
+        if(cid.equals(&fence_id)) { return underlayer_content::render_rv_fence() }
+        if(cid.equals(&vector_id)) { return underlayer_content::render_rv_vector() }
+        if(cid.equals(&dataflow_id)) { return underlayer_content::render_rv_dataflow() }
+        return string()
+    }
+
     // The x86-64 ABI. Same fall-through contract: empty string for anything
     // else.  `x86-calling` and its five siblings continue the `x86-` prefix
     // the assembly course already owns, and they are deliberately NOT
@@ -1391,6 +1422,28 @@ public namespace underlayer_web {
         // is an order that will be broken by the next course.
         var rvpriv_html = render_rvpriv_concept(concept_id)
         if(rvpriv_html.size() > 0) { return rvpriv_html }
+        // The RISC-V section's FOURTH and last course: atomics, the ordering
+        // fence, and the vector extension.  The four resolvers now claim
+        // DISJOINT sets of ids, and that is the state worth being in -- an order
+        // that matters is an order that will be broken by the next course.
+        //
+        //   rv-amo       the zero, the encoding, and why the retry IS the
+        //                instruction.  Not `rv-atomic`: the page is not about
+        //                atomicity, it is about the two instructions that
+        //                implement it.
+        //   rv-fence     the four fields and the fifteen spellings.  Not
+        //                `rv-ordering`: ordering is the model, the fence is
+        //                this architecture's whole mechanism for it, and the
+        //                page's claim is that they are the same thing.
+        //   rv-vector    vsetvli and the length that is not in it.  Not
+        //                `rv-vlen`: VLEN is a CSR, not the subject, and the
+        //                subject is the four fields.
+        //   rv-dataflow  the mask, the register group, the compiler's output,
+        //                two readers, and the boundary.  The course's own
+        //                word for what the artifact does, and the same word
+        //                `a64simd` used for its own closing concept.
+        var rvat_html = render_rvat_concept(concept_id)
+        if(rvat_html.size() > 0) { return rvat_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

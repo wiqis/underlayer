@@ -1,0 +1,51 @@
+
+amo_a_O2.o:	file format elf64-littleriscv
+
+Disassembly of section .text:
+
+0000000000000000 <amo_fetch_add_seqcst>:
+       0: 06b5252f     	amoadd.w.aqrl	a0, a1, (a0)
+       4: 00008067     	ret
+
+0000000000000008 <amo_fetch_add_relaxed>:
+       8: 00b5252f     	amoadd.w	a0, a1, (a0)
+       c: 00008067     	ret
+
+0000000000000010 <amo_exchange_seqcst>:
+      10: 0eb5252f     	amoswap.w.aqrl	a0, a1, (a0)
+      14: 00008067     	ret
+
+0000000000000018 <amo_exchange_relaxed>:
+      18: 08b5252f     	amoswap.w	a0, a1, (a0)
+      1c: 00008067     	ret
+
+0000000000000020 <amo_store_release>:
+      20: 0310000f     	fence	rw, w
+      24: 00b52023     	sw	a1, 0x0(a0)
+      28: 00008067     	ret
+
+000000000000002c <amo_load_acquire>:
+      2c: 00052503     	lw	a0, 0x0(a0)
+      30: 0230000f     	fence	r, rw
+      34: 00008067     	ret
+
+0000000000000038 <amo_or_relaxed>:
+      38: 40b5252f     	amoor.w	a0, a1, (a0)
+      3c: 00008067     	ret
+
+0000000000000040 <amo_cas_loop>:
+      40: 0005869b     	sext.w	a3, a1
+      44: 160525af     	lr.w.aqrl	a1, (a0)
+      48: fed59ce3     	bne	a1, a3, 0x40 <amo_cas_loop>
+      4c: 1ac5272f     	sc.w.rl	a4, a2, (a0)
+      50: fe071ae3     	bnez	a4, 0x44 <amo_cas_loop+0x4>
+      54: 00068513     	mv	a0, a3
+      58: 00008067     	ret
+
+000000000000005c <sync_cas_loop>:
+      5c: 160526af     	lr.w.aqrl	a3, (a0)
+      60: feb69ee3     	bne	a3, a1, 0x5c <sync_cas_loop>
+      64: 1ac5272f     	sc.w.rl	a4, a2, (a0)
+      68: fe071ae3     	bnez	a4, 0x5c <sync_cas_loop>
+      6c: 00100513     	li	a0, 0x1
+      70: 00008067     	ret

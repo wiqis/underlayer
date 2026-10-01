@@ -1,0 +1,46 @@
+
+fence.o:	file format elf64-littleriscv
+
+Disassembly of section .text:
+
+0000000000000000 <.text>:
+       0: 0ff0000f     	fence
+       4: 0ff0000f     	fence
+       8: 0220000f     	fence	r, r
+       c: 0110000f     	fence	w, w
+      10: 0330000f     	fence	rw, rw
+      14: 0230000f     	fence	r, rw
+      18: 0320000f     	fence	rw, r
+      1c: 0120000f     	fence	w, r
+      20: 0210000f     	fence	r, w
+      24: 0130000f     	fence	w, rw
+      28: 0310000f     	fence	rw, w
+      2c: 0f20000f     	fence	iorw, r
+      30: 02f0000f     	fence	r, iorw
+      34: 0f10000f     	fence	iorw, w
+      38: 01f0000f     	fence	w, iorw
+      3c: 0880000f     	fence	i, i
+      40: 0440000f     	fence	o, o
+      44: 0cc0000f     	fence	io, io
+      48: 08c0000f     	fence	i, io
+      4c: 0c80000f     	fence	io, i
+      50: 0c20000f     	fence	io, r
+      54: 02c0000f     	fence	r, io
+      58: 0c30000f     	fence	io, rw
+      5c: 03c0000f     	fence	rw, io
+      60: 0830000f     	fence	i, rw
+      64: 0340000f     	fence	rw, o
+      68: 0430000f     	fence	o, rw
+      6c: 0ec0000f     	fence	ior, io
+      70: 0dc0000f     	fence	iow, io
+      74: 0bc0000f     	fence	irw, io
+      78: 07c0000f     	fence	orw, io
+      7c: 0ac0000f     	fence	ir, io
+      80: 09c0000f     	fence	iw, io
+      84: 06c0000f     	fence	or, io
+      88: 05c0000f     	fence	ow, io
+      8c: 8330000f     	fence.tso
+      90: 8330000f     	fence.tso
+      94: 0000100f     	fence.i
+      98: 0000100f     	fence.i
+      9c: 8082         	ret

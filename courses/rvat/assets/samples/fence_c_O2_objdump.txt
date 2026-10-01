@@ -1,0 +1,96 @@
+
+fence_c_O2.o:	file format elf64-littleriscv
+
+Disassembly of section .text:
+
+0000000000000000 <fence_relaxed>:
+       0: 8082         	ret
+
+0000000000000002 <fence_consume>:
+       2: 0230000f     	fence	r, rw
+       6: 8082         	ret
+
+0000000000000008 <fence_acquire>:
+       8: 0230000f     	fence	r, rw
+       c: 8082         	ret
+
+000000000000000e <fence_release>:
+       e: 0310000f     	fence	rw, w
+      12: 8082         	ret
+
+0000000000000014 <fence_acqrel>:
+      14: 8330000f     	fence.tso
+      18: 8082         	ret
+
+000000000000001a <fence_seqcst>:
+      1a: 0330000f     	fence	rw, rw
+      1e: 8082         	ret
+
+0000000000000020 <load_relaxed>:
+      20: 4108         	lw	a0, 0x0(a0)
+      22: 8082         	ret
+
+0000000000000024 <load_consume>:
+      24: 4108         	lw	a0, 0x0(a0)
+      26: 0230000f     	fence	r, rw
+      2a: 8082         	ret
+
+000000000000002c <load_acquire>:
+      2c: 4108         	lw	a0, 0x0(a0)
+      2e: 0230000f     	fence	r, rw
+      32: 8082         	ret
+
+0000000000000034 <load_seqcst>:
+      34: 0330000f     	fence	rw, rw
+      38: 4108         	lw	a0, 0x0(a0)
+      3a: 0230000f     	fence	r, rw
+      3e: 8082         	ret
+
+0000000000000040 <store_relaxed>:
+      40: c10c         	sw	a1, 0x0(a0)
+      42: 8082         	ret
+
+0000000000000044 <store_release>:
+      44: 0310000f     	fence	rw, w
+      48: c10c         	sw	a1, 0x0(a0)
+      4a: 8082         	ret
+
+000000000000004c <store_seqcst>:
+      4c: 0310000f     	fence	rw, w
+      50: c10c         	sw	a1, 0x0(a0)
+      52: 0330000f     	fence	rw, rw
+      56: 8082         	ret
+
+0000000000000058 <sync_full_fence>:
+      58: 0330000f     	fence	rw, rw
+      5c: 8082         	ret
+
+000000000000005e <publish>:
+      5e: 0310000f     	fence	rw, w
+
+0000000000000062 <.Lpcrel_hi0>:
+      62: 00000597     	auipc	a1, 0x0
+      66: 00a5a023     	sw	a0, 0x0(a1)
+      6a: 8082         	ret
+
+000000000000006c <observe>:
+      6c: 00000517     	auipc	a0, 0x0
+      70: 00052503     	lw	a0, 0x0(a0)
+      74: 0230000f     	fence	r, rw
+      78: 8082         	ret
+
+000000000000007a <rmw_seqcst>:
+      7a: 06b5252f     	amoadd.w.aqrl	a0, a1, (a0)
+      7e: 8082         	ret
+
+0000000000000080 <rmw_acqrel>:
+      80: 06b5252f     	amoadd.w.aqrl	a0, a1, (a0)
+      84: 8082         	ret
+
+0000000000000086 <rmw_acquire>:
+      86: 04b5252f     	amoadd.w.aq	a0, a1, (a0)
+      8a: 8082         	ret
+
+000000000000008c <rmw_release>:
+      8c: 02b5252f     	amoadd.w.rl	a0, a1, (a0)
+      90: 8082         	ret
