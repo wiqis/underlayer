@@ -29,7 +29,9 @@ public namespace underlayer_web {
                     </button>
                 <div class="nav-links">
                     <a href="/" class="nav-link active">Home</a>
-                    <a href="/courses/elf" class="nav-link">Courses</a>
+                    <a href="/courses" class="nav-link">Courses</a>
+                    <a href="/learning-path" class="nav-link">Path</a>
+                    <a href="/search" class="nav-link">Search</a>
                     <a href="/dashboard" class="nav-link">Dashboard</a>
                     <a href="/review" class="nav-link">Review</a>
                     <a href="/progress" class="nav-link">Progress</a>
@@ -56,9 +58,9 @@ public namespace underlayer_web {
             <div class="search-modal" id="search-modal">
                 <div class="search-backdrop" onclick="closeSearch()"></div>
                 <div class="search-dialog">
-                    <input type="text" id="search-input" class="search-input" placeholder="Search concepts..." oninput="doSearch(this.value)" />
+                    <input type="text" id="search-input" class="search-input" placeholder="Search all 398 concepts..." oninput="doSearch(this.value)" />
                     <div class="search-results" id="search-results"></div>
-                    <div class="search-hint">Press Escape to close</div>
+                    <div class="search-hint">Esc to close &middot; <a href="/search">full results page</a></div>
                 </div>
             </div>
 
@@ -113,9 +115,13 @@ public namespace underlayer_web {
                             <h3>Start Review</h3>
                             <p>Review concepts you're about to forget. Spaced repetition keeps knowledge fresh.</p>
                         </a>
-                        <a href="/courses/elf" class="action-card">
-                            <h3>Continue Learning</h3>
-                            <p>Pick up where you left off in the ELF course.</p>
+                        <a href="/courses" class="action-card">
+                            <h3>Browse Courses</h3>
+                            <p>All 34 courses and every concept in them, with three orders if you do not know where to start.</p>
+                        </a>
+                        <a href="/learning-path" class="action-card">
+                            <h3>Follow a Path</h3>
+                            <p>Three orders through the collection, each step carrying the reason it sits there.</p>
                         </a>
                         <a href="/dashboard" class="action-card">
                             <h3>View Dashboard</h3>
@@ -132,6 +138,7 @@ public namespace underlayer_web {
 
         render_home_css(&mut page)
         render_home_js(&mut page)
+        render_home_search_js(&mut page)
 
         send_page(res, &raw page)
     }

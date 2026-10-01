@@ -53,13 +53,26 @@ MARKER = "-"  # this document's items are `- [ ]`, not `* [ ]`
 # the completed sections already use ("  — `x86simd`, concept `x86-sse`"), so
 # the title is everything before it. No item title in the roadmap contains it.
 
-# Recorded from HEAD on 2026-10-01, before the restructure was written, over
-# item TITLES (annotation stripped).
-BASELINE_ALL_SHA256 = "72380c53e5233b4d724fcfd965adb5e61f55335e7a51e6483afa0741539dc836"
-BASELINE_CHECKED_SHA256 = "ee4eed31955954ba2ebbcd57cab45f3209488843c9298c316cfeb1edd4cdc484"
+# Re-baselined 2026-10-02.  The TITLES have not changed since the restructure --
+# 738 in, 738 out, no title only-in-old and none only-in-new, and the
+# compback commit that ticked six items changed no text at all.  What changed is
+# the CHECKED SET: compback taught Compiler Architecture, Instruction Selection,
+# Register Allocation, Instruction Scheduling, Compiler ABIs and Compiler Debug
+# Information, so checked went 60 -> 66 and `compiler`'s remaining count 67 -> 61.
+#
+# This tool was left red by that commit, and a checker that is always failing is
+# a checker nobody reads -- which is worse than not having one, because it looks
+# like coverage. The constants are the re-baseline, and they are the ONLY thing
+# that changed; the parsing and hashing below are untouched.
+#
+# Recorded 2026-10-01 before the restructure, over item TITLES (annotation
+# stripped). Kept for provenance: 72380c53... was the pre-restructure value and
+# ee4eed31... the pre-compback checked set.
+BASELINE_ALL_SHA256 = "7dab74ccaf58741189adf4b98e202f6edbdd6638732846c3a6f62649ca97290b"
+BASELINE_CHECKED_SHA256 = "002b83711658c8e07397ef850be45732157df084b039885baebabe75d7b6cbad"
 EXPECTED_TOTAL = 738
-EXPECTED_CHECKED = 60
-EXPECTED_UNCHECKED = 678
+EXPECTED_CHECKED = 66
+EXPECTED_UNCHECKED = 672
 
 # The 14 planned courses and the item count the document claims for each.
 EXPECTED_COURSE_COUNTS = {
@@ -70,7 +83,7 @@ EXPECTED_COURSE_COUNTS = {
     "network": 52,
     "crypto": 53,
     "encodings": 59,
-    "compiler": 67,
+    "compiler": 61,
     "vm": 63,
     "data": 41,
     "graphics": 29,

@@ -64,9 +64,12 @@ public namespace underlayer_web {
             .search-input { width: 100%; padding: 1rem 1.25rem; border: none; background: transparent; font-size: 1rem; color: hsl(var(--foreground)); outline: none; }
             .search-input::placeholder { color: hsl(var(--muted-foreground)); }
             .search-results { max-height: 300px; overflow-y: auto; }
-            .search-result-item { display: block; padding: 0.75rem 1.25rem; color: hsl(var(--foreground)); text-decoration: none; border-top: 1px solid hsl(var(--border)); }
+            .search-result-item { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.75rem 1.25rem; color: hsl(var(--foreground)); text-decoration: none; border-top: 1px solid hsl(var(--border)); }
             .search-result-item:hover { background: hsl(var(--accent)); }
             .search-hint { padding: 0.5rem 1.25rem; font-size: 0.8rem; color: hsl(var(--muted-foreground)); border-top: 1px solid hsl(var(--border)); }
+            .search-result-title { font-weight: 600; }
+            .search-result-course { font-size: 0.8rem; color: hsl(var(--muted-foreground)); }
+            .search-result-more { color: hsl(217 91% 60%); font-weight: 600; }
             @media (max-width: 1300px) {
                 .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); flex-direction: column; padding: 1rem; gap: 0.5rem; }
                 .nav-links.open { display: flex; }
@@ -107,57 +110,6 @@ public namespace underlayer_web {
             }
             setTheme(getTheme());
 
-            var allConcepts = [
-                {name: "Bytes and Binary", url: "/courses/elf/lessons/bytes"},
-                {name: "Binary Representation", url: "/courses/elf/lessons/binary-representation"},
-                {name: "File Layout", url: "/courses/elf/lessons/file-layout"},
-                {name: "ELF Identification", url: "/courses/elf/lessons/elf-identification"},
-                {name: "ELF Header Fields", url: "/courses/elf/lessons/elf-header-fields"},
-                {name: "Entry Point", url: "/courses/elf/lessons/entry-point"},
-                {name: "Program Header Table", url: "/courses/elf/lessons/program-header-table"},
-                {name: "Segment Types", url: "/courses/elf/lessons/segment-types"},
-                {name: "Memory Mapping", url: "/courses/elf/lessons/memory-mapping"},
-                {name: "Section Header Table", url: "/courses/elf/lessons/section-header-table"},
-                {name: "Common Sections", url: "/courses/elf/lessons/common-sections"},
-                {name: "Section vs Segment", url: "/courses/elf/lessons/section-vs-segment"},
-                {name: "Symbol Table", url: "/courses/elf/lessons/symbol-table"},
-                {name: "Symbol Binding", url: "/courses/elf/lessons/binding"},
-                {name: "Symbol Visibility", url: "/courses/elf/lessons/visibility"},
-                {name: "Relocation Entries", url: "/courses/elf/lessons/relocation-entries"},
-                {name: "Relocation Types", url: "/courses/elf/lessons/relocation-types"},
-                {name: "Dynamic Relocations", url: "/courses/elf/lessons/dynamic-relocations"},
-                {name: "Dynamic Section", url: "/courses/elf/lessons/dynamic-section"},
-                {name: "Shared Libraries", url: "/courses/elf/lessons/shared-libraries"},
-                {name: "The Dynamic Linker", url: "/courses/elf/lessons/ld-so"},
-                {name: "The Kernel Loader", url: "/courses/elf/lessons/loader"},
-                {name: "Process Memory Layout", url: "/courses/elf/lessons/memory-layout"},
-                {name: "The Startup Sequence", url: "/courses/elf/lessons/execution"}
-            ];
-
-            function openSearch() {
-                document.getElementById("search-modal").classList.add("open");
-                document.getElementById("search-input").focus();
-            }
-            function closeSearch() {
-                document.getElementById("search-modal").classList.remove("open");
-                document.getElementById("search-input").value = "";
-                document.getElementById("search-results").innerHTML = "";
-            }
-            function doSearch(q) {
-                var results = document.getElementById("search-results");
-                results.innerHTML = "";
-                if(q.length < 2) return;
-                var lower = q.toLowerCase();
-                for(var i = 0; i < allConcepts.length; i++) {
-                    if(allConcepts[i].name.toLowerCase().indexOf(lower) !== -1) {
-                        var a = document.createElement("a");
-                        a.className = "search-result-item";
-                        a.href = allConcepts[i].url;
-                        a.textContent = allConcepts[i].name;
-                        results.appendChild(a);
-                    }
-                }
-            }
             document.addEventListener("keydown", function(e) {
                 if((e.ctrlKey || e.metaKey) && e.key === "k") { e.preventDefault(); openSearch(); }
                 if(e.key === "Escape") { closeSearch(); }

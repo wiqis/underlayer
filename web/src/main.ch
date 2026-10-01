@@ -33,6 +33,30 @@
 //   handlers_study_plan.ch   — handle_create_study_plan, handle_get_study_plans, handle_update_study_plan, handle_delete_study_plan
 //   pages_help.ch            — render_help_page, render_shortcuts_page, render_faq_page, render_about_page
 //   static.ch                — content_type_for_ext, file_extension, handle_static_file
+//
+// Collection-level pages (the course index, the learning path, concept search):
+//   routes_data.ch           — RouteStep, PathRoute, mk_step, build_routes, route_orphans
+//   routes_formats.ch        — Route 1: the seven container formats
+//   routes_link.ch           — Route 2: object files -> linking -> loading -> the neutral core
+//   routes_arch.ch           — Route 3: x86-64, AArch64, RISC-V, then the compiler backend
+//   routes_verify.ch         — verify_route_order: walks the routes against the real manifests
+//   courses_index_data.ch    — ConceptLink, Placement, CatalogCard, module_title_for
+//   courses_catalog_build.ch — build_card, build_catalog, resolve_route_course, minutes_of
+//   courses_index_render.ch  — #html components for one course card and its concept list
+//   courses_path_render.ch   — #html components for a route, a step, its prerequisites, the check
+//   courses_orphans.ch       — the courses no route claims, printed rather than omitted
+//   pages_courses.ch         — render_courses_page            (GET /courses)
+//   pages_path.ch            — render_learning_path_page_index (GET /learning-path)
+//   pages_search.ch          — render_search_page             (GET /search)
+//   courses_index_assets.ch  — CSS + JS for /courses and /learning-path
+//   search_assets.ch         — CSS for /search
+//   nav_bar.ch               — render_nav_bar, render_theme_js (the one nav, in one place)
+//   search_core.ch           — SearchHit, find_bytes, hit_score, snippet helpers
+//   search_scan.ch           — snippet_of, title_less, sort_hits, swap_hits
+//   search_walk.ch           — search_concepts: the walk every search goes through
+//   handlers_collection_pages.ch — handle_courses_page, handle_learning_path_index, handle_search_page
+//   handlers_search_concepts.ch   — handle_search_concepts (GET /api/search/concepts)
+//   home_search.ch           — the home page's Ctrl+K modal, now fetching the real index
 using std::string
 
 public namespace underlayer_web {

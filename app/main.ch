@@ -167,6 +167,13 @@ public func main() : int {
         underlayer_web::handle_search(courses_dir, &req, &raw mut res)
     }))
 
+    // Concept search: titles, descriptions, module names and course titles
+    // across all courses. Additive — /api/search's response shape is a
+    // shipped contract and is left alone.
+    srv.router.add("GET", "/api/search/concepts", (|&courses_dir|(req, res) => {
+        underlayer_web::handle_search_concepts(courses_dir, &req, &raw mut res)
+    }))
+
     // ---- Filter Courses (7.1.7) ----
     srv.router.add("GET", "/api/courses/all", (|&courses_dir|(req, res) => {
         underlayer_web::handle_filter_courses(courses_dir, &req, &raw mut res)
@@ -419,6 +426,26 @@ public func main() : int {
 
     srv.router.add("GET", "/api/exercises/hint", (|&db|(req, res) => {
         underlayer_web::handle_exercise_hint(db, &req, &raw mut res)
+    }))
+
+    // Course index — /courses. Registered BEFORE /courses/:courseId so the
+    // exact path wins over the parameterised one. This is the page every
+    // lesson's "All courses" back-link points at, 42 times across 32 files,
+    // and it did not exist until now; tools/link_check.py is what stops that
+    // from being true again.
+    srv.router.add("GET", "/courses", (|&courses_dir|(req, res) => {
+        underlayer_web::handle_courses_page(courses_dir, &req, &raw mut res)
+    }))
+
+    // Learning path — the three routes through the collection. Distinct from
+    // /courses/:courseId/path, which is the per-course dependency graph.
+    srv.router.add("GET", "/learning-path", (|&courses_dir|(req, res) => {
+        underlayer_web::handle_learning_path_index(courses_dir, &req, &raw mut res)
+    }))
+
+    // Search — concept search, server-rendered from ?q=
+    srv.router.add("GET", "/search", (|&courses_dir|(req, res) => {
+        underlayer_web::handle_search_page(courses_dir, &req, &raw mut res)
     }))
 
     // Course landing page

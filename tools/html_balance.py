@@ -13,7 +13,25 @@ import sys
 
 OPEN = re.compile(r'<(div|pre)\b[^>]*>')
 CLOSE = re.compile(r'</(div|pre)>')
-ANY_TAG = re.compile(r'<(/?)([a-zA-Z][a-zA-Z0-9]*)')
+# A tag, with the self-closing slash captured.  The slash is captured because
+# `unclosed_in` used to read `<path d="..."/>` as an OPENER and then report the
+# matching `</svg>` as closing a `<path>` that was never closed -- which is how
+# the home page's search icon produced three false positives the moment this
+# tool was pointed at web/src/ for the first time.
+# A tag, with the self-closing slash captured.  Two things this has to get
+# right, both of which were wrong on 2026-10-01 and both of which produced
+# false positives:
+#
+#   * the self-closing slash.  `unclosed_in` used to read `<path d="..."/>` as
+#     an OPENER, so the home page's search icon reported three phantom
+#     unbalanced tags the first time this tool was pointed at web/src/.
+#   * quoted attribute values may contain `<`.  Several lesson pages put
+#     `<code>` and `<em>` inside a `data-explain="..."` attribute -- that is
+#     legal HTML and a browser reads it as text -- and an attribute body that
+#     cannot contain `<` turns those into real tags in this regex, which then
+#     reports the tag they were nested in as "closed with no matching opener".
+#     The alternation `[^<>"]|"[^"]*"` is the HTML tokenizer's own rule.
+ANY_TAG = re.compile(r'<(/?)([a-zA-Z][a-zA-Z0-9]*)((?:[^<>"]|"[^"]*")*?)(/?)>')
 VOID = {'br', 'hr', 'img', 'input', 'meta', 'link'}
 
 # Tags the lesson markup actually uses. A '<' followed by one of these is a real
@@ -45,7 +63,13 @@ def macro_hazards(path):
         still aborts the macro, so that case is still reported.
     """
     src = open(path).read()
-    _s, _e, block = block_of(src)
+    out = []
+    for _bs, _be, block in blocks_of(src):
+        out.extend(hazards_in(block))
+    return out
+
+
+def hazards_in(block):
     out = []
     for m in re.finditer(r'<pre>(.*?)</pre>', block, re.S):
         for line in m.group(1).split('\n'):
@@ -55,14 +79,58 @@ def macro_hazards(path):
                                'will be lexed as one; write &lt;%s>'
                                % (bad, bad))
                     break
-    # Outside <pre> a brace is the interpolation sigil and aborts the macro.
-    # The concept pages carry no Chemical logic, so every brace seen here is
-    # spurious. Checked separately so a real @{...} or @(...) expression can be
-    # allow-listed by editing this line rather than by accident.
+    # Outside <pre> a brace is the interpolation sigil and aborts the macro --
+    # so a STRAY one is a real hazard.  What is not a hazard is a brace pair
+    # that is the sigil doing its job, and until 2026-10-01 this check could
+    # not tell the two apart: it reported every `{value}` on a page that
+    # interpolates, and every `@if(cond) {` in a statement block, as a macro
+    # that would fail to parse.  It did that on files that build cleanly, which
+    # is how a hazard check becomes a checker nobody reads.
+    #
+    # So the legal forms are removed first and only what is left is reported:
+    #
+    #   `{expr}`      the interpolation sigil, html_balance's own subject
+    #   {`a${b}c`}    the backtick "expressive string" form of the same
+    #   `@if(c) {`    an html_cbi statement block, whose braces belong to the
+    #   `} @else {`   statement and not to the block's brace counter
+    #   `@{`/`@(`     NOT removed -- docs/implementation-gaps.md records `@{}`
+    #                 inside a block as a parse failure, so it stays a hazard
+    #
+    # A STRAY brace is by definition one the strippers do not pair up, so this
+    # narrows the false positives without narrowing the check.  The negative
+    # control is in the tool's own docstring habit: inject a lone `}` into a
+    # nav link and it is still reported.
     rest = re.sub(r'<pre>.*?</pre>', '', block, flags=re.S)
     rest = rest.replace('#html {', '', 1).rstrip()
     if rest.endswith('}'):
         rest = rest[:-1]
+    # ORDER MATTERS and the order is: values first, statement blocks second.
+    # The statement-block pass removes a fixed number of `}` characters, and if
+    # it ran first it took them out of the interpolations instead of out of the
+    # statement blocks -- so `{card.modules}` lost a brace and became a hazard
+    # report on a page that builds.
+    rest = re.sub(r'\{`[^`]*`\}', ' ', rest)
+    # The value may start with an identifier OR with a number: `#universal`
+    # components take `max={100.0}` and `value={pct}` alike, and requiring an
+    # identifier first reported the numeric one on
+    # web/src/handlers_dashboard.ch -- a page that builds.
+    rest = re.sub(r'\{[A-Za-z_0-9][A-Za-z0-9_.()\[\] &\'*:,.<>/=-]*\}', ' ', rest)
+    rest = re.sub(r'\}\s*@\s*else\s*\{', ' @STMT@ ', rest)
+    # `@if(cond) {` opens a brace the macro's counter is tracking, so its
+    # matching `}` on a later line is equally not a stray.  Removing the
+    # opener alone is not enough -- the closer is then reported as a raw brace
+    # on a file that builds -- so the opener is counted and that many closers
+    # are removed with it.
+    opened = [0]
+
+    def _count_open(m):
+        opened[0] += m.group(0).count('{') - m.group(0).count('}')
+        return ' @STMT@ '
+
+    rest = re.sub(r'@\s*(?:if|else|while|for)\s*\([^\n]*?\)\s*\{',
+                  _count_open, rest)
+    for _ in range(max(0, opened[0])):
+        rest = rest.replace('}', ' ', 1)
     for m in re.finditer(r'(?<![@(])[{}]', rest):
         line = rest[:m.start()].count('\n') + 1
         ctx = rest[max(0, m.start() - 40):m.start() + 40].replace('\n', ' ')
@@ -79,11 +147,19 @@ def unclosed(path):
     check, and it catches the class of mistake a div/pre counter cannot.
     """
     src = open(path).read()
-    _s, _e, block = block_of(src)
+    problems = []
+    for _bs, _be, block in blocks_of(src):
+        problems.extend(unclosed_in(block))
+    return problems
+
+
+def unclosed_in(block):
     stack = []
     problems = []
     for m in ANY_TAG.finditer(block):
         closing, name = m.group(1), m.group(2).lower()
+        if m.group(4) == '/':
+            continue                       # <path ... /> closes itself
         if name in VOID:
             continue
         if closing:
@@ -122,8 +198,88 @@ def block_of(src):
     return start, tail, src[start:tail]
 
 
+# A `#html` block OPENS with `#html {` on a line of its own and CLOSES with a
+# line that is nothing but an indented `}` -- the same convention
+# tools/bracecheck.py uses, and the only terminator that works when a file has
+# more than one block.
+BLOCK_OPEN = re.compile(r'^\s*#html \{\s*$')
+BLOCK_CLOSE = re.compile(r'^\s*\}\s*$')
+
+
+def blocks_of(src):
+    """Every `#html` block in the file, as (start, end, text).
+
+    Added 2026-10-01 because block_of() could only model ONE block per file,
+    and every page in web/src/ has several: the markup is emitted as a shell
+    block, then a `while` loop of balanced blocks, then a CSS/JS pair, with
+    plain Chemical between them.  Pointed at such a file, block_of() ran from
+    the first `#html {` to the first `#css {` and read the intervening Chemical
+    as markup -- which is how `cards.get_ptr(i)` came to be reported as an
+    unclosed `<catalogcard>` element, and a file with no `#html` block at all
+    raised ValueError and printed a traceback instead of a verdict.
+
+    Returns [] when there is no block, which report() states plainly.
+    """
+    STMT_OPEN = re.compile(r'@\s*(?:if|else|while|for)\s*[\(\{]')
+    out = []
+    lines = src.split('\n')
+    pos = 0
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if BLOCK_OPEN.match(line):
+            start = pos
+            j = i + 1
+            # A `}` on a line of its own does not always end the macro block.
+            # Two things open a brace that the macro's counter is tracking: an
+            # html_cbi STATEMENT BLOCK (`@if(cond) {` ... `} @else {` ... `}`)
+            # and a <pre>, whose braces are literal characters.  Treating either
+            # as the end of the block truncated the markup mid-tree and reported
+            # every tag below it as unclosed -- which is a linter inventing
+            # defects, the failure mode this whole tool exists to prevent.
+            stmt = 0
+            pre = 0
+            while j < len(lines):
+                cur = lines[j]
+                pre += len(re.findall(r'<pre[\s>]', cur))
+                pre -= len(re.findall(r'</pre>', cur))
+                if pre > 0:
+                    j += 1
+                    continue
+                if STMT_OPEN.search(cur):
+                    stmt += cur.count('{') - cur.count('}')
+                    j += 1
+                    continue
+                if BLOCK_CLOSE.match(cur):
+                    if stmt > 0:
+                        stmt -= 1
+                        j += 1
+                        continue
+                    break
+                j += 1
+            # `pos` is the offset of the `#html {` line itself, and `start`
+            # points at it, so the slice has to INCLUDE line i.  Dropping
+            # it (i+1) truncated every block by the length of its own
+            # opening line and reported the last tag of each page as
+            # unclosed.
+            end = pos + sum(len(l) + 1 for l in lines[i:min(j + 1, len(lines))])
+            out.append((start, end, src[start:end]))
+            pos = end
+            i = j + 1
+            continue
+        pos += len(line) + 1
+        i += 1
+    return out
+
+
 def repair(path, write=True):
     src = open(path).read()
+    n = len(blocks_of(src))
+    if n > 1:
+        raise ValueError(
+            '%s has %d #html blocks; repair() rewrites exactly one and would '
+            'silently truncate the others. Run the report instead, or fix the '
+            'block by hand.' % (path, n))
     start, end, block = block_of(src)
     out = []
     stack = []
@@ -189,15 +345,21 @@ def repair(path, write=True):
 
 def report(path):
     src = open(path).read()
-    _s, _e, block = block_of(src)
-    o = len(re.findall(r'<div\b', block))
-    c = len(re.findall(r'</div>', block))
-    op = len(re.findall(r'<pre\b', block))
-    cp = len(re.findall(r'</pre>', block))
+    blocks = blocks_of(src)
+    if not blocks:
+        print('%-34s no #html block -- nothing to check'
+              % path.split('/')[-1])
+        return True
+    o = c = op = cp = 0
+    for _bs, _be, block in blocks:
+        o += len(re.findall(r'<div\b', block))
+        c += len(re.findall(r'</div>', block))
+        op += len(re.findall(r'<pre\b', block))
+        cp += len(re.findall(r'</pre>', block))
     probs = unclosed(path) + macro_hazards(path)
     ok = (o == c and op == cp and not probs)
-    print('%-34s div %3d/%-3d  pre %3d/%-3d  %s'
-          % (path.split('/')[-1], o, c, op, cp,
+    print('%-34s div %3d/%-3d  pre %3d/%-3d  %2d blk  %s'
+          % (path.split('/')[-1], o, c, op, cp, len(blocks),
              'ok' if ok else 'PROBLEM'))
     for q in probs:
         print('           %s' % q)

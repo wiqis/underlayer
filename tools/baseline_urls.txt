@@ -42,6 +42,13 @@
 /courses/coff/lessons/coff-tls
 /courses/coff/lessons/coff-weak-externals
 /courses/coff/lessons/coff-drectve
+/courses/compback
+/courses/compback/lessons/cb-abi
+/courses/compback/lessons/cb-ir
+/courses/compback/lessons/cb-isel
+/courses/compback/lessons/cb-regalloc
+/courses/compback/lessons/cb-sched
+/courses/compback/lessons/cb-verify
 /courses/dwarf
 /courses/dwarf/lessons/dwarf-intro
 /courses/dwarf/lessons/dwarf-sections

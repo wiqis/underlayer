@@ -7,7 +7,10 @@ using underlayer_db::DbClient
 public namespace underlayer_web {
 
     // ASCII lowercase a view into a new string (no to_lower in underlayer_core).
-    func ascii_lower(sv : *string_view) : string {
+    // PUBLIC because it is shared: underlayer_web::search_walk.ch lowercases
+    // every concept title and description in the collection on each query, and
+    // a second copy of this would be a second thing to keep correct.
+    public func ascii_lower(sv : *string_view) : string {
         var out = string()
         var i : size_t = 0
         while(i < sv.size()) {

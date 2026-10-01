@@ -54,6 +54,8 @@ using underlayer_models::Course
                     <div class="nav-links">
                         <a href="/" class="nav-link">Home</a>
                         <a href="/courses" class="nav-link active">Courses</a>
+                        <a href="/learning-path" class="nav-link">Path</a>
+                        <a href="/search" class="nav-link">Search</a>
                         <a href="/dashboard" class="nav-link">Dashboard</a>
                         <a href="/review" class="nav-link">Review</a>
                         <a href="/progress" class="nav-link">Progress</a>

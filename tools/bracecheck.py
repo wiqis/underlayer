@@ -27,7 +27,45 @@ CLOSE = re.compile(r"^\s*\}$")
 # difference between a tool that is run on every edit and one that is run once.
 ATTR = re.compile(r"=\"[^\"]*\"")
 # Chemical interpolation inside a #html block: `{expr}`.  Required, not a bug.
-INTERP = re.compile(r"\{[A-Za-z_][A-Za-z0-9_.()\[\] ]*\}")
+#
+# The character class was widened on 2026-10-01, and the reason is worth
+# recording because the narrow version was not wrong about braces -- it was
+# wrong about what an EXPRESSION contains.  It allowed letters, digits, `.`,
+# `_`, `(`, `)`, `[`, `]` and spaces, which covers `{esc_title}` and
+# `{concept_count}` and nothing else, so a page whose interpolation passes a
+# function call -- `{render_all_cards(&catalog, &mut page)}` -- was reported as
+# containing two raw braces it does not contain.  A linter that cries wolf on
+# correct code is a linter that gets deleted, and this one is worth keeping.
+# The pair still has to be complete, and the value may now start with a DIGIT
+# as well as a letter: `#universal` components take `max={100.0}` and
+# `value={health.health_score * 100}`, and the `*` was missing from the class
+# too.  Both spellings are in web/src/handlers_dashboard.ch, a committed file
+# that builds, so the tool was reporting six raw braces it did not have.  A
+# lone `{` is still reported, which is the case the tool exists for.
+INTERP = re.compile(r"\{[A-Za-z_0-9][A-Za-z0-9_.()\[\] &'*:!,.<>/=-]*\}")
+
+# html_cbi statement blocks: `@if(cond) { ... } @else { ... }` and `@}`.
+#
+# The braces of a statement block are not raw braces and never were: the macro
+# lexes `@if(` as a Chemical node and the `{` after it as that statement's
+# block, which is the documented form (see the collection's own html_cbi tests
+# at lang/tests/compiler_plugins/html/src/to_string.ch, `if_works_1`).  This
+# exemption was added on 2026-10-01 for the same reason as INTERP above -- the
+# pages that use conditionals inside a block were reported as broken while
+# building cleanly.  `@{` is deliberately NOT here: docs/implementation-gaps.md
+# records `@{}` as a parse failure, so an `@{` in a block IS the hazard this
+# tool exists for and it stays reported.
+STMT_IF = re.compile(r"@\s*(?:if|else|while)\s*\([^\n]*?\)\s*\{")
+STMT_ELSE = re.compile(r"\}\s*@\s*else\s*\{")
+
+# The "expressive string" form of an interpolated value: a backtick-quoted
+# Chemical string with `${}` holes in it, e.g.
+# ``href={`/courses/${dep_esc}`}``.  Documented and tested by html_cbi
+# (`expressive_strings_work` in lang/tests/compiler_plugins/html/src/
+# to_string.ch), so it is legal markup rather than a brace pair that happens to
+# be balanced.  Same reasoning as INTERP: the pattern has to be recognised, or
+# the tool reports two braces the file does not contain.
+TEMPLATE = re.compile(r"\{`[^`]*`\}")
 
 
 def check(path):
@@ -67,6 +105,12 @@ def check(path):
         # embeds a value at all and is required rather than accidental.
         text = ATTR.sub(" ", raw)
         text = text.replace("&quot;", " ")
+        # Statement blocks first: `@if(cond) {` must go before INTERP runs, or
+        # the `@` prefix keeps the pair from matching and both braces are then
+        # reported.  Order matters here and is the only order that works.
+        text = STMT_IF.sub(" @STMT@ ", text)
+        text = STMT_ELSE.sub(" @STMT@ ", text)
+        text = TEMPLATE.sub(" ", text)
         text = INTERP.sub(" ", text)
         for ch in ("{", "}"):
             if ch in text:
