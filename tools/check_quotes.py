@@ -156,6 +156,35 @@ PREFIXES = {
     # ARTIFACT IT IS WRITTEN FOR IS NOT A NEGATIVE; IT IS A BUG WEARING ONE.
     "rvat": ("rv_amo.ch", "rv_fence.ch", "rv_vector.ch", "rv_dataflow.ch",
              "rvat_landing.ch"),
+    # The compiler backend course, and the one this tool matters most for
+    # AFTER rvat, because its output file is the FOURTH name that collides with
+    # a sibling's subject rather than with a sibling's filename.  compback.out
+    # records instruction counts for x86-64, aarch64 AND riscv64 in the same
+    # tables, and it records the SAME hex words the assembly courses record --
+    # 0x9b000820 is an AArch64 `madd` and both `a64asm` and `rvasm` print
+    # AArch64 and RISC-V words in their own recordings.  So a page of this
+    # course that quoted the WRONG course's output would find most of its hex
+    # tokens present, which is exactly the quiet partial pass this table
+    # exists to prevent.
+    #
+    # The entry lists SEVEN files and not six, and the seventh is the landing
+    # page: the landing page of every course above quotes measured output too,
+    # and a PREFIXES entry that left it out would leave the most-quoted page in
+    # the course unchecked while the file count still looked plausible.
+    #
+    # Two more things about this course are worth recording next to the entry,
+    # because both are the kind of thing that makes a token check pass for the
+    # wrong reason.  FIRST, section 10 of the artifact -- the ONLY section in
+    # the whole collection that can put a ratio on real memory traffic -- prints
+    # RATIOS ONLY and contains no `ticks/op` at all, so the TICK regex below has
+    # nothing to find in this course's pages: the exact ticks were moved into a
+    # SEPARATE file, `cbbench.out`, precisely because a report containing a
+    # clock reading cannot be byte-identical between two runs.  SECOND, the
+    # harness's own check count (171) is in EXEMPT below, because the harness
+    # counts itself after the run and the number therefore cannot be in the
+    # output it is checking -- the same reason the five numbers above it are.
+    "compback": ("cb_ir.ch", "cb_isel.ch", "cb_regalloc.ch", "cb_sched.ch",
+                 "cb_abi.ch", "cb_verify.ch", "compback_landing.ch"),
 }
 OUTPUTS = {
     "x86asm": "x86dec.out",
@@ -193,6 +222,18 @@ OUTPUTS = {
     # THIS TABLE EXISTS TO PREVENT, AND IT IS WHY THE CHECK BELOW REPORTS HOW MANY
     # TOKENS IT EXAMINED.
     "rvat": "rvat.out",
+    # This course's artifact is `compback.py` and its output is `compback.out`,
+    # and it is a DIFFERENT file from every name above.  This entry matters more
+    # than any of the previous ones for a reason worth stating precisely: §KEEP§
+    # compback.out CONTAINS A RATIO AND A COUNT FOR THE SAME SUBJECT THAT
+    # rvat.out ALSO RECORDS -- both courses compile the same three targets and
+    # both count the machine instructions -- §KEEP§ SO A PAGE OF THIS COURSE THAT
+    # QUOTED THE WRONG ONE WOULD FIND MOST OF ITS DECIMAL TOKENS PRESENT AND
+    # PASS.  §KEEP§ AND THE COLLECTION HAS NOW PAID FOR A QUIET PARTIAL PASS
+    # FOUR TIMES, WHICH IS WHY THE COUNT OF TOKENS EXAMINED IS PRINTED BELOW AND
+    # WHY A COURSE THAT ADDS PAGES WITHOUT ADDING ITSELF TO PREFIXES SHOWS UP AS
+    # A FILE COUNT THAT DID NOT MOVE.
+    "compback": "compback.out",
 }
 PREF = PREFIXES.get(COURSE, (COURSE[:3],))
 if not isinstance(PREF, tuple):
@@ -230,6 +271,37 @@ EXEMPT = {
                 "refused `c.sw`; section 4C prints it",
     "0x00b5": "the B-type words on the rv-immediate page, printed in full by "
               "section 7's offset table",
+    # NO ENTRY FOR compback, AND THE REASON IS WORTH RECORDING RATHER THAN
+    # LEAVING AS A SILENT OMISSION.  §KEEP§ Adding one "so it is there if it is
+    # ever needed" would be the same class of mistake the NORMALISER fire table
+    # in the artifacts exists to catch: an entry that no check can reach is a
+    # row with a zero, and a row with a zero reads as a permission.  §KEEP§ All
+    # THREE regexes above were run against every figure this course's pages
+    # quote, and the result is a finding about the SHAPE of the subject rather
+    # than about the course:
+    #
+    #   * TICK  finds NOTHING, and cannot.  compback.out contains no `ticks/op`
+    #     AT ALL -- the raw ticks were moved into the separate file
+    #     `cbbench.out` precisely because a report containing a clock reading
+    #     and a file that is byte-identical between two runs cannot both be
+    #     true.  A page that printed one would be quoting a number the course
+    #     deliberately made unquotable, and this table should NOT be the place
+    #     that quietly permitted it.
+    #   * RATIO finds almost nothing, because this course's ratios are printed
+    #     as BANDS ("1.25-1.56") rather than as "1.25x".  The regex needs a
+    #     trailing `x`, and the report's own reason for the bands is the one
+    #     printed above: printing "1.12x" for one arm and "1.11x" for another
+    #     when they differ by less than the floor would be a third decimal
+    #     place deciding which run you get.
+    #   * HEX finds the real thing, and it is the only one of the three that
+    #     does.  The instruction-selection page quotes ten AArch64 words and
+    #     the ABI page twelve more, all of them from the recorded encoder
+    #     cross-check rather than from a disassembly a page typed out.
+    #
+    # So this course is checked on its hex tokens and NOT on its timing, and the
+    # honest sentence is that the mechanical half of rule 2 reaches the bytes
+    # and does not reach the clock.  The clock is checked by crosscheck.py's own
+    # 171 assertions instead, which is the mechanism that CAN reach it.
 }
 
 # The command lines a quoted-output block may name.  A block that contains one
@@ -249,10 +321,61 @@ ARTIFACT_CMDS = ("./x86dec", "./sysdump", "./a64dec", "./a64abi", "./a64sys",
                  # would catch -- and the command is listed anyway for the
                  # reason the comment above this tuple gives: a filter that
                  # passes by luck is a filter that will fail by accident.
-                 "rvat.py", "./rvat", "corrupt.py")
+                 "rvat.py", "./rvat", "corrupt.py",
+                  # The compiler backend course.  Three commands and all three
+                  # are needed, which is worth saying because two of them look
+                  # like they could be omitted and the omission would be
+                  # SILENT: `compback.py --run` is the report itself,
+                  # `crosscheck.py` and `corrupt.py` are the harness and its
+                  # corruption suite, and a page that quotes the HARNESS's own
+                  # output -- its 171 checks, its 22 corruptions, its verdicts
+                  # -- names one of the last two rather than the first.  The
+                  # `cbbench` entry is the FOURTH file this course quotes and
+                  # the reason it is needed is not obvious: the raw ticks live
+                  # in cbbench.out and NOT in compback.out, because a report
+                  # containing a clock reading and a file that is byte-
+                  # identical between two runs cannot both be true.  So the
+                  # register-allocation page quotes both files, and a filter
+                  # that knew only about compback.py would skip every block it
+                  # takes from the other one.
+                  "./compback", "compback.py", "./cbbench", "cbbench.c")
 
 TICK = re.compile(r"(\d+\.\d{3}) ticks/op")
 HEX = re.compile(r"(0x[0-9a-f]{8,16})\b")
+# §KEEP§THE BARE-WORD VARIANT, AND IT IS OPT-IN PER COURSE BECAUSE IT IS A
+# PROPERTY OF THE ARTIFACT AND NOT OF THE TOOL.  compback.out prints an
+# instruction word BARE in its section 9 second-reader table (`8b010408`,
+# `20a5a533`) and only `0x`-prefixes the same width of word in section 5
+# (`0x9b000820`).  So a page that quoted the bare table FAITHFULLY had all
+# twelve of its hex words skipped by the `0x`-requiring pattern above, and the
+# tool reported ALL CONSISTENT over 7 tokens while the page carried twelve
+# unchecked bit patterns -- the quiet partial pass this table exists to
+# prevent, reached through TYPOGRAPHY rather than through a missing entry.
+#
+# It is NOT enabled globally, because enabling it globally was tried and
+# reverted: it immediately surfaced seven tokens in FOUR other courses
+# (`0000000000000023`, `00000000000283d0`, `0000000000000420`, `00a5a023`, two
+# `0000000000000006`, and four BINARY literals `0b100110`/`0b100111`/
+# `0b011010`/`0b011011` in `a64_encoding.ch` that the bare pattern grabbed out
+# of a `0b` prefix and that are not hex words at all).  Adjudicating four
+# courses' content from inside a change to a thirteenth one is how a shared
+# tool acquires a hundred-line diff nobody asked for.  So the set below names
+# the courses whose ARTIFACT prints words bare, which is the property the
+# pattern is actually about, and a course that starts printing a bare word and
+# is not in the table gets the old under-reaching behaviour rather than seven
+# false alarms.
+#
+# The `0b` lookbehind is there because of `a64_encoding.ch`: `0b100110` is six
+# binary digits that a naive bare pattern reads as a hex word.  A course that
+# quotes binary literals as bare digits needs the exclusion in any case.
+BARE_HEX_COURSES = ("compback",)
+BARE_HEX = re.compile(r"(?<![0-9a-fxb])(?:0x)?([0-9a-f]{8}|[0-9a-f]{16})\b")
+if COURSE in BARE_HEX_COURSES:
+    HEX = re.compile(r"(0x[0-9a-f]{8,16})\b|(?<![0-9a-fxb])([0-9a-f]{8}|[0-9a-f]{16})\b")
+    # the two alternation groups, so the caller unpacks whichever fired
+    HEX_GROUP = (1, 2)
+else:
+    HEX_GROUP = (1,)
 RATIO = re.compile(r"(\d+\.\d{2})x\b")
 
 fails = 0
@@ -298,7 +421,21 @@ for name in sorted(os.listdir(os.path.join(ROOT, "content", "src"))):
         blocks_quoted += 1
         for pat, kind in ((TICK, "ticks/op"), (HEX, "hex"), (RATIO, "ratio")):
             for m in pat.finditer(b):
-                tok = m.group(0) if kind == "ratio" else m.group(1)
+                if kind == "ratio":
+                    tok = m.group(0)
+                elif kind == "hex":
+                    # HEX may have TWO alternation groups (see BARE_HEX above)
+                    # and exactly one of them is set on any given match, so the
+                    # token is whichever captured.  Leaving this as
+                    # m.group(1) would read an unset group as None and print
+                    # `None not in compback.out` -- a MISSING line whose token
+                    # is the string "None", which is a failure report nobody
+                    # can act on, and which a bare pattern reaching other
+                    # courses would produce on every single match.
+                    tok = next(g for g in (m.group(n) for n in HEX_GROUP)
+                               if g)
+                else:
+                    tok = m.group(1)
                 if tok in EXEMPT or tok[2:] in EXEMPT:
                     continue
                 checked += 1

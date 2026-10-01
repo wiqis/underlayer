@@ -1265,6 +1265,71 @@ public namespace underlayer_web {
         return string()
     }
 
+    // The COMPILER BACKEND course: the middle of the chain, and the first
+    // course in this collection whose machine runs the code it makes.  Same
+    // fall-through contract: empty string for anything else.
+    //
+    // Placed LAST in the chain, after `render_rvat_concept`, because that is
+    // the order in which a name was claimed and this course is the newest --
+    // and because it is the only course here with no section to sit inside.
+    // Every other course in this file belongs to one of the x86-64, AArch64
+    // or RISC-V sections, or to a format course, and the section is what the
+    // surrounding comments use to justify an ordering.  This one is a single
+    // course standing alone, so the only thing that fixes its place in the
+    // chain is the date it was claimed.
+    //
+    // ALL SIX IDS ARE `cb-` PREFIXED, and the prefix is a claim about this
+    // file rather than about style: render_concept() resolves concept ids
+    // GLOBALLY with no course in the key, so a collision does not 404 -- it
+    // serves ANOTHER COURSE'S PAGE under this course's URL, silently, with no
+    // diagnostic from anywhere.  This collection has now been bitten by that
+    // four times (three `x86-verify`, two `rv-verify`, one `a64-verify`), and
+    // the rule that came out of it is the sentence at the top of
+    // `render_x86asm_concept`: name a concept for the thing it measures, and
+    // grep this file for the id BEFORE planning the page rather than after.
+    // `cb-` was checked against every id in this file and against every
+    // shipped manifest in `courses/` before the first page was written.
+    //
+    //   cb-ir        what is being translated, and what an IR must NOT hide.
+    //                NOT `compiler-architecture`, which is the name in
+    //                docs/courses-todo.md and which names a TOPIC rather than
+    //                a finding.
+    //   cb-isel      which machine form.
+    //   cb-regalloc  which register.  NOT `register-allocation`: the todo item
+    //                is named for the subject and this id for the page.
+    //   cb-sched     which order.
+    //   cb-abi       what the backend must know BEFORE it emits anything.
+    //                NOT `compiler-abis`: the three ABI conventions were
+    //                already taught by x86abi, a64abi and rvabi, so an id
+    //                named after the conventions would promise content this
+    //                course deliberately does not carry.
+    //   cb-verify    read a backend's decisions back out of the bytes, and
+    //                then the measured/quoted boundary.  Named `cb-verify`
+    //                rather than `cb-boundary` for the reason the RISC-V and
+    //                x86-64 sections both hit: they used `*-boundary` for a
+    //                concept that WAS the measured/quoted table, and a
+    //                concept id cannot be reused across courses.  This
+    //                course is named for the thing it does, which is
+    //                verification, and the boundary is what the last third of
+    //                the page is about.
+    public func render_compback_concept(concept_id : *string) : string {
+        var cid = concept_id.copy()
+        var ir_id = std::string("cb-ir")
+        var isel_id = std::string("cb-isel")
+        var regalloc_id = std::string("cb-regalloc")
+        var sched_id = std::string("cb-sched")
+        var abi_id = std::string("cb-abi")
+        var verify_id = std::string("cb-verify")
+
+        if(cid.equals(&ir_id)) { return underlayer_content::render_cb_ir() }
+        if(cid.equals(&isel_id)) { return underlayer_content::render_cb_isel() }
+        if(cid.equals(&regalloc_id)) { return underlayer_content::render_cb_regalloc() }
+        if(cid.equals(&sched_id)) { return underlayer_content::render_cb_sched() }
+        if(cid.equals(&abi_id)) { return underlayer_content::render_cb_abi() }
+        if(cid.equals(&verify_id)) { return underlayer_content::render_cb_verify() }
+        return string()
+    }
+
     public func render_concept(concept_id : *string) : string {
         var cid = concept_id.copy()
         // HAT concepts are resolved first; render_hat_concept returns an empty
@@ -1444,6 +1509,16 @@ public namespace underlayer_web {
         //                `a64simd` used for its own closing concept.
         var rvat_html = render_rvat_concept(concept_id)
         if(rvat_html.size() > 0) { return rvat_html }
+        // The COMPILER BACKEND course, checked LAST of all resolvers because
+        // it was claimed last and because its six `cb-` ids are DISJOINT from
+        // every id above it -- which was checked by reading this file and
+        // every shipped manifest, not by assuming.  It is the only course in
+        // the collection with no section behind it, so there is no neighbour
+        // whose prefix it could collide with on inspection; the greps are the
+        // only evidence, and the note above `render_compback_concept` records
+        // what was grepped.
+        var compback_html = render_compback_concept(concept_id)
+        if(compback_html.size() > 0) { return compback_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

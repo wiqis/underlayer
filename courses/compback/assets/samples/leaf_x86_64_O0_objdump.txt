@@ -1,0 +1,29 @@
+
+leaf_x86_64_O0.o:	file format elf64-x86-64
+
+Disassembly of section .text:
+
+0000000000000000 <leaf>:
+       0: 55                           	pushq	%rbp
+       1: 48 89 e5                     	movq	%rsp, %rbp
+       4: 48 89 7d f8                  	movq	%rdi, -0x8(%rbp)
+       8: 48 89 75 f0                  	movq	%rsi, -0x10(%rbp)
+       c: 48 89 55 e8                  	movq	%rdx, -0x18(%rbp)
+      10: 48 89 4d e0                  	movq	%rcx, -0x20(%rbp)
+      14: 4c 89 45 d8                  	movq	%r8, -0x28(%rbp)
+      18: 4c 89 4d d0                  	movq	%r9, -0x30(%rbp)
+      1c: 48 8b 45 f8                  	movq	-0x8(%rbp), %rax
+      20: 48 8b 4d f0                  	movq	-0x10(%rbp), %rcx
+      24: 48 d1 e1                     	shlq	%rcx
+      27: 48 01 c8                     	addq	%rcx, %rax
+      2a: 48 6b 4d e8 03               	imulq	$0x3, -0x18(%rbp), %rcx
+      2f: 48 01 c8                     	addq	%rcx, %rax
+      32: 48 8b 4d e0                  	movq	-0x20(%rbp), %rcx
+      36: 48 c1 e1 02                  	shlq	$0x2, %rcx
+      3a: 48 01 c8                     	addq	%rcx, %rax
+      3d: 48 6b 4d d8 05               	imulq	$0x5, -0x28(%rbp), %rcx
+      42: 48 01 c8                     	addq	%rcx, %rax
+      45: 48 6b 4d d0 06               	imulq	$0x6, -0x30(%rbp), %rcx
+      4a: 48 01 c8                     	addq	%rcx, %rax
+      4d: 5d                           	popq	%rbp
+      4e: c3                           	retq

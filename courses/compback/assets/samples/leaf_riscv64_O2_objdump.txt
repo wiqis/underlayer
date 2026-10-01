@@ -1,0 +1,15 @@
+
+leaf_riscv64_O2.o:	file format elf64-littleriscv
+
+Disassembly of section .text:
+
+0000000000000000 <leaf>:
+       0: 20a5a533     	sh1add	a0, a1, a0
+       4: 20c625b3     	sh1add	a1, a2, a2
+       8: 20e74633     	sh2add	a2, a4, a4
+       c: 952e         	add	a0, a0, a1
+       e: 20a6c533     	sh2add	a0, a3, a0
+      12: 9532         	add	a0, a0, a2
+      14: 20f7a5b3     	sh1add	a1, a5, a5
+      18: 20a5a533     	sh1add	a0, a1, a0
+      1c: 8082         	ret

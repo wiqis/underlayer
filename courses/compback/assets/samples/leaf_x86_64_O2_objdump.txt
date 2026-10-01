@@ -1,0 +1,15 @@
+
+leaf_x86_64_O2.o:	file format elf64-x86-64
+
+Disassembly of section .text:
+
+0000000000000000 <leaf>:
+       0: 48 8d 04 77                  	leaq	(%rdi,%rsi,2), %rax
+       4: 48 8d 14 52                  	leaq	(%rdx,%rdx,2), %rdx
+       8: 48 01 c2                     	addq	%rax, %rdx
+       b: 48 8d 04 8a                  	leaq	(%rdx,%rcx,4), %rax
+       f: 4b 8d 0c 80                  	leaq	(%r8,%r8,4), %rcx
+      13: 48 01 c1                     	addq	%rax, %rcx
+      16: 4b 8d 04 49                  	leaq	(%r9,%r9,2), %rax
+      1a: 48 8d 04 41                  	leaq	(%rcx,%rax,2), %rax
+      1e: c3                           	retq

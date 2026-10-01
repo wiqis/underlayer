@@ -1,0 +1,15 @@
+
+leaf_aarch64_O2.o:	file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+0000000000000000 <leaf>:
+       0: 8b010408     	add	x8, x0, x1, lsl #1
+       4: 8b020449     	add	x9, x2, x2, lsl #1
+       8: 528000ca     	mov	w10, #0x6               // =6
+       c: 8b090108     	add	x8, x8, x9
+      10: 8b040889     	add	x9, x4, x4, lsl #2
+      14: 8b030908     	add	x8, x8, x3, lsl #2
+      18: 8b090108     	add	x8, x8, x9
+      1c: 9b0a20a0     	madd	x0, x5, x10, x8
+      20: d65f03c0     	ret

@@ -1,0 +1,107 @@
+{
+  "id": "compback",
+  "title": "Compiler Backend: From IR to Machine Code",
+  "version": "1.0.0",
+  "description": "The middle of the chain, and the first course in this collection to run the code it makes. Both ends are taught in depth elsewhere -- object files, linking, loading, and all three architectures -- and the part BETWEEN them was taught nowhere: what a backend actually decides, and how you can see the decision in the bytes. LLVM is the ORACLE here and never the dependency: the IR reader, the selector, the three allocators, the scheduler, the encoder and the timing harness are all files in this course's own directory, and the report prints what replaces each piece of LLVM BY FILE NAME beside the thing it replaces. The host's three absences are printed before the first number: x86-64 RUNS, so this is the only course in the collection that can put a RATIO on the cost of a spill; aarch64 and riscv64 COMPILE AND CANNOT RUN, with no cross-linker and no emulator, so every claim about their instructions is MEASURED-ON-BYTES. Three labels and no fourth: MEASURED, MEASURED-ON-BYTES, QUOTED. The IR/machine ratio is read in BOTH directions -- -O0 gives 1.106 and -O2 gives 0.818, and neither direction is a measure of quality; at -O2 the three targets agree on every opcode and still emit 253, 190 and 207 instructions. A selector that dispatches on operand KIND alone routes 49 of 61 instructions to the wrong machine form and NEVER FAILS ONCE -- so the receipt is a checksum, 193715795505516148 against 193715795509322676, and not the count. Three allocators on one IR give 58, 166 and 45 spills, and the 2.86 between them is a fact about the SPILL HEURISTIC and not about the algorithms. Two off-by-one bugs fail in OPPOSITE directions: a half-open live range LOSES 15 of 50 interference edges so the graph is EASIER to colour and the wrong allocator reports the BETTER number, while the coalescer with the same bug GAINS a merge. A scheduler with no alias analysis is FAST and WRONG, and timing crowns it the winner. The spill cost is NOT linear: 1 and 2 spills are indistinguishable, only 4 separates -- so the allocator's job is not to avoid spilling but to find where spilling stops being cheap. 25 provenance rows with the count printed (8 MEASURED, 9 MEASURED-ON-BYTES, 8 QUOTED), 15 numbered limits, 11 things a reader therefore cannot conclude beside 11 they can, 18 retractions each with a SOURCE, four poisons, and a 171-check harness that re-asks the committed recording rather than re-measuring.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "advanced",
+  "importance": "critical",
+  "completion_criteria": "Read all 6 concepts, reproduce the 171 checks in courses/compback/assets/samples/crosscheck.py against the shipped compback.out, then break one of the four numbers a poison claims and watch the delta move by name. The 171 includes pinned claim sentences, because a scope list you can soften without editing a test is not a scope list. Then read cbbench.out beside section 10 and see that the exact ticks live in a file this course does NOT compare, because a file with a clock reading and a file that is byte-identical between two runs cannot both be true.",
+  "min_score": 70,
+  "dependencies": [
+    "elf",
+    "obj",
+    "x86asm",
+    "a64asm",
+    "rvasm",
+    "x86abi",
+    "a64abi",
+    "rvabi",
+    "reloc",
+    "link"
+  ],
+  "modules": [
+    {
+      "id": "ir",
+      "title": "The Representation, and What It Must Not Hide",
+      "concepts": [
+        "cb-ir"
+      ]
+    },
+    {
+      "id": "select",
+      "title": "Three Questions About a Sequence of Operations",
+      "concepts": [
+        "cb-isel",
+        "cb-regalloc",
+        "cb-sched"
+      ]
+    },
+    {
+      "id": "abi",
+      "title": "The Contract, and Reading the Decisions Back Out",
+      "concepts": [
+        "cb-abi",
+        "cb-verify"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "cb-ir",
+      "title": "What an IR Is For, and What It Must Not Be",
+      "module_id": "ir",
+      "description": "MEASURED, one source at five -O levels and three targets. The positive half of the argument for an IR is a ratio, and it has to be read in BOTH directions: ABOVE 1.0 the backend deleted instructions the IR had and BELOW 1.0 it inserted them -- an address computation, a zero extension, a spill reload -- so -O0 gives 1.106 (260 IR against 235 machine instructions) and -O2 gives 0.818 (207 against 253), and the ratio SPANS 0.818 to 1.106 and is NOT MONOTONIC, because a number that only falls as the compiler gets better is a story. The negative half is the one nobody states: the SAME source at the SAME level emits DIFFERENT OPCODE SETS per target, and at -Os RISC-V carries 19 opcodes of which 17 are shared, the two that are not being `insertelement` and `shufflevector`. So the finding is neither 'an IR is target-independent' nor 'target-dependent' -- at -O2 all three targets agree on every opcode and the machine counts are still 253, 190 and 207, and every instruction of the difference is a decision the backend made. Then the level table, which is where -O stops being a ranking: -O1 vectorises nothing (0 IR vector operations), -O2 and -O3 emit 6 across the three targets, and -Os emits 2 -- on RISC-V only, and MORE IR for RISC-V than -O2 does (151 against 203). The vectoriser enters at -O2 and not at -O1 and not at -Os, and the one function chosen to show it (`walk`) goes from 27 instructions at -O0 to 59 at -O2 -- MORE, NOT FEWER -- because -O0 spills every argument and -O2 spills nothing in a leaf.",
+      "estimated_minutes": 24,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "cb-isel",
+      "title": "Instruction Selection",
+      "module_id": "select",
+      "description": "MEASURED. The selector is a tree walk over operand KINDS, twelve operations and the same twelve on all three targets, and the failure mode nobody names is that a selector dispatching on kind ALONE takes the first pattern with a matching kind -- which in this artifact's table is `add` for every two-operand arithmetic form, so every `sub`, `xor`, `shl` and `mul` in the corpus is routed to the instruction for `add`: 49 of 61 instructions across four kernels, 10, 12, 13 and 14 per kernel, and the selector NEVER FAILS ONCE. The result is not a crash; it is a PROGRAM THAT COMPUTES A DIFFERENT NUMBER, which is why the receipt is the checksum and not the count: the correct program folds to 193715795505516148 and one `sub` computed as an `add` folds to 193715795509322676. Then fusion, MEASURED-ON-BYTES and built BY HAND rather than assembled, because an assembler hides the question: seven AArch64 words re-encoded bit for bit and seven of seven agree with a real assembler, and the field positions are what caught all three bugs the encoder shipped, one of which read the three-source group selector out of the wrong group and produced a `msub` for a `madd`. Four five-bit register fields are twenty bits of thirty-two, and the three-operand form is not a compressed form -- it is the same width with one field reading 31. The x86-64 half is a REFUSAL: `enc_x86` takes (op, dst, src) and cannot express a three-operand multiply, because the ModRM byte puts the source in bits 3-5 and the destination in the low three. The worst shape a function signature can have is named on the page: the signature is `enc_x86(op, dst, src, rex_w=True)`, so a call with four positional arguments binds the fourth to `rex_w`, which is a TRUTHY STRING, and it encoded a two-operand instruction where the caller asked for three.",
+      "estimated_minutes": 27,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "cb-regalloc",
+      "title": "Register Allocation",
+      "module_id": "select",
+      "description": "MEASURED-ON-BYTES, and the centrepiece. Three allocators on the same IR -- linear scan (Braun & Hack 1978, no interference graph at all), Chaitin colour, and a third policy that spills what will not colour and repeats -- and three spill policies give 58, 166 and 45 spills across 36 allocations, so the 2.86 between Chaitin and linear is a fact about the SPILL HEURISTIC and not about the algorithms: WHICH ALLOCATOR IS BETTER IS A PROPERTY OF YOUR CORPUS, and a backend reporting 'graph colouring spills N' without naming the policy has reported nothing reproducible. Every 'yes' in the tables is a CHECKSUM and not a count: the program is lowered with the spills, run, and each virtual register's value read back out of its physical location AT ITS LAST USE -- because a spill slot may legitimately be reused, and reading at the end of the program reports an error in a correct allocation, which was a bug this artifact shipped. Then the two deliberate off-by-ones, which fail in OPPOSITE directions. The interference graph built from half-open ranges LOSES 15 of 50 edges, so it is EASIER to colour and SUCCEEDING IS THE FAILURE -- the sweep goes down to pressure 1 precisely because that is the one pressure at which the bug is invisible, and a sweep starting at three would have reported nine of nine and called it detected. The coalescer with the same bug GAINS a merge instead. And then the one measurement no other course in this collection could take, because this is the first course whose machine RUNS the code: four arms, four values forced through a stack slot, all four carrying the same checksum 5925179420309322629, and the ratios banded because a report containing a clock reading cannot be byte-identical between two runs. The verdict is against the 1-SPILL arm and not against the floor, and the cost is NOT LINEAR -- 1 and 2 spills are indistinguishable and only 4 separates, so the allocator's job is to find the point where spilling stops being cheap.",
+      "estimated_minutes": 28,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "cb-sched",
+      "title": "Instruction Scheduling",
+      "module_id": "select",
+      "description": "MEASURED-ON-BYTES. List scheduling in full -- while unscheduled nodes remain, take one with no unscheduled predecessor, and among those take the one the priority function prefers -- with three priorities and the kernel chosen ON PURPOSE: kernel_d, 16 instructions, critical path 8, ILP 2.00, and not kernel_a, because kernel_a is a dependency chain whose critical path EQUALS its length, so every schedule of it is the input order and a list scheduler measured on it has nothing to decide -- a scheduler given no choice prints three copies of the input and a reader who has not spotted it concludes that scheduling works. Four orders, all LEGAL, and the only thing separating three of them is a TIE-BREAK: `height` against `height_hi` is the same algorithm with a different undocumented tie-break, and a backend reporting 'my scheduler is better' without naming the tie-break has reported a different scheduler and not a better one. The first version of this scheduler computed the longest chain ENDING at each node and used it as the priority, so it preferred the nodes whose work arrived latest -- the exact opposite of what hides latency. It produced a schedule, it was legal, it was deterministic, and it was no better than the input order. Then the trap: a schedule that respects the dependencies it can see and not the ones it cannot. The kernel stores to [1024+8] and then loads from [1024+8], the SAME address, and the WITHOUT-memory-dependency `height` schedule returns 6601062688 where the correct answer is 6601140724. The two verdicts are printed together because they are both true and they say different things -- that exact schedule is CORRECT on a kernel with distinct addresses, and the only difference between the two kernels is whether the backend KNEW.",
+      "estimated_minutes": 26,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "cb-abi",
+      "title": "The Backend and the ABI",
+      "module_id": "abi",
+      "description": "The obligation is not the convention, and the order matters: a backend that emits a call must ALREADY know the argument registers, the return register, the callee-saved set and the stack alignment -- and it must know them BEFORE it has allocated a register to anything, because register allocation assigns NAMES to VALUES and the ABI assigns NAMES to ARGUMENTS. If the allocator runs first the ABI is consulted second, the allocator has already given `rbx` to a value, and the prologue now has to save it -- a prologue the backend did not plan for, and on x86-64 that means a stack frame where the function looked like it needed none. Three conventions QUOTED with a document and a section each, then MEASURED BY NAME and BY BITS: 6 of 6 argument registers read on all three targets, and the measurement by name is a LOWER BOUND rather than an upper one, because a destructive mnemonic can print an operand twice and a memory operand names a register that is not an argument. The second reader is where the section stops counting names and starts reading words -- 1 of 12 agree, and the eleven that disagree are printed rather than summarised, because a decoder printing `(undefined)` is claiming the architecture defines no meaning for a word the architecture defines precisely. The six-item list is a list rather than a paragraph because every item is a thing a reader can go and look for, and item 5 is the one that bites: on x86-64 `al` is an ARGUMENT REGISTER that becomes the VECTOR-COUNT register, so a varargs call cannot be encoded by the same prologue as an ordinary one.",
+      "estimated_minutes": 23,
+      "difficulty": "advanced",
+      "importance": "critical"
+    },
+    {
+      "id": "cb-verify",
+      "title": "Read a Backend's Decisions Back Out of the Bytes",
+      "module_id": "abi",
+      "description": "MEASURED. Given a compiled function with no symbol table and no debug information, recover four things -- and the fourth is the only one of the four that is an INFERENCE, and it is labelled as one, because the first three are COUNTS and a count can be checked and a reading cannot. Six target/level rows: x86-64 -O0 is 235 instructions, 11 headers, 141 memory operations and 5 distinct registers; aarch64 -O2 is 190, 11, 11 and 12; riscv64 -O2 is 207, 12, 6 and 8. The inference is on one function and the reasoning is printed with it: `leaf` is 9 instructions, 7 distinct registers, peaks at 3 registers live at instruction 3, and never touches the stack -- so it was allocated WITHOUT SPILLING, and a comparison with the -O0 build of the same source (23 instructions, 15 of them touching rsp or rbp) is what turns the reading into an inference. A PROLOGUE IS VISIBLE BECAUSE IT IS A FRAME, not because it saves registers: the compiler may save more than it modified, and what is recoverable from a disassembly alone is the frame and the memory traffic inside it. Then the boundary itself: 25 provenance rows with the COUNT printed (8 MEASURED, 9 MEASURED-ON-BYTES, 8 QUOTED), 15 numbered limits, 11 things a reader therefore CANNOT conclude beside 11 they can -- the second list being the longer one IS the finding -- and 18 retractions each with a SOURCE, none of which is a mistake about how a computer works. The two-reader check runs over the AArch64 leaf with a NORMALISER FIRE TABLE pre-seeded at zero, so a rule that never fires is a ROW WITH A ZERO rather than an absence, and two of the six rules are dead BY DESIGN and say so in the table itself. Four poisons, all FIRED: misroutes -1 and the checksum changed; edges -15 and the checksum went WRONG; dependency edges -1 and the schedule gave a DIFFERENT ANSWER; and 5 of 9 planted disagreements HIDDEN by a normaliser that deletes an operand, which is the class of bug that reads as success.",
+      "estimated_minutes": 22,
+      "difficulty": "advanced",
+      "importance": "critical"
+    }
+  ]
+}

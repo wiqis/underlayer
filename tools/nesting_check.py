@@ -207,6 +207,7 @@ if __name__ == '__main__':
              or sorted(glob.glob('content/src/*.ch')))
     allp = []
     excused = []
+    excused_files = 0
     stale = []
     for p in paths:
         probs = check(p)
@@ -218,6 +219,7 @@ if __name__ == '__main__':
         if p in KNOWN:
             if probs:
                 excused.extend(probs)
+                excused_files += 1
             else:
                 stale.append(p)
             print('%-38s known exception: %s' % (p.split('/')[-1], KNOWN[p]))
@@ -239,5 +241,13 @@ if __name__ == '__main__':
         for p in allp:
             print('  ' + p)
         sys.exit(1)
-    print('\nALL CLEAR: %d files, stack-checked, no unit div swallows a sibling'
-          % (len(paths) - len(excused and KNOWN or KNOWN)))
+    # The file count is the number ACTUALLY stack-checked.  This printed
+    # `len(paths) - len(KNOWN)` before, which subtracted the size of the whole
+    # allowlist rather than the number of files that matched an entry in it --
+    # so five clean files and four allowlist entries printed "1 files".  A
+    # summary that cannot say how much of the corpus it looked at is the same
+    # defect this tool exists to catch, one level up.
+    print('\nALL CLEAR: %d of %d files stack-checked, no unit div swallows a '
+          'sibling (%d allowlisted, %d reported clean)'
+          % (len(paths) - excused_files - len(stale), len(paths), excused_files,
+             len(paths) - excused_files - len(stale)))

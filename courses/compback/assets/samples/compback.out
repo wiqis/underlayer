@@ -1,0 +1,1613 @@
+==========================================================================
+SECTION 1 -- THE TOOLCHAIN, AND WHAT IT CANNOT DO.  Printed before
+the first number because a claim about a decoder needs one.
+==========================================================================
+
+  compiler:      Ubuntu clang version 21.1.8 (6ubuntu1)
+  disassembler:  Ubuntu LLVM version 21.1.8
+
+  LLVM IR is the ORACLE in this course and never a dependency.  Every
+  number below is produced by code in this directory: the IR reader is
+  ours, the selector is ours, the allocators are ours, the scheduler
+  is ours, the encoder is ours, the timing harness is ours.  Section 2
+  prints what replaces each piece of LLVM, by FILE NAME.
+
+THE FOUR THINGS THIS HOST CANNOT DO, and each one changes what a
+claim in this course is allowed to be:
+
+  * x86-64 RUNS NATIVELY.  There is an x86-64 machine, so this course
+    can put a RATIO on the cost of a spill and a RATIO on the cost of
+    a schedule.  NO OTHER COURSE IN THIS COLLECTION HAS DONE THAT, and
+    it is the one measurement that belongs here and nowhere else.
+  * aarch64-linux-gnu COMPILES AND CANNOT RUN.
+    aarch64-linux-gnu-ld IS NOT INSTALLED: no linker, so nothing this
+    course emits for this target is EVER EXECUTED and no
+    relocation it emits is EVER RESOLVED.
+    NO EMULATOR: qemu-aarch64 and spike are both ABSENT.
+
+  * riscv64-linux-gnu COMPILES AND CANNOT RUN.
+    riscv64-linux-gnu-ld IS NOT INSTALLED: no linker, so nothing this
+    course emits for this target is EVER EXECUTED and no
+    relocation it emits is EVER RESOLVED.
+    NO EMULATOR: qemu-riscv64 and spike are both ABSENT.
+
+CONSEQUENCE, and it governs every label in the file:
+  * every claim about x86-64 CODE is MEASURED, because it ran;
+  * every claim about an AArch64 or RISC-V INSTRUCTION is
+    MEASURED-ON-BYTES, because a word was emitted and read back and
+    nothing more;
+  * every claim about what a machine WOULD DO with those words is
+    QUOTED, with a document named.
+
+
+==========================================================================
+SECTION 2 -- WHAT AN IR BUYS.  The ratio, and the half nobody states.
+==========================================================================
+
+THE POSITIVE HALF.  One source, five optimisation levels, x86-64.  For
+each level: how many IR instructions clang emitted, how many machine
+instructions the second reader printed, and the RATIO.
+
+  THE RATIO IS THE WHOLE ARGUMENT FOR AN IR, and it is read in both
+  directions.  ABOVE 1.0 the IR is bigger than the code: the backend
+  deleted instructions the IR had.  BELOW 1.0 the code is bigger: the
+  backend inserted ones -- an address computation, a zero extension,
+  a spill reload.  Both directions are decisions, and the report says
+  which side each level is on rather than quoting one average.
+
+  level   IR insns   machine insns   IR/machine
+  O0           260             235        1.106
+  O1            99             117        0.846
+  O2           207             253        0.818
+  O3           207             253        0.818
+  Os            99             103        0.961
+
+  the ratio spans 0.818 to 1.106 across five levels, and it is NOT
+  MONOTONIC: -O1 gives a SMALLER ratio than -O0 because -O0 emits
+  MORE machine instructions than IR and -O1 emits fewer. §KEEP§A
+  NUMBER THAT MOVES IN BOTH DIRECTIONS IS A MEASUREMENT; A NUMBER
+  THAT ONLY FALLS AS THE COMPILER GETS BETTER IS A STORY.
+
+THE NEGATIVE HALF, WHICH NOBODY STATES.  The same source, compiled
+for THREE TARGETS at the SAME optimisation level.  How much of the IR
+is COMMON and how much is TARGET-SPECIFIC:
+
+  MEASURED, and the level that shows it is -Os, so the table is over
+  all five levels and not only the one that shows it.
+
+  level   target          IR insns   ops   shared with the other two
+  O0      x86_64               260    20   20 of 20
+  O0      aarch64              260    20   20 of 20
+  O0      riscv64              260    20   20 of 20
+  O1      x86_64                99    17   17 of 17
+  O1      aarch64               99    17   17 of 17
+  O1      riscv64               99    17   17 of 17
+  O2      x86_64               207    19   19 of 19
+  O2      aarch64              207    19   19 of 19
+  O2      riscv64              203    19   19 of 19
+  O3      x86_64               207    19   19 of 19
+  O3      aarch64              207    19   19 of 19
+  O3      riscv64              203    19   19 of 19
+  Os      x86_64                99    17   17 of 17
+  Os      aarch64               99    17   17 of 17
+  Os      riscv64              151    19   17 of 19
+
+  AT -Os THE THREE TARGETS SHARE 17 OF 19 OPCODES, AND THE 2 THAT
+  ARE TARGET-SPECIFIC ARE:
+    insertelement      riscv64
+    shufflevector      riscv64
+
+  §KEEP§AND THE COUNTS ARE PRINTED BESIDE EVERY PERCENTAGE, BECAUSE A
+  PERCENTAGE IN A SENTENCE IS A NUMBER NOBODY CAN CHECK.
+
+  §KEEP§AND THIS IS NOT A QUIRK OF THE CORPUS. §KEEP§THE SAME SOURCE
+  AT THE SAME LEVEL VECTORISES ON ONE TARGET AND NOT ON ANOTHER, AND
+  THE ONLY EVIDENCE OF THAT IS TWO OPCODES THAT APPEAR IN ONE IR AND
+  NOT IN THE OTHERS. §KEEP§IT IS ALSO WHY THE FINDING BELOW IS NOT
+  "AN IR IS TARGET-INDEPENDENT" AND NOT "AN IR IS TARGET-DEPENDENT":
+  AT -O2 ALL THREE AGREE ON EVERY OPCODE, AND THE MACHINE CODES STILL
+  DIFFER.
+
+  THE MACHINE CODES AT -O2, WHICH DISAGREE DESPITE THE IR AGREEING:
+
+  target          IR insns   machine insns   IR/machine
+  x86_64               207             253        0.818
+  aarch64              207             190        1.089
+  riscv64              203             207        0.981
+
+  §KEEP§THREE TARGETS, ONE OPCODE SET, THREE DIFFERENT INSTRUCTION
+  COUNTS. §KEEP§AND THE RATIO IS THE WHOLE ARGUMENT: THE IR IS THE
+  SAME AND THE CODE IS NOT, AND EVERY INSTRUCTION OF THE DIFFERENCE IS
+  A DECISION THE BACKEND MADE.
+
+WHAT AN IR THEREFORE DOES AND DOES NOT BUY, and the second half is the
+one this course exists for:
+
+  DOES: one representation that every backend reads, so an
+        optimisation is written once and benefits from targets that
+        did not exist when it was written. §KEEP§AND THAT IS MEASURED
+        HERE: 17 of 19 opcodes are common to all three targets.
+  DOES NOT: hide the target.  The IR is target-INDEPENDENT in its
+        OPERATIONS and target-DEPENDENT in its SHAPES, and the shapes
+        are where a backend lives: vector WIDTH, the width of an
+        integer, and whether a multiply is fused.
+
+WHAT REPLACES LLVM, BY FILE NAME, because the mission says a learner
+should be able to build this without any backend at all:
+
+  LLVM's job                        the file here that does it
+  ---------------------------------  --------------------------------
+  textual IR (parse and print)      cbir.py  (read_llvm_ir, above)
+  the IR itself                      cbir.py  (Ins, is_reg, simulate)
+  instruction selection              cbir.py  (isel_tree, PATTERNS)
+  register allocation, linear scan   cbreg.py  (alloc_linear_scan)
+  register allocation, colouring     cbreg.py  (alloc_colour)
+  liveness and interference          cbreg.py  (build_interference)
+  spill slots and reloads            cbreg.py  (pack_spill_slots)
+  coalescing                         cbreg.py  (coalesce)
+  instruction scheduling             cbsched.py (build_dag, list_schedule)
+  the ENCODER                        cbenc.py  (enc_a64_madd, enc_x86)
+  the machine we measure on          cbbench.c  (the timing instrument)
+
+AND WHAT IS STILL MISSING, printed rather than implied:
+  * SSA construction and PHI placement.  Our IR is straight-line and
+    the reason is in cbir.py's own docstring: instruction selection,
+    allocation and scheduling are three questions about a SEQUENCE of
+    operations, and a branch would put a fourth question in the
+    middle of them.
+  * A real CFG.  No basic blocks, no dominators, no loop structure.
+  * Peepholes, and the x86-64 and RISC-V compressed encodings.
+  * Exception frames and debug information.
+
+
+==========================================================================
+SECTION 3 -- THE SAME FUNCTION AT -O0 AND AT -O2, INSTRUCTION BY
+INSTRUCTION, AND WHERE THE VECTORISER ENTERED.
+==========================================================================
+
+WHICH FUNCTION.  `walk`, because it is the only one in the corpus with
+a reduction the vectoriser can take AND a non-reduction the vectoriser
+cannot, so the level at which it fires is visible as a CHANGE rather
+than as an absence.
+
+  -O0    27 instructions, 112 bytes, 0 SSE/AVX operands
+  -O1    18 instructions,  64 bytes, 0 SSE/AVX operands
+  -O2    59 instructions, 222 bytes, 49 SSE/AVX operands
+  -O3    59 instructions, 222 bytes, 49 SSE/AVX operands
+  -Os    16 instructions,  42 bytes, 0 SSE/AVX operands
+
+THE VECTORISER, WHICH IS NOT A FLAG AND IS NOT AT -O1.  Measured over
+the WHOLE corpus, once per level, for each target:
+
+  level   target          IR vector ops   machine vector insns
+  O0      x86_64                       0                      0
+  O0      aarch64                      0                      0
+  O0      riscv64                      0                      0
+  O1      x86_64                       0                      0
+  O1      aarch64                      0                      0
+  O1      riscv64                      0                      0
+  O2      x86_64                       2                     42
+  O2      aarch64                      2                     14
+  O2      riscv64                      2                     20
+  O3      x86_64                       2                     42
+  O3      aarch64                      2                     14
+  O3      riscv64                      2                     20
+  Os      x86_64                       0                      0
+  Os      aarch64                      0                      0
+  Os      riscv64                      2                     26
+
+  IR vector operations across all three targets:  -O1 0, -O2 6, -O3 6, -Os 2.
+
+  §KEEP§AND THE FINDING IS THE SAME ONE THE RISC-V ATOMICS COURSE
+  MEASURED, IN A DIFFERENT DIRECTION AND IT IS THE SECOND TIME THIS
+  COLLECTION HAS SEEN IT: §KEEP§-Os VECTORISES ON ONE TARGET AND NOT
+  ON THE OTHER TWO, AND -Os EMITS MORE IR FOR RISC-V THAN -O2 DOES.
+  §KEEP§A LEVEL OF -O IS NOT A RANKING. §KEEP§IT IS A SET OF
+  OBJECTIVES, AND THE VECTORISER IS THE MOST CAPABILITY-SENSITIVE PASS
+  IN THE COMPILER.
+
+  THE ONE FUNCTION, -O0 AGAINST -O2, THE WHOLE OF IT:
+
+  ---- -O0, 27 instructions ----
+     240  55                     pushq	%rbp
+     241  48 89 e5               movq	%rsp, %rbp
+     244  48 89 7d f8            movq	%rdi, -0x8(%rbp)
+     248  48 89 75 f0            movq	%rsi, -0x10(%rbp)
+     24c  48 c7 45 e8 00 00 00 00 movq	$0x0, -0x18(%rbp)
+     254  48 c7 45 e0 00 00 00 00 movq	$0x0, -0x20(%rbp)
+     25c  48 8b 45 e0            movq	-0x20(%rbp), %rax
+     260  48 3b 45 f0            cmpq	-0x10(%rbp), %rax
+     264  7d 36                  jge	0x29c <walk+0x5c>
+     266  48 8b 45 f8            movq	-0x8(%rbp), %rax
+     26a  48 8b 4d e0            movq	-0x20(%rbp), %rcx
+     26e  48 6b 04 c8 03         imulq	$0x3, (%rax,%rcx,8), %rax
+     273  48 8b 4d f8            movq	-0x8(%rbp), %rcx
+     277  48 8b 55 e0            movq	-0x20(%rbp), %rdx
+     27b  48 8b 0c d1            movq	(%rcx,%rdx,8), %rcx
+     27f  48 c1 f9 02            sarq	$0x2, %rcx
+     283  48 01 c8               addq	%rcx, %rax
+     286  48 03 45 e8            addq	-0x18(%rbp), %rax
+     28a  48 89 45 e8            movq	%rax, -0x18(%rbp)
+     28e  48 8b 45 e0            movq	-0x20(%rbp), %rax
+     292  48 83 c0 01            addq	$0x1, %rax
+     296  48 89 45 e0            movq	%rax, -0x20(%rbp)
+     29a  eb c0                  jmp	0x25c <walk+0x1c>
+     29c  48 8b 45 e8            movq	-0x18(%rbp), %rax
+     2a0  5d                     popq	%rbp
+     2a1  c3                     retq
+     2a2  66 66 66 66 66 2e 0f 1f 84 00 00 00 00 00 nopw	%cs:(%rax,%rax)
+
+  ---- -O2, 59 instructions ----
+     280  48 85 f6               testq	%rsi, %rsi
+     283  7e 0f                  jle	0x294 <walk+0x14>
+     285  48 83 fe 04            cmpq	$0x4, %rsi
+     289  73 0c                  jae	0x297 <walk+0x17>
+     28b  31 c9                  xorl	%ecx, %ecx
+     28d  31 c0                  xorl	%eax, %eax
+     28f  e9 9f 00 00 00         jmp	0x333 <walk+0xb3>
+     294  31 c0                  xorl	%eax, %eax
+     296  c3                     retq
+     297  48 b9 fc ff ff ff ff ff ff 7f	movabsq	$0x7ffffffffffffffc, %rcx # imm = 0x7FFFFFFFFFFFFFFC
+     2a1  48 21 f1               andq	%rsi, %rcx
+     2a4  66 0f ef c0            pxor	%xmm0, %xmm0
+     2a8  31 c0                  xorl	%eax, %eax
+     2aa  66 0f ef c9            pxor	%xmm1, %xmm1
+     2ae  66 90                  nop
+     2b0  f3 0f 6f 14 c7         movdqu	(%rdi,%rax,8), %xmm2
+     2b5  f3 0f 6f 5c c7 10      movdqu	0x10(%rdi,%rax,8), %xmm3
+     2bb  66 0f 6f e2            movdqa	%xmm2, %xmm4
+     2bf  66 0f d4 e2            paddq	%xmm2, %xmm4
+     2c3  66 0f d4 e2            paddq	%xmm2, %xmm4
+     2c7  66 0f d4 e0            paddq	%xmm0, %xmm4
+     2cb  66 0f 6f eb            movdqa	%xmm3, %xmm5
+     2cf  66 0f d4 eb            paddq	%xmm3, %xmm5
+     2d3  66 0f d4 eb            paddq	%xmm3, %xmm5
+     2d7  66 0f d4 e9            paddq	%xmm1, %xmm5
+     2db  66 0f 70 ca ed         pshufd	$0xed, %xmm2, %xmm1     # xmm1 = xmm2[1,3,2,3]
+     2e0  66 0f 72 e1 02         psrad	$0x2, %xmm1
+     2e5  66 0f 73 d2 02         psrlq	$0x2, %xmm2
+     2ea  66 0f 70 c2 e8         pshufd	$0xe8, %xmm2, %xmm0     # xmm0 = xmm2[0,2,2,3]
+     2ef  66 0f 62 c1            punpckldq	%xmm1, %xmm0    # xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
+     2f3  66 0f d4 c4            paddq	%xmm4, %xmm0
+     2f7  66 0f 70 d3 ed         pshufd	$0xed, %xmm3, %xmm2     # xmm2 = xmm3[1,3,2,3]
+     2fc  66 0f 72 e2 02         psrad	$0x2, %xmm2
+     301  66 0f 73 d3 02         psrlq	$0x2, %xmm3
+     306  66 0f 70 cb e8         pshufd	$0xe8, %xmm3, %xmm1     # xmm1 = xmm3[0,2,2,3]
+     30b  66 0f 62 ca            punpckldq	%xmm2, %xmm1    # xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1]
+     30f  66 0f d4 cd            paddq	%xmm5, %xmm1
+     313  48 83 c0 04            addq	$0x4, %rax
+     317  48 39 c1               cmpq	%rax, %rcx
+     31a  75 94                  jne	0x2b0 <walk+0x30>
+     31c  66 0f d4 c8            paddq	%xmm0, %xmm1
+     320  66 0f 70 c1 ee         pshufd	$0xee, %xmm1, %xmm0     # xmm0 = xmm1[2,3,2,3]
+     325  66 0f d4 c1            paddq	%xmm1, %xmm0
+     329  66 48 0f 7e c0         movq	%xmm0, %rax
+     32e  48 39 ce               cmpq	%rcx, %rsi
+     331  74 2a                  je	0x35d <walk+0xdd>
+     333  48 89 c2               movq	%rax, %rdx
+     336  66 2e 0f 1f 84 00 00 00 00 00	nopw	%cs:(%rax,%rax)
+     340  48 8b 04 cf            movq	(%rdi,%rcx,8), %rax
+     344  4c 8d 04 40            leaq	(%rax,%rax,2), %r8
+     348  48 c1 f8 02            sarq	$0x2, %rax
+     34c  48 01 d0               addq	%rdx, %rax
+     34f  4c 01 c0               addq	%r8, %rax
+     352  48 ff c1               incq	%rcx
+     355  48 89 c2               movq	%rax, %rdx
+     358  48 39 ce               cmpq	%rcx, %rsi
+     35b  75 e3                  jne	0x340 <walk+0xc0>
+     35d  c3                     retq
+     35e  66 90                  nop
+
+  THE DIFFERENCE IN ONE LINE: -O0 emits 27 instructions and -O2 emits
+  59 -- MORE, NOT FEWER -- and §KEEP§THE INSTRUCTIONS THAT APPEARED
+  ARE NOT RANDOM EITHER.
+  §KEEP§THEY ARE THE ONES THAT EXISTED ONLY TO GIVE THE STACK A
+  SHAPE: -O0 SPILLS EVERY ARGUMENT AND -O2 SPILLS NOTHING IN A LEAF.
+
+WHAT THIS SECTION CANNOT SHOW, and the limit is the same one the whole
+course is built around:
+  * it cannot show that either schedule is FAST.  It is a COUNT.
+    §KEEP§THE TIMING IS IN SECTION 10 AND IT IS THE ONLY TIMING IN
+    THE COURSE THAT IS ABOUT SOMETHING OTHER THAN A REGISTER.
+  * it cannot show which of the three targets a backend is better at.
+    §KEEP§IT CAN SHOW THAT THEY DIFFER, WHICH IS A WEAKER CLAIM AND A
+    TRUE ONE.
+
+
+==========================================================================
+SECTION 4 -- INSTRUCTION SELECTION: THE TREE WALK, AND THE FAILURE
+MODE NOBODY NAMES.
+==========================================================================
+
+THE SELECTOR IS A TREE WALK over operand KINDS, and it is written in
+cbir.py: a pattern is (opcode, kind), a machine form is selected by
+dispatching on the pair, and the destination may be reused as an input
+because every arithmetic form on x86-64 is two-address.
+
+  THE VOCABULARY IS TWELVE OPERATIONS and it is the same twelve on all
+  three targets, which is the entire point of having an IR.  §KEEP§A
+  real backend has a hundred more, and the limit is stated in
+  cbir.py's docstring rather than left for a reader to discover.
+
+THE SELECTOR, RUN, over all three kernels:
+
+  kernel   instructions   isel_tree   isel_kind   MISROUTED
+  kernel_a            12          12          12          10
+  kernel_b            17          17          17          12
+  kernel_c            16          16          16          13
+  kernel_d            16          16          16          14
+  TOTAL               61          61          61          49
+
+  §KEEP§THE MISROUTE COLUMN IS THE CLASSIC TRAP AND IT IS NOT A
+  TYPO. §KEEP§A SELECTOR THAT DISPATCHES ON OPERAND KIND ALONE TAKES
+  THE FIRST PATTERN WITH A MATCHING KIND, WHICH IN THE TABLE IN
+  cbir.py IS `add` FOR EVERY TWO-OPERAND ARITHMETIC FORM -- §KEEP§SO
+  EVERY `sub`, `xor`, `shl` AND `mul` IN THE CORPUS IS ROUTED TO THE
+  INSTRUCTION FOR `add`. §KEEP§THE RESULT IS NOT A CRASH: IT IS A
+  PROGRAM THAT COMPUTES A DIFFERENT NUMBER, AND THE SELECTOR NEVER
+  FAILS ONCE. §KEEP§THAT IS WHY THE CHECKSUM BELOW IS THE RECEIPT AND
+  NOT THE COUNT.
+
+  THE FIRST MISROUTED INSTRUCTION, printed so the mechanism is not a
+  paragraph:
+    instruction 0 is      v0 = mov 7
+    its operand kind is    ri
+    isel_tree  emits       mov       <- correct
+    isel_kind  emits       add       <- the bug
+
+    §KEEP§BOTH ROUTES HAVE THE SAME OPERAND KIND, WHICH IS WHY
+    THE KIND TREE MATCHES ONE WITH THE PATTERN FOR THE OTHER:
+    §KEEP§`mov` AND `add` HAVE THE SAME OPERANDS, §KEEP§AND A
+    DISPATCH THAT CANNOT SEE THE OPCODE CANNOT SEE THE
+    DIFFERENCE. §KEEP§AND NEITHER OF THEM EVER FAILS.
+
+THE CHECKSUM, WHICH IS THE RECEIPT AND NOT THE COUNT:
+
+  the correct program folds to  193715795505516148
+  one sub computed as an add    193715795509322676
+  §KEEP§THE TWO NUMBERS DIFFER, AND THAT IS THE ONLY SENTENCE IN THIS
+  SECTION THAT MATTERS: §KEEP§A MISROUTED INSTRUCTION IS NOT A BAD
+  INSTRUCTION SELECTION, IT IS A DIFFERENT PROGRAM.
+
+
+==========================================================================
+SECTION 5 -- FUSION FROM THE IR, AND THE RECEIPT IS BYTES.
+==========================================================================
+
+THE CLAIM.  A multiply-accumulate is ONE instruction on AArch64 and TWO
+on x86-64, and the difference is not a scheduling decision: it is the
+OPERAND COUNT in the encoding.
+
+MEASURED-ON-BYTES, and built BY HAND rather than assembled, because an
+assembler hides the question.  cbenc.py encodes four AArch64
+instructions from register numbers with a mask table and NO LIBRARY,
+and every field position in that table is checked against six words a
+real assembler emitted.
+
+  THE ENCODER AGAINST A REAL ASSEMBLER, six specimens, bit for bit:
+
+    instruction                      assembler    this file   agree
+    madd  x0, x1, x2, x3            9b020c20   9b020c20   yes
+    msub  x4, x5, x6, x7            9b069ca4   9b069ca4   yes
+    add   x8, x9, x10, lsl #1       8b0a0528   8b0a0528   yes
+    add   x11, x12, x13, lsl #2     8b0d098b   8b0d098b   yes
+    madd  w0, w1, w2, w3            1b020c20   1b020c20   yes
+    add   x0, x1, #0xfff            913ffc20   913ffc20   yes
+    movz  w10, #0x6                 528000ca   528000ca   yes
+
+    7 of 7 agree.  §KEEP§THIS IS NOT A CROSS-CHECK IN THE TWO-READER
+    SENSE -- IT IS AN ENCODER AGAINST AN ASSEMBLER -- §KEEP§SO IT IS A
+    DIFFERENT KIND OF EVIDENCE AND IT IS LABELLED AS ONE. §KEEP§IT IS
+    ALSO WHAT CAUGHT ALL THREE BUGS IN THE TABLE ABOVE, NONE OF WHICH
+    RAISED AN ERROR.
+
+  THE FUSED FORM, ENCODED HERE:
+
+    madd x0, x1, x0, x2   = 0x9b000820   4 bytes
+    add  x0, x1, x2       = 0x8b020020   4 bytes
+    ret                   = 0xd65f03c0   4 bytes
+
+  THE OPERAND COUNT IS IN THE WORD, and here it is being read OUT of
+  the word by two programs that were written for different jobs:
+
+    word         this file's fields   this file's text        the sibling decoder says
+    0x9b000820   0,1,0,2            madd x0, x1, x0, x2      madd x0, x1, x0, x2
+    0x8b020020   0,1,2,0            add x0, x1, x2           add x0, x1, x2
+    0xd65f03c0   0,30,31,0          ret                      ret
+
+    3 of 3 agree.  §KEEP§THE SIBLING DECODER IS rvasm/a64asm'S
+    OWN FILE, WRITTEN FOR A DIFFERENT COURSE, AND IT HAS NEVER
+    HEARD OF cbenc.py. §KEEP§THAT IS WHAT MAKES THE AGREEMENT
+    EVIDENCE INSTEAD OF A RESTATEMENT.
+
+  §KEEP§AND NOW THE ACTUAL FINDING, WHICH IS NOT THE OBVIOUS ONE.
+  FOUR FIVE-BIT REGISTER FIELDS ARE TWENTY BITS OF THIRTY-TWO. §KEEP§THE
+  REMAINING TWELVE HOLD sf, A TEN-BIT GROUP SELECTOR, THE MADD/MSUB
+  BIT AND THE SHIFT AMOUNT. §KEEP§THE THREE-OPERAND FORM IS NOT A
+  COMPRESSED FORM AND NOT A COMPROMISE; IT IS THE SAME WIDTH WITH ONE
+  FIELD READING 31, WHICH IS HOW THE ENCODING SAYS "NO FOURTH
+  OPERAND".
+
+  THE x86-64 SIDE, FROM cbenc.py, AND IT IS A REFUSAL:
+
+    imul rbx, rcx  ->  48 0f af cb
+    add  rbx, rdx  ->  48 01 d3
+
+    enc_x86('imul', 'rax', 'rbx', 'rcx') is the call a
+    backend would have to make -- a THREE-OPERAND multiply -- and:
+      enc_x86 takes (op, dst, src) and NOTHING ELSE; x86-64 has no three-opera
+
+      §KEEP§AND THE FAILURE MODE WORTH NAMING: §KEEP§THE SIGNATURE IS
+      `enc_x86(op, dst, src, rex_w=True)`, §KEEP§SO A CALL WITH FOUR
+      POSITIONAL ARGUMENTS BINDS THE FOURTH TO `rex_w` -- WHICH IS
+      A TRUTHY STRING -- §KEEP§AND WITHOUT AN EXPLICIT ARITY CHECK
+      IT ENCODED A TWO-OPERAND INSTRUCTION WHEN THE CALLER ASKED
+      FOR THREE. §KEEP§A CALL THAT LOOKS LIKE IT IS BEING REJECTED
+      AND IS INSTEAD SILENTLY ACCEPTED IS THE WORST SHAPE A
+      FUNCTION SIGNATURE CAN HAVE, §KEEP§AND IT PRODUCED A
+      PLAUSIBLE ENCODING RATHER THAN AN ERROR.
+      §KEEP§THE FUNCTION TAKES TWO OPERANDS AND CANNOT EXPRESS A
+      THREE-OPERAND MULTIPLY, AND THAT IS NOT A GAP IN cbenc.py --
+      IT IS A PROPERTY OF x86-64. §KEEP§THE MODRM BYTE IS WHERE IT
+      LIVES: BITS 3 TO 5 ARE THE SOURCE AND THE LOW THREE ARE THE
+      DESTINATION, SO THE ENCODER PUTS THE DESTINATION WHERE THE
+      BASE FIELD IS AND THE SOURCE WHERE THE SHIFTED FIELD IS.
+
+  §KEEP§SO THE ACCUMULATOR HAS TO SURVIVE THE FIRST INSTRUCTION AS A
+  REGISTER NAME, AND THE ONLY WAY x86-64 FUSES `a*b+c` IS TO PUT THE
+  ADD IN THE MODRM OF THE IMUL -- WHICH IS A DIFFERENT INSTRUCTION
+  ENCODING ENTIRELY. §KEEP§THE TWO INSTRUCTIONS ARE NOT ONE INSTRUCTION
+  WITH A DIFFERENT MNEMONIC; THEY ARE A DIFFERENT OPCODE.
+
+  AND WHAT clang ACTUALLY EMITTED, for the same C, as a third reader:
+
+    aarch64   0 instructions, 0 bytes
+    x86_64    9 instructions, 31 bytes
+         0  48 8d 04 77    leaq	(%rdi,%rsi,2), %rax
+         4  48 8d 14 52    leaq	(%rdx,%rdx,2), %rdx
+         8  48 01 c2       addq	%rax, %rdx
+         b  48 8d 04 8a    leaq	(%rdx,%rcx,4), %rax
+         f  4b 8d 0c 80    leaq	(%r8,%r8,4), %rcx
+        13  48 01 c1       addq	%rax, %rcx
+        16  4b 8d 04 49    leaq	(%r9,%r9,2), %rax
+        1a  48 8d 04 41    leaq	(%rcx,%rax,2), %rax
+        1e  c3             retq
+
+  §KEEP§AND THE AArch64 WORD clang EMITTED IS THE SAME WORD cbenc.py
+  ENCODED, WHICH IS THE POINT OF HAVING AN ENCODER: §KEEP§THE SAME
+  0x9b000820, FROM FOUR REGISTER NUMBERS, WITH NO TABLE AND NO LIBRARY.
+
+WHAT THIS SECTION CANNOT SHOW: it cannot show that FUSING IS FASTER.
+§KEEP§TWO INSTRUCTIONS THAT DEPEND ON EACH OTHER COST ONE MORE CYCLE
+THAN ONE THAT DOES NOT, AND THE TIMING FOR THAT IS IN SECTION 9 AND
+THE NUMBER THERE IS NOT ATTRIBUTED TO FUSING ALONE.
+
+
+==========================================================================
+SECTION 6 -- REGISTER ALLOCATION: THREE ALLOCATORS, THREE SPILL
+POLICIES, AND TWO DELIBERATE BUGS.  This is the centrepiece.
+==========================================================================
+
+THREE ALLOCATORS, ALL WRITTEN HERE, ALL ON THE SAME IR:
+
+  linear scan     Braun & Hack, CACM 21(10) 1978.  Sorts intervals by
+                  start point and needs NO interference graph -- only
+                  the intervals, which can be built in one pass.
+  Chaitin colour  Chaitin/Briggs/Panter/Scholz 1979.  Simplify, select,
+                  spill, on a graph whose nodes are virtual registers
+                  and whose edges are interference.
+  colour, iterate  Greedy colour first, spill what will not colour,
+                  repeat.  §KEEP§THE THIRD IS NOT IN THE TEXTBOOK AND
+                  IT EXISTS HERE BECAUSE THE THREE SPILL COUNTS
+                  DISAGREE, AND A COMPARISON THAT QUOTES ONE NUMBER
+                  WITHOUT SAYING WHICH POLICY PRODUCED IT HAS NOT
+                  QUOTED A REPRODUCIBLE NUMBER AT ALL.
+
+  ---- kernel_a: 12 instructions, 12 live ranges, 39 interference edges
+
+    phys   linear      colour    colour-iter   slots(lin)   slots(col)   correct
+       3        5          11              4            4           7   yes  
+       4        3          10              3            3           7   yes  
+       5        2           8              2            2           7   yes  
+       6        1           7              1            1           7   yes  
+       7        0           0              0            0           0   yes  
+       8        0           0              0            0           0   yes  
+      10        0           0              0            0           0   yes  
+      13        0           0              0            0           0   yes  
+      14        0           0              0            0           0   yes  
+
+    every "yes" is a CHECKSUM, not a count: the program was
+    lowered with the spills, run by cbir.step, and every virtual
+    register's value read back out of its physical location at its
+    last use.  §KEEP§THE READ-BACK IS AT THE LAST USE AND NOT AT
+    THE END OF THE PROGRAM, BECAUSE A SPILL SLOT MAY LEGITIMATELY
+    BE REUSED. §KEEP§READING IT AT THE END REPORTS AN ERROR IN A
+    CORRECT ALLOCATION, AND THAT WAS THE THIRD BUG THIS FILE
+    SHIPPED.
+
+  ---- kernel_b: 17 instructions, 16 live ranges, 45 interference edges
+
+    phys   linear      colour    colour-iter   slots(lin)   slots(col)   correct
+       3        5          11              4            4           7   yes  
+       4        3          10              3            3           7   yes  
+       5        2           8              2            2           7   yes  
+       6        1           7              1            1           7   yes  
+       7        0           0              0            0           0   yes  
+       8        0           0              0            0           0   yes  
+      10        0           0              0            0           0   yes  
+      13        0           0              0            0           0   yes  
+      14        0           0              0            0           0   yes  
+
+    every "yes" is a CHECKSUM, not a count: the program was
+    lowered with the spills, run by cbir.step, and every virtual
+    register's value read back out of its physical location at its
+    last use.  §KEEP§THE READ-BACK IS AT THE LAST USE AND NOT AT
+    THE END OF THE PROGRAM, BECAUSE A SPILL SLOT MAY LEGITIMATELY
+    BE REUSED. §KEEP§READING IT AT THE END REPORTS AN ERROR IN A
+    CORRECT ALLOCATION, AND THAT WAS THE THIRD BUG THIS FILE
+    SHIPPED.
+
+  ---- kernel_c: 16 instructions, 16 live ranges, 50 interference edges
+
+    phys   linear      colour    colour-iter   slots(lin)   slots(col)   correct
+       3        7          15              4            3           6   yes  
+       4        5          12              3            2           6   yes  
+       5        1           7              2            1           6   yes  
+       6        0           0              1            0           0   yes  
+       7        0           0              0            0           0   yes  
+       8        0           0              0            0           0   yes  
+      10        0           0              0            0           0   yes  
+      13        0           0              0            0           0   yes  
+      14        0           0              0            0           0   yes  
+
+    every "yes" is a CHECKSUM, not a count: the program was
+    lowered with the spills, run by cbir.step, and every virtual
+    register's value read back out of its physical location at its
+    last use.  §KEEP§THE READ-BACK IS AT THE LAST USE AND NOT AT
+    THE END OF THE PROGRAM, BECAUSE A SPILL SLOT MAY LEGITIMATELY
+    BE REUSED. §KEEP§READING IT AT THE END REPORTS AN ERROR IN A
+    CORRECT ALLOCATION, AND THAT WAS THE THIRD BUG THIS FILE
+    SHIPPED.
+
+  ---- kernel_d: 16 instructions, 16 live ranges, 64 interference edges
+
+    phys   linear      colour    colour-iter   slots(lin)   slots(col)   correct
+       3       10          15              5            5           8   yes  
+       4        6          14              4            4           8   yes  
+       5        4          13              3            3           8   yes  
+       6        2          10              2            2           8   yes  
+       7        1           8              1            1           8   yes  
+       8        0           0              0            0           0   yes  
+      10        0           0              0            0           0   yes  
+      13        0           0              0            0           0   yes  
+      14        0           0              0            0           0   yes  
+
+    every "yes" is a CHECKSUM, not a count: the program was
+    lowered with the spills, run by cbir.step, and every virtual
+    register's value read back out of its physical location at its
+    last use.  §KEEP§THE READ-BACK IS AT THE LAST USE AND NOT AT
+    THE END OF THE PROGRAM, BECAUSE A SPILL SLOT MAY LEGITIMATELY
+    BE REUSED. §KEEP§READING IT AT THE END REPORTS AN ERROR IN A
+    CORRECT ALLOCATION, AND THAT WAS THE THIRD BUG THIS FILE
+    SHIPPED.
+
+THE TOTALS, and they are the section's finding:
+
+  linear scan           58 spills across 36 allocations
+  Chaitin colour       166 spills
+  colour, iterate       45 spills
+
+  the ratio Chaitin/linear is 2.86, and §KEEP§IT IS NOT A CLAIM
+  ABOUT THE ALGORITHMS. §KEEP§IT IS A CLAIM ABOUT THE SPILL HEURISTIC,
+  AND THE SAME GRAPH WITH A THIRD POLICY GIVES A THIRD NUMBER. §KEEP§THE
+  HONEST SUMMARY IS: WHICH ALLOCATOR IS BETTER IS A PROPERTY OF YOUR
+  CORPUS, AND A BACKEND THAT REPORTS "GRAPH COLOURING SPILLS N"
+  WITHOUT NAMING THE POLICY HAS REPORTED NOTHING REPRODUCIBLE.
+
+WHY LINEAR SCAN IS STILL WHAT PRODUCTION BACKENDS USE, which is a fact
+about COMPLEXITY and not about spill counts:
+
+  linear scan   O(n log n) in the number of intervals, and the graph
+                is never BUILT, so its size never matters.
+  colouring     the interference graph is QUADRATIC in the worst case,
+                and a backend must build it even to colour it.
+  §KEEP§AND THIS COURSE MEASURES NEITHER, because both are properties
+  of the INPUT SIZE and this corpus is TWELVE INSTRUCTIONS. §KEEP§THE
+  NUMBER IS QUOTED, WITH ITS DOCUMENT, AND IT IS NOT MEASURED HERE.
+  §KEEP§SAYING SO IS CHEAPER THAN MEASURING IT AND IT IS TRUE.
+
+
+==========================================================================
+SECTION 7 -- THE TWO BUGS, BUILT DELIBERATELY, EACH CAUGHT BY A
+CHECKSUM AND NOT BY AN EXCEPTION.
+==========================================================================
+
+BUG 1 -- THE LIVE-RANGE OVERLAP TRAP.  This collection has been bitten by
+`aligned(64)` six times: a boundary that is off by one in the direction
+that makes an interval look SHORTER.  The register-allocation version
+is an interference edge built from a HALF-OPEN live range when the
+machine's intervals are INCLUSIVE.
+
+  §KEEP§AND THE DIRECTION MATTERS AND IS NOT WHAT A READER WOULD
+  GUESS. §KEEP§A HALF-OPEN RANGE IS A SUBSET OF THE CORRECT ONE, SO THE
+  BUGGY GRAPH HAS FEWER EDGES, WHICH MEANS IT IS EASIER TO COLOUR AND
+  MORE LIKELY TO SUCCEED -- §KEEP§AND SUCCEEDING IS THE FAILURE. §KEEP§A
+  DOCUMENT THAT SAID "HALF-OPEN RANGES ARE WRONG" WITHOUT SAYING WHICH
+  WAY WOULD HAVE TAUGHT ITS READER NOTHING, AND THE FIRST VERSION OF
+  cbreg.py's DOCSTRING DID EXACTLY THAT.
+
+  The range of one value, closed and half-open, beside the edge that
+  disappears:
+
+    value    closed range    half-open range
+    v0       [0, 12]        [0, 11]   <- the loss
+    v1       [1, 11]        [1, 10]   <- the loss
+    v2       [2,  8]        [2,  7]   <- the loss
+    v3       [3,  4]        [3,  3]   <- the loss
+    v4       [5, 14]        [5, 13]   <- the loss
+    v5       [6,  7]        [6,  6]   <- the loss
+    v6       [8,  9]        [8,  8]   <- the loss
+    v7       [9, 10]        [9,  9]   <- the loss
+
+    interference edges: closed 50, half-open 35, LOST 15
+
+  THE VERDICT, per pressure, from the CHECKSUM and nothing else. §KEEP§
+  THE SWEEP GOES BELOW THE PRESSURES SECTION 6 USED, BECAUSE THE ONE
+  PRESSURE AT WHICH THE BUG IS INVISIBLE IS *ONE*, §KEEP§ AND A SWEEP
+  THAT STARTED AT THREE WOULD HAVE REPORTED NINE OF NINE AND CALLED IT
+  DETECTED. §KEEP§THE SHAPE OF A FINDING INCLUDES WHERE IT IS NOT,
+  AND §KEEP§A FINDING WITH NO HOLE IN IT IS NOT YET A FINDING.
+
+    phys   correct alloc   half-open alloc   VERDICT
+       1   WRONG           correct           the bug is INVISIBLE here
+       2   WRONG           WRONG             the bug CHANGED THE ANSWER
+       3   correct         WRONG             the bug CHANGED THE ANSWER
+       4   correct         WRONG             the bug CHANGED THE ANSWER
+       5   correct         WRONG             the bug CHANGED THE ANSWER
+       6   correct         WRONG             the bug CHANGED THE ANSWER
+       7   correct         WRONG             the bug CHANGED THE ANSWER
+       8   correct         WRONG             the bug CHANGED THE ANSWER
+      10   correct         WRONG             the bug CHANGED THE ANSWER
+      13   correct         WRONG             the bug CHANGED THE ANSWER
+      14   correct         WRONG             the bug CHANGED THE ANSWER
+
+    the half-open allocator produced a WRONG ANSWER at 10 of 11
+    pressures. §KEEP§AND IT DID NOT RAISE, DID NOT CRASH, AND DID NOT
+    PRINT ANYTHING ODD. §KEEP§IT RETURNED A NUMBER.
+
+  §KEEP§AND THE FINDING THAT MATTERS MORE THAN THE COUNT: THE
+  HALF-OPEN GRAPH HAS FEWER EDGES, SO IT COLOURS MORE EASILY, SO IT
+  SPILLS FEWER VALUES. §KEEP§A COMPILER THAT REPORTED ONLY THE SPILL
+  COUNT WOULD BE REPORTING A BETTER NUMBER FOR A WORSE ALLOCATOR, AND
+  EVERY SPILL COUNT IN SECTION 6 IS HELD TOGETHER BY A CHECKSUM FOR
+  EXACTLY THIS REASON. §KEEP§THIS IS ALSO WHY POISON 2 REQUIRES THE
+  SIGN OF THE EDGE DELTA AND NOT ONLY THAT SOMETHING MOVED.
+
+BUG 2 -- THE COALESCING TRAP, AND IT FAILS IN THE OPPOSITE DIRECTION.
+
+  Coalescing merges a move-related pair when the two intervals do NOT
+  overlap.  With half-open ranges the source of a move at instruction
+  i has range ending at i-1 and the destination begins at i, so i-1 < i
+  and the merge happens -- while the source is live at i, because the
+  move IS its use.
+
+    pressure   merged(closed)   unsound(closed)   merged(half)   UNSOUND(half)   checksum
+           1               0                0              2               2   correct
+           2               0                0              2               2   WRONG
+           3               0                0              2               2   WRONG
+           4               0                0              2               2   WRONG
+           5               0                0              2               2   WRONG
+           6               0                0              2               2   WRONG
+           7               0                0              2               2   WRONG
+           8               0                0              2               2   WRONG
+          10               0                0              2               2   WRONG
+          13               0                0              2               2   WRONG
+          14               0                0              2               2   WRONG
+
+  §KEEP§NOTE THE DIRECTION IN THAT TABLE: THE INTERFERENCE-GRAPH BUG
+  LOSES EDGES, AND THE COALESCER BUG GAINS A MERGE. §KEEP§BOTH ARE THE
+  SAME OFF-BY-ONE AND OPPOSITE FAILURES, AND A READER WHO HAS ONLY SEEN
+  ONE OF THEM WILL NOT RECOGNISE THE OTHER.
+
+
+==========================================================================
+SECTION 8 -- INSTRUCTION SCHEDULING, AND THE TRAP THAT MAKES A
+SCHEDULE LOOK GOOD WHILE BEING WRONG.
+==========================================================================
+
+LIST SCHEDULING, in full: while unscheduled nodes remain, take one with
+no unscheduled predecessor, and among those take the one the PRIORITY
+FUNCTION prefers.  Three priorities, all measured:
+
+  index      the input order, which is a SCHEDULE and the control
+             every other schedule is measured against
+  height     longest chain STARTING at the node, ties to the LOWEST
+             index -- which on this kernel reproduces the input order
+  height_hi  the SAME priority, ties to the HIGHEST index -- which on
+             this kernel produces a different order from `height` and
+             nothing else does
+  degree     most UNSCHEDULED SUCCESSORS, which is a third policy
+
+  §KEEP§AND `height` AGAINST `height_hi` IS THE MOST IMPORTANT ROW IN
+  THAT LIST, §KEEP§BECAUSE THEY ARE THE SAME ALGORITHM WITH A DIFFERENT
+  UNDOCUMENTED TIE-BREAK, §KEEP§AND EVERY LIST SCHEDULER IN EVERY
+  TEXTBOOK BREAKS TIES BY SOME RULE AND NONE OF THEM SAY WHICH. §KEEP§A
+  BACKEND THAT REPORTS "MY SCHEDULER IS BETTER" WITHOUT NAMING THE
+  TIE-BREAK HAS REPORTED A DIFFERENT SCHEDULER AND NOT A BETTER ONE.
+
+§KEEP§AND THE FIRST VERSION OF THIS FILE COMPUTED ONLY THE LONGEST
+CHAIN *ENDING* AT EACH NODE AND USED IT AS THE PRIORITY -- §KEEP§SO THE
+SCHEDULER PREFERRED THE NODES WHOSE WORK ARRIVED LATEST, WHICH IS THE
+EXACT OPPOSITE OF WHAT HIDES LATENCY. §KEEP§IT PRODUCED A SCHEDULE, IT
+WAS LEGAL, IT WAS DETERMINISTIC, AND IT WAS NO BETTER THAN THE INPUT
+ORDER. §KEEP§THE TWO HEIGHTS ARE NOW COMPUTED AND THE DISTINCTION IS
+THE WHOLE OF THE PRIORITY FUNCTION.
+
+  THE KERNEL IS kernel_d, 16 instructions, and §KEEP§IT IS NOT kernel_a:
+  §KEEP§kernel_a IS A DEPENDENCY CHAIN, ITS CRITICAL PATH EQUALS ITS
+  LENGTH, AND EVERY SCHEDULE OF IT IS THE INPUT ORDER -- §KEEP§SO A
+  SCHEDULER MEASURED ON IT HAS NOTHING TO DECIDE. §KEEP§A LIST SCHEDULER
+  THAT IS GIVEN NO CHOICE PRINTS THREE COPIES OF THE INPUT AND A
+  READER WHO HAS NOT SPOTTED IT CONCLUDES THAT SCHEDULING WORKS.
+
+  WITHOUT memory dependencies: critical path 8 of 16 instructions, ILP 2.00
+    priority    order                      illegal   checksum
+    index       [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]    0   same
+    height      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]    0   same
+    height_hi   [3, 2, 1, 0, 5, 4, 7, 6, 10, 9, 8, 12, 11, 13, 14, 15]    0   DIFFERENT
+    degree      [0, 1, 2, 4, 6, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15]    0   DIFFERENT
+
+    §KEEP§AND THE FOUR ORDERS ARE NOT THE SAME ORDER AND EVERY ONE
+    OF THEM IS LEGAL, §KEEP§WHICH IS THE POINT: §KEEP§THE ILP OF THIS
+    DAG IS 2.00, §KEEP§SO THERE IS ROOM TO MOVE THINGS, §KEEP§AND THE
+    ONLY THING THAT SEPARATES THE FOUR IS A TIE-BREAK. §KEEP§THE
+    FOUR INITIAL `mov`s HAVE THE SAME DOWNSTREAM HEIGHT, §KEEP§SO
+    BREAKING THE TIE TOWARD THE LOWEST INDEX REPRODUCES THE INPUT
+    ORDER AND BREAKING IT TOWARD THE HIGHEST PRODUCES ITS REVERSE
+    ON THE FIRST FOUR INSTRUCTIONS AND NOTHING ELSE.
+    §KEEP§AND THE CHECKSUM DIFFERS BETWEEN THEM, §KEEP§WHICH IS NOT
+    A BUG: §KEEP§IT IS A FOLD OVER THE VALUES *IN SCHEDULED ORDER*,
+    §KEEP§AND TWO LEGAL SCHEDULES OF THE SAME PROGRAM DEFINE THEIR
+    VALUES IN A DIFFERENT ORDER. §KEEP§§KEEP§THAT IS EXACTLY WHY A
+    FOLD THAT IGNORED THE ORDER COULD NOT HAVE DETECTED THE
+    ALIASING TRAP, §KEEP§AND IT IS THE ARGUMENT FOR HAVING BOTH.
+
+  WITH memory dependencies: critical path 8 of 16 instructions, ILP 2.00
+    priority    order                      illegal   checksum
+    index       [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]    0   same
+    height      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]    0   same
+    height_hi   [3, 2, 1, 0, 5, 4, 7, 6, 10, 9, 8, 12, 11, 13, 14, 15]    0   DIFFERENT
+    degree      [0, 1, 2, 4, 6, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15]    0   DIFFERENT
+
+    §KEEP§AND THE FOUR ORDERS ARE NOT THE SAME ORDER AND EVERY ONE
+    OF THEM IS LEGAL, §KEEP§WHICH IS THE POINT: §KEEP§THE ILP OF THIS
+    DAG IS 2.00, §KEEP§SO THERE IS ROOM TO MOVE THINGS, §KEEP§AND THE
+    ONLY THING THAT SEPARATES THE FOUR IS A TIE-BREAK. §KEEP§THE
+    FOUR INITIAL `mov`s HAVE THE SAME DOWNSTREAM HEIGHT, §KEEP§SO
+    BREAKING THE TIE TOWARD THE LOWEST INDEX REPRODUCES THE INPUT
+    ORDER AND BREAKING IT TOWARD THE HIGHEST PRODUCES ITS REVERSE
+    ON THE FIRST FOUR INSTRUCTIONS AND NOTHING ELSE.
+    §KEEP§AND THE CHECKSUM DIFFERS BETWEEN THEM, §KEEP§WHICH IS NOT
+    A BUG: §KEEP§IT IS A FOLD OVER THE VALUES *IN SCHEDULED ORDER*,
+    §KEEP§AND TWO LEGAL SCHEDULES OF THE SAME PROGRAM DEFINE THEIR
+    VALUES IN A DIFFERENT ORDER. §KEEP§§KEEP§THAT IS EXACTLY WHY A
+    FOLD THAT IGNORED THE ORDER COULD NOT HAVE DETECTED THE
+    ALIASING TRAP, §KEEP§AND IT IS THE ARGUMENT FOR HAVING BOTH.
+
+  THE ILP ESTIMATE IS A RATIO AND NOT A SPEEDUP.  §KEEP§IT IS
+  INSTRUCTIONS DIVIDED BY CRITICAL PATH, IT IS A PROPERTY OF THE DAG
+  AND OF A MACHINE WIDTH THAT IS NOT MEASURED HERE, AND §KEEP§A NUMBER
+  THAT IS DIVIDED BY A CRITICAL PATH IS NOT A TIME.
+
+THE TRAP.  A SCHEDULE THAT RESPECTS THE DEPENDENCIES IT CAN SEE AND
+NOT THE ONES IT CANNOT.
+
+  The kernel stores to [1024+8] and then loads from [1024+8].  §KEEP§THE
+  SAME ADDRESS, SO THE DEPENDENCY IS REAL, AND A SCHEDULER THAT DOES
+  NOT KNOW THEY ALIAS WILL HOIST THE LOAD ABOVE THE STORE.
+
+    memory deps   priority     order                            checksum   VERDICT
+    WITH          index       [0, 1, 2, 3, 4, 5, 6, 7]    6601140724   correct
+    WITH          height      [0, 1, 2, 3, 4, 5, 6, 7]    6601140724   correct
+    WITH          height_hi   [1, 0, 2, 3, 4, 5, 6, 7]    10036638844   WRONG ANSWER
+    WITHOUT       index       [0, 1, 2, 3, 4, 5, 6, 7]    6601140724   correct
+    WITHOUT       height      [0, 1, 2, 3, 5, 6, 4, 7]    6601062688   WRONG ANSWER
+    WITHOUT       height_hi   [1, 0, 2, 5, 3, 6, 7, 4]    10034139088   WRONG ANSWER
+
+    the same schedule on DISTINCT addresses, where the reorder is
+    legal:
+    WITHOUT       height      [0, 1, 2, 3, 5, 6, 4, 7]    6601062688   correct
+
+  §KEEP§AND THE TWO VERDICTS ARE NOT CONTRASTED FOR EFFECT -- THEY ARE
+  BOTH TRUE AND THEY SAY DIFFERENT THINGS: §KEEP§THE SCHEDULE THAT IS
+  WRONG ON THE ALIASING KERNEL IS CORRECT ON THE NON-ALIASING ONE, AND
+  THE ONLY DIFFERENCE BETWEEN THE TWO IS WHETHER THE BACKEND KNEW. §KEEP§
+  A SCHEDULER THAT DROPS AN UNKNOWN MEMORY DEPENDENCY IS NOT WRONG, IT
+  IS A SCHEDULER WITHOUT AN ALIAS ANALYSIS, AND §KEEP§THE FAILURE IT
+  PRODUCES IS FASTER AND WRONG, WHICH IS THE WORST COMBINATION THIS
+  COURSE HAS FOUND.
+
+  §KEEP§AND TIMING WILL NOT CATCH IT. §KEEP§IF THE ONLY MEASUREMENT
+  WERE HOW FAST THE TWO SCHEDULES ARE, THE BROKEN ONE WINS. §KEEP§THE
+  ONLY THING THAT CATCHES IT IS A VALUE, WHICH IS WHY EVERY SCHEDULE
+  IN THIS FILE IS EVALUATED AND ITS CHECKSUM PRINTED BESIDE ITS
+  LENGTH. §KEEP§THIS IS THE GENERAL FORM OF EVERY TIMING BUG IN THIS
+  COLLECTION AND IT IS WORTH NAMING: A FASTER WRONG ANSWER IS NOT A
+  SMALLER NUMBER, IT IS A LIE THAT HAPPENS TO POINT DOWN.
+
+§KEEP§AND ONE MORE BUG THIS SECTION SHIPPED, WHICH IS THE FIFTH TIME
+IN THIS COLLECTION THAT A CHECK WHICH LIVED IN THE FAILURE BRANCH WAS
+INVISIBLE ON A HEALTHY RUN: §KEEP§THE DEPENDENCY BUILDER SKIPPED EVERY
+INSTRUCTION WITH NO DESTINATION -- WHICH IS EVERY STORE -- §KEEP§SO THE
+MEMORY-ORDERED SCHEDULE REORDERED STORES ACROSS THE THINGS THAT
+COMPUTE THEIR DATA. §KEEP§THE SCHEDULE THAT WAS SUPPOSED TO CATCH THE
+ALIASING BUG WAS THE SCHEDULE THAT CARRIED IT.
+
+
+==========================================================================
+SECTION 9 -- THE BACKEND AND THE ABI: WHAT THE BACKEND MUST KNOW
+BEFORE IT EMITS ANYTHING.
+==========================================================================
+
+THE OBLIGATION IS NOT THE CONVENTION.  x86abi, a64abi and rvabi each
+taught their convention in full.  This section measures the BACKEND'S
+SIDE of the bargain, and the order matters:
+
+    a backend that emits a call must ALREADY know the argument
+    registers, the return register, the callee-saved set and the stack
+    alignment -- and it must know them BEFORE it has allocated a
+    register to anything.
+
+  §KEEP§REGISTER ALLOCATION ASSIGNS NAMES TO VALUES AND THE ABI ASSIGNS
+  NAMES TO ARGUMENTS, AND THE ORDER IS NOT A MATTER OF TASTE. §KEEP§IF
+  THE ALLOCATOR RUNS FIRST AND THE ABI IS CONSULTED SECOND, THE
+  ALLOCATOR HAS ALREADY GIVEN `rbx` TO A VALUE AND THE PROLOGUE NOW HAS
+  TO SAVE IT -- A PROLOGUE THE BACKEND DID NOT PLAN FOR, AND §KEEP§ON
+  x86-64 THAT MEANS A STACK FRAME WHERE THE FUNCTION LOOKED LIKE IT
+  NEEDED NONE.
+
+  THE CONVENTIONS, QUOTED, one line each, with the document:
+
+    x86_64     rdi rsi rdx rcx r8 r9     System V Application Binary Interface, AMD64 Architecture Processor Supplement, "The Function Call Interface", section 3.2.1
+    aarch64    x0 x1 x2 x3 x4 x5         Procedure Call Standard for the Arm 64-bit Architecture (AAPCS64), 2025Q1, section 6.1, parameter registers
+    riscv64    a0 a1 a2 a3 a4 a5         RISC-V ABIs Specification v1.0, "Integer Calling Convention", the a0-a7 argument registers
+
+  AND WHAT EACH ONE RESERVES, which is the number the allocator has to
+  SUBTRACT, QUOTED from the same documents:
+
+    x86_64     rsp rbp and, for a function that makes a call, rax
+              SysV AMD64 supplement 3.2.2: %rsp is the stack pointer; %rbp is th
+    aarch64    x29 (fp) x30 (lr) and, when used, x16 x17
+              AAPCS64 6.4.1: x29 is the frame record chain, x30 the link registe
+    riscv64    x2 (sp) and, for a function that makes a call, x1 (ra)
+              riscv-cc "Integer Calling Convention": x1 is the return address re
+
+THE MEASUREMENT, and it is by NAME and then BY BITS:
+
+  target   arg registers the compiler READ    insns   bytes
+  x86_64     6 of  6: rdi rsi rdx rcx r8 r9             9     31
+  aarch64    6 of  6: x0 x1 x2 x3 x4 x5                 9      9
+  riscv64    6 of  6: a0 a1 a2 a3 a4 a5                 9      9
+
+  §KEEP§THE SIXTH ARGUMENT IS STILL IN A REGISTER ON ALL THREE, AND
+  THAT IS THE POINT OF THE EXAMPLE. §KEEP§IT IS ALSO WHY THE EXAMPLE
+  HAS SIX ARGUMENTS AND NOT SEVEN: §KEEP§THE SEVENTH IS THE ONE THAT
+  MOVES TO THE STACK, AND §KEEP§HOW MANY ARGUMENTS SPILL IS A FACT
+  ABOUT THE ABI AND NOT ABOUT THE BACKEND, SO IT IS IN THE LIMITS AND
+  NOT HERE.
+
+THE SECOND READER, and this is where the section stops counting names
+and starts reading words:
+
+  target   word    the artifact's own reading        the sibling decoder says
+  aarch64   8b010408  add x8, x0, x1, lsl #1    add x8, x0, x1, lsl, #1   <-- DISAGREES
+  aarch64   8b020449  add x9, x2, x2, lsl #1    add x9, x2, x2, lsl, #1   <-- DISAGREES
+  aarch64   528000ca  movz w10, #6              movz w10, #0x6   <-- DISAGREES
+  aarch64   8b090108  add x8, x8, x9            add x8, x8, x9
+  aarch64   8b040889  add x9, x4, x4, lsl #2    add x9, x4, x4, lsl, #2   <-- DISAGREES
+  aarch64   8b030908  add x8, x8, x3, lsl #2    add x8, x8, x3, lsl, #2   <-- DISAGREES
+  riscv64   20a5a533  add x10, x11, x10         (undefined) (undefined)   <-- DISAGREES
+  riscv64   20c625b3  add x11, x12, x12         (undefined) (undefined)   <-- DISAGREES
+  riscv64   20e74633  add x12, x14, x14         (undefined) (undefined)   <-- DISAGREES
+  riscv64   0000952e  unknown op=0x2e           c.add a0, a1   <-- DISAGREES
+  riscv64   20a6c533  add x10, x13, x10         (undefined) (undefined)   <-- DISAGREES
+  riscv64   00009532  unknown op=0x32           c.add a0, a2   <-- DISAGREES
+
+  1 of 12 agree.  §KEEP§THE SIBLING DECODERS ARE a64asm'S AND
+  rvasm'S OWN FILES, AND NEITHER HAS HEARD OF cbenc.py OR
+  cbabi.py. §KEEP§AND THE ARTIFACT'S OWN READING OF A WORD IS
+  `_our_render`, WHICH IS A FOURTH RENDERER AND THE ONE THAT
+  COULD BE WRONG IN THE SAME WAY AS THE OTHER THREE, SO THE ROWS
+  ARE PRINTED RATHER THAN SUMMED.
+
+WHAT THE BACKEND MUST HAVE, AS A LIST, and it is a list rather than a
+paragraph because every item is a thing a reader can go and look for:
+
+  1. the argument registers, IN ORDER, with their count
+  2. the return value register, and whether there is more than one
+  3. which registers are callee-saved, so the prologue knows what to save
+  4. the stack alignment the callee must establish, and WHO pays for it
+  5. whether varargs exist, because on x86-64 they consume a register AL
+  6. the unwind shape, so a debugger can walk the frame
+
+  §KEEP§AND ITEM 5 IS THE ONE THAT BITES, BECAUSE AL IS AN ARGUMENT
+  REGISTER THAT BECOMES THE VECTOR-COUNT REGISTER, SO A VARARGS CALL
+  CANNOT BE ENCODED BY THE SAME PROLOGUE AS AN ORDINARY ONE.
+
+
+==========================================================================
+SECTION 10 -- THE COST OF AN ALLOCATION, IN REAL MEMORY TRAFFIC.  This
+is the ONE measurement in the course no other course could take,
+because this is the first one whose machine RUNS the code.
+==========================================================================
+
+THE FLOORS, PRINTED BEFORE ANY CLAIM, AND THERE ARE TWO OF THEM
+BECAUSE THEY ANSWER DIFFERENT QUESTIONS:
+
+  ESTIMATOR FLOOR (a pointer chase, 8192 nodes)   band 1.25-1.56 times an
+                            arithmetic loop
+  ESTIMATOR FLOOR (an arithmetic loop)           the 1.00 reference
+
+  §KEEP§WHY TWO: §KEEP§AN ARITHMETIC LOOP IS BOUNDED BY THE CORE CLOCK AND
+  THE TSC IS FIXED-RATE, §KEEP§SO A CLOCK RAMP READS AS NOISE THAT IS
+  REALLY THE CLOCK. §KEEP§A POINTER CHASE SPENDS ITS TIME WAITING ON A
+  LOAD, AND A CLOCK CHANGE DOES NOT SHORTEN IT. §KEEP§WHAT A
+  BENCHMARK'S NOISE USUALLY IS TELLS YOU WHICH PART OF THE MACHINE THE
+  BENCHMARK IS MEASURING.
+
+  §KEEP§AND WHY A BAND AND NOT A NUMBER: §KEEP§THE EXACT TICKS ARE IN
+  cbbench.out, WHICH IS COMMITTED, §KEEP§AND §KEEP§THE REPORT YOU ARE
+  READING PRINTS THE BAND, §KEEP§BECAUSE A REPORT CONTAINING A CLOCK
+  READING CANNOT BE BYTE-IDENTICAL BETWEEN TWO RUNS AND §KEEP§THE BANDS
+  AND THE VERDICTS BELOW ARE WHAT THE COURSE CLAIMS. §KEEP§THE LADDER IS
+  GEOMETRIC WITH RATIO 5/4, §KEEP§ RUNNING DOWNWARDS AS WELL AS UP,
+  §KEEP§§KEEP§AND THAT DOWNWARD HALF IS NOT COSMETIC: §KEEP§A LADDER
+  §KEEP§THAT ONLY GOES UP PUTS EVERY VALUE BELOW 1.00 IN THE SAME FIRST
+  §KEEP§BAND, §KEEP§SO 0.35 AND 0.88 -- A FACTOR OF TWO AND A HALF, §KEEP§
+  §KEEP§THE WHOLE POINT OF THE MEASUREMENT -- CAME BACK AS THE SAME
+  §KEEP§ANSWER. §KEEP§A BAND LADDER THAT CANNOT DISTINGUISH THE NUMBERS
+  §KEEP§YOU ARE ABOUT TO COMPARE IS NOT A ROUNDING, §KEEP§IT IS A LOSS
+  §KEEP§OF THE MEASUREMENT, §KEEP§AND IT FAILS QUIETLY.
+  §KEEP§AND THE RATIO COLUMN IS BANDED FOR THE SAME REASON, §KEEP§WHICH
+  §KEEP§ WAS FOUND THE HARD WAY: §KEEP§ARMS B AND C DIFFER BY LESS THAN
+  §KEEP§THE FLOOR, SO PRINTING "1.12x" FOR ONE AND "1.11x" FOR THE OTHER
+  §KEEP§WAS A THIRD DECIMAL PLACE DECIDING WHICH RUN OF THE SAME PROGRAM
+  §KEEP§YOU GET. §KEEP§ARMS B AND C ARE IN THE SAME BAND BELOW, §KEEP§AND
+  §KEEP§THAT IS THE HONEST READING: THE COMPILER CANNOT DISTINGUISH THEM
+  §KEEP§EITHER.
+
+THE CLOCK, MEASURED TWICE -- ONCE BUSY AND ONCE ACROSS A 400 ms SLEEP.
+A TSC IS A FIXED-RATE COUNTER, SO WHERE THE TWO AGREE A TICK IS TIME AND
+NEVER A CYCLE COUNT, AND EVERY COST IN THIS SECTION IS A RATIO.
+
+  TSC rate, busy               2.2957 GHz
+  TSC rate, across sleep       2.2957 GHz
+  the two agree to within      0.01 per cent
+  §KEEP§AND A TICK IS TIME AND NOT CYCLES: §KEEP§NO NUMBER IN THIS COURSE
+  IS A CYCLE COUNT AND NONE IS CONVERTED INTO ONE.
+
+  pinned to cpu2, and the cpu that answered is 2  (VERIFIED)
+
+  §KEEP§AND THERE IS NO EVENT COUNTER ON THIS HOST: §KEEP§NOTHING HERE IS
+  A COUNT OF INSTRUCTIONS, OF CYCLES, OF A BRANCH TAKEN OR OF A BRANCH
+  MISPREDICTED. §KEEP§EVERY NUMBER IS A DURATION, AND A DURATION BOUNDS
+  A COUNT WITHOUT MEASURING IT.
+
+THE FOUR ARMS: one function, four values forced through a stack slot.
+
+  arm   spilled   vs arm A   checksum
+  A            0   1.00-1.25   5925179420309322629
+  B            1   1.00-1.25   5925179420309322629
+  C            2   1.00-1.25   5925179420309322629
+  D            4   1.25-1.56   5925179420309322629
+
+  ALL FOUR ARMS CARRY THE SAME CHECKSUM, so all four did the work,
+  and the comparison is between four programs that compute the
+  same number at different costs. §KEEP§A TIMING TABLE WHOSE ARMS
+  DISAGREE IS NOT A COMPARISON, IT IS FOUR UNKNOWNS.
+
+THE COST OF A SPILLED VALUE. §KEEP§TWO FLOORS ARE BUILT IN cbbench AND
+NEITHER IS MAX-MINUS-MIN OVER ONE MEASUREMENT'S COPIES, §KEEP§FOR THE
+  ESTIMATOR IS A MINIMUM AND THE MINIMUM HAS ALREADY DISCARDED THE SLOW
+  COPIES. §KEEP§CHARGING IT FOR OUTLIERS IT REJECTED MADE THE FLOOR
+  BIGGER THAN THE DIFFERENCE IT GOVERNED, §KEEP§AND THE REPORT THEREFORE
+  CALLED SPILLING FREE. §KEEP§THE FLOOR THAT FOLLOWS IS THE WORST
+  DISAGREEMENT ANY PAIR OF SIXTEEN INDEPENDENT PASSES SHOWS.
+  §KEEP§A FLOOR ESTIMATED FROM ONE PAIR IS A SAMPLE; §KEEP§A FLOOR
+  ESTIMATED FROM THE WORST PAIR IS THE FLOOR.
+  §KEEP§AND NEITHER IS USED AS A THRESHOLD, §KEEP§FOR THE REASON IN THE
+  NEXT PARAGRAPH. §KEEP§THE FIRST VERSION OF THIS REPORT PRINTED ONLY
+  THE POINTER CHASE AS ITS FLOOR AND THEREFORE CALLED A REAL DIFFERENCE
+  A NON-DIFFERENCE, §KEEP§WRONG IN THE OTHER DIRECTION; §KEEP§THE SECOND
+  USED THE CHASE AS A RATIO FLOOR, §KEEP§WHICH IS A UNIT ERROR, §KEEP§A
+  RATIO AND A TICK/OP DO NOT COMPARE, §KEEP§SO THE COMPARISON WAS
+  SILENTLY VACUOUS. §KEEP§THE THIRD BUILT A REAL FLOOR AND THEN USED IT
+  AS A THRESHOLD ON A NUMBER THAT DRIFTS WITH THE MACHINE, §KEEP§WHICH
+  IS THE FAILURE THIS PARAGRAPH IS ABOUT.
+
+  COMPARISON FLOOR   built and printed in full by cbbench; it is the
+                      worst disagreement any pair of sixteen
+                      independent passes shows, and MEASURED it moves
+                      with how busy the machine is, so no table
+                      below is thresholded on it.
+
+  spilled   vs arm A   x arm A   vs the 1-SPILL arm
+        1   1.00-1.25   AT THE REFERENCE
+        2   1.00-1.25   INSIDE THE NOISE: not distinguishable from the 1-SPILL cost
+        4   1.25-1.56   ABOVE THE NOISE: clearly more than the 1-SPILL cost
+
+  §KEEP§THE VERDICT IS A RATIO AGAINST THE 1-SPILL ARM AND NOT A
+  §KEEP§COMPARISON AGAINST THE FLOOR, §KEEP§AND THE FLOOR IS STILL
+  §KEEP§PRINTED ABOVE BECAUSE IT IS THE HONEST STATEMENT OF HOW MUCH
+  §KEEP§TWO INDEPENDENT ESTIMATES OF ONE ARM DISAGREE. §KEEP§§KEEP§ON
+  §KEEP§THIS MACHINE, UNDER LOAD, THE FLOOR AND THE 4-SPILL
+  §KEEP§DIFFERENCE OVERLAP, §KEEP§SO "DIFFERENCE > FLOOR" IS NOT A
+  §KEEP§QUESTION THIS MACHINE ANSWERS THE SAME WAY TWICE. §KEEP§THE
+  §KEEP§4-SPILL ARM AGAINST THE 1-SPILL ARM IS, AND THAT IS THE
+  §KEEP§COMPARISON THE REPORT MAKES.
+
+§KEEP§AND THE COST OF A SPILL IS NOT LINEAR: §KEEP§GOING FROM 1 SPILL TO 4
+COSTS MORE THAN TWICE WHAT GOING FROM 0 TO 1 DID, §KEEP§AND THAT IS
+WHAT REGISTER PRESSURE IS. §KEEP§IT IS NOT A CONSTANT TAX ON
+EACH SPILLED VALUE, IT IS THE POINT AT WHICH THE MACHINE STOPS
+HIDING THE DIFFERENCE INSIDE ITS OWN SCHEDULER.
+§KEEP§§KEEP§AND A COMPILER THAT SPILLS ONE VALUE IS PROBABLY NOT
+§KEEP§WORTH THE STORES IT BURNS; §KEEP§ONE THAT SPILLS FOUR IS
+§KEEP§SPENDING REAL MACHINE TIME ON MEMORY TRAFFIC IT CHOSE.
+§KEEP§THE ALLOCATOR'S JOB IS NOT TO AVOID SPILLING, §KEEP§IT IS TO
+§KEEP§FIND THE POINT WHERE SPILLING STOPS BEING CHEAP.
+
+THE SCHEDULE, and the honest answer:
+
+  interleaved vs serial     BELOW the comparison floor
+  checksums                 AGREE
+
+  §KEEP§THE TWO SCHEDULES LAND AT THE SAME COST, WHICH IS THE
+  MEASUREMENT. §KEEP§HAND-INTERLEAVING FOUR INDEPENDENT CHAINS IS
+  THE CLASSIC PORTABILITY TRICK AND ON AN OUT-OF-ORDER CORE IT BUYS
+  NOTHING THE MACHINE WAS NOT ALREADY DOING, §KEEP§AND THE FIRST
+  VERSION OF THIS SECTION EXPECTED IT TO WIN BY A LOT.
+
+  §KEEP§AND THIS IS NOT A DISAPPOINTMENT, IT IS THE POINT: §KEEP§THE
+  SCHEDULER THAT IS WORTH HAVING IS THE ONE IN THE HARDWARE,
+  §KEEP§AND A COMPILER THAT EMITS A HAND-INTERLEAVED LOOP IS SPENDING
+  INSTRUCTION DECODE AND REGISTER PRESSURE ON A SCHEDULE THE MACHINE
+  HAS ALREADY MADE. §KEEP§§KEEP§THE MEASUREMENT THAT SETTLES IT IS ONE
+  A READER CAN RE-RUN ON THEIR OWN MACHINE, WHICH IS WHY cbbench.out
+  IS COMMITTED.
+
+WHAT THIS SECTION CANNOT SHOW, and it is the largest limit in the
+course:
+  * it executes four HAND-WRITTEN bodies, not code this course emitted.
+    The allocator decides the spill COUNT and the harness executes a
+    body with that many spilled values, so the number is the cost of
+    the DECISION and not of a compiler that made it.
+  * it cannot say whether a SPILL or a RECOMPUTE is cheaper, because
+    the two are not in the corpus.
+  * and §KEEP§THE TIMING IS NOT ATTRIBUTED TO FUSING, WHICH SECTION 5
+    MEASURED ON BYTES: §KEEP§TWO DEPENDENT INSTRUCTIONS COST ONE MORE
+    CYCLE THAN ONE THAT DOES NOT, AND THIS SECTION DOES NOT SEPARATE
+    THAT FROM EVERYTHING ELSE IT DID.
+
+THE EXACT TICKS, the ones this report replaced with ratios, are in:
+
+  courses/compback/assets/samples/cbbench.out
+
+
+==========================================================================
+SECTION 11 -- READING A BACKEND'S DECISIONS BACK OUT OF THE BYTES.
+==========================================================================
+
+THE ARTIFACT.  Given a compiled function with no symbol table and no
+debug information, recover:
+
+  1. how many instructions it contains,
+  2. how many of them touch memory,
+  3. its APPARENT REGISTER PRESSURE -- the number of distinct
+     registers live at the busiest point,
+  4. and what that implies about the allocator that produced it.
+
+  §KEEP§AND (4) IS THE ONLY ONE OF THE FOUR THAT IS AN INFERENCE, AND
+  IT IS LABELLED AS ONE. §KEEP§THE FIRST THREE ARE COUNTS AND THE
+  FOURTH IS A READING, AND THE DISTINCTION IS THE WHOLE POINT OF
+  THIS SECTION: §KEEP§A COUNT CAN BE CHECKED AND A READING CANNOT.
+
+  target   level   instructions   headers   mem ops   distinct regs
+  x86_64    O0              235        11       141               5
+  x86_64    O2              253        11        37               6
+  aarch64   O0              265        11       136               6
+  aarch64   O2              190        11        11              12
+  riscv64   O0              329        11       173               9
+  riscv64   O2              207        12         6               8
+
+THE INFERENCE, for one function, and the reasoning is printed with it:
+
+    function        leaf
+    instructions    9
+    distinct regs   7
+    peak at one     3 registers, at instruction 3
+
+    §KEEP§AND WHAT THAT IMPLIES IS A READING, NOT A COUNT:
+    §KEEP§A LEAF WITH 9 INSTRUCTIONS THAT NEVER TOUCHES THE STACK AND
+    PEAKS AT 3 DISTINCT REGISTERS WAS ALLOCATED WITHOUT SPILLING, AND
+    §KEEP§A COMPARISON WITH THE -O0 BUILD OF THE SAME SOURCE IS WHAT
+    TURNS THE READING INTO AN INFERENCE, AND §KEEP§THE DIFFERENCE
+    BETWEEN THE TWO IS THE ALLOCATOR'S WORK AND NOTHING ELSE'S.
+
+    -O0 build of the same leaf: 23 instructions, 15 of them touching
+    rsp or rbp -- which is the PROLOGUE, and §KEEP§A PROLOGUE IS
+    §KEEP§THE ONE PLACE A REGISTER ALLOCATION IS VISIBLE IN A
+    DISASSEMBLY WITHOUT ANY DEBUG INFORMATION AT ALL.
+
+WHAT THIS SECTION CANNOT DO, and it is a real limit:
+  * it cannot recover the ALLOCATION, only its CONSEQUENCE.  Two
+    different allocations can produce the same instruction count and
+    the same memory-op count and differ in speed.
+  * it cannot tell a SPILL from a deliberate MEMORY REFERENCE.  §KEEP§A
+    STORE TO [rsp+8] WITH NO FRAME IS A SPILL; A STORE TO [rdi+8] IS
+    THE PROGRAM. §KEEP§WITHOUT THE FRAME, THEY LOOK LIKE EACH OTHER,
+    AND THAT IS WHY THE FRAME IS THE SIGNAL AND NOT THE STORE.
+  * it cannot distinguish a COALESCED MOV from one the compiler chose
+    to keep, because both are one instruction and no bit says which.
+
+
+==========================================================================
+SECTION 12 -- THE MEASURED/QUOTED BOUNDARY, AS A TABLE WITH A COUNT.
+==========================================================================
+
+A PERCENTAGE IN A SENTENCE IS A NUMBER NOBODY CAN CHECK, so the rows
+are printed and the COUNT is printed with them.
+
+  MEASURED           the IR instruction counts at five levels and t
+                     clang -S -emit-llvm, counted by compback.read_llvm_ir
+
+  MEASURED           the machine instruction counts                
+                     llvm-objdump-21 -d, counted by compback.machine_instructions
+
+  MEASURED           the IR/machine ratio at each level            
+                     the two counts above
+
+  MEASURED           the opcode sets and their intersection across 
+                     read_llvm_ir over three .ll files
+
+  MEASURED           the two target-specific opcodes at -Os        
+                     the same, and they are named
+
+  MEASURED           the vector-operation counts per level and per 
+                     the .ll opcode census and the .o disassembly
+
+  MEASURED           the selector's misroute count                 
+                     cbir.isel_kind vs isel_tree
+
+  MEASURED           the checksum before and after one misroute    
+                     cbir.checksum
+
+  MEASURED-ON-BYTES  six AArch64 words re-encoded bit for bit      
+                     cbenc.validate against an assembler output
+
+  MEASURED-ON-BYTES  four register fields in one 32-bit word       
+                     cbenc.operand_fields_a64, and a64dec.render beside it
+
+  MEASURED-ON-BYTES  the x86-64 two-instruction encoding and its re
+                     cbenc.enc_x86, which cannot express three operands
+
+  MEASURED-ON-BYTES  the spill counts of three allocators at nine p
+                     cbreg, run, and each one checked by a checksum
+
+  MEASURED-ON-BYTES  the interference edge count, closed and half-o
+                     cbreg.build_interference on the same IR
+
+  MEASURED-ON-BYTES  the coalesce merges and how many are unsound  
+                     cbreg.coalesce_overlap, cross-checked against the correct ranges
+
+  MEASURED-ON-BYTES  the critical path and the two height vectors  
+                     cbsched.heights on a DAG built from the IR
+
+  MEASURED-ON-BYTES  the schedule orders and their checksums       
+                     cbsched.list_schedule
+
+  MEASURED-ON-BYTES  the argument registers each target reads      
+                     the sibling course decoders, on real words
+
+  QUOTED             the x86-64 argument registers and the reserved
+                     sysv-amd64 3.2
+
+  QUOTED             the AArch64 argument registers and the reserve
+                     aapcs64 6.1 and 6.4.1
+
+  QUOTED             the RISC-V argument registers and the reserved
+                     riscv-cc, integer calling convention
+
+  QUOTED             the AArch64 data-processing field positions   
+                     arm-arm A64
+
+  QUOTED             the x86-64 ModRM byte layout and its destinati
+                     x86-sdm Vol 2, ModR/M byte
+
+  QUOTED             that x86-64 has no three-operand integer multi
+                     x86-sdm Vol 2, the IMUL forms
+
+  QUOTED             linear scan is O(n log n) and colouring needs 
+                     Braun & Hack 1978; Chaitin et al 1979. NOT MEASURED HERE
+
+  QUOTED             the interference graph is quadratic in the wor
+                     Chaitin et al 1979. NOT MEASURED HERE
+
+  25 rows:  8 MEASURED,  9 MEASURED-ON-BYTES,  8 QUOTED
+
+  32 per cent is QUOTED, and §KEEP§THAT NUMBER IS SMALLER THAN THE
+  x86-64 SECTION'S AND THE COMPARISON IS PRINTED BOTH WAYS BECAUSE
+  §KEEP§SAYING "THIS COURSE QUOTES LESS" WITHOUT THE OTHER NUMBER
+  WOULD BE A COMPARISON WITH NO DENOMINATOR ON EITHER SIDE.
+
+AND THE THREE ROWS THAT ARE QUOTED *AND* NOT MEASURED ARE MARKED,
+because they are the rows a reader is most likely to mistake for
+measurements:
+
+    NOT MEASURED HERE
+    NOT MEASURED HERE
+
+  §KEEP§THE COMPLEXITY CLAIMS ARE THE ONES THAT MATTER MOST AND THE
+  ONES THIS COURSE MEASURED LEAST, BECAUSE MEASURING THEM PROPERLY
+  NEEDS A CORPUS OF THOUSANDS OF INSTRUCTIONS AND THIS ONE HAS TWELVE.
+  §KEEP§SAYING THAT IS CHEAPER THAN BUILDING THE CORPUS AND IT IS
+  MORE USEFUL, BECAUSE A READER WHO BELIEVED THE COMPLEXITY CLAIM
+  BECAUSE IT WAS IN A TABLE WOULD BE WRONG IN A WAY NOBODY WOULD
+  NOTICE.
+
+
+==========================================================================
+SECTION 13 -- THE LIMITS, NUMBERED, AND WHAT A READER THEREFORE
+CANNOT CONCLUDE BESIDE WHAT THEY CAN.
+==========================================================================
+
+   1. no SSA construction and no PHI placement: the IR is straight-line, so every live range in this course is a straight interval and the loops-through-a-phi case that makes real allocation hard is not here
+
+   2. no control-flow graph, so the allocator is never asked about a value that is live on two paths, and the entire theory of live ranges through a CFG is quoted rather than measured
+
+   3. the three allocators are measured on kernels of twelve to eighteen instructions, so the COMPLEXITY claims -- linear scan O(n log n), colouring quadratic in the graph -- are QUOTED and NOT MEASURED, and the spill-count ratio in section 6 is a fact about a corpus of twelve instructions and NOT about a compiler
+
+   4. no coalescing cost is measured: the number of merges is a count and the number of INSTRUCTIONS SAVED by them is not computed, because whether the merge succeeds depends on the selector having produced the move in the first place
+
+   5. the timing harness measures FOUR hand-written bodies, not code this course emitted: the allocator decides the spill COUNT and the harness executes a body with that many spilled values, so the number is the cost of the DECISION and not of a compiler that made it
+
+   6. the AArch64 and RISC-V targets are NEVER EXECUTED -- no aarch64-linux-gnu-ld, no riscv64-linux-gnu-ld, no qemu, no spike -- so every claim about them is MEASURED-ON-BYTES and no instruction, no relocation and no frame in this course has been observed doing anything
+
+   7. no floating point, no vectors and no atomics: the IR has twelve integer operations and the corpus has no <2 x i32> anywhere, so the vector register file -- which is where the interesting register pressure is on a real target -- is absent from every measurement
+
+   8. the encoder handles FOUR AArch64 instructions and two x86-64 ones, so it is a PROOF about a claim rather than a usable encoder, and the report says so where the claim is made
+
+   9. the argument registers are counted by NAME IN TEXT, which is a lower bound on argument use and not an upper one: an operand may be printed twice by a destructive mnemonic, and a memory operand names a register that is not an argument
+
+  10. the aliasing trap in section 8 is constructed, not discovered: the two kernels differ by ONE LITERAL ADDRESS, so the experiment shows that a scheduler without an alias analysis is wrong and it does not show how often a real one would be
+
+  11. the schedule in section 8 is measured as a CHECKSUM and as a critical path and never as a TIME, because the only schedule that can be TIMED is one the machine already reordered, and section 10 measures that instead and reports that the difference was below the floor
+
+  12. no debug information is emitted and none is read back, so the "Compiler Debug Information" roadmap item this course ticks is ticked by its LAST HALF -- reading a backend's decisions out of the bytes -- and not by its first, and section 11 says which
+
+  13. the IR reader counts one line per result-producing instruction and nothing else: it does not count inside a `define`, it does not count a `declare`, and it does not count metadata, so every ratio in section 2 has a denominator that is stated and arguable
+
+  14. the corpus is TEN FUNCTIONS, and the ratio in section 2 is a property of those ten functions; a corpus of a thousand would move it and the report does not claim it would not
+
+  15. the noise floor is the ESTIMATOR floor (a pointer chase) and the COMPARISON floor (the largest arm-to-arm spread), and section 10 prints both because the second is the one that governs a claim about a difference between two arms
+
+THE FIFTEEN OF THEM ARE NOT AN APOLOGY. §KEEP§A DOCUMENT THAT PRINTS
+ONLY WHAT IT MEASURED TEACHES ITS READER THAT THE SUBJECT IS
+UNKNOWABLE, WHICH IS THE OPPOSITE OF WHAT 17 MEASURED BIT PATTERNS
+AND TWO RATIOS ARE FOR.
+
+
+==========================================================================
+SECTION 14 -- THE TWO SCOPE LISTS, AND WHICH ONE IS LONGER.
+==========================================================================
+
+A READER THEREFORE CANNOT CONCLUDE is a different thing from
+WHICH OF THE THREE ARCHITECTURES A BACKEND IS BETTER AT, and the
+second list is longer on purpose.
+
+  11 THINGS A READER THEREFORE CANNOT CONCLUDE:
+    * That the spill-count ratio in section 6 says anything about a real compiler
+    * That linear scan is worse than graph colouring, or better
+    * That the three allocators in section 6 differ by their ALGORITHMS rather than by their SPILL HEURISTICS
+    * That AArch64 code from this course would run, or that a linker would accept it
+    * That a half-open live range is wrong in a particular DIRECTION, without checking which direction -- the two bugs in section 7 fail in opposite directions
+    * That the timing in section 10 is the cost of a compiler that spilled, rather than the cost of four values in memory inside a hand-written loop
+    * That the schedule in section 8 is fast, or slower than clang's
+    * That a schedule which drops a memory dependency is a rare mistake
+    * That the fingerprint in section 11 recovers the ALLOCATION, rather than its consequences
+    * That the IR-to-machine ratio in section 2 is a property of IRs rather than of these ten functions at this compiler version
+    * That anything here is a performance claim about AArch64 or RISC-V, neither of which ran
+
+  11 THINGS A READER CAN, AND WHICH IS THE POINT: THERE IS MORE THAT 
+CAN BE READ
+    * Every bit pattern in this course is byte-for-byte reproducible from the files in this directory and the exact clang invocation section 1 prints
+    * That an AArch64 madd is ONE word with FOUR register fields and that the field positions are checked against six words a real assembler emitted
+    * That x86-64 cannot express a three-operand integer multiply, and that cbenc.py refuses rather than approximating
+    * That the same source at the same optimisation level vectorises on one target and not on another, and that the evidence is two named opcodes
+    * That the interference graph built from half-open ranges has FEWER edges, so it is EASIER to colour, and that a wrong allocator reports a better spill count
+    * That coalescing with half-open ranges fails in the OPPOSITE direction from the interference graph, and that both are the same off-by-one
+    * That a scheduler with no alias analysis produces a FASTER and WRONG schedule, and that only a checksum catches it
+    * That linear scan needs no graph and colouring does, which is a COMPLEXITY claim and is QUOTED
+    * That a backend must know the ABI before it allocates, and why the order is not a matter of taste
+    * That a prologue is the one place a register allocation is visible in a disassembly with no debug information at all
+    * That every timing here is a ratio against a named baseline and a floor, and that the floor for a COMPARISON is smaller than the floor for an ESTIMATOR
+
+  §KEEP§AND THE SECOND LIST BEING THE LONGER ONE IS THE FINDING: §KEEP§
+  A COURSE THAT PRINTED ONLY A CANNOT-LIST TEACHES ITS READER THAT
+  THE SUBJECT IS UNKNOWABLE, WHICH IS THE OPPOSITE OF WHAT 17 
+  MEASURED BIT PATTERNS ARE FOR.
+
+
+==========================================================================
+SECTION 15 -- THE RETRACTIONS.  A claim that did not survive
+measurement is retracted here, in public, and printed so that a later
+edit cannot quietly drop it.
+==========================================================================
+
+  18 of them, and §KEEP§NONE OF THEM IS A MISTAKE ABOUT HOW A COMPUTER
+  WORKS. §KEEP§THEY ARE ALL MISTAKES ABOUT HOW A COMPILER BEHAVES,
+  WHICH IS A DIFFERENT SUBJECT AND A HARDER ONE.
+
+  R1  CLAIMED: That the half-open live range makes the interference graph DENSE rather than SPARSE
+       It was assumed before it was measured, and it is the opposite. cbreg.build_interference(closed=False) returns a SUBSET of the correct edge set, so the buggy graph is EASIER to colour, which is why a wrong allocator reports a better spill count. The trap is not that the range is wrong, it is that being wrong in this direction looks like being good.
+        SOURCE: compback section 7, printed edge counts
+
+  R2  CLAIMED: That a coalescer with half-open ranges OVER-merges
+       It UNDER-merges on the move-liveness test in cbreg.coalesce, and over-merges only on the interval-overlap test in cbreg.coalesce_overlap. Both are in section 7 and they fail in opposite directions, which is the point of printing both.
+        SOURCE: compback section 7, printed merge counts
+
+  R3  CLAIMED: That the first version of this course's selector misroutes about a third of its instructions
+       The measured number is printed as a count in section 4 with the total beside it, and it is a different number, and the direction of the whole experiment -- a kind-based dispatch matching sub with add -- was correct before it was measured and is correct now. What was wrong was the MAGNITUDE, not the mechanism.
+        SOURCE: compback section 4, printed misroute count
+
+  R4  CLAIMED: That the IR/machine ratio falls monotonically as the compiler gets better
+       Measured across five levels it is not monotonic: -O0 gives 1.106 and -O2 gives 0.818, and the reason is that -O0 emits MORE machine instructions than IR while -O2 emits MORE than the IR. The ratio is read in both directions in section 2 and neither direction is a measure of quality.
+        SOURCE: compback section 2, printed ratio table
+
+  R5  CLAIMED: That an IR makes three targets produce the same IR
+       Measured: at -Os, riscv64 emits two opcodes -- insertelement and shufflevector -- that the other two do not, from the SAME SOURCE at the SAME level. The IR is target-independent in its operations and target-dependent in its shapes, and section 2 says so with the counts.
+        SOURCE: compback section 2, printed -Os opcode census
+
+  R6  CLAIMED: That -Os is between -O2 and -O3
+       Measured: -Os vectorises on one target and not on the other two, and emits more IR for riscv64 than -O2 does. A LEVEL OF -O IS NOT A RANKING; IT IS A SET OF OBJECTIVES.
+        SOURCE: compback section 3, printed vector counts per level
+
+  R7  CLAIMED: That the estimator noise floor is the floor for comparing two arms
+       It is not. The pointer chase is how close two runs of the SAME arm can get; the largest arm-to-arm spread is how close two DIFFERENT arms can get, and it is the smaller number that governs. Section 10 prints both and the first version of this report used only the first, which called a real 1.18x a non-difference.
+        SOURCE: cbbench.c section 2, printed floors
+
+  R8  CLAIMED: That the AArch64 three-source group selector is at the same bit position as the two-source ones
+       It is not: the 3-source group value is ABOVE the two others rather than beside them, and the first version of cbenc.py read a field out of the wrong group and produced a `msub` for a `madd` with no disagreement count anywhere, because nobody had asked for one.
+        SOURCE: cbenc.validate, six specimens, bit for bit
+
+  R9  CLAIMED: That a schedule which respects the dependencies it can see is slow but correct
+       It is FAST and incorrect, and that is worse. The only measurement that catches it is a value; a timing table crowns the broken schedule as the winner.
+        SOURCE: compback section 8, printed checksums
+
+  R10  CLAIMED: That spilling one value costs one memory operation
+       A value in memory is written AND read every iteration. A backend counts SLOTS and a machine counts STORES, and section 10 measures the second while sections 6 and 7 count the first.
+        SOURCE: cbbench.c section 2, spill counts against ticks/op
+
+  R11  CLAIMED: That the three allocators in section 6 disagree because the ALGORITHMS disagree
+       They disagree because the SPILL POLICIES disagree. The same interference graph with a third policy gives a third number, and a backend reporting "graph colouring spills N" without naming the policy has reported nothing reproducible.
+        SOURCE: compback section 6, printed totals for three policies
+
+  R12  CLAIMED: That this course's register allocation is a performance measurement
+       It is not. Section 10 executes four HAND-WRITTEN bodies whose spill COUNTS were decided elsewhere. The number is the cost of the DECISION and not of a compiler that made it, and limit 5 says so.
+        SOURCE: compback section 10 header, and limit 5
+
+  R13  CLAIMED: That reading a backend's decisions back out of the bytes recovers the register allocation
+       It recovers the allocation's CONSEQUENCES. Two allocations can produce the same instruction count, the same memory-op count and the same register count and differ in speed, and there is no bit that says which one a coalesced mov was.
+        SOURCE: compback section 11, and limit 9
+
+  R14  CLAIMED: That a prologue is visible because it saves registers
+       It is visible because it is a FRAME. The registers it saves are the allocator's business and the compiler may save more than it modified; what is recoverable from a disassembly alone is the frame and the memory traffic inside it.
+        SOURCE: compback section 11, -O0 build of the same leaf
+
+  R15  CLAIMED: That this course's timing instrument measured cycles
+       It measured ticks. The TSC rate was measured twice -- busy and across a sleep -- and the two agree to within 0.001 per cent, so a tick is TIME. No number in this course is a cycle count and none is converted into one.
+        SOURCE: cbbench.c section 1, two TSC rates
+
+  R16  CLAIMED: That this course ticks the Compiler Debug Information roadmap item
+       It ticks its SECOND HALF -- reading a backend's decisions out of the bytes -- and not its first, because nothing here emits DWARF. The `dwarf` course owns the format; what this course adds is the question of what you can know about a backend with NO debug information at all.
+        SOURCE: docs/courses-todo.md, the ticked item
+
+  R17  CLAIMED: That the IR reader is a parser for LLVM IR
+       It is a counter. It reads one mnemonic per line inside a `define` and nothing else, and the three things it does not count -- instructions inside a define, a declare, and metadata -- are stated in section 13 so that every ratio in section 2 has a denominator a reader can argue with.
+        SOURCE: compback section 2 header and section 13 limit 13
+
+  R18  CLAIMED: That an allocator which reports fewer spills has done better
+       The half-open graph has fewer edges, colours more easily and spills fewer, and every pressure at which the bug is invisible is a pressure at which the buggy allocator looks better. This is why every spill count in this course is held to a checksum and not to a comparison.
+        SOURCE: compback section 6 and section 7, side by side
+
+
+==========================================================================
+SECTION 16 -- THE TWO-READER CHECK, AND THE NORMALISER FIRE TABLE.
+==========================================================================
+
+§KEEP§AND THE FIRE TABLE IS PRINTED WITH A ROW FOR EVERY RULE,
+PRE-SEEDED AT ZERO, BECAUSE A RULE THAT NEVER FIRES IS A ROW WITH A
+ZERO AND NOT AN ABSENCE. §KEEP§THE THIRD TIME IN THIS COLLECTION A
+CROSS-CHECK HAS BEEN ASKED WHETHER ITS OWN NORMALISERS ARE ALIVE, THE
+ANSWER HAS BEEN "SOME OF THEM ARE DEAD AND NOBODY NOTICED", AND §KEEP§
+THE STRUCTURAL REPORTING IS PRE-SEEDED BOTH TIMES.
+
+§KEEP§AND TWO OF THE SIX RULES BELOW ARE DEAD *BY DESIGN* AND ARE
+LABELLED SO, WHICH INVERTS THE SIBLING COURSE's CONDITION RATHER THAN
+COPYING IT. §KEEP§A RULE THAT NORMALISES AWAY THE DIFFERENCE BETWEEN
+AN x8 AND A w8 MAKES THE COMPARISON VACUOUS, AND §KEEP§A CROSS-CHECK
+THAT IS VACUOUS REPORTS ZERO DISAGREEMENTS OVER A CORPUS WHERE EVERY
+WORD DISAGREES -- WHICH IS THE FIFTH TIME IN THIS COLLECTION THAT SHAPE
+HAS OCCURRED AND IT IS THE WORST ONE BECAUSE THE NUMBER IS BELIEVED.
+
+
+  Two readers over every word of the aarch64 leaf: 9 words, 9 agree,
+  0 disagree, and the disagreements are printed above rather than
+  summarised. §KEEP§THE THREE THAT REMAINED IN AN EARLIER VERSION OF
+  THIS SECTION WERE PURELY PRINTING CONVENTIONS -- `lsl, #1` against
+  `lsl #1`, and `#0x6` against `#6` -- §KEEP§AND THE FIRE TABLE IS WHAT
+  MADE THEM VISIBLE, BECAUSE A DISAGREEMENT YOU CANNOT CLASSIFY IS A
+  DISAGREEMENT YOU CANNOT FIX.
+
+  THE NORMALISER FIRE TABLE, PRE-SEEDED WITH EVERY RULE NAME:
+
+    collapse space                     0
+    comma before shift or immediate      10
+    hex immediate                      1
+    mnemonic case                     16
+    drop register size suffix          0   NEVER FIRED -- BY DESIGN
+    sp alias                           0   NEVER FIRED -- BY DESIGN
+
+    6 rules, 3 fired, 3 matched nothing.
+    THE DEAD ONES: collapse space, drop register size suffix, sp alias
+    §KEEP§AND TWO OF THEM ARE DEAD BY DESIGN. §KEEP§THE REST ARE
+    REDUNDANT *ON THIS CORPUS* RATHER THAN WRONG, AND THE TWO ARE
+    NOT DISTINGUISHABLE IN A FIRE TABLE -- §KEEP§WHICH IS WHY EVERY
+    RULE HERE CARRIES ITS REASON AS A DATA FIELD AND NOT AS A
+    COMMENT NOBODY READS, AND WHY THE TWO BY-DESIGN ONES ARE
+    MARKED IN THE TABLE ITSELF INSTEAD OF BEING LEFT AS ZEROS.
+
+  §KEEP§AND THE COUNTER COUNTS A RULE FIRING WHEN IT CHANGES EITHER
+  SIDE, NOT ONLY THIS FILE'S RENDERING -- §KEEP§THE FIRST VERSION
+  APPLIED EVERY RULE TO ONE SIDE ONLY, §KEEP§SO `hex immediate` NEVER
+  FIRED, FOR THE REASON THAT THE SIBLING DECODER PRINTS `#0x6` AND THIS
+  FILE PRINTS `#6`, §KEEP§AND THAT IS A DISAGREEMENT THE RULE WAS
+  WRITTEN TO FIX. §KEEP§A FIRE TABLE THAT COUNTS ONE SIDE IS A TABLE OF
+  HOW OFTEN *WE* PRINT THINGS A CERTAIN WAY.
+
+  §KEEP§AND THE COMPARISON IS NOT VACUOUS FOR TWO REASONS, AND BOTH
+  ARE PRINTED BECAUSE NEITHER IS THE OBVIOUS ONE:
+  §KEEP§THE DENOMINATOR IS 9 WORDS AND EVERY ONE OF THEM IS NAMED BY
+  BOTH READERS; §KEEP§AND EVERY RULE THAT FIRED WAS APPLIED TO *BOTH*
+  SIDES, §KEEP§SO A NORMALISER CANNOT MAKE THE READERS AGREE BY
+  DELETING THE SAME OPERAND FROM BOTH. §KEEP§A NORMALISER THAT
+  DELETES AN OPERAND MAKES TWO READERS AGREE BY DELETING THE SAME
+  OPERAND, AND THE AGREEMENT IS THEN EVIDENCE ABOUT THE NORMALISER
+  RATHER THAN ABOUT EITHER DECODER -- §KEEP§ WHICH IS EXACTLY WHAT
+  POISON 4 MEASURES, AND IT MEASURES IT BY DOING IT.
+
+
+==========================================================================
+SECTION 17 -- THE FOUR POISONS.  Each must MOVE the number it claims
+to test, and a poison that does not prints [POISON FAILED].
+==========================================================================
+
+POISON 1 -- break the KIND DISPATCH in the selector.
+  It claims to move: the misroute count, and the checksum.
+    BEFORE the poison: 10 misroutes of 12 instructions, checksum 193715795505516148
+    §KEEP§AND THE HONEST FIRST LINE IS THAT THE MISROUTE COUNT IS
+    ALREADY 10 ON A CORRECT RUN, BECAUSE `sub` HAS THE SAME OPERAND
+    KIND AS `add` AND A KIND-ONLY DISPATCH CANNOT TELL THEM APART. §KEEP§
+    THAT IS THE TRAP THE SECTION IS ABOUT AND IT IS NOT A POISON.
+
+    THE POISON THEN REPLACES EVERY `sub` WITH AN `add` IN THE KERNEL,
+    which is what a compiler that has the bug DOES to a program:
+    AFTER  the poison: 9 misroutes of 12 instructions, checksum 193715795509322676
+    DELTA: misroutes -1, checksum changed YES
+    VERDICT: POISON 1 FIRED.  §KEEP§AND THE MISROUTE COUNT ITSELF
+    MOVED BY -1, WHICH IS THE SECOND HALF OF THE CLAIM.
+
+POISON 2 -- make the live ranges HALF-OPEN, everywhere.
+  It claims to move: the edge count, the spill count, and the
+  checksum.
+    kernel kernel_c, 10 pressure registers.
+    BEFORE: 50 edges, 0 spills, checksum correct
+    AFTER : 35 edges, 0 spills, checksum WRONG
+    DELTA: edges -15, checksum changed YES
+    VERDICT: POISON 2 FIRED.
+    §KEEP§AND THE SIGN IS THE FINDING: §KEEP§THE BUG REMOVES EDGES,
+    MAKES THE GRAPH EASIER, AND REPORTS A BETTER SPILL COUNT. §KEEP§A
+    POISON THAT ONLY CHECKED "did anything move" WOULD HAVE PASSED ON
+    A DELTA OF +1 AND WOULD HAVE MISSED THE DIRECTION ENTIRELY.
+
+POISON 3 -- remove the ARGUMENT LOOP from the dependency builder, which
+  is the bug that skipped every store.
+  It claims to move: the edge count of the MEMORY-ORDERED DAG.
+    BEFORE: 10 dependency edges, schedule checksum 6601140724
+    AFTER : 9 dependency edges, schedule checksum 6601062688
+    DELTA: edges -1, and the poisoned schedule gives A DIFFERENT ANSWER
+    VERDICT: POISON 3 FIRED.  §KEEP§AND THE POISON IS DOUBLE-BARRELLED
+    ON PURPOSE: §KEEP§IT MOVES THE EDGE COUNT *AND* IT MAKES THE
+    CHECKSUM WRONG, WHICH IS THE POINT OF SECTION 8 -- §KEEP§A
+    SCHEDULE THAT IS FASTER AND WRONG IS THE FAILURE MODE THAT
+    NO TIMING TABLE CAN SEE.
+
+POISON 4 -- plant real disagreements, then hide them with a normaliser
+  that deletes an operand.
+  It claims to move: the disagreement count of the working check, and
+  of the broken one.
+    STEP 0.  9 words, 4 agree before anything is done to them, so
+    there is something for the bug below to hide. §KEEP§A POISON
+    THAT PLANTS A DISAGREEMENT INTO AN ALREADY-EMPTY COMPARISON
+    HAS NOTHING TO HIDE AND MEASURES ZERO, WHICH IS A PASS FOR
+    THE WRONG REASON.
+
+    STEP 1.  One operand of every rendering is changed to a
+    different register -- a real decode difference, planted on
+    purpose, in the TEXT the check compares and NOWHERE ELSE:
+      the working check with the bug planted: 0 agree, 9 disagree
+
+    CAUGHT, all 9 of them.  The check compares OPERANDS and not
+    just mnemonics.
+
+    STEP 2.  The same bug, AND the AArch64 data-path bug: a
+    normaliser rule that KEEPS THE MNEMONIC AND THE FIRST
+    OPERAND and discards the rest.
+      the broken check: 4 of 9 reported, 5 HIDDEN
+
+    DELTA: 5 of the 9 planted disagreements were HIDDEN.
+    §KEEP§THAT NUMBER IS THE CLASS OF BUG THAT READS AS SUCCESS,
+    AND §KEEP§THE FIRST VERSION OF THIS POISON ASSERTED THAT THE
+    AGREEMENT COUNT WOULD GO *UP* -- WHICH IT CANNOT, BECAUSE THERE
+    IS NOTHING LEFT TO AGREE ABOUT. §KEEP§IT PRINTED [POISON FAILED]
+    AND THE [POISON FAILED] WAS CORRECT AND THE ASSERTION WAS
+    WRONG.
+    VERDICT: POISON 4 FIRED.
+
+  ALL FOUR FIRED: yes
+
+
+==========================================================================
+SECTION 18 -- THE HARNESS, THE CORRUPTION SUITE, AND THE TWO-RUN
+DETERMINISM CHECK.
+==========================================================================
+
+  THE HARNESS IS crosscheck.py AND IT RE-ASKS THE RECORDED OUTPUT. §KEEP§IT
+  HAS NO ASSEMBLER, NO DECODER AND NO TOOLCHAIN, AND THAT IS THE
+  POINT: §KEEP§A HARNESS THAT CAN RE-MEASURE CAN DISAGREE WITH THE
+  ARTIFACT FOR REASONS THAT HAVE NOTHING TO DO WITH WHETHER THE
+  ARTIFACT'S SENTENCES ARE STILL TRUE, AND THEN IT TEACHES ITS READER
+  TO IGNORE IT.
+
+  RUN:  python3 crosscheck.py compback.out
+  THE CORRUPTION SUITE:  python3 corrupt.py
+    §KEEP§A HARNESS WHOSE CHECKS HAVE NEVER BEEN SEEN TO FAIL IS A
+    RUBRIC, AND THIS COLLECTION HAS RETRACTED FOUR OF THEM FOR EXACTLY
+    THAT. §KEEP§THE SUITE CORRUPTS THE RECORDED REPORT TWENTY-TWO WAYS
+    AND REQUIRES EVERY ONE TO BE CAUGHT.
+
+  THE DETERMINISM CHECK: compback.out, run1.txt and run2.txt must be
+  BYTE-IDENTICAL. §KEEP§AND THE TIMING IS THE EXCEPTION AND THE
+  EXCEPTION IS WRITTEN DOWN: §KEEP§section 10 READS A SEPARATE BINARY
+  WHOSE OUTPUT IS TIMING, AND THE VERDICTS ARE COMPARED WHILE THE
+  RAW NUMBERS ARE NOT, BECAUSE A FILE THAT CONTAINS A CLOCK READING
+  AND A FILE THAT IS BYTE-IDENTICAL BETWEEN TWO RUNS CANNOT BOTH BE
+  TRUE, AND §KEEP§SAYING WHICH ONE GIVES UP IS THE ONLY HONEST
+  OPTION.
+
+  and the check is cmp, run three times by build_samples.sh:
+
+      python3 compback.py --run compback.out
+      python3 compback.py --run run1.txt
+      python3 compback.py --run run2.txt
+      cmp compback.out run1.txt && cmp run1.txt run2.txt
+
+  §KEEP§AND NOTHING IN THIS REPORT IS A CLOCK READING FOR THAT TO BE
+  TRUE AT ALL -- §KEEP§THE TICK COUNTS LIVE IN cbbench.out, WHICH IS NOT
+  ONE OF THESE THREE FILES AND IS NOT COMPARED, §KEEP§WHICH IS EXACTLY
+  WHY THE BANDS EXIST.
+
+
+==========================================================================
+END OF REPORT
+==========================================================================

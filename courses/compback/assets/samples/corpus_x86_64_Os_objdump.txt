@@ -1,0 +1,129 @@
+
+corpus_x86_64_Os.o:	file format elf64-x86-64
+
+Disassembly of section .text:
+
+0000000000000000 <dot>:
+       0: 85 d2                        	testl	%edx, %edx
+       2: 7e 1b                        	jle	0x1f <dot+0x1f>
+       4: 89 d1                        	movl	%edx, %ecx
+       6: 31 d2                        	xorl	%edx, %edx
+       8: 31 c0                        	xorl	%eax, %eax
+       a: 44 8b 04 96                  	movl	(%rsi,%rdx,4), %r8d
+       e: 44 0f af 04 97               	imull	(%rdi,%rdx,4), %r8d
+      13: 44 01 c0                     	addl	%r8d, %eax
+      16: 48 ff c2                     	incq	%rdx
+      19: 48 39 d1                     	cmpq	%rdx, %rcx
+      1c: 75 ec                        	jne	0xa <dot+0xa>
+      1e: c3                           	retq
+      1f: 31 c0                        	xorl	%eax, %eax
+      21: c3                           	retq
+
+0000000000000022 <max3>:
+      22: 89 f8                        	movl	%edi, %eax
+      24: 39 fe                        	cmpl	%edi, %esi
+      26: 0f 4f c6                     	cmovgl	%esi, %eax
+      29: 39 c2                        	cmpl	%eax, %edx
+      2b: 0f 4f c2                     	cmovgl	%edx, %eax
+      2e: c3                           	retq
+
+000000000000002f <sumld>:
+      2f: 48 85 f6                     	testq	%rsi, %rsi
+      32: 7e 11                        	jle	0x45 <sumld+0x16>
+      34: 31 c9                        	xorl	%ecx, %ecx
+      36: 31 c0                        	xorl	%eax, %eax
+      38: 48 03 04 cf                  	addq	(%rdi,%rcx,8), %rax
+      3c: 48 ff c1                     	incq	%rcx
+      3f: 48 39 ce                     	cmpq	%rcx, %rsi
+      42: 75 f4                        	jne	0x38 <sumld+0x9>
+      44: c3                           	retq
+      45: 31 c0                        	xorl	%eax, %eax
+      47: c3                           	retq
+
+0000000000000048 <sw>:
+      48: 31 c0                        	xorl	%eax, %eax
+      4a: 83 ff 02                     	cmpl	$0x2, %edi
+      4d: 77 0c                        	ja	0x5b <sw+0x13>
+      4f: 89 f8                        	movl	%edi, %eax
+      51: 48 8d 0d 00 00 00 00         	leaq	(%rip), %rcx            # 0x58 <sw+0x10>
+      58: 8b 04 81                     	movl	(%rcx,%rax,4), %eax
+      5b: c3                           	retq
+
+000000000000005c <cnt>:
+      5c: 85 f6                        	testl	%esi, %esi
+      5e: 74 1c                        	je	0x7c <cnt+0x20>
+      60: 89 f1                        	movl	%esi, %ecx
+      62: 31 f6                        	xorl	%esi, %esi
+      64: 31 c0                        	xorl	%eax, %eax
+      66: 45 31 c0                     	xorl	%r8d, %r8d
+      69: 39 14 b7                     	cmpl	%edx, (%rdi,%rsi,4)
+      6c: 41 0f 94 c0                  	sete	%r8b
+      70: 44 01 c0                     	addl	%r8d, %eax
+      73: 48 ff c6                     	incq	%rsi
+      76: 48 39 f1                     	cmpq	%rsi, %rcx
+      79: 75 eb                        	jne	0x66 <cnt+0xa>
+      7b: c3                           	retq
+      7c: 31 c0                        	xorl	%eax, %eax
+      7e: c3                           	retq
+
+000000000000007f <sat>:
+      7f: 89 d0                        	movl	%edx, %eax
+      81: 39 d7                        	cmpl	%edx, %edi
+      83: 0f 4c c7                     	cmovll	%edi, %eax
+      86: 39 f7                        	cmpl	%esi, %edi
+      88: 0f 4c c6                     	cmovll	%esi, %eax
+      8b: c3                           	retq
+
+000000000000008c <mix>:
+      8c: 48 89 f1                     	movq	%rsi, %rcx
+      8f: 48 0f af cf                  	imulq	%rdi, %rcx
+      93: 48 8d 04 52                  	leaq	(%rdx,%rdx,2), %rax
+      97: 48 31 fe                     	xorq	%rdi, %rsi
+      9a: 48 01 f0                     	addq	%rsi, %rax
+      9d: 48 01 c8                     	addq	%rcx, %rax
+      a0: 48 01 d2                     	addq	%rdx, %rdx
+      a3: 48 29 d0                     	subq	%rdx, %rax
+      a6: c3                           	retq
+
+00000000000000a7 <cond>:
+      a7: 89 f8                        	movl	%edi, %eax
+      a9: 29 f0                        	subl	%esi, %eax
+      ab: 29 fe                        	subl	%edi, %esi
+      ad: 0f 4d c6                     	cmovgel	%esi, %eax
+      b0: c3                           	retq
+
+00000000000000b1 <walk>:
+      b1: 48 85 f6                     	testq	%rsi, %rsi
+      b4: 7e 22                        	jle	0xd8 <walk+0x27>
+      b6: 31 c9                        	xorl	%ecx, %ecx
+      b8: 31 d2                        	xorl	%edx, %edx
+      ba: 48 8b 04 cf                  	movq	(%rdi,%rcx,8), %rax
+      be: 4c 8d 04 40                  	leaq	(%rax,%rax,2), %r8
+      c2: 48 c1 f8 02                  	sarq	$0x2, %rax
+      c6: 48 01 d0                     	addq	%rdx, %rax
+      c9: 4c 01 c0                     	addq	%r8, %rax
+      cc: 48 ff c1                     	incq	%rcx
+      cf: 48 89 c2                     	movq	%rax, %rdx
+      d2: 48 39 ce                     	cmpq	%rcx, %rsi
+      d5: 75 e3                        	jne	0xba <walk+0x9>
+      d7: c3                           	retq
+      d8: 31 c0                        	xorl	%eax, %eax
+      da: c3                           	retq
+
+00000000000000db <popcntish>:
+      db: 31 c0                        	xorl	%eax, %eax
+      dd: 85 ff                        	testl	%edi, %edi
+      df: 74 12                        	je	0xf3 <popcntish+0x18>
+      e1: 89 f9                        	movl	%edi, %ecx
+      e3: 89 fa                        	movl	%edi, %edx
+      e5: 83 e2 01                     	andl	$0x1, %edx
+      e8: 01 d0                        	addl	%edx, %eax
+      ea: d1 e9                        	shrl	%ecx
+      ec: 83 ff 01                     	cmpl	$0x1, %edi
+      ef: 89 cf                        	movl	%ecx, %edi
+      f1: 77 f0                        	ja	0xe3 <popcntish+0x8>
+      f3: c3                           	retq
+
+00000000000000f4 <mul3>:
+      f4: 8d 04 7f                     	leal	(%rdi,%rdi,2), %eax
+      f7: c3                           	retq

@@ -1,0 +1,216 @@
+
+corpus_aarch64_O3.o:	file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+0000000000000000 <dot>:
+       0: 7100045f     	cmp	w2, #0x1
+       4: 540000eb     	b.lt	0x20 <dot+0x20>
+       8: 7100205f     	cmp	w2, #0x8
+       c: 2a0203e9     	mov	w9, w2
+      10: 540000e2     	b.hs	0x2c <dot+0x2c>
+      14: aa1f03ea     	mov	x10, xzr
+      18: 2a1f03e8     	mov	w8, wzr
+      1c: 14000017     	b	0x78 <dot+0x78>
+      20: 2a1f03e8     	mov	w8, wzr
+      24: 2a0803e0     	mov	w0, w8
+      28: d65f03c0     	ret
+      2c: 6f00e400     	movi	v0.2d, #0000000000000000
+      30: 6f00e401     	movi	v1.2d, #0000000000000000
+      34: 927d6d2a     	and	x10, x9, #0x7ffffff8
+      38: 91004028     	add	x8, x1, #0x10
+      3c: 9100400b     	add	x11, x0, #0x10
+      40: aa0a03ec     	mov	x12, x10
+      44: ad7f8d62     	ldp	q2, q3, [x11, #-0x10]
+      48: f100218c     	subs	x12, x12, #0x8
+      4c: ad7f9504     	ldp	q4, q5, [x8, #-0x10]
+      50: 91008108     	add	x8, x8, #0x20
+      54: 9100816b     	add	x11, x11, #0x20
+      58: 4ea29480     	mla	v0.4s, v4.4s, v2.4s
+      5c: 4ea394a1     	mla	v1.4s, v5.4s, v3.4s
+      60: 54ffff21     	b.ne	0x44 <dot+0x44>
+      64: 4ea08420     	add	v0.4s, v1.4s, v0.4s
+      68: eb09015f     	cmp	x10, x9
+      6c: 4eb1b800     	addv	s0, v0.4s
+      70: 1e260008     	fmov	w8, s0
+      74: 54000140     	b.eq	0x9c <dot+0x9c>
+      78: d37ef54c     	lsl	x12, x10, #2
+      7c: cb0a0129     	sub	x9, x9, x10
+      80: 8b0c002b     	add	x11, x1, x12
+      84: 8b0c000c     	add	x12, x0, x12
+      88: b840458a     	ldr	w10, [x12], #0x4
+      8c: f1000529     	subs	x9, x9, #0x1
+      90: b840456d     	ldr	w13, [x11], #0x4
+      94: 1b0a21a8     	madd	w8, w13, w10, w8
+      98: 54ffff81     	b.ne	0x88 <dot+0x88>
+      9c: 2a0803e0     	mov	w0, w8
+      a0: d65f03c0     	ret
+
+00000000000000a4 <max3>:
+      a4: 6b00003f     	cmp	w1, w0
+      a8: 1a80c028     	csel	w8, w1, w0, gt
+      ac: 6b08005f     	cmp	w2, w8
+      b0: 1a88c040     	csel	w0, w2, w8, gt
+      b4: d65f03c0     	ret
+
+00000000000000b8 <sumld>:
+      b8: f100043f     	cmp	x1, #0x1
+      bc: 540000cb     	b.lt	0xd4 <sumld+0x1c>
+      c0: f100103f     	cmp	x1, #0x4
+      c4: 540000e2     	b.hs	0xe0 <sumld+0x28>
+      c8: aa1f03e9     	mov	x9, xzr
+      cc: aa1f03e8     	mov	x8, xzr
+      d0: 14000014     	b	0x120 <sumld+0x68>
+      d4: aa1f03e8     	mov	x8, xzr
+      d8: aa0803e0     	mov	x0, x8
+      dc: d65f03c0     	ret
+      e0: 6f00e400     	movi	v0.2d, #0000000000000000
+      e4: 6f00e401     	movi	v1.2d, #0000000000000000
+      e8: 927ef029     	and	x9, x1, #0x7ffffffffffffffc
+      ec: 91004008     	add	x8, x0, #0x10
+      f0: aa0903ea     	mov	x10, x9
+      f4: ad7f8d02     	ldp	q2, q3, [x8, #-0x10]
+      f8: f100114a     	subs	x10, x10, #0x4
+      fc: 91008108     	add	x8, x8, #0x20
+     100: 4ee08440     	add	v0.2d, v2.2d, v0.2d
+     104: 4ee18461     	add	v1.2d, v3.2d, v1.2d
+     108: 54ffff61     	b.ne	0xf4 <sumld+0x3c>
+     10c: 4ee08420     	add	v0.2d, v1.2d, v0.2d
+     110: eb09003f     	cmp	x1, x9
+     114: 5ef1b800     	addp	d0, v0.2d
+     118: 9e660008     	fmov	x8, d0
+     11c: 540000e0     	b.eq	0x138 <sumld+0x80>
+     120: 8b090c0a     	add	x10, x0, x9, lsl #3
+     124: cb090029     	sub	x9, x1, x9
+     128: f840854b     	ldr	x11, [x10], #0x8
+     12c: f1000529     	subs	x9, x9, #0x1
+     130: 8b080168     	add	x8, x11, x8
+     134: 54ffffa1     	b.ne	0x128 <sumld+0x70>
+     138: aa0803e0     	mov	x0, x8
+     13c: d65f03c0     	ret
+
+0000000000000140 <sw>:
+     140: 7100081f     	cmp	w0, #0x2
+     144: 540000a8     	b.hi	0x158 <sw+0x18>
+     148: 90000008     	adrp	x8, 0x0 <dot>
+     14c: 91000108     	add	x8, x8, #0x0
+     150: b8605900     	ldr	w0, [x8, w0, uxtw #2]
+     154: d65f03c0     	ret
+     158: 2a1f03e0     	mov	w0, wzr
+     15c: d65f03c0     	ret
+
+0000000000000160 <cnt>:
+     160: 340000e1     	cbz	w1, 0x17c <cnt+0x1c>
+     164: 7100203f     	cmp	w1, #0x8
+     168: 2a0103e9     	mov	w9, w1
+     16c: 540000e2     	b.hs	0x188 <cnt+0x28>
+     170: aa1f03ea     	mov	x10, xzr
+     174: 2a1f03e8     	mov	w8, wzr
+     178: 14000017     	b	0x1d4 <cnt+0x74>
+     17c: 2a1f03e8     	mov	w8, wzr
+     180: 2a0803e0     	mov	w0, w8
+     184: d65f03c0     	ret
+     188: 6f00e400     	movi	v0.2d, #0000000000000000
+     18c: 6f00e401     	movi	v1.2d, #0000000000000000
+     190: 927d712a     	and	x10, x9, #0xfffffff8
+     194: 4e040c42     	dup	v2.4s, w2
+     198: 91004008     	add	x8, x0, #0x10
+     19c: aa0a03eb     	mov	x11, x10
+     1a0: ad7f9103     	ldp	q3, q4, [x8, #-0x10]
+     1a4: f100216b     	subs	x11, x11, #0x8
+     1a8: 91008108     	add	x8, x8, #0x20
+     1ac: 6ea28c63     	cmeq	v3.4s, v3.4s, v2.4s
+     1b0: 6ea28c84     	cmeq	v4.4s, v4.4s, v2.4s
+     1b4: 6ea38400     	sub	v0.4s, v0.4s, v3.4s
+     1b8: 6ea48421     	sub	v1.4s, v1.4s, v4.4s
+     1bc: 54ffff21     	b.ne	0x1a0 <cnt+0x40>
+     1c0: 4ea08420     	add	v0.4s, v1.4s, v0.4s
+     1c4: eb09015f     	cmp	x10, x9
+     1c8: 4eb1b800     	addv	s0, v0.4s
+     1cc: 1e260008     	fmov	w8, s0
+     1d0: 54000100     	b.eq	0x1f0 <cnt+0x90>
+     1d4: 8b0a080b     	add	x11, x0, x10, lsl #2
+     1d8: cb0a0129     	sub	x9, x9, x10
+     1dc: b840456a     	ldr	w10, [x11], #0x4
+     1e0: 6b02015f     	cmp	w10, w2
+     1e4: 1a881508     	cinc	w8, w8, eq
+     1e8: f1000529     	subs	x9, x9, #0x1
+     1ec: 54ffff81     	b.ne	0x1dc <cnt+0x7c>
+     1f0: 2a0803e0     	mov	w0, w8
+     1f4: d65f03c0     	ret
+
+00000000000001f8 <sat>:
+     1f8: 6b02001f     	cmp	w0, w2
+     1fc: 1a82b008     	csel	w8, w0, w2, lt
+     200: 6b01001f     	cmp	w0, w1
+     204: 1a88b020     	csel	w0, w1, w8, lt
+     208: d65f03c0     	ret
+
+000000000000020c <mix>:
+     20c: ca000028     	eor	x8, x1, x0
+     210: d37ff849     	lsl	x9, x2, #1
+     214: 9b002028     	madd	x8, x1, x0, x8
+     218: 8b02012a     	add	x10, x9, x2
+     21c: 8b0a0108     	add	x8, x8, x10
+     220: cb090100     	sub	x0, x8, x9
+     224: d65f03c0     	ret
+
+0000000000000228 <cond>:
+     228: 6b010008     	subs	w8, w0, w1
+     22c: 5a885500     	cneg	w0, w8, mi
+     230: d65f03c0     	ret
+
+0000000000000234 <walk>:
+     234: f100043f     	cmp	x1, #0x1
+     238: 540000ab     	b.lt	0x24c <walk+0x18>
+     23c: 540000e1     	b.ne	0x258 <walk+0x24>
+     240: aa1f03e9     	mov	x9, xzr
+     244: aa1f03e8     	mov	x8, xzr
+     248: 14000016     	b	0x2a0 <walk+0x6c>
+     24c: aa1f03e8     	mov	x8, xzr
+     250: aa0803e0     	mov	x0, x8
+     254: d65f03c0     	ret
+     258: 927ff429     	and	x9, x1, #0x7ffffffffffffffe
+     25c: aa1f03ea     	mov	x10, xzr
+     260: aa1f03eb     	mov	x11, xzr
+     264: 91002008     	add	x8, x0, #0x8
+     268: aa0903ec     	mov	x12, x9
+     26c: a97fb90d     	ldp	x13, x14, [x8, #-0x8]
+     270: f100098c     	subs	x12, x12, #0x2
+     274: 91004108     	add	x8, x8, #0x10
+     278: 8b0d05af     	add	x15, x13, x13, lsl #1
+     27c: 8b0e05d0     	add	x16, x14, x14, lsl #1
+     280: 8b8d094a     	add	x10, x10, x13, asr #2
+     284: 8b8e096b     	add	x11, x11, x14, asr #2
+     288: 8b0f014a     	add	x10, x10, x15
+     28c: 8b10016b     	add	x11, x11, x16
+     290: 54fffee1     	b.ne	0x26c <walk+0x38>
+     294: eb09003f     	cmp	x1, x9
+     298: 8b0a0168     	add	x8, x11, x10
+     29c: 54000120     	b.eq	0x2c0 <walk+0x8c>
+     2a0: 8b090c0a     	add	x10, x0, x9, lsl #3
+     2a4: cb090029     	sub	x9, x1, x9
+     2a8: f840854b     	ldr	x11, [x10], #0x8
+     2ac: f1000529     	subs	x9, x9, #0x1
+     2b0: 8b0b056c     	add	x12, x11, x11, lsl #1
+     2b4: 8b8b0908     	add	x8, x8, x11, asr #2
+     2b8: 8b0c0108     	add	x8, x8, x12
+     2bc: 54ffff61     	b.ne	0x2a8 <walk+0x74>
+     2c0: aa0803e0     	mov	x0, x8
+     2c4: d65f03c0     	ret
+
+00000000000002c8 <popcntish>:
+     2c8: 34000120     	cbz	w0, 0x2ec <popcntish+0x24>
+     2cc: 2a0003e8     	mov	w8, w0
+     2d0: 2a1f03e0     	mov	w0, wzr
+     2d4: 53017d09     	lsr	w9, w8, #1
+     2d8: 1200010a     	and	w10, w8, #0x1
+     2dc: 7100051f     	cmp	w8, #0x1
+     2e0: 0b0a0000     	add	w0, w0, w10
+     2e4: 2a0903e8     	mov	w8, w9
+     2e8: 54ffff68     	b.hi	0x2d4 <popcntish+0xc>
+     2ec: d65f03c0     	ret
+
+00000000000002f0 <mul3>:
+     2f0: 0b000400     	add	w0, w0, w0, lsl #1
+     2f4: d65f03c0     	ret

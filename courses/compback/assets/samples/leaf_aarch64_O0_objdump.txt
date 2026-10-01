@@ -1,0 +1,32 @@
+
+leaf_aarch64_O0.o:	file format elf64-littleaarch64
+
+Disassembly of section .text:
+
+0000000000000000 <leaf>:
+       0: d100c3ff     	sub	sp, sp, #0x30
+       4: f90017e0     	str	x0, [sp, #0x28]
+       8: f90013e1     	str	x1, [sp, #0x20]
+       c: f9000fe2     	str	x2, [sp, #0x18]
+      10: f9000be3     	str	x3, [sp, #0x10]
+      14: f90007e4     	str	x4, [sp, #0x8]
+      18: f90003e5     	str	x5, [sp]
+      1c: f94017e8     	ldr	x8, [sp, #0x28]
+      20: f94013e9     	ldr	x9, [sp, #0x20]
+      24: 8b090508     	add	x8, x8, x9, lsl #1
+      28: f9400fe9     	ldr	x9, [sp, #0x18]
+      2c: d280006a     	mov	x10, #0x3               // =3
+      30: 9b0a7d29     	mul	x9, x9, x10
+      34: 8b090108     	add	x8, x8, x9
+      38: f9400be9     	ldr	x9, [sp, #0x10]
+      3c: 8b090908     	add	x8, x8, x9, lsl #2
+      40: f94007e9     	ldr	x9, [sp, #0x8]
+      44: d28000aa     	mov	x10, #0x5               // =5
+      48: 9b0a7d29     	mul	x9, x9, x10
+      4c: 8b090108     	add	x8, x8, x9
+      50: f94003e9     	ldr	x9, [sp]
+      54: d28000ca     	mov	x10, #0x6               // =6
+      58: 9b0a7d29     	mul	x9, x9, x10
+      5c: 8b090100     	add	x0, x8, x9
+      60: 9100c3ff     	add	sp, sp, #0x30
+      64: d65f03c0     	ret

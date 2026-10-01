@@ -844,11 +844,38 @@ Absorbs **Unicode & Text** (10 items), **Compression & Encoding** (16 items), **
 
 ## Planned course 8 of 14 — Compilers, Languages and Build Systems
 
-Slug `compiler`. **67 items.**
+Slug `compiler`. **67 items, 6 ticked.**
 
 Absorbs **Compilers** (31 items), **Compilers & Languages — Advanced** (21 items), **Build Systems & Toolchains** (15 items).
 
-- [ ] Learn Compiler Architecture  — `compiler`, from Compilers, concept `compiler-architecture`
+The six ticked items are all ticked by the `compback` course, and the reason
+all six landed in one course rather than six is the shape of the chain:
+`docs/course-mission.md` puts the backend between the IR and the object file,
+and this collection had taught both ends in depth with **nothing in the
+middle**. So `compback` fills the hole and takes the six roadmap lines that
+belong to it — with two boundaries stated rather than glossed:
+
+* **The IR is straight-line.** No SSA construction, no PHI placement, no CFG,
+  no dominators, no loop structure, no peepholes, no compressed encodings, no
+  exception frames. That is why `ssa-static-single-assignment`,
+  `control-flow-graphs`, `dominators` and `data-flow-analysis` are still open:
+  every live range in the course is a straight interval, and the
+  loops-through-a-phi case that makes real allocation hard is not present.
+* **Compiler Debug Information is ticked by its second half only.** Nothing in
+  the course emits DWARF — `dwarf` owns the format — and the item is ticked for
+  reading a backend's decisions back out of bytes with no debug information at
+  all. This is retraction **R16** in the artifact, published rather than left
+  for a reader to discover.
+
+Every concept id was renamed from the todo name to a `cb-` name, because a
+concept id is resolved **GLOBALLY** by `render_concept()` in
+`web/src/helpers.ch` with no course in the key, so a collision does not 404 — it
+silently serves another course's page under this course's URL.
+`tools/verify_compback.py` asserts all six todo names **ABSENT** as whole
+segments, so the rename cannot be undone by accident and cannot be "tidied"
+back by a later editor.
+
+- [x] Learn Compiler Architecture  — `compiler`, from Compilers, concept `compiler-architecture`. Ticked by `compback`, whose `cb-ir` names the finding rather than the topic: what an IR is for, and what it must not hide. The ratio is read BOTH ways (-O0 1.106, -O2 0.818) and it is NOT MONOTONIC; and at -O2 all three targets agree on every opcode while emitting 253, 190 and 207 instructions. Concept id renamed `cb-ir` — see `tools/verify_compback.py`'s RETIRED list, which asserts `compiler-architecture` ABSENT so the rename cannot be undone by accident
 - [ ] Learn Lexers  — `compiler`, from Compilers, concept `lexers`
 - [ ] Learn Parser Design  — `compiler`, from Compilers, concept `parser-design`
 - [ ] Learn Recursive-Descent Parsing  — `compiler`, from Compilers, concept `recursive-descent-parsing`
@@ -864,9 +891,9 @@ Absorbs **Compilers** (31 items), **Compilers & Languages — Advanced** (21 ite
 - [ ] Learn Control-Flow Graphs  — `compiler`, from Compilers, concept `control-flow-graphs`
 - [ ] Learn Data-Flow Analysis  — `compiler`, from Compilers, concept `data-flow-analysis`
 - [ ] Learn Dominators  — `compiler`, from Compilers, concept `dominators`
-- [ ] Learn Register Allocation  — `compiler`, from Compilers, concept `register-allocation`
-- [ ] Learn Instruction Selection  — `compiler`, from Compilers, concept `instruction-selection`
-- [ ] Learn Instruction Scheduling  — `compiler`, from Compilers, concept `instruction-scheduling`
+- [x] Learn Register Allocation  — `compiler`, from Compilers, concept `register-allocation`. Ticked by `compback`'s `cb-regalloc`, 28 min, and it is the course's centrepiece because it holds the ONLY measurement in the collection whose machine runs the code it makes: four arms, 0/1/2/4 spilled values, one checksum 5925179420309322629 across all four, and bands rather than ticks because a clock reading and a byte-identical file cannot both be true. THE COST OF A SPILL IS NOT LINEAR and no page may say otherwise — the 1- and 2-spill arms are indistinguishable and only 4 separates. Three allocators give 58/166/45 spills and the 2.86 is a fact about the SPILL HEURISTIC, not the algorithms. Concept id renamed `cb-regalloc`
+- [x] Learn Instruction Selection  — `compiler`, from Compilers, concept `instruction-selection`. Ticked by `compback`'s `cb-isel`, 27 min: a selector dispatching on operand KIND alone routes 49 of 61 instructions to the wrong machine form and NEVER FAILS ONCE, so the receipt is a checksum (193715795505516148 against 193715795509322676) and not the count. Fusion is MEASURED-ON-BYTES — seven AArch64 words re-encoded from register numbers, 7 of 7 agreeing with a real assembler — and the x86-64 half is a REFUSAL: `enc_x86` takes (op, dst, src) and cannot express a three-operand multiply. Concept id renamed `cb-isel`
+- [x] Learn Instruction Scheduling  — `compiler`, from Compilers, concept `instruction-scheduling`. Ticked by `compback`'s `cb-sched`, 26 min: list scheduling with three priorities on a kernel chosen ON PURPOSE (kernel_d, not kernel_a, because a dependency chain gives the scheduler nothing to decide and prints three copies of the input). `height` against `height_hi` is the same algorithm with a different undocumented TIE-BREAK, and a backend reporting "my scheduler is better" without naming it has reported a different scheduler. Then the trap: without an alias analysis the schedule is FAST and WRONG. Concept id renamed `cb-sched`
 - [ ] Learn Compiler Optimization  — `compiler`, from Compilers, concept `compiler-optimization`
 - [ ] Learn Constant Folding  — `compiler`, from Compilers, concept `constant-folding`
 - [ ] Learn Dead-Code Elimination  — `compiler`, from Compilers, concept `dead-code-elimination`
@@ -877,8 +904,8 @@ Absorbs **Compilers** (31 items), **Compilers & Languages — Advanced** (21 ite
 - [ ] Learn Link-Time Optimization  — `compiler`, from Compilers, concept `link-time-optimization`
 - [ ] Learn JIT Compilation  — `compiler`, from Compilers, concept `jit-compilation`. The JVM's and the runtimes' JIT are in `vm`; this line is the compiler-internal one
 - [ ] Learn Runtime Code Generation  — `compiler`, from Compilers, concept `runtime-code-generation`
-- [ ] Learn Compiler Debug Information  — `compiler`, from Compilers, concept `compiler-debug-information`. DWARF is already taught by the built `dwarf` course
-- [ ] Learn Compiler ABIs  — `compiler`, from Compilers, concept `compiler-abis`. The x86-64 and AArch64 ABIs are already taught by `x86abi` and `a64abi`
+- [x] Learn Compiler Debug Information  — `compiler`, from Compilers, concept `compiler-debug-information`. DWARF is already taught by the built `dwarf` course. Ticked by `compback`'s `cb-verify`, and it is ticked by its **SECOND HALF ONLY** — reading a backend's decisions back out of the bytes with NO debug information at all — and not by its first, because nothing in this course emits DWARF. That is retraction R16 in the artifact's own list, published rather than left implied. What is recovered is four things, of which THREE ARE COUNTS and the fourth is an INFERENCE and is labelled as one: 9 instructions, 7 distinct registers, peak 3 at instruction 3, so allocated without spilling — and a prologue is visible because it is a FRAME, not because it saves registers. Concept id `cb-verify`, deliberately NOT `cb-boundary`: `rv-boundary` and `x86-boundary` already exist and a concept id is resolved GLOBALLY
+- [x] Learn Compiler ABIs  — `compiler`, from Compilers, concept `compiler-abis`. The x86-64 and AArch64 ABIs are already taught by `x86abi` and `a64abi`, and so is RISC-V's by `rvabi` — which is exactly why this page teaches the OBLIGATION and not the convention, and LINKS all three rather than re-teaching any. The subject is the ORDER: register allocation assigns names to values and the ABI assigns names to arguments, so a backend that learns the ABI second emits a prologue it did not plan for — on x86-64, a stack frame where the function looked like it needed none. 6 of 6 argument registers read on all three targets, and that count is a LOWER BOUND rather than an upper one. Concept id renamed `cb-abi`, asserted ABSENT as `compiler-abis` by the verifier
 - [ ] Learn Borrow Checking  — `compiler`, from Compilers & Languages — Advanced, concept `borrow-checking`
 - [ ] Learn Lifetime Analysis  — `compiler`, from Compilers & Languages — Advanced, concept `lifetime-analysis`
 - [ ] Learn Region Inference  — `compiler`, from Compilers & Languages — Advanced, concept `region-inference`

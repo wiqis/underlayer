@@ -1,0 +1,35 @@
+
+leaf_riscv64_O0.o:	file format elf64-littleriscv
+
+Disassembly of section .text:
+
+0000000000000000 <leaf>:
+       0: 7139         	addi	sp, sp, -0x40
+       2: fc06         	sd	ra, 0x38(sp)
+       4: f822         	sd	s0, 0x30(sp)
+       6: 0080         	addi	s0, sp, 0x40
+       8: fea43423     	sd	a0, -0x18(s0)
+       c: feb43023     	sd	a1, -0x20(s0)
+      10: fcc43c23     	sd	a2, -0x28(s0)
+      14: fcd43823     	sd	a3, -0x30(s0)
+      18: fce43423     	sd	a4, -0x38(s0)
+      1c: fcf43023     	sd	a5, -0x40(s0)
+      20: fe843583     	ld	a1, -0x18(s0)
+      24: fe043503     	ld	a0, -0x20(s0)
+      28: 20b52533     	sh1add	a0, a0, a1
+      2c: fd843583     	ld	a1, -0x28(s0)
+      30: 20b5a5b3     	sh1add	a1, a1, a1
+      34: 95aa         	add	a1, a1, a0
+      36: fd043503     	ld	a0, -0x30(s0)
+      3a: 20b54533     	sh2add	a0, a0, a1
+      3e: fc843583     	ld	a1, -0x38(s0)
+      42: 20b5c5b3     	sh2add	a1, a1, a1
+      46: 95aa         	add	a1, a1, a0
+      48: fc043503     	ld	a0, -0x40(s0)
+      4c: 20a52533     	sh1add	a0, a0, a0
+      50: 20b52533     	sh1add	a0, a0, a1
+      54: fc040113     	addi	sp, s0, -0x40
+      58: 70e2         	ld	ra, 0x38(sp)
+      5a: 7442         	ld	s0, 0x30(sp)
+      5c: 6121         	addi	sp, sp, 0x40
+      5e: 8082         	ret

@@ -1,0 +1,112 @@
+
+corpus_riscv64_O1.o:	file format elf64-littleriscv
+
+Disassembly of section .text:
+
+0000000000000000 <dot>:
+       0: 4681         	li	a3, 0x0
+       2: 00c05c63     	blez	a2, 0x1a <dot+0x1a>
+       6: 20b64633     	sh2add	a2, a2, a1
+       a: 4118         	lw	a4, 0x0(a0)
+       c: 419c         	lw	a5, 0x0(a1)
+       e: 0591         	addi	a1, a1, 0x4
+      10: 9f5d         	mul	a4, a4, a5
+      12: 9eb9         	addw	a3, a3, a4
+      14: 0511         	addi	a0, a0, 0x4
+      16: fec59ae3     	bne	a1, a2, 0xa <dot+0xa>
+      1a: 8536         	mv	a0, a3
+      1c: 8082         	ret
+
+000000000000001e <max3>:
+      1e: 0aa5e533     	max	a0, a1, a0
+      22: 0aa66533     	max	a0, a2, a0
+      26: 8082         	ret
+
+0000000000000028 <sumld>:
+      28: 4601         	li	a2, 0x0
+      2a: 00b05963     	blez	a1, 0x3c <sumld+0x14>
+      2e: 20a5e5b3     	sh3add	a1, a1, a0
+      32: 6114         	ld	a3, 0x0(a0)
+      34: 0521         	addi	a0, a0, 0x8
+      36: 9636         	add	a2, a2, a3
+      38: feb51de3     	bne	a0, a1, 0x32 <sumld+0xa>
+      3c: 8532         	mv	a0, a2
+      3e: 8082         	ret
+
+0000000000000040 <sw>:
+      40: 4589         	li	a1, 0x2
+      42: 00a5e063     	bltu	a1, a0, 0x42 <sw+0x2>
+
+0000000000000046 <.Lpcrel_hi0>:
+      46: 00000597     	auipc	a1, 0x0
+      4a: 00058593     	mv	a1, a1
+      4e: 20b54533     	sh2add	a0, a0, a1
+      52: 4108         	lw	a0, 0x0(a0)
+      54: 8082         	ret
+      56: 4501         	li	a0, 0x0
+      58: 8082         	ret
+
+000000000000005a <cnt>:
+      5a: cd91         	beqz	a1, 0x76 <cnt+0x1c>
+      5c: 86aa         	mv	a3, a0
+      5e: 4501         	li	a0, 0x0
+      60: 20d5c5bb     	sh2add.uw	a1, a1, a3
+      64: 4298         	lw	a4, 0x0(a3)
+      66: 0691         	addi	a3, a3, 0x4
+      68: 8f31         	xor	a4, a4, a2
+      6a: 00173713     	seqz	a4, a4
+      6e: 9d39         	addw	a0, a0, a4
+      70: feb69ae3     	bne	a3, a1, 0x64 <cnt+0xa>
+      74: 8082         	ret
+      76: 4501         	li	a0, 0x0
+      78: 8082         	ret
+
+000000000000007a <sat>:
+      7a: 00b526b3     	slt	a3, a0, a1
+      7e: 0ac54533     	min	a0, a0, a2
+      82: 0ed57533     	czero.nez	a0, a0, a3
+      86: 0ed5d5b3     	czero.eqz	a1, a1, a3
+      8a: 8d4d         	or	a0, a0, a1
+      8c: 8082         	ret
+
+000000000000008e <mix>:
+      8e: 02a586b3     	mul	a3, a1, a0
+      92: 8d2d         	xor	a0, a0, a1
+      94: 9536         	add	a0, a0, a3
+      96: 9532         	add	a0, a0, a2
+      98: 8082         	ret
+
+000000000000009a <cond>:
+      9a: 9d0d         	subw	a0, a0, a1
+      9c: 40a005bb     	negw	a1, a0
+      a0: 0ab56533     	max	a0, a0, a1
+      a4: 8082         	ret
+
+00000000000000a6 <walk>:
+      a6: 4601         	li	a2, 0x0
+      a8: 00b05d63     	blez	a1, 0xc2 <walk+0x1c>
+      ac: 20a5e5b3     	sh3add	a1, a1, a0
+      b0: 6114         	ld	a3, 0x0(a0)
+      b2: 0521         	addi	a0, a0, 0x8
+      b4: 20d6a733     	sh1add	a4, a3, a3
+      b8: 8689         	srai	a3, a3, 0x2
+      ba: 9636         	add	a2, a2, a3
+      bc: 963a         	add	a2, a2, a4
+      be: feb519e3     	bne	a0, a1, 0xb0 <walk+0xa>
+      c2: 8532         	mv	a0, a2
+      c4: 8082         	ret
+
+00000000000000c6 <popcntish>:
+      c6: 4581         	li	a1, 0x0
+      c8: c519         	beqz	a0, 0xd6 <popcntish+0x10>
+      ca: 00157613     	andi	a2, a0, 0x1
+      ce: 0015551b     	srliw	a0, a0, 0x1
+      d2: 9db1         	addw	a1, a1, a2
+      d4: f97d         	bnez	a0, 0xca <popcntish+0x4>
+      d6: 852e         	mv	a0, a1
+      d8: 8082         	ret
+
+00000000000000da <mul3>:
+      da: 20a52533     	sh1add	a0, a0, a0
+      de: 2501         	sext.w	a0, a0
+      e0: 8082         	ret
