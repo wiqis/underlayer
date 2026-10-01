@@ -1,6 +1,243 @@
 # Underlayer Course Roadmap
 
+**Restructured 2026-10-01. The 738 items below are unchanged.** No item was
+added, removed, merged into another bullet, reworded, or re-ticked. What
+changed is that the 678 un-started items are now grouped into **14 planned
+courses** instead of 35 flat topic sections, and every one of them names the
+course that will teach it. `python3 tools/todo_check.py` proves the set of item
+titles is identical to the pre-restructure file and exits non-zero if it is not.
+
+## What is in this document
+
+| Part | What | Items |
+|---|---|---|
+| 1 — Completed | Built courses. Unchanged headings, annotations and provenance. | 60 |
+| 2 — Planned | 14 planned courses, each named, sized and traceable. | 678 |
+
+---
+
+## The shape of the remaining work
+
+### The 14 planned courses
+
+| # | Planned course | Slug | Items | Roadmap sections it absorbs |
+|---|---|---|---|---|
+| 1 | Operating Systems, Processes and Virtualization | `os` | 64 | Operating Systems (27); Runtime & Process Internals (14); Virtualization (20); Boot & Startup (3 of 13) |
+| 2 | Hardware, Firmware and the Boot Path | `hwboot` | 39 | Firmware & Embedded Systems (17 of 18); Boot & Startup (10 of 13); Hardware Interfaces (12) |
+| 3 | Memory Systems, Concurrency and Machine Arithmetic | `memconc` | 60 | Memory (27); Concurrency (20); Mathematics for Systems (11 of 13); Firmware & Embedded Systems (1 of 18); System Design at the Lowest Level (1 of 16) |
+| 4 | Filesystems, Version Control and Replication | `storage` | 44 | Filesystems (21); Source Control Internals (10); Distributed & Networked Storage (12); Binary Formats & File Formats — Git object database (1 of 41) |
+| 5 | Networking and Network Protocols | `network` | 52 | Networking (28); Network Protocols (23); Binary Formats & File Formats — PCAP packet captures (1 of 41) |
+| 6 | Cryptography and Security Internals | `crypto` | 53 | Cryptography (31); Security Internals (21); Binary Formats & File Formats — X.509 certificates (1 of 41) |
+| 7 | Text, Compression, Archives and Serialization | `encodings` | 59 | Unicode & Text (10); Compression & Encoding (16); Binary Formats & File Formats — archives (5 of 41); Binary Formats & File Formats — text and serialization formats (12 of 41); Protocol & Serialization Design (14); Mathematics for Systems (2 of 13) |
+| 8 | Compilers, Languages and Build Systems | `compiler` | 67 | Compilers (31); Compilers & Languages — Advanced (21); Build Systems & Toolchains (15) |
+| 9 | Virtual Machines, Runtimes and Language Internals | `vm` | 63 | Language Runtimes (19); JVM (17); WebAssembly (12); Programming Language Internals (15) |
+| 10 | Data Structure and Database Internals | `data` | 41 | Databases & Storage Engines (21); Data Structures & Algorithms — Deep Internals (18); Binary Formats & File Formats — SQLite and Berkeley DB (2 of 41) |
+| 11 | Graphics, Images and Page Description | `graphics` | 29 | Graphics (20); Binary Formats & File Formats — image and page formats (9 of 41) |
+| 12 | Audio, Video and Media Containers | `media` | 31 | Audio & Video (22); Binary Formats & File Formats — audio and video containers (9 of 41) |
+| 13 | Debugging, Observability and Systems I/O | `debugio` | 46 | Debugging & Observability (19); Binary Formats & File Formats — PDB (1 of 41); System Design at the Lowest Level (15 of 16); Terminals & Shells (11) |
+| 14 | Distributed Systems, Clocks and Consistency | `distsys` | 30 | Distributed Systems (21); Time & Clocks (9) |
+| | **Total** | | **678** | 35 sections, all of them |
+
+### Why 14 courses and not 35
+
+A course is not a folder of pages. Each one costs a `chemical.mod`, a
+`manifest.json`, a build entry point, a `tools/verify_<course>.py`, a
+`crosscheck.py` harness with its recorded output, a landing page, a route,
+a verifier pass and a commit that has to stay green. That overhead is paid
+**per course**, and it is the part an AI agent pays over and over while
+trying to finish a roadmap.
+
+Read as one-course-per-item, the 678 un-started items ask for 678 builds,
+678 verifiers and 678 harnesses. Read as 14 courses, they ask for 14. The
+item count is identical; only the number of times the fixed cost is paid
+changes. That is the whole argument, and it is the founder's: *"we want to
+teach less courses, but teach everything still, NOT miss anything, this way
+AIs would be able to complete the courses faster."*
+
+35 sections became 14 courses. Nothing was dropped to get there.
+
+### The size target, and the arithmetic behind it
+
+The 33 built course directories run **4 to 24 concepts** (`elf`, `pe` and
+`macho` at 24; `coff`, `obj` and `jvm` at 18; `rvpriv` at 4), excluding `hat`,
+which is a 69-concept test-prep course and not part of this comparison. The
+target set here was
+**roughly 48 roadmap items per course: mean 48.4, range 29–67.**
+
+The honest consequence has to be stated. Converting roadmap items into
+concepts using the ratio measured on the built courses:
+
+| Built course group | `[x]` items | concepts | concepts/item |
+|---|---|---|---|
+| x86-64 (`x86asm`+`x86abi`+`x86sys`+`x86simd`) | 20 | 26 | 1.3 |
+| AArch64 (`a64asm`+`a64abi`+`a64sys`+`a64simd`) | 10 | 21 | 2.1 |
+| RISC-V (`rvasm`+`rvabi`+`rvpriv`+`rvat`) | 9 | 17 | 1.9 |
+
+At 1.3–2.1 concepts per item, a 48-item planned course is **60–100
+concepts**, which is 3–4x the largest course ever built. So a planned course
+here is explicitly **not one build**. It is a landing page, one manifest, one
+verifier and one harness covering 3–5 modules built and committed separately,
+each module landing as its own concept set with its own harness checks. That
+is where the saving comes from: the per-course overhead is paid once, and the
+per-concept work is still committed in reviewable pieces.
+
+The alternative was rejected by arithmetic, not by taste. To stay at or
+below 24 concepts a course can hold at most 16 roadmap items, which over 678
+items is **at least 43 courses** — more courses than the 35 sections being
+merged away, so it defeats the instruction instead of serving it. 14 is the
+number where the per-course cost is paid once per *subject* instead of once
+per *line of a checklist*. A further split into modules, not courses, gets the
+size back down without paying that cost again.
+
+### Grouping rules applied
+
+Grouped by **subject coherence**, not by section boundary. The 35 sections
+were written as topics; a course has to be finishable on its own.
+
+Merged without hesitation, because the concepts correspond:
+
+- **Image and page formats with graphics.** PNG, JPEG, GIF, WebP, AVIF, TIFF,
+  SVG, PDF and PostScript are all encoders and decoders over a pixel or a
+  page; a learner who has rasterised a triangle and sampled a texture meets
+  a scanline filter as the next step of the same problem, not a new subject.
+- **Audio/video formats and containers together.** WAV, AIFF, FLAC, Ogg,
+  Matroska, MP3, MP4, MPEG-TS and MPEG-PS each sit next to their codec in the
+  same course: a container is taught as the box the codec's output is put in.
+- **Archive formats with compression.** ZIP, GZIP, TAR, 7z and RAR are
+  DEFLATE, LZ77, Huffman and a directory table — containers over the
+  compression course, not separate subjects.
+- **Cryptography with security internals.** An AEAD tag, a stack canary and
+  an ASLR base are the same threat model. Splitting them teaches a
+  primitive and its use-apart.
+- **The compilers sections with each other, and with build systems.** Lexing
+  through codegen, then type systems and metaprogramming, then Make/Ninja/
+  CMake/cross-compilation is one chain: the parts of a toolchain, in the order
+  a toolchain runs them.
+- **The OS sections with each other.** Kernel, processes, `fork`/`exec`,
+  handles, loaders and virtualisation are one subject seen at three layers.
+- **Runtimes, the JVM, WebAssembly and language internals.** All four are a
+  language's runtime and object layout in four vocabularies — and `wasm`+
+  `jvm` are already merged on the built side by `docs/course-merge-plan.md`.
+- **Distributed systems with clocks.** Logical clocks, vector clocks and NTP
+  are the same first chapter of a distributed-systems course.
+
+Deliberately **not** merged, as traps:
+
+- **Not merged by size.** `graphics` (29) and `media` (31) are neighbours in
+  the table and stayed apart; a reader finishing one does not want the other.
+  `compiler` is 67 because the chain is long, not because nothing else was
+  left.
+- **Not merged for tidiness.** Databases keep their own course even at 41
+  items; `sqlite`/`berkeleydb` were pulled out of the flat format list into it
+  rather than scattered across a formats course that no longer exists.
+- **`data` holds hash tables, B-trees, B+ trees, Bloom filters, LSM trees and
+  query planners together** because those are the *same* structures in their
+  engine role and in their own right. Four titles in this roadmap are literal
+  duplicates across the two lists it absorbs, so a course that taught them
+  twice would be worse than one that teaches them once and shows both uses.
+
+### Sections that were split, and why
+
+Four of the 35 sections were cut. Every other section moved whole.
+
+| Section | Split into | Why |
+|---|---|---|
+| Binary Formats & File Formats — 41 un-started items across 8 courses; its 7 `[x]` items stay in Part 1 | `graphics` (9), `media` (9), `encodings` (17), `data` (2), `storage`, `network`, `crypto`, `debugio` (1 each) | This is not one subject, it is a list. 41 items with images, audio, archives, serialization, certificates, packet captures and a Git object database in it is a table of contents, not a course outline. Each format went to the course that already teaches the machinery it is a format of. |
+| Mathematics for Systems (13) | `memconc` (11), `encodings` (2) | Two different audiences. Representation and arithmetic (two's complement, fixed point, IEEE 754, bit manipulation, modular arithmetic, probability of a race) belong with memory and concurrency; information theory and Shannon entropy are the *definition* of a compression course and read as an unexplained prerequisite anywhere else. |
+| Boot & Startup (13) | `hwboot` (10), `os` (3) | The section has a hinge in it. UEFI → `EFI_STUB` → kernel entry is firmware; kernel initialisation, PID 1 and system startup are the first three things `os` teaches. Putting PID 1 in a firmware course would be wrong in both directions. |
+| Firmware & Embedded Systems (18) | `hwboot` (17), `memconc` (1) | `Memory-Mapped I/O` is memory access, and the memory course already owns `Memory-Mapped Files`. Splitting it keeps both courses internally consistent; the firmware course still teaches UART, SPI, I²C, timers and DMA, which are all memory-mapped registers. |
+
+### Titles that appear on two roadmap lines
+
+Sixteen titles in this roadmap sit on two roadmap lines each, and one more is
+a near-duplicate. All of them are kept — both lines, `- [ ]` or `- [x]`, as
+they were. What changed is that each duplicate now names where it is taught
+instead of looking like an accident. The sixteen exact duplicates are in the
+first thirteen rows; the last row is the near-duplicate.
+
+| Title | Lines | Handling |
+|---|---|---|
+| Learn B-Trees / Learn B+ Trees / Learn Bloom Filters / Learn Lock-Free Data Structures | Databases & Storage Engines; Data Structures & Algorithms | One concept each, annotated on both lines. Same concept, two roadmap lines. |
+| Learn Rasterization | Graphics — two consecutive lines | One concept `rasterization`. Same concept, two roadmap lines. |
+| Learn Bootloaders | Firmware & Embedded Systems; Boot & Startup | One concept `bootloaders` in `hwboot`. |
+| Learn DMA | Firmware & Embedded Systems; Hardware Interfaces | One concept `dma` in `hwboot`. |
+| Learn Memory-Mapped I/O | Firmware & Embedded Systems; System Design at the Lowest Level | One concept `mmio` in `memconc`. |
+| Learn Secure Boot | Security Internals; Boot & Startup | Taught in `hwboot` (it is a firmware measurement chain); `crypto` keeps the line for the attack surface. |
+| Learn Consistent Hashing | Distributed Systems; Distributed & Networked Storage | Taught in `distsys`; `storage` keeps the line for its use in object storage. |
+| Learn Stack Unwinding | Debugging & Observability; Language Runtimes | Taught in `debugio`; `vm` keeps the line for its use in exception handling. |
+| Learn Deadlocks | Operating Systems; Concurrency | Taught in `os`; `memconc` keeps the line for user-space deadlock. |
+| Learn Coroutines | Language Runtimes; Concurrency | Taught in `vm`; `memconc` keeps the line for user-space use. |
+| Learn NTP | Network Protocols; Time & Clocks | Wire protocol in `network`; clock synchronisation in `distsys`. |
+| Learn Entropy | Cryptography; Mathematics for Systems | Cryptographic entropy in `crypto`; Shannon entropy in `encodings`. |
+| Learn WebAssembly Binary Format | `[x]` under Binary Formats; `[ ]` under WebAssembly | The `[ ]` line is already satisfied by the built `wasm` course (`wasm-header`, `wasm-sections`, `wasm-leb128`). Both lines stay. |
+| Learn JVM Class File Format / Learn JVM Class Files | `[x]` under Binary Formats; `[ ]` under JVM | The `[ ]` line is already satisfied by the built `jvm` course (`jvm-header`, `jvm-constant-pool`, `jvm-code`). Both lines stay. |
+
+### How to read an annotation
+
+Shown here without the leading checkbox so the example is not itself parsed
+as a roadmap item:
+
+```
+Learn jemalloc  — `memconc`, from Memory, concept `jemalloc`
+Learn PNG — Portable Network Graphics  — `graphics`, from Binary Formats & File Formats, concept `png`
+Learn DMA  — `hwboot`, from Hardware Interfaces, concept `dma`. same concept; this line duplicates the Firmware & Embedded Systems one
+```
+
+`— \`<slug>\`` is the planned course. `from <section>` is where the line came
+from, so a reader can still find the section it used to live under. `concept
+\`<id>\`` is the **proposed** concept id. Concept ids are *proposed, not
+registered* — a concept gets a real id when its course is built, and the
+proposal here is the id that build is expected to take. They are generated
+from the item title by one rule, so they are reproducible and comparable
+rather than hand-picked:
+
+> strip a leading `Learn `, lowercase, replace every run of non-alphanumeric
+> characters with a single `-`, trim leading and trailing `-`.
+
+Two short override tables handle the cases the rule mangles. The first is
+keyed by the item title, for the six where the rule cannot tell C from C++
+(`C++ ABI` → `cpp-abi`; `C ABI` stays `c-abi`). The second is keyed by the
+slug the rule produced, for spelling (`H.265 / HEVC` → `hevc`, `ext4` →
+`ext4` not `ext-4`, `Memory-Mapped I/O` → `mmio`). No id is assigned by
+guessing what the concept will contain.
+
+### The machine check
+
+```bash
+python3 tools/todo_check.py            # exits 0 only if nothing moved
+python3 tools/todo_check.py --against docs/courses-todo.md.before  # diff two revisions
+```
+
+It verifies, and exits non-zero on any failure:
+
+1. total items 738, checked 60, unchecked 678
+2. every `- [ ]`/`- [x]` line is well formed
+3. the **multiset** of item titles, sorted, hashes to the value recorded
+   when the restructure was made — so no item added, dropped, reworded,
+   re-ticked, or merged into another bullet
+4. the 60 `[x]` titles are still exactly the same 60
+5. every unchecked line carries an annotation naming one of the 14 slugs
+6. the per-slug counts on the lines are 64/39/60/44/52/53/59/67/63/41/29/
+   31/46/30 and sum to 678, matching the summary table above
+
+The multiset, not the set: sixteen titles appear on two lines each, so a
+check that deduplicated would pass while a line had been silently deleted.
+
+---
+
+# Part 1 — completed work (60 items, unchanged)
+
+Every line below is what it was before the restructure, under the heading it
+already had. The 60 `[x]` items and the courses that teach them were
+deliberately left alone — `docs/course-merge-plan.md` records that decision
+separately and this restructure does not touch it. The only text added under a
+heading is one sentence, under the first, pointing at where its un-started
+siblings went.
 ## Binary Formats & File Formats
+
+Its 41 un-started items moved into the planned courses in Part 2, each
+to the course that already teaches the machinery it is a format of. The
+seven `[x]` lines below did not move.
 
 - [x] Learn ELF — Executable and Linkable Format
 - [x] Learn PE — Portable Executable Format
@@ -9,48 +246,6 @@
 - [x] Learn COFF — Common Object File Format
 - [x] Learn WebAssembly Binary Format
 - [x] Learn JVM Class File Format
-- [ ] Learn .NET Assembly Metadata and PE Format
-- [ ] Learn PDB — Program Database Format
-- [ ] Learn PDF — Portable Document Format
-- [ ] Learn PostScript
-- [ ] Learn SVG — Scalable Vector Graphics
-- [ ] Learn PNG — Portable Network Graphics
-- [ ] Learn JPEG — JPEG Image Format
-- [ ] Learn GIF — Graphics Interchange Format
-- [ ] Learn WebP
-- [ ] Learn AVIF
-- [ ] Learn TIFF
-- [ ] Learn WAV — Waveform Audio File Format
-- [ ] Learn AIFF — Audio Interchange File Format
-- [ ] Learn FLAC — Free Lossless Audio Codec Format
-- [ ] Learn Ogg and Ogg Containers
-- [ ] Learn Matroska — MKV
-- [ ] Learn MP3 File Format
-- [ ] Learn MP4 — ISO Base Media File Format
-- [ ] Learn MPEG Transport Stream
-- [ ] Learn MPEG Program Stream
-- [ ] Learn ZIP File Format
-- [ ] Learn GZIP File Format
-- [ ] Learn TAR Archive Format
-- [ ] Learn 7z Archive Format
-- [ ] Learn RAR Archive Format
-- [ ] Learn Git Object Database
-- [ ] Learn SQLite Database File Format
-- [ ] Learn Berkeley DB File Format
-- [ ] Learn PCAP Packet Capture Format
-- [ ] Learn DNS Zone File Format
-- [ ] Learn MIME and Internet Media Types
-- [ ] Learn X.509 Certificate Format
-- [ ] Learn ASN.1
-- [ ] Learn DER Encoding
-- [ ] Learn BER Encoding
-- [ ] Learn CBOR
-- [ ] Learn MessagePack
-- [ ] Learn Protocol Buffers Encoding
-- [ ] Learn BSON
-- [ ] Learn FlatBuffers Binary Format
-- [ ] Learn Cap'n Proto Encoding
-
 
 ## Executables, Linking & Loading
 
@@ -61,7 +256,6 @@
 - [x] Learn Dynamic Linking and Shared Libraries
 - [x] Learn Executable Images and OS Loading
 - [x] Learn Executable Security and Hardening
-
 
 ## CPU Architecture
 
@@ -97,7 +291,6 @@
 - [x] Learn x86-64 Debug Registers
 - [x] Learn x86-64 Performance Monitoring
 
-
 ## ARM64
 
 - [x] Learn AArch64 Assembly
@@ -129,7 +322,6 @@
       hinge into the ELF courses: `sh_addralign` carries the 2 MiB
       requirement and the ADRP+LO12 pair is read from an object file, both by
       two parsers that agree. No timings anywhere in this course.
-
 
 ## RISC-V
 
@@ -220,779 +412,789 @@
        two scope lists at 9 cannot-conclude against 11 can-conclude -- the
        second being the longer one IS the finding.
 
+---
+
+# Part 2 — the 14 planned courses (678 items)
+
+Every course below is **planned**, not built: no directory, `manifest.json`,
+verifier or harness exists for any of them. The slug is the course id a build
+is expected to use, and the concept id on each line is the concept that build
+is expected to create. Both are proposals; the roadmap items themselves are
+not.
+
+## Planned course 1 of 14 — Operating Systems, Processes and Virtualization
+
+Slug `os`. **64 items.**
+
+Absorbs **Operating Systems** (27 items), **Runtime & Process Internals** (14 items), **Virtualization** (20 items), **Boot & Startup** (3 of 13 items).
+
+- [ ] Learn Operating Systems From First Principles  — `os`, from Operating Systems, concept `operating-systems-from-first-principles`
+- [ ] Learn Processes  — `os`, from Operating Systems, concept `processes`
+- [ ] Learn Threads  — `os`, from Operating Systems, concept `threads`
+- [ ] Learn Scheduling  — `os`, from Operating Systems, concept `scheduling`
+- [ ] Learn Context Switching  — `os`, from Operating Systems, concept `context-switching`
+- [ ] Learn System Calls  — `os`, from Operating Systems, concept `system-calls`
+- [ ] Learn User Mode and Kernel Mode  — `os`, from Operating Systems, concept `user-mode-and-kernel-mode`
+- [ ] Learn Interrupts  — `os`, from Operating Systems, concept `interrupts`
+- [ ] Learn Exceptions  — `os`, from Operating Systems, concept `exceptions`
+- [ ] Learn Kernel Entry and Exit  — `os`, from Operating Systems, concept `kernel-entry-and-exit`
+- [ ] Learn Inter-Process Communication  — `os`, from Operating Systems, concept `ipc`
+- [ ] Learn Pipes  — `os`, from Operating Systems, concept `pipes`
+- [ ] Learn Shared Memory  — `os`, from Operating Systems, concept `shared-memory`
+- [ ] Learn Signals  — `os`, from Operating Systems, concept `signals`
+- [ ] Learn Synchronization  — `os`, from Operating Systems, concept `synchronization`
+- [ ] Learn Mutexes  — `os`, from Operating Systems, concept `mutexes`
+- [ ] Learn Semaphores  — `os`, from Operating Systems, concept `semaphores`
+- [ ] Learn Condition Variables  — `os`, from Operating Systems, concept `condition-variables`
+- [ ] Learn Futexes  — `os`, from Operating Systems, concept `futexes`
+- [ ] Learn Deadlocks  — `os`, from Operating Systems, concept `deadlocks`
+- [ ] Learn Kernel Memory Management  — `os`, from Operating Systems, concept `kernel-memory-management`
+- [ ] Learn Kernel Virtual Memory  — `os`, from Operating Systems, concept `kernel-virtual-memory`
+- [ ] Learn Kernel Modules  — `os`, from Operating Systems, concept `kernel-modules`
+- [ ] Learn Device Drivers  — `os`, from Operating Systems, concept `device-drivers`
+- [ ] Learn Linux Kernel Architecture  — `os`, from Operating Systems, concept `linux-kernel-architecture`
+- [ ] Learn Windows NT Architecture  — `os`, from Operating Systems, concept `windows-nt-architecture`
+- [ ] Learn macOS and XNU Architecture  — `os`, from Operating Systems, concept `macos-and-xnu-architecture`
+- [ ] Learn Process Creation  — `os`, from Runtime & Process Internals, concept `process-creation`
+- [ ] Learn fork()  — `os`, from Runtime & Process Internals, concept `fork`
+- [ ] Learn exec()  — `os`, from Runtime & Process Internals, concept `exec`
+- [ ] Learn Windows Process Creation  — `os`, from Runtime & Process Internals, concept `windows-process-creation`
+- [ ] Learn Unix File Descriptors  — `os`, from Runtime & Process Internals, concept `unix-file-descriptors`
+- [ ] Learn Windows Handles  — `os`, from Runtime & Process Internals, concept `windows-handles`
+- [ ] Learn Unix Signals  — `os`, from Runtime & Process Internals, concept `unix-signals`
+- [ ] Learn Windows Structured Exception Handling  — `os`, from Runtime & Process Internals, concept `windows-structured-exception-handling`
+- [ ] Learn Unix Dynamic Loading  — `os`, from Runtime & Process Internals, concept `unix-dynamic-loading`
+- [ ] Learn Windows DLL Loading  — `os`, from Runtime & Process Internals, concept `windows-dll-loading`
+- [ ] Learn macOS Dynamic Loading  — `os`, from Runtime & Process Internals, concept `macos-dynamic-loading`
+- [ ] Learn Environment Variables Internals  — `os`, from Runtime & Process Internals, concept `environment-variables-internals`
+- [ ] Learn Process Environment Blocks  — `os`, from Runtime & Process Internals, concept `process-environment-blocks`
+- [ ] Learn Thread-Local Storage Internals  — `os`, from Runtime & Process Internals, concept `thread-local-storage-internals`
+- [ ] Learn Virtual Machines From First Principles  — `os`, from Virtualization, concept `virtual-machines-from-first-principles`
+- [ ] Learn Hardware Virtualization  — `os`, from Virtualization, concept `hardware-virtualization`
+- [ ] Learn Intel VT-x  — `os`, from Virtualization, concept `intel-vt-x`
+- [ ] Learn AMD-V  — `os`, from Virtualization, concept `amd-v`
+- [ ] Learn ARM Virtualization  — `os`, from Virtualization, concept `arm-virtualization`
+- [ ] Learn Hypervisors  — `os`, from Virtualization, concept `hypervisors`
+- [ ] Learn Type-1 Hypervisors  — `os`, from Virtualization, concept `type-1-hypervisors`
+- [ ] Learn Type-2 Hypervisors  — `os`, from Virtualization, concept `type-2-hypervisors`
+- [ ] Learn Virtual CPUs  — `os`, from Virtualization, concept `virtual-cpus`
+- [ ] Learn Virtual Memory in Hypervisors  — `os`, from Virtualization, concept `virtual-memory-in-hypervisors`. X86-64 and AArch64 page tables are already taught by `x86sys` and `a64sys`; this line is the second-level map a VMM maintains
+- [ ] Learn Virtual I/O  — `os`, from Virtualization, concept `virtual-io`
+- [ ] Learn Device Emulation  — `os`, from Virtualization, concept `device-emulation`
+- [ ] Learn VirtIO  — `os`, from Virtualization, concept `virtio`
+- [ ] Learn QEMU Internals  — `os`, from Virtualization, concept `qemu-internals`
+- [ ] Learn KVM  — `os`, from Virtualization, concept `kvm`
+- [ ] Learn Containers From First Principles  — `os`, from Virtualization, concept `containers-from-first-principles`
+- [ ] Learn Linux Containers  — `os`, from Virtualization, concept `linux-containers`
+- [ ] Learn Namespaces  — `os`, from Virtualization, concept `namespaces`. Linux namespaces as a security boundary are in `crypto`; this line is their use in a container
+- [ ] Learn cgroups  — `os`, from Virtualization, concept `cgroups`
+- [ ] Learn Overlay Filesystems  — `os`, from Virtualization, concept `overlay-filesystems`. Union-mount semantics are taught here; on-disk structures are in `storage`
+- [ ] Learn Kernel Initialization  — `os`, from Boot & Startup, concept `kernel-initialization`
+- [ ] Learn Process 1  — `os`, from Boot & Startup, concept `process-1`
+- [ ] Learn System Initialization  — `os`, from Boot & Startup, concept `system-initialization`
+
+## Planned course 2 of 14 — Hardware, Firmware and the Boot Path
+
+Slug `hwboot`. **39 items.**
+
+Absorbs **Firmware & Embedded Systems** (17 of 18 items), **Boot & Startup** (10 of 13 items), **Hardware Interfaces** (12 items).
+
+- [ ] Learn Embedded Systems From First Principles  — `hwboot`, from Firmware & Embedded Systems, concept `embedded-systems-from-first-principles`
+- [ ] Learn Microcontrollers  — `hwboot`, from Firmware & Embedded Systems, concept `microcontrollers`
+- [ ] Learn Interrupt Controllers  — `hwboot`, from Firmware & Embedded Systems, concept `interrupt-controllers`
+- [ ] Learn Timers  — `hwboot`, from Firmware & Embedded Systems, concept `timers`
+- [ ] Learn UART  — `hwboot`, from Firmware & Embedded Systems, concept `uart`
+- [ ] Learn SPI  — `hwboot`, from Firmware & Embedded Systems, concept `spi`
+- [ ] Learn I2C  — `hwboot`, from Firmware & Embedded Systems, concept `i2c`
+- [ ] Learn GPIO  — `hwboot`, from Firmware & Embedded Systems, concept `gpio`
+- [ ] Learn DMA  — `hwboot`, from Firmware & Embedded Systems, concept `dma`
+- [ ] Learn ADC and DAC  — `hwboot`, from Firmware & Embedded Systems, concept `adc-and-dac`
+- [ ] Learn Bootloaders  — `hwboot`, from Firmware & Embedded Systems, concept `bootloaders`
+- [ ] Learn Embedded Linker Scripts  — `hwboot`, from Firmware & Embedded Systems, concept `embedded-linker-scripts`
+- [ ] Learn Firmware Images  — `hwboot`, from Firmware & Embedded Systems, concept `firmware-images`
+- [ ] Learn ARM Cortex-M  — `hwboot`, from Firmware & Embedded Systems, concept `arm-cortex-m`
+- [ ] Learn RTOS Architecture  — `hwboot`, from Firmware & Embedded Systems, concept `rtos-architecture`
+- [ ] Learn Real-Time Scheduling  — `hwboot`, from Firmware & Embedded Systems, concept `real-time-scheduling`
+- [ ] Learn Embedded Debugging  — `hwboot`, from Firmware & Embedded Systems, concept `embedded-debugging`
+- [ ] Learn Computer Boot From Power-On  — `hwboot`, from Boot & Startup, concept `computer-boot-from-power-on`
+- [ ] Learn BIOS  — `hwboot`, from Boot & Startup, concept `bios`
+- [ ] Learn UEFI  — `hwboot`, from Boot & Startup, concept `uefi`
+- [ ] Learn UEFI Boot Process  — `hwboot`, from Boot & Startup, concept `uefi-boot-process`
+- [ ] Learn Bootloaders  — `hwboot`, from Boot & Startup, concept `bootloaders`. Same concept; the other line of the pair is from Firmware & Embedded Systems
+- [ ] Learn Multiboot  — `hwboot`, from Boot & Startup, concept `multiboot`
+- [ ] Learn Linux Boot Process  — `hwboot`, from Boot & Startup, concept `linux-boot-process`
+- [ ] Learn Windows Boot Process  — `hwboot`, from Boot & Startup, concept `windows-boot-process`
+- [ ] Learn macOS Boot Process  — `hwboot`, from Boot & Startup, concept `macos-boot-process`
+- [ ] Learn Secure Boot  — `hwboot`, from Boot & Startup, concept `secure-boot`
+- [ ] Learn PCI Express  — `hwboot`, from Hardware Interfaces, concept `pcie`
+- [ ] Learn USB  — `hwboot`, from Hardware Interfaces, concept `usb`
+- [ ] Learn USB Device Enumeration  — `hwboot`, from Hardware Interfaces, concept `usb-device-enumeration`
+- [ ] Learn USB Descriptors  — `hwboot`, from Hardware Interfaces, concept `usb-descriptors`
+- [ ] Learn NVMe  — `hwboot`, from Hardware Interfaces, concept `nvme`
+- [ ] Learn SATA  — `hwboot`, from Hardware Interfaces, concept `sata`
+- [ ] Learn AHCI  — `hwboot`, from Hardware Interfaces, concept `ahci`
+- [ ] Learn Bluetooth  — `hwboot`, from Hardware Interfaces, concept `bluetooth`
+- [ ] Learn Wi-Fi From First Principles  — `hwboot`, from Hardware Interfaces, concept `wi-fi-from-first-principles`
+- [ ] Learn IOMMU  — `hwboot`, from Hardware Interfaces, concept `iommu`
+- [ ] Learn DMA  — `hwboot`, from Hardware Interfaces, concept `dma`. Same concept; the other line of the pair is from Firmware & Embedded Systems
+- [ ] Learn Interrupts and MSI-X  — `hwboot`, from Hardware Interfaces, concept `msix-interrupts`
+
+## Planned course 3 of 14 — Memory Systems, Concurrency and Machine Arithmetic
+
+Slug `memconc`. **60 items.**
+
+Absorbs **Memory** (27 items), **Concurrency** (20 items), **Mathematics for Systems** (11 of 13 items), **Firmware & Embedded Systems** (1 of 18 items), **System Design at the Lowest Level** (1 of 16 items).
+
+- [ ] Learn Virtual Memory  — `memconc`, from Memory, concept `virtual-memory`. X86-64 and AArch64 paging are already taught by `x86sys` and `a64sys`
+- [ ] Learn Physical Memory  — `memconc`, from Memory, concept `physical-memory`
+- [ ] Learn Page Tables  — `memconc`, from Memory, concept `page-tables`. X86-64 and AArch64 page tables are already taught by `x86sys` and `a64sys`
+- [ ] Learn Multi-Level Page Tables  — `memconc`, from Memory, concept `multi-level-page-tables`
+- [ ] Learn Memory Mapping  — `memconc`, from Memory, concept `memory-mapping`
+- [ ] Learn Memory Protection  — `memconc`, from Memory, concept `memory-protection`. X86-64 and AArch64 protection are already taught by `x86sys` and `a64sys`
+- [ ] Learn Memory-Mapped Files  — `memconc`, from Memory, concept `memory-mapped-files`
+- [ ] Learn Copy-on-Write  — `memconc`, from Memory, concept `copy-on-write`
+- [ ] Learn Demand Paging  — `memconc`, from Memory, concept `demand-paging`
+- [ ] Learn Page Faults  — `memconc`, from Memory, concept `page-faults`
+- [ ] Learn Huge Pages  — `memconc`, from Memory, concept `huge-pages`
+- [ ] Learn Memory Allocators  — `memconc`, from Memory, concept `memory-allocators`
+- [ ] Learn malloc  — `memconc`, from Memory, concept `malloc`
+- [ ] Learn jemalloc  — `memconc`, from Memory, concept `jemalloc`
+- [ ] Learn mimalloc  — `memconc`, from Memory, concept `mimalloc`
+- [ ] Learn Garbage Collection  — `memconc`, from Memory, concept `garbage-collection`
+- [ ] Learn Mark-and-Sweep Garbage Collection  — `memconc`, from Memory, concept `mark-and-sweep-garbage-collection`
+- [ ] Learn Generational Garbage Collection  — `memconc`, from Memory, concept `generational-garbage-collection`
+- [ ] Learn Concurrent Garbage Collection  — `memconc`, from Memory, concept `concurrent-garbage-collection`
+- [ ] Learn Reference Counting  — `memconc`, from Memory, concept `reference-counting`
+- [ ] Learn Region-Based Memory Management  — `memconc`, from Memory, concept `region-based-memory-management`
+- [ ] Learn Stack Allocation  — `memconc`, from Memory, concept `stack-allocation`
+- [ ] Learn Heap Allocation  — `memconc`, from Memory, concept `heap-allocation`
+- [ ] Learn Memory Fragmentation  — `memconc`, from Memory, concept `memory-fragmentation`
+- [ ] Learn Memory Arenas  — `memconc`, from Memory, concept `memory-arenas`
+- [ ] Learn Slab Allocators  — `memconc`, from Memory, concept `slab-allocators`
+- [ ] Learn Lock-Free Memory Reclamation  — `memconc`, from Memory, concept `lock-free-memory-reclamation`
+- [ ] Learn Concurrency From First Principles  — `memconc`, from Concurrency, concept `concurrency-from-first-principles`
+- [ ] Learn Threads and Processes  — `memconc`, from Concurrency, concept `threads-and-processes`
+- [ ] Learn Race Conditions  — `memconc`, from Concurrency, concept `race-conditions`
+- [ ] Learn Mutual Exclusion  — `memconc`, from Concurrency, concept `mutual-exclusion`
+- [ ] Learn Lock-Free Programming  — `memconc`, from Concurrency, concept `lock-free-programming`
+- [ ] Learn Atomic Operations  — `memconc`, from Concurrency, concept `atomic-operations`. The machine-level primitives are already taught by `x86simd`, `a64simd` and `rvat`
+- [ ] Learn Compare-and-Swap  — `memconc`, from Concurrency, concept `compare-and-swap`
+- [ ] Learn Memory Models  — `memconc`, from Concurrency, concept `memory-models`. The machine-level ordering is already taught by `x86simd`, `a64simd` and `rvat`
+- [ ] Learn Sequential Consistency  — `memconc`, from Concurrency, concept `sequential-consistency`
+- [ ] Learn Acquire and Release Semantics  — `memconc`, from Concurrency, concept `acquire-and-release-semantics`
+- [ ] Learn Data Races  — `memconc`, from Concurrency, concept `data-races`
+- [ ] Learn Deadlocks  — `memconc`, from Concurrency, concept `deadlocks`. Taught in `os`; this line is its use in user-space code
+- [ ] Learn Lock-Free Data Structures  — `memconc`, from Concurrency, concept `lock-free-data-structures`
+- [ ] Learn Wait-Free Algorithms  — `memconc`, from Concurrency, concept `wait-free-algorithms`
+- [ ] Learn Work Stealing  — `memconc`, from Concurrency, concept `work-stealing`
+- [ ] Learn Thread Pools  — `memconc`, from Concurrency, concept `thread-pools`
+- [ ] Learn Event Loops  — `memconc`, from Concurrency, concept `event-loops`
+- [ ] Learn Async I/O  — `memconc`, from Concurrency, concept `async-io`
+- [ ] Learn Coroutines  — `memconc`, from Concurrency, concept `coroutines`. Taught in `vm`; this line is its use in user-space code
+- [ ] Learn Fibers  — `memconc`, from Concurrency, concept `fibers`
+- [ ] Learn Binary Arithmetic  — `memconc`, from Mathematics for Systems, concept `binary-arithmetic`
+- [ ] Learn Two's Complement  — `memconc`, from Mathematics for Systems, concept `twos-complement`
+- [ ] Learn Fixed-Point Arithmetic  — `memconc`, from Mathematics for Systems, concept `fixed-point-arithmetic`
+- [ ] Learn Floating-Point Arithmetic  — `memconc`, from Mathematics for Systems, concept `floating-point-arithmetic`
+- [ ] Learn IEEE 754  — `memconc`, from Mathematics for Systems, concept `ieee-754`
+- [ ] Learn Floating-Point Errors  — `memconc`, from Mathematics for Systems, concept `floating-point-errors`
+- [ ] Learn Numerical Stability  — `memconc`, from Mathematics for Systems, concept `numerical-stability`
+- [ ] Learn Bit Manipulation  — `memconc`, from Mathematics for Systems, concept `bit-manipulation`
+- [ ] Learn Boolean Algebra  — `memconc`, from Mathematics for Systems, concept `boolean-algebra`
+- [ ] Learn Modular Arithmetic  — `memconc`, from Mathematics for Systems, concept `modular-arithmetic`
+- [ ] Learn Probability for Computer Systems  — `memconc`, from Mathematics for Systems, concept `probability-for-computer-systems`
+- [ ] Learn Memory-Mapped I/O  — `memconc`, from Firmware & Embedded Systems, concept `mmio`
+- [ ] Learn Memory-Mapped I/O  — `memconc`, from System Design at the Lowest Level, concept `mmio`. Same concept; the other line of the pair is from Firmware & Embedded Systems
+
+## Planned course 4 of 14 — Filesystems, Version Control and Replication
+
+Slug `storage`. **44 items.**
+
+Absorbs **Filesystems** (21 items), **Source Control Internals** (10 items), **Distributed & Networked Storage** (12 items), **Binary Formats & File Formats — Git object database** (1 of 41 items).
+
+- [ ] Learn Filesystems From First Principles  — `storage`, from Filesystems, concept `filesystems-from-first-principles`
+- [ ] Learn Inodes  — `storage`, from Filesystems, concept `inodes`
+- [ ] Learn File Descriptors  — `storage`, from Filesystems, concept `file-descriptors`
+- [ ] Learn Directory Structures  — `storage`, from Filesystems, concept `directory-structures`
+- [ ] Learn File Permissions  — `storage`, from Filesystems, concept `file-permissions`
+- [ ] Learn File Metadata  — `storage`, from Filesystems, concept `file-metadata`
+- [ ] Learn Journaling Filesystems  — `storage`, from Filesystems, concept `journaling-filesystems`
+- [ ] Learn Copy-on-Write Filesystems  — `storage`, from Filesystems, concept `copy-on-write-filesystems`
+- [ ] Learn Virtual Filesystems  — `storage`, from Filesystems, concept `virtual-filesystems`
+- [ ] Learn Linux VFS  — `storage`, from Filesystems, concept `linux-vfs`
+- [ ] Learn ext4  — `storage`, from Filesystems, concept `ext4`
+- [ ] Learn XFS  — `storage`, from Filesystems, concept `xfs`
+- [ ] Learn Btrfs  — `storage`, from Filesystems, concept `btrfs`
+- [ ] Learn ZFS  — `storage`, from Filesystems, concept `zfs`
+- [ ] Learn NTFS  — `storage`, from Filesystems, concept `ntfs`
+- [ ] Learn APFS  — `storage`, from Filesystems, concept `apfs`
+- [ ] Learn FAT32  — `storage`, from Filesystems, concept `fat32`
+- [ ] Learn exFAT  — `storage`, from Filesystems, concept `exfat`
+- [ ] Learn FUSE  — `storage`, from Filesystems, concept `fuse`
+- [ ] Learn Filesystem Caching  — `storage`, from Filesystems, concept `filesystem-caching`
+- [ ] Learn Filesystem Crash Consistency  — `storage`, from Filesystems, concept `filesystem-crash-consistency`
+- [ ] Learn Git Internals  — `storage`, from Source Control Internals, concept `git-internals`
+- [ ] Learn Git Objects  — `storage`, from Source Control Internals, concept `git-objects`
+- [ ] Learn Git Packfiles  — `storage`, from Source Control Internals, concept `git-packfiles`
+- [ ] Learn Git Index  — `storage`, from Source Control Internals, concept `git-index`
+- [ ] Learn Git References  — `storage`, from Source Control Internals, concept `git-references`
+- [ ] Learn Git Reflogs  — `storage`, from Source Control Internals, concept `git-reflogs`
+- [ ] Learn Git Merge  — `storage`, from Source Control Internals, concept `git-merge`
+- [ ] Learn Git Rebase  — `storage`, from Source Control Internals, concept `git-rebase`
+- [ ] Learn Git Garbage Collection  — `storage`, from Source Control Internals, concept `git-garbage-collection`
+- [ ] Learn Git Transfer Protocol  — `storage`, from Source Control Internals, concept `git-transfer-protocol`
+- [ ] Learn Object Storage  — `storage`, from Distributed & Networked Storage, concept `object-storage`
+- [ ] Learn Distributed Filesystems  — `storage`, from Distributed & Networked Storage, concept `distributed-filesystems`
+- [ ] Learn RAID  — `storage`, from Distributed & Networked Storage, concept `raid`
+- [ ] Learn RAID 0  — `storage`, from Distributed & Networked Storage, concept `raid-0`
+- [ ] Learn RAID 1  — `storage`, from Distributed & Networked Storage, concept `raid-1`
+- [ ] Learn RAID 5  — `storage`, from Distributed & Networked Storage, concept `raid-5`
+- [ ] Learn RAID 6  — `storage`, from Distributed & Networked Storage, concept `raid-6`
+- [ ] Learn RAID 10  — `storage`, from Distributed & Networked Storage, concept `raid-10`
+- [ ] Learn Erasure Coding  — `storage`, from Distributed & Networked Storage, concept `erasure-coding`
+- [ ] Learn Replicated Storage  — `storage`, from Distributed & Networked Storage, concept `replicated-storage`
+- [ ] Learn Consistent Hashing  — `storage`, from Distributed & Networked Storage, concept `consistent-hashing`. Taught in `distsys`; this line is its use in object storage
+- [ ] Learn Content-Addressable Storage  — `storage`, from Distributed & Networked Storage, concept `content-addressable-storage`
+- [ ] Learn Git Object Database  — `storage`, from Binary Formats & File Formats, concept `git-object-database`
+
+## Planned course 5 of 14 — Networking and Network Protocols
+
+Slug `network`. **52 items.**
+
+Absorbs **Networking** (28 items), **Network Protocols** (23 items), **Binary Formats & File Formats — PCAP packet captures** (1 of 41 items).
+
+- [ ] Learn Networking From First Principles  — `network`, from Networking, concept `networking-from-first-principles`
+- [ ] Learn Ethernet  — `network`, from Networking, concept `ethernet`
+- [ ] Learn ARP  — `network`, from Networking, concept `arp`
+- [ ] Learn IPv4  — `network`, from Networking, concept `ipv4`
+- [ ] Learn IPv6  — `network`, from Networking, concept `ipv6`
+- [ ] Learn ICMP  — `network`, from Networking, concept `icmp`
+- [ ] Learn UDP  — `network`, from Networking, concept `udp`
+- [ ] Learn TCP  — `network`, from Networking, concept `tcp`
+- [ ] Learn TCP Connection Establishment  — `network`, from Networking, concept `tcp-connection-establishment`
+- [ ] Learn TCP Congestion Control  — `network`, from Networking, concept `tcp-congestion-control`
+- [ ] Learn TCP Flow Control  — `network`, from Networking, concept `tcp-flow-control`
+- [ ] Learn TCP Retransmission  — `network`, from Networking, concept `tcp-retransmission`
+- [ ] Learn TCP Sockets  — `network`, from Networking, concept `tcp-sockets`
+- [ ] Learn Network Byte Order  — `network`, from Networking, concept `network-byte-order`
+- [ ] Learn DNS  — `network`, from Networking, concept `dns`
+- [ ] Learn DHCP  — `network`, from Networking, concept `dhcp`
+- [ ] Learn NAT  — `network`, from Networking, concept `nat`
+- [ ] Learn Routing  — `network`, from Networking, concept `routing`
+- [ ] Learn IP Fragmentation  — `network`, from Networking, concept `ip-fragmentation`
+- [ ] Learn MTU and Path MTU Discovery  — `network`, from Networking, concept `mtu-and-path-mtu-discovery`
+- [ ] Learn Ethernet Frames  — `network`, from Networking, concept `ethernet-frames`
+- [ ] Learn IP Packets  — `network`, from Networking, concept `ip-packets`
+- [ ] Learn TCP Segments  — `network`, from Networking, concept `tcp-segments`
+- [ ] Learn UDP Datagrams  — `network`, from Networking, concept `udp-datagrams`
+- [ ] Learn Network Packet Capture  — `network`, from Networking, concept `network-packet-capture`
+- [ ] Learn BPF  — `network`, from Networking, concept `bpf`
+- [ ] Learn eBPF  — `network`, from Networking, concept `ebpf`. Tracing with it is `eBPF Tracing` in `debugio`
+- [ ] Learn Network Namespaces  — `network`, from Networking, concept `network-namespaces`
+- [ ] Learn HTTP/1.1  — `network`, from Network Protocols, concept `http-1-1`
+- [ ] Learn HTTP/2  — `network`, from Network Protocols, concept `http-2`
+- [ ] Learn HTTP/3  — `network`, from Network Protocols, concept `http-3`
+- [ ] Learn QUIC  — `network`, from Network Protocols, concept `quic`
+- [ ] Learn WebSocket  — `network`, from Network Protocols, concept `websocket`
+- [ ] Learn TLS 1.2  — `network`, from Network Protocols, concept `tls-1-2`
+- [ ] Learn TLS 1.3  — `network`, from Network Protocols, concept `tls-1-3`
+- [ ] Learn TLS From Cryptographic Primitives  — `network`, from Network Protocols, concept `tls-from-cryptographic-primitives`
+- [ ] Learn How to Implement TLS  — `network`, from Network Protocols, concept `how-to-implement-tls`
+- [ ] Learn SSH Protocol  — `network`, from Network Protocols, concept `ssh-protocol`
+- [ ] Learn SMTP  — `network`, from Network Protocols, concept `smtp`
+- [ ] Learn IMAP  — `network`, from Network Protocols, concept `imap`
+- [ ] Learn POP3  — `network`, from Network Protocols, concept `pop3`
+- [ ] Learn FTP  — `network`, from Network Protocols, concept `ftp`
+- [ ] Learn SFTP  — `network`, from Network Protocols, concept `sftp`
+- [ ] Learn NTP  — `network`, from Network Protocols, concept `ntp`. The NTP wire protocol is taught here; clock synchronisation is taught in `distsys`
+- [ ] Learn SNMP  — `network`, from Network Protocols, concept `snmp`
+- [ ] Learn LDAP  — `network`, from Network Protocols, concept `ldap`
+- [ ] Learn MQTT  — `network`, from Network Protocols, concept `mqtt`
+- [ ] Learn AMQP  — `network`, from Network Protocols, concept `amqp`
+- [ ] Learn gRPC  — `network`, from Network Protocols, concept `grpc`
+- [ ] Learn DNS over HTTPS  — `network`, from Network Protocols, concept `dns-over-https`
+- [ ] Learn DNS over TLS  — `network`, from Network Protocols, concept `dns-over-tls`
+- [ ] Learn PCAP Packet Capture Format  — `network`, from Binary Formats & File Formats, concept `pcap-packet-capture-format`
+
+## Planned course 6 of 14 — Cryptography and Security Internals
+
+Slug `crypto`. **53 items.**
+
+Absorbs **Cryptography** (31 items), **Security Internals** (21 items), **Binary Formats & File Formats — X.509 certificates** (1 of 41 items).
+
+- [ ] Learn Cryptography From First Principles  — `crypto`, from Cryptography, concept `cryptography-from-first-principles`
+- [ ] Learn Cryptographic Randomness  — `crypto`, from Cryptography, concept `cryptographic-randomness`
+- [ ] Learn Entropy  — `crypto`, from Cryptography, concept `entropy`. Shannon entropy for compression is taught in `encodings`
+- [ ] Learn Hash Functions  — `crypto`, from Cryptography, concept `hash-functions`
+- [ ] Learn HMAC  — `crypto`, from Cryptography, concept `hmac`
+- [ ] Learn HKDF  — `crypto`, from Cryptography, concept `hkdf`
+- [ ] Learn SHA-2  — `crypto`, from Cryptography, concept `sha-2`
+- [ ] Learn SHA-3  — `crypto`, from Cryptography, concept `sha-3`
+- [ ] Learn BLAKE2  — `crypto`, from Cryptography, concept `blake2`
+- [ ] Learn BLAKE3  — `crypto`, from Cryptography, concept `blake3`
+- [ ] Learn AES  — `crypto`, from Cryptography, concept `aes`
+- [ ] Learn ChaCha20  — `crypto`, from Cryptography, concept `chacha20`
+- [ ] Learn Poly1305  — `crypto`, from Cryptography, concept `poly1305`
+- [ ] Learn Authenticated Encryption  — `crypto`, from Cryptography, concept `authenticated-encryption`
+- [ ] Learn AES-GCM  — `crypto`, from Cryptography, concept `aes-gcm`
+- [ ] Learn ChaCha20-Poly1305  — `crypto`, from Cryptography, concept `chacha20-poly1305`
+- [ ] Learn Public-Key Cryptography  — `crypto`, from Cryptography, concept `public-key-cryptography`
+- [ ] Learn RSA  — `crypto`, from Cryptography, concept `rsa`
+- [ ] Learn Diffie-Hellman  — `crypto`, from Cryptography, concept `diffie-hellman`
+- [ ] Learn Elliptic-Curve Cryptography  — `crypto`, from Cryptography, concept `elliptic-curve-cryptography`
+- [ ] Learn X25519  — `crypto`, from Cryptography, concept `x25519`
+- [ ] Learn Ed25519  — `crypto`, from Cryptography, concept `ed25519`
+- [ ] Learn Digital Signatures  — `crypto`, from Cryptography, concept `digital-signatures`
+- [ ] Learn Certificate Chains  — `crypto`, from Cryptography, concept `certificate-chains`. The DER structure itself is the next line, concept `x509-der`
+- [ ] Learn X.509  — `crypto`, from Cryptography, concept `x509-certificates`
+- [ ] Learn Certificate Transparency  — `crypto`, from Cryptography, concept `certificate-transparency`
+- [ ] Learn Key Derivation  — `crypto`, from Cryptography, concept `key-derivation`
+- [ ] Learn Password Hashing  — `crypto`, from Cryptography, concept `password-hashing`
+- [ ] Learn Argon2  — `crypto`, from Cryptography, concept `argon2`
+- [ ] Learn Secure Random Number Generation  — `crypto`, from Cryptography, concept `secure-random-number-generation`
+- [ ] Learn Cryptographic Protocol Design  — `crypto`, from Cryptography, concept `cryptographic-protocol-design`
+- [ ] Learn Memory Safety  — `crypto`, from Security Internals, concept `memory-safety`
+- [ ] Learn Buffer Overflows  — `crypto`, from Security Internals, concept `buffer-overflows`
+- [ ] Learn Stack Smashing  — `crypto`, from Security Internals, concept `stack-smashing`
+- [ ] Learn Heap Exploitation  — `crypto`, from Security Internals, concept `heap-exploitation`
+- [ ] Learn Use-After-Free  — `crypto`, from Security Internals, concept `use-after-free`
+- [ ] Learn Double-Free Bugs  — `crypto`, from Security Internals, concept `double-free-bugs`
+- [ ] Learn Integer Overflow  — `crypto`, from Security Internals, concept `integer-overflow`
+- [ ] Learn Format String Vulnerabilities  — `crypto`, from Security Internals, concept `format-string-vulnerabilities`
+- [ ] Learn Return-Oriented Programming  — `crypto`, from Security Internals, concept `return-oriented-programming`
+- [ ] Learn Control-Flow Integrity  — `crypto`, from Security Internals, concept `control-flow-integrity`
+- [ ] Learn ASLR  — `crypto`, from Security Internals, concept `aslr`
+- [ ] Learn DEP and NX  — `crypto`, from Security Internals, concept `dep-and-nx`
+- [ ] Learn Sandboxing  — `crypto`, from Security Internals, concept `sandboxing`
+- [ ] Learn Process Isolation  — `crypto`, from Security Internals, concept `process-isolation`
+- [ ] Learn Linux Namespaces  — `crypto`, from Security Internals, concept `linux-namespaces`
+- [ ] Learn Linux Capabilities  — `crypto`, from Security Internals, concept `linux-capabilities`
+- [ ] Learn Secure Boot  — `crypto`, from Security Internals, concept `secure-boot`. Measured boot is taught in `hwboot`; this line is the attack surface
+- [ ] Learn Trusted Execution Environments  — `crypto`, from Security Internals, concept `trusted-execution-environments`
+- [ ] Learn Memory Protection Keys  — `crypto`, from Security Internals, concept `memory-protection-keys`
+- [ ] Learn Spectre  — `crypto`, from Security Internals, concept `spectre`
+- [ ] Learn Meltdown  — `crypto`, from Security Internals, concept `meltdown`
+- [ ] Learn X.509 Certificate Format  — `crypto`, from Binary Formats & File Formats, concept `x509-der`
+
+## Planned course 7 of 14 — Text, Compression, Archives and Serialization
+
+Slug `encodings`. **59 items.**
+
+Absorbs **Unicode & Text** (10 items), **Compression & Encoding** (16 items), **Binary Formats & File Formats — archives** (5 of 41 items), **Binary Formats & File Formats — text and serialization formats** (12 of 41 items), **Protocol & Serialization Design** (14 items), **Mathematics for Systems** (2 of 13 items).
+
+- [ ] Learn Unicode From First Principles  — `encodings`, from Unicode & Text, concept `unicode-from-first-principles`
+- [ ] Learn UTF-8  — `encodings`, from Unicode & Text, concept `utf-8`
+- [ ] Learn UTF-16  — `encodings`, from Unicode & Text, concept `utf-16`
+- [ ] Learn UTF-32  — `encodings`, from Unicode & Text, concept `utf-32`
+- [ ] Learn Unicode Normalization  — `encodings`, from Unicode & Text, concept `unicode-normalization`
+- [ ] Learn Unicode Grapheme Clusters  — `encodings`, from Unicode & Text, concept `unicode-grapheme-clusters`
+- [ ] Learn Unicode Collation  — `encodings`, from Unicode & Text, concept `unicode-collation`
+- [ ] Learn Unicode Bidirectional Algorithm  — `encodings`, from Unicode & Text, concept `unicode-bidi`
+- [ ] Learn Character Encoding  — `encodings`, from Unicode & Text, concept `character-encoding`
+- [ ] Learn Text Segmentation  — `encodings`, from Unicode & Text, concept `text-segmentation`
+- [ ] Learn Compression From First Principles  — `encodings`, from Compression & Encoding, concept `compression-from-first-principles`
+- [ ] Learn Run-Length Encoding  — `encodings`, from Compression & Encoding, concept `rle`
+- [ ] Learn Huffman Coding  — `encodings`, from Compression & Encoding, concept `huffman-coding`
+- [ ] Learn Arithmetic Coding  — `encodings`, from Compression & Encoding, concept `arithmetic-coding`
+- [ ] Learn LZ77  — `encodings`, from Compression & Encoding, concept `lz77`
+- [ ] Learn LZ78  — `encodings`, from Compression & Encoding, concept `lz78`
+- [ ] Learn LZW  — `encodings`, from Compression & Encoding, concept `lzw`
+- [ ] Learn DEFLATE  — `encodings`, from Compression & Encoding, concept `deflate`
+- [ ] Learn gzip  — `encodings`, from Compression & Encoding, concept `gzip`
+- [ ] Learn Brotli  — `encodings`, from Compression & Encoding, concept `brotli`
+- [ ] Learn Zstandard  — `encodings`, from Compression & Encoding, concept `zstandard`
+- [ ] Learn Snappy  — `encodings`, from Compression & Encoding, concept `snappy`
+- [ ] Learn LZ4  — `encodings`, from Compression & Encoding, concept `lz4`
+- [ ] Learn Delta Encoding  — `encodings`, from Compression & Encoding, concept `delta-encoding`
+- [ ] Learn Entropy Coding  — `encodings`, from Compression & Encoding, concept `entropy-coding`
+- [ ] Learn Error-Correcting Codes  — `encodings`, from Compression & Encoding, concept `error-correcting-codes`
+- [ ] Learn ZIP File Format  — `encodings`, from Binary Formats & File Formats, concept `zip-file-format`
+- [ ] Learn GZIP File Format  — `encodings`, from Binary Formats & File Formats, concept `gzip-file-format`
+- [ ] Learn TAR Archive Format  — `encodings`, from Binary Formats & File Formats, concept `tar-archive-format`
+- [ ] Learn 7z Archive Format  — `encodings`, from Binary Formats & File Formats, concept `7z-archive-format`
+- [ ] Learn RAR Archive Format  — `encodings`, from Binary Formats & File Formats, concept `rar-archive-format`
+- [ ] Learn .NET Assembly Metadata and PE Format  — `encodings`, from Binary Formats & File Formats, concept `net-assembly-metadata`
+- [ ] Learn DNS Zone File Format  — `encodings`, from Binary Formats & File Formats, concept `dns-zone-file-format`
+- [ ] Learn MIME and Internet Media Types  — `encodings`, from Binary Formats & File Formats, concept `mime-and-internet-media-types`
+- [ ] Learn ASN.1  — `encodings`, from Binary Formats & File Formats, concept `asn-1`
+- [ ] Learn DER Encoding  — `encodings`, from Binary Formats & File Formats, concept `der-encoding`
+- [ ] Learn BER Encoding  — `encodings`, from Binary Formats & File Formats, concept `ber-encoding`
+- [ ] Learn CBOR  — `encodings`, from Binary Formats & File Formats, concept `cbor`
+- [ ] Learn MessagePack  — `encodings`, from Binary Formats & File Formats, concept `messagepack`
+- [ ] Learn Protocol Buffers Encoding  — `encodings`, from Binary Formats & File Formats, concept `protocol-buffers-encoding`
+- [ ] Learn BSON  — `encodings`, from Binary Formats & File Formats, concept `bson`
+- [ ] Learn FlatBuffers Binary Format  — `encodings`, from Binary Formats & File Formats, concept `flatbuffers-binary-format`
+- [ ] Learn Cap'n Proto Encoding  — `encodings`, from Binary Formats & File Formats, concept `cap-n-proto-encoding`
+- [ ] Learn Binary Protocol Design  — `encodings`, from Protocol & Serialization Design, concept `binary-protocol-design`
+- [ ] Learn Text Protocol Design  — `encodings`, from Protocol & Serialization Design, concept `text-protocol-design`
+- [ ] Learn Protocol Framing  — `encodings`, from Protocol & Serialization Design, concept `protocol-framing`
+- [ ] Learn Length-Prefixed Protocols  — `encodings`, from Protocol & Serialization Design, concept `length-prefixed-protocols`
+- [ ] Learn Varints  — `encodings`, from Protocol & Serialization Design, concept `varints`
+- [ ] Learn Endianness  — `encodings`, from Protocol & Serialization Design, concept `endianness`
+- [ ] Learn Versioning Protocols  — `encodings`, from Protocol & Serialization Design, concept `versioning-protocols`
+- [ ] Learn Backward-Compatible Protocols  — `encodings`, from Protocol & Serialization Design, concept `backward-compatible-protocols`
+- [ ] Learn Forward-Compatible Protocols  — `encodings`, from Protocol & Serialization Design, concept `forward-compatible-protocols`
+- [ ] Learn Protocol Negotiation  — `encodings`, from Protocol & Serialization Design, concept `protocol-negotiation`
+- [ ] Learn Capability Negotiation  — `encodings`, from Protocol & Serialization Design, concept `capability-negotiation`
+- [ ] Learn State Machine Protocols  — `encodings`, from Protocol & Serialization Design, concept `state-machine-protocols`
+- [ ] Learn Protocol Error Handling  — `encodings`, from Protocol & Serialization Design, concept `protocol-error-handling`
+- [ ] Learn Protocol Security  — `encodings`, from Protocol & Serialization Design, concept `protocol-security`
+- [ ] Learn Information Theory  — `encodings`, from Mathematics for Systems, concept `information-theory`
+- [ ] Learn Entropy  — `encodings`, from Mathematics for Systems, concept `entropy`. This is Shannon entropy; cryptographic entropy is taught in `crypto`
+
+## Planned course 8 of 14 — Compilers, Languages and Build Systems
+
+Slug `compiler`. **67 items.**
+
+Absorbs **Compilers** (31 items), **Compilers & Languages — Advanced** (21 items), **Build Systems & Toolchains** (15 items).
+
+- [ ] Learn Compiler Architecture  — `compiler`, from Compilers, concept `compiler-architecture`
+- [ ] Learn Lexers  — `compiler`, from Compilers, concept `lexers`
+- [ ] Learn Parser Design  — `compiler`, from Compilers, concept `parser-design`
+- [ ] Learn Recursive-Descent Parsing  — `compiler`, from Compilers, concept `recursive-descent-parsing`
+- [ ] Learn Pratt Parsing  — `compiler`, from Compilers, concept `pratt-parsing`
+- [ ] Learn LR Parsing  — `compiler`, from Compilers, concept `lr-parsing`
+- [ ] Learn GLR Parsing  — `compiler`, from Compilers, concept `glr-parsing`
+- [ ] Learn Abstract Syntax Trees  — `compiler`, from Compilers, concept `abstract-syntax-trees`
+- [ ] Learn Type Checking  — `compiler`, from Compilers, concept `type-checking`
+- [ ] Learn Type Inference  — `compiler`, from Compilers, concept `type-inference`
+- [ ] Learn Semantic Analysis  — `compiler`, from Compilers, concept `semantic-analysis`
+- [ ] Learn Intermediate Representations  — `compiler`, from Compilers, concept `intermediate-representations`
+- [ ] Learn SSA — Static Single Assignment  — `compiler`, from Compilers, concept `ssa-static-single-assignment`
+- [ ] Learn Control-Flow Graphs  — `compiler`, from Compilers, concept `control-flow-graphs`
+- [ ] Learn Data-Flow Analysis  — `compiler`, from Compilers, concept `data-flow-analysis`
+- [ ] Learn Dominators  — `compiler`, from Compilers, concept `dominators`
+- [ ] Learn Register Allocation  — `compiler`, from Compilers, concept `register-allocation`
+- [ ] Learn Instruction Selection  — `compiler`, from Compilers, concept `instruction-selection`
+- [ ] Learn Instruction Scheduling  — `compiler`, from Compilers, concept `instruction-scheduling`
+- [ ] Learn Compiler Optimization  — `compiler`, from Compilers, concept `compiler-optimization`
+- [ ] Learn Constant Folding  — `compiler`, from Compilers, concept `constant-folding`
+- [ ] Learn Dead-Code Elimination  — `compiler`, from Compilers, concept `dead-code-elimination`
+- [ ] Learn Common Subexpression Elimination  — `compiler`, from Compilers, concept `common-subexpression-elimination`
+- [ ] Learn Loop Optimization  — `compiler`, from Compilers, concept `loop-optimization`
+- [ ] Learn Inlining  — `compiler`, from Compilers, concept `inlining`
+- [ ] Learn Escape Analysis  — `compiler`, from Compilers, concept `escape-analysis`
+- [ ] Learn Link-Time Optimization  — `compiler`, from Compilers, concept `link-time-optimization`
+- [ ] Learn JIT Compilation  — `compiler`, from Compilers, concept `jit-compilation`. The JVM's and the runtimes' JIT are in `vm`; this line is the compiler-internal one
+- [ ] Learn Runtime Code Generation  — `compiler`, from Compilers, concept `runtime-code-generation`
+- [ ] Learn Compiler Debug Information  — `compiler`, from Compilers, concept `compiler-debug-information`. DWARF is already taught by the built `dwarf` course
+- [ ] Learn Compiler ABIs  — `compiler`, from Compilers, concept `compiler-abis`. The x86-64 and AArch64 ABIs are already taught by `x86abi` and `a64abi`
+- [ ] Learn Borrow Checking  — `compiler`, from Compilers & Languages — Advanced, concept `borrow-checking`
+- [ ] Learn Lifetime Analysis  — `compiler`, from Compilers & Languages — Advanced, concept `lifetime-analysis`
+- [ ] Learn Region Inference  — `compiler`, from Compilers & Languages — Advanced, concept `region-inference`
+- [ ] Learn Ownership Type Systems  — `compiler`, from Compilers & Languages — Advanced, concept `ownership-type-systems`
+- [ ] Learn Algebraic Data Types  — `compiler`, from Compilers & Languages — Advanced, concept `algebraic-data-types`
+- [ ] Learn Pattern Matching Compilation  — `compiler`, from Compilers & Languages — Advanced, concept `pattern-matching-compilation`
+- [ ] Learn Effect Systems  — `compiler`, from Compilers & Languages — Advanced, concept `effect-systems`
+- [ ] Learn Dependent Types  — `compiler`, from Compilers & Languages — Advanced, concept `dependent-types`
+- [ ] Learn Type Erasure  — `compiler`, from Compilers & Languages — Advanced, concept `type-erasure`
+- [ ] Learn Monomorphization  — `compiler`, from Compilers & Languages — Advanced, concept `monomorphization`
+- [ ] Learn Trait Resolution  — `compiler`, from Compilers & Languages — Advanced, concept `trait-resolution`
+- [ ] Learn Garbage Collector Integration  — `compiler`, from Compilers & Languages — Advanced, concept `garbage-collector-integration`
+- [ ] Learn Closure Conversion  — `compiler`, from Compilers & Languages — Advanced, concept `closure-conversion`
+- [ ] Learn Continuation-Passing Style  — `compiler`, from Compilers & Languages — Advanced, concept `continuation-passing-style`
+- [ ] Learn Tail-Call Optimization  — `compiler`, from Compilers & Languages — Advanced, concept `tail-call-optimization`
+- [ ] Learn Desugaring  — `compiler`, from Compilers & Languages — Advanced, concept `desugaring`
+- [ ] Learn Macro Systems  — `compiler`, from Compilers & Languages — Advanced, concept `macro-systems`
+- [ ] Learn Hygienic Macros  — `compiler`, from Compilers & Languages — Advanced, concept `hygienic-macros`
+- [ ] Learn Module Systems  — `compiler`, from Compilers & Languages — Advanced, concept `module-systems`
+- [ ] Learn Incremental Compilation  — `compiler`, from Compilers & Languages — Advanced, concept `incremental-compilation`
+- [ ] Learn Compiler Caching  — `compiler`, from Compilers & Languages — Advanced, concept `compiler-caching`
+- [ ] Learn Build Systems From First Principles  — `compiler`, from Build Systems & Toolchains, concept `build-systems-from-first-principles`
+- [ ] Learn Make  — `compiler`, from Build Systems & Toolchains, concept `make`
+- [ ] Learn Ninja  — `compiler`, from Build Systems & Toolchains, concept `ninja`
+- [ ] Learn CMake Internals  — `compiler`, from Build Systems & Toolchains, concept `cmake-internals`
+- [ ] Learn Dependency Resolution  — `compiler`, from Build Systems & Toolchains, concept `dependency-resolution`
+- [ ] Learn Package Managers  — `compiler`, from Build Systems & Toolchains, concept `package-managers`
+- [ ] Learn Reproducible Builds  — `compiler`, from Build Systems & Toolchains, concept `reproducible-builds`
+- [ ] Learn Hermetic Builds  — `compiler`, from Build Systems & Toolchains, concept `hermetic-builds`
+- [ ] Learn Cross Compilation  — `compiler`, from Build Systems & Toolchains, concept `cross-compilation`
+- [ ] Learn Toolchains  — `compiler`, from Build Systems & Toolchains, concept `toolchains`
+- [ ] Learn Sysroots  — `compiler`, from Build Systems & Toolchains, concept `sysroots`
+- [ ] Learn Linker Toolchains  — `compiler`, from Build Systems & Toolchains, concept `linker-toolchains`
+- [ ] Learn Compiler Drivers  — `compiler`, from Build Systems & Toolchains, concept `compiler-drivers`
+- [ ] Learn Build Caching  — `compiler`, from Build Systems & Toolchains, concept `build-caching`
+- [ ] Learn Distributed Build Systems  — `compiler`, from Build Systems & Toolchains, concept `distributed-build-systems`
+
+## Planned course 9 of 14 — Virtual Machines, Runtimes and Language Internals
+
+Slug `vm`. **63 items.**
+
+Absorbs **Language Runtimes** (19 items), **JVM** (17 items), **WebAssembly** (12 items), **Programming Language Internals** (15 items).
+
+- [ ] Learn Language Runtime Design  — `vm`, from Language Runtimes, concept `language-runtime-design`
+- [ ] Learn Calling Conventions  — `vm`, from Language Runtimes, concept `calling-conventions`
+- [ ] Learn Stack-Based Virtual Machines  — `vm`, from Language Runtimes, concept `stack-based-virtual-machines`
+- [ ] Learn Register-Based Virtual Machines  — `vm`, from Language Runtimes, concept `register-based-virtual-machines`
+- [ ] Learn Bytecode Interpreters  — `vm`, from Language Runtimes, concept `bytecode-interpreters`
+- [ ] Learn Tree-Walking Interpreters  — `vm`, from Language Runtimes, concept `tree-walking-interpreters`
+- [ ] Learn Virtual Machine Design  — `vm`, from Language Runtimes, concept `virtual-machine-design`
+- [ ] Learn JIT Compilers  — `vm`, from Language Runtimes, concept `jit-compilers`
+- [ ] Learn Inline Caches  — `vm`, from Language Runtimes, concept `inline-caches`
+- [ ] Learn Runtime Type Information  — `vm`, from Language Runtimes, concept `runtime-type-information`
+- [ ] Learn Exception Handling  — `vm`, from Language Runtimes, concept `exception-handling`
+- [ ] Learn Stack Unwinding  — `vm`, from Language Runtimes, concept `stack-unwinding`. Taught in `debugio`; this line is its use in exception handling
+- [ ] Learn Foreign Function Interfaces  — `vm`, from Language Runtimes, concept `foreign-function-interfaces`
+- [ ] Learn ABI Compatibility  — `vm`, from Language Runtimes, concept `abi-compatibility`
+- [ ] Learn Dynamic Dispatch  — `vm`, from Language Runtimes, concept `dynamic-dispatch`
+- [ ] Learn Object Models  — `vm`, from Language Runtimes, concept `object-models`
+- [ ] Learn Closures  — `vm`, from Language Runtimes, concept `closures`
+- [ ] Learn Coroutines  — `vm`, from Language Runtimes, concept `coroutines`
+- [ ] Learn Async Runtimes  — `vm`, from Language Runtimes, concept `async-runtimes`
+- [ ] Learn JVM Architecture  — `vm`, from JVM, concept `jvm-architecture`
+- [ ] Learn JVM Class Files  — `vm`, from JVM, concept `jvm-class-files`. The built `jvm` course already teaches this format (`jvm-header`, `jvm-constant-pool`, `jvm-code`); the line stays for the roadmap count
+- [ ] Learn JVM Bytecode  — `vm`, from JVM, concept `jvm-bytecode`
+- [ ] Learn JVM Verification  — `vm`, from JVM, concept `jvm-verification`
+- [ ] Learn JVM Stack Frames  — `vm`, from JVM, concept `jvm-stack-frames`
+- [ ] Learn JVM Operand Stacks  — `vm`, from JVM, concept `jvm-operand-stacks`
+- [ ] Learn JVM Class Loading  — `vm`, from JVM, concept `jvm-class-loading`
+- [ ] Learn JVM Linking  — `vm`, from JVM, concept `jvm-linking`
+- [ ] Learn JVM Method Resolution  — `vm`, from JVM, concept `jvm-method-resolution`
+- [ ] Learn JVM Garbage Collection  — `vm`, from JVM, concept `jvm-garbage-collection`
+- [ ] Learn JVM JIT Compilation  — `vm`, from JVM, concept `jvm-jit-compilation`
+- [ ] Learn JVM Safepoints  — `vm`, from JVM, concept `jvm-safepoints`
+- [ ] Learn JVM Threads  — `vm`, from JVM, concept `jvm-threads`
+- [ ] Learn JVM Synchronization  — `vm`, from JVM, concept `jvm-synchronization`
+- [ ] Learn JVM Memory Model  — `vm`, from JVM, concept `jvm-memory-model`
+- [ ] Learn JVM Native Interface  — `vm`, from JVM, concept `jvm-native-interface`
+- [ ] Learn JVM Performance  — `vm`, from JVM, concept `jvm-performance`
+- [ ] Learn WebAssembly  — `vm`, from WebAssembly, concept `webassembly`
+- [ ] Learn WebAssembly Text Format  — `vm`, from WebAssembly, concept `webassembly-text-format`
+- [ ] Learn WebAssembly Binary Format  — `vm`, from WebAssembly, concept `webassembly-binary-format`. The built `wasm` course already teaches this format (`wasm-header`, `wasm-sections`, `wasm-leb128`); the line stays for the roadmap count
+- [ ] Learn WebAssembly Validation  — `vm`, from WebAssembly, concept `webassembly-validation`
+- [ ] Learn WebAssembly Linear Memory  — `vm`, from WebAssembly, concept `webassembly-linear-memory`
+- [ ] Learn WebAssembly Tables  — `vm`, from WebAssembly, concept `webassembly-tables`
+- [ ] Learn WebAssembly Modules  — `vm`, from WebAssembly, concept `webassembly-modules`
+- [ ] Learn WebAssembly Imports and Exports  — `vm`, from WebAssembly, concept `webassembly-imports-and-exports`
+- [ ] Learn WebAssembly Runtime Design  — `vm`, from WebAssembly, concept `webassembly-runtime-design`
+- [ ] Learn WebAssembly WASI  — `vm`, from WebAssembly, concept `webassembly-wasi`
+- [ ] Learn WebAssembly Component Model  — `vm`, from WebAssembly, concept `webassembly-component-model`
+- [ ] Learn WebAssembly Garbage Collection  — `vm`, from WebAssembly, concept `webassembly-garbage-collection`
+- [ ] Learn C Object Representation  — `vm`, from Programming Language Internals, concept `c-object-representation`
+- [ ] Learn C Undefined Behavior  — `vm`, from Programming Language Internals, concept `c-undefined-behavior`
+- [ ] Learn C Memory Model  — `vm`, from Programming Language Internals, concept `c-memory-model`
+- [ ] Learn C ABI  — `vm`, from Programming Language Internals, concept `c-abi`
+- [ ] Learn C++ Object Model  — `vm`, from Programming Language Internals, concept `cpp-object-model`
+- [ ] Learn C++ ABI  — `vm`, from Programming Language Internals, concept `cpp-abi`
+- [ ] Learn C++ Name Mangling  — `vm`, from Programming Language Internals, concept `cpp-name-mangling`
+- [ ] Learn C++ Virtual Functions  — `vm`, from Programming Language Internals, concept `cpp-virtual-functions`
+- [ ] Learn C++ Exception Handling  — `vm`, from Programming Language Internals, concept `cpp-exceptions`
+- [ ] Learn C++ RTTI  — `vm`, from Programming Language Internals, concept `cpp-rtti`
+- [ ] Learn Rust Ownership Internals  — `vm`, from Programming Language Internals, concept `rust-ownership-internals`
+- [ ] Learn Rust Borrow Checking Internals  — `vm`, from Programming Language Internals, concept `rust-borrow-checking-internals`
+- [ ] Learn Rust Trait Objects  — `vm`, from Programming Language Internals, concept `rust-trait-objects`
+- [ ] Learn Rust Async Runtime Internals  — `vm`, from Programming Language Internals, concept `rust-async-runtime-internals`
+- [ ] Learn Rust ABI and FFI  — `vm`, from Programming Language Internals, concept `rust-abi-and-ffi`
+
+## Planned course 10 of 14 — Data Structure and Database Internals
+
+Slug `data`. **41 items.**
+
+Absorbs **Databases & Storage Engines** (21 items), **Data Structures & Algorithms — Deep Internals** (18 items), **Binary Formats & File Formats — SQLite and Berkeley DB** (2 of 41 items).
+
+- [ ] Learn Database Storage Engines  — `data`, from Databases & Storage Engines, concept `database-storage-engines`
+- [ ] Learn B-Trees  — `data`, from Databases & Storage Engines, concept `b-trees`
+- [ ] Learn B+ Trees  — `data`, from Databases & Storage Engines, concept `b-plus-trees`
+- [ ] Learn LSM Trees  — `data`, from Databases & Storage Engines, concept `lsm-trees`
+- [ ] Learn SSTables  — `data`, from Databases & Storage Engines, concept `sstables`
+- [ ] Learn Write-Ahead Logging  — `data`, from Databases & Storage Engines, concept `write-ahead-logging`
+- [ ] Learn Database Transactions  — `data`, from Databases & Storage Engines, concept `database-transactions`
+- [ ] Learn MVCC  — `data`, from Databases & Storage Engines, concept `mvcc`
+- [ ] Learn Database Isolation Levels  — `data`, from Databases & Storage Engines, concept `database-isolation-levels`
+- [ ] Learn Database Recovery  — `data`, from Databases & Storage Engines, concept `database-recovery`
+- [ ] Learn Database Buffer Pools  — `data`, from Databases & Storage Engines, concept `database-buffer-pools`
+- [ ] Learn Database Indexes  — `data`, from Databases & Storage Engines, concept `database-indexes`
+- [ ] Learn Query Execution  — `data`, from Databases & Storage Engines, concept `query-execution`
+- [ ] Learn Query Planners  — `data`, from Databases & Storage Engines, concept `query-planners`
+- [ ] Learn Cost-Based Query Optimization  — `data`, from Databases & Storage Engines, concept `cost-based-query-optimization`
+- [ ] Learn Hash Tables in Databases  — `data`, from Databases & Storage Engines, concept `hash-tables-in-databases`
+- [ ] Learn Bloom Filters  — `data`, from Databases & Storage Engines, concept `bloom-filters`
+- [ ] Learn Compaction  — `data`, from Databases & Storage Engines, concept `compaction`
+- [ ] Learn SQLite Internals  — `data`, from Databases & Storage Engines, concept `sqlite-internals`
+- [ ] Learn SQLite Virtual Machine  — `data`, from Databases & Storage Engines, concept `sqlite-virtual-machine`
+- [ ] Learn SQLite Query Planner  — `data`, from Databases & Storage Engines, concept `sqlite-query-planner`
+- [ ] Learn Hash Tables  — `data`, from Data Structures & Algorithms — Deep Internals, concept `hash-tables`. The engine's use of it is the earlier line `Hash Tables in Databases`
+- [ ] Learn Hash Table Collision Resolution  — `data`, from Data Structures & Algorithms — Deep Internals, concept `hash-table-collision-resolution`
+- [ ] Learn Bloom Filters  — `data`, from Data Structures & Algorithms — Deep Internals, concept `bloom-filters`. Same concept; the other line of the pair is from Databases & Storage Engines
+- [ ] Learn Cuckoo Hashing  — `data`, from Data Structures & Algorithms — Deep Internals, concept `cuckoo-hashing`
+- [ ] Learn B-Trees  — `data`, from Data Structures & Algorithms — Deep Internals, concept `b-trees`. Same concept; the other line of the pair is from Databases & Storage Engines
+- [ ] Learn B+ Trees  — `data`, from Data Structures & Algorithms — Deep Internals, concept `b-plus-trees`. Same concept; the other line of the pair is from Databases & Storage Engines
+- [ ] Learn Red-Black Trees  — `data`, from Data Structures & Algorithms — Deep Internals, concept `red-black-trees`
+- [ ] Learn AVL Trees  — `data`, from Data Structures & Algorithms — Deep Internals, concept `avl-trees`
+- [ ] Learn Skip Lists  — `data`, from Data Structures & Algorithms — Deep Internals, concept `skip-lists`
+- [ ] Learn Tries  — `data`, from Data Structures & Algorithms — Deep Internals, concept `tries`
+- [ ] Learn Radix Trees  — `data`, from Data Structures & Algorithms — Deep Internals, concept `radix-trees`
+- [ ] Learn Interval Trees  — `data`, from Data Structures & Algorithms — Deep Internals, concept `interval-trees`
+- [ ] Learn Fenwick Trees  — `data`, from Data Structures & Algorithms — Deep Internals, concept `fenwick-trees`
+- [ ] Learn Segment Trees  — `data`, from Data Structures & Algorithms — Deep Internals, concept `segment-trees`
+- [ ] Learn Union-Find  — `data`, from Data Structures & Algorithms — Deep Internals, concept `union-find`
+- [ ] Learn Priority Queues  — `data`, from Data Structures & Algorithms — Deep Internals, concept `priority-queues`
+- [ ] Learn Heaps  — `data`, from Data Structures & Algorithms — Deep Internals, concept `heaps`
+- [ ] Learn Lock-Free Data Structures  — `data`, from Data Structures & Algorithms — Deep Internals, concept `lock-free-data-structures`
+- [ ] Learn SQLite Database File Format  — `data`, from Binary Formats & File Formats, concept `sqlite-database-file-format`
+- [ ] Learn Berkeley DB File Format  — `data`, from Binary Formats & File Formats, concept `berkeley-db-file-format`
+
+## Planned course 11 of 14 — Graphics, Images and Page Description
+
+Slug `graphics`. **29 items.**
+
+Absorbs **Graphics** (20 items), **Binary Formats & File Formats — image and page formats** (9 of 41 items).
+
+- [ ] Learn Rasterization  — `graphics`, from Graphics, concept `rasterization`
+- [ ] Learn Computer Graphics From First Principles  — `graphics`, from Graphics, concept `computer-graphics-from-first-principles`
+- [ ] Learn GPU Architecture  — `graphics`, from Graphics, concept `gpu-architecture`
+- [ ] Learn GPU Memory  — `graphics`, from Graphics, concept `gpu-memory`
+- [ ] Learn Graphics Pipelines  — `graphics`, from Graphics, concept `graphics-pipelines`
+- [ ] Learn Vertex Processing  — `graphics`, from Graphics, concept `vertex-processing`
+- [ ] Learn Rasterization  — `graphics`, from Graphics, concept `rasterization`. Same concept; the other line of the pair is from Graphics
+- [ ] Learn Fragment Processing  — `graphics`, from Graphics, concept `fragment-processing`
+- [ ] Learn Depth Buffers  — `graphics`, from Graphics, concept `depth-buffers`
+- [ ] Learn Blending  — `graphics`, from Graphics, concept `blending`
+- [ ] Learn Texture Sampling  — `graphics`, from Graphics, concept `texture-sampling`
+- [ ] Learn GPU Command Buffers  — `graphics`, from Graphics, concept `gpu-command-buffers`
+- [ ] Learn Shader Compilation  — `graphics`, from Graphics, concept `shader-compilation`
+- [ ] Learn SPIR-V  — `graphics`, from Graphics, concept `spir-v`
+- [ ] Learn Vulkan Architecture  — `graphics`, from Graphics, concept `vulkan-architecture`
+- [ ] Learn Vulkan Synchronization  — `graphics`, from Graphics, concept `vulkan-synchronization`
+- [ ] Learn Vulkan Memory Management  — `graphics`, from Graphics, concept `vulkan-memory-management`
+- [ ] Learn OpenGL Internals  — `graphics`, from Graphics, concept `opengl-internals`
+- [ ] Learn Direct3D Architecture  — `graphics`, from Graphics, concept `direct3d-architecture`
+- [ ] Learn Metal Architecture  — `graphics`, from Graphics, concept `metal-architecture`
+- [ ] Learn PDF — Portable Document Format  — `graphics`, from Binary Formats & File Formats, concept `pdf-portable-document-format`
+- [ ] Learn PostScript  — `graphics`, from Binary Formats & File Formats, concept `postscript`
+- [ ] Learn SVG — Scalable Vector Graphics  — `graphics`, from Binary Formats & File Formats, concept `svg-scalable-vector-graphics`
+- [ ] Learn PNG — Portable Network Graphics  — `graphics`, from Binary Formats & File Formats, concept `png-portable-network-graphics`
+- [ ] Learn JPEG — JPEG Image Format  — `graphics`, from Binary Formats & File Formats, concept `jpeg-jpeg-image-format`
+- [ ] Learn GIF — Graphics Interchange Format  — `graphics`, from Binary Formats & File Formats, concept `gif-graphics-interchange-format`
+- [ ] Learn WebP  — `graphics`, from Binary Formats & File Formats, concept `webp`
+- [ ] Learn AVIF  — `graphics`, from Binary Formats & File Formats, concept `avif`
+- [ ] Learn TIFF  — `graphics`, from Binary Formats & File Formats, concept `tiff`
+
+## Planned course 12 of 14 — Audio, Video and Media Containers
+
+Slug `media`. **31 items.**
+
+Absorbs **Audio & Video** (22 items), **Binary Formats & File Formats — audio and video containers** (9 of 41 items).
+
+- [ ] Learn Digital Audio From First Principles  — `media`, from Audio & Video, concept `digital-audio-from-first-principles`
+- [ ] Learn PCM Audio  — `media`, from Audio & Video, concept `pcm-audio`
+- [ ] Learn Sample Rates and Bit Depth  — `media`, from Audio & Video, concept `sample-rates-and-bit-depth`
+- [ ] Learn Digital Audio Codecs  — `media`, from Audio & Video, concept `digital-audio-codecs`
+- [ ] Learn MP3 Encoding  — `media`, from Audio & Video, concept `mp3-encoding`
+- [ ] Learn AAC Encoding  — `media`, from Audio & Video, concept `aac-encoding`
+- [ ] Learn Opus  — `media`, from Audio & Video, concept `opus`
+- [ ] Learn FLAC Encoding  — `media`, from Audio & Video, concept `flac-encoding`
+- [ ] Learn Digital Video From First Principles  — `media`, from Audio & Video, concept `digital-video-from-first-principles`
+- [ ] Learn YUV and RGB Video  — `media`, from Audio & Video, concept `yuv-rgb`
+- [ ] Learn Video Frames  — `media`, from Audio & Video, concept `video-frames`
+- [ ] Learn I-Frames, P-Frames and B-Frames  — `media`, from Audio & Video, concept `video-frame-types`
+- [ ] Learn Motion Estimation  — `media`, from Audio & Video, concept `motion-estimation`
+- [ ] Learn H.264  — `media`, from Audio & Video, concept `h264-avc`
+- [ ] Learn H.265 / HEVC  — `media`, from Audio & Video, concept `hevc`
+- [ ] Learn AV1  — `media`, from Audio & Video, concept `av1`
+- [ ] Learn VP9  — `media`, from Audio & Video, concept `vp9`
+- [ ] Learn Video Encoding  — `media`, from Audio & Video, concept `video-encoding`
+- [ ] Learn Video Decoding  — `media`, from Audio & Video, concept `video-decoding`
+- [ ] Learn Audio/Video Synchronization  — `media`, from Audio & Video, concept `av-sync`
+- [ ] Learn Media Containers  — `media`, from Audio & Video, concept `media-containers`
+- [ ] Learn MP4 Internals  — `media`, from Audio & Video, concept `mp4-internals`
+- [ ] Learn WAV — Waveform Audio File Format  — `media`, from Binary Formats & File Formats, concept `wav-waveform-audio-file-format`
+- [ ] Learn AIFF — Audio Interchange File Format  — `media`, from Binary Formats & File Formats, concept `aiff-audio-interchange-file-format`
+- [ ] Learn FLAC — Free Lossless Audio Codec Format  — `media`, from Binary Formats & File Formats, concept `flac-free-lossless-audio-codec-format`
+- [ ] Learn Ogg and Ogg Containers  — `media`, from Binary Formats & File Formats, concept `ogg`
+- [ ] Learn Matroska — MKV  — `media`, from Binary Formats & File Formats, concept `matroska`
+- [ ] Learn MP3 File Format  — `media`, from Binary Formats & File Formats, concept `mp3-file-format`
+- [ ] Learn MP4 — ISO Base Media File Format  — `media`, from Binary Formats & File Formats, concept `mp4`
+- [ ] Learn MPEG Transport Stream  — `media`, from Binary Formats & File Formats, concept `mpeg-transport-stream`
+- [ ] Learn MPEG Program Stream  — `media`, from Binary Formats & File Formats, concept `mpeg-program-stream`
+
+## Planned course 13 of 14 — Debugging, Observability and Systems I/O
+
+Slug `debugio`. **46 items.**
+
+Absorbs **Debugging & Observability** (19 items), **Binary Formats & File Formats — PDB** (1 of 41 items), **System Design at the Lowest Level** (15 of 16 items), **Terminals & Shells** (11 items).
+
+- [ ] Learn Debuggers From First Principles  — `debugio`, from Debugging & Observability, concept `debuggers-from-first-principles`
+- [ ] Learn Breakpoints  — `debugio`, from Debugging & Observability, concept `breakpoints`
+- [ ] Learn Watchpoints  — `debugio`, from Debugging & Observability, concept `watchpoints`
+- [ ] Learn Hardware Breakpoints  — `debugio`, from Debugging & Observability, concept `hardware-breakpoints`
+- [ ] Learn Stack Traces  — `debugio`, from Debugging & Observability, concept `stack-traces`
+- [ ] Learn Stack Unwinding  — `debugio`, from Debugging & Observability, concept `stack-unwinding`
+- [ ] Learn Core Dumps  — `debugio`, from Debugging & Observability, concept `core-dumps`
+- [ ] Learn Crash Dumps  — `debugio`, from Debugging & Observability, concept `crash-dumps`
+- [ ] Learn Minidumps  — `debugio`, from Debugging & Observability, concept `minidumps`
+- [ ] Learn Debug Symbols  — `debugio`, from Debugging & Observability, concept `debug-symbols`
+- [ ] Learn PDB Debug Information  — `debugio`, from Debugging & Observability, concept `pdb-debug-info`
+- [ ] Learn Source-Level Debugging  — `debugio`, from Debugging & Observability, concept `source-level-debugging`
+- [ ] Learn Remote Debugging  — `debugio`, from Debugging & Observability, concept `remote-debugging`
+- [ ] Learn GDB Internals  — `debugio`, from Debugging & Observability, concept `gdb-internals`
+- [ ] Learn LLDB Internals  — `debugio`, from Debugging & Observability, concept `lldb-internals`
+- [ ] Learn System Call Tracing  — `debugio`, from Debugging & Observability, concept `system-call-tracing`
+- [ ] Learn Linux perf  — `debugio`, from Debugging & Observability, concept `linux-perf`
+- [ ] Learn eBPF Tracing  — `debugio`, from Debugging & Observability, concept `ebpf-tracing`
+- [ ] Learn Hardware Performance Counters  — `debugio`, from Debugging & Observability, concept `hardware-performance-counters`
+- [ ] Learn PDB — Program Database Format  — `debugio`, from Binary Formats & File Formats, concept `pdb-file-format`
+- [ ] Learn IPC From First Principles  — `debugio`, from System Design at the Lowest Level, concept `ipc-from-first-principles`
+- [ ] Learn RPC From First Principles  — `debugio`, from System Design at the Lowest Level, concept `rpc-from-first-principles`
+- [ ] Learn Serialization From First Principles  — `debugio`, from System Design at the Lowest Level, concept `serialization-from-first-principles`
+- [ ] Learn Event-Driven Architecture  — `debugio`, from System Design at the Lowest Level, concept `event-driven-architecture`
+- [ ] Learn Message Queues  — `debugio`, from System Design at the Lowest Level, concept `message-queues`
+- [ ] Learn Ring Buffers  — `debugio`, from System Design at the Lowest Level, concept `ring-buffers`
+- [ ] Learn Memory Pools  — `debugio`, from System Design at the Lowest Level, concept `memory-pools`
+- [ ] Learn Object Pools  — `debugio`, from System Design at the Lowest Level, concept `object-pools`
+- [ ] Learn Zero-Copy I/O  — `debugio`, from System Design at the Lowest Level, concept `zero-copy-io`
+- [ ] Learn Scatter-Gather I/O  — `debugio`, from System Design at the Lowest Level, concept `scatter-gather-io`
+- [ ] Learn io_uring  — `debugio`, from System Design at the Lowest Level, concept `io-uring`
+- [ ] Learn epoll  — `debugio`, from System Design at the Lowest Level, concept `epoll`
+- [ ] Learn kqueue  — `debugio`, from System Design at the Lowest Level, concept `kqueue`
+- [ ] Learn IOCP  — `debugio`, from System Design at the Lowest Level, concept `iocp`
+- [ ] Learn Asynchronous File I/O  — `debugio`, from System Design at the Lowest Level, concept `async-file-io`
+- [ ] Learn Terminal Emulators  — `debugio`, from Terminals & Shells, concept `terminal-emulators`
+- [ ] Learn TTYs  — `debugio`, from Terminals & Shells, concept `ttys`
+- [ ] Learn PTYs  — `debugio`, from Terminals & Shells, concept `ptys`
+- [ ] Learn Terminal Line Discipline  — `debugio`, from Terminals & Shells, concept `terminal-line-discipline`
+- [ ] Learn ANSI Escape Sequences  — `debugio`, from Terminals & Shells, concept `ansi-escape-sequences`
+- [ ] Learn Shell Parsing  — `debugio`, from Terminals & Shells, concept `shell-parsing`
+- [ ] Learn Shell Expansion  — `debugio`, from Terminals & Shells, concept `shell-expansion`
+- [ ] Learn Shell Job Control  — `debugio`, from Terminals & Shells, concept `shell-job-control`
+- [ ] Learn Unix Pipelines  — `debugio`, from Terminals & Shells, concept `unix-pipelines`
+- [ ] Learn Process Groups  — `debugio`, from Terminals & Shells, concept `process-groups`
+- [ ] Learn Session Management  — `debugio`, from Terminals & Shells, concept `session-management`
+
+## Planned course 14 of 14 — Distributed Systems, Clocks and Consistency
+
+Slug `distsys`. **30 items.**
+
+Absorbs **Distributed Systems** (21 items), **Time & Clocks** (9 items).
+
+- [ ] Learn Distributed Systems From First Principles  — `distsys`, from Distributed Systems, concept `distributed-systems-from-first-principles`
+- [ ] Learn Clocks in Distributed Systems  — `distsys`, from Distributed Systems, concept `clocks-in-distributed-systems`
+- [ ] Learn Logical Clocks  — `distsys`, from Distributed Systems, concept `logical-clocks`
+- [ ] Learn Vector Clocks  — `distsys`, from Distributed Systems, concept `vector-clocks`
+- [ ] Learn Leader Election  — `distsys`, from Distributed Systems, concept `leader-election`
+- [ ] Learn Consensus  — `distsys`, from Distributed Systems, concept `consensus`
+- [ ] Learn Raft  — `distsys`, from Distributed Systems, concept `raft`
+- [ ] Learn Paxos  — `distsys`, from Distributed Systems, concept `paxos`
+- [ ] Learn Distributed Transactions  — `distsys`, from Distributed Systems, concept `distributed-transactions`
+- [ ] Learn Two-Phase Commit  — `distsys`, from Distributed Systems, concept `two-phase-commit`
+- [ ] Learn Replication  — `distsys`, from Distributed Systems, concept `replication`
+- [ ] Learn Quorum Systems  — `distsys`, from Distributed Systems, concept `quorum-systems`
+- [ ] Learn Consistent Hashing  — `distsys`, from Distributed Systems, concept `consistent-hashing`
+- [ ] Learn Distributed Hash Tables  — `distsys`, from Distributed Systems, concept `distributed-hash-tables`
+- [ ] Learn CAP Theorem  — `distsys`, from Distributed Systems, concept `cap-theorem`
+- [ ] Learn Eventual Consistency  — `distsys`, from Distributed Systems, concept `eventual-consistency`
+- [ ] Learn Distributed Locks  — `distsys`, from Distributed Systems, concept `distributed-locks`
+- [ ] Learn Distributed Logs  — `distsys`, from Distributed Systems, concept `distributed-logs`
+- [ ] Learn Failure Detection  — `distsys`, from Distributed Systems, concept `failure-detection`
+- [ ] Learn Idempotency  — `distsys`, from Distributed Systems, concept `idempotency`
+- [ ] Learn Exactly-Once Processing  — `distsys`, from Distributed Systems, concept `exactly-once-processing`
+- [ ] Learn Computer Timekeeping  — `distsys`, from Time & Clocks, concept `computer-timekeeping`
+- [ ] Learn Unix Time  — `distsys`, from Time & Clocks, concept `unix-time`
+- [ ] Learn Monotonic Clocks  — `distsys`, from Time & Clocks, concept `monotonic-clocks`
+- [ ] Learn Wall Clocks  — `distsys`, from Time & Clocks, concept `wall-clocks`
+- [ ] Learn Clock Synchronization  — `distsys`, from Time & Clocks, concept `clock-synchronization`
+- [ ] Learn NTP  — `distsys`, from Time & Clocks, concept `ntp`. The NTP wire protocol is taught in `network`; this line is the clock model
+- [ ] Learn Leap Seconds  — `distsys`, from Time & Clocks, concept `leap-seconds`
+- [ ] Learn Time Zones  — `distsys`, from Time & Clocks, concept `time-zones`
+- [ ] Learn Calendrical Computation  — `distsys`, from Time & Clocks, concept `calendrical-computation`
 
-## Memory
-
-- [ ] Learn Virtual Memory
-- [ ] Learn Physical Memory
-- [ ] Learn Page Tables
-- [ ] Learn Multi-Level Page Tables
-- [ ] Learn Memory Mapping
-- [ ] Learn Memory Protection
-- [ ] Learn Memory-Mapped Files
-- [ ] Learn Copy-on-Write
-- [ ] Learn Demand Paging
-- [ ] Learn Page Faults
-- [ ] Learn Huge Pages
-- [ ] Learn Memory Allocators
-- [ ] Learn malloc
-- [ ] Learn jemalloc
-- [ ] Learn mimalloc
-- [ ] Learn Garbage Collection
-- [ ] Learn Mark-and-Sweep Garbage Collection
-- [ ] Learn Generational Garbage Collection
-- [ ] Learn Concurrent Garbage Collection
-- [ ] Learn Reference Counting
-- [ ] Learn Region-Based Memory Management
-- [ ] Learn Stack Allocation
-- [ ] Learn Heap Allocation
-- [ ] Learn Memory Fragmentation
-- [ ] Learn Memory Arenas
-- [ ] Learn Slab Allocators
-- [ ] Learn Lock-Free Memory Reclamation
-
-
-## Operating Systems
-
-- [ ] Learn Operating Systems From First Principles
-- [ ] Learn Processes
-- [ ] Learn Threads
-- [ ] Learn Scheduling
-- [ ] Learn Context Switching
-- [ ] Learn System Calls
-- [ ] Learn User Mode and Kernel Mode
-- [ ] Learn Interrupts
-- [ ] Learn Exceptions
-- [ ] Learn Kernel Entry and Exit
-- [ ] Learn Inter-Process Communication
-- [ ] Learn Pipes
-- [ ] Learn Shared Memory
-- [ ] Learn Signals
-- [ ] Learn Synchronization
-- [ ] Learn Mutexes
-- [ ] Learn Semaphores
-- [ ] Learn Condition Variables
-- [ ] Learn Futexes
-- [ ] Learn Deadlocks
-- [ ] Learn Kernel Memory Management
-- [ ] Learn Kernel Virtual Memory
-- [ ] Learn Kernel Modules
-- [ ] Learn Device Drivers
-- [ ] Learn Linux Kernel Architecture
-- [ ] Learn Windows NT Architecture
-- [ ] Learn macOS and XNU Architecture
-
-
-## Filesystems
-
-- [ ] Learn Filesystems From First Principles
-- [ ] Learn Inodes
-- [ ] Learn File Descriptors
-- [ ] Learn Directory Structures
-- [ ] Learn File Permissions
-- [ ] Learn File Metadata
-- [ ] Learn Journaling Filesystems
-- [ ] Learn Copy-on-Write Filesystems
-- [ ] Learn Virtual Filesystems
-- [ ] Learn Linux VFS
-- [ ] Learn ext4
-- [ ] Learn XFS
-- [ ] Learn Btrfs
-- [ ] Learn ZFS
-- [ ] Learn NTFS
-- [ ] Learn APFS
-- [ ] Learn FAT32
-- [ ] Learn exFAT
-- [ ] Learn FUSE
-- [ ] Learn Filesystem Caching
-- [ ] Learn Filesystem Crash Consistency
-
-
-## Networking
-
-- [ ] Learn Networking From First Principles
-- [ ] Learn Ethernet
-- [ ] Learn ARP
-- [ ] Learn IPv4
-- [ ] Learn IPv6
-- [ ] Learn ICMP
-- [ ] Learn UDP
-- [ ] Learn TCP
-- [ ] Learn TCP Connection Establishment
-- [ ] Learn TCP Congestion Control
-- [ ] Learn TCP Flow Control
-- [ ] Learn TCP Retransmission
-- [ ] Learn TCP Sockets
-- [ ] Learn Network Byte Order
-- [ ] Learn DNS
-- [ ] Learn DHCP
-- [ ] Learn NAT
-- [ ] Learn Routing
-- [ ] Learn IP Fragmentation
-- [ ] Learn MTU and Path MTU Discovery
-- [ ] Learn Ethernet Frames
-- [ ] Learn IP Packets
-- [ ] Learn TCP Segments
-- [ ] Learn UDP Datagrams
-- [ ] Learn Network Packet Capture
-- [ ] Learn BPF
-- [ ] Learn eBPF
-- [ ] Learn Network Namespaces
-
-
-## Network Protocols
-
-- [ ] Learn HTTP/1.1
-- [ ] Learn HTTP/2
-- [ ] Learn HTTP/3
-- [ ] Learn QUIC
-- [ ] Learn WebSocket
-- [ ] Learn TLS 1.2
-- [ ] Learn TLS 1.3
-- [ ] Learn TLS From Cryptographic Primitives
-- [ ] Learn How to Implement TLS
-- [ ] Learn SSH Protocol
-- [ ] Learn SMTP
-- [ ] Learn IMAP
-- [ ] Learn POP3
-- [ ] Learn FTP
-- [ ] Learn SFTP
-- [ ] Learn NTP
-- [ ] Learn SNMP
-- [ ] Learn LDAP
-- [ ] Learn MQTT
-- [ ] Learn AMQP
-- [ ] Learn gRPC
-- [ ] Learn DNS over HTTPS
-- [ ] Learn DNS over TLS
-
-
-## Cryptography
-
-- [ ] Learn Cryptography From First Principles
-- [ ] Learn Cryptographic Randomness
-- [ ] Learn Entropy
-- [ ] Learn Hash Functions
-- [ ] Learn HMAC
-- [ ] Learn HKDF
-- [ ] Learn SHA-2
-- [ ] Learn SHA-3
-- [ ] Learn BLAKE2
-- [ ] Learn BLAKE3
-- [ ] Learn AES
-- [ ] Learn ChaCha20
-- [ ] Learn Poly1305
-- [ ] Learn Authenticated Encryption
-- [ ] Learn AES-GCM
-- [ ] Learn ChaCha20-Poly1305
-- [ ] Learn Public-Key Cryptography
-- [ ] Learn RSA
-- [ ] Learn Diffie-Hellman
-- [ ] Learn Elliptic-Curve Cryptography
-- [ ] Learn X25519
-- [ ] Learn Ed25519
-- [ ] Learn Digital Signatures
-- [ ] Learn Certificate Chains
-- [ ] Learn X.509
-- [ ] Learn Certificate Transparency
-- [ ] Learn Key Derivation
-- [ ] Learn Password Hashing
-- [ ] Learn Argon2
-- [ ] Learn Secure Random Number Generation
-- [ ] Learn Cryptographic Protocol Design
-
-
-## Compilers
-
-- [ ] Learn Compiler Architecture
-- [ ] Learn Lexers
-- [ ] Learn Parser Design
-- [ ] Learn Recursive-Descent Parsing
-- [ ] Learn Pratt Parsing
-- [ ] Learn LR Parsing
-- [ ] Learn GLR Parsing
-- [ ] Learn Abstract Syntax Trees
-- [ ] Learn Type Checking
-- [ ] Learn Type Inference
-- [ ] Learn Semantic Analysis
-- [ ] Learn Intermediate Representations
-- [ ] Learn SSA — Static Single Assignment
-- [ ] Learn Control-Flow Graphs
-- [ ] Learn Data-Flow Analysis
-- [ ] Learn Dominators
-- [ ] Learn Register Allocation
-- [ ] Learn Instruction Selection
-- [ ] Learn Instruction Scheduling
-- [ ] Learn Compiler Optimization
-- [ ] Learn Constant Folding
-- [ ] Learn Dead-Code Elimination
-- [ ] Learn Common Subexpression Elimination
-- [ ] Learn Loop Optimization
-- [ ] Learn Inlining
-- [ ] Learn Escape Analysis
-- [ ] Learn Link-Time Optimization
-- [ ] Learn JIT Compilation
-- [ ] Learn Runtime Code Generation
-- [ ] Learn Compiler Debug Information
-- [ ] Learn Compiler ABIs
-
-
-## Language Runtimes
-
-- [ ] Learn Language Runtime Design
-- [ ] Learn Calling Conventions
-- [ ] Learn Stack-Based Virtual Machines
-- [ ] Learn Register-Based Virtual Machines
-- [ ] Learn Bytecode Interpreters
-- [ ] Learn Tree-Walking Interpreters
-- [ ] Learn Virtual Machine Design
-- [ ] Learn JIT Compilers
-- [ ] Learn Inline Caches
-- [ ] Learn Runtime Type Information
-- [ ] Learn Exception Handling
-- [ ] Learn Stack Unwinding
-- [ ] Learn Foreign Function Interfaces
-- [ ] Learn ABI Compatibility
-- [ ] Learn Dynamic Dispatch
-- [ ] Learn Object Models
-- [ ] Learn Closures
-- [ ] Learn Coroutines
-- [ ] Learn Async Runtimes
-
-
-## JVM
-
-- [ ] Learn JVM Architecture
-- [ ] Learn JVM Class Files
-- [ ] Learn JVM Bytecode
-- [ ] Learn JVM Verification
-- [ ] Learn JVM Stack Frames
-- [ ] Learn JVM Operand Stacks
-- [ ] Learn JVM Class Loading
-- [ ] Learn JVM Linking
-- [ ] Learn JVM Method Resolution
-- [ ] Learn JVM Garbage Collection
-- [ ] Learn JVM JIT Compilation
-- [ ] Learn JVM Safepoints
-- [ ] Learn JVM Threads
-- [ ] Learn JVM Synchronization
-- [ ] Learn JVM Memory Model
-- [ ] Learn JVM Native Interface
-- [ ] Learn JVM Performance
-
-
-## WebAssembly
-
-- [ ] Learn WebAssembly
-- [ ] Learn WebAssembly Text Format
-- [ ] Learn WebAssembly Binary Format
-- [ ] Learn WebAssembly Validation
-- [ ] Learn WebAssembly Linear Memory
-- [ ] Learn WebAssembly Tables
-- [ ] Learn WebAssembly Modules
-- [ ] Learn WebAssembly Imports and Exports
-- [ ] Learn WebAssembly Runtime Design
-- [ ] Learn WebAssembly WASI
-- [ ] Learn WebAssembly Component Model
-- [ ] Learn WebAssembly Garbage Collection
-
-
-## Debugging & Observability
-
-- [ ] Learn Debuggers From First Principles
-- [ ] Learn Breakpoints
-- [ ] Learn Watchpoints
-- [ ] Learn Hardware Breakpoints
-- [ ] Learn Stack Traces
-- [ ] Learn Stack Unwinding
-- [ ] Learn Core Dumps
-- [ ] Learn Crash Dumps
-- [ ] Learn Minidumps
-- [ ] Learn Debug Symbols
-- [ ] Learn PDB Debug Information
-- [ ] Learn Source-Level Debugging
-- [ ] Learn Remote Debugging
-- [ ] Learn GDB Internals
-- [ ] Learn LLDB Internals
-- [ ] Learn System Call Tracing
-- [ ] Learn Linux perf
-- [ ] Learn eBPF Tracing
-- [ ] Learn Hardware Performance Counters
-
-
-## Databases & Storage Engines
-
-- [ ] Learn Database Storage Engines
-- [ ] Learn B-Trees
-- [ ] Learn B+ Trees
-- [ ] Learn LSM Trees
-- [ ] Learn SSTables
-- [ ] Learn Write-Ahead Logging
-- [ ] Learn Database Transactions
-- [ ] Learn MVCC
-- [ ] Learn Database Isolation Levels
-- [ ] Learn Database Recovery
-- [ ] Learn Database Buffer Pools
-- [ ] Learn Database Indexes
-- [ ] Learn Query Execution
-- [ ] Learn Query Planners
-- [ ] Learn Cost-Based Query Optimization
-- [ ] Learn Hash Tables in Databases
-- [ ] Learn Bloom Filters
-- [ ] Learn Compaction
-- [ ] Learn SQLite Internals
-- [ ] Learn SQLite Virtual Machine
-- [ ] Learn SQLite Query Planner
-
-
-## Compression & Encoding
-
-- [ ] Learn Compression From First Principles
-- [ ] Learn Run-Length Encoding
-- [ ] Learn Huffman Coding
-- [ ] Learn Arithmetic Coding
-- [ ] Learn LZ77
-- [ ] Learn LZ78
-- [ ] Learn LZW
-- [ ] Learn DEFLATE
-- [ ] Learn gzip
-- [ ] Learn Brotli
-- [ ] Learn Zstandard
-- [ ] Learn Snappy
-- [ ] Learn LZ4
-- [ ] Learn Delta Encoding
-- [ ] Learn Entropy Coding
-- [ ] Learn Error-Correcting Codes
-
-
-## Graphics
-
-- [ ] Learn Rasterization
-- [ ] Learn Computer Graphics From First Principles
-- [ ] Learn GPU Architecture
-- [ ] Learn GPU Memory
-- [ ] Learn Graphics Pipelines
-- [ ] Learn Vertex Processing
-- [ ] Learn Rasterization
-- [ ] Learn Fragment Processing
-- [ ] Learn Depth Buffers
-- [ ] Learn Blending
-- [ ] Learn Texture Sampling
-- [ ] Learn GPU Command Buffers
-- [ ] Learn Shader Compilation
-- [ ] Learn SPIR-V
-- [ ] Learn Vulkan Architecture
-- [ ] Learn Vulkan Synchronization
-- [ ] Learn Vulkan Memory Management
-- [ ] Learn OpenGL Internals
-- [ ] Learn Direct3D Architecture
-- [ ] Learn Metal Architecture
-
-
-## Audio & Video
-
-- [ ] Learn Digital Audio From First Principles
-- [ ] Learn PCM Audio
-- [ ] Learn Sample Rates and Bit Depth
-- [ ] Learn Digital Audio Codecs
-- [ ] Learn MP3 Encoding
-- [ ] Learn AAC Encoding
-- [ ] Learn Opus
-- [ ] Learn FLAC Encoding
-- [ ] Learn Digital Video From First Principles
-- [ ] Learn YUV and RGB Video
-- [ ] Learn Video Frames
-- [ ] Learn I-Frames, P-Frames and B-Frames
-- [ ] Learn Motion Estimation
-- [ ] Learn H.264
-- [ ] Learn H.265 / HEVC
-- [ ] Learn AV1
-- [ ] Learn VP9
-- [ ] Learn Video Encoding
-- [ ] Learn Video Decoding
-- [ ] Learn Audio/Video Synchronization
-- [ ] Learn Media Containers
-- [ ] Learn MP4 Internals
-
-
-## Unicode & Text
-
-- [ ] Learn Unicode From First Principles
-- [ ] Learn UTF-8
-- [ ] Learn UTF-16
-- [ ] Learn UTF-32
-- [ ] Learn Unicode Normalization
-- [ ] Learn Unicode Grapheme Clusters
-- [ ] Learn Unicode Collation
-- [ ] Learn Unicode Bidirectional Algorithm
-- [ ] Learn Character Encoding
-- [ ] Learn Text Segmentation
-
-
-## Mathematics for Systems
-
-- [ ] Learn Binary Arithmetic
-- [ ] Learn Two's Complement
-- [ ] Learn Fixed-Point Arithmetic
-- [ ] Learn Floating-Point Arithmetic
-- [ ] Learn IEEE 754
-- [ ] Learn Floating-Point Errors
-- [ ] Learn Numerical Stability
-- [ ] Learn Bit Manipulation
-- [ ] Learn Boolean Algebra
-- [ ] Learn Modular Arithmetic
-- [ ] Learn Probability for Computer Systems
-- [ ] Learn Information Theory
-- [ ] Learn Entropy
-
-
-## Concurrency
-
-- [ ] Learn Concurrency From First Principles
-- [ ] Learn Threads and Processes
-- [ ] Learn Race Conditions
-- [ ] Learn Mutual Exclusion
-- [ ] Learn Lock-Free Programming
-- [ ] Learn Atomic Operations
-- [ ] Learn Compare-and-Swap
-- [ ] Learn Memory Models
-- [ ] Learn Sequential Consistency
-- [ ] Learn Acquire and Release Semantics
-- [ ] Learn Data Races
-- [ ] Learn Deadlocks
-- [ ] Learn Lock-Free Data Structures
-- [ ] Learn Wait-Free Algorithms
-- [ ] Learn Work Stealing
-- [ ] Learn Thread Pools
-- [ ] Learn Event Loops
-- [ ] Learn Async I/O
-- [ ] Learn Coroutines
-- [ ] Learn Fibers
-
-
-## Distributed Systems
-
-- [ ] Learn Distributed Systems From First Principles
-- [ ] Learn Clocks in Distributed Systems
-- [ ] Learn Logical Clocks
-- [ ] Learn Vector Clocks
-- [ ] Learn Leader Election
-- [ ] Learn Consensus
-- [ ] Learn Raft
-- [ ] Learn Paxos
-- [ ] Learn Distributed Transactions
-- [ ] Learn Two-Phase Commit
-- [ ] Learn Replication
-- [ ] Learn Quorum Systems
-- [ ] Learn Consistent Hashing
-- [ ] Learn Distributed Hash Tables
-- [ ] Learn CAP Theorem
-- [ ] Learn Eventual Consistency
-- [ ] Learn Distributed Locks
-- [ ] Learn Distributed Logs
-- [ ] Learn Failure Detection
-- [ ] Learn Idempotency
-- [ ] Learn Exactly-Once Processing
-
-
-## Security Internals
-
-- [ ] Learn Memory Safety
-- [ ] Learn Buffer Overflows
-- [ ] Learn Stack Smashing
-- [ ] Learn Heap Exploitation
-- [ ] Learn Use-After-Free
-- [ ] Learn Double-Free Bugs
-- [ ] Learn Integer Overflow
-- [ ] Learn Format String Vulnerabilities
-- [ ] Learn Return-Oriented Programming
-- [ ] Learn Control-Flow Integrity
-- [ ] Learn ASLR
-- [ ] Learn DEP and NX
-- [ ] Learn Sandboxing
-- [ ] Learn Process Isolation
-- [ ] Learn Linux Namespaces
-- [ ] Learn Linux Capabilities
-- [ ] Learn Secure Boot
-- [ ] Learn Trusted Execution Environments
-- [ ] Learn Memory Protection Keys
-- [ ] Learn Spectre
-- [ ] Learn Meltdown
-
-
-## Protocol & Serialization Design
-
-- [ ] Learn Binary Protocol Design
-- [ ] Learn Text Protocol Design
-- [ ] Learn Protocol Framing
-- [ ] Learn Length-Prefixed Protocols
-- [ ] Learn Varints
-- [ ] Learn Endianness
-- [ ] Learn Versioning Protocols
-- [ ] Learn Backward-Compatible Protocols
-- [ ] Learn Forward-Compatible Protocols
-- [ ] Learn Protocol Negotiation
-- [ ] Learn Capability Negotiation
-- [ ] Learn State Machine Protocols
-- [ ] Learn Protocol Error Handling
-- [ ] Learn Protocol Security
-
-
-## Compilers & Languages — Advanced
-
-- [ ] Learn Borrow Checking
-- [ ] Learn Lifetime Analysis
-- [ ] Learn Region Inference
-- [ ] Learn Ownership Type Systems
-- [ ] Learn Algebraic Data Types
-- [ ] Learn Pattern Matching Compilation
-- [ ] Learn Effect Systems
-- [ ] Learn Dependent Types
-- [ ] Learn Type Erasure
-- [ ] Learn Monomorphization
-- [ ] Learn Trait Resolution
-- [ ] Learn Garbage Collector Integration
-- [ ] Learn Closure Conversion
-- [ ] Learn Continuation-Passing Style
-- [ ] Learn Tail-Call Optimization
-- [ ] Learn Desugaring
-- [ ] Learn Macro Systems
-- [ ] Learn Hygienic Macros
-- [ ] Learn Module Systems
-- [ ] Learn Incremental Compilation
-- [ ] Learn Compiler Caching
-
-
-## Build Systems & Toolchains
-
-- [ ] Learn Build Systems From First Principles
-- [ ] Learn Make
-- [ ] Learn Ninja
-- [ ] Learn CMake Internals
-- [ ] Learn Dependency Resolution
-- [ ] Learn Package Managers
-- [ ] Learn Reproducible Builds
-- [ ] Learn Hermetic Builds
-- [ ] Learn Cross Compilation
-- [ ] Learn Toolchains
-- [ ] Learn Sysroots
-- [ ] Learn Linker Toolchains
-- [ ] Learn Compiler Drivers
-- [ ] Learn Build Caching
-- [ ] Learn Distributed Build Systems
-
-
-## Firmware & Embedded Systems
-
-- [ ] Learn Embedded Systems From First Principles
-- [ ] Learn Microcontrollers
-- [ ] Learn Memory-Mapped I/O
-- [ ] Learn Interrupt Controllers
-- [ ] Learn Timers
-- [ ] Learn UART
-- [ ] Learn SPI
-- [ ] Learn I2C
-- [ ] Learn GPIO
-- [ ] Learn DMA
-- [ ] Learn ADC and DAC
-- [ ] Learn Bootloaders
-- [ ] Learn Embedded Linker Scripts
-- [ ] Learn Firmware Images
-- [ ] Learn ARM Cortex-M
-- [ ] Learn RTOS Architecture
-- [ ] Learn Real-Time Scheduling
-- [ ] Learn Embedded Debugging
-
-
-## Boot & Startup
-
-- [ ] Learn Computer Boot From Power-On
-- [ ] Learn BIOS
-- [ ] Learn UEFI
-- [ ] Learn UEFI Boot Process
-- [ ] Learn Bootloaders
-- [ ] Learn Multiboot
-- [ ] Learn Linux Boot Process
-- [ ] Learn Windows Boot Process
-- [ ] Learn macOS Boot Process
-- [ ] Learn Secure Boot
-- [ ] Learn Kernel Initialization
-- [ ] Learn Process 1
-- [ ] Learn System Initialization
-
-
-## Terminals & Shells
-
-- [ ] Learn Terminal Emulators
-- [ ] Learn TTYs
-- [ ] Learn PTYs
-- [ ] Learn Terminal Line Discipline
-- [ ] Learn ANSI Escape Sequences
-- [ ] Learn Shell Parsing
-- [ ] Learn Shell Expansion
-- [ ] Learn Shell Job Control
-- [ ] Learn Unix Pipelines
-- [ ] Learn Process Groups
-- [ ] Learn Session Management
-
-
-## Time & Clocks
-
-- [ ] Learn Computer Timekeeping
-- [ ] Learn Unix Time
-- [ ] Learn Monotonic Clocks
-- [ ] Learn Wall Clocks
-- [ ] Learn Clock Synchronization
-- [ ] Learn NTP
-- [ ] Learn Leap Seconds
-- [ ] Learn Time Zones
-- [ ] Learn Calendrical Computation
-
-
-## Hardware Interfaces
-
-- [ ] Learn PCI Express
-- [ ] Learn USB
-- [ ] Learn USB Device Enumeration
-- [ ] Learn USB Descriptors
-- [ ] Learn NVMe
-- [ ] Learn SATA
-- [ ] Learn AHCI
-- [ ] Learn Bluetooth
-- [ ] Learn Wi-Fi From First Principles
-- [ ] Learn IOMMU
-- [ ] Learn DMA
-- [ ] Learn Interrupts and MSI-X
-
-
-## Data Structures & Algorithms — Deep Internals
-
-- [ ] Learn Hash Tables
-- [ ] Learn Hash Table Collision Resolution
-- [ ] Learn Bloom Filters
-- [ ] Learn Cuckoo Hashing
-- [ ] Learn B-Trees
-- [ ] Learn B+ Trees
-- [ ] Learn Red-Black Trees
-- [ ] Learn AVL Trees
-- [ ] Learn Skip Lists
-- [ ] Learn Tries
-- [ ] Learn Radix Trees
-- [ ] Learn Interval Trees
-- [ ] Learn Fenwick Trees
-- [ ] Learn Segment Trees
-- [ ] Learn Union-Find
-- [ ] Learn Priority Queues
-- [ ] Learn Heaps
-- [ ] Learn Lock-Free Data Structures
-
-
-## Programming Language Internals
-
-- [ ] Learn C Object Representation
-- [ ] Learn C Undefined Behavior
-- [ ] Learn C Memory Model
-- [ ] Learn C ABI
-- [ ] Learn C++ Object Model
-- [ ] Learn C++ ABI
-- [ ] Learn C++ Name Mangling
-- [ ] Learn C++ Virtual Functions
-- [ ] Learn C++ Exception Handling
-- [ ] Learn C++ RTTI
-- [ ] Learn Rust Ownership Internals
-- [ ] Learn Rust Borrow Checking Internals
-- [ ] Learn Rust Trait Objects
-- [ ] Learn Rust Async Runtime Internals
-- [ ] Learn Rust ABI and FFI
-
-
-## Runtime & Process Internals
-
-- [ ] Learn Process Creation
-- [ ] Learn fork()
-- [ ] Learn exec()
-- [ ] Learn Windows Process Creation
-- [ ] Learn Unix File Descriptors
-- [ ] Learn Windows Handles
-- [ ] Learn Unix Signals
-- [ ] Learn Windows Structured Exception Handling
-- [ ] Learn Unix Dynamic Loading
-- [ ] Learn Windows DLL Loading
-- [ ] Learn macOS Dynamic Loading
-- [ ] Learn Environment Variables Internals
-- [ ] Learn Process Environment Blocks
-- [ ] Learn Thread-Local Storage Internals
-
-
-## Source Control Internals
-
-- [ ] Learn Git Internals
-- [ ] Learn Git Objects
-- [ ] Learn Git Packfiles
-- [ ] Learn Git Index
-- [ ] Learn Git References
-- [ ] Learn Git Reflogs
-- [ ] Learn Git Merge
-- [ ] Learn Git Rebase
-- [ ] Learn Git Garbage Collection
-- [ ] Learn Git Transfer Protocol
-
-
-## Virtualization
-
-- [ ] Learn Virtual Machines From First Principles
-- [ ] Learn Hardware Virtualization
-- [ ] Learn Intel VT-x
-- [ ] Learn AMD-V
-- [ ] Learn ARM Virtualization
-- [ ] Learn Hypervisors
-- [ ] Learn Type-1 Hypervisors
-- [ ] Learn Type-2 Hypervisors
-- [ ] Learn Virtual CPUs
-- [ ] Learn Virtual Memory in Hypervisors
-- [ ] Learn Virtual I/O
-- [ ] Learn Device Emulation
-- [ ] Learn VirtIO
-- [ ] Learn QEMU Internals
-- [ ] Learn KVM
-- [ ] Learn Containers From First Principles
-- [ ] Learn Linux Containers
-- [ ] Learn Namespaces
-- [ ] Learn cgroups
-- [ ] Learn Overlay Filesystems
-
-
-## Distributed & Networked Storage
-
-- [ ] Learn Object Storage
-- [ ] Learn Distributed Filesystems
-- [ ] Learn RAID
-- [ ] Learn RAID 0
-- [ ] Learn RAID 1
-- [ ] Learn RAID 5
-- [ ] Learn RAID 6
-- [ ] Learn RAID 10
-- [ ] Learn Erasure Coding
-- [ ] Learn Replicated Storage
-- [ ] Learn Consistent Hashing
-- [ ] Learn Content-Addressable Storage
-
-
-## System Design at the Lowest Level
-
-- [ ] Learn IPC From First Principles
-- [ ] Learn RPC From First Principles
-- [ ] Learn Serialization From First Principles
-- [ ] Learn Event-Driven Architecture
-- [ ] Learn Message Queues
-- [ ] Learn Ring Buffers
-- [ ] Learn Memory Pools
-- [ ] Learn Object Pools
-- [ ] Learn Zero-Copy I/O
-- [ ] Learn Scatter-Gather I/O
-- [ ] Learn io_uring
-- [ ] Learn epoll
-- [ ] Learn kqueue
-- [ ] Learn IOCP
-- [ ] Learn Asynchronous File I/O
-- [ ] Learn Memory-Mapped I/O

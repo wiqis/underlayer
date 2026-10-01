@@ -106,3 +106,55 @@ No merge is done until all of these hold, for the whole collection:
 - `bracecheck`, `html_balance`, `nesting_check` clear
 - `check_quotes` passing for every course
 - the concept count and the minute total are **unchanged**
+
+## The same invariant, applied to the un-started roadmap (2026-10-01)
+
+The 2026-10-01 request was a second one, in the same direction and at a
+different scale: *"there are too many courses, could you merge some titles, we
+don't want to NOT teach something, but we want to put more topics into
+courses… we want to teach less courses, but teach everything still, NOT miss
+anything, this way AIs would be able to complete the courses faster."*
+
+**It applies only to work that has not been started.** The 60 ticked items and
+the 21 courses that teach them were deliberately left alone. Merging them was
+already decided above and separately, and this change does not revisit it: the
+ticked items sit in `docs/courses-todo.md` Part 1 under the headings they have
+always had, with their existing annotations and provenance notes, byte for
+byte. Reopening a shipped course to make a checklist look tidier is exactly the
+kind of change that has to stay green for no benefit.
+
+What changed is the other half of the document. The 678 un-started items were
+flat under 35 topic sections, which read as 35 more courses — or, read one line
+at a time, as 678. They are now grouped into **14 planned courses**, each named,
+sized, and traceable, with every item annotated `— \`slug\`, from <section>,
+concept \`<id>\``. No course directory, manifest, verifier or harness exists for
+any of them; the slug and the concept id are what a build is expected to use.
+
+The invariant is the same one that governs a merge, and it is machine-checked
+rather than asserted:
+
+```bash
+python3 tools/todo_check.py    # exits 0 only if nothing moved
+```
+
+It compares the **multiset** of item titles — not the set, because sixteen
+titles sit on two roadmap lines each and a set-based check would pass while a
+line had been deleted — against a SHA-256 recorded before the restructure, and
+additionally verifies the counts (738 / 60 / 678), that all 60 ticked titles are
+the same 60, that every un-ticked line carries one of the 14 slugs, and that the
+per-slug counts are the ones the summary table claims.
+
+Three rules carried over from a merge to this restructure, because they are the
+same operation on different inputs:
+
+1. **Nothing is deleted, summarised, or folded into another bullet.** A merge
+   loses courses and keeps concepts; this loses neither. It changes only the
+   grouping and adds an annotation.
+2. **A course is packaging.** Here the grouping is a proposal. The manifest,
+   the concept ids and the module boundaries are decided when the course is
+   built, and a build may split a planned course into modules without touching
+   this document.
+3. **Old identities keep working.** Roadmap item titles are unchanged, so any
+   script or link that names a title still finds it; what is new is the
+   annotation after the separator, which is why the check strips everything
+   after `  — ` before comparing.
