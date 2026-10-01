@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prove the courses-todo.md restructure dropped nothing.
+r"""Prove the courses-todo.md restructure dropped nothing.
 
 The 2026-10-01 restructure reorganised 678 un-started roadmap items out of 35
 flat sections into 14 planned courses. The one failure mode that matters is
@@ -22,23 +22,36 @@ Checks (all must pass for exit 0):
     5. every unchecked line carries an annotation naming one of the 14 slugs
     6. the per-slug item counts are exactly EXPECTED_COURSE_COUNTS and sum
        to 678, which is what the summary table in the document claims
+    7. no line is a checkbox item written with the wrong bullet marker, which
+       would otherwise be invisible to both the count and the hash
 
-The multiset, not the set: sixteen titles appear on two roadmap lines each, so
+The multiset, not the set: fifteen titles appear on two roadmap lines each, so
 a check that deduplicated would pass while a line had been deleted.
+
+The parsing and hashing primitives are shared with `tools/music_todo_check.py`
+via `tools/todo_check_core.py`, because the same restructure was applied to the
+music curriculum on the same day and the two checks must not be able to drift
+apart on the part that is easy to get wrong. Only the profile below -- this
+document, its marker, its baselines and its 14 slugs -- is specific to it.
 """
 import argparse
-import hashlib
-import os
-import re
 import sys
-from collections import Counter
+
+from todo_check_core import (
+    ANNOTATION_SEP,
+    checked_sha,
+    diff_revisions,
+    items_sha,
+    read_items,
+    slug_counts,
+)
 
 DOC = "docs/courses-todo.md"
+MARKER = "-"  # this document's items are `- [ ]`, not `* [ ]`
 
 # The separator between an item title and its annotation. It is the separator
 # the completed sections already use ("  — `x86simd`, concept `x86-sse`"), so
 # the title is everything before it. No item title in the roadmap contains it.
-ANNOTATION_SEP = "  — "
 
 # Recorded from HEAD on 2026-10-01, before the restructure was written, over
 # item TITLES (annotation stripped).
@@ -66,56 +79,6 @@ EXPECTED_COURSE_COUNTS = {
     "distsys": 30,
 }
 
-ITEM_RE = re.compile(r"^- \[( |x)\] (.*)$")
-SLUG_RE = re.compile(r"^\s*-\s*\[ \]\s.*?—\s*`([a-z0-9]+)`")
-
-
-def read_items(path):
-    """Return (items, malformed_lines). items = [(state, title), ...].
-
-    The annotation after ANNOTATION_SEP is deliberately NOT part of the title:
-    the restructure appends one to every un-started line, and the invariant is
-    that the TITLE of every item is unchanged. Stripping it is what makes the
-    comparison a comparison of titles and not of titles-plus-annotations.
-    """
-    items = []
-    malformed = []
-    with open(path, encoding="utf-8") as fh:
-        for lineno, line in enumerate(fh.read().split("\n"), 1):
-            if re.match(r"^- \[.\]", line):
-                m = ITEM_RE.match(line)
-                if not m:
-                    malformed.append((lineno, line))
-                else:
-                    rest = m.group(2)
-                    title = rest.split(ANNOTATION_SEP, 1)[0]
-                    items.append((m.group(1), title))
-    return items, malformed
-
-
-def canonical(items):
-    return "\n".join(sorted(f"[{s}] {t}" for s, t in items))
-
-
-def sha(text):
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def slug_counts(path):
-    """Count annotated unchecked lines per course slug."""
-    counts = Counter()
-    unannotated = []
-    with open(path, encoding="utf-8") as fh:
-        for lineno, line in enumerate(fh.read().split("\n"), 1):
-            if not line.startswith("- [ ] "):
-                continue
-            m = SLUG_RE.match(line)
-            if m:
-                counts[m.group(1)] += 1
-            else:
-                unannotated.append((lineno, line))
-    return counts, unannotated
-
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
@@ -128,13 +91,16 @@ def main():
     failures = []
     notes = []
 
-    items, malformed = read_items(args.path)
+    items, malformed, foreign, stray = read_items(args.path, MARKER, ANNOTATION_SEP)
     checked = [t for s, t in items if s == "x"]
     unchecked = [t for s, t in items if s == " "]
 
-    if malformed:
-        for lineno, line in malformed:
-            failures.append(f"malformed item line {lineno}: {line!r}")
+    for lineno, line in malformed:
+        failures.append(f"malformed item line {lineno}: {line!r}")
+    for lineno, line in foreign:
+        failures.append(
+            f"line {lineno} is a checkbox item under the wrong bullet marker "
+            f"(expected {MARKER!r}): {line[:70]!r}")
 
     if len(items) != EXPECTED_TOTAL:
         failures.append(f"total items {len(items)}, expected {EXPECTED_TOTAL}")
@@ -143,15 +109,15 @@ def main():
     if len(unchecked) != EXPECTED_UNCHECKED:
         failures.append(f"unchecked items {len(unchecked)}, expected {EXPECTED_UNCHECKED}")
 
-    all_hash = sha(canonical(items))
+    all_hash = items_sha(items)
     if all_hash != BASELINE_ALL_SHA256:
         failures.append(f"item multiset hash {all_hash}, expected {BASELINE_ALL_SHA256}")
 
-    checked_hash = sha("\n".join(sorted(checked)))
+    checked_hash = checked_sha(checked)
     if checked_hash != BASELINE_CHECKED_SHA256:
         failures.append(f"checked-item hash {checked_hash}, expected {BASELINE_CHECKED_SHA256}")
 
-    counts, unannotated = slug_counts(args.path)
+    counts, unannotated = slug_counts(args.path, MARKER, ANNOTATION_SEP)
     for lineno, line in unannotated:
         failures.append(f"unchecked line {lineno} has no course slug: {line[:70]!r}")
     unknown = sorted(set(counts) - set(EXPECTED_COURSE_COUNTS))
@@ -166,21 +132,13 @@ def main():
                         f"expected {EXPECTED_UNCHECKED}")
 
     if args.against:
-        other, other_malformed = read_items(args.against)
-        if other_malformed:
-            failures.append(f"{args.against}: {len(other_malformed)} malformed item line(s)")
-        diff_notes = []
-        a, b = Counter(t for _, t in items), Counter(t for _, t in other)
-        for text, n in sorted((a - b).items()):
-            diff_notes.append(f"  ONLY IN {args.path}: {text}")
-        for text, n in sorted((b - a).items()):
-            diff_notes.append(f"  ONLY IN {args.against}: {text}")
-        sa = Counter(f"[{s}] {t}" for s, t in items)
-        sb = Counter(f"[{s}] {t}" for s, t in other)
-        for text, n in sorted((sa - sb).items()):
-            diff_notes.append(f"  STATE CHANGED IN {args.path}: {text}")
-        for text, n in sorted((sb - sa).items()):
-            diff_notes.append(f"  STATE CHANGED IN {args.against}: {text}")
+        other, o_malformed, o_foreign, _ = read_items(args.against, MARKER, ANNOTATION_SEP)
+        if o_malformed:
+            failures.append(f"{args.against}: {len(o_malformed)} malformed item line(s)")
+        if o_foreign:
+            failures.append(f"{args.against}: {len(o_foreign)} item line(s) under "
+                            f"the wrong bullet marker")
+        diff_notes = diff_revisions(items, other, args.path, args.against)
         if diff_notes:
             failures.append("item sets differ between revisions:\n" + "\n".join(diff_notes))
         else:
@@ -193,6 +151,9 @@ def main():
         print(f"  checked items     sha256 {checked_hash}")
         print(f"  {len(counts)} planned courses: "
               + ", ".join(f"`{s}` {counts[s]}" for s in EXPECTED_COURSE_COUNTS))
+        if stray:
+            print(f"  {len(stray)} prose line(s) mention a checkbox token and are "
+                  f"correctly not counted as items")
         for n in notes:
             print("  " + n)
 

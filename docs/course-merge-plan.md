@@ -158,3 +158,93 @@ same operation on different inputs:
    script or link that names a title still finds it; what is new is the
    annotation after the separator, which is why the check strips everything
    after `  — ` before comparing.
+
+## The same invariant, applied to the music curriculum (2026-10-01)
+
+The same request was then applied to the music plan: *"courses in there are
+also too many, we should reduce courses before we start there."* `docs/music-plan.md`
+carried **309 un-started music curriculum items** flat under 15 topic sections —
+Foundation, Composition Training, Harmony, Counterpoint, Form, Pop Composition,
+Classical Composition, Orchestration & Arrangement, Analysis, Composition
+Techniques, Composition Drills, Style Analysis, MuseScore / Notation, Integrated
+Composition Courses, and Advanced "Composition Athlete" Training. Read one line
+at a time they were 309 courses; read by section, 15. They are now **8 planned
+courses**:
+
+| # | Planned course | Slug | Items |
+|---|---|---|---|
+| 1 | Music Foundations and Notation | `music-foundations` | 34 |
+| 2 | Harmony and Counterpoint | `music-harmony` | 37 |
+| 3 | Form and Analysis | `music-form` | 38 |
+| 4 | Composition | `music-composition` | 47 |
+| 5 | Genre Composition | `music-genres` | 43 |
+| 6 | Orchestration and Arrangement | `music-orchestration` | 22 |
+| 7 | Composition Drills and Style | `music-drills` | 46 |
+| 8 | Integrated and Advanced Composition | `music-integrated` | 42 |
+| | **Total** | | **309** |
+
+**No built course was touched.** No music course exists, so there is no
+directory, `manifest.json`, verifier or harness, no lesson URL and no inbound
+link that could move. The 33 built course directories and the 60 ticked items
+in `docs/courses-todo.md` are exactly as they were, and the systems check still
+passes against its own recorded baseline.
+
+**The argument was not cut, only the checklist was moved.** `docs/music-plan.md`
+is not a bare checklist: it carries the three-capability argument (composition
+athlete, musical analyst, musical reconstruction), the requirement that the AI
+be forced to generate actual machine-readable notation, the validation pipeline
+that gates a lesson, and the closing rule that no lesson may stay verbal. All of
+that prose is kept verbatim. The 15 original headings still stand with their
+argument, and a pointer to the new course sits exactly where each checklist was.
+Lines 1–230 and the closing rule onward are **byte-identical** to the
+pre-restructure file; the change is confined to the checklist region.
+
+The invariant is the same one, machine-checked rather than asserted:
+
+```bash
+python3 tools/music_todo_check.py    # exits 0 only if nothing moved
+```
+
+It compares the **multiset** of the 309 item titles against a SHA-256 recorded
+before the restructure, and additionally verifies the counts (309 / 0 / 309),
+that every line is still un-ticked, that every line carries one of the 8 slugs,
+and that the per-slug counts are the ones the summary table claims.
+
+Two traps this document shares with the systems one, and how each is handled:
+
+1. **A checkbox token is not an item.** The music plan is a prose document, so
+   a line-based counter is especially unsafe. Items are matched on a leading
+   `*` plus `[ ]` plus a space; a line that uses the other bullet marker is a
+   hard failure, not a silent omission. `docs/courses-todo.md` has nine prose
+   lines that mention `` `[ ]` `` in a table or a sentence, and the shared
+   reader reports them rather than counting them.
+2. **Eight titles sit on two lines each** — `Learn Musical Phrases`, `Learn
+   Sonata Form`, `Learn Suspensions`, `Learn Theme and Variations`, `Learn
+   Motif Development`, and `Learn Writing for Orchestra` / `for Piano` / `for
+   String Quartet`. The check is a multiset so a deleted line cannot hide behind
+   its twin, and each pair shares one concept id with a note saying where the
+   other line went. A duplicate is a genuine repeat of a real topic, not an
+   error to collapse.
+
+`tools/todo_check_core.py` now holds the parsing and hashing primitives both
+checks drive, because they are the same operation on two documents and must not
+be able to drift on the part that is easy to get wrong. Each CLI keeps its own
+profile — its document, its bullet marker, its recorded baselines and its course
+slugs. `todo_check.py` still exits 0 with the same counts and the same two
+hashes it reported before the shared module existed.
+
+**The size trade is larger here, and it is recorded rather than hidden.** The
+32 built courses run 4 to 24 concepts. The 8 music courses average 38.6 items,
+and because the systems ratio of 1.3–2.1 concepts per item cannot be measured
+for a subject with nothing built, the reasoned music range is **1.5–3.0** — the
+direction is *up*, because 33 of the 309 items are exercise families and whole
+pieces rather than subjects. A 38.6-item music course is therefore 58–116
+concepts, 2.4x to 4.8x the largest course ever built. So a planned music course
+is explicitly **not one build**: it is a landing page, one manifest, one
+verifier and one harness over 3–6 modules committed separately, exactly as
+recorded for the systems roadmap. Music carries one extra cost the systems
+courses do not: a music concept is not complete until its notation has been
+generated, rendered, played and theory-checked, which makes the module split
+more necessary rather than less. `docs/music-plan.md` also records the one place
+where the right unit is smaller than a concept — `music-drills` is a drill bank
+with a generator and a scoring rule, not 70–140 hand-written concept pages.
