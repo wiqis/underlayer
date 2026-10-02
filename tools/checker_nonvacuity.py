@@ -32,6 +32,13 @@ WHAT IS PROVEN, AND HOW.
   security_check  --selftest asserts identical-vs-different is distinguishable
                    and a 64-hex legacy value is not classified as bcrypt
   route_check     --selftest plants a cross-learner leak and asserts it fires
+  session_js_check  the 401 contract is restored to the old
+                   "silent401 RETURNS the 401" shape and the checker must fail.
+  lesson_pager_check  a LENGTH is passed to string_view.subview() where it
+                   takes an END INDEX -- the actual defect that shipped, which
+                   truncated every lesson page while every other gate stayed
+                   green.  Both of these rebuild the tree, so --quick skips
+                   them.
 
 The tree-mutating checkers run against a full COPY of the repo, so this script
 cannot damage the working tree even if it is killed midway.
@@ -49,6 +56,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PY = sys.executable
@@ -298,6 +306,201 @@ def check_selftests(quick):
                 else 'the selftest did not pass on a clean tree (exit %d)' % rc))
 
 
+def check_session_js(quick):
+    """Prove session_js_check.js can fail.
+
+    A grep is not a test here.  The js_cbi macro rewrites `function(){}` into
+    `(function(){})`, so the text a grep would look for is not the text that
+    ships, and "the helper is in the HTML" proves nothing about whether it
+    works.  session_js_check.js therefore extracts the REAL emitted script and
+    executes it in Node against a DOM stub -- which means its assertions have to
+    be shown failing, or it is one macro change away from being decoration.
+
+    The plant is the smallest one that matters: restore the old 401 contract in
+    web/src/session_js.ch (honour `silent401` by RETURNING the 401 instead of
+    rejecting it).  That is the exact shape that made callers parse
+    `{"error":"unauthorized"}` as data, so if this checker cannot see it, the
+    checker is not looking at the thing it claims to look at.
+
+    This one builds the tree, so it needs the compiler; --quick skips it.
+    """
+    rc, out = run(['node', 'tools/session_js_check.js',
+                   os.environ.get('UL_BASE_URL', 'http://localhost:9000')],
+                  timeout=900)
+    if rc != 0:
+        record('session_js_check', False, False,
+               'control already fails on the real server; skipped')
+        return
+    if quick:
+        record('session_js_check', True, False, 'skipped by --quick')
+        return
+    compiler = find_compiler()
+    if not compiler:
+        record('session_js_check', True, False, 'no compiler found; skipped')
+        return
+    with tempfile.TemporaryDirectory() as tmp:
+        tree = os.path.join(tmp, 'r')
+        shutil.copytree(REPO, tree, ignore=shutil.ignore_patterns(
+            '.git', 'build', 'output', 'node_modules', '__pycache__'))
+        victim = os.path.join(tree, 'web/src/session_js.ch')
+        src = open(victim).read()
+        planted = src.replace('if (r.status === 401) {',
+                               'if (r.status === 401 && !opts.silent401) {', 1)
+        if planted == src:
+            record('session_js_check', True, False,
+                   'the plant did not apply -- the 401 guard is not in the '
+                   'shape this check expects')
+            return
+        open(victim, 'w').write(planted)
+        port = free_port()
+        rc2, _ = run([compiler, 'chemical.mod', '-o',
+                      os.path.join(tree, 'build/underlayer.exe'),
+                      '-bm-modules', '--no-cache', '--mode', 'debug_quick'],
+                     cwd=tree, timeout=1800)
+        if rc2 != 0:
+            record('session_js_check', True, False,
+                   'the planted tree did not build (exit %d)' % rc2)
+            return
+        exe = os.path.join(tree, 'build/underlayer.exe')
+        srv = subprocess.Popen([exe], cwd=tree,
+                               env=dict(os.environ, PORT=str(port),
+                                        DATABASE_URL=os.path.join(tree, 'nv.db')),
+                               stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL)
+        try:
+            base = 'http://localhost:%d' % port
+            if not wait_for_health(base, 60):
+                record('session_js_check', True, False,
+                       'the planted server never came up')
+                return
+            rc3, out3 = run(['node', 'tools/session_js_check.js', base],
+                            timeout=900)
+            caught = rc3 != 0 and '401' in out3
+        finally:
+            srv.terminate()
+            try:
+                srv.wait(timeout=20)
+            except Exception:
+                srv.kill()
+    record('session_js_check', True, caught,
+           'restored the old silent401-returns-the-401 contract -> exit %d, '
+           'named=%s' % (rc3, caught))
+
+
+def check_lesson_pager(quick):
+    """Prove lesson_pager_check.py can fail, by reintroducing the bug it exists
+    for: passing a LENGTH to string_view.subview() where it takes an END INDEX.
+
+    This is the only plant in this file that reproduces a bug that shipped for
+    a while without ANY gate noticing.  Every lesson page was served truncated
+    -- bytes 65,866 -> 24,934, cut off mid-attribute -- while the server stayed
+    healthy, every route answered 200, nav_check reported 447 good pages and
+    link_check reported 462 good links.  A status code and a link target are
+    both still valid in a document that has lost two thirds of itself.
+
+    So the plant is worth more than a made-up one: it is the actual defect,
+    and the checker either sees it or it does not deserve to exist.
+    """
+    rc, out = run([PY, 'tools/lesson_pager_check.py',
+                   os.environ.get('UL_BASE_URL', 'http://localhost:9000')],
+                  timeout=900)
+    if rc != 0:
+        record('lesson_pager_check', False, False,
+               'control already fails on the real server; skipped')
+        return
+    if quick:
+        record('lesson_pager_check', True, False, 'skipped by --quick')
+        return
+    compiler = find_compiler()
+    if not compiler:
+        record('lesson_pager_check', True, False, 'no compiler found; skipped')
+        return
+    victim_rel = os.path.join('web', 'src', 'lesson_pager.ch')
+    with tempfile.TemporaryDirectory() as tmp:
+        tree = os.path.join(tmp, 'r')
+        shutil.copytree(REPO, tree, ignore=shutil.ignore_patterns(
+            '.git', 'build', 'output', 'node_modules', '__pycache__'))
+        victim = os.path.join(tree, victim_rel)
+        src = open(victim).read()
+        planted = src.replace('src.to_view().subview(after, src.size())',
+                              'src.to_view().subview(after, src.size() - after)', 1)
+        if planted == src:
+            record('lesson_pager_check', True, False,
+                   'the plant did not apply -- subview() is not called in the '
+                   'shape this check expects')
+            return
+        open(victim, 'w').write(planted)
+        rc2, _ = run([compiler, 'chemical.mod', '-o',
+                      os.path.join(tree, 'build/underlayer.exe'),
+                      '-bm-modules', '--no-cache', '--mode', 'debug_quick'],
+                     cwd=tree, timeout=1800)
+        if rc2 != 0:
+            record('lesson_pager_check', True, False,
+                   'the planted tree did not build (exit %d)' % rc2)
+            return
+        exe = os.path.join(tree, 'build/underlayer.exe')
+        srv = subprocess.Popen([exe], cwd=tree,
+                               env=dict(os.environ, PORT='9121',
+                                        DATABASE_URL=os.path.join(tree, 'nv2.db')),
+                               stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL)
+        try:
+            base = 'http://localhost:9121'
+            if not wait_for_health(base, 60):
+                record('lesson_pager_check', True, False,
+                       'the planted server never came up')
+                return
+            rc3, out3 = run([PY, 'tools/lesson_pager_check.py', base], timeout=900)
+            caught = rc3 != 0 and 'truncated' in out3
+        finally:
+            srv.terminate()
+            try:
+                srv.wait(timeout=20)
+            except Exception:
+                srv.kill()
+    record('lesson_pager_check', True, caught,
+           'passed a LENGTH to subview() where it takes an END INDEX -> every '
+           'lesson page truncated -> exit %d, named=%s' % (rc3, caught))
+
+
+def find_compiler():
+    """The Chemical compiler, the same way scripts/_common.sh looks for it."""
+    env = os.environ.get('CHEMICAL_ROOT')
+    if env:
+        for sub in ('cmake-build-debug', 'build', '.'):
+            for name in ('TCCCompiler', 'TCCCompiler.exe'):
+                cand = os.path.join(env, sub, name)
+                if os.path.isfile(cand):
+                    return cand
+    for root in ('/tmp/opencode/asan-build',):
+        cand = os.path.join(root, 'TCCCompiler')
+        if os.path.isfile(cand):
+            return cand
+    return None
+
+
+def free_port():
+    import socket
+    s = socket.socket()
+    s.bind(('127.0.0.1', 0))
+    port = s.getsockname()[1]
+    s.close()
+    return port
+
+
+def wait_for_health(base, seconds):
+    import urllib.request
+    for _ in range(seconds):
+        try:
+            with urllib.request.urlopen(base + '/api/health', timeout=5) as r:
+                if r.getcode() == 200:
+                    return True
+        except Exception:
+            pass
+        time.sleep(1)
+    return False
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--quick', action='store_true')
@@ -313,6 +516,8 @@ def main():
     print('--- checkers with their own negative controls ---')
     check_selftests(args.quick)
     check_nav(args.quick)
+    check_session_js(args.quick)
+    check_lesson_pager(args.quick)
     print()
     print('--- document checkers ---')
     check_todo(args.quick)

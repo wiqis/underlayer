@@ -68,7 +68,25 @@ public namespace underlayer_web {
         var learner = underlayer_repository::get_learner(db, &learner_id)
         var learner_name = learner.name.copy()
         if(learner_name.size() == 0) { learner_name = string("Learner") }
-        var course_title = course_id.copy()
+        // THE CERTIFICATE'S COURSE TITLE WAS THE COURSE ID.  `var course_title =
+        // course_id.copy()` meant every certificate this platform has ever
+        // issued is titled "elf", or "rvasm", or "pe" -- and the certificate
+        // page renders that string as the name of the course the learner
+        // completed.  It is stored, so it is not a display bug: the wrong value
+        // is in the row and in every certificate URL's response.
+        //
+        // `courses_dir` is already a parameter -- require_course_complete needed
+        // it for the manifest's concept count -- so the real title is one
+        // manifest load away.  Falls back to the id ONLY when the course cannot
+        // be loaded, because an empty title on a certificate is worse than a
+        // bare one.
+        var course_title = string()
+        var course = underlayer_repository::load_course(courses_dir, &course_id)
+        if(course.id.size() > 0) {
+            course_title = course.title.copy()
+        } else {
+            course_title = course_id.copy()
+        }
         var cert_id = underlayer_repository::issue_certificate(db, &learner_id, &course_id, &learner_name, &course_title)
         var resp = string("{\"id\":\"")
         resp.append_string(&cert_id)

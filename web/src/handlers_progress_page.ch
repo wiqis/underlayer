@@ -11,6 +11,11 @@ public namespace underlayer_web {
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
         page.appendTitle(std::string_view("Progress — Underlayer"))
+        // THE SHARED SESSION HELPER.  This page's script calls __ulFetch,
+        // __ulCourseId and __ulHeaders, all defined once in session_js.ch.
+        // Emitted before the page's own script so the helpers exist by the
+        // time its DOMContentLoaded handler calls them.
+        render_session_js(&mut page)
 
         #html {
             {render_nav_bar(&mut page)}
@@ -18,7 +23,7 @@ public namespace underlayer_web {
             <div class="container" id="main-content">
                 <div class="page-header">
                     <h1>Your Progress</h1>
-                    <p class="subtitle">Track your learning journey through the ELF course</p>
+                    <p class="subtitle">Track your learning journey through this course</p>
                 </div>
 
                 <div class="stats-grid">
@@ -198,21 +203,18 @@ public namespace underlayer_web {
                 loadConceptList();
             });
 
-            // WHY THE AUTHORIZATION HEADER IS HERE AND WAS NOT BEFORE.  The
-            // fetch below ran without it, so auth_get_learner_id() found no
-            // bearer token, fell back to the shared "demo" learner, and the page
-            // reported DEMO'S progress to every signed-in learner on the
-            // platform.  Signed out, this is still the empty state; signed in,
-            // it is now the signed-in learner's own numbers.
-            function ppHeaders() {
-                var h = {};
-                var t = '';
-                try { t = localStorage.getItem('session_token') || ''; } catch (e) { t = ''; }
-                if (t) { h['Authorization'] = 'Bearer ' + t; }
-                return h;
-            }
+            // THE AUTHORIZATION HEADER IS NOT HERE ANY MORE.  This page had its own
+            // ppHeaders() that read localStorage in a try/catch and built the
+            // bearer header -- the same helper now lives once in
+            // session_js.ch as __ulHeaders(), which every page shares, and it
+            // does this plus handles the 401 this page had no answer for.
+            // Kept here as a note because the comment that explained why the
+            // header was added is the reason the helper is shared rather than
+            // copy-pasted: auth_get_learner_id() falls back to the shared
+            // "demo" learner when no bearer token arrives, so a page that
+            // forgets the header shows EVERY LEARNER THE SAME NUMBERS.
             function loadProgress() {
-                fetch("/api/progress?course_id=elf", { headers: ppHeaders() })
+                __ulFetch('/api/progress?course_id=' + encodeURIComponent(__ulCourseId()))
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         // Every field below was read by this page and emitted by
@@ -251,7 +253,13 @@ public namespace underlayer_web {
                         setText("reviewing-count", "0");
                     });
 
-                fetch("/api/review/due?course_id=elf&limit=1000", { headers: ppHeaders() })
+                // silent401 HERE, DELIBERATELY.  This is the due-review COUNTER: a signed-out
+                // visitor should see "0 due", not be thrown to a login page for
+                // asking what is on their schedule.  The review page, where
+                // nothing can happen without a session, does not pass this and
+                // does redirect.  Same wrapper, one named flag, and the flag is
+                // where the decision is visible.
+                __ulFetch('/api/review/due?course_id=' + encodeURIComponent(__ulCourseId()) + '&limit=1000', { silent401: true })
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         var items = data || [];
@@ -281,12 +289,44 @@ public namespace underlayer_web {
             function loadConceptList() {
                 var list = document.getElementById("concept-list");
                 list.innerHTML = "";
-                var names = ["Bytes and Binary", "Binary Representation", "File Layout", "ELF Identification", "ELF Header Fields", "Entry Point", "Program Header Table", "Segment Types", "Memory Mapping", "Section Header Table", "Common Sections", "Section vs Segment", "Symbol Table", "Symbol Binding", "Symbol Visibility", "Relocation Entries", "Relocation Types", "Dynamic Relocations", "Dynamic Section", "Shared Libraries", "The Dynamic Linker", "The Kernel Loader", "Process Memory Layout", "The Startup Sequence"];
-                var ids = ["bytes", "binary-representation", "file-layout", "elf-identification", "elf-header-fields", "entry-point", "program-header-table", "segment-types", "memory-mapping", "section-header-table", "common-sections", "section-vs-segment", "symbol-table", "binding", "visibility", "relocation-entries", "relocation-types", "dynamic-relocations", "dynamic-section", "shared-libraries", "dynamic-linker", "loader", "memory-layout", "execution"];
-                fetch("/api/progress?course_id=elf", { headers: ppHeaders() })
+                var course = __ulCourseId();
+                // THE ORDER AND TITLES COME FROM THE MANIFEST NOW.  They used to
+                // be two hardcoded arrays pasted into this page, and the comment
+                // above them admitted the cost: "reordering it by hand would be a
+                // 24-entry table to keep in step with the manifest."  That is not
+                // a maintenance note, it is the defect.  The arrays had already
+                // drifted -- they were ELF's 24 concepts on a page whose URL
+                // carries a course id, so on /progress?course_id=rvasm this drew
+                // 24 rows titled "Bytes and Binary", "ELF Header Fields" and
+                // "The Dynamic Linker" over RISC-V progress, and a learner
+                // studying RISC-V saw a page about ELF.
+                //
+                // GET /api/courses/<id> already returns the manifest's own
+                // concepts array -- the same source the lesson pages and the
+                // course landing page are built from -- so there was never a
+                // reason for a second copy to exist.
+                __ulFetch('/api/courses/' + encodeURIComponent(course))
                     .then(function(r) { return r.json(); })
-                    .then(function(data) { renderConceptRows(list, ids, names, data.concepts || []); })
-                    .catch(function() { renderConceptRows(list, ids, names, []); });
+                    .then(function(manifest) {
+                        var concepts = (manifest && manifest.concepts) || [];
+                        if (concepts.length === 0) {
+                            list.innerHTML = '<p class="muted">This course has no concepts yet.</p>';
+                            return;
+                        }
+                        var ids = [];
+                        var names = [];
+                        for (var c = 0; c < concepts.length; c++) {
+                            ids.push(concepts[c].id);
+                            names.push(concepts[c].title);
+                        }
+                        return __ulFetch('/api/progress?course_id=' + encodeURIComponent(course))
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) { renderConceptRows(list, ids, names, data.concepts || []); })
+                            .catch(function() { renderConceptRows(list, ids, names, []); });
+                    })
+                    .catch(function() {
+                        list.innerHTML = '<p class="muted">Could not load the concepts for this course.</p>';
+                    });
             }
             function renderConceptRows(list, ids, names, states) {
                 var byId = {};

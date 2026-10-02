@@ -52,6 +52,33 @@
 //   pages_search.ch          — render_search_page             (GET /search)
 //   courses_index_assets.ch  — CSS + JS for /courses and /learning-path
 //   search_assets.ch         — CSS for /search
+//   pages_gate.ch            — render_onboarding_gate: the banner that tells a
+//                              signed-in learner with incomplete onboarding
+//                              that there is a step left.  GET
+//                              /api/onboarding/check shipped and was called
+//                              from nowhere; this is its consumer, and it
+//                              ships HIDDEN so a signed-out or offline page is
+//                              correct before any script runs.
+//   lesson_pager.ch          — apply_lesson_pager: prev/next lesson links,
+//                              resolved from the manifest the handler already
+//                              loaded.  They were filled in by the page's own
+//                              fetch, which meant a statically pre-rendered
+//                              lesson page had no links at all and its swipe
+//                              gesture reloaded the page it was already on.
+//   session_js.ch            — render_session_js: THE shared client session
+//                              helper (__ulToken / __ulHeaders / __ulFetch /
+//                              __ulCourseId / __ulGate).  Seventeen pages each
+//                              read localStorage and build a bearer header on
+//                              their own, and eleven of them did it without a
+//                              try/catch, so blocking site data threw on eleven
+//                              pages and not on three.  One helper, one 401
+//                              policy, one answer to "which course is this
+//                              page about".
+//                            — render_auth_destination_js: __ulNextPath and
+//                              __ulAfterAuth, which decide where a learner
+//                              lands after login or register.  `next` first,
+//                              then the onboarding gate, then home.  Both auth
+//                              pages used to hardcode '/'.
 //   nav_bar.ch               — render_nav_bar, which delegates to the ONE nav in
 //                              content/src/lesson_nav.ch.  The nav lives below
 //                              web because the 398 lesson pages — the ones that

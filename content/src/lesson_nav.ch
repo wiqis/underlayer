@@ -195,13 +195,40 @@ public namespace underlayer_content {
     public func render_site_nav_js(page : &mut HtmlPage) {
         #js {
             function getTheme() {
-                var saved = localStorage.getItem('theme');
+                // THE try/catch HERE IS NOT DEFENSIVE NOISE.  localStorage
+                // ACCESS THROWS -- it does not return null -- in a browser with
+                // site data blocked (Firefox "Block cookies and other site
+                // data" on file:// and in private windows; Safari ITP in
+                // third-party contexts).  An unguarded read therefore takes
+                // down the WHOLE script block, not just the theme: every
+                // function defined after this line in the same <script> is
+                // still DEFINED (the block parsed) but never RUNS, because
+                // setTheme(getTheme()) is a top-level statement and its
+                // throw aborts the block.  So the identity loader and the
+                // sign-out handler in the other component -- separate blocks,
+                // separate <script> tags -- survived, while anything in THIS
+                // block did not.
+                //
+                // The same reason the identity helper in lesson_identity.ch
+                // wraps its own read.  It had the guard, this one did not, and
+                // "the theme helper is the one that breaks" is exactly the kind
+                // of asymmetry that a shared helper (web/src/session_js.ch)
+                // exists to remove.
+                var saved = '';
+                try { saved = localStorage.getItem('theme'); } catch (e) { saved = ''; }
                 if (saved) return saved;
-                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                var prefersDark = false;
+                try { prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches; }
+                catch (e) { prefersDark = false; }
+                return prefersDark ? 'dark' : 'light';
             }
             function setTheme(theme) {
                 document.documentElement.classList.toggle('dark', theme === 'dark');
-                localStorage.setItem('theme', theme);
+                // A failed WRITE must not take the toggle down either: the
+                // class has already been applied above, so the visible change
+                // has happened.  Letting the write throw here would undo that
+                // for the reader -- the button would appear not to work.
+                try { localStorage.setItem('theme', theme); } catch (e) { }
             }
             function toggleTheme() {
                 var current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';

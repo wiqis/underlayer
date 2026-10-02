@@ -11,6 +11,10 @@ public namespace underlayer_web {
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
         page.appendTitle(std::string_view("Review — Underlayer"))
+        // The shared session helper: __ulFetch (one 401 policy), __ulCourseId
+        // (which course this review is about), __ulHeaders.  This page's own
+        // script used to carry three private copies of the bearer-header logic.
+        render_session_js(&mut page)
 
         #html {
             {render_nav_bar(&mut page)}
@@ -209,26 +213,24 @@ public namespace underlayer_web {
                 fetchDueItems();
             });
 
-            // 5.1.19: review APIs require a bearer token. Read it from
-            // localStorage (set at login) and attach it to every request.
-            function bearerValue() {
-                var token = localStorage.getItem("session_token");
-                if(!token) { return ""; }
-                return "Bearer " + token;
-            }
-
-            function authHeaders() {
-                var token = localStorage.getItem("session_token");
-                if(token) {
-                    return {"Authorization": bearerValue()};
-                }
-                return {};
-            }
-
-            function jsonAuthHeaders() {
-                return {"Content-Type": "application/json", "Authorization": bearerValue()};
-            }
-
+            // THE BEARER HEADER IS NOT BUILT HERE ANY MORE.  This page had three
+            // helpers of its own -- bearerValue(), authHeaders() and
+            // jsonAuthHeaders() -- each reading localStorage separately, and
+            // the first of them sent the literal string "Bearer " with an empty
+            // token when signed out.  All three now live once in session_js.ch
+            // as __ulFetch, which also does the one thing none of the three
+            // did: on a 401 it drops the dead token and sends the learner to
+            // /login with a `next` back to this page.
+            //
+            // The reason that mattered HERE specifically is already written
+            // below -- showAuthRequired() was the manual 401 answer for four
+            // call sites, and the two fetches below that used fetch() directly
+            // had no 401 branch at all.  One wrapper, one 401 policy, and the
+            // policy is visible at the call site.
+            //
+            // showAuthRequired() is kept, and is still called: __ulFetch
+            // navigates away on a 401, but this page also renders its own
+            // message for the case where navigation is not wanted.
             function showAuthRequired() {
                 var concept = document.getElementById("card-concept");
                 var prompt = document.getElementById("card-prompt");
@@ -236,12 +238,18 @@ public namespace underlayer_web {
                 if(prompt) { prompt.textContent = "Please log in to start a review session. Your progress is saved to your account."; }
                 var actions = document.getElementById("review-actions");
                 if(actions) {
-                    actions.innerHTML = '<a href="/login" class="btn btn-primary btn-large">Log in</a>';
+                    actions.innerHTML = '<a href="/login?next=' + encodeURIComponent(window.location.pathname) + '" class="btn btn-primary btn-large">Log in</a>';
                 }
             }
 
             function fetchDueItems() {
-                fetch("/api/review/due?course_id=elf&limit=50", { headers: authHeaders() })
+                // course_id=elf WAS HARDCODED HERE, and this is the page where it
+                // cost the most.  A learner enrolled in RISC-V who opened /review
+                // was shown RISC-V's due count on the left and could only start
+                // an ELF session -- the Start button called startMode() with a
+                // hardcoded course too, so every rating they submitted was
+                // recorded against ELF.  __ulCourseId() reads the real one.
+                __ulFetch('/api/review/due?course_id=' + encodeURIComponent(__ulCourseId()) + '&limit=50', { silent401: true })
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         dueItems = data || [];
@@ -275,9 +283,8 @@ public namespace underlayer_web {
                 var concept = document.getElementById("card-concept");
                 concept.textContent = "Starting session";
                 prompt.textContent = "Loading your " + mode + " review session...";
-                fetch("/api/review/start?course_id=elf&mode=" + encodeURIComponent(mode) + "&count=10", { headers: authHeaders() })
+                __ulFetch('/api/review/start?course_id=' + encodeURIComponent(__ulCourseId()) + '&mode=' + encodeURIComponent(mode) + '&count=10')
                     .then(function(r) {
-                        if(r.status === 401) { showAuthRequired(); return null; }
                         return r.json();
                     })
                     .then(function(data) {
@@ -359,13 +366,16 @@ public namespace underlayer_web {
                     elapsed = Math.round((Date.now() - sessionStartTime) / 1000);
                     if(elapsed < 0) { elapsed = 0; }
                 }
-                fetch("/api/review/submit", {
+                // course_id: "elf" WAS HARDCODED IN THIS BODY, so every rating a learner
+                // gave on any course was recorded against ELF's schedule.  A
+                // rating is the one input FSRS consumes; writing it under the
+                // wrong concept id makes the whole spaced-repetition model train
+                // on the wrong material, silently, forever.
+                __ulFetch("/api/review/submit", {
                     method: "POST",
-                    headers: jsonAuthHeaders(),
-                    body: JSON.stringify({concept_id: currentConceptId, rating: rating, course_id: "elf", session_id: sessionId, time_spent: elapsed})
+                    json: {concept_id: currentConceptId, rating: rating, course_id: __ulCourseId(), session_id: sessionId, time_spent: elapsed}
                 })
                 .then(function(r) {
-                    if(r.status === 401) { showAuthRequired(); return null; }
                     return r.json();
                 })
                 .then(function(data) {
@@ -392,9 +402,9 @@ public namespace underlayer_web {
 
             function endSession() {
                 if(!sessionId) { return; }
-                fetch("/api/review/end?session_id=" + encodeURIComponent(sessionId), {
+                __ulFetch("/api/review/end?session_id=" + encodeURIComponent(sessionId), {
                     method: "POST",
-                    headers: jsonAuthHeaders()
+                    noRedirect: true
                 })
                 .then(function(r) { return r.json(); })
                 .catch(function() { /* best effort — the session is finished locally */ });
@@ -416,10 +426,13 @@ public namespace underlayer_web {
                 if(!sessionId) { return Promise.resolve(null); }
                 var url = path + "?session_id=" + encodeURIComponent(sessionId);
                 if(extra) { url = url + extra; }
-                return fetch(url, {
-                    method: "POST",
-                    headers: jsonAuthHeaders()
-                }).then(function(r) { return r.json(); }).catch(function() { return null; });
+                // noRedirect BECAUSE ENDING A SESSION IS NOT AN AUTHORISATION PROBLEM.  If the
+                // token has expired, the review already happened in this tab and
+                // there is nothing to navigate to -- bouncing to /login mid-way
+                // through ending a session loses the reader's place.  The 401 is
+                // recorded and the local session is still closed.
+                return __ulFetch(url, { method: "POST", noRedirect: true })
+                    .then(function(r) { return r.json(); }).catch(function() { return null; });
             }
 
             function pauseSession() {

@@ -98,7 +98,10 @@ public namespace underlayer_repository {
     // tests in the Chemical suite prove string append itself is correct, so
     // the difference between the working query and these two is the one thing
     // worth not repeating.  Only values are appended.
-    public func note_owned_by(db : &DbClient, learner_id : &string, note_id : &string) : bool {
+    // Takes *DbClient because that is what query_sql takes -- the database layer
+    // takes a raw pointer on every entry point, and this function has no
+    // reason to differ.
+    public func note_owned_by(db : *DbClient, learner_id : &string, note_id : &string) : bool {
         var lid_s = sql_escape(learner_id)
         var lid = lid_s.to_view()
         var nid_s = sql_escape(note_id)
@@ -113,7 +116,7 @@ public namespace underlayer_repository {
         return result.rows.size() > 0
     }
 
-    public func update_note(db : &DbClient, learner_id : &string, note_id : &string, content : &string) : i64 {
+    public func update_note(db : *DbClient, learner_id : &string, note_id : &string, content : &string) : i64 {
         if(!note_owned_by(db, learner_id, note_id)) { return 0 }
         var now = underlayer_core::current_timestamp()
         var now_str = underlayer_core::int_to_string(now)
@@ -134,7 +137,7 @@ public namespace underlayer_repository {
 
     // Same defect, same fix: `DELETE FROM learner_notes WHERE id = '...'` let
     // any authenticated learner destroy any note on the platform.
-    public func delete_note(db : &DbClient, learner_id : &string, note_id : &string) : i64 {
+    public func delete_note(db : *DbClient, learner_id : &string, note_id : &string) : i64 {
         if(!note_owned_by(db, learner_id, note_id)) { return 0 }
         var nid_s = sql_escape(note_id)
         var nid = nid_s.to_view()

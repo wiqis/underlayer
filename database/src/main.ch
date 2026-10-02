@@ -14,10 +14,21 @@ public namespace underlayer_db {
         var vals : vector<string>
     }
 
+    // `ok` and `error_message` are here for the same reason they are on
+    // ExecResult: a statement SQLite REFUSED must not be readable as a
+    // legitimate empty result.  On the read path that mistake is quieter than
+    // on the write path -- `query_sql` returns zero rows, every caller reads
+    // zero rows as "no such row", and the endpoint answers 404 for a query
+    // that never ran.  A 404 is a plausible answer, so nothing looks broken
+    // and the real statement never appears anywhere the caller can see.
+    // (notes.ch's ownership check hit exactly this: it could not tell "not
+    // yours" from "could not be parsed".)
     public struct QueryResult {
         var columns : vector<string>
         var rows : vector<QueryRow>
         var rows_affected : i64
+        var ok : bool
+        var error_message : string
     }
 
     // `ok` and `error_message` exist because a statement SQLite REFUSED used to
@@ -172,7 +183,9 @@ public namespace underlayer_db {
         var result = QueryResult {
             columns = vector<string>(),
             rows = vector<QueryRow>(),
-            rows_affected = 0
+            rows_affected = 0,
+            ok = true,
+            error_message = std::string()
         }
         if(db.is_sqlite && db.sqlite_handle != null) {
             var h_stmt : *mut sqlite::sqlite3_stmt = null
@@ -182,8 +195,19 @@ public namespace underlayer_db {
                 // parse returned an empty result, which every caller reads as
                 // "no such row".  Name it in the log so a malformed statement
                 // cannot be mistaken for a legitimately empty table.
-                printf("[underlayer_db] SQL PREPARE FAILED rc=%d: %s\n", res, sql.data())
+                // sqlite3_errmsg hands back a pointer SQLite owns, so this
+                // message is copied out and never freed here -- freeing it
+                // would be a free() of a static.
+                var perr : *char = sqlite::ffi::sqlite3_errmsg(db.sqlite_handle)
+                var pm = std::string()
+                if(perr != null) {
+                    var pi : size_t = 0
+                    while(perr[pi] != 0) { pm.append(perr[pi]); pi = pi + 1 }
+                }
+                printf("[underlayer_db] SQL PREPARE FAILED rc=%d: %s (%s)\n", res, pm.data(), sql.data())
                 fflush(stdout)
+                result.ok = false
+                result.error_message = pm
                 return result
             }
             var col_count = sqlite::ffi::sqlite3_column_count(h_stmt)
@@ -198,9 +222,16 @@ public namespace underlayer_db {
                 result.columns.push(col_str)
                 ci = ci + 1
             }
+            // `last_step` keeps the code that ended the loop.  It cannot be read back
+            // off the handle afterwards: sqlite3_errcode() reports SQLITE_DONE
+            // (101) for a query that ran perfectly, and 101 is not an error, so
+            // asking the handle whether it is happy reports every successful
+            // query as a failure.  The value the loop actually stopped on is
+            // the only honest answer.
+            var last_step : int = 100
             while(true) {
-                var step_res = sqlite::ffi::sqlite3_step(h_stmt)
-                if(step_res != 100) { break }
+                last_step = sqlite::ffi::sqlite3_step(h_stmt)
+                if(last_step != 100) { break }
                 var row = QueryRow { vals = vector<string>() }
                 var ri : int = 0
                 while(ri < col_count) {
@@ -215,9 +246,31 @@ public namespace underlayer_db {
                 }
                 result.rows.push(row)
             }
+            // A step error is the read-path twin of a refused write: SQLite
+            // handed back something other than SQLITE_ROW or SQLITE_DONE.
+            // Report it rather than returning the rows gathered so far as if
+            // the query had completed.
+            var step_rc = last_step
+            if(step_rc != 101 && step_rc != 0) {
+                var serr : *char = sqlite::ffi::sqlite3_errmsg(db.sqlite_handle)
+                var sm = std::string()
+                if(serr != null) {
+                    var si : size_t = 0
+                    while(serr[si] != 0) { sm.append(serr[si]); si = si + 1 }
+                }
+                printf("[underlayer_db] SQL STEP FAILED rc=%d: %s (%s)\n", step_rc, sm.data(), sql.data())
+                fflush(stdout)
+                result.ok = false
+                result.error_message = sm
+            }
             sqlite::ffi::sqlite3_finalize(h_stmt)
             return result
         }
+        // Same reasoning as exec_sql's remote branch: there is no code path
+        // here that could have read anything, so say so instead of returning
+        // an empty result that reads as "the table is empty".
+        result.ok = false
+        result.error_message = std::string("remote (Turso) query is not implemented")
         return result
     }
 

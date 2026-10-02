@@ -61,9 +61,15 @@ public namespace underlayer_web {
         page.injectDefaultComponentsTheme()
         page.appendTitle(std::string_view("Dashboard — Underlayer"))
         render_dashboard_css(&mut page)
+        // THE ONBOARDING GATE (7.1.20).  A signed-in learner whose onboarding is
+        // incomplete is sent to /onboarding.  __ulGate answers rather than
+        // navigating, and THIS page is what acts on the answer -- see the note
+        // in session_js.ch for why the helper must not redirect on its own.
+        render_session_js(&mut page)
 
         #html {
             {render_nav_bar(&mut page)}
+            {render_onboarding_gate(&mut page)}
 
             <div class="container" id="main-content" style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
                 <div class="wd-head">

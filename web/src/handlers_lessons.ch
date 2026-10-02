@@ -22,10 +22,20 @@ public namespace underlayer_web {
             send_error(res, 404u, &err)
             return
         }
+        // Prev/next links, resolved HERE rather than in the lesson's own
+        // script.  The course manifest is already loaded above -- it is what
+        // decided whether this lesson exists -- so the information was in hand
+        // and was previously fetched over HTTP by the page's JavaScript.  Doing
+        // it server-side is what makes the links work with no server at all,
+        // which the 398 statically pre-rendered lesson pages require; an empty
+        // href="" also made the swipe gesture RELOAD THE CURRENT PAGE offline.
+        // See web/src/lesson_pager.ch for the full argument and for why this is
+        // sentinel replacement rather than an argument through 431 renderers.
+        var paged = apply_lesson_pager(&html, &cidsv, &course, &pid)
         var ct = std::string_view("text/html; charset=utf-8")
         res.set_header_view(std::string_view("Content-Type"), &ct)
-        var hv = html.to_view()
-        res.write_view(&hv)
+        var pv = paged.to_view()
+        res.write_view(&pv)
     }
 
     public func handle_course_landing(courses_dir : &string, course_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {

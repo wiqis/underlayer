@@ -11,6 +11,12 @@ public namespace underlayer_web {
         page.injectDefaultComponentsTheme()
         var title = std::string_view("Login — Underlayer")
         page.appendTitle(&title)
+        // Both auth helpers: __ulToken/__ulHeaders for the onboarding check,
+        // and __ulNextPath/__ulAfterAuth for where this learner goes once the
+        // token is stored.  The second is why a `next` link survives the round
+        // trip through this page.
+        render_session_js(&mut page)
+        render_auth_destination_js(&mut page)
 
         #html {
             <div class="auth-page">
@@ -104,7 +110,10 @@ public namespace underlayer_web {
                     else {
                         localStorage.setItem('session_token', data.session_token);
                         if(data.refresh_token) { localStorage.setItem('refresh_token', data.refresh_token); }
-                        window.location.href = '/';
+                        // NOT '/' ANY MORE.  See render_auth_destination_js:
+                        // honours ?next=, else routes a new or incomplete
+                        // account into onboarding, else home.
+                        window.__ulAfterAuth();
                     }
                   }).catch(function() { alert('Network error. Please try again.'); });
             });
@@ -123,6 +132,10 @@ public namespace underlayer_web {
         page.injectDefaultComponentsTheme()
         var title = std::string_view("Register — Underlayer")
         page.appendTitle(&title)
+        // Same two helpers as /login.  A brand-new account is the case the
+        // onboarding gate exists for: `next` first, then onboarding, then home.
+        render_session_js(&mut page)
+        render_auth_destination_js(&mut page)
 
         #html {
             <div class="auth-page">
@@ -267,7 +280,10 @@ public namespace underlayer_web {
                     else {
                         localStorage.setItem('session_token', data.session_token);
                         if(data.refresh_token) { localStorage.setItem('refresh_token', data.refresh_token); }
-                        window.location.href = '/';
+                        // NOT '/' ANY MORE.  See render_auth_destination_js:
+                        // honours ?next=, else routes a new or incomplete
+                        // account into onboarding, else home.
+                        window.__ulAfterAuth();
                     }
                   }).catch(function() { alert('Network error. Please try again.'); });
             });

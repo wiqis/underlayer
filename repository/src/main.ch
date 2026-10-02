@@ -2,6 +2,7 @@
 // All code lives in separate files:
 //   helpers.ch        — parse_i64, parse_int, JSON helpers (public)
 //   schema.ch         — init_schema
+//   schema_migrations.ch — column_exists, add_column_if_missing, run_conditional_migrations (all ALTERs are conditional; a bare ADD COLUMN is a defect)
 //   courses.ch        — load_course, list_courses
 //   learners.ch       — create_learner, get_learner
 //   concept_states.ch — get_concept_state, upsert_concept_state, get_all_concept_states
@@ -21,6 +22,11 @@
 //   course_reviews.ch — submit_review, get_reviews_for_course, get_learner_review, update_review, delete_review, mark_helpful, get_course_rating_summary
 //   achievements.ch  — grant_achievement, get_achievements, has_achievement, get_achievement_count, check_and_award_streak, check_and_award_milestones
 //   notes.ch         — create_note, update_note, delete_note, get_notes_for_concept, get_notes_for_course, search_notes
+//   onboarding.ch    — is_onboarding_complete, mark_onboarding_complete.  The
+//                       onboarding gate reads `onboarding_completed_at`, NOT
+//                       "a learning_preferences row exists" -- registration
+//                       creates one for every account, so that inference was
+//                       always true and the gate could never fire.
 //   certificates.ch  — issue_certificate, get_certificate, get_learner_certificates, has_certificate
 //   bookmarks.ch      — add_bookmark, remove_bookmark, get_bookmarks, get_bookmarks_for_course, is_bookmarked
 //   study_plan.ch     — create_plan, get_plans, get_plans_for_date, get_plan, update_plan_status, delete_plan, get_upcoming_plans

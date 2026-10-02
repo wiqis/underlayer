@@ -41,10 +41,33 @@ public func test_review_start_returns_200(env : &mut TestEnv) {
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
-    var res = client.get("http://127.0.0.1:19901/api/review/start")
+
+    // THE ANONYMOUS CALL MUST BE 401, NOT 200.  This test used to assert 200
+    // for a request with no Authorization header, which was only ever true
+    // because /api/review/start resolved the caller to the shared `demo`
+    // learner when no token was present.  5.1.19 removed that fallback --
+    // every anonymous review session and every rating was being written to one
+    // shared learner, which pollutes real learners' FSRS schedules and streaks.
+    // So the 200 case below is now taken WITH a token, and the anonymous case
+    // is asserted to be refused.
+    //
+    // Both halves matter: without the first, this test would pass on a server
+    // that rejected every caller; without the second, it would pass on one that
+    // accepted every caller.
+    var anon_res = client.get("http://127.0.0.1:19901/api/review/start")
+    if(anon_res is Result.Err) { env.error("anonymous request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Ok(anon_resp) = anon_res else unreachable
+    if(anon_resp.status != 401u) {
+        env.error("expected 401 for an anonymous review start, not 200: the shared demo learner must not receive anonymous sessions")
+    }
+
+    var learner_id = string("review-start-learner")
+    var token = test_helpers::make_session_token(&raw db, &learner_id)
+    var url = string("http://127.0.0.1:19901/api/review/start")
+    var res = test_helpers::authed_get(&client, &url, &token)
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unreachable
-    if(resp.status != 200u) { env.error("expected 200") }
+    if(resp.status != 200u) { env.error("expected 200 for an authenticated review start") }
 
     srv.shutdown()
     underlayer_db::close(&raw db)

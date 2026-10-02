@@ -191,6 +191,20 @@ def extract_scripts(html):
     return re.findall(r'<script[^>]*>(.*?)</script>', html, re.S)
 
 
+def course_title_for(base, cid):
+    """The course's manifest title, read from the API the certificate handler
+    itself reads it from.  Used to assert a certificate carries the course NAME
+    rather than its id -- `course_title` was a copy of `course_id`, so every
+    certificate this platform issued was titled "elf"."""
+    try:
+        st, body = request_json(base, '/api/courses/%s' % cid)
+    except Exception:
+        return None
+    if st != 200 or not isinstance(body, dict):
+        return None
+    return body.get('title')
+
+
 def html_text(html):
     """The visible text of a page, tags stripped.  Used to prove the lesson BODY
     is intact -- the backend-optional rule is that a feature may add to a lesson
@@ -928,30 +942,38 @@ def run_checks(base):
         bad('the note is in the learner\'s own /api/notes list',
             'asked for %s, got %s' % (note_id, ids))
 
-    st, fbs = request_json(base, '/api/feedback/concept/%s' % concept)
+    # THE TOKEN IS SENT HERE NOW, AND THAT IS THE POINT.  This GET used to be
+    # made with no Authorization header, on the strength of a comment saying it
+    # leaked every learner's feedback for the concept -- ids included -- and that
+    # the lesson page therefore does not call it.  That leak has since been
+    # closed server-side: the endpoint now answers 401 unauthenticated.  The
+    # check was not updated, so it kept asserting the OLD behaviour and failed
+    # with "got []" against a server that was doing the right thing.
+    #
+    # That is the failure mode worth writing down: a check documenting a known
+    # defect is indistinguishable from a check that has gone stale, and the
+    # difference is only visible from the outside.  So the two things it cared
+    # about are now asserted directly, and both are now gate failures rather
+    # than a warning somebody was meant to keep reading:
+    #
+    #   * the learner's own feedback reads back with a token
+    #   * the endpoint does NOT answer for an anonymous caller
+    st, fbs = request_json(base, '/api/feedback/concept/%s' % concept, token=token)
     msgs = [f.get('message') for f in (fbs if isinstance(fbs, list) else [])]
     if 'integration_check feedback body' in msgs:
         ok('the feedback the page sent is stored against this concept')
     else:
         bad('the feedback the page sent is stored against this concept',
             'got %s' % (msgs,))
-    # A DOCUMENTED LEAK, reported every run and deliberately not a gate.  This
-    # GET takes no Authorization header and returns every learner's feedback
-    # for the concept, ids included.  A gate that failed on it would have to be
-    # edited to pass the moment somebody fixed it, which is how a gate stops
-    # being read.  The lesson page does not call this endpoint for exactly this
-    # reason -- see content/src/lesson_feedback_js.ch.
-    mine_msgs = [f.get('message') for f in (fbs if isinstance(fbs, list) else [])
-                 if f.get('learner_id') == learner_id]
-    others = [m for m in msgs if m not in mine_msgs]
-    if not others:
-        ok('GET /api/feedback/concept/:id shows this learner only')
+
+    st_anon, fbs_anon = request_json(base, '/api/feedback/concept/%s' % concept)
+    if st_anon == 401 or not isinstance(fbs_anon, list):
+        ok('GET /api/feedback/concept/:id refuses an anonymous caller '
+           '(the documented leak is closed server-side, HTTP %s)' % st_anon)
     else:
-        warn('GET /api/feedback/concept/:id leaks other learners\' feedback '
-             'unauthenticated (reported in lesson_feedback_js.ch; needs a '
-             'server-side auth check, not a page change)',
-             '%d of %d message(s) on this concept belong to other learners'
-             % (len(others), len(msgs)))
+        bad('GET /api/feedback/concept/:id leaks other learners\' feedback '
+            'to an anonymous caller', 'HTTP %s, %d message(s) returned'
+            % (st_anon, len(fbs_anon)))
 
     st, streak = request_json(base, '/api/streaks', token=token)
     if streak.get('current_streak', 0) >= 1:
@@ -1012,9 +1034,25 @@ def run_checks(base):
                 bad('an unfinished course: the claim button is not offered',
                     'btn_hidden=%r' % r1.get('btn_hidden'))
 
-            # (b) Pressing it must issue one, against the REAL server.  This is
-            # also the standing proof that the server does not check completion:
-            # the learner in this run has read ONE concept.
+            # (b) THE SERVER REFUSES AN UNFINISHED LEARNER.  This block used to
+            # assert the opposite, and its comment said so out loud: "the
+            # standing proof that the server does not check completion: the
+            # learner in this run has read ONE concept."  It then pressed the
+            # claim button and required a certificate to appear.
+            #
+            # That was true when written -- POST /api/certificates only asked
+            # has_certificate() -- and it was a security hole: any signed-in
+            # learner could POST any course id and be handed a certificate for a
+            # course they had opened one lesson of, and /certificates/<id> would
+            # then serve a page asserting they had completed it.  The gate now
+            # lives in web/src/completion_gate.ch and refuses.
+            #
+            # So this check was not merely stale, it was a check that FAILED
+            # WHEN THE HOLE WAS CLOSED and would have failed it again.  A gate
+            # whose failure means "a vulnerability is fixed" is worse than no
+            # gate, because the first person to see it red will be tempted to
+            # make it green by removing the fix.  The direction is inverted:
+            # the press must be REFUSED, and the refusal must be visible.
             r2, err2 = drive_cert(claim_js, '/courses/%s' % cid, token, base,
                                   land_ids, land_hidden, press_cert=True)
             if err2:
@@ -1030,33 +1068,99 @@ def run_checks(base):
             st, certs2 = request_json(base, '/api/certificates', token=token)
             rows = [c for c in (certs2 if isinstance(certs2, list) else [])
                     if c.get('course_id') == cid]
+            if not rows:
+                ok('the press produced NO certificate for an unfinished learner '
+                   '-- the completion gate holds')
+            else:
+                bad('the press produced a certificate for an UNFINISHED learner '
+                    '-- the completion gate is not holding', 'got %s' % (rows,))
+
+            # The same claim, made directly rather than through the page.  The
+            # page hides its button, so this is the only way to prove the refusal
+            # is the SERVER's doing and not just the button's absence.
+            st_direct, refused = request_json(
+                base, '/api/certificates', token=token, method='POST',
+                body={'course_id': cid})
+            if st_direct in (403, 409):
+                ok('a direct POST for an unfinished course is refused (HTTP %d)'
+                   % st_direct)
+            else:
+                bad('a direct POST for an unfinished course was NOT refused',
+                    'HTTP %s, body %s' % (st_direct, refused))
+
+            # (b2) NOW FINISH THE COURSE AND CLAIM FOR REAL.  Everything below
+            # -- the date, the title, the page's "you already hold this" state --
+            # needs a certificate that actually exists, and it was being read off
+            # a certificate the learner had not earned.
+            st_man, manifest = request_json(base, '/api/courses/%s' % cid)
+            concept_ids = [c.get('id') for c in (manifest.get('concepts') or [])] \
+                if isinstance(manifest, dict) else []
+            if not concept_ids:
+                bad('could not read the course manifest to finish the course',
+                    'GET /api/courses/%s' % cid)
+            else:
+                for c in concept_ids:
+                    request_json(base, '/api/learning/view', token=token,
+                                 method='POST',
+                                 body={'course_id': cid, 'concept_id': c})
+                st_ok, issued = request_json(
+                    base, '/api/certificates', token=token, method='POST',
+                    body={'course_id': cid})
+                # The OUTCOME is what matters, not the response shape: a learner
+                # who already holds one gets {"error": "certificate already
+                # issued", "certificate_id": ...} at 200 rather than the id.
+                # Asserting on `id` alone would fail a correct server, which is
+                # the same class of mistake as asserting on a stale contract.
+                holds = None
+                if isinstance(issued, dict):
+                    holds = issued.get('id') or issued.get('certificate_id')
+                if holds:
+                    ok('a learner who has read all %d concepts holds a '
+                       'certificate (id %s)' % (len(concept_ids), holds))
+                else:
+                    bad('a learner who finished the course was refused a '
+                        'certificate', 'HTTP %s, body %s' % (st_ok, issued))
+
+            st, certs2 = request_json(base, '/api/certificates', token=token)
+            rows = [c for c in (certs2 if isinstance(certs2, list) else [])
+                    if c.get('course_id') == cid]
             if len(rows) == 1:
-                ok('GET /api/certificates now carries one for %s (id %s)'
+                ok('GET /api/certificates carries exactly one for %s (id %s)'
                    % (cid, rows[0].get('id')))
             else:
-                bad('the press produced exactly one certificate for %s' % cid,
-                    'got %s' % (rows,))
+                bad('exactly one certificate for %s' % cid, 'got %s' % (rows,))
             if rows and rows[0].get('completion_date'):
                 ok('the certificate carries a completion date (%s)'
                    % rows[0].get('completion_date'))
-                # A WARN, not a FAIL, and the arithmetic is worth printing because
-                # the bug is not obvious from the code.  repository/src/
-                # certificates.ch:44-56 computes the date from a UNIX SECONDS
-                # timestamp as though the value were days:
-                #     year  = now / 31536000 + 1970
-                #     month = (now % 31536000) / 2592000 + 1
-                #     day   = ((now % 31536000) % 2592000) / 86400 + 1
-                # Dividing seconds by seconds-per-year does give the right year,
-                # which is why it looks right at a glance; but 2592000 is a
-                # THIRTY-DAY month and 31536000 is a 365-day year, so the month
-                # and day drift -- on 2026-10-02 it printed 2026-10-19.  A
-                # certificate with the wrong date on it is worse than no date.
+                # A GATE NOW, NOT A WARNING.  The date used to be computed by
+                # hand in repository/src/certificates.ch with a 30-day month
+                # and a 365-day year, which printed 2026-10-19 on 2026-10-02 --
+                # a certificate claiming a completion date seventeen days in the
+                # future.  It now calls underlayer_core::date_string.  A
+                # certificate is a permanent record of what a learner did and
+                # when; a wrong date on one is a false statement, so this fails
+                # the gate rather than printing a warning nobody had to act on.
                 today = time.strftime('%Y-%m-%d', time.gmtime())
                 if rows[0].get('completion_date') != today:
-                    warn('a certificate issued today carries completion_date '
-                         '%s, not %s' % (rows[0].get('completion_date'), today))
+                    bad('a certificate issued today carries completion_date '
+                        '%s, not %s' % (rows[0].get('completion_date'), today))
+                else:
+                    ok('the completion date is today (%s)' % today)
             else:
                 bad('the certificate carries a completion date', 'got %s' % (rows,))
+
+            # THE COURSE TITLE, NOT THE COURSE ID.  `course_title` used to be a
+            # copy of `course_id`, so every certificate this platform has issued
+            # is titled "elf".  It is stored in the row, so this is not a display
+            # bug that a CSS change can hide.
+            want_title = course_title_for(base, cid)
+            if rows and rows[0].get('course_title') == want_title:
+                ok('the certificate is titled with the course name, not its id '
+                   '(%r)' % want_title)
+            else:
+                bad('the certificate is titled with the course name, not its id',
+                    'got %r, wanted %r'
+                    % (rows[0].get('course_title') if rows else None, want_title))
 
             # (c) With one issued, the page shows it and links to it.
             r3, err3 = drive_cert(claim_js, '/courses/%s' % cid, token, base,

@@ -41,20 +41,27 @@ public namespace underlayer_repository {
         cert_id.append_string(learner_id)
         cert_id.append_view("_")
         cert_id.append_string(course_id)
-        var completion_date = string()
-        var year = now / 31536000 + 1970
-        var y_str = underlayer_core::int_to_string(year)
-        completion_date.append_view(y_str.to_view())
-        completion_date.append_view("-")
-        var month = (now % 31536000) / 2592000 + 1
-        if(month < 10) { completion_date.append_view("0") }
-        var m_str = underlayer_core::int_to_string(month)
-        completion_date.append_view(m_str.to_view())
-        completion_date.append_view("-")
-        var day = ((now % 31536000) % 2592000) / 86400 + 1
-        if(day < 10) { completion_date.append_view("0") }
-        var d_str = underlayer_core::int_to_string(day)
-        completion_date.append_view(d_str.to_view())
+        // THE COMPLETION DATE IS NOW underlayer_core::date_string(now), and this
+        // function used to compute it by hand:
+        //
+        //     year  = now / 31536000 + 1970
+        //     month = (now % 31536000) / 2592000 + 1
+        //     day   = ((now % 31536000) % 2592000) / 86400 + 1
+        //
+        // Dividing seconds by seconds-per-year does give the right YEAR, which
+        // is why it looked correct at a glance.  But 2592000 is a THIRTY-day
+        // month and 31536000 is a 365-day year, so every month after February
+        // is out by 30 days and the month itself drifts.  Measured on
+        // 2026-10-02 it printed "2026-10-19" -- a certificate claiming a
+        // completion date seventeen days in the future.  A certificate is a
+        // permanent record about what a learner did and when, so a wrong date
+        // on it is worse than no date.
+        //
+        // `date_string` has been in core/ since before this file existed and
+        // uses Howard Hinnant's civil_from_days, which handles month lengths,
+        // leap years and the pre-epoch direction.  A second implementation of
+        // "epoch seconds to a calendar date" is a second set of bugs.
+        var completion_date = underlayer_core::date_string(now)
         var cert_url = string("/certificates/")
         cert_url.append_string(&cert_id)
         var name_esc = underlayer_core::json_escape(&learner_name.to_view())

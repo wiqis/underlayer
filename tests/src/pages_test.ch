@@ -185,8 +185,21 @@ public func test_review_session_end_marks_completed(env : &mut TestEnv) {
     srv.router.add("POST", "/api/review/submit", (|&db|(req, res) => {
         underlayer_web::handle_review_submit(db, &raw mut req, &raw mut res)
     }))
+    // `handle_review_end` takes `&http::Request`, NOT `*mut http::Request`.  This
+    // call passed `&raw mut req` and has been failing to link since the two
+    // signatures diverged -- so the test suite has not built, and a suite that
+    // does not build is not a suite with "some failing tests", it is no suite.
+    //
+    // The asymmetry is real and deliberate on the handler side:
+    // handle_review_submit takes `*mut Request` because it calls
+    // `read_body(&raw mut req)`, which has to mutate the request to take the
+    // body out of it.  handle_review_end reads no body, so it takes a shared
+    // reference.  Passing `&raw mut` to the second is not a harmless extra
+    // mutability: in a closure over router state it is also the shape the
+    // compiler rejects as a mutation of captured state in a safe context, which
+    // is why the build error named the *missing argument* rather than the type.
     srv.router.add("POST", "/api/review/end", (|&db|(req, res) => {
-        underlayer_web::handle_review_end(db, &raw mut req, &raw mut res)
+        underlayer_web::handle_review_end(db, &req, &raw mut res)
     }))
     srv.serve_async(19898u)
     std::concurrent.sleep_ms(200u)
@@ -195,8 +208,18 @@ public func test_review_session_end_marks_completed(env : &mut TestEnv) {
     var empty_body = string("")
     var ebv = empty_body.to_view()
 
+    // A REAL SESSION TOKEN, and this is what the test was missing.  5.1.19 made
+    // /api/review/start resolve the learner from the bearer token ONLY, so an
+    // anonymous call answers 401 -- correctly, because the `demo` fallback it
+    // replaced meant anonymous sessions and ratings were written to one shared
+    // learner and polluted real progress.  The token is minted through the
+    // same hash path the login handler uses, so this is a token the server
+    // accepts rather than a hand-rolled fixture.
+    var token = test_helpers::make_session_token(&raw db, &learner_id)
+
     // Start a session for the engaged learner.
-    var start_res = client.get("http://127.0.0.1:19898/api/review/start?course_id=elf&mode=due&count=5")
+    var start_url = string("http://127.0.0.1:19898/api/review/start?course_id=elf&mode=due&count=5")
+    var start_res = test_helpers::authed_get(&client, &start_url, &token)
     if(start_res is Result.Err) { env.error("start request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(start_resp) = start_res else unreachable
     var start_body_opt = start_resp.body.read_to_string()
@@ -226,7 +249,8 @@ public func test_review_session_end_marks_completed(env : &mut TestEnv) {
     submit_body.append_string(&sid)
     submit_body.append_view("\"}")
     var sbv = submit_body.to_view()
-    var sub_res = client.post("http://127.0.0.1:19898/api/review/submit", &sbv, "application/json")
+    var submit_url = string("http://127.0.0.1:19898/api/review/submit")
+    var sub_res = test_helpers::authed_post(&client, &submit_url, &token, &sbv, "application/json")
     if(sub_res is Result.Err) { env.error("submit failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
 
     // Before ending, the session is active.
@@ -238,7 +262,7 @@ public func test_review_session_end_marks_completed(env : &mut TestEnv) {
     // End the session.
     var end_url = string("http://127.0.0.1:19898/api/review/end?session_id=")
     end_url.append_string(&sid)
-    var end_res = client.post(&end_url.to_view(), &ebv, "application/json")
+    var end_res = test_helpers::authed_post(&client, &end_url, &token, &ebv, "application/json")
     if(end_res is Result.Err) { env.error("end request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
 
     // After ending, the session must be completed.
@@ -285,19 +309,30 @@ public func test_review_session_controls_change_state(env : &mut TestEnv) {
     var empty_body = string("")
     var ebv = empty_body.to_view()
 
-    var pause_res = client.post("http://127.0.0.1:19899/api/session/pause?session_id=ctl-session", &ebv, "application/json")
+    // A TOKEN FOR THE LEARNER WHO OWNS ctl-session, because these three
+    // endpoints go through require_own_session (web/src/session_guard.ch).
+    // An anonymous caller is refused with 403 -- which is the IDOR fix working
+    // -- so a test of the PAUSE/RESUME/ABORT behaviour itself has to be the
+    // owner.  The refusal is asserted separately, in
+    // additional_api_test.ch's five 403 assertions.
+    var token = test_helpers::make_session_token(&raw db, &learner_id)
+
+    var pause_url = string("http://127.0.0.1:19899/api/session/pause?session_id=ctl-session")
+    var pause_res = test_helpers::authed_post(&client, &pause_url, &token, &ebv, "application/json")
     if(pause_res is Result.Err) { env.error("pause failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
     if(!underlayer_repository::get_session_status(&raw db, &ctl_sid).equals(string("paused"))) {
         env.error("pause did not set status paused")
     }
 
-    var resume_res = client.post("http://127.0.0.1:19899/api/session/resume?session_id=ctl-session", &ebv, "application/json")
+    var resume_url = string("http://127.0.0.1:19899/api/session/resume?session_id=ctl-session")
+    var resume_res = test_helpers::authed_post(&client, &resume_url, &token, &ebv, "application/json")
     if(resume_res is Result.Err) { env.error("resume failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
     if(!underlayer_repository::get_session_status(&raw db, &ctl_sid).equals(string("active"))) {
         env.error("resume did not set status active")
     }
 
-    var abort_res = client.post("http://127.0.0.1:19899/api/session/abort?session_id=ctl-session", &ebv, "application/json")
+    var abort_url = string("http://127.0.0.1:19899/api/session/abort?session_id=ctl-session")
+    var abort_res = test_helpers::authed_post(&client, &abort_url, &token, &ebv, "application/json")
     if(abort_res is Result.Err) { env.error("abort failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
     // abort deletes the session row
     if(underlayer_repository::get_session_status(&raw db, &ctl_sid).size() != 0) {

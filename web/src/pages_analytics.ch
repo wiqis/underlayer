@@ -57,6 +57,11 @@ public namespace underlayer_web {
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
         page.appendTitle(std::string_view("Analytics — Underlayer"))
+        // The shared session helper.  This is the OVERALL analytics page, whose
+        // script is a different function from the course page's -- so the two
+        // had drifted independently, which is how the literal-template bug
+        // below survived on one and not the other.
+        render_session_js(&mut page)
 
         #html {
             {render_nav_bar(&mut page)}
@@ -416,14 +421,29 @@ public namespace underlayer_web {
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
         page.appendTitle(std::string_view("Course Analytics — Underlayer"))
+        // The shared session helper: this page's script calls __ulFetch for the
+        // concept list, and needs __ulCourseId to know which course to ask
+        // about.  Neither existed here before -- the fetch below named ELF in a
+        // literal and could not name anything else.
+        render_session_js(&mut page)
+
+        // The course this page is about, stamped on the page so the browser
+        // reads it from __UL_COURSE_ID instead of hardcoding `course_id=elf`
+        // into its own fetch URLs (the 7.1.22 bug).  The handler already knows
+        // the course -- it is a route parameter on /analytics/:courseId -- so
+        // the value below is the REAL one, and the label is rendered from it
+        // too, so the heading cannot claim one course while the charts show
+        // another.
+        var cid_label = course_id.copy()
 
         #html {
             {render_nav_bar(&mut page)}
+            <script>window.__UL_COURSE_ID = "{cid_label}";</script>
 
             <div class="container" id="main-content">
                 <div class="page-header">
                     <h1>Course Analytics</h1>
-                    <p class="subtitle">Detailed analytics for course: <span id="course-title-label">elf</span></p>
+                    <p class="subtitle">Detailed analytics for course: <span id="course-title-label">{cid_label}</span></p>
                 </div>
 
                 <div class="stats-grid">
@@ -567,7 +587,23 @@ public namespace underlayer_web {
             });
 
             function loadConceptList() {
-                fetch('/api/progress/:courseId?course_id=elf')
+                // THE LITERAL-TEMPLATE BUG, and why it is fixed by READING the
+                // course instead of naming it.  This line was
+                //     fetch('/api/progress/:courseId?course_id=elf')
+                // -- a route TEMPLATE pasted into a literal.  The `:courseId`
+                // was never substituted by anything, so the browser requested
+                // the URL literally, the router matched no route, and the
+                // response was a 404 page of HTML.  `r.json()` then threw, the
+                // catch painted "Failed to load concepts.", and the concept
+                // list was permanently empty on this page -- which is the whole
+                // point of this page.  `course_id=elf` was a second, separate
+                // lie: even with the path fixed it would have reported ELF
+                // numbers on /analytics/rvasm.
+                //
+                // __ulCourseId() reads ?course_id=, then a /courses/<id>/ path
+                // segment, then the value the handler stamped above.  One
+                // helper, correct on all three page shapes.
+                __ulFetch('/api/progress?course_id=' + encodeURIComponent(__ulCourseId()))
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         var concepts = data.concepts || [];

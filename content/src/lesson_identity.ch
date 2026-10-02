@@ -54,6 +54,22 @@
 // not call render_lesson_engagement, so those helpers may not exist.  The `||`
 // form is idempotent, so on a lesson page the engagement script's versions win
 // and there is exactly one implementation of each.
+//
+// THE SIGNATURE MUST MATCH web/src/session_js.ch EXACTLY, and it did not until
+// this was caught.  This version took no arguments.  The web-layer version
+// takes `extra` and merges it into the returned headers, because __ulFetch uses
+// it to attach a caller's headers.  Both were guarded with `||`, and the nav's
+// block is emitted FIRST on any page that carries both -- so the nav's
+// no-argument version won, and every `__ulHeaders(extra)` call in the web layer
+// silently got a header object with the extra keys MISSING.  Nothing threw.  The
+// request went out with the wrong headers and the page's own error handler
+// blamed something else.
+//
+// That is the specific danger of a guarded global: the guard turns a
+// signature mismatch from an error into a silent wrong answer.  When two
+// implementations of one name exist, they must be the same shape -- and if they
+// ever need to diverge, the second should take a different name, because a
+// guarded global cannot express "these are compatible".
 public namespace underlayer_content {
 
     public func render_identity_js(page : &mut HtmlPage) {
@@ -63,10 +79,17 @@ public namespace underlayer_content {
                 try { t = localStorage.getItem('session_token') || ''; } catch (e) { t = ''; }
                 return t;
             };
-            window.__ulHeaders = window.__ulHeaders || function() {
+            // `extra` IS LOAD-BEARING -- see the header note.  The web layer's __ulFetch
+            // calls this as __ulHeaders(opts.headers) and relies on those keys
+            // surviving.  A zero-argument version here wins the `||` race on
+            // every nav-carrying page and drops them.
+            window.__ulHeaders = window.__ulHeaders || function(extra) {
                 var h = { 'Content-Type': 'application/json' };
                 var t = window.__ulToken();
                 if (t) { h['Authorization'] = 'Bearer ' + t; }
+                if (extra) {
+                    for (var k in extra) { h[k] = extra[k]; }
+                }
                 return h;
             };
 

@@ -444,34 +444,38 @@ public namespace underlayer_web {
         pref_del.append_view(")")
         underlayer_db::exec_sql(db, &raw pref_del)
 
+        // RECORD THAT ONBOARDING FINISHED, unconditionally.  This is the write
+        // that makes the check endpoint able to answer at all, and it happens
+        // whether or not a course was chosen -- the page's own script finishes
+        // with `if(selectedCourse) ... else '/'`, so a learner who completed the
+        // flow without picking one is a real case.  Gating on "a course was
+        // picked" instead would send that learner back to /onboarding on every
+        // page load and every login, with no way out.
+        underlayer_repository::mark_onboarding_complete(db, &learner_id, now)
+
         var resp = string("{\"ok\":true}")
         send_json_str(res, &raw resp)
     }
 
-    // ---- GET /api/onboarding/check — Check if onboarding is completed ----
-
+    // ---- GET /api/onboarding/check — Has this learner finished onboarding? ----
+    //
+    // THE ANSWER IS NOW `onboarding_completed_at`, and that is the whole fix.
+    // This used to ask whether a learning_preferences row existed -- which is
+    // true for every account ever registered, because registration inserts one.
+    // Measured before the change: register, call this endpoint, get
+    // {"completed":true}.  So the gate that onboarding exists to raise could
+    // never be raised, which is why the onboarding flow was reachable only by
+    // typing /onboarding.  The reasoning is in repository/src/onboarding.ch and
+    // the column in repository/src/schema_migrations.ch; the short version is
+    // that a DEFAULT cannot be evidence that someone chose something.
     public func handle_check_onboarding(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
-            var resp = string("{\"completed\":false,\"authenticated\":false}")
-            send_json_str(res, &raw resp)
+            var unauth = string("{\"completed\":false,\"authenticated\":false}")
+            send_json_str(res, &raw unauth)
             return
         }
-        // Onboarding is complete if the user has set a daily_goal_minutes different from the default (20)
-        var sql = string("SELECT daily_goal_minutes FROM learning_preferences WHERE learner_id = '")
-        sql.append_string(&learner_id)
-        sql.append_view("' LIMIT 1")
-        var result = underlayer_db::query_sql(db, &raw sql)
-        var completed = false
-        if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
-            if(row.vals.size() > 0) {
-                var val = row.vals.get_ptr(0).copy()
-                // If daily_goal_minutes was explicitly set (not default), onboarding is done
-                // We check if a learning_preferences row exists with a non-default value
-                completed = true
-            }
-        }
+        var completed = underlayer_repository::is_onboarding_complete(db, &learner_id)
         var resp = string("{\"completed\":")
         if(completed) { resp.append_view("true") } else { resp.append_view("false") }
         resp.append_view(",\"authenticated\":true}")

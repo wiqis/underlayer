@@ -326,7 +326,20 @@ public func test_session_pause_returns_200(env : &mut TestEnv) {
     var res = client.post("http://127.0.0.1:20050/api/session/pause?session_id=999", &ebv, "application/json")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unreachable
-    if(resp.status != 200u && resp.status != 404u) { env.error("expected 200 or 404") }
+    // 403 IS THE CORRECT ANSWER HERE, and it is what this assertion now says.
+    // These endpoints act on a caller-supplied `session_id` and pass through
+    // `require_own_session` (web/src/session_guard.ch), which refuses a session
+    // that does not belong to the caller.  These requests carry no bearer
+    // token, so the caller resolves to the shared `demo` learner, and session
+    // 999 is not theirs -- hence 403.
+    //
+    // The assertion used to be `200 or 404`, which was true when these handlers
+    // took the id and did the thing: an ANONYMOUS caller could abort, pause,
+    // resume, undo and skip ANY learner's review session -- the IDOR the guard
+    // exists to close.  A test that FAILS when a vulnerability is fixed is a
+    // test that will be made green by reverting the fix, so the direction is
+    // inverted: the refusal is now the thing asserted.
+    if(resp.status != 403u) { env.error("expected 403: an anonymous caller may not act on a session it does not own") }
 
     srv.shutdown()
     underlayer_db::close(&raw db)
@@ -350,7 +363,20 @@ public func test_session_resume_returns_200(env : &mut TestEnv) {
     var res = client.post("http://127.0.0.1:20051/api/session/resume?session_id=999", &ebv, "application/json")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unreachable
-    if(resp.status != 200u && resp.status != 404u) { env.error("expected 200 or 404") }
+    // 403 IS THE CORRECT ANSWER HERE, and it is what this assertion now says.
+    // These endpoints act on a caller-supplied `session_id` and pass through
+    // `require_own_session` (web/src/session_guard.ch), which refuses a session
+    // that does not belong to the caller.  These requests carry no bearer
+    // token, so the caller resolves to the shared `demo` learner, and session
+    // 999 is not theirs -- hence 403.
+    //
+    // The assertion used to be `200 or 404`, which was true when these handlers
+    // took the id and did the thing: an ANONYMOUS caller could abort, pause,
+    // resume, undo and skip ANY learner's review session -- the IDOR the guard
+    // exists to close.  A test that FAILS when a vulnerability is fixed is a
+    // test that will be made green by reverting the fix, so the direction is
+    // inverted: the refusal is now the thing asserted.
+    if(resp.status != 403u) { env.error("expected 403: an anonymous caller may not act on a session it does not own") }
 
     srv.shutdown()
     underlayer_db::close(&raw db)
@@ -374,7 +400,20 @@ public func test_session_abort_returns_200(env : &mut TestEnv) {
     var res = client.post("http://127.0.0.1:20052/api/session/abort?session_id=999", &ebv, "application/json")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unreachable
-    if(resp.status != 200u && resp.status != 404u) { env.error("expected 200 or 404") }
+    // 403 IS THE CORRECT ANSWER HERE, and it is what this assertion now says.
+    // These endpoints act on a caller-supplied `session_id` and pass through
+    // `require_own_session` (web/src/session_guard.ch), which refuses a session
+    // that does not belong to the caller.  These requests carry no bearer
+    // token, so the caller resolves to the shared `demo` learner, and session
+    // 999 is not theirs -- hence 403.
+    //
+    // The assertion used to be `200 or 404`, which was true when these handlers
+    // took the id and did the thing: an ANONYMOUS caller could abort, pause,
+    // resume, undo and skip ANY learner's review session -- the IDOR the guard
+    // exists to close.  A test that FAILS when a vulnerability is fixed is a
+    // test that will be made green by reverting the fix, so the direction is
+    // inverted: the refusal is now the thing asserted.
+    if(resp.status != 403u) { env.error("expected 403: an anonymous caller may not act on a session it does not own") }
 
     srv.shutdown()
     underlayer_db::close(&raw db)
@@ -398,7 +437,20 @@ public func test_session_undo_returns_200(env : &mut TestEnv) {
     var res = client.post("http://127.0.0.1:20053/api/session/undo?session_id=999", &ebv, "application/json")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unreachable
-    if(resp.status != 200u && resp.status != 404u) { env.error("expected 200 or 404") }
+    // 403 IS THE CORRECT ANSWER HERE, and it is what this assertion now says.
+    // These endpoints act on a caller-supplied `session_id` and pass through
+    // `require_own_session` (web/src/session_guard.ch), which refuses a session
+    // that does not belong to the caller.  These requests carry no bearer
+    // token, so the caller resolves to the shared `demo` learner, and session
+    // 999 is not theirs -- hence 403.
+    //
+    // The assertion used to be `200 or 404`, which was true when these handlers
+    // took the id and did the thing: an ANONYMOUS caller could abort, pause,
+    // resume, undo and skip ANY learner's review session -- the IDOR the guard
+    // exists to close.  A test that FAILS when a vulnerability is fixed is a
+    // test that will be made green by reverting the fix, so the direction is
+    // inverted: the refusal is now the thing asserted.
+    if(resp.status != 403u) { env.error("expected 403: an anonymous caller may not act on a session it does not own") }
 
     srv.shutdown()
     underlayer_db::close(&raw db)
@@ -423,7 +475,20 @@ public func test_session_skip_returns_200(env : &mut TestEnv) {
     var res = client.post("http://127.0.0.1:20054/api/session/skip?session_id=999&concept_id=bytes", &ebv, "application/json")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unreachable
-    if(resp.status != 200u && resp.status != 404u) { env.error("expected 200 or 404") }
+    // 403 IS THE CORRECT ANSWER HERE, and it is what this assertion now says.
+    // These endpoints act on a caller-supplied `session_id` and pass through
+    // `require_own_session` (web/src/session_guard.ch), which refuses a session
+    // that does not belong to the caller.  These requests carry no bearer
+    // token, so the caller resolves to the shared `demo` learner, and session
+    // 999 is not theirs -- hence 403.
+    //
+    // The assertion used to be `200 or 404`, which was true when these handlers
+    // took the id and did the thing: an ANONYMOUS caller could abort, pause,
+    // resume, undo and skip ANY learner's review session -- the IDOR the guard
+    // exists to close.  A test that FAILS when a vulnerability is fixed is a
+    // test that will be made green by reverting the fix, so the direction is
+    // inverted: the refusal is now the thing asserted.
+    if(resp.status != 403u) { env.error("expected 403: an anonymous caller may not act on a session it does not own") }
 
     srv.shutdown()
     underlayer_db::close(&raw db)
@@ -576,8 +641,20 @@ public func test_nav_status_returns_counts(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20086")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/nav-status", (|&db|(req, res) => {
-        underlayer_web::handle_nav_status(db, &req, &raw mut res)
+    // `courses_dir` IS A REAL PARAMETER of handle_nav_status now, and this call
+    // was never updated: the handler grew one when the nav-status endpoint
+    // stopped being pinned to elf, and the test has been failing to LINK since
+    // -- which is why the whole suite has not built and `scripts/test.sh` has
+    // been reported as "does not build" rather than as a failing test.  A test
+    // file that does not compile is not a passing test; it is no test at all,
+    // and it takes the other 18 files in this directory down with it.
+    //
+    // The course matters to the assertions below: nav_status computes
+    // concepts_total from the MANIFEST, so it needs a real course directory
+    // and not an empty string.
+    var courses_dir = string("./courses")
+    srv.router.add("GET", "/api/nav-status", (|&db, &courses_dir|(req, res) => {
+        underlayer_web::handle_nav_status(db, courses_dir, &req, &raw mut res)
     }))
     srv.serve_async(20086u)
     std::concurrent.sleep_ms(200u)

@@ -7,16 +7,10 @@ public namespace underlayer_repository {
     public func init_schema(db : *DbClient) {
         var sql = string("CREATE TABLE IF NOT EXISTS learners (id TEXT PRIMARY KEY, name TEXT, email TEXT UNIQUE, password_hash TEXT, created_at INTEGER)")
         underlayer_db::exec_sql(db, &raw sql)
-        // 16.2.1: Add password_hash column for existing DBs
-        var mig_ph = string("ALTER TABLE learners ADD COLUMN password_hash TEXT")
-        underlayer_db::exec_sql(db, &raw mig_ph)
         var sql2 = string("CREATE TABLE IF NOT EXISTS concept_states (learner_id TEXT, concept_id TEXT, course_id TEXT, status TEXT DEFAULT 'not_started', attempts INTEGER DEFAULT 0, correct INTEGER DEFAULT 0, streak INTEGER DEFAULT 0, last_studied INTEGER, next_review INTEGER, difficulty_rating REAL DEFAULT 0, PRIMARY KEY (learner_id, concept_id, course_id))")
         underlayer_db::exec_sql(db, &raw sql2)
         var sql3 = string("CREATE TABLE IF NOT EXISTS review_items (id TEXT PRIMARY KEY, learner_id TEXT, concept_id TEXT, course_id TEXT, type TEXT, front TEXT, back TEXT, difficulty REAL DEFAULT 5.0, stability REAL DEFAULT 1.0, retrievability REAL DEFAULT 1.0, next_review INTEGER, last_review INTEGER, reps INTEGER DEFAULT 0, lapses INTEGER DEFAULT 0, ease_factor REAL DEFAULT 2.5)")
         underlayer_db::exec_sql(db, &raw sql3)
-        // 1.1.15: Add ease_factor column if missing (migration for existing DBs)
-        var mig = string("ALTER TABLE review_items ADD COLUMN ease_factor REAL DEFAULT 2.5")
-        underlayer_db::exec_sql(db, &raw mig)
         var sql4 = string("CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, learner_id TEXT, start_time INTEGER, end_time INTEGER, type TEXT, exercises_attempted INTEGER DEFAULT 0, exercises_correct INTEGER DEFAULT 0, status TEXT DEFAULT 'active')")
         underlayer_db::exec_sql(db, &raw sql4)
         var sql5 = string("CREATE TABLE IF NOT EXISTS session_items (id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT, concept_id TEXT, rating INTEGER, time_spent_ms INTEGER, reviewed_at INTEGER)")
@@ -24,9 +18,6 @@ public namespace underlayer_repository {
         // 4.1.1-4.1.5: Exercise table
         var sql6 = string("CREATE TABLE IF NOT EXISTS exercises (id TEXT PRIMARY KEY, concept_id TEXT, type TEXT, question TEXT, answer TEXT, options_json TEXT, correct_index INTEGER DEFAULT 0, explanation TEXT, hint1 TEXT, hint2 TEXT, hint3 TEXT, difficulty REAL DEFAULT 0.5)")
         underlayer_db::exec_sql(db, &raw sql6)
-        // 4.1.3: Add correct_indices column for multi-select exercises
-        var sql6b = string("ALTER TABLE exercises ADD COLUMN correct_indices_json TEXT DEFAULT '[]'")
-        underlayer_db::exec_sql(db, &raw sql6b)
         var idx1 = string("CREATE INDEX IF NOT EXISTS idx_cs_learner ON concept_states(learner_id)")
         underlayer_db::exec_sql(db, &raw idx1)
         var idx2 = string("CREATE INDEX IF NOT EXISTS idx_ri_learner ON review_items(learner_id)")
@@ -96,9 +87,6 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw idx18)
         var idx19 = string("CREATE INDEX IF NOT EXISTS idx_al_learner ON audit_log(learner_id)")
         underlayer_db::exec_sql(db, &raw idx19)
-        // 16.1.1: Add password_hash column if missing
-        var mig_pw = string("ALTER TABLE learners ADD COLUMN password_hash TEXT DEFAULT ''")
-        underlayer_db::exec_sql(db, &raw mig_pw)
         // 6.2.3: Course analytics
         var sql_ca = string("CREATE TABLE IF NOT EXISTS course_analytics (id INTEGER PRIMARY KEY AUTOINCREMENT, learner_id TEXT, course_id TEXT, total_concepts INTEGER DEFAULT 0, mastered_concepts INTEGER DEFAULT 0, learning_concepts INTEGER DEFAULT 0, completion_pct REAL DEFAULT 0, velocity_concepts_per_week REAL DEFAULT 0, total_time_seconds INTEGER DEFAULT 0, updated_at INTEGER)")
         underlayer_db::exec_sql(db, &raw sql_ca)
@@ -222,6 +210,13 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw idx_xa_learner)
         var idx_xa_exercise = string("CREATE INDEX IF NOT EXISTS idx_xa_att_exercise ON exercise_attempts(learner_id, exercise_id)")
         underlayer_db::exec_sql(db, &raw idx_xa_exercise)
+        // Every migration runs here, at the END, not next to its CREATE TABLE.
+        // The old unconditional ALTERs sat above, and the reason that was wrong
+        // is not timing -- it is that they were unconditional at all.  Running
+        // them last means a table that does not exist yet is a CREATE-only
+        // start, and the ones that need adding are added once, silently, on
+        // the second start.  See schema_migrations.ch for the full argument.
+        run_conditional_migrations(db)
     }
 
 }

@@ -16,9 +16,12 @@ public namespace underlayer_web {
         page.injectDefaultComponentsTheme()
         var title = std::string_view("Underlayer - Learn Things Deeply")
         page.appendTitle(&title)
+        // The shared session helper and the onboarding gate -- see pages_gate.ch.
+        render_session_js(&mut page)
 
         #html {
             {render_nav_bar(&mut page)}
+            {render_onboarding_gate(&mut page)}
 
             <div class="search-modal" id="search-modal">
                 <div class="search-backdrop" onclick="closeSearch()"></div>
