@@ -55,6 +55,7 @@ public namespace underlayer_web {
         var ct = content_type_for_ext(&raw ext)
         var ct_view = ct.to_view()
         res.set_header_view(std::string_view("Content-Type"), &ct_view)
+        apply_security_headers(res)
 
         var body_view = std::string_view(bytes.data() as *char, bytes.size())
         res.write_view(&body_view)

@@ -23,6 +23,7 @@ public namespace underlayer_web {
         var html_out = render_analytics_page(db, &learner_id)
         var bv = html_out.to_view()
         res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
+        apply_security_headers(res)
         res.write_view(&bv)
     }
 
@@ -33,6 +34,7 @@ public namespace underlayer_web {
         var html_out = render_course_analytics_page(db, course_id, &learner_id)
         var bv = html_out.to_view()
         res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
+        apply_security_headers(res)
         res.write_view(&bv)
     }
 

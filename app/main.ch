@@ -13,6 +13,34 @@ public func main() : int {
     printf("[underlayer] Starting Underlayer on port %s\n", underlayer_core::u32_to_string(port).data())
 
     var db = underlayer_db::make_client(db_url.copy(), db_token.copy())
+
+    // ---- REFUSE AN UNUSABLE DATABASE, BEFORE SERVING ANYTHING ---------
+    //
+    // Measured on 2026-10-02 with the URL the Dockerfile documents as the
+    // production setting:
+    //
+    //     DATABASE_URL="libsql://example.invalid" ./underlayer.exe
+    //       -> /api/health  200
+    //       -> POST /api/auth/register  {"error":"could not create the account"}
+    //
+    // The remote (Turso/libSQL) backend is not implemented in this build, so
+    // every query and every write fails -- while the server reports itself
+    // healthy and accepts traffic.  A half-working configuration is worse than a
+    // refused one: it fails at 3am, discovered by a learner whose registration
+    // vanished, rather than at deploy time by the person deploying.
+    //
+    // So this exits BEFORE the schema init, the seeding and the accept loop.
+    // `is_unusable_config` also catches a local SQLite path that could not be
+    // opened, which has the same shape: everything answers, nothing is stored.
+    var sqlite_ok = false
+    if(db.is_sqlite && db.sqlite_handle != null) { sqlite_ok = true }
+    if(underlayer_db::is_unusable_config(&db_url, sqlite_ok)) {
+        var fatal = underlayer_db::unusable_config_message(&db_url)
+        printf("%s", fatal.data())
+        fflush(stdout)
+        return 1
+    }
+    printf("[underlayer] Database OK: %s\n", db_url.data())
     var courses_dir_pre = cfg.courses_dir.copy()
 
     // ---- Init schema (skip for remote DB) ----
@@ -419,11 +447,11 @@ public func main() : int {
     }))
 
     // ---- Bulk Exercise Import API ----
-    srv.router.add("POST", "/api/exercises/import", (|&db|(req, res) => {
-        underlayer_web::handle_exercise_import(db, &raw mut req, &raw mut res)
+    srv.router.add("POST", "/api/exercises/import", (|db|(req, res) => {
+        underlayer_web::refuse_exercise_import(&raw db, &req, &raw mut res)
     }))
-    srv.router.add("POST", "/api/exercises/seed", (|&db|(req, res) => {
-        underlayer_web::handle_exercise_seed(db, &raw mut req, &raw mut res)
+    srv.router.add("POST", "/api/exercises/seed", (|db|(req, res) => {
+        underlayer_web::refuse_exercise_seed(&raw db, &req, &raw mut res)
     }))
     srv.router.add("GET", "/api/exercises/stats", (|&db|(req, res) => {
         underlayer_web::handle_exercise_stats(db, &req, &raw mut res)
@@ -568,11 +596,27 @@ public func main() : int {
             res.write_view(&bv)
         }
     })
+    // Rate-limit bucket names.  Declared here rather than inline as literals
+    // at the four call sites so the set of guarded endpoints is readable in
+    // one place, and so the four are named identically by construction.
+
     // Auth API (from handlers_auth.ch)
     srv.router.add("POST", "/api/auth/register", (|db|(req, res) => {
+        // RATE LIMITED: 8 attempts per 5 minutes per IP.  bcrypt cost 12 costs
+        // this server ~0.44s of CPU per login attempt, so an unthrottled login
+        // endpoint is a denial-of-service from a single HTTP client.  Measured
+        // before the limiter: twelve wrong passwords in a row, twelve 401s, no
+        // delay and no counter.  See web/src/rate_limit.ch.
+        if(!underlayer_web::rate_limit_register(&raw db, &req, &raw mut res)) { return }
         underlayer_web::handle_register(&raw db, &raw mut req, &raw mut res)
     }))
     srv.router.add("POST", "/api/auth/login", (|db|(req, res) => {
+        // RATE LIMITED: 8 attempts per 5 minutes per IP.  bcrypt cost 12 costs
+        // this server ~0.44s of CPU per login attempt, so an unthrottled login
+        // endpoint is a denial-of-service from a single HTTP client.  Measured
+        // before the limiter: twelve wrong passwords in a row, twelve 401s, no
+        // delay and no counter.  See web/src/rate_limit.ch.
+        if(!underlayer_web::rate_limit_login(&raw db, &req, &raw mut res)) { return }
         underlayer_web::handle_login(&raw db, &raw mut req, &raw mut res)
     }))
     srv.router.add("POST", "/api/auth/logout", (|db|(req, res) => {
@@ -582,9 +626,21 @@ public func main() : int {
         underlayer_web::handle_get_me(&raw db, &req, &raw mut res)
     }))
     srv.router.add("POST", "/api/auth/forgot-password", (|db|(req, res) => {
+        // RATE LIMITED: 8 attempts per 5 minutes per IP.  bcrypt cost 12 costs
+        // this server ~0.44s of CPU per login attempt, so an unthrottled login
+        // endpoint is a denial-of-service from a single HTTP client.  Measured
+        // before the limiter: twelve wrong passwords in a row, twelve 401s, no
+        // delay and no counter.  See web/src/rate_limit.ch.
+        if(!underlayer_web::rate_limit_forgot(&raw db, &req, &raw mut res)) { return }
         underlayer_web::handle_forgot_password(&raw db, &raw mut req, &raw mut res)
     }))
     srv.router.add("POST", "/api/auth/reset-password", (|db|(req, res) => {
+        // RATE LIMITED: 8 attempts per 5 minutes per IP.  bcrypt cost 12 costs
+        // this server ~0.44s of CPU per login attempt, so an unthrottled login
+        // endpoint is a denial-of-service from a single HTTP client.  Measured
+        // before the limiter: twelve wrong passwords in a row, twelve 401s, no
+        // delay and no counter.  See web/src/rate_limit.ch.
+        if(!underlayer_web::rate_limit_reset(&raw db, &req, &raw mut res)) { return }
         underlayer_web::handle_reset_password(&raw db, &raw mut req, &raw mut res)
     }))
     srv.router.add("POST", "/api/auth/verify-email", (|db|(req, res) => {
@@ -947,7 +1003,21 @@ public func main() : int {
             res.write_view(&bv)
         }
     }))
+    // A SESSION IS REQUIRED, and it is a smaller change than it looks: this was
+    // an unauthenticated vote with no dedupe, so `curl` in a loop on any
+    // review id moved `helpful_count` without limit -- and the count is what
+    // the course landing page shows a visitor deciding whether to read the
+    // review.  A free account still allows unlimited votes, so this is NOT
+    // presented as the complete fix; the dedupe is the remaining half and it
+    // needs a per-learner "already voted" column, which is a schema change
+    // rather than a gate.  What this does stop is a vote with no identity at
+    // all.  See docs/audit-2026-10-02-production.md.
     srv.router.add("POST", "/api/reviews/:id/helpful", (|db|(req, res) => {
+        if(!underlayer_web::has_session(&raw db, &req)) {
+            var anon = string("unauthorized")
+            underlayer_web::send_error(&raw mut res, 401u, &anon)
+            return
+        }
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {

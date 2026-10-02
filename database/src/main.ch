@@ -74,6 +74,49 @@ public namespace underlayer_db {
         return url.copy()
     }
 
+    // True when this build cannot actually talk to the configured database.
+    //
+    // WHY THIS EXISTS, MEASURED.  Pointed the shipped binary at the remote URL
+    // the Dockerfile documents as the production setting:
+    //
+    //     DATABASE_URL="libsql://example.invalid" ./underlayer.exe
+    //       -> /api/health   200
+    //       -> POST /api/auth/register   {"error":"could not create the account"}
+    //
+    // The server booted, reported healthy, accepted traffic, and failed every
+    // write -- silently, because the remote backend is not implemented and the
+    // two branches in exec_sql/query_sql return "no" with a comment nobody
+    // reads. So anyone following the deployment documentation gets a site that
+    // looks up and loses registrations, and finds out from a user.
+    //
+    // A half-working configuration is worse than a refused one. Refusing to
+    // start is the only answer that is honest at 3am, and it costs one check.
+    //
+    // WHAT IT IS NOT.  This does not pretend the remote backend works and does
+    // not add a partial one. It says no.
+    public func is_unusable_config(url : &string, handle_ok : bool) : bool {
+        if(is_remote_url(&raw url)) { return true }
+        if(!handle_ok) { return true }
+        return false
+    }
+
+    // The message, so main() and this file cannot word it differently.
+    public func unusable_config_message(url : &string) : string {
+        var msg = string("[underlayer_db] FATAL: cannot use this database.\n")
+        msg.append_view("  DATABASE_URL = ")
+        msg.append_string(url)
+        msg.append_view("\n")
+        if(is_remote_url(&raw url)) {
+            msg.append_view("  The remote (Turso/libSQL) backend is NOT IMPLEMENTED in this build.\n")
+            msg.append_view("  Every query and every write would fail while the server reported itself healthy.\n")
+            msg.append_view("  Use a local SQLite path instead, e.g. DATABASE_URL=./underlayer.db\n")
+            msg.append_view("  (mount a volume at that path for durable state.)\n")
+        } else {
+            msg.append_view("  SQLite could not open that file. Check the path and write permissions.\n")
+        }
+        return msg
+    }
+
     public func make_client(url : string, token : string) : DbClient {
         if(is_remote_url(&raw url)) {
             var http_url = normalize_url(&raw url)

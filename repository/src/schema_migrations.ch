@@ -128,4 +128,17 @@ public namespace underlayer_repository {
         add_column_if_missing(db, &t_pref, &c_oc, string_view("INTEGER"))
     }
 
+    // Tables that need creating rather than altering.  Separate from
+    // run_conditional_migrations because the two have different failure modes:
+    // a missing COLUMN can be tested for, and a missing TABLE is just created.
+    //
+    // rate_limits is the login limiter's counter store.  It lives in the schema
+    // rather than in web/src/rate_limit.ch so the table exists before the first
+    // request arrives -- a limiter whose table is created on first use loses the
+    // first attempt, which is the one an attacker sends first.
+    public func run_support_tables(db : *DbClient) {
+        var rl = string("CREATE TABLE IF NOT EXISTS rate_limits (bucket TEXT PRIMARY KEY, window_start INTEGER, count INTEGER)")
+        underlayer_db::exec_sql(db, &raw rl)
+    }
+
 }

@@ -104,6 +104,45 @@ PW = 'security-check-password-1'
 TAG = 'secchk'
 
 
+# THE LOGIN LIMITER, AND WHY THIS SCRIPT HAS TO KNOW ABOUT IT.
+#
+# web/src/rate_limit.sh caps /api/auth/login and /api/auth/register at 8
+# attempts per 5 minutes per IP.  This script registers a dozen accounts and logs
+# each one in, so it hit that cap -- and the failures it reported were
+# "HTTP 429 too many attempts", which is the limiter working.  A check that
+# cannot run to completion because the product correctly refuses it is not a
+# check, it is a tripwire.
+#
+# The limiter is NOT turned down to accommodate this.  Instead the counters are
+# cleared at the start of a run and between the accounts, which is also what
+# makes the run independent of whatever state the last one left behind.  The
+# limiter itself is verified separately, by the explicit 429 assertions in
+# CHECK 14 -- so clearing the counters here does not weaken coverage; it moves
+# the testing to the place that can actually see it.
+RATE_LIMITED = ('/api/auth/login', '/api/auth/register',
+                '/api/auth/forgot-password', '/api/auth/reset-password')
+_rate_clears = 0
+
+
+def clear_rate_limits():
+    """Empty the rate_limits table. Returns True if the table was there.
+
+    Silently does nothing when the table does not exist, so this script still
+    runs against a server older than the limiter -- and CHECK 14 says so rather
+    than passing quietly.
+    """
+    global _rate_clears
+    try:
+        c = db()
+        c.execute('DELETE FROM rate_limits')
+        c.commit()
+        c.close()
+        _rate_clears += 1
+        return True
+    except Exception:
+        return False
+
+
 def http(method, path, port, token=None, body=None, timeout=30):
     url = 'http://localhost:%d%s' % (port, path)
     data = None
@@ -249,6 +288,13 @@ def main():
         print('FAIL: cannot read %s (%s).  NOT a pass.' % (DB, e))
         return 2
 
+    # Start from a clean limiter so this run measures the security properties and
+    # not the residue of the last run.
+    had_limiter = clear_rate_limits()
+    if had_limiter:
+        print('=== rate limits cleared for this run (the login limiter is '
+              'asserted separately in CHECK 14) ===\n')
+
     stamp = '%d' % int(time.time())
     e1 = '%s_%s_a@t.com' % (TAG, stamp)
     e2 = '%s_%s_b@t.com' % (TAG, stamp)
@@ -264,7 +310,20 @@ def main():
         results.append((name, ok, detail))
         print('  %s  %s\n        %s' % ('PASS' if ok else 'FAIL', name, detail))
 
+    def budget():
+        """Refill the limiter's allowance for the NEXT check.
+
+        Every auth call in this script counts against the same 8-per-5-minutes
+        budget, and the script makes far more than 8 across its 50 checks. So the
+        budget is refilled between checks. The limiter is not weakened -- CHECK
+        14 asserts it directly, from a known-empty counter, and asserts both
+        directions including that a legitimate login recovers.
+        """
+        if had_limiter:
+            clear_rate_limits()
+
     try:
+        budget()
         print('=== CHECK 1  same password -> different stored hashes ===')
         r1 = register(args.port, e1, 'Sec A')
         r2 = register(args.port, e2, 'Sec B')
@@ -281,6 +340,7 @@ def main():
               not (h1 and len(h1) == 64) and not (h2 and len(h2) == 64),
               'lengths: %s' % [len(x) for x in (h1, h2) if x])
 
+        budget()
         print('=== CHECK 2  the stored value is a self-describing KDF string ===')
         cost = bcrypt_cost(h1)
         check('stored hash is a bcrypt modular-crypt string', cost is not None,
@@ -291,6 +351,7 @@ def main():
               bcrypt_cost(h1) == 12 and bcrypt_cost(h2) == 12,
               '%r / %r' % (h1 and h1[:7], h2 and h2[:7]))
 
+        budget()
         print('=== CHECK 3  no unsalted fallback left inside the stored value ===')
         naive = hashlib.sha256(PW.encode()).hexdigest()
         leaks = [h for h in (h1, h2) if h and naive in h]
@@ -302,6 +363,7 @@ def main():
               not (h1 and salted_same and salted_same == h1),
               'a hand-rolled scheme would be caught here')
 
+        budget()
         print('=== CHECK 4  login still works, and only with the right password ===')
         st, tok, body = login(args.port, e1, PW)
         check('correct password logs in', st == 200 and bool(tok),
@@ -312,6 +374,7 @@ def main():
         if tok:
             tokens['e1-session'] = tok
 
+        budget()
         print('=== CHECK 5  a legacy unsalted row still authenticates ===')
         rl = register(args.port, el, 'Sec Legacy')
         tokens[el] = rl[1]
@@ -325,6 +388,7 @@ def main():
         if tokl:
             tokens['legacy-session'] = tokl
 
+        budget()
         print('=== CHECK 6  and is upgraded in place on that login ===')
         now = stored_hash(el)
         check('the row is no longer the legacy digest', now != legacy,
@@ -336,6 +400,7 @@ def main():
         check('a second legacy row is NOT rewritten by a WRONG password',
               True, 'covered by check 4 and by the 401 below')
 
+        budget()
         print('=== CHECK 7  a wrong password against a legacy row does not upgrade it ===')
         e3 = '%s_%s_legacy2@t.com' % (TAG, stamp)
         r3 = register(args.port, e3, 'Sec Legacy 2')
@@ -348,6 +413,7 @@ def main():
               stored_hash(e3) == legacy,
               'stored = %r' % str(stored_hash(e3))[:16])
 
+        budget()
         print('=== CHECK 8  the hash means the same thing to a reference bcrypt ===')
         ok, note = reference_ok(h1, PW)
         if ok is None:
@@ -357,6 +423,7 @@ def main():
             bad, note2 = reference_ok(h1, PW + 'nope')
             check('python bcrypt rejects it for a wrong password', bad is False, note2)
 
+        budget()
         print('=== CHECK 9  a session token is stored hashed, never in the clear ===')
         c = db()
         try:
@@ -377,6 +444,7 @@ def main():
         # `email` field went into a SQL literal unescaped, so
         #   "' OR password_hash='<sha256 of a password I know>"
         # authenticated as that account and returned a usable session token.
+        budget()
         print('=== CHECK 10  a crafted email cannot borrow another account ===')
         known_hash = hashlib.sha256(PW.encode()).hexdigest()
         for label, payload in [
@@ -393,6 +461,7 @@ def main():
                   stx == 401 and not tokx,
                   'HTTP %d %s' % (stx, bodyx[:100]))
 
+        budget()
         print('=== CHECK 11  a crafted name cannot silently destroy the account ===')
         # `exec_sql` frees SQLite's error message without reporting it, so an
         # apostrophe in a display name used to turn the INSERT into a syntax
@@ -415,6 +484,7 @@ def main():
         check('that learner can log in with the password just set', stl2 == 200 and bool(tokl2),
               'HTTP %d' % stl2)
 
+        budget()
         print('=== CHECK 12  another learner\'s review session cannot be driven ===')
         # Session ids are Unix timestamps, so the whole day's id space is
         # enumerable, and every /api/session/* endpoint used to act on whatever
@@ -458,6 +528,7 @@ def main():
                   'HTTP %d %s' % (stleg, bleg[:90]))
             _ = owner_before
 
+        budget()
         print('=== CHECK 13  the destructive endpoints need a token ===')
         # These two resolved an absent token to the shared `demo` learner and
         # then deleted things, so an unauthenticated DELETE /api/user/account
@@ -471,6 +542,68 @@ def main():
             check('%s refused with no token' % label, stx == 401,
                   'HTTP %d %s' % (stx, bodyx[:90]))
 
+        budget()
+        print('=== CHECK 14  the login limiter actually refuses a flood ===')
+        # This is where the limiter is asserted, deliberately, at the END and
+        # after the counters have been cleared for every other check.  Before the
+        # limiter existed, twelve wrong passwords in a row answered twelve 401s
+        # with no delay -- and bcrypt cost 12 costs this server ~0.44s of CPU per
+        # attempt, so that endpoint was a denial-of-service from one HTTP client.
+        #
+        # Asserted in both directions, because either half alone is weak: a
+        # limiter that refuses EVERYTHING (including a correct password) would
+        # pass the 429 check and break every real reader.
+        if had_limiter:
+            clear_rate_limits()
+            codes = []
+            for _ in range(10):
+                stl, _ = http('POST', '/api/auth/login', args.port,
+                              body=json.dumps({'email': 'nobody@t.com',
+                                               'password': 'wrong'}))
+                codes.append(stl)
+            first_429 = next((i for i, cc in enumerate(codes) if cc == 429), -1)
+            check('a flood of wrong passwords is refused with 429',
+                  first_429 != -1,
+                  'statuses seen: %s' % (codes,))
+            check('the refusal starts within the limit, not on the first try',
+                  first_429 == 8,
+                  'first 429 at attempt %s, limit is 8' % first_429)
+            check('every attempt before the limit answered 401 (not 429)',
+                  all(cc == 401 for cc in codes[:8]) if first_429 == 8 else False,
+                  'statuses before the limit: %s' % (codes[:8],))
+            # And the counters really are in the table.
+            try:
+                cc2 = db()
+                rows = cc2.execute('select count(*) from rate_limits').fetchone()[0]
+                cc2.close()
+                check('the limiter keeps a counter row', rows >= 1,
+                      'rate_limits has %d row(s)' % rows)
+            except Exception as e:  # noqa: BLE001
+                check('the limiter keeps a counter row', False, str(e))
+            # A CORRECT password is refused while throttled too. That is right:
+            # if only wrong passwords were throttled, the limiter would be an
+            # account-existence oracle.
+            stl2, bodyl2 = http('POST', '/api/auth/login', args.port,
+                                body=json.dumps({'email': e1,
+                                                 'password': PW}))
+            check('a correct password is ALSO refused while throttled '
+                  '(no account-existence oracle)', stl2 == 429,
+                  'HTTP %d %s' % (stl2, bodyl2[:80]))
+            # ... and the window recovers: clearing is the same thing the window
+            # expiry does, so this proves the limiter is not a permanent lockout.
+            clear_rate_limits()
+            stl3, bodyl3 = http('POST', '/api/auth/login', args.port,
+                                body=json.dumps({'email': e1,
+                                                 'password': PW}))
+            check('a legitimate login works again once the window has passed',
+                  stl3 == 200, 'HTTP %d %s' % (stl3, bodyl3[:80]))
+            clear_rate_limits()
+        else:
+            check('the login limiter is present', False,
+                  'no rate_limits table -- this build has no login limiter, and '
+                  'the 44 checks above do NOT cover the DoS')
+
+        budget()
         print('=== CHECK 14  deleting an account leaves nothing behind ===')
         ec = '%s_%s_del@t.com' % (TAG, stamp)
         tokens[ec] = register(args.port, ec, 'Del')[1]

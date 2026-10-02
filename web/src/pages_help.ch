@@ -587,6 +587,7 @@ public namespace underlayer_web {
         var html = render_help_page()
         var ct = std::string_view("text/html; charset=utf-8")
         res.set_header_view(std::string_view("Content-Type"), &ct)
+        apply_security_headers(res)
         var hv = html.to_view()
         res.write_view(&hv)
     }
@@ -595,6 +596,7 @@ public namespace underlayer_web {
         var html = render_shortcuts_page()
         var ct = std::string_view("text/html; charset=utf-8")
         res.set_header_view(std::string_view("Content-Type"), &ct)
+        apply_security_headers(res)
         var hv = html.to_view()
         res.write_view(&hv)
     }
@@ -603,6 +605,7 @@ public namespace underlayer_web {
         var html = render_faq_page()
         var ct = std::string_view("text/html; charset=utf-8")
         res.set_header_view(std::string_view("Content-Type"), &ct)
+        apply_security_headers(res)
         var hv = html.to_view()
         res.write_view(&hv)
     }
@@ -611,6 +614,7 @@ public namespace underlayer_web {
         var html = render_about_page()
         var ct = std::string_view("text/html; charset=utf-8")
         res.set_header_view(std::string_view("Content-Type"), &ct)
+        apply_security_headers(res)
         var hv = html.to_view()
         res.write_view(&hv)
     }

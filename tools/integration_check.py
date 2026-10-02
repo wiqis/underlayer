@@ -72,6 +72,7 @@ import json
 import os
 import re
 import shutil
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -145,6 +146,11 @@ def section(title):
 
 # ---------------------------------------------------------------- HTTP helpers
 
+# The development database, used only to clear the rate limiter between
+# accounts. Read from the environment so it works against a test database.
+DB_PATH = os.environ.get('UL_DB', './underlayer.db')
+
+
 def request(base, path, token=None, method='GET', body=None, timeout=40):
     url = base.rstrip('/') + path
     data = None
@@ -160,6 +166,30 @@ def request(base, path, token=None, method='GET', body=None, timeout=40):
             return resp.status, resp.read().decode('utf-8', 'replace')
     except urllib.error.HTTPError as e:
         return e.code, e.read().decode('utf-8', 'replace')
+
+
+# THE LOGIN LIMITER, AND WHY THIS SCRIPT HAS TO CLEAR IT.
+#
+# web/src/rate_limit.ch caps /api/auth/login and /api/auth/register at 8
+# attempts per 5 minutes per IP. This script registers and signs in several
+# accounts, so it trips the cap and the failure it reported was "register a fresh
+# learner -> 429", which is the limiter working, not a broken feature.
+#
+# A check that cannot run to completion because the product correctly refuses it
+# is a tripwire, not a check. So the counters are cleared before each account is
+# created. The limiter is not weakened -- tools/security_check.py asserts it
+# directly, including that it refuses a flood, that it starts refusing at the
+# limit rather than on the first try, and that a legitimate login recovers.
+def clear_rate_limits():
+    """Empty the rate_limits table, if it exists. Never raises."""
+    try:
+        c = sqlite3.connect(DB_PATH, timeout=20)
+        c.execute('DELETE FROM rate_limits')
+        c.commit()
+        c.close()
+        return True
+    except Exception:
+        return False
 
 
 def request_json(base, path, token=None, method='GET', body=None):
@@ -682,6 +712,9 @@ def run_checks(base):
     stamp = int(time.time())
     email = 'integration-check-%d-%d@example.invalid' % (stamp, os.getpid())
     password = 'IntegCheck!%d' % (stamp % 100000)
+    # Refill the limiter's allowance so this run measures integration rather
+    # than the residue of the previous one. See clear_rate_limits().
+    clear_rate_limits()
     st, reg = request_json(base, '/api/auth/register', method='POST',
                            body={'email': email, 'password': password,
                                  'name': 'Integration Check'})

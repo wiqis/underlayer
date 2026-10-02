@@ -8,6 +8,7 @@ public namespace underlayer_web {
     public func send_page(res : *mut http::ResponseWriter, page : *HtmlPage) {
         var ct = std::string_view("text/html; charset=utf-8")
         res.set_header_view(std::string_view("Content-Type"), &ct)
+        apply_security_headers(res)
         var html = page.toString()
         var hv = html.to_view()
         res.write_view(&hv)
@@ -16,6 +17,7 @@ public namespace underlayer_web {
     public func send_html(res : *mut http::ResponseWriter, html : *string) {
         var ct = std::string_view("text/html; charset=utf-8")
         res.set_header_view(std::string_view("Content-Type"), &ct)
+        apply_security_headers(res)
         var hv = html.to_view()
         res.write_view(&hv)
     }
@@ -23,6 +25,7 @@ public namespace underlayer_web {
     public func send_json_str(res : *mut http::ResponseWriter, body : *string) {
         var ct = std::string_view("application/json")
         res.set_header_view(std::string_view("Content-Type"), &ct)
+        apply_security_headers(res)
         var bv = body.to_view()
         res.write_view(&bv)
     }
@@ -31,6 +34,7 @@ public namespace underlayer_web {
         res.status = status
         var ct = std::string_view("application/json")
         res.set_header_view(std::string_view("Content-Type"), &ct)
+        apply_security_headers(res)
         var body = std::string("{\"error\":\"")
         body.append_string(msg)
         body.append_view("\"}")

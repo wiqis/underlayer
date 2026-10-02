@@ -149,6 +149,7 @@ public namespace underlayer_web {
         var out = page.toString()
         var ov = out.to_view()
         res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
+        apply_security_headers(res)
         res.write_view(&ov)
     }
 

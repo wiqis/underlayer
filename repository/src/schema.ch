@@ -217,6 +217,10 @@ public namespace underlayer_repository {
         // start, and the ones that need adding are added once, silently, on
         // the second start.  See schema_migrations.ch for the full argument.
         run_conditional_migrations(db)
+        // Tables, not columns -- see run_support_tables.  rate_limits backs the
+        // login limiter, and it has to exist before the first request rather
+        // than on first use.
+        run_support_tables(db)
     }
 
 }

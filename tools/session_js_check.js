@@ -167,6 +167,20 @@ function run(html, storage, search, pathname) {
     };
 }
 
+// Register a throwaway learner for the sections that need a session, and
+// delete it at the end. Uses the platform's own routes so it exercises the real
+// registration path.
+async function registerLearner(base) {
+    const email = 'sess-js-' + Date.now() + '@underlayer.dev';
+    const r = await fetch(base + '/api/auth/register', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: 'password123', name: 'Session JS' }),
+    });
+    const d = await r.json();
+    registerLearner.email = email;
+    return d.session_token || '';
+}
+
 // Small helper for the gate lifecycle assertions in section 13.
 async function chk2(base, auth) {
     const r = await fetch(base + '/api/onboarding/check', { headers: auth });
@@ -178,8 +192,17 @@ async function main() {
 
     // ---------------------------------------------------------------------
     console.log('\n[1] the helper is emitted and defined on every page that uses it');
+    // THESE THREE PAGES ARE BEHIND THE SIGN-IN GATE (web/src/pages_auth_gate.ch),
+    // so an anonymous request receives the gate page, which carries no session
+    // script at all. Fetching them without a token here was reporting nine
+    // failures that said nothing about the helper -- it was reporting that the
+    // gate works. So a throwaway learner is registered first, and the gate itself
+    // is asserted separately in section [14] below.
+    const tok = await registerLearner(BASE);
     for (const path of ['/progress', '/review', '/analytics']) {
-        const html = await (await fetch(BASE + path)).text();
+        const html = await (await fetch(BASE + path, {
+            headers: { Authorization: 'Bearer ' + tok },
+        }, { headers: { Authorization: 'Bearer ' + tok } })).text();
         const env = makeEnv({}, '', path);
         const win = run(html, env.localStorage, '', path).win;
         check('/' + path.slice(1) + ': __ulFetch defined',
@@ -197,7 +220,7 @@ async function main() {
     // ---------------------------------------------------------------------
     console.log('\n[2] __ulCourseId reads the real course, never a hardcoded elf');
     {
-        const html = await (await fetch(BASE + '/progress')).text();
+        const html = await (await fetch(BASE + '/progress', { headers: { Authorization: 'Bearer ' + tok } })).text();
 
         const r1 = run(html, {}, '?course_id=rvasm', '/progress').win.__ulCourseId();
         check('?course_id=rvasm -> rvasm', r1 === 'rvasm', 'got ' + r1);
@@ -220,7 +243,7 @@ async function main() {
     // ---------------------------------------------------------------------
     console.log('\n[3] a course id is never silently replaced by elf');
     {
-        const html = await (await fetch(BASE + '/review')).text();
+        const html = await (await fetch(BASE + '/review', { headers: { Authorization: 'Bearer ' + tok } })).text();
         // Every URL the page builds must carry the course it was told to.
         const r = run(html, {}, '?course_id=coff', '/review');
         r.win.__ulFetch('/api/review/due?course_id=' + r.win.__ulCourseId() + '&limit=50');
@@ -233,7 +256,7 @@ async function main() {
     // ---------------------------------------------------------------------
     console.log('\n[4] __ulHeaders attaches the token, and no "Bearer null"');
     {
-        const html = await (await fetch(BASE + '/progress')).text();
+        const html = await (await fetch(BASE + '/progress', { headers: { Authorization: 'Bearer ' + tok } })).text();
 
         const signedOut = run(html, {}, '', '/progress').win;
         const h1 = signedOut.__ulHeaders({});
@@ -274,7 +297,7 @@ async function main() {
     // ---------------------------------------------------------------------
     console.log('\n[5] blocked site data must not throw (this killed 11 pages before)');
     {
-        const html = await (await fetch(BASE + '/progress')).text();
+        const html = await (await fetch(BASE + '/progress', { headers: { Authorization: 'Bearer ' + tok } })).text();
         const hostile = {
             getItem: function () { throw new Error('SecurityError: site data blocked'); },
             removeItem: function () { throw new Error('SecurityError'); },
@@ -296,7 +319,7 @@ async function main() {
     // ---------------------------------------------------------------------
     console.log('\n[6] a 401 clears the dead token and redirects (7.1.19)');
     {
-        const html = await (await fetch(BASE + '/progress')).text();
+        const html = await (await fetch(BASE + '/progress', { headers: { Authorization: 'Bearer ' + tok } })).text();
         let removed = false;
         const store = {
             getItem: function (k) { return k === 'session_token' ? 'expired-token' : null; },
@@ -329,7 +352,7 @@ async function main() {
     // ---------------------------------------------------------------------
     console.log('\n[7] silent401 suppresses the REDIRECT but still rejects');
     {
-        const html = await (await fetch(BASE + '/progress')).text();
+        const html = await (await fetch(BASE + '/progress', { headers: { Authorization: 'Bearer ' + tok } })).text();
         let removed = false;
         let target = '';
         const store = {
@@ -385,7 +408,7 @@ async function main() {
 
     console.log('\n[8] the login redirect cannot loop on an auth page');
     {
-        const html = await (await fetch(BASE + '/progress')).text();
+        const html = await (await fetch(BASE + '/progress', { headers: { Authorization: 'Bearer ' + tok } })).text();
         for (const p of ['/login', '/register', '/onboarding']) {
             let navigated = false;
             const env = makeEnv({}, '', p);
@@ -417,7 +440,7 @@ async function main() {
     // ---------------------------------------------------------------------
     console.log('\n[9] __ulGate answers rather than navigating by itself');
     {
-        const html = await (await fetch(BASE + '/progress')).text();
+        const html = await (await fetch(BASE + '/progress', { headers: { Authorization: 'Bearer ' + tok } })).text();
         const emptyStore = {
             getItem: function () { return null; },
             removeItem: function () {},
@@ -488,7 +511,7 @@ async function main() {
     console.log('\n[10] the onboarding gate is on the gate pages, and hidden');
     {
         for (const p of ['/', '/dashboard']) {
-            const html = await (await fetch(BASE + p)).text();
+            const html = await (await fetch(BASE + p, { headers: { Authorization: 'Bearer ' + tok } })).text();
             check(p + ' carries the gate', html.indexOf('ul-onboarding-gate') !== -1);
             check(p + ' ships the gate HIDDEN (correct before any JS runs)',
                 /id="ul-onboarding-gate"[^>]*\shidden/.test(html)
@@ -498,7 +521,7 @@ async function main() {
         // The auth pages must NOT carry the gate: a learner on /login being
         // told to finish onboarding is the loop this design avoids.
         for (const p of ['/login', '/register']) {
-            const html = await (await fetch(BASE + p)).text();
+            const html = await (await fetch(BASE + p, { headers: { Authorization: 'Bearer ' + tok } })).text();
             check(p + ' does NOT carry the gate',
                 html.indexOf('ul-onboarding-gate') === -1);
         }
@@ -507,7 +530,7 @@ async function main() {
     // ---------------------------------------------------------------------
     console.log('\n[11] __ulAfterAuth honours `next`, then the gate, then home');
     {
-        const html = await (await fetch(BASE + '/login')).text();
+        const html = await (await fetch(BASE + '/login', { headers: { Authorization: 'Bearer ' + tok } })).text();
 
         // next= wins, and the learner lands where they were going.
         {
@@ -553,7 +576,7 @@ async function main() {
     // ---------------------------------------------------------------------
     console.log('\n[12] `next` cannot be used as an open redirect');
     {
-        const html = await (await fetch(BASE + '/login')).text();
+        const html = await (await fetch(BASE + '/login', { headers: { Authorization: 'Bearer ' + tok } })).text();
         const store = { getItem: function () { return null; }, removeItem: function () {}, setItem: function () {} };
 
         // Each of these must be REFUSED, and refusal means falling through to
@@ -650,6 +673,58 @@ async function main() {
             // Leave no rows behind -- this gate must not accumulate accounts.
             await fetch(BASE + '/api/user/account', { method: 'DELETE', headers: auth });
         }
+    }
+
+    // ---------------------------------------------------------------------
+    console.log('\n[14] the account pages are gated, and the lessons are not');
+    {
+        const GATED = ['/dashboard', '/progress', '/review', '/analytics',
+            '/bookmarks', '/notes', '/study-plans', '/achievements', '/streaks',
+            '/notifications', '/certificates'];
+        let bad = [];
+        for (const p of GATED) {
+            // NO token here, on purpose: that is the whole assertion.
+            const html = await (await fetch(BASE + p)).text();
+            if (!html.includes('ul-gate-card')) { bad.push(p); }
+        }
+        check('every account page gates an anonymous visitor', bad.length === 0,
+              'not gated: ' + bad.join(', '));
+
+        // ...and the gate must not appear for a signed-in learner, or the
+        // feature would be broken in the other direction.
+        let gatedWhenIn = [];
+        for (const p of GATED) {
+            const html = await (await fetch(BASE + p, {
+                headers: { Authorization: 'Bearer ' + tok },
+            }, { headers: { Authorization: 'Bearer ' + tok } })).text();
+            if (html.includes('ul-gate-card')) { gatedWhenIn.push(p); }
+        }
+        check('no account page gates a signed-in learner', gatedWhenIn.length === 0,
+              'gated when signed in: ' + gatedWhenIn.join(', '));
+
+        // PUBLIC PAGES MUST NOT BE GATED.  A lesson is the product: gating it
+        // would be gating the only thing there is to see.
+        let wrongly = [];
+        for (const p of ['/', '/courses', '/search', '/login', '/register',
+                         '/courses/elf', '/courses/elf/lessons/bytes']) {
+            const html = await (await fetch(BASE + p, { headers: { Authorization: 'Bearer ' + tok } })).text();
+            if (html.includes('ul-gate-card')) { wrongly.push(p); }
+        }
+        check('no public page is gated', wrongly.length === 0,
+              'wrongly gated: ' + wrongly.join(', '));
+
+        // The advisory on a lesson, hidden in the markup so it cannot flash.
+        const lesson = await (await fetch(BASE + '/courses/elf/lessons/bytes', { headers: { Authorization: 'Bearer ' + tok } })).text();
+        check('a lesson carries the sign-in advisory',
+              lesson.includes('ul-signin-advisory'));
+        check('the advisory ships HIDDEN (correct before any JS runs)',
+              /id="ul-signin-advisory"[^>]*\shidden/.test(lesson));
+        check('a lesson is NOT gated', !lesson.includes('ul-gate-card'));
+
+        // Clean up the throwaway learner.
+        await fetch(BASE + '/api/user/account', {
+            method: 'DELETE', headers: { Authorization: 'Bearer ' + tok },
+        });
     }
 
     console.log('\n' + (failures === 0

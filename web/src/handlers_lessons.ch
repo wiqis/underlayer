@@ -34,6 +34,7 @@ public namespace underlayer_web {
         var paged = apply_lesson_pager(&html, &cidsv, &course, &pid)
         var ct = std::string_view("text/html; charset=utf-8")
         res.set_header_view(std::string_view("Content-Type"), &ct)
+        apply_security_headers(res)
         var pv = paged.to_view()
         res.write_view(&pv)
     }
@@ -50,6 +51,7 @@ public namespace underlayer_web {
         var html = underlayer_content::render_course_landing(&course)
         var ct = std::string_view("text/html; charset=utf-8")
         res.set_header_view(std::string_view("Content-Type"), &ct)
+        apply_security_headers(res)
         var hv = html.to_view()
         res.write_view(&hv)
     }
