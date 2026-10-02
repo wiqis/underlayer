@@ -2,7 +2,7 @@
   "id": "a64asm",
   "title": "AArch64: Encoding From The Ground Up",
   "version": "1.0.0",
-  "description": "The class field is four bits and not two, and `ret` is in a class a two-bit rule cannot see; a 12-bit logical immediate reaches 1,302 of 4,294,967,296 constants and refuses the two a compiler wants most; `cset w0, eq` is `csinc w0, wzr, wzr, NE`, so the condition is inverted and nothing about the result looks wrong; and AArch64 loses on code density at two optimisation levels and wins at two, which retracts the claim the course was written to make.",
+  "description": "Decode any AArch64 instruction from its 32 bits: the register classes, the logical-immediate encoding, the conditionals and the bit patterns that do not mean what they first look like.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

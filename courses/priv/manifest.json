@@ -2,7 +2,7 @@
   "id": "priv",
   "title": "Exceptions, Privilege and Mode Changes",
   "version": "1.0.0",
-  "description": "What happens between asking for something you cannot do yourself and getting it: a gate table a user process can locate and not read, three ways in of which only two go through a gate, a boundary that is 2^47 minus the width of the access, and a vendor disagreement about one instruction that is documented on both sides and is not an erratum.",
+  "description": "Explain what happens when a program asks for something it cannot do itself: the gate tables, the ways in, and what the privilege boundary really protects.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

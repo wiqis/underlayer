@@ -2,7 +2,7 @@
   "id": "x86simd",
   "title": "The x86-64 Data Path: Atomics, Ordering and Vectors",
   "version": "1.0.0",
-  "description": "Twenty-one `LOCK` arms and fifteen without one, two threads and a barrier each, and the verdict column is the finding: `lock inc` IS exact and the draft said it was not, while `or $0`, `xor $0` and `sub $0` with no prefix all LOSE increments while looking like no-ops -- and only a SECOND instrument can see that, because the first is blind to an operation whose value never changes. The two prefixed arms that are not exact are `adc` and `sbb`, and the artifact says so rather than quoting them: they read a carry FLAG as well as the word, so a lost flag is not a lost increment. Ten vector loads probed one per forked child, and VEX did NOT remove the alignment requirement: all five aligned forms die at +8 bytes, aligned and unaligned alike. Thirty encodings round-tripped AND cross-checked against objdump, which is how twenty-four of the draft's claims came back retracted -- including two the second reader itself had to be fixed for, one of which reported 28 disagreements out of 30 for an encoder that was entirely correct.",
+  "description": "Write correct x86-64 atomics and vector code, and know which LOCK-prefixed forms are exact, which only look it, and what alignment really costs.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

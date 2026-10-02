@@ -2,7 +2,7 @@
   "id": "rvpriv",
   "title": "The RISC-V Privileged Architecture",
   "version": "1.0.0",
-  "description": "A privileged architecture is a DOCUMENT, and this course is unusually honest about what that costs. There is no RISC-V machine, no emulator and no RISC-V linker on the build host, so NOTHING IS EXECUTED: no exception is taken, no page is walked, no TLB is consulted, no `ecall` is observed trapping. What IS measurable is the part a compiler author needs -- the twelve CSR instruction encodings and the single funct3 bit between them, the 12-bit CSR address decomposed into its accessibility and privilege fields, the Zicsr split that moves a standard extension out of the base ISA string without the ISA string noticing, and the relocation records a page-table walk emits, read out of a relocatable object. Two natural satp PPN widths -- 44 and 54 -- both COMPILE, and the wrongness was measured on the compiler's own shifts. The pairing rule's arithmetic (2048 - 1 = 2047) is exact and the assembler enforces none of it: one HI20 and two LO12_I records at every one of six distances, including 8 KiB apart. Seventeen retractions, sixteen limits, four poisons, and the measured/quoted boundary printed as a 44-row table rather than a disclaimer.",
+  "description": "Read the RISC-V privileged specification as a compiler author: CSR encodings and their accessibility fields, the satp page-table format, and the relocation records a walk emits.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

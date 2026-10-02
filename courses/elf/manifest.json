@@ -2,7 +2,7 @@
   "id": "elf",
   "title": "Executable and Linkable Format",
   "version": 1,
-  "description": "A deep dive into the ELF binary format — headers, sections, segments, symbols, relocations, and dynamic linking.",
+  "description": "Read any ELF binary end to end: headers, sections, segments, symbols, relocations, and the dynamic structures that connect it to a shared library.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

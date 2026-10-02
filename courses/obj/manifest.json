@@ -2,7 +2,7 @@
   "id": "obj",
   "title": "Object Files",
   "version": 1,
-  "description": "The intermediate artefact every compiler emits and no programmer ever sees. One C file compiled three ways, and the holes left behind for a linker to fill. The fixup record, the three symbol table designs, COMMON and its ABI break, COMDAT, archives, and the whole business of emitting an object file that a linker will actually accept.",
+  "description": "Read the object file your compiler emits: its sections, its symbol tables, its fixup records and the holes left for a linker to fill.",
   "author": "Waqas Tahir",
   "license": "MIT",
   "language": "en",

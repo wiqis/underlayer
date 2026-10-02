@@ -2,7 +2,7 @@
   "id": "simd",
   "title": "SIMD and Vector Processing",
   "version": "1.0.0",
-  "description": "A 4-wide loop is 3.89x the scalar one on L1-resident data and 1.14x on the same data once it is 24 MiB, and the lane count did not change between those two numbers; the gather instruction is 2.6x slower than four ordinary scalar loads; and the compiler declines to vectorise a loop that reaches its three streams through pointers, which has nothing to do with the trip count.",
+  "description": "Decide when vectorisation pays, read a vector instruction, and use gathers, reductions and lane boundaries without a data-dependent stall.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

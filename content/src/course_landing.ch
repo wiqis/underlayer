@@ -45,6 +45,13 @@ using underlayer_models::Course
         // The module list container is filled by JS (fetch /api/courses/:id).
         // Concept links follow /courses/<id>/lessons/<concept>.
         render_landing_css(&mut page)
+        // This page draws its OWN navbar rather than calling render_site_nav, so
+        // the sign-in slot has to be emitted here or the landing pages are the
+        // one place on the site where a reader cannot tell whether they are
+        // signed in.  Same component, same script, same styles as every other
+        // page -- see content/src/lesson_identity.ch.
+        render_identity_css(&mut page)
+        render_identity_js(&mut page)
 
         #html {
             <a href="#main-content" class="skip-link">Skip to content</a>
@@ -67,6 +74,7 @@ using underlayer_models::Course
                         <span class="nav-progress-note" id="nav-progress-note"></span>
                         <a href="/review" class="nav-due-badge" id="nav-due-badge" hidden></a>
                     </div>
+                    <span class="nav-identity" id="ul-identity" hidden></span>
                     <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
                         <span class="theme-icon-light">☀️</span>
                         <span class="theme-icon-dark">🌙</span>
@@ -92,6 +100,7 @@ using underlayer_models::Course
                     </div>
                     <div class="course-actions">
                         <a class="btn-start" id="start-btn" href="#module-list">Start learning</a>
+                        {render_certificate_claim(&mut page)}
                     </div>
                 </div>
 

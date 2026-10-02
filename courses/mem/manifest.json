@@ -2,7 +2,7 @@
   "id": "mem",
   "title": "The Memory Hierarchy",
   "version": "1.0.0",
-  "description": "What the machine does between a load and its value: a chase and a sweep measure different things and differ by 38x, a cache size is a band and not a number, and the claim a huge page buys has to be withdrawn when the mapping does not collapse.",
+  "description": "Predict what a memory access will cost: cache sizes and associativity, the translation path, prefetching, and the point where a huge page stops paying for itself.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

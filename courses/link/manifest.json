@@ -2,7 +2,7 @@
   "id": "link",
   "title": "Static Linking and Linker Scripts",
   "version": "1.0.0",
-  "description": "The 276-line program that places every binary you have ever linked, read from top to bottom, then two sections the script alone controls.",
+  "description": "Follow a link from object files to a finished executable, and write the linker script that decides where every section lands and why.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

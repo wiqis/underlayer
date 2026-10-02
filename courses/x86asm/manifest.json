@@ -2,7 +2,7 @@
   "id": "x86asm",
   "title": "x86-64 Assembly and Encoding",
   "version": "1.0.0",
-  "description": "The three-byte VEX form is not for 256-bit registers, which it can name perfectly well; a register-to-register copy that the three-operand form eliminates was free; a failing cmov still reads its source, proved with a PROT_NONE page and not with a stopwatch; and the 0F 3A map is empty to two instructions in 256 and half full with one VEX byte in front.",
+  "description": "Write and read x86-64 assembly: the legacy, VEX and EVEX encodings, the flags, the conditionals and the addressing modes a compiler emits.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

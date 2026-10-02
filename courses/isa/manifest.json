@@ -2,7 +2,7 @@
   "id": "isa",
   "title": "The Instruction Set Architecture",
   "version": "1.0.0",
-  "description": "How x86-64 turns bytes into instructions: the mode, the opcode map, the prefix layers, ModRM and SIB, and the length arithmetic a linker needs.",
+  "description": "Decode x86-64 from bytes yourself: the mode, the opcode map, the prefix layers, ModRM and SIB, and the length arithmetic a tool has to do with no help.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

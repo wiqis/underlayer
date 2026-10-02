@@ -2,7 +2,7 @@
   "id": "exe",
   "title": "How a CPU Executes Instructions",
   "version": "1.0.0",
-  "description": "What the hardware does with the bytes the ISA course decoded: dependencies, execution width, branch prediction and speculation -- measured with an instrument that was validated before it was trusted.",
+  "description": "Explain why one instruction sequence runs faster than another: dependencies, execution width, the front end, branch prediction and speculation.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

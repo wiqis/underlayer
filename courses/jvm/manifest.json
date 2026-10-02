@@ -2,7 +2,7 @@
   "id": "jvm",
   "title": "JVM Class File Format",
   "version": "0.1.0",
-  "description": "The file a compiler emits and a virtual machine refuses to guess about. A magic number, two versions, a constant pool that everything else points into, a string encoding that is not the one it is named after, two offset conventions, a verifier's conclusions written into the file, and an open-ended attribute mechanism that absorbed twenty years of new language features.",
+  "description": "Read a .class file: the magic number, the versions, the constant pool everything points into, the code a verifier checks, and the attribute that has carried every new language feature for years.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "Java",

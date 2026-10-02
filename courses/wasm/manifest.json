@@ -2,7 +2,7 @@
   "id": "wasm",
   "title": "WebAssembly — The Binary Format",
   "version": "1.0.0",
-  "description": "The container a compiler and a runtime agree on. Eight bytes of header, thirteen section kinds in a required order, one variable-width encoding governing almost every number in between, and the object format the core specification deliberately does not define.",
+  "description": "Read a WebAssembly binary: its eight-byte header, its ordered sections, the variable-width LEB128 encoding almost every number uses, and the object file built on top.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "C",

@@ -2,7 +2,7 @@
   "id": "a64abi",
   "title": "The AArch64 Procedure Call Standard",
   "version": "1.0.0",
-  "description": "There is no AArch64 machine on the machine that wrote this course and no emulator, so not one instruction in it has been run and there are no timings anywhere -- and the two things the plan for this course got wrong are both numbers rather than shapes: the stack alignment rule is 16 bytes and not 128, and a 32-bit write to an AArch64 register is one bit and not a second register file. 36 of 36 argument placements audited by name at four optimisation levels; the 9th integer lands at [sp+0] because x30 holds the return address and there is nothing on the stack to skip. AArch64 has no red zone, the region below SP is the inactive region, and the cost is two instructions in every function with locals: 25 of 25 allocate a frame at -O0 against x86-64's 7. AAPCS64 preserves the bottom 64 bits of v8-v15 and not of v0-v7, clang uses the platform register x18 zero times, and NZCV has no mnemonic at all. The unwind table is 27.0% of .text at -O0 and 42.3% at -O2, and no function ever gains a CFI row while two of them double their rules.",
+  "description": "Pass arguments and return values the way AArch64 code expects, and know the rules clang obeys that the C source never mentions, from the stack alignment to the unwind table.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

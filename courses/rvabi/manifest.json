@@ -2,7 +2,7 @@
   "id": "rvabi",
   "title": "The RISC-V ABI, and the Register That Isn't There",
   "version": "1.0.0",
-  "description": "RISC-V has no flags register and no condition codes. x86-64 has EFLAGS, AArch64 has NZCV, RISC-V has nothing -- and that single absence explains why AArch64 needs csel at all, why a compiler emits a branch on one target and a cmov on another, and why the register list this course counts has no entry for 'the condition'. The calling convention is a contract between compilers, so it can be quoted exactly and then tested: 44 of 44 integer argument placements agree with riscv-cc, and the row a summary gets wrong is the ninth DOUBLE, which arrives in a0 -- an INTEGER register -- because the hardware floating-point convention falls back to the integer one. Two independent argument counters, proved by a function with nine integers then nine doubles, which reads offsets 0 and 8 and nothing else. The three targets' conditional idioms are 17 branches, 16 csel/cneg and 16 cmov, and the three sets are DISJOINT -- computed, not asserted. There are NO TIMINGS: no RISC-V machine, no emulator, no RISC-V linker, so every figure is a bit pattern, a count of bit patterns, an arithmetic identity, or a refusal from a real assembler, and the x86-64 section's 4.92x and 27.65x have no counterpart here and are not invented.",
+  "description": "Pass arguments and results the way RISC-V code requires, and understand why the architecture needs no condition-code register at all -- and what a compiler does instead.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

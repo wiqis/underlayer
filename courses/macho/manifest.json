@@ -2,7 +2,7 @@
   "id": "macho",
   "title": "Mach-O Format",
   "version": 1,
-  "description": "A deep dive into Apple's Mach-O binary format — headers, load commands, segments, sections, symbols, dynamic linking, dyld, code signing, and how macOS maps and runs an executable.",
+  "description": "Read any Mach-O binary: headers, load commands, segments, sections, symbols, dyld, code signing, and how macOS maps an image into memory.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

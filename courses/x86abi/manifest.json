@@ -2,7 +2,7 @@
   "id": "x86abi",
   "title": "The x86-64 ABI",
   "version": "1.0.0",
-  "description": "The fourth argument of a function call is in rcx, and the reason the fourth argument of a SYSTEM call is in r10 is one instruction: syscall writes the return RIP into rcx, and call pushes it onto the stack instead. Both are measured, and the draft that welded them together is retracted in public.",
+  "description": "Place arguments, results and callee-saved registers the way x86-64 code requires, including why a system call moves the return address into r10 instead of rcx.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

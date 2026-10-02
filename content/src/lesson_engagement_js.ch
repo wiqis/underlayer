@@ -158,6 +158,22 @@ public namespace underlayer_content {
                     if (fill) { fill.style.width = pct + '%'; }
                     var bar = document.querySelector('.ul-progress-bar');
                     if (bar) { bar.setAttribute('title', started + ' of ' + total + ' concepts read'); }
+                    // THE CERTIFICATE OFFER, WHICH IS A LINK AND NOT A CERTIFICATE FEATURE.  A
+                    // certificate is earned per COURSE, so the claim itself is not
+                    // here -- it is on the course landing page
+                    // (content/src/certificate_claim.ch), which knows which course
+                    // it is.  All a lesson can honestly do is offer the link once
+                    // progress reaches 100%, and it offers it at exactly 100%
+                    // because POST /api/certificates issues a certificate for any
+                    // course id with NO completion check at all
+                    // (web/src/handlers_certificates.ch checks only
+                    // has_certificate), so where this link sits is currently the
+                    // only thing between a learner and an unearned certificate.
+                    var certEl = document.getElementById('ul-certificate');
+                    if (certEl && pct >= 100) {
+                        certEl.href = '/courses/' + ctx.course + '#certificate';
+                        certEl.hidden = false;
+                    }
                     var mine = null;
                     var cs = d.concepts || [];
                     for (var i = 0; i < cs.length; i++) {

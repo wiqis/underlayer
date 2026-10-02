@@ -2,7 +2,7 @@
   "id": "img",
   "title": "Executable Images and OS Loading",
   "version": "1.0.0",
-  "description": "What the kernel builds before your first instruction runs: the auxiliary vector nobody exposes, the initial stack decoded by hand, and the addresses chosen for you.",
+  "description": "Follow a program from an executable image to its first instruction: the kernel's mapping, the auxiliary vector, the initial stack and the addresses you are handed.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

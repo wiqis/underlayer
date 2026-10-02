@@ -79,6 +79,20 @@ public namespace underlayer_repository {
         direct.push(string("certificates"))
         direct.push(string("course_reviews"))
         direct.push(string("exercise_attempts"))
+        // THESE TWO WERE MISSING, and "delete my account" that keeps a deleted
+        // learner's own prose is not a deletion.  content_feedback is a row
+        // written by POST /api/feedback -- a correction, an objection, a "this
+        // is unclear" -- carrying the learner's id and their message, and
+        // GET /api/feedback/concept/:conceptId returns it with NO Authorization
+        // header at all.  Before this line, deleting an account left its
+        // feedback published and attributed, and tools/integration_check.py
+        // added two more rows on every run it made.
+        //
+        // exercise_reports has the same shape (POST /api/feedback/report-exercise)
+        // and the same absence.  Both are keyed by learner_id directly, so they
+        // belong in this list and nowhere else.
+        direct.push(string("content_feedback"))
+        direct.push(string("exercise_reports"))
         direct.push(string("learner_profiles"))
         direct.push(string("learner_settings"))
         direct.push(string("learning_preferences"))

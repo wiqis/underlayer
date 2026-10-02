@@ -76,6 +76,8 @@ public namespace underlayer_content {
             </div>
         }
         render_site_nav_css(page)
+        render_identity_css(page)
+        render_identity_js(page)
         if(lesson) {
             return
         }
@@ -101,9 +103,19 @@ public namespace underlayer_content {
     // about the course belongs -- and because HtmlPage collects blocks
     // regardless of call order, so neither this nor the caller's
     // `page.defaultPrepare()` placement changes the output.
+    // IT ALSO EMITS THE LESSON TOOLS -- the bookmark, note, report, streak and
+    // achievement row -- and that call is INSIDE render_lesson_tools() rather
+    // than beside it, for a reason that was found by removing it.  The scripts
+    // and the markup were four sibling calls; taking away `render_lesson_tools`
+    // took away the markup and left the boot function on the page, which then
+    // threw `window.__ulLoadBookmark is not a function` on every lesson.  The
+    // non-vacuity proof in tools/integration_check.py surfaced it as a Node
+    // stack trace.  A feature has to be removable in ONE line or the gate that
+    // removes it is measuring half a feature.
     public func render_lesson_nav(page : &mut HtmlPage) {
         render_site_nav(page, true)
         render_lesson_engagement(page)
+        render_lesson_tools(page)
     }
 
     // The skip-link, on pages that have something above the nav to skip past.
@@ -118,14 +130,20 @@ public namespace underlayer_content {
         }
     }
 
-    // The right-hand slot.  The toggle on a themed page; an empty div on a
-    // lesson page, kept rather than omitted because `.nav-inner` is
-    // `justify-content: space-between` and dropping the third child moves the
+    // The right-hand slot.  A theme toggle on a themed page, and on BOTH
+    // pages the identity slot that says whether anybody is signed in -- that was
+    // /api/auth/me called from zero page builders on 2026-10-02, and an empty
+    // right-hand slot is exactly where the answer belongs.  See
+    // content/src/lesson_identity.ch.
+    //
+    // The slot is kept rather than omitted on a lesson page because `.nav-inner`
+    // is `justify-content: space-between` and dropping the third child moves the
     // whole link row off-centre.
     func nav_right(page : &mut HtmlPage, lesson : bool) {
         if(!lesson) {
             #html {
                 <div class="nav-right">
+                    <span class="nav-identity" id="ul-identity" hidden></span>
                     <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
                         <span class="theme-icon-light">&#9728;</span>
                         <span class="theme-icon-dark">&#9790;</span>
@@ -135,7 +153,9 @@ public namespace underlayer_content {
             return
         }
         #html {
-            <div class="nav-right"></div>
+            <div class="nav-right">
+                <span class="nav-identity" id="ul-identity" hidden></span>
+            </div>
         }
     }
 

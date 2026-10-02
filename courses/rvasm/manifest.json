@@ -2,7 +2,7 @@
   "id": "rvasm",
   "title": "RISC-V: The Encoding Spectrum",
   "version": "1.0.0",
-  "description": "An instruction is two bytes or four and the two bits that say which are the two bits that say 'this is a 32-bit instruction' -- so a decoder with no model for a word still steps over it correctly, and every other problem follows from that one fact. The base ISA keeps all three register fields at the same bit position in every format and pays for it by scattering the immediates; the compressed extension adds a SECOND, three-bit register encoding whose value 0 means x8; the B-type displacement's high bit lives in the slot the S format uses for its low bit; and 2,409 of the 49,152 reachable half-words are reserved, not the quarter the plan assumed. 1,047 instructions decoded twice with zero disagreements, and the seven hundred that had to be fixed to get there are the work: 116 words decoded by a model with no funct7 guard, 91 branches that had lost both their register operands, and a cross-check that reported 67% disagreement as if it were one number rather than seven different things counted together.",
+  "description": "Decode RISC-V instructions, compressed or not, and see why one format scatters its immediates while the compressed extension adds a second register field entirely.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

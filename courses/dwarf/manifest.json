@@ -2,7 +2,7 @@
   "id": "dwarf",
   "title": "DWARF — The Debugging Data Format",
   "version": 1,
-  "description": "The file format that turns an address back into a source line. DWARF is how a debugger knows that 0x1154 is line 15, and it is the companion to the ELF, PE and Mach-O courses: those explain how a binary is loaded and run, this one explains how it is read. Built entirely from a single 18-line C file compiled with gcc -gdwarf-5 -O0, with every offset decoded by an independent parser and checked against readelf.",
+  "description": "Take an address in a running program back to the file, line and local variable it came from, by reading the DWARF sections a compiler emits.",
   "author": "Underlayer",
   "license": "CC BY-SA 4.0",
   "language": "en",

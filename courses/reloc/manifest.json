@@ -2,7 +2,7 @@
   "id": "reloc",
   "title": "Relocations, PIC and PIE",
   "version": "1.0.0",
-  "description": "Why a linker needs a different relocation for every kind of reference, what position independence actually costs, and the two ways it fails.",
+  "description": "Choose the right relocation for a reference, explain what position independence actually costs, and recognise the two ways it goes wrong.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

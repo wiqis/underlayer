@@ -2,7 +2,7 @@
   "id": "pe",
   "title": "Portable Executable Format",
   "version": 1,
-  "description": "A deep dive into the Windows PE binary format — DOS and COFF headers, optional header, data directories, sections, imports, exports, relocations, resources, and how the Windows loader maps and runs an image.",
+  "description": "Read any Windows PE image: the DOS and COFF headers, data directories, sections, imports, exports, base relocations, TLS and resources.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

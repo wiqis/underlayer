@@ -2,7 +2,7 @@
   "id": "dyn",
   "title": "Dynamic Linking and Shared Libraries",
   "version": "1.0.0",
-  "description": "The ordered list every undefined symbol is answered from, what ends up in a shared library's .dynsym, and loading a library at run time.",
+  "description": "Trace an undefined symbol from the first reference to the shared library that answers it: the lookup scope, .dynsym, versioning, TLS blocks and loading at run time.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

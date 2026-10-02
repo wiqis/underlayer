@@ -2,7 +2,7 @@
   "id": "x86sys",
   "title": "The x86-64 Machine: Privilege, Memory and Time",
   "version": "1.0.0",
-  "description": "Every privileged instruction a ring-3 program can try, one forked child each, with the signal it dies from -- and the set is not the one in the manual: SIDT, SGDT, STR, SLDT, SMSW, XGETBV and RDFSBASE all return, while RDPMC, RDMSR, every MOV to or from CR0-CR8, and both segment-register loads die with si_code 128 and no address. The absence this course proves is not a feature bit: CPUID says the core and L3 performance monitors ARE present, and the process is simply not allowed to read them.",
+  "description": "Find out what a ring-3 process can and cannot ask the CPU for, and tell a privilege check apart from a page table that will not map you.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

@@ -2,7 +2,7 @@
   "id": "sec",
   "title": "Executable Security and Hardening",
   "version": "1.0.0",
-  "description": "What each hardening flag does to the bytes, and the three layers -- codegen, linker, driver -- where the defaults are decided.",
+  "description": "Say what each hardening flag does to the bytes it produces, and which of the three layers -- compiler, linker or driver -- is where that decision gets made.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

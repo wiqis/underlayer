@@ -2,7 +2,7 @@
   "id": "smp",
   "title": "Multiprocessor Architecture",
   "version": "1.0.0",
-  "description": "True sharing and false sharing cost the same to within 20%, because the cost is in the cache line and not in the data; a lock prefix costs nearly twice a plain store with nothing to lock against; and the row that was supposed to show a ping-pong did not, because the store buffer absorbed it.",
+  "description": "Reason about a program running on more than one core: topologies, true and false sharing, memory ordering, and when an atomic instruction buys anything at all.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",

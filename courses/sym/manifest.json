@@ -2,7 +2,7 @@
   "id": "sym",
   "title": "Symbol Resolution and Symbol Tables",
   "version": "1.0.0",
-  "description": "How a linker decides what a name means. Binding and visibility, the extraction algorithm, the loader's lookup tables, symbol versioning, and the symbols the linker invents for you.",
+  "description": "Explain how a linker turns a name into an address: binding, visibility, archive extraction, versioning and the symbols the linker invents on your behalf.",
   "author": "Underlayer",
   "license": "MIT",
   "language": "en",
