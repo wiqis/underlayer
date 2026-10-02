@@ -1104,31 +1104,91 @@ public func main() : int {
     }))
 
     // ---- Feature Pages (bookmarks, notes, planner, achievements, streaks, notifications, certificates) ----
+    //
+    // ALL SEVEN ARE GATED, and the gate is here rather than inside each page's
+    // builder so the list of gated pages is a list you can read in one place.
+    //
+    // These seven render a SHELL -- nav, headings, empty containers -- and then
+    // fetch their data client-side from endpoints that all require a bearer
+    // token and all answer 401 without one.  So an anonymous visitor got a page
+    // that LOOKED like their bookmarks/notes/streaks and then filled it with
+    // nothing, because every request behind it failed.  The failure was invisible
+    // from outside: HTTP 200, correct headings, an empty list.
+    //
+    // Gating them server-side makes the answer true before any script runs, which
+    // is the same rule the onboarding banner follows by shipping `hidden`.  It
+    // also means the reader is told WHY, instead of being left to wonder whether
+    // an empty account is normal.
+    //
+    // `next` is the page they asked for, so signing in brings them back to it
+    // rather than to the home page.
     srv.router.add("GET", "/bookmarks", (|db|(req, res) => {
+        if(!underlayer_web::has_session(&raw db, &req)) {
+            var gate_path = string("/bookmarks")
+            var gate_feat = string("bookmarks")
+            underlayer_web::send_auth_gate(&raw mut res, &gate_path, &gate_feat)
+            return
+        }
         var html = underlayer_web::render_bookmarks_page()
         underlayer_web::send_html(&raw mut res, &raw html)
     }))
     srv.router.add("GET", "/notes", (|db|(req, res) => {
+        if(!underlayer_web::has_session(&raw db, &req)) {
+            var gate_path = string("/notes")
+            var gate_feat = string("notes")
+            underlayer_web::send_auth_gate(&raw mut res, &gate_path, &gate_feat)
+            return
+        }
         var html = underlayer_web::render_notes_page()
         underlayer_web::send_html(&raw mut res, &raw html)
     }))
     srv.router.add("GET", "/study-plans", (|db|(req, res) => {
+        if(!underlayer_web::has_session(&raw db, &req)) {
+            var gate_path = string("/study-plans")
+            var gate_feat = string("the planner")
+            underlayer_web::send_auth_gate(&raw mut res, &gate_path, &gate_feat)
+            return
+        }
         var html = underlayer_web::render_study_plans_page()
         underlayer_web::send_html(&raw mut res, &raw html)
     }))
     srv.router.add("GET", "/achievements", (|db|(req, res) => {
+        if(!underlayer_web::has_session(&raw db, &req)) {
+            var gate_path = string("/achievements")
+            var gate_feat = string("achievements")
+            underlayer_web::send_auth_gate(&raw mut res, &gate_path, &gate_feat)
+            return
+        }
         var html = underlayer_web::render_achievements_page()
         underlayer_web::send_html(&raw mut res, &raw html)
     }))
     srv.router.add("GET", "/streaks", (|db|(req, res) => {
+        if(!underlayer_web::has_session(&raw db, &req)) {
+            var gate_path = string("/streaks")
+            var gate_feat = string("streaks")
+            underlayer_web::send_auth_gate(&raw mut res, &gate_path, &gate_feat)
+            return
+        }
         var html = underlayer_web::render_streaks_page()
         underlayer_web::send_html(&raw mut res, &raw html)
     }))
     srv.router.add("GET", "/notifications", (|db|(req, res) => {
+        if(!underlayer_web::has_session(&raw db, &req)) {
+            var gate_path = string("/notifications")
+            var gate_feat = string("notifications")
+            underlayer_web::send_auth_gate(&raw mut res, &gate_path, &gate_feat)
+            return
+        }
         var html = underlayer_web::render_notifications_page()
         underlayer_web::send_html(&raw mut res, &raw html)
     }))
     srv.router.add("GET", "/certificates", (|db|(req, res) => {
+        if(!underlayer_web::has_session(&raw db, &req)) {
+            var gate_path = string("/certificates")
+            var gate_feat = string("certificates")
+            underlayer_web::send_auth_gate(&raw mut res, &gate_path, &gate_feat)
+            return
+        }
         var html = underlayer_web::render_certificates_page()
         underlayer_web::send_html(&raw mut res, &raw html)
     }))

@@ -895,9 +895,26 @@ def run_checks(base, expect_engagement=True):
     # so the two questions with no answer were added to it.  This runs the
     # dashboard's OWN script against the REAL server and reads what it renders,
     # because an API that answers is not the same as a page that shows.
-    st, dash = request(base, '/dashboard')
+    # THE TOKEN IS SENT HERE NOW, and it is the reason this section needs a
+    # note.  /dashboard is behind the sign-in gate (web/src/pages_auth_gate.ch):
+    # every number on it is the signed-in learner's own, so an anonymous request
+    # gets the gate page instead.  Fetching it without a token used to work and
+    # now returns a page with no #wd-courses on it -- which looked like the
+    # feature had broken, when in fact the gate was working exactly as intended.
+    #
+    # So this asserts BOTH halves: the gate refuses an anonymous request, and the
+    # dashboard renders the real thing for a signed-in one.  Only the first half
+    # could have been written before the gate existed.
+    st_anon, dash_anon = request(base, '/dashboard')
+    if 'ul-gate-card' in dash_anon:
+        ok('/dashboard gates an anonymous visitor (no learner data without a session)')
+    else:
+        bad('/dashboard gates an anonymous visitor',
+            'a signed-out request received the real dashboard')
+
+    st, dash = request(base, '/dashboard', token=token)
     if st != 200:
-        bad('GET /dashboard returns 200', 'HTTP %s' % st)
+        bad('GET /dashboard returns 200 for a signed-in learner', 'HTTP %s' % st)
         return 1 if failures else 0
     for probe in ('wd-courses', 'wd-failures'):
         if probe in dash:

@@ -31,9 +31,28 @@ using underlayer_db::DbClient
 public namespace underlayer_web {
 
     public func handle_dashboard(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+        // THE SIGN-IN GATE, BEFORE ANY QUERY.
+        //
+        // This used to resolve a learner and fall back to the shared "demo"
+        // identity, then build the whole page anyway -- which is how a
+        // signed-out visitor got a dashboard of ~38 zeroes that are not theirs
+        // and cannot become theirs.  The fallback is DELETED here rather than
+        // papered over downstream: there is no shared bucket worth protecting
+        // on a page whose entire content is "your numbers", because with no
+        // account there are no numbers.
+        //
+        // Returning EARLY also means a gated page issues no learner queries at
+        // all, so there is nothing to leak and nothing to cache wrongly.
+        // See pages_auth_gate.ch for the full argument, and for which pages are
+        // deliberately NOT gated (the ones a stranger has to be able to read).
+        if(!has_session(&raw db, req)) {
+            var gate_path = string("/dashboard")
+            var gate_feat = string("the dashboard")
+            send_auth_gate(res, &gate_path, &gate_feat)
+            return
+        }
         var learner_id = auth_get_learner_id(&raw db, req)
         var signed_in = learner_id.size() > 0
-        if(!signed_in) { learner_id = string("demo") }
         var course_id = progress_course_id(req)
 
         var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)

@@ -7,6 +7,17 @@ public namespace underlayer_web {
 
     // GET /analytics — HTML analytics dashboard
     public func handle_analytics_page(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+        // THE SIGN-IN GATE.  Every number on this page is read from the
+        // signed-in learner's own rows, so with no account there is nothing to
+        // show and the page rendered about 30 zeroes -- which reads as failure
+        // rather than as "you are not signed in".  Gated before any query;
+        // see pages_auth_gate.ch.
+        if(!has_session(db, req)) {
+            var gate_path = string("/analytics")
+            var gate_feat = string("analytics")
+            send_auth_gate(res, &gate_path, &gate_feat)
+            return
+        }
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var html_out = render_analytics_page(db, &learner_id)

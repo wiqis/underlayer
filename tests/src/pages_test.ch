@@ -117,8 +117,20 @@ public func test_review_page_renders_session_in_page(env : &mut TestEnv) {
     srv.serve_async(19897u)
     std::concurrent.sleep_ms(200u)
 
+    // A SESSION, because /review is behind the sign-in gate now
+    // (web/src/pages_auth_gate.ch): every number it shows is the learner's own,
+    // so an anonymous request gets the gate page.  This test then asserted
+    // things about the GATE -- "missing pauseSession()", "missing
+    // /api/session/abort" -- which read exactly like a broken review page and
+    // were not one.  A test that fails for a reason unrelated to what it tests
+    // is worse than no test, so the session is what makes this test mean what
+    // its name says again.
+    var learner_id = string("review-page-learner")
+    var token = test_helpers::make_session_token(&raw db, &learner_id)
+
     var client = http::Client()
-    var res = client.get("http://127.0.0.1:19897/review")
+    var anon_url = string("http://127.0.0.1:19897/review")
+    var res = test_helpers::authed_get(&client, &anon_url, &token)
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unreachable
     if(resp.status != 200u) { env.error("expected 200") }

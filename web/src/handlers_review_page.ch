@@ -6,6 +6,18 @@ using underlayer_db::DbClient
 public namespace underlayer_web {
 
     public func handle_review_page(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+        // THE SIGN-IN GATE.  Every number on this page is read from
+        // the signed-in learner's own rows, so with no account there
+        // is nothing to show and the page rendered zeros -- which reads
+        // as failure rather than as "you are not signed in".  Checked
+        // before any query; see pages_auth_gate.ch for why this is a
+        // page rather than a redirect.
+        if(!has_session(&raw db, req)) {
+            var gate_path = string("/review")
+            var gate_feat = string("review sessions")
+            send_auth_gate(res, &gate_path, &gate_feat)
+            return
+        }
         var page = HtmlPage()
         page.defaultUniversalSetup()
         page.defaultPrepare()

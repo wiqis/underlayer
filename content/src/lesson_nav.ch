@@ -50,6 +50,17 @@ public namespace underlayer_content {
 
     // The one entry point.  `lesson` is true on a content/src page.
     public func render_site_nav(page : &mut HtmlPage, lesson : bool = false) {
+        // THE THEME IS APPLIED BEFORE THE FIRST PAINT, from <head>.
+        //
+        // This is the fix for the flash: the page painted light, then the body
+        // script added `.dark` and it repainted. This call emits a small
+        // blocking script into <head> instead, so the first paint is already the
+        // right colour. It goes HERE, before anything else, because this is the
+        // one function every themed page in both layers calls -- so the fix
+        // cannot be applied to some pages and forgotten on others, which is how
+        // the eleven duplicate navs happened in the first place.
+        render_theme_boot_js(page, lesson)
+        render_color_scheme_meta(page)
         nav_skip_link(page, lesson)
         #html {
             <div class="navbar">
@@ -114,8 +125,55 @@ public namespace underlayer_content {
     // removes it is measuring half a feature.
     public func render_lesson_nav(page : &mut HtmlPage) {
         render_site_nav(page, true)
+        // THE SHORT SIGN-IN ADVISORY.  One line, one button, hidden in the
+        // markup and revealed only for a reader who has no session -- so a
+        // signed-in reader never sees a flash of it, and a page opened from
+        // disk with no server at all never sees it.  The lesson is NOT gated:
+        // a stranger has to be able to read one before deciding whether to
+        // register.  See web/src/pages_auth_gate.ch for why that line is drawn
+        // there rather than here.
+        render_signin_advisory(page)
+        render_signin_advisory_js(page)
         render_lesson_engagement(page)
         render_lesson_tools(page)
+    }
+
+    // Reveal the advisory for a signed-out reader.
+    //
+    // It rides on the /api/auth/me call the nav's identity loader ALREADY
+    // makes, so this adds no request to any page.  Re-reading the token is not
+    // enough on its own -- a stale token means signed out, and a reader with a
+    // stale token should be shown the advisory, not an empty lesson tools row
+    // that quietly does nothing.
+    func render_signin_advisory_js(page : &mut HtmlPage) {
+        #js {
+            window.__ulPaintSigninAdvisory = function(isSignedIn) {
+                var bar = document.getElementById('ul-signin-advisory');
+                if (!bar) { return; }
+                // Only ever unhide. A late-arriving answer must not remove a
+                // prompt the reader is already looking at.
+                if (!isSignedIn) { bar.hidden = false; }
+            };
+
+            window.addEventListener('DOMContentLoaded', function() {
+                var signedIn = false;
+                if (typeof window.__ulToken === 'function' &&
+                    window.__ulToken().length > 0) {
+                    // A token exists; only /api/auth/me can say whether it is
+                    // still good.  Failure means signed out, which is the
+                    // answer the advisory is for.
+                    fetch('/api/auth/me', { headers: window.__ulHeaders() })
+                        .then(function(r) { return r.ok ? r.json() : null; })
+                        .then(function(d) {
+                            signedIn = !!(d && d.learner_id);
+                            window.__ulPaintSigninAdvisory(signedIn);
+                        })
+                        .catch(function() { window.__ulPaintSigninAdvisory(false); });
+                } else {
+                    window.__ulPaintSigninAdvisory(false);
+                }
+            });
+        }
     }
 
     // The skip-link, on pages that have something above the nav to skip past.
