@@ -1,4 +1,32 @@
-// underlayer_web — Content feedback & exercise report handlers.
+// underlayer_web — Feedback a learner FILES, and the one read they may make.
+//
+// WHY THE ADMIN HALF IS IN ITS OWN FILE (handlers_feedback_admin.ch).  This file
+// was 273 lines before this change -- already over the 250-line ceiling -- and
+// the split is by authorisation, which is the axis that matters here: everything
+// a signed-in learner may do to feedback is here, and everything that would
+// cross learners is in the other file where it can only be read as one decision.
+//
+// THE READ IS OWNER-SCOPED AND THAT IS THE FIX.  `GET
+// /api/feedback/concept/:conceptId` was called with a concept id and no
+// learner_id at all, so it answered 200 to an anonymous request carrying every
+// learner's feedback for that concept: learner_id, message, status,
+// admin_notes.  Confirmed by unauthenticated curl.  The empty table is why the
+// probe returned `200 []` and looked harmless -- the endpoint was open, the data
+// was simply not there yet.
+//
+// WHY OWNER-SCOPED AND NOT "AUTHENTICATED".  There is no admin role on this
+// platform: `learners` is (id, name, email, password_hash, created_at) with no
+// role column and no membership table, and handlers_settings.ch has no role
+// concept either.  So there is nobody to authenticate AS.  Requiring a token
+// without scoping to the owner would have turned an open hole into a
+// one-login-and-everybody hole, which is the same defect wearing a hat.
+//
+// The consequence is recorded, not hidden: with reads scoped to the owner, a
+// course author can no longer read the corrections a learner filed about their
+// own lesson through this API.  Feedback triage is unreachable.  That is the
+// price of there being no reviewer identity to give it to, and it is why the
+// cross-learner routes are refused with a message that says so rather than
+// quietly returning nothing.
 using std::string
 using std::string_view
 using underlayer_db::DbClient
@@ -61,9 +89,17 @@ public namespace underlayer_web {
         send_json_str(res, &raw resp)
     }
 
-    // GET /api/feedback/concept/:conceptId
+    // GET /api/feedback/concept/:conceptId — the caller's OWN feedback for a
+    // concept.  401 with no token; the repository filters by learner_id so a
+    // signed-in learner sees their own rows and only their own rows.
     public func handle_get_concept_feedback(db : *DbClient, concept_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
-        var feedbacks = underlayer_repository::get_feedback_for_concept(db, concept_id)
+        var learner_id = auth_get_learner_id(db, req)
+        if(learner_id.size() == 0) {
+            var err = string("unauthorized")
+            send_error(res, 401u, &err)
+            return
+        }
+        var feedbacks = underlayer_repository::get_feedback_for_learner_concept(db, &learner_id, concept_id)
         var resp = string("[")
         var ri : size_t = 0
         while(ri < feedbacks.size()) {
@@ -97,72 +133,6 @@ public namespace underlayer_web {
             ri = ri + 1
         }
         resp.append_view("]")
-        send_json_str(res, &raw resp)
-    }
-
-    // GET /api/feedback/admin — Get all pending feedback
-    public func handle_get_admin_feedback(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var feedbacks = underlayer_repository::get_all_pending_feedback(db)
-        var resp = string("[")
-        var ri : size_t = 0
-        while(ri < feedbacks.size()) {
-            if(ri > 0) { resp.append_view(",") }
-            var fb = feedbacks.get_ptr(ri)
-            resp.append_view("{\"id\":\"")
-            resp.append_string(&fb.id)
-            resp.append_view("\",\"learner_id\":\"")
-            resp.append_string(&fb.learner_id)
-            resp.append_view("\",\"concept_id\":\"")
-            resp.append_string(&fb.concept_id)
-            resp.append_view("\",\"course_id\":\"")
-            resp.append_string(&fb.course_id)
-            resp.append_view("\",\"feedback_type\":\"")
-            resp.append_string(&fb.feedback_type)
-            resp.append_view("\",\"message\":\"")
-            resp.append_string(&fb.message)
-            resp.append_view("\",\"page_url\":\"")
-            resp.append_string(&fb.page_url)
-            resp.append_view("\",\"status\":\"")
-            resp.append_string(&fb.status)
-            resp.append_view("\",\"admin_notes\":\"")
-            resp.append_string(&fb.admin_notes)
-            resp.append_view("\",\"created_at\":")
-            var created_str = underlayer_core::int_to_string(fb.created_at)
-            resp.append_view(created_str.to_view())
-            resp.append_view(",\"updated_at\":")
-            var updated_str = underlayer_core::int_to_string(fb.updated_at)
-            resp.append_view(updated_str.to_view())
-            resp.append_view("}")
-            ri = ri + 1
-        }
-        resp.append_view("]")
-        send_json_str(res, &raw resp)
-    }
-
-    // PUT /api/feedback/:id/status
-    public func handle_update_feedback_status(db : *DbClient, feedback_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
-        var body_str = read_body(&raw mut req)
-        if(body_str.size() == 0) {
-            var err = string("empty request body")
-            send_error(res, 400u, &err)
-            return
-        }
-        var parse_result = json::parse(body_str.to_view())
-        if(parse_result is std::Result.Err) {
-            var err = string("invalid JSON")
-            send_error(res, 400u, &err)
-            return
-        }
-        var Ok(parsed) = parse_result else unreachable
-        var status = json_get_str(&raw parsed, "status")
-        var admin_notes = json_get_str(&raw parsed, "admin_notes")
-        if(status.size() == 0) {
-            var err = string("status is required")
-            send_error(res, 400u, &err)
-            return
-        }
-        underlayer_repository::update_feedback_status(db, feedback_id, &status, &raw admin_notes)
-        var resp = string("{\"ok\":true}")
         send_json_str(res, &raw resp)
     }
 
@@ -215,39 +185,11 @@ public namespace underlayer_web {
         send_json_str(res, &raw resp)
     }
 
-    // GET /api/feedback/admin/reports
-    public func handle_get_admin_reports(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var reports = underlayer_repository::get_all_exercise_reports(db)
-        var resp = string("[")
-        var ri : size_t = 0
-        while(ri < reports.size()) {
-            if(ri > 0) { resp.append_view(",") }
-            var r = reports.get_ptr(ri)
-            resp.append_view("{\"id\":\"")
-            resp.append_string(&r.id)
-            resp.append_view("\",\"learner_id\":\"")
-            resp.append_string(&r.learner_id)
-            resp.append_view("\",\"exercise_id\":\"")
-            resp.append_string(&r.exercise_id)
-            resp.append_view("\",\"concept_id\":\"")
-            resp.append_string(&r.concept_id)
-            resp.append_view("\",\"report_type\":\"")
-            resp.append_string(&r.report_type)
-            resp.append_view("\",\"message\":\"")
-            resp.append_string(&r.message)
-            resp.append_view("\",\"status\":\"")
-            resp.append_string(&r.status)
-            resp.append_view("\",\"created_at\":")
-            var created_str = underlayer_core::int_to_string(r.created_at)
-            resp.append_view(created_str.to_view())
-            resp.append_view("}")
-            ri = ri + 1
-        }
-        resp.append_view("]")
-        send_json_str(res, &raw resp)
-    }
-
-    // GET /api/feedback/stats
+    // GET /api/feedback/stats — counts by feedback_type across all learners.
+    // The ONLY feedback read left that is not owner-scoped, and it is left
+    // because it carries no learner identity and no message: an aggregate over
+    // a category name.  Nothing in the client calls it.  Reported in
+    // docs/audit-2026-10-02-hardening.md as found-and-not-changed.
     public func handle_feedback_stats(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
         var stats = underlayer_repository::get_feedback_stats(db)
         var resp = string("[")

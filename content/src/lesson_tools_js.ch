@@ -18,15 +18,13 @@
 //                                        -> {"ok":true,"id":"..."}
 //
 // WHAT THIS CLIENT DELIBERATELY DOES NOT CALL, AND WHY.  GET
-// /api/feedback/concept/:conceptId returns EVERY learner's feedback for a
-// concept -- ids, learner_id, message, status -- and it does so with no
-// Authorization header at all, which was verified: an unauthenticated curl gets
-// a full list back with HTTP 200.  Rendering that list on a lesson page would
-// publish every learner's corrections and every learner's id to anyone who opens
-// the page.  So the report form POSTs and then says "Sent", and never reads the
-// list back.  The endpoint wanting an auth check is a server-side fix and is
-// reported separately; a lesson page is the worst possible place to start using
-// it.
+// /api/feedback/concept/:conceptId returned EVERY learner's feedback for a
+// concept -- ids, learner_id, message, status -- with no Authorization header at
+// all, which was verified: an unauthenticated curl got a full list back with HTTP
+// 200.  It is now owner-scoped and answers 401 without a token, so the reason has
+// gone; the report form still POSTs and says "Sent" and never reads the list
+// back, because "what other readers reported" is a feature nobody has asked for
+// and there is no reviewer on the platform to keep it worth reading.
 //
 // TWO MORE SERVER FACTS THIS CLIENT RESPONDS TO RATHER THAN IGNORES.
 //
@@ -34,13 +32,13 @@
 //     is_bookmarked() answers true to both, and DELETE removes both.  So the
 //     toggle does not decide from "have I pressed this" -- it decides from the
 //     aria-pressed value, which came from GET .../check.  One press, one row.
-//   * PUT and DELETE /api/notes/:id take a note id and do NOT check that the
-//     note belongs to the caller (web/src/handlers_notes.ch resolves
-//     learner_id and then never uses it).  That is an IDOR on the server.  This
-//     client is not the hole -- it only ever passes ids that came back from the
-//     caller's own GET /api/notes/concept/:conceptId -- and it is reported
-//     separately.  Wiring a page to an endpoint should not become the reason
-//     that endpoint gets used.
+//   * PUT and DELETE /api/notes/:id used to take a note id and NOT check that the
+//     note belonged to the caller (web/src/handlers_notes.ch resolved learner_id
+//     and then never used it).  That was an IDOR on the server.  It is fixed:
+//     both queries are scoped to the authenticated learner and answer 404 when
+//     the note is not theirs, which is the same answer as "no such note" so the
+//     endpoint is not an existence oracle.  This client passes only ids that came
+//     back from the caller's own GET /api/notes/concept/:conceptId either way.
 //
 // NOTHING IS BUILT BY CONCATENATION.  The note list is assembled with
 // document.createElement and textContent, never with innerHTML, so a note

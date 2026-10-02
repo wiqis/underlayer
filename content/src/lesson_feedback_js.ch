@@ -19,12 +19,16 @@
 // things a reader of a technical lesson actually wants to say: a wrong fact, an
 // unclear passage, something broken, and a gap.
 //
-// WHY THERE IS NO "SEE WHAT OTHERS REPORTED" LINK HERE, when the endpoint that
-// would power it exists and works.  GET /api/feedback/concept/:conceptId is
-// unauthenticated and returns every learner's feedback for the concept,
-// including learner_id and message.  Rendering it on a lesson page would publish
-// that to every reader.  The endpoint needs an auth check on the server; until it
-// has one, a page that links to it is the defect.  Reported separately.
+// WHY THERE IS NO "SEE WHAT OTHERS REPORTED" LINK HERE.  It was because
+// GET /api/feedback/concept/:conceptId was unauthenticated and returned every
+// learner's feedback for the concept, including learner_id and message -- so
+// rendering it on a lesson page would have published that to every reader.  That
+// endpoint is now OWNER-SCOPED and answers 401 without a token, so a link would
+// now be safe to render.  It is still not here, and that is a product decision
+// rather than a security one: a "what other readers reported" panel is new UI,
+// and there is no reviewer on the platform to keep those reports worth reading
+// (see web/src/handlers_feedback_admin.ch).  The hole is closed either way; what
+// is not built is the feature.
 public namespace underlayer_content {
 
     public func render_lesson_feedback_js(page : &mut HtmlPage) {

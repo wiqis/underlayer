@@ -6,8 +6,18 @@ using underlayer_db::DbClient
 public namespace underlayer_web {
 
     // ---- POST /api/certificates — Issue a new certificate ----
-
-    public func handle_issue_certificate(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    //
+    // GATED ON COMPLETION.  This handler used to check `has_certificate()` and
+    // nothing else, so any signed-in learner could POST any course id and be
+    // told they had completed a course they had opened one lesson of.  The gate
+    // is `require_course_complete` in completion_gate.ch, which uses the
+    // platform's existing coverage number -- started over concepts-in-the-
+    // manifest, the same number the progress page shows and the same one the
+    // claim button appears at -- so the server and the button agree by
+    // construction.  `courses_dir` was not a parameter before and is now,
+    // because the denominator is the course manifest and the manifest loader
+    // lives above this layer.
+    public func handle_issue_certificate(db : *DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
@@ -33,8 +43,12 @@ public namespace underlayer_web {
             send_error(res, 400u, &err)
             return
         }
+        // The duplicate check stays ABOVE the gate.  A learner who already has
+        // a certificate for a course must be able to ask for it again and get
+        // its id back even if their progress rows have since been cleared;
+        // refusing with "course not complete" for something they already hold
+        // would be a worse answer than the one they earned.
         if(underlayer_repository::has_certificate(db, &learner_id, &course_id)) {
-            var existing = underlayer_repository::get_certificate(db, &learner_id)
             var resp = string("{\"error\":\"certificate already issued\",\"certificate_id\":\"")
             var existing_certs = underlayer_repository::get_learner_certificates(db, &learner_id)
             var fi : size_t = 0
@@ -50,6 +64,7 @@ public namespace underlayer_web {
             send_json_str(res, &raw resp)
             return
         }
+        if(!require_course_complete(db, courses_dir, &learner_id, &course_id, res)) { return }
         var learner = underlayer_repository::get_learner(db, &learner_id)
         var learner_name = learner.name.copy()
         if(learner_name.size() == 0) { learner_name = string("Learner") }

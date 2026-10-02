@@ -47,7 +47,15 @@ public namespace underlayer_web {
         }
     }
 
-    // PUT /api/notes/:id — Update a note
+    // PUT /api/notes/:id — Update a note.
+    //
+    // THE learner_id IS NO LONGER DECORATION.  This handler resolved
+    // `auth_get_learner_id`, checked it was non-empty, and then handed the
+    // repository only the note id: `update_note(db, note_id, &content)`, whose
+    // WHERE clause was `id = '...'`.  So the check said "you are somebody" and
+    // then acted as anybody.  Any authenticated learner could rewrite any note
+    // on the platform.  The repository now filters on learner_id and returns
+    // how many rows it touched, and zero is a 404.
     public func handle_update_note(db : *DbClient, note_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
@@ -70,25 +78,42 @@ public namespace underlayer_web {
                         var err = string("content is required")
                         send_error(res, 400u, &err)
                     } else {
-                        underlayer_repository::update_note(db, note_id, &content)
-                        var resp = string("{\"ok\":true}")
-                        send_json_str(res, &raw resp)
+                        var touched = underlayer_repository::update_note(db, &learner_id, note_id, &content)
+                        if(touched <= 0) {
+                            // One answer for "not yours" and "not there": the
+                            // endpoint must not be an oracle that tells a caller
+                            // which note ids are real.
+                            var gone = string("note not found")
+                            send_error(res, 404u, &gone)
+                        } else {
+                            var resp = string("{\"ok\":true}")
+                            send_json_str(res, &raw resp)
+                        }
                     }
                 }
             }
         }
     }
 
-    // DELETE /api/notes/:id — Delete a note
+    // DELETE /api/notes/:id — Delete a note.  Same defect, same fix: the
+    // previous DELETE was `DELETE FROM learner_notes WHERE id = '...'` with no
+    // ownership predicate, so any authenticated learner could destroy any
+    // note.  A note is the learner's own words about a lesson; losing it to
+    // another account is not recoverable.
     public func handle_delete_note(db : *DbClient, note_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
             send_error(res, 401u, &err)
         } else {
-            underlayer_repository::delete_note(db, note_id)
-            var resp = string("{\"ok\":true}")
-            send_json_str(res, &raw resp)
+            var touched = underlayer_repository::delete_note(db, &learner_id, note_id)
+            if(touched <= 0) {
+                var gone = string("note not found")
+                send_error(res, 404u, &gone)
+            } else {
+                var resp = string("{\"ok\":true}")
+                send_json_str(res, &raw resp)
+            }
         }
     }
 

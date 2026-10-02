@@ -73,6 +73,18 @@ public namespace underlayer_content {
                         // away.
                         var existing = d && d.certificate_id ? d.certificate_id : '';
                         if (existing) { paintIssued({ id: existing, completion_date: '' }); btn.hidden = true; return; }
+                        // The server refuses an unfinished course with 403 and
+                        // {"error":"course not complete","concepts_started":N,
+                        // "concepts_total":M,...}  (web/src/completion_gate.ch).
+                        // Say the counts rather than "try again", because the
+                        // one thing a learner who cannot claim needs to know is
+                        // how much is left.  The same shape is what a POST made
+                        // by hand without the button produces, and it is the
+                        // honest answer in both cases.
+                        if (d && d.error === 'course not complete') {
+                            label.textContent = 'Not finished: ' + d.concepts_started + ' of ' + d.concepts_total + ' concepts read.';
+                            return;
+                        }
                         label.textContent = 'Could not issue it. Try again.';
                     }).catch(function() {
                         btn.disabled = false;

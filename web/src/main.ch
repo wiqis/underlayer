@@ -23,9 +23,11 @@
 //   pages_onboarding.ch      — handle_onboarding_page, handle_onboarding_complete, handle_check_onboarding
 //   handlers_knowledge_health.ch — handle_knowledge_health, handle_knowledge_health_per_module, handle_knowledge_projection, handle_enroll_course, handle_get_enrollments
 //   handlers_learning_path.ch — handle_get_prerequisites, handle_add_prerequisite, handle_remove_prerequisite, handle_can_enroll, handle_skill_assessment, handle_get_assessment
-//   handlers_feedback.ch      — handle_submit_feedback, handle_get_concept_feedback, handle_get_admin_feedback, handle_update_feedback_status, handle_report_exercise, handle_get_admin_reports, handle_feedback_stats
+//   handlers_feedback.ch      — handle_submit_feedback, handle_get_concept_feedback (OWNER-SCOPED), handle_report_exercise, handle_feedback_stats
+//   handlers_feedback_admin.ch — handle_get_admin_feedback, handle_get_admin_reports, handle_update_feedback_status — all three REFUSED 403, see the file header
 //   handlers_bookmarks.ch    — handle_add_bookmark, handle_remove_bookmark, handle_get_bookmarks, handle_check_bookmark
-//   handlers_certificates.ch — handle_issue_certificate, handle_get_certificate, handle_get_certificates, handle_certificate_page
+//   handlers_certificates.ch — handle_issue_certificate (gated by completion_gate.ch), handle_get_certificate, handle_get_certificates, handle_certificate_page
+//   completion_gate.ch        — require_course_complete: "finished" is the coverage number from learning/src/coverage.ch, >= 100, and nothing else
 //   handlers_notes.ch        — handle_create_note, handle_update_note, handle_delete_note, handle_get_concept_notes, handle_search_notes
 //   handlers_achievements.ch — handle_get_achievements, handle_check_achievements, handle_achievement_count
 //   handlers_course_reviews.ch — handle_submit_review, handle_get_course_reviews, handle_update_review, handle_delete_review, handle_mark_review_helpful, handle_course_rating_summary

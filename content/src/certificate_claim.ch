@@ -26,14 +26,18 @@
 //                                 "course_title":"...","certificate_url":"/certificates/<id>"}
 //   401 when signed out; {"error":"certificate already issued","certificate_id":"..."} on a repeat.
 //
-// THE GATE ON THE CLAIM BUTTON IS CLIENT-SIDE, AND THAT IS A FINDING NOT A
-// DESIGN.  handle_issue_certificate in web/src/handlers_certificates.ch checks
-// has_certificate() and NOTHING ELSE -- it never asks whether the course is
-// finished.  POST /api/certificates with any course id therefore returns a
-// certificate, which was verified: a learner with zero concepts read in elf got
-// one.  Until the server checks completion, the only thing standing between a
-// learner and an unearned certificate is this button being shown at 100%, and
-// that is a fact worth knowing before anyone builds a leaderboard on top of it.
+// THE GATE IS NOW ON THE SERVER, NOT ON THE BUTTON.  This comment used to
+// record a finding rather than a design: handle_issue_certificate checked
+// has_certificate() and NOTHING ELSE, so POST /api/certificates with any course
+// id returned a certificate -- verified with a learner who had read one concept
+// in elf -- and the only thing standing between a learner and an unearned
+// certificate was this button being shown at 100%.  The server now checks
+// completion itself, in web/src/completion_gate.ch, and the check is the same
+// coverage number the button is shown at: `progress_percentage >= 100`, where
+// the denominator is the course manifest's concept count.  A button that appears
+// means the claim will be accepted; a POST that arrives without one is refused
+// with 403 and the counts that caused it.  See that file for why the threshold
+// is >= and not >, and why it is coverage and not mastery.
 //
 // SIGNED OUT: NOTHING IS SHOWN AND NOTHING IS ASKED.  No token, no request, no
 // empty box.  A course landing page must render and read well for a reader who

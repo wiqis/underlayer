@@ -999,8 +999,8 @@ public func main() : int {
     }))
 
     // ---- Certificates API ----
-    srv.router.add("POST", "/api/certificates", (|db|(req, res) => {
-        underlayer_web::handle_issue_certificate(&raw db, &req, &raw mut res)
+    srv.router.add("POST", "/api/certificates", (|&db, &courses_dir|(req, res) => {
+        underlayer_web::handle_issue_certificate(&raw db, courses_dir, &req, &raw mut res)
     }))
     srv.router.add("GET", "/api/certificates", (|db|(req, res) => {
         underlayer_web::handle_get_certificates(&raw db, &req, &raw mut res)
