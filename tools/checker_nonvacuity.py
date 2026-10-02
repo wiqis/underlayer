@@ -34,6 +34,8 @@ WHAT IS PROVEN, AND HOW.
   route_check     --selftest plants a cross-learner leak and asserts it fires
   session_js_check  the 401 contract is restored to the old
                    "silent401 RETURNS the 401" shape and the checker must fail.
+  theme_check       render_theme_boot_js is made a no-op, so no page reads the
+                   theme inside <head> and the dark-mode flash returns
   lesson_pager_check  a LENGTH is passed to string_view.subview() where it
                    takes an END INDEX -- the actual defect that shipped, which
                    truncated every lesson page while every other gate stayed
@@ -463,6 +465,78 @@ def check_lesson_pager(quick):
            'lesson page truncated -> exit %d, named=%s' % (rc3, caught))
 
 
+def check_theme(quick):
+    """Prove theme_check.py can fail, by putting the theme read back where the
+    flash said it was.
+
+    The plant is the real defect: `render_theme_boot_js` made a no-op, so the
+    script never reaches <head> and the pages go back to painting light and
+    repainting.  This is the only plant in this file that reproduces a bug a
+    person actually noticed and reported, which is the point -- if the checker
+    cannot see it, the checker is not looking at what it claims to look at.
+    """
+    rc, out = run([PY, 'tools/theme_check.py',
+                   os.environ.get('UL_BASE_URL', 'http://localhost:9000')],
+                  timeout=900)
+    if rc != 0:
+        record('theme_check', False, False,
+               'control already fails on the real server; skipped')
+        return
+    if quick:
+        record('theme_check', True, False, 'skipped by --quick')
+        return
+    compiler = find_compiler()
+    if not compiler:
+        record('theme_check', True, False, 'no compiler found; skipped')
+        return
+    with tempfile.TemporaryDirectory() as tmp:
+        tree = os.path.join(tmp, 'r')
+        shutil.copytree(REPO, tree, ignore=shutil.ignore_patterns(
+            '.git', 'build', 'output', 'node_modules', '__pycache__'))
+        victim = os.path.join(tree, 'content', 'src', 'theme_boot.ch')
+        src = open(victim).read()
+        planted = src.replace('        if(lesson) { return }',
+                              '        if(true) { return }', 1)
+        if planted == src:
+            record('theme_check', True, False,
+                   'the plant did not apply -- the lesson guard is not in the '
+                   'shape this check expects')
+            return
+        open(victim, 'w').write(planted)
+        rc2, _ = run([compiler, 'chemical.mod', '-o',
+                      os.path.join(tree, 'build/underlayer.exe'),
+                      '-bm-modules', '--no-cache', '--mode', 'debug_quick'],
+                     cwd=tree, timeout=1800)
+        if rc2 != 0:
+            record('theme_check', True, False,
+                   'the planted tree did not build (exit %d)' % rc2)
+            return
+        exe = os.path.join(tree, 'build/underlayer.exe')
+        srv = subprocess.Popen([exe], cwd=tree,
+                               env=dict(os.environ, PORT='9122',
+                                        DATABASE_URL=os.path.join(tree, 'nv3.db')),
+                               stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL)
+        try:
+            base = 'http://localhost:9122'
+            if not wait_for_health(base, 60):
+                record('theme_check', True, False,
+                       'the planted server never came up')
+                return
+            rc3, out3 = run([PY, 'tools/theme_check.py', base], timeout=900)
+            caught = rc3 != 0 and 'inside <head>' in out3
+        finally:
+            srv.terminate()
+            try:
+                srv.wait(timeout=20)
+            except Exception:
+                srv.kill()
+    record('theme_check', True, caught,
+           'made render_theme_boot_js a no-op -> no page reads the theme in '
+           '<head> -> the dark-mode flash returns -> exit %d, named=%s'
+           % (rc3, caught))
+
+
 def find_compiler():
     """The Chemical compiler, the same way scripts/_common.sh looks for it."""
     env = os.environ.get('CHEMICAL_ROOT')
@@ -518,6 +592,7 @@ def main():
     check_nav(args.quick)
     check_session_js(args.quick)
     check_lesson_pager(args.quick)
+    check_theme(args.quick)
     print()
     print('--- document checkers ---')
     check_todo(args.quick)

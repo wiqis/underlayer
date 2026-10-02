@@ -13,7 +13,21 @@ public func render_dwarf_landing() : string {
     var title = std::string_view("DWARF Debugging Data Format — Underlayer")
     page.appendTitle(&title)
 
-    #html {
+            // THE PRE-PAINT THEME.  These landing pages hand-roll their navbar
+        // instead of calling render_site_nav, so they are the only pages that
+        // would miss the <head> theme script and therefore the only pages that
+        // paint light first and repaint -- the flash reported on 2026-10-02.
+        // Measured before this: 0 of 432 static pages carried it.
+        //
+        // The real fix is to call render_site_nav here like every other page.
+        // That is a layout change to seven pages and belongs in its own commit;
+        // until then these two lines are what stops them flashing, and this
+        // comment is what stops the next reader from thinking the duplication
+        // is accidental.
+        render_theme_boot_js(&mut page, false)
+        render_color_scheme_meta(&mut page)
+
+#html {
         <a href="#main-content" class="skip-link">Skip to content</a>
         <div class="navbar">
             <div class="nav-inner">

@@ -9,6 +9,18 @@ public namespace underlayer_web {
         page.defaultUniversalSetup()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
+        // THE PRE-PAINT THEME, on a page that draws no navbar.
+        //
+        // These pages are the ones the nav audit listed as having no navbar at
+        // all (/login, /register, /settings, /help, /faq, /about, ...).  Adding a
+        // navbar to an auth page or a legal page is a design decision that was
+        // deliberately deferred -- but the THEME is not the same decision.  They
+        // already inject the components theme, whose .dark rules key on the <html>
+        // class, so with the class set they respect the reader's OS preference
+        // and their toggle.  Without it they render light unconditionally, which
+        // is a reader with a dark OS reading a bright page.
+        underlayer_content::render_theme_boot_js(&mut page, false)
+        underlayer_content::render_color_scheme_meta(&mut page)
         var title = std::string_view("Login — Underlayer")
         page.appendTitle(&title)
         // Both auth helpers: __ulToken/__ulHeaders for the onboarding check,
@@ -131,6 +143,18 @@ public namespace underlayer_web {
         page.defaultUniversalSetup()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
+        // THE PRE-PAINT THEME, on a page that draws no navbar.
+        //
+        // These pages are the ones the nav audit listed as having no navbar at
+        // all (/login, /register, /settings, /help, /faq, /about, ...).  Adding a
+        // navbar to an auth page or a legal page is a design decision that was
+        // deliberately deferred -- but the THEME is not the same decision.  They
+        // already inject the components theme, whose .dark rules key on the <html>
+        // class, so with the class set they respect the reader's OS preference
+        // and their toggle.  Without it they render light unconditionally, which
+        // is a reader with a dark OS reading a bright page.
+        underlayer_content::render_theme_boot_js(&mut page, false)
+        underlayer_content::render_color_scheme_meta(&mut page)
         var title = std::string_view("Register — Underlayer")
         page.appendTitle(&title)
         // Same two helpers as /login.  A brand-new account is the case the
@@ -302,6 +326,18 @@ public namespace underlayer_web {
         page.defaultUniversalSetup()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
+        // THE PRE-PAINT THEME, on a page that draws no navbar.
+        //
+        // These pages are the ones the nav audit listed as having no navbar at
+        // all (/login, /register, /settings, /help, /faq, /about, ...).  Adding a
+        // navbar to an auth page or a legal page is a design decision that was
+        // deliberately deferred -- but the THEME is not the same decision.  They
+        // already inject the components theme, whose .dark rules key on the <html>
+        // class, so with the class set they respect the reader's OS preference
+        // and their toggle.  Without it they render light unconditionally, which
+        // is a reader with a dark OS reading a bright page.
+        underlayer_content::render_theme_boot_js(&mut page, false)
+        underlayer_content::render_color_scheme_meta(&mut page)
         var title = std::string_view("Forgot Password — Underlayer")
         page.appendTitle(&title)
 
@@ -383,6 +419,18 @@ public namespace underlayer_web {
         page.defaultUniversalSetup()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
+        // THE PRE-PAINT THEME, on a page that draws no navbar.
+        //
+        // These pages are the ones the nav audit listed as having no navbar at
+        // all (/login, /register, /settings, /help, /faq, /about, ...).  Adding a
+        // navbar to an auth page or a legal page is a design decision that was
+        // deliberately deferred -- but the THEME is not the same decision.  They
+        // already inject the components theme, whose .dark rules key on the <html>
+        // class, so with the class set they respect the reader's OS preference
+        // and their toggle.  Without it they render light unconditionally, which
+        // is a reader with a dark OS reading a bright page.
+        underlayer_content::render_theme_boot_js(&mut page, false)
+        underlayer_content::render_color_scheme_meta(&mut page)
         var title = std::string_view("Reset Password — Underlayer")
         page.appendTitle(&title)
 

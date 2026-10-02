@@ -52,6 +52,18 @@ using underlayer_models::Course
         // page -- see content/src/lesson_identity.ch.
         render_identity_css(&mut page)
         render_identity_js(&mut page)
+        // ...and the same for the PRE-PAINT THEME, which render_site_nav emits
+        // for every other page.  These six landing pages are the only pages that
+        // hand-roll their navbar, and they draw a theme toggle, so without this
+        // they are the only pages that paint light first and repaint: measured
+        // before the fix, 432 static pages carried the pre-paint script and
+        // THESE SIX did not, because they bypass the one function that emits it.
+        //
+        // That is the cost of a hand-rolled navbar, stated as a fact rather
+        // than left to be rediscovered.  The better fix is to call
+        // render_site_nav here like every other page; that is a layout change to
+        // six pages and is worth doing separately.  Until then the two lines
+        // below are what keeps them from flashing.
 
         #html {
             <a href="#main-content" class="skip-link">Skip to content</a>

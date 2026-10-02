@@ -12,6 +12,17 @@ public func render_dyn_landing() : string {
     page.appendTitle(&title)
 
     render_lesson_nav(&mut page)
+    // THE PRE-PAINT THEME.  This landing page calls render_lesson_nav, which
+    // passes lesson=true and therefore skips the theme script -- correct for a
+    // LESSON, whose palette is hardcoded light, but wrong here: this is a
+    // course landing page and a reader who chose dark, or whose OS is dark,
+    // should not get a flash of light before the page settles.
+    //
+    // Two lines, and the alternative is to change what these 28 pages call --
+    // a layout change across the whole collection that is worth doing on its
+    // own and is not what the flash report asked for.
+    render_theme_boot_js(&mut page, false)
+
     render_lesson_css(&mut page)
 
     #html {
