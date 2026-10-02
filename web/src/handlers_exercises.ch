@@ -107,7 +107,8 @@ public namespace underlayer_web {
         var eid_v = req.query.get(&q_eid.to_view())
         var ans_v = req.query.get(&q_ans.to_view())
         if(eid_v.size() == 0 || ans_v.size() == 0) {
-            send_error(res, 400u, &string("missing query params: exercise_id, answer"))
+            var err_msg = string("missing query params: exercise_id, answer")
+            send_error(res, 400u, &err_msg)
             return
         }
         var exercise_id = sv_to_string(&raw eid_v)
@@ -115,7 +116,8 @@ public namespace underlayer_web {
 
         var ex = underlayer_repository::get_exercise(&raw db, &exercise_id)
         if(ex.id.size() == 0) {
-            send_error(res, 404u, &string("exercise not found"))
+            var err_msg2 = string("exercise not found")
+            send_error(res, 404u, &err_msg2)
             return
         }
 
@@ -288,7 +290,8 @@ public namespace underlayer_web {
         var eid_v = req.query.get(&q_eid.to_view())
         var lvl_v = req.query.get(&q_lvl.to_view())
         if(eid_v.size() == 0) {
-            send_error(res, 400u, &string("missing query param: exercise_id"))
+            var err_msg = string("missing query param: exercise_id")
+            send_error(res, 400u, &err_msg)
             return
         }
         var exercise_id = sv_to_string(&raw eid_v)
@@ -301,7 +304,8 @@ public namespace underlayer_web {
 
         var ex = underlayer_repository::get_exercise(&raw db, &exercise_id)
         if(ex.id.size() == 0) {
-            send_error(res, 404u, &string("exercise not found"))
+            var err_msg2 = string("exercise not found")
+            send_error(res, 404u, &err_msg2)
             return
         }
 

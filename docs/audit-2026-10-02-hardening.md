@@ -253,7 +253,92 @@ both endpoints 401 with no token; a throwaway learner with rows in 8 tables
 deletes and **no table holds a row for that learner id afterwards** — 25 tables
 cleared.
 
-### F5 — CRITICAL — the server aborts on a request sequence
+### F5 — CRITICAL — the server aborts on a request sequence — **FIXED**
+
+**Root cause: passing an inline `string(...)` temporary to a `&string`
+parameter.** The 41 call sites written as
+
+```chemical
+send_error(res, 400u, &string("missing query param: q"))
+```
+
+make the compiler emit, at the end of the enclosing scope:
+
+```
+lea    -0x730(%rbp),%rax
+mov    %rax,%rdi
+call   std_stdstringdelete
+```
+
+`-0x730(%rbp)` is a stack slot the compiler allocated and **never wrote**, and the
+destroy is **not** guarded by a liveness flag. It still holds whatever the
+previous call at that stack depth left there, so when those bytes happen to
+describe a heap-backed `std::string` (`state == '2'`) the compiler calls
+`free()` on a pointer that has already been freed. That is the abort. The same
+source written as a named local takes the compiler's correct path — the slot is
+initialised and the destroy is flag-guarded:
+
+```
+lea    -0x750(%rbp),%rsi     ; temporary
+lea    -0x730(%rbp),%rdi     ; named local
+movsq  (%rsi),(%rdi) x4      ; initialised
+mov    %al,-0x751(%rbp)      ; liveness flag
+movsbl -0x751(%rbp),%eax ; cmp $0x0,%eax ; je ...   ; guarded destroy
+```
+
+**How it was found.** AddressSanitizer, on an instrumented compiler build
+(`-DENABLE_ASAN=ON`, `TCCCompiler` in a separate build dir, libasan preloaded
+into the emitted binary because the compiler writes the app's code itself).
+ASan settled it on the first run, in the first 300 steps:
+
+```
+ERROR: AddressSanitizer: attempting double-free on 0x7740d26a9d40 in thread T2
+  #1 std_stdstringdelete
+  #2 underlayer_web_underlayer_webhandle_review_submit
+freed by thread T2 here:
+  #2 underlayer_models_underlayer_modelsCoursedelete
+  #3 underlayer_web_underlayer_webhandle_lesson
+previously allocated by thread T2 here:
+  #3 underlayer_repository_underlayer_repositoryjson_str
+  #5 underlayer_repository_underlayer_repositoryload_course_from_disk
+```
+
+Three different handlers, one request each — which is only possible if the freed
+pointer is reached again from a *later* request. It is: the bytes survive in a
+worker thread's stack, and the uninitialised slot re-reads them. The 30-char,
+`state == '2'` string is a `Course` field from `json_str`'s `s.copy()`, freed by
+`Course.delete` at the end of `handle_lesson`, and re-freed by the orphan
+`delete` in `handle_review_submit`.
+
+Isolated to a 34-line Chemical program with no server, no threads and no SQL —
+two frames at the same stack depth, the first leaving a freed heap string in
+`-0x20(%rbp)`, the second passing an inline temporary by reference:
+
+```
+free(): double free detected in tcache 2
+RUNTIME ERROR: abort() called
+```
+
+Changing only that one line to a named local makes it exit 0. A 5-character
+literal triggers it too, so all 41 sites were equally dangerous.
+
+**Fix.** All 41 sites (33 in `web/src`, 4 in `repository/src`, 8 in `tests/src`)
+now bind the string to a named local first. `tools/check_inline_string_temporaries.py`
+fails the build if any `&string(...)` argument reappears — a runtime test cannot
+catch this, because the abort is not deterministic; the source lint can.
+Verified: `tools/crash_repro.py` 3/3 runs survive all 1039 steps under ASan with
+zero findings, and `route_check.py` exits 0 three times with `crashes=0`.
+
+Separately fixed while in the same layer: `underlayer_db::exec_sql` used to free
+SQLite's error message and return, so a refused statement was indistinguishable
+from an executed one — the mechanism behind F2. It now returns `ok` and
+`error_message` and logs the failing statement. That immediately exposed four
+`ALTER TABLE ... ADD COLUMN` migrations in `init_schema` that have been failing
+on every start ("duplicate column name"); they are benign (the `CREATE TABLE`
+already carries those columns, and the `ALTER` is a legacy-DB migration) but see
+"not fixed" below.
+
+#### F5 as originally observed
 
 Auditing all 180 routes killed the process:
 
@@ -288,17 +373,25 @@ It happens roughly **4 times per full 180-route pass**, and the detection site
 moves between `corrupted double-linked list`, `double free or corruption (!prev)`
 and `free(): double free detected in tcache 2` — different runs, same failure.
 
-**NOT FIXED.** Reason: this is heap corruption, not a logic error, and the
+**Why the three earlier attempts all failed** (kept because it is the reason this
+needed a second audit): this is heap corruption, not a logic error, and the
 backtrace names where glibc *noticed*, not where the byte was *written*. Three
 things were tried and did not localise it: prefix-bisecting the request sequence
 (no single step is responsible — skipping any one of 30 candidates still
-reproduces it), hammering each route 30× in isolation (nothing corrupts alone),
-and running under gdb with `MALLOC_CHECK_=3` (survives some identical runs, dies
-on others — the signature of an overrun). The tool that would settle it is a
-memory checker, and `valgrind` needs root on this machine. **This is a remote,
-unauthenticated denial of service and should be the next thing worked on.**
+reproduces it), hammering each route 30× in isolation (nothing corrupts alone —
+it needs a *previous* request to leave the right bytes on that stack slot), and
+running under gdb with `MALLOC_CHECK_=3` (survives some identical runs, dies on
+others). That last one is **not** the signature of an overrun, as it was read at
+the time; it is the signature of reading an **uninitialised** slot. The tool that
+settles it is a memory checker, `valgrind` needs root on this machine — ASan does
+not, and the compiler already ships an `ENABLE_ASAN` switch.
 
-`tools/route_check.py` now records a process death as its own finding class and
+**A far shorter reproducer now exists**, for anyone who wants to watch this die
+without the 1039-step walk: `POST /api/review/end` with a valid bearer token and
+a garbage body, repeated. On the unfixed build that kills the server on request
+41 of 300; on the fixed build it does not.
+
+`tools/route_check.py` records a process death as its own finding class and
 restarts the server so the rest of the routes are still measured.
 
 ### F6 — HIGH — `GET /api/courses/:courseId/lessons/:conceptId` never worked
@@ -504,22 +597,51 @@ F4 discussion if he wants them gone.
 
 ## 8. What I could not fix, and why
 
-1. **The heap-corruption abort (F5).** Needs a memory checker; `valgrind` needs
-   root. Three localisation attempts documented above. Reproducer delivered.
-2. **`POST /api/exercises/import` and neighbours write global course content with
+1. **An unauthenticated handler that answers without draining the request body
+   resets the connection.** Distinct from F5 and pre-existing: any handler that
+   returns 4xx without reading the body leaves those bytes in the socket receive
+   buffer, so the close becomes a TCP RST and the client loses the response body.
+   Measured at ~2 in 300 requests on `POST /api/review/end`; it also reproduces
+   on `web/src/handlers_notifications.ch`, a file the F5 fix does not touch, which
+   is how it was confirmed to predate this work. It cost `route_check.py` one run
+   in ~10 (an unhandled `ConnectionResetError` inside the checker's own body
+   read). **Not fixed because the correct fix is not in this repository** — the
+   HTTP server must drain an unread request body before closing, and that is
+   `lang/libs/server` in the Chemical tree. Suppressing it in the handler set
+   would mean touching every early-return path and still would not cover routes
+   added later.
+2. **Four `init_schema` migrations fail on every start.** `exec_sql` now reports
+   them (see F5) and they are `ALTER TABLE ... ADD COLUMN` statements whose column
+   the `CREATE TABLE` already declares, so the failure is benign and the rows are
+   correct. **Not fixed** because the clean version needs schema introspection
+   (`PRAGMA table_info`) to skip an `ALTER` that is not needed, and
+   `repository/src/schema.ch` is at 227 of the 250-line ceiling while
+   `database/src/main.ch` is at 245 — both would need splitting, which is a
+   separate change.
+3. **`scripts/test.sh` does not build, and did not before this work.** Two
+   pre-existing errors, neither in a line this change touched:
+   `tests/src/additional_api_test.ch:580` calls `handle_nav_status` with 3
+   arguments for a 4-parameter handler (missing `courses_dir`), and
+   `tests/src/pages_test.ch:189` passes `&raw mut req` where `&Request` is
+   expected. Confirmed by building the suite from a clean `git stash` of HEAD.
+   **Not fixed** because it is unrelated test rot, and the F5 change's own edits
+   to 5 test files were validated instead by checking that no name this change
+   introduces collides within a scope (0 collisions) — the same transformation is
+   exercised by 33 app sites that do compile and pass every gate.
+4. **`POST /api/exercises/import` and neighbours write global course content with
    no auth (F10).** Fixing it means deciding who may author course content — a
    product decision, not a defect fix, and this brief adds no capability.
-3. **The remaining 128 over-length files (F12).** Splitting ~100 lesson files
+5. **The remaining 128 over-length files (F12).** Splitting ~100 lesson files
    that 24 `verify_*.py` checkers assert byte-level facts about is a refactor,
    not hardening, and it would put the course corpus at risk.
-4. **11 pages still have no navbar** — `/login`, `/register`, `/forgot-password`,
+6. **11 pages still have no navbar** — `/login`, `/register`, `/forgot-password`,
    `/reset-password`, `/help`, `/faq`, `/about`, `/terms`, `/privacy`,
    `/shortcuts`, `/components`, `/onboarding`. Each already carries a link home,
    so none is the trap `/settings` was, and putting a full nav on an auth page or
    a legal page is a design decision rather than a defect fix. They are also
    deliberately **not** in `baseline_urls.txt`, because `nav_check` asserts every
    baseline URL has a nav and adding them would fail on a design choice.
-5. **The `demo` fallback on non-destructive writes (F11).** Changing it changes
+7. **The `demo` fallback on non-destructive writes (F11).** Changing it changes
    what a signed-out visitor's progress does.
 
 ---
@@ -532,6 +654,7 @@ F4 discussion if he wants them gone.
 | `tools/sqli_scan.py` | Static: traces every request-derived value to every SQL literal in the tree. `--selftest` plants one and asserts the count rises by exactly one. |
 | `tools/route_check.py` | All 180 routes: answers, 5xx on 14 garbage bodies, error-body leaks, cross-learner bleed with two accounts, process aborts. `--selftest`. |
 | `tools/crash_repro.py` | The F5 abort: minimal dying step, preceding requests, server-log evidence, optional gdb backtrace. |
+| `tools/check_inline_string_temporaries.py` | The F5 regression test. Fails the build if any `&string(...)` inline temporary reappears — the shape that makes the compiler destroy an uninitialised stack slot. A runtime test cannot catch this (the abort is not deterministic); a source lint can. |
 | `tools/checker_nonvacuity.py` | Proves all 11 shipped checkers fail when their claim is broken. |
 | `tools/nav_consolidate.py` | `--check` / `--apply` for the nav consolidation. Idempotent. |
 

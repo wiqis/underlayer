@@ -11,7 +11,8 @@ public namespace test_helpers {
 
     // Setup a test database. Caller must close with underlayer_db::close(&raw db) when done.
     public func setup_test_db() : underlayer_db::DbClient {
-        return setup_test_db_path(&string("./test_underlayer_tmp.db"))
+        var lit_a = string("./test_underlayer_tmp.db")
+        return setup_test_db_path(&lit_a)
     }
 
     // Isolated DB path — use when tests run in parallel and would otherwise

@@ -99,7 +99,8 @@ public namespace underlayer_web {
         var q_cid = string("concept_id")
         var cid_v = req.query.get(&q_cid.to_view())
         if(cid_v.size() == 0) {
-            send_error(res, 400u, &string("missing query param: concept_id"))
+            var err_msg = string("missing query param: concept_id")
+            send_error(res, 400u, &err_msg)
             return
         }
         var concept_id = sv_to_string(&raw cid_v)

@@ -399,8 +399,10 @@ public namespace underlayer_web {
 
         // Map session length string to minutes
         var session_minutes : i64 = 20
-        if(session_length.equals(&string("short"))) { session_minutes = 10 }
-        if(session_length.equals(&string("long"))) { session_minutes = 30 }
+        var k_short = string("short")
+        var k_long = string("long")
+        if(session_length.equals(&k_short)) { session_minutes = 10 }
+        if(session_length.equals(&k_long)) { session_minutes = 30 }
         var sess_str = underlayer_core::int_to_string(session_minutes)
 
         // Save selected course to learning_goals (existing schema: id, learner_id, course_id, target_date, created_at)

@@ -15,7 +15,8 @@ public namespace underlayer_web {
         var q_key = string("q")
         var q_v = req.query.get(&q_key.to_view())
         if(q_v.size() == 0) {
-            send_error(res, 400u, &string("missing query param: q"))
+            var err_msg = string("missing query param: q")
+            send_error(res, 400u, &err_msg)
             return
         }
         var query = sv_to_string(&raw q_v)

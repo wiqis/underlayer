@@ -8,7 +8,8 @@ using underlayer_models::Exercise
 
 @test
 public func test_exercise_submit_grades_all_types(env : &mut TestEnv) {
-    var db = test_helpers::setup_test_db_path(&string("./test_ex_grade.db"))
+    var lit_a = string("./test_ex_grade.db")
+    var db = test_helpers::setup_test_db_path(&lit_a)
 
     var ex_hex = Exercise::make()
     ex_hex.id = string("t_hex")
@@ -146,13 +147,15 @@ public func test_exercise_submit_grades_all_types(env : &mut TestEnv) {
 
 @test
 public func test_exercise_seed_new_types_from_manifest(env : &mut TestEnv) {
-    var db = test_helpers::setup_test_db_path(&string("./test_ex_seed.db"))
+    var lit_a = string("./test_ex_seed.db")
+    var db = test_helpers::setup_test_db_path(&lit_a)
     var courses_dir = string("./courses")
     var course_id = string("hat")
     var created = underlayer_repository::seed_exercises_from_manifest(&raw db, &courses_dir, &course_id)
     if(created == 0) { env.error("expected hat seed to insert exercises"); underlayer_db::close(&raw db); return }
 
-    var list = underlayer_repository::get_exercises_for_concept(&raw db, &string("hat-network-routing"), 10)
+    var lit_b = string("hat-network-routing")
+    var list = underlayer_repository::get_exercises_for_concept(&raw db, &lit_b, 10)
     var found_multi = false
     var found_label = false
     var found_hex = false
@@ -164,7 +167,8 @@ public func test_exercise_seed_new_types_from_manifest(env : &mut TestEnv) {
     }
     if(found_multi == false) { env.error("seeded multi_recognize not found for hat-network-routing") }
 
-    var labels = underlayer_repository::get_exercises_for_concept(&raw db, &string("hat-exam-overview"), 20)
+    var lit_c = string("hat-exam-overview")
+    var labels = underlayer_repository::get_exercises_for_concept(&raw db, &lit_c, 20)
     i = 0
     while(i < labels.size()) {
         var e = labels.get_ptr(i)
@@ -177,7 +181,8 @@ public func test_exercise_seed_new_types_from_manifest(env : &mut TestEnv) {
     var elf_id = string("elf")
     var created_elf = underlayer_repository::seed_exercises_from_manifest(&raw db, &elf_dir, &elf_id)
     if(created_elf == 0) { env.error("expected elf seed to insert exercises"); underlayer_db::close(&raw db); return }
-    var bytes_list = underlayer_repository::get_exercises_for_concept(&raw db, &string("bytes"), 20)
+    var lit_d = string("bytes")
+    var bytes_list = underlayer_repository::get_exercises_for_concept(&raw db, &lit_d, 20)
     i = 0
     while(i < bytes_list.size()) {
         var e = bytes_list.get_ptr(i)

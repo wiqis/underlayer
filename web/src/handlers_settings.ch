@@ -88,7 +88,8 @@ public namespace underlayer_web {
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var history = underlayer_repository::get_all_review_history(&raw db, &learner_id)
         if(history.size() < 10) {
-            send_error(res, 400u, &string("need at least 10 reviews for optimization"))
+            var err_msg = string("need at least 10 reviews for optimization")
+            send_error(res, 400u, &err_msg)
             return
         }
         // Extract ratings and intervals
@@ -110,7 +111,8 @@ public namespace underlayer_web {
         }
         var old_params = underlayer_learning::init_fsrs_params()
         var new_params = underlayer_learning::optimize_fsrs_params(&old_params, &ratings, &intervals)
-        var log_entry = underlayer_learning::log_param_change(&old_params, &new_params, &string("optimize_from_history"))
+        var optimize_reason = string("optimize_from_history")
+        var log_entry = underlayer_learning::log_param_change(&old_params, &new_params, &optimize_reason)
         var body = std::string("{\"ok\":true,\"log\":")
         body.append_view(&log_entry.to_view())
         body.append_view("}")
@@ -140,7 +142,8 @@ public namespace underlayer_web {
         var q_weights = string("weights")
         var weights_v = req.query.get(&q_weights.to_view())
         if(weights_v.size() == 0) {
-            send_error(res, 400u, &string("missing query param: weights (JSON array of floats)"))
+            var err_msg = string("missing query param: weights (JSON array of floats)")
+            send_error(res, 400u, &err_msg)
             return
         }
         var weights_str = sv_to_string(&raw weights_v)

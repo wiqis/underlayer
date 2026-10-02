@@ -120,21 +120,25 @@ public namespace underlayer_repository {
     public func delete_learner_data_of_type(db : *DbClient, learner_id : &string, data_type : &string) : bool {
         if(learner_id.size() == 0) { return false }
         var lid = sql_escape(learner_id)
-        if(data_type.equals(&string("reviews"))) {
+        var k_reviews = string("reviews")
+        var k_progress = string("progress")
+        var k_sessions = string("sessions")
+        var k_all = string("all")
+        if(data_type.equals(&k_reviews)) {
             var sql = string("DELETE FROM review_items WHERE learner_id = '")
             sql.append_string(&lid)
             sql.append_view("'")
             underlayer_db::exec_sql(db, &raw sql)
             return true
         }
-        if(data_type.equals(&string("progress"))) {
+        if(data_type.equals(&k_progress)) {
             var sql = string("DELETE FROM concept_states WHERE learner_id = '")
             sql.append_string(&lid)
             sql.append_view("'")
             underlayer_db::exec_sql(db, &raw sql)
             return true
         }
-        if(data_type.equals(&string("sessions"))) {
+        if(data_type.equals(&k_sessions)) {
             var iq = string("DELETE FROM session_items WHERE session_id IN (SELECT id FROM sessions WHERE learner_id = '")
             iq.append_string(&lid)
             iq.append_view("')")
@@ -145,7 +149,7 @@ public namespace underlayer_repository {
             underlayer_db::exec_sql(db, &raw sq)
             return true
         }
-        if(data_type.equals(&string("all"))) {
+        if(data_type.equals(&k_all)) {
             // Everything except the account itself.  "Delete my data" and
             // "delete my account" are different requests and they answer to
             // different routes; this one must never remove the learners row.

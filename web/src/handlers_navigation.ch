@@ -51,7 +51,8 @@ public namespace underlayer_web {
         var concept = sv_to_string(concept_id)
         var course = underlayer_repository::load_course(courses_dir, &cid)
         if(course.id.size() == 0) {
-            send_error(res, 404u, &string("course not found"))
+            var err_msg = string("course not found")
+            send_error(res, 404u, &err_msg)
             return
         }
 

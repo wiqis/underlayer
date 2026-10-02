@@ -352,7 +352,8 @@ public namespace underlayer_web {
         if(sid_v.size() == 0) { sid_v = body_session.to_view() }
         if(time_v.size() == 0) { time_v = body_time.to_view() }
         if(cid_v.size() == 0 || crsid_v.size() == 0 || rat_v.size() == 0) {
-            send_error(res, 400u, &string("missing concept_id, course_id, or rating (query params or JSON body)"))
+            var err_msg = string("missing concept_id, course_id, or rating (query params or JSON body)")
+            send_error(res, 400u, &err_msg)
             return
         }
         var concept_id = sv_to_string(&raw cid_v)
@@ -493,7 +494,8 @@ public namespace underlayer_web {
         var q_sid = string("session_id")
         var sid_v = req.query.get(&q_sid.to_view())
         if(sid_v.size() == 0) {
-            send_error(res, 400u, &string("missing query param: session_id"))
+            var err_msg = string("missing query param: session_id")
+            send_error(res, 400u, &err_msg)
             return
         }
         var session_id = sv_to_string(&raw sid_v)
@@ -626,7 +628,8 @@ public namespace underlayer_web {
             }
         }
         if(sid_v.size() == 0) {
-            send_error(res, 400u, &string("missing session_id param or path segment"))
+            var err_msg = string("missing session_id param or path segment")
+            send_error(res, 400u, &err_msg)
             return
         }
         var session_id = sv_to_string(&raw sid_v)
@@ -674,7 +677,8 @@ public namespace underlayer_web {
         var q_sid = string("session_id")
         var sid_v = req.query.get(&q_sid.to_view())
         if(sid_v.size() == 0) {
-            send_error(res, 400u, &string("missing query param: session_id"))
+            var err_msg = string("missing query param: session_id")
+            send_error(res, 400u, &err_msg)
             return
         }
         var session_id = sv_to_string(&raw sid_v)
@@ -691,7 +695,8 @@ public namespace underlayer_web {
         var q_sid = string("session_id")
         var sid_v = req.query.get(&q_sid.to_view())
         if(sid_v.size() == 0) {
-            send_error(res, 400u, &string("missing query param: session_id"))
+            var err_msg = string("missing query param: session_id")
+            send_error(res, 400u, &err_msg)
             return
         }
         var session_id = sv_to_string(&raw sid_v)
@@ -713,7 +718,8 @@ public namespace underlayer_web {
         var q_sid = string("session_id")
         var sid_v = req.query.get(&q_sid.to_view())
         if(sid_v.size() == 0) {
-            send_error(res, 400u, &string("missing query param: session_id"))
+            var err_msg = string("missing query param: session_id")
+            send_error(res, 400u, &err_msg)
             return
         }
         var session_id = sv_to_string(&raw sid_v)
@@ -730,14 +736,16 @@ public namespace underlayer_web {
         var q_sid = string("session_id")
         var sid_v = req.query.get(&q_sid.to_view())
         if(sid_v.size() == 0) {
-            send_error(res, 400u, &string("missing query param: session_id"))
+            var err_msg = string("missing query param: session_id")
+            send_error(res, 400u, &err_msg)
             return
         }
         var session_id = sv_to_string(&raw sid_v)
         if(!require_own_session(&raw db, req, res, &raw session_id)) { return }
         var undone = underlayer_repository::undo_last_item(&raw db, &raw session_id)
         if(!undone) {
-            send_error(res, 404u, &string("no items to undo"))
+            var err_msg2 = string("no items to undo")
+            send_error(res, 404u, &err_msg2)
             return
         }
         var resp = string("{\"status\":\"ok\",\"session_id\":\"")
@@ -753,7 +761,8 @@ public namespace underlayer_web {
         var sid_v = req.query.get(&q_sid.to_view())
         var cid_v = req.query.get(&q_cid.to_view())
         if(sid_v.size() == 0 || cid_v.size() == 0) {
-            send_error(res, 400u, &string("missing query params: session_id, concept_id"))
+            var err_msg = string("missing query params: session_id, concept_id")
+            send_error(res, 400u, &err_msg)
             return
         }
         var session_id = sv_to_string(&raw sid_v)

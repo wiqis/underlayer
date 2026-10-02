@@ -8,12 +8,14 @@ using underlayer_models::Exercise
 
 @test
 public func test_exercise_get_all_types_payload(env : &mut TestEnv) {
-    var db = test_helpers::setup_test_db_path(&string("./test_ex_payload.db"))
+    var lit_a = string("./test_ex_payload.db")
+    var db = test_helpers::setup_test_db_path(&lit_a)
 
     var ex_multi = Exercise::make()
     ex_multi.id = string("t_multi")
     ex_multi.concept_id = string("t-concept-multi")
-    ex_multi.exercise_type = underlayer_repository::exercise_type_from_str(&string("multi_recognize"))
+    var lit_b = string("multi_recognize")
+    ex_multi.exercise_type = underlayer_repository::exercise_type_from_str(&lit_b)
     ex_multi.question = string("Pick both")
     ex_multi.options.push(string("A"))
     ex_multi.options.push(string("B"))

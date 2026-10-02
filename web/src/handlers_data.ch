@@ -11,7 +11,8 @@ public namespace underlayer_web {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var learner = underlayer_repository::get_learner(db, &learner_id)
-        var states = underlayer_repository::get_all_concept_states(db, &learner_id, &string("elf"))
+        var elf_course = string("elf")
+        var states = underlayer_repository::get_all_concept_states(db, &learner_id, &elf_course)
         var sessions = underlayer_repository::get_learner_sessions(db, &learner_id, 1000)
         var body = string("{\"learner\":{\"id\":\"")
         body.append_string(&learner.id)
@@ -101,17 +102,24 @@ public namespace underlayer_web {
     public func handle_delete_data(db : *DbClient, data_type : *string, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
-            send_error(res, 401u, &string("unauthorized"))
+            var err_msg = string("unauthorized")
+            send_error(res, 401u, &err_msg)
             return
         }
         var dt = data_type.copy()
-        var known = dt.equals(&string("reviews")) || dt.equals(&string("progress")) || dt.equals(&string("sessions")) || dt.equals(&string("all"))
+        var k_reviews = string("reviews")
+        var k_progress = string("progress")
+        var k_sessions = string("sessions")
+        var k_all = string("all")
+        var known = dt.equals(&k_reviews) || dt.equals(&k_progress) || dt.equals(&k_sessions) || dt.equals(&k_all)
         if(!known) {
-            send_error(res, 400u, &string("invalid data_type: use reviews, progress, sessions, or all"))
+            var err_msg2 = string("invalid data_type: use reviews, progress, sessions, or all")
+            send_error(res, 400u, &err_msg2)
             return
         }
         if(!underlayer_repository::delete_learner_data_of_type(db, &learner_id, &dt)) {
-            send_error(res, 400u, &string("could not delete that data type"))
+            var err_msg3 = string("could not delete that data type")
+            send_error(res, 400u, &err_msg3)
             return
         }
         var ok_body = string("{\"ok\":true,\"data_type\":\"")
@@ -155,7 +163,8 @@ public namespace underlayer_web {
     public func handle_delete_account(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
-            send_error(res, 401u, &string("unauthorized"))
+            var err_msg = string("unauthorized")
+            send_error(res, 401u, &err_msg)
             return
         }
         var cleared = underlayer_repository::delete_learner_everything(db, &learner_id)
@@ -212,12 +221,14 @@ public namespace underlayer_web {
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var body_str = read_body(&raw mut req)
         if(body_str.size() == 0) {
-            send_error(res, 400u, &string("missing request body"))
+            var err_msg = string("missing request body")
+            send_error(res, 400u, &err_msg)
             return
         }
         var parse_result = json::parse(body_str.to_view())
         if(parse_result is std::Result.Err) {
-            send_error(res, 400u, &string("invalid JSON"))
+            var err_msg2 = string("invalid JSON")
+            send_error(res, 400u, &err_msg2)
             return
         }
         var Ok(parsed) = parse_result else unreachable
@@ -316,7 +327,8 @@ public namespace underlayer_web {
     // GET /api/progress/shared/:token — get shared progress
     public func handle_get_shared_progress(db : *DbClient, token : *string_view, res : *mut http::ResponseWriter) {
         var learner_id = string("demo")
-        var states = underlayer_repository::get_all_concept_states(db, &learner_id, &string("elf"))
+        var elf_course = string("elf")
+        var states = underlayer_repository::get_all_concept_states(db, &learner_id, &elf_course)
         var health = underlayer_learning::compute_knowledge_health(&raw states)
         var body = string("{\"health_score\":")
         var hs_str = underlayer_learning::f64_to_string(health.health_score)

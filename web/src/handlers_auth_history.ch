@@ -44,7 +44,8 @@ public namespace underlayer_web {
             resp.append_view("\",\"user_agent\":\"")
             resp.append_string(&val3)
             resp.append_view("\",\"success\":")
-            if(val4.equals(&string("1"))) { resp.append_view("true") } else { resp.append_view("false") }
+            var one = string("1")
+            if(val4.equals(&one)) { resp.append_view("true") } else { resp.append_view("false") }
             resp.append_view(",\"failure_reason\":\"")
             resp.append_string(&val5)
             resp.append_view("\",\"created_at\":")

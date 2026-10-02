@@ -13,25 +13,29 @@ public namespace underlayer_web {
     public func handle_exercise_import(db : &DbClient, req : *mut http::Request, res : *mut http::ResponseWriter) {
         var body = read_body(req)
         if(body.size() == 0) {
-            send_error(res, 400u, &string("empty request body"))
+            var err_msg = string("empty request body")
+            send_error(res, 400u, &err_msg)
             return
         }
 
         var parsed = json::parse(body.to_view())
         if(parsed is std::Result.Err) {
-            send_error(res, 400u, &string("invalid JSON"))
+            var err_msg2 = string("invalid JSON")
+            send_error(res, 400u, &err_msg2)
             return
         }
         var Ok(json_val) = parsed else unreachable
 
         var exercises_field = json_get(&raw json_val, "exercises")
         if(exercises_field == null) {
-            send_error(res, 400u, &string("missing 'exercises' array"))
+            var err_msg3 = string("missing 'exercises' array")
+            send_error(res, 400u, &err_msg3)
             return
         }
 
         if(!(exercises_field is JsonValue.Array)) {
-            send_error(res, 400u, &string("'exercises' must be an array"))
+            var err_msg4 = string("'exercises' must be an array")
+            send_error(res, 400u, &err_msg4)
             return
         }
         var Array(arr) = *exercises_field else unreachable

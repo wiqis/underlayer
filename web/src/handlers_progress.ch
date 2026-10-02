@@ -191,7 +191,8 @@ public namespace underlayer_web {
         var q_td = string("target_date")
         var td_v = req.query.get(&q_td.to_view())
         if(td_v.size() == 0) {
-            send_error(res, 400u, &string("missing query param: target_date"))
+            var err_msg = string("missing query param: target_date")
+            send_error(res, 400u, &err_msg)
             return
         }
         var target_date = parse_i64(td_v) as i64

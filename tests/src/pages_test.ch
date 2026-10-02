@@ -105,7 +105,8 @@ public func test_review_page_returns_200(env : &mut TestEnv) {
 public func test_review_page_renders_session_in_page(env : &mut TestEnv) {
     // 5.1.16: the review page must fetch /api/review/start and render the
     // session in-page, not navigate the browser to the raw JSON endpoint.
-    var db = test_helpers::setup_test_db_path(&string("./test_review_page.db"))
+    var lit_a = string("./test_review_page.db")
+    var db = test_helpers::setup_test_db_path(&lit_a)
     var courses_dir = string("./courses")
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:19897")
@@ -159,7 +160,8 @@ public func test_review_session_end_marks_completed(env : &mut TestEnv) {
     // 5.1.17: starting a session, submitting an item, then calling
     // /api/review/end must mark the session "completed" (it used to stay
     // "active" forever), and the item must be recorded against the session.
-    var db = test_helpers::setup_test_db_path(&string("./test_review_end.db"))
+    var lit_a = string("./test_review_end.db")
+    var db = test_helpers::setup_test_db_path(&lit_a)
     var courses_dir = string("./courses")
 
     // Engage the concept so seeding produces a review item for this learner.
@@ -256,7 +258,8 @@ public func test_review_session_end_marks_completed(env : &mut TestEnv) {
 @test
 public func test_review_session_controls_change_state(env : &mut TestEnv) {
     // 5.1.18: pause/resume/abort session controls change the session state.
-    var db = test_helpers::setup_test_db_path(&string("./test_review_controls.db"))
+    var lit_a = string("./test_review_controls.db")
+    var db = test_helpers::setup_test_db_path(&lit_a)
     var courses_dir = string("./courses")
     var learner_id = string("controls-learner")
     var course_id = string("elf")

@@ -20,9 +20,18 @@ public namespace underlayer_db {
         var rows_affected : i64
     }
 
+    // `ok` and `error_message` exist because a statement SQLite REFUSED used to
+    // be indistinguishable from one it ran.  exec_sql() freed SQLite's error
+    // message and returned `rows_affected`, and callers that ignored the count
+    // reported success for a write that never happened -- which is how a
+    // display name containing an apostrophe ("D'Arcy") produced a register
+    // response carrying a token for a learner row that was never inserted.
+    // A write that failed must be able to say so.
     public struct ExecResult {
         var last_insert_rowid : i64
         var rows_affected : i64
+        var ok : bool
+        var error_message : string
     }
 
     public struct DbClient {
@@ -113,18 +122,50 @@ public namespace underlayer_db {
     public func exec_sql(db : *DbClient, sql : *string) : ExecResult {
         if(db.is_sqlite && db.sqlite_handle != null) {
             var errmsg : *mut char = null
-            sqlite::ffi::sqlite3_exec(db.sqlite_handle, sql.data(), null, null, &raw mut errmsg)
+            var rc = sqlite::ffi::sqlite3_exec(db.sqlite_handle, sql.data(), null, null, &raw mut errmsg)
             if(errmsg != null) {
+                var msg = std::string()
+                var i : size_t = 0
+                while(errmsg[i] != 0) { msg.append(errmsg[i]); i = i + 1 }
+                // Say what failed and why, instead of freeing the message and
+                // returning a result that reads like success.  last_insert_rowid
+                // is deliberately NOT reported here: after a failed statement
+                // sqlite3_last_insert_rowid still holds the rowid of some EARLIER
+                // successful insert, which is a value that means nothing here.
+                printf("[underlayer_db] SQL FAILED rc=%d: %s\n", rc, msg.data())
+                printf("[underlayer_db]   statement: %s\n", sql.data())
+                // stdout is block-buffered when the server is started with its
+                // output redirected to a log file, so an unflushed report can
+                // sit in the buffer until the process exits -- which is exactly
+                // when it is least useful.
+                fflush(stdout)
                 sqlite::ffi::sqlite3_free(errmsg as *void)
+                var failed = ExecResult {
+                    last_insert_rowid = 0,
+                    rows_affected = 0,
+                    ok = false,
+                    error_message = msg
+                }
+                return failed
             }
             var result = ExecResult {
                 last_insert_rowid = sqlite::ffi::sqlite3_last_insert_rowid(db.sqlite_handle),
-                rows_affected = sqlite::ffi::sqlite3_changes(db.sqlite_handle) as i64
+                rows_affected = sqlite::ffi::sqlite3_changes(db.sqlite_handle) as i64,
+                ok = true,
+                error_message = std::string()
             }
             return result
         }
-        var result = ExecResult { last_insert_rowid: 0, rows_affected: 0 }
-        return result
+        // The Turso/HTTP backend is not implemented yet, so there is no path
+        // here that can have written anything.  Report that rather than
+        // returning a zeroed result that looks like "ran, changed nothing".
+        var unsupported = ExecResult {
+            last_insert_rowid = 0,
+            rows_affected = 0,
+            ok = false,
+            error_message = std::string("remote (Turso) exec is not implemented")
+        }
+        return unsupported
     }
 
     public func query_sql(db : *DbClient, sql : *string) : QueryResult {
@@ -137,6 +178,12 @@ public namespace underlayer_db {
             var h_stmt : *mut sqlite::sqlite3_stmt = null
             var res = sqlite::ffi::sqlite3_prepare_v2(db.sqlite_handle, sql.data(), sql.size() as int, &raw mut h_stmt, null)
             if(res != 0 || h_stmt == null) {
+                // Same defect as exec_sql: a statement SQLite could not even
+                // parse returned an empty result, which every caller reads as
+                // "no such row".  Name it in the log so a malformed statement
+                // cannot be mistaken for a legitimately empty table.
+                printf("[underlayer_db] SQL PREPARE FAILED rc=%d: %s\n", res, sql.data())
+                fflush(stdout)
                 return result
             }
             var col_count = sqlite::ffi::sqlite3_column_count(h_stmt)

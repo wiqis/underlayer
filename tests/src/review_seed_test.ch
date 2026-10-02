@@ -7,7 +7,8 @@ using std::Result
 @test
 public func test_review_seeding_creates_items(env : &mut TestEnv) {
     // Isolated DB — tests run in parallel and setup_test_db() wipes shared rows.
-    var db = test_helpers::setup_test_db_path(&string("./test_review_seed_a.db"))
+    var lit_a = string("./test_review_seed_a.db")
+    var db = test_helpers::setup_test_db_path(&lit_a)
 
     // Simulate a learner having engaged with the "bytes" concept.
     var learner_id = string("seed-test-learner")
@@ -43,7 +44,8 @@ public func test_review_seeding_creates_items(env : &mut TestEnv) {
 @test
 public func test_review_due_seeds_automatically(env : &mut TestEnv) {
     // Isolated DB — tests run in parallel and setup_test_db() wipes shared rows.
-    var db = test_helpers::setup_test_db_path(&string("./test_review_seed_b.db"))
+    var lit_a = string("./test_review_seed_b.db")
+    var db = test_helpers::setup_test_db_path(&lit_a)
     var courses_dir = string("./courses")
 
     // Give a dedicated learner an engaged concept.
