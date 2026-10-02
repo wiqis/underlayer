@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_diagnostic_test() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Your Baseline Diagnostic: Start with Evidence - Underlayer")
     page.appendTitle(&title)

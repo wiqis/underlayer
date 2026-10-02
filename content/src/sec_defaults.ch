@@ -12,6 +12,7 @@ public func render_sec_defaults() : string {
     var title = std::string_view("Three Layers, Two Answers — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

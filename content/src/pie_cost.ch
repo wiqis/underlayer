@@ -12,6 +12,7 @@ public func render_pie_cost() : string {
     var title = std::string_view("What Position Independence Costs — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

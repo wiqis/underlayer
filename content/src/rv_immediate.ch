@@ -11,6 +11,7 @@ public func render_rv_immediate() : string {
     var title = std::string_view("The Immediates That Do Not Fit — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

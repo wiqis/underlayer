@@ -11,6 +11,7 @@ public func render_priv_table() : string {
     var title = std::string_view("A Table You Can Locate and Not Read — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

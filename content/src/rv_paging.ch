@@ -11,6 +11,7 @@ public func render_rv_paging() : string {
     var title = std::string_view("Sv39, Sv48, Sv57 and satp, Measured on the Compiler's Own Shifts — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

@@ -12,6 +12,7 @@ public func render_macho_dyld_info() : string {
     var title = std::string_view("Rebase and Bind Opcodes — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

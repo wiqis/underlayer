@@ -12,6 +12,7 @@ public func render_macho_header() : string {
     var title = std::string_view("The mach_header_64 Field by Field — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

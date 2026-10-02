@@ -21,6 +21,7 @@ public func render_a64_virtual() : string {
     var title = std::string_view("T0SZ = 64 - 48, and the Field With a Floor — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

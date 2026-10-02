@@ -11,6 +11,7 @@ public func render_x86_avx() : string {
     var title = std::string_view("AVX and AVX2: Three Operands, vzeroupper, and the Upper Half — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

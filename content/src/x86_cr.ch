@@ -11,6 +11,7 @@ public func render_x86_cr() : string {
     var title = std::string_view("CR0 to CR4, Every Bit — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

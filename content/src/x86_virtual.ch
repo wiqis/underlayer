@@ -11,6 +11,7 @@ public func render_x86_virtual() : string {
     var title = std::string_view("The 48-Bit Split, LA57 and LAM — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

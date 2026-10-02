@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_mock_protocol() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("How to Run a Mock — Underlayer")
     page.appendTitle(&title)

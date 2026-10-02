@@ -24,6 +24,7 @@ public func render_a64simd_landing() : string {
     var title = std::string_view("The AArch64 Data Path: NEON, Atomics and Ordering — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

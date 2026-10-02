@@ -824,7 +824,7 @@
 - [ ] P2 7.1.14 Unread indicator (new content)
 - [x] P2 7.1.15 Due indicator (review items due)
 - [ ] P1 7.1.16 Prev/next lesson navigation on concept pages wired to GET /api/navigation/:courseId/:conceptId (rel links are empty; no consumer of the navigation API)
-- [ ] P1 7.1.17 Site navbar on lesson pages — concept pages rendered from content/src are orphaned from site navigation (no navbar, no way back to dashboard)
+- [x] P1 7.1.17 Site navbar on lesson pages — one nav, as a component in content/src/lesson_nav.ch (the layer below web, because that is where lesson pages are built); 431 page builders call render_lesson_nav, the 7 course landing pages that already drew their own richer nav are left alone, and tools/nav_check.py asserts on every baseline URL that the page is 200, carries exactly one navbar, and that the navbar offers /courses /search /dashboard /progress
 - [ ] P1 7.1.18 Auth-aware navbar: Login/Register links when logged out, profile + Logout when logged in (POST /api/auth/logout exists, no UI calls it)
 - [ ] P1 7.1.19 401 handling in authenticated pages: redirect to /login when session token expired (pages currently render empty states silently)
 - [ ] P1 7.1.20 Onboarding gate: logged-in users with incomplete onboarding are routed to /onboarding from home/dashboard (GET /api/onboarding/check exists, never consulted)

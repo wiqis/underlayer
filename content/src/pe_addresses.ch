@@ -12,6 +12,7 @@ public func render_pe_addresses() : string {
     var title = std::string_view("VA, RVA, and File Offset — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

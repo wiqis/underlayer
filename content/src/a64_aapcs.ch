@@ -12,6 +12,7 @@ public func render_a64_aapcs() : string {
     var title = std::string_view("The Calling Convention, and the Number That Was 128 — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

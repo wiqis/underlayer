@@ -13,6 +13,7 @@ public func render_a64_save() : string {
     var title = std::string_view("Callee-Saved, and the Count of Zero That Is Also a Rule — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

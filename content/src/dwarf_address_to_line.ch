@@ -12,6 +12,7 @@ public func render_dwarf_address_to_line() : string {
     var title = std::string_view("From Rows to Source Lines — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

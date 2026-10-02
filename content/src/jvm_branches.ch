@@ -13,6 +13,7 @@ public func render_jvm_branches() : string {
     var title = std::string_view("Two Offset Conventions — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

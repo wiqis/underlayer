@@ -8,6 +8,7 @@ using std::string_view
 
 public func render_memory_layout() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Process Memory Layout — Underlayer")
     page.appendTitle(&title)

@@ -14,6 +14,7 @@ public func render_obj_comdat_group() : string {
     var title = std::string_view("COMDAT, GROUP, linkonce — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

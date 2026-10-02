@@ -13,6 +13,7 @@ public func render_reloc_apply() : string {
     var title = std::string_view("Applying Them Yourself — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

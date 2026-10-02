@@ -11,6 +11,7 @@ public func render_x86_atomics() : string {
     var title = std::string_view("The Atomic Set: Which Instructions Imply LOCK — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

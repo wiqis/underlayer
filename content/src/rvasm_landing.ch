@@ -11,6 +11,7 @@ public func render_rvasm_landing() : string {
     var title = std::string_view("RISC-V: The Encoding Spectrum — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

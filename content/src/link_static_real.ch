@@ -13,6 +13,7 @@ public func render_link_static_real() : string {
     var title = std::string_view("What -static Actually Does — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

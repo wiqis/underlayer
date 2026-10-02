@@ -11,6 +11,7 @@ public func render_priv_doors() : string {
     var title = std::string_view("Four Ways In, and One of Them Is Not a Door — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

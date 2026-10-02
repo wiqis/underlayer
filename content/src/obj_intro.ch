@@ -13,6 +13,7 @@ public func render_obj_intro() : string {
     var title = std::string_view("The Middle of Every Build — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

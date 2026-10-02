@@ -11,6 +11,7 @@ public func render_a64_asm() : string {
     var title = std::string_view("Four Bytes, and a Mnemonic That Is Not In There — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

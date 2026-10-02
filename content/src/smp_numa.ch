@@ -11,6 +11,7 @@ public func render_smp_numa() : string {
     var title = std::string_view("The Thing This Machine Cannot Do — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_score_targets() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("What Score Do You Need? — Underlayer")
     page.appendTitle(&title)

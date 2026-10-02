@@ -13,6 +13,7 @@ public func render_dyn_order_runtime() : string {
     var title = std::string_view("Breadth-First, and Why It Matters — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

@@ -11,6 +11,7 @@ public func render_x86_exceptions() : string {
     var title = std::string_view("All Thirty-Two, As an x86-64 Reference — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

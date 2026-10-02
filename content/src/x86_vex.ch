@@ -11,6 +11,7 @@ public func render_x86_vex() : string {
     var title = std::string_view("Two Bytes, Three, and the Bit That Went Wrong — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

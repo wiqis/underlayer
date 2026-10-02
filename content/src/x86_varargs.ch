@@ -11,6 +11,7 @@ public func render_x86_varargs() : string {
     var title = std::string_view("The One Place the ABI Describes Itself — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

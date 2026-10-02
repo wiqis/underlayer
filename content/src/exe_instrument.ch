@@ -13,6 +13,7 @@ public func render_exe_instrument() : string {
     var title = std::string_view("Measure the Instrument First — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

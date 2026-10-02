@@ -12,6 +12,7 @@ public func render_macho_cputypes() : string {
     var title = std::string_view("CPU Types and Subtypes — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

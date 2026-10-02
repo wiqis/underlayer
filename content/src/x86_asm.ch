@@ -11,6 +11,7 @@ public func render_x86_asm() : string {
     var title = std::string_view("Reading a Disassembly Without Being Fooled — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

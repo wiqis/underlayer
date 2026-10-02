@@ -13,6 +13,7 @@ public func render_dwarf_v4() : string {
     var title = std::string_view("DWARF 4 in Practice — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

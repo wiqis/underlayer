@@ -12,6 +12,7 @@ public func render_macho_entry() : string {
     var title = std::string_view("The Dynamic Linker and Entry Point — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

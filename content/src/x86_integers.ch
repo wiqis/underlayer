@@ -11,6 +11,7 @@ public func render_x86_integers() : string {
     var title = std::string_view("The Integer Set, Which Nothing Teaches — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

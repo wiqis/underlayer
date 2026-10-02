@@ -11,6 +11,7 @@ public func render_smp_atomic() : string {
     var title = std::string_view("A Lock With Nothing to Lock Against — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

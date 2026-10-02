@@ -12,6 +12,7 @@ public func render_img_stack() : string {
     var title = std::string_view("Reading the Initial Stack by Hand — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

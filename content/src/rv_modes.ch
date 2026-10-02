@@ -12,6 +12,7 @@ public func render_rv_modes() : string {
     var title = std::string_view("The CSR Address and the Twelve Instructions That Touch It — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

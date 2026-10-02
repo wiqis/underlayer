@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_strong_weak_arguments() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Strong and Weak Arguments - Underlayer")
     page.appendTitle(&title)

@@ -14,6 +14,7 @@ public func render_mem_writes() : string {
     var title = std::string_view("What a Store Costs — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

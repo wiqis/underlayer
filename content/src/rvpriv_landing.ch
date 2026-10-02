@@ -11,6 +11,7 @@ public func render_rvpriv_landing() : string {
     var title = std::string_view("The RISC-V Privileged Architecture — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

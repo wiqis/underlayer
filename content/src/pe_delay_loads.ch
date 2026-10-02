@@ -12,6 +12,7 @@ public func render_pe_delay_loads() : string {
     var title = std::string_view("Delay-Load Imports — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

@@ -13,6 +13,7 @@ public func render_jvm_constant_pool() : string {
     var title = std::string_view("The Constant Pool — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

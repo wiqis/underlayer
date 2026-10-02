@@ -13,6 +13,7 @@ public func render_a64_unwind() : string {
     var title = std::string_view("The Frame in a Second Language, and the Shape That Was Not There — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

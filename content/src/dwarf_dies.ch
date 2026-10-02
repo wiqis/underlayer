@@ -12,6 +12,7 @@ public func render_dwarf_dies() : string {
     var title = std::string_view("The DIE Tree — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

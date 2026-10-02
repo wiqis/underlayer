@@ -17,6 +17,7 @@ public func render_a64sys_landing() : string {
     var title = std::string_view("The AArch64 Machine: Modes, Memory and Faults — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

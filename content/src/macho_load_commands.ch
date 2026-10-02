@@ -12,6 +12,7 @@ public func render_macho_load_commands() : string {
     var title = std::string_view("The Load Command Area — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

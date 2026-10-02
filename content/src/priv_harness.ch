@@ -11,6 +11,7 @@ public func render_priv_harness() : string {
     var title = std::string_view("The Harness, and the Eight Things It Refuses to Let Go — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

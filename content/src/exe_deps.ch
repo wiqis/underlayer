@@ -13,6 +13,7 @@ public func render_exe_deps() : string {
     var title = std::string_view("A Dependency Is a Constraint, Not a Cost — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

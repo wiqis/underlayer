@@ -11,6 +11,7 @@ public func render_simd_reduce() : string {
     var title = std::string_view("Going Back to One Scalar — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

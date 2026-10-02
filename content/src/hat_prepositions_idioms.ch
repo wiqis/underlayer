@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_prepositions_idioms() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Prepositions, Idioms and Confused Words — Underlayer")
     page.appendTitle(&title)

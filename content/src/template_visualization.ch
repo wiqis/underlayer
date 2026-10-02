@@ -12,6 +12,7 @@ using std::string_view
 
 public func template_visualization() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Concept Title — Underlayer")
     page.appendTitle(&title)

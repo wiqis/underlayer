@@ -12,6 +12,7 @@ public func render_dwarf_file_tables() : string {
     var title = std::string_view("Directory and File Tables — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

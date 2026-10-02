@@ -12,6 +12,7 @@ public func render_pe_memory_layout() : string {
     var title = std::string_view("Process Memory Layout — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

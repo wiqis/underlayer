@@ -12,6 +12,7 @@ public func render_img_place() : string {
     var title = std::string_view("Where the Kernel Put Everything — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

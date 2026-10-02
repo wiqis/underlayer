@@ -11,6 +11,7 @@ public func render_x86_boundary() : string {
     var title = std::string_view("What Ring 3 Can See, and What It Cannot — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

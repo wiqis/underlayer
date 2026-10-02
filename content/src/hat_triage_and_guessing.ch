@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_triage_and_guessing() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Triage and Guessing — Underlayer")
     page.appendTitle(&title)

@@ -13,6 +13,7 @@ public func render_wasm_instructions() : string {
     var title = std::string_view("Instruction Encoding — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

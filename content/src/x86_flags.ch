@@ -11,6 +11,7 @@ public func render_x86_flags() : string {
     var title = std::string_view("From a Comparison to a Boolean — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

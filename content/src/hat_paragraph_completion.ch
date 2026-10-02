@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_paragraph_completion() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Paragraph Completion and Coherence - Underlayer")
     page.appendTitle(&title)

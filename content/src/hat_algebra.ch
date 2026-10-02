@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_algebra() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Algebra Without Fear — Underlayer")
     page.appendTitle(&title)

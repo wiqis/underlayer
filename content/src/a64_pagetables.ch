@@ -22,6 +22,7 @@ public func render_a64_pagetables() : string {
     var title = std::string_view("Four Levels, and Why a Page Needs a Pair of Relocations — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

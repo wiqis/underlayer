@@ -13,6 +13,7 @@ public func render_sym_binding() : string {
     var title = std::string_view("Binding, and the Two Tables — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

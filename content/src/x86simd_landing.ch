@@ -11,6 +11,7 @@ public func render_x86simd_landing() : string {
     var title = std::string_view("The x86-64 Data Path: Atomics, Ordering and Vectors — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

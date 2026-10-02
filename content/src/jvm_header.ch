@@ -13,6 +13,7 @@ public func render_jvm_header() : string {
     var title = std::string_view("The Header and the Fixed Order — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

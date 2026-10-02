@@ -13,6 +13,7 @@ public func render_mem_latency() : string {
     var title = std::string_view("A Chase and a Sweep Are Different Questions — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

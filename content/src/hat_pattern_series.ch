@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_pattern_series() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Number and Letter Series — Underlayer")
     page.appendTitle(&title)

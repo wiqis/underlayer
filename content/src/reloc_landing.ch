@@ -11,6 +11,7 @@ public func render_reloc_landing() : string {
     var title = std::string_view("Relocations, PIC and PIE — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

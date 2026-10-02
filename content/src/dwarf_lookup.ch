@@ -12,6 +12,7 @@ public func render_dwarf_lookup() : string {
     var title = std::string_view("Finding Things Without Reading Everything — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

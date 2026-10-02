@@ -18,6 +18,7 @@ public func render_a64_neonspace() : string {
     var title = std::string_view("The Shared Memory Space, and the Bit SVE Does Not Have — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

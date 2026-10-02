@@ -12,6 +12,7 @@ public func render_rv_amo() : string {
     var title = std::string_view("The Reservation, and Why the Retry Is the Instruction — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

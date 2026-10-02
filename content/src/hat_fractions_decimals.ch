@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_fractions_decimals() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Fractions, Decimals and Percentages — Underlayer")
     page.appendTitle(&title)

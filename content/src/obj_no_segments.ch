@@ -13,6 +13,7 @@ public func render_obj_no_segments() : string {
     var title = std::string_view("No Segments, and Why — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

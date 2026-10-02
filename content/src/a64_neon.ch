@@ -19,6 +19,7 @@ public func render_a64_neon() : string {
     var title = std::string_view("Thirty-Two Registers, Four Ways to Read One — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

@@ -13,6 +13,7 @@ public func render_link_default_script() : string {
     var title = std::string_view("The Program That Placed Your Binary — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

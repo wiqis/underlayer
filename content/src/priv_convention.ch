@@ -11,6 +11,7 @@ public func render_priv_convention() : string {
     var title = std::string_view("The Convention, in the Kernel's Own Bytes — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

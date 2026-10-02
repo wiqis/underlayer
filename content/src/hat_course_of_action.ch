@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_course_of_action() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Course of Action - Underlayer")
     page.appendTitle(&title)

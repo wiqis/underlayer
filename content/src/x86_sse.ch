@@ -11,6 +11,7 @@ public func render_x86_sse() : string {
     var title = std::string_view("SSE and SSE2: The XMM Register and the Alignment Split — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

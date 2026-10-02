@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_grammar_errors() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Finding the Error: Grammar Rules — Underlayer")
     page.appendTitle(&title)

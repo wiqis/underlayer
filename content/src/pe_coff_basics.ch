@@ -12,6 +12,7 @@ public func render_pe_coff_basics() : string {
     var title = std::string_view("The COFF Heritage — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

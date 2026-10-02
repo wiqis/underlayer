@@ -12,6 +12,7 @@ public func render_macho_hardening() : string {
     var title = std::string_view("__PAGEZERO and Memory Hardening — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

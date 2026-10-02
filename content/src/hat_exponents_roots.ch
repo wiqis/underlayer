@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_exponents_roots() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Powers, Roots and Surds — Underlayer")
     page.appendTitle(&title)

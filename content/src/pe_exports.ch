@@ -12,6 +12,7 @@ public func render_pe_exports() : string {
     var title = std::string_view("The Export Tables — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

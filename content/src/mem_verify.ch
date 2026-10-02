@@ -14,6 +14,7 @@ public func render_mem_verify() : string {
     var title = std::string_view("The Harness, and the Claim It Refuses to Make — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

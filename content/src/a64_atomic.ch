@@ -23,6 +23,7 @@ public func render_a64_atomic() : string {
     var title = std::string_view("The Exclusive Monitor, and Why the Retry Is the Instruction — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

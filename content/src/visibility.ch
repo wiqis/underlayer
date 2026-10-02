@@ -8,6 +8,7 @@ using std::string_view
 
 public func render_visibility() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Symbol Visibility — Underlayer")
     page.appendTitle(&title)
@@ -231,7 +232,7 @@ nm --defined-only libvis.so
         .lesson.ls-loose { letter-spacing: 0.04em; }
         .lesson.w-narrow { max-width: 640px; margin: 0 auto; }
         .lesson.w-wide { max-width: 1100px; margin: 0 auto; }
-        .a11y-controls { position: fixed; top: 1rem; left: 1rem; display: flex; gap: 0.35rem; z-index: 60; }
+        .a11y-controls { display: flex; gap: 0.35rem; margin-bottom: 0.5rem; }
         .a11y-btn { width: 2rem; height: 2rem; border: 1px solid #d1d5db; border-radius: 4px; background: white; cursor: pointer; font-size: 0.75rem; font-weight: 600; color: #374151; }
         .a11y-btn:hover { background: #f3f4f6; }
         .a11y-btn.active { background: #1f2937; color: white; border-color: #1f2937; }

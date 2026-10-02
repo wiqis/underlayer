@@ -11,6 +11,7 @@ public func render_x86asm_landing() : string {
     var title = std::string_view("x86-64 Assembly and Encoding — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

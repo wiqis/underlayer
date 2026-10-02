@@ -12,6 +12,7 @@ public func render_reloc_why_so_many() : string {
     var title = std::string_view("Why There Are So Many Kinds — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

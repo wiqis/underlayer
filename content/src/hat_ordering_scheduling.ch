@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_ordering_scheduling() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Ordering, Grouping and Scheduling — Underlayer")
     page.appendTitle(&title)

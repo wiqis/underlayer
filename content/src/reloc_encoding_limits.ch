@@ -13,6 +13,7 @@ public func render_reloc_encoding_limits() : string {
     var title = std::string_view("The Limits That Shaped the Table — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

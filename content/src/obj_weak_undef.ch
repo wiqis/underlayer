@@ -13,6 +13,7 @@ public func render_obj_weak_undef() : string {
     var title = std::string_view("Weak and Undefined-Weak — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

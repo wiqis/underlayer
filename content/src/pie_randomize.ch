@@ -13,6 +13,7 @@ public func render_pie_randomize() : string {
     var title = std::string_view("Does the Executable Actually Move? — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

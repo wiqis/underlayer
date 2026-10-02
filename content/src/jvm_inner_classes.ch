@@ -13,6 +13,7 @@ public func render_jvm_inner_classes() : string {
     var title = std::string_view("Inner Classes and Nests — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

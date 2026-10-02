@@ -14,6 +14,7 @@ using std::string_view
 
 public func render_hat_landing() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("HAT — Higher Education Aptitude Test — Underlayer")
     page.appendTitle(&title)

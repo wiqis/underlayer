@@ -11,6 +11,7 @@ public func render_a64abi_landing() : string {
     var title = std::string_view("The AArch64 Procedure Call Standard — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

@@ -13,6 +13,7 @@ public func render_cb_sched() : string {
     var title = std::string_view("Instruction Scheduling — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

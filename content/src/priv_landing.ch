@@ -11,6 +11,7 @@ public func render_priv_landing() : string {
     var title = std::string_view("Exceptions, Privilege and Mode Changes — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

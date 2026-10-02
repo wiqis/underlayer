@@ -11,6 +11,7 @@ public func render_rv_noflags() : string {
     var title = std::string_view("No Flags Register, No Condition Codes, No CMOV — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

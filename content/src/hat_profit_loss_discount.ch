@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_profit_loss_discount() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Profit, Loss and Discount — Underlayer")
     page.appendTitle(&title)

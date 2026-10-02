@@ -8,6 +8,7 @@ using std::string_view
 
 public func render_elf_identification() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("ELF Identification — Underlayer")
     page.appendTitle(&title)
@@ -215,7 +216,7 @@ public func render_elf_identification() : string {
         .lesson.ls-loose { letter-spacing: 0.04em; }
         .lesson.w-narrow { max-width: 640px; margin: 0 auto; }
         .lesson.w-wide { max-width: 1100px; margin: 0 auto; }
-        .a11y-controls { position: fixed; top: 1rem; left: 1rem; display: flex; gap: 0.35rem; z-index: 60; }
+        .a11y-controls { display: flex; gap: 0.35rem; margin-bottom: 0.5rem; }
         .a11y-btn { width: 2rem; height: 2rem; border: 1px solid #d1d5db; border-radius: 4px; background: white; cursor: pointer; font-size: 0.75rem; font-weight: 600; color: #374151; }
         .a11y-btn:hover { background: #f3f4f6; }
         .a11y-btn.active { background: #1f2937; color: white; border-color: #1f2937; }
@@ -236,7 +237,7 @@ public func render_elf_identification() : string {
         .lesson.high-contrast .quiz-option { background: #111; color: #fff; border-color: #555; }
         .lesson.reduced-motion *, .lesson.reduced-motion *::before, .lesson.reduced-motion *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         @media (min-width: 1440px) { .lesson { max-width: 960px; } }
-        .cb-controls { position: fixed; top: 1rem; left: 5rem; display: flex; gap: 0.35rem; z-index: 60; }
+        .cb-controls { display: flex; gap: 0.35rem; margin-bottom: 0.5rem; }
         .cb-controls .a11y-btn { font-size: 0.65rem; }
         .cb-controls .a11y-btn.active { background: #1f2937; color: white; border-color: #1f2937; }
         footer { text-align: center; padding: 2rem 1rem; color: #6b7280; font-size: 0.85rem; border-top: 1px solid #e5e7eb; margin-top: 2rem; }

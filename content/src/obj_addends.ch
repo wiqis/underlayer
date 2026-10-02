@@ -15,6 +15,7 @@ public func render_obj_addends() : string {
     var title = std::string_view("The Addend Lives in the Bytes — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

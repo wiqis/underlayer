@@ -12,6 +12,7 @@ public func render_pe_data_directories() : string {
     var title = std::string_view("The Data Directories — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

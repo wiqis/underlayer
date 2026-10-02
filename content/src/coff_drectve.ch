@@ -13,6 +13,7 @@ public func render_coff_drectve() : string {
     var title = std::string_view("Linker Directives in a Section — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

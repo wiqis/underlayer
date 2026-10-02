@@ -13,6 +13,7 @@ public func render_mem_associativity() : string {
     var title = std::string_view("A Number From /sys, a Number Measured — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

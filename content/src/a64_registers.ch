@@ -13,6 +13,7 @@ public func render_a64_registers() : string {
     var title = std::string_view("One Register, Two Names, and Three Things Called 31 — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

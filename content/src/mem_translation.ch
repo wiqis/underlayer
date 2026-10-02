@@ -14,6 +14,7 @@ public func render_mem_translation() : string {
     var title = std::string_view("Translation, and the 512x a Huge Page Buys — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

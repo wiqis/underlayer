@@ -13,6 +13,7 @@ public func render_link_keep_gc() : string {
     var title = std::string_view("Reachability, and Who the Roots Are — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

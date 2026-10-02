@@ -13,6 +13,7 @@ public func render_link_orphans() : string {
     var title = std::string_view("The Sections the Script Forgot — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

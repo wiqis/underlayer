@@ -11,6 +11,7 @@ public func render_rvabi_landing() : string {
     var title = std::string_view("The RISC-V ABI, and the Register That Isn't There — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

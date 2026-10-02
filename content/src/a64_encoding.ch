@@ -12,6 +12,7 @@ public func render_a64_encoding() : string {
     var title = std::string_view("The Class Field Is Four Bits, and the Field Map Is Measured — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

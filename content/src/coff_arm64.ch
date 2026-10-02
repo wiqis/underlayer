@@ -13,6 +13,7 @@ public func render_coff_arm64() : string {
     var title = std::string_view("ARM64 Relocations — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

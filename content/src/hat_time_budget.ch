@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_time_budget() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Your 120 Minutes — Underlayer")
     page.appendTitle(&title)

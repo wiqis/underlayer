@@ -11,6 +11,7 @@ public func render_rv_registers() : string {
     var title = std::string_view("The Register File as Roles, Not Numbers — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

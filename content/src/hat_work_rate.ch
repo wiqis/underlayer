@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_work_rate() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Work, Pipes and Rates — Underlayer")
     page.appendTitle(&title)

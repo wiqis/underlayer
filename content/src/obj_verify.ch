@@ -13,6 +13,7 @@ public func render_obj_verify() : string {
     var title = std::string_view("Proving Your Object File Is Right — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

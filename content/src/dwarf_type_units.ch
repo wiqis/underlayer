@@ -13,6 +13,7 @@ public func render_dwarf_type_units() : string {
     var title = std::string_view("Type Units — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

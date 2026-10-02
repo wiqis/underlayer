@@ -8,6 +8,7 @@ using std::string_view
 
 public func render_ld_so() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("The Dynamic Linker — Underlayer")
     page.appendTitle(&title)

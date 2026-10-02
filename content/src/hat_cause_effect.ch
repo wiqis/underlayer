@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_cause_effect() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Cause and Effect - Underlayer")
     page.appendTitle(&title)

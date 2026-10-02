@@ -13,6 +13,7 @@ public func render_cb_verify() : string {
     var title = std::string_view("Read a Backend's Decisions Back Out of the Bytes — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

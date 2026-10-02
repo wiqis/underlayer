@@ -11,6 +11,7 @@ public func render_sym_landing() : string {
     var title = std::string_view("Symbol Resolution and Symbol Tables — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

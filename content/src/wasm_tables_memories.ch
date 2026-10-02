@@ -13,6 +13,7 @@ public func render_wasm_tables_memories() : string {
     var title = std::string_view("Tables, Memories and Limits — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

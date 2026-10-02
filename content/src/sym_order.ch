@@ -13,6 +13,7 @@ public func render_sym_order() : string {
     var title = std::string_view("Order, Archives and the Map File — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

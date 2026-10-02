@@ -50,7 +50,11 @@
 //   pages_search.ch          — render_search_page             (GET /search)
 //   courses_index_assets.ch  — CSS + JS for /courses and /learning-path
 //   search_assets.ch         — CSS for /search
-//   nav_bar.ch               — render_nav_bar, render_theme_js (the one nav, in one place)
+//   nav_bar.ch               — render_nav_bar, which delegates to the ONE nav in
+//                              content/src/lesson_nav.ch.  The nav lives below
+//                              web because the 398 lesson pages — the ones that
+//                              had none — are built in content/ and cannot
+//                              import this layer.
 //   search_core.ch           — SearchHit, find_bytes, hit_score, snippet helpers
 //   search_scan.ch           — snippet_of, title_less, sort_hits, swap_hits
 //   search_walk.ch           — search_concepts: the walk every search goes through

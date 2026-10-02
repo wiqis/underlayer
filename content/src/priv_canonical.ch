@@ -11,6 +11,7 @@ public func render_priv_canonical() : string {
     var title = std::string_view("The Hole Has No Fixed Address — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

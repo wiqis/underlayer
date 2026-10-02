@@ -12,6 +12,7 @@ public func render_sym_algorithm() : string {
     var title = std::string_view("The Algorithm, Measured — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

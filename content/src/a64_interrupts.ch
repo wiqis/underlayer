@@ -19,6 +19,7 @@ public func render_a64_interrupts() : string {
     var title = std::string_view("Sixteen Entries of 0x80, and Four Times No Diagnostic — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

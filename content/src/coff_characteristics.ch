@@ -12,6 +12,7 @@ public func render_coff_characteristics() : string {
     var title = std::string_view("Section Characteristics — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

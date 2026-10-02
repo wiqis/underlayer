@@ -13,6 +13,7 @@ public func render_link_phdrs() : string {
     var title = std::string_view("PHDRS and the -T Surprise — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

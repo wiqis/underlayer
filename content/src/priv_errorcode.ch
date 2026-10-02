@@ -11,6 +11,7 @@ public func render_priv_errorcode() : string {
     var title = std::string_view("Three Error Codes and None of Them Visible — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

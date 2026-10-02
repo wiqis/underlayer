@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_counting_probability() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Counting and Probability — Underlayer")
     page.appendTitle(&title)

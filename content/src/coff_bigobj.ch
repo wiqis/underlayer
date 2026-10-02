@@ -12,6 +12,7 @@ public func render_coff_bigobj() : string {
     var title = std::string_view("bigobj — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

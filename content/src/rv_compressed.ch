@@ -12,6 +12,7 @@ public func render_rv_compressed() : string {
     var title = std::string_view("The Extension That Halves Instructions, and the One That Breaks Them — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

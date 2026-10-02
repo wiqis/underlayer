@@ -12,6 +12,7 @@ public func render_sym_linker_defined() : string {
     var title = std::string_view("Symbols the Linker Invents — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

@@ -11,6 +11,7 @@ public func render_x86_paging() : string {
     var title = std::string_view("The Four Entries and Every Flag in One — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

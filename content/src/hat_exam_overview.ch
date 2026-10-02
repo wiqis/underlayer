@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_exam_overview() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("HAT Exam Overview — Underlayer")
     page.appendTitle(&title)

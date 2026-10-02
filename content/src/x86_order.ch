@@ -11,6 +11,7 @@ public func render_x86_order() : string {
     var title = std::string_view("Ordering: TSO, the Three Fences, and the Direction Flag — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

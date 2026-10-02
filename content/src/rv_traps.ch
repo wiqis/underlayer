@@ -12,6 +12,7 @@ public func render_rv_traps() : string {
     var title = std::string_view("ecall, the Five Registers, and Why the Mode Is Not in the Instruction — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

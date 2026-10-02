@@ -11,6 +11,7 @@ public func render_x86_frame() : string {
     var title = std::string_view("The Stack Frame, the Red Zone, and Two Rules — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

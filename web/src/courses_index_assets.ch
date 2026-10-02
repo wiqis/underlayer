@@ -1,5 +1,14 @@
 // underlayer_web — CSS and JS for /courses and /learning-path.
 //
+// THE NAV IS NOT HERE ANY MORE.  `.skip-link`, `.navbar`, `.nav-inner`,
+// `.nav-brand`, `.nav-links`, `.nav-link`, `.nav-right`, `.theme-toggle` and
+// the three `.theme-icon-*` rules used to sit in this file, and in
+// search_assets.ch beside it -- two copies of one nav in two sheets, with the
+// 398 lesson pages having neither.  They belong to the nav component
+// (content/src/lesson_nav.ch), which renders the markup, so it renders the
+// styles too: a page that draws the nav can no longer draw it unstyled, and
+// there is one stylesheet for it rather than three.
+//
 // The card treatment is copied from the home page's course grid in
 // home_assets.ch (.course-card, .course-badge, .course-stats, .btn-primary)
 // rather than reinvented: this page is the same collection rendered one level
@@ -14,23 +23,7 @@ public namespace underlayer_web {
             body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 0; background: hsl(var(--background)); color: hsl(var(--foreground)); }
             a { color: hsl(217 91% 60%); text-decoration: none; }
             a:hover { text-decoration: underline; }
-            .skip-link { position: absolute; top: -100%; left: 0; background: hsl(217 91% 60%); color: white; padding: 0.75rem 1.5rem; z-index: 200; font-weight: 600; text-decoration: none; border-radius: 0 0 8px 0; }
-            .skip-link:focus { top: 0; }
             :focus-visible { outline: 2px solid hsl(217 91% 60%); outline-offset: 2px; }
-            .navbar { background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
-            .nav-inner { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; row-gap: 0.25rem; column-gap: 1rem; }
-            .nav-brand { font-size: 1.25rem; font-weight: 700; color: hsl(var(--foreground)); text-decoration: none; }
-            .nav-brand:hover { color: hsl(217 91% 60%); text-decoration: none; }
-            .nav-links { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.25rem 0.5rem; flex: 0 1 auto; min-width: 0; }
-            .nav-link { color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.6rem; border-radius: 6px; transition: all 0.15s; white-space: nowrap; }
-            .nav-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); text-decoration: none; }
-            .nav-link.active { color: hsl(217 91% 60%); background: hsl(217 91% 60% / 10%); }
-            .nav-right { display: flex; align-items: center; gap: 0.75rem; }
-            .theme-toggle { background: none; border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 0.5rem; cursor: pointer; font-size: 1.1rem; line-height: 1; }
-            .theme-toggle:hover { background: hsl(var(--accent)); }
-            .theme-icon-dark { display: none; }
-            .dark .theme-icon-light { display: none; }
-            .dark .theme-icon-dark { display: inline; }
             .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
             .page-head h1 { font-size: 2rem; margin-bottom: 0.5rem; }
             .lede { color: hsl(var(--muted-foreground)); font-size: 1.05rem; max-width: 70ch; }
@@ -95,7 +88,9 @@ public namespace underlayer_web {
     }
 
     public func render_index_js(page : &mut HtmlPage) {
-        render_theme_js(page)
+        // The theme script is NOT called here any more: render_nav_bar emits
+        // it, because the theme toggle belongs to the nav rather than to this
+        // page, and calling it in both places shipped it twice.
         #js {
             // Expand-all is a toggle over every <details>, so a learner who
             // wants the whole catalogue open gets it in one click and can put

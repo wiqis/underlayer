@@ -12,6 +12,7 @@ public func render_pie_flags() : string {
     var title = std::string_view("The Flags, and Which One Is Which Kind — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

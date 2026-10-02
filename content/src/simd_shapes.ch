@@ -11,6 +11,7 @@ public func render_simd_shapes() : string {
     var title = std::string_view("Elementwise, and Independent — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

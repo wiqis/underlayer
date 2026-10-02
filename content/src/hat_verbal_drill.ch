@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_verbal_drill() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Verbal Drill — Underlayer")
     page.appendTitle(&title)

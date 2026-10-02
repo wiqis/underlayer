@@ -12,6 +12,7 @@ public func render_sym_binding_time() : string {
     var title = std::string_view("Lazy, Eager, and the Flag That Does Nothing — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

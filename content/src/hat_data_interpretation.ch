@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_data_interpretation() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Tables, Charts and Graphs — Underlayer")
     page.appendTitle(&title)

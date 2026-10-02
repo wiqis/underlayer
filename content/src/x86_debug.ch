@@ -11,6 +11,7 @@ public func render_x86_debug() : string {
     var title = std::string_view("DR0 to DR7 and the Mask a Debugger Must Program — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

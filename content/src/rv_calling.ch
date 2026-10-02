@@ -12,6 +12,7 @@ public func render_rv_calling() : string {
     var title = std::string_view("The Calling Convention — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

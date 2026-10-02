@@ -13,6 +13,7 @@ public func render_sym_hash() : string {
     var title = std::string_view("Two Hash Tables, One Job — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

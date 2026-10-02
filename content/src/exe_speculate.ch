@@ -13,6 +13,7 @@ public func render_exe_speculate() : string {
     var title = std::string_view("Speculation, and What Could Not Be Measured — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

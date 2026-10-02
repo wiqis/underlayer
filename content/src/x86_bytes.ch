@@ -11,6 +11,7 @@ public func render_x86_bytes() : string {
     var title = std::string_view("Thirty Encodings, Round-Tripped and Cross-Checked — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

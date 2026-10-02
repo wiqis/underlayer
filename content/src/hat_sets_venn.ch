@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_sets_venn() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Set-Based Deduction: Venn Diagrams - Underlayer")
     page.appendTitle(&title)

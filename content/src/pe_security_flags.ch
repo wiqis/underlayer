@@ -12,6 +12,7 @@ public func render_pe_security_flags() : string {
     var title = std::string_view("Security & Subsystem Flags — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

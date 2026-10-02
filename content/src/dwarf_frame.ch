@@ -13,6 +13,7 @@ public func render_dwarf_frame() : string {
     var title = std::string_view("The Other Unwind Section — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

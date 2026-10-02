@@ -13,6 +13,7 @@ public func render_coff_comdat_linking() : string {
     var title = std::string_view("COMDAT in the Linker — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

@@ -11,6 +11,7 @@ public func render_simd_compiler() : string {
     var title = std::string_view("The Compiler, the Intrinsics, and a Control That Lied — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

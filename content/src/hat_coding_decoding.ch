@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_coding_decoding() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Coding and Decoding — Underlayer")
     page.appendTitle(&title)

@@ -12,6 +12,7 @@ public func render_macho_file_layout() : string {
     var title = std::string_view("Mach-O File Layout — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

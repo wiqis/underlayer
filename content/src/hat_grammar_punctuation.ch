@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_grammar_punctuation() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Punctuation and Sentence Boundaries - Underlayer")
     page.appendTitle(&title)

@@ -13,6 +13,7 @@ public func render_cb_abi() : string {
     var title = std::string_view("The Backend and the ABI — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

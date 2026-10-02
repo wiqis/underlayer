@@ -12,6 +12,7 @@ public func render_rv_verify() : string {
     var title = std::string_view("Decode It Yourself, Twice, and Poison It — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

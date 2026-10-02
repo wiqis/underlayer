@@ -12,6 +12,7 @@ public func render_coff_relocations() : string {
     var title = std::string_view("Relocations — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

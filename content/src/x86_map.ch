@@ -11,6 +11,7 @@ public func render_x86_map() : string {
     var title = std::string_view("The Audit, and the Reader That Agreed With Itself — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

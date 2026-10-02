@@ -11,6 +11,7 @@ public func render_x86_avx512() : string {
     var title = std::string_view("AVX-512: ZMM, k0-k7, and a Decoder That Needs No Silicon — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

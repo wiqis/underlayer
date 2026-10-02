@@ -12,6 +12,7 @@ public func render_pe_signature_coff() : string {
     var title = std::string_view("PE Signature and COFF Header — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

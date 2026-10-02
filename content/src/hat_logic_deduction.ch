@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_logic_deduction() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Ordering, Grouping and Deduction — Underlayer")
     page.appendTitle(&title)

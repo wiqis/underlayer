@@ -11,6 +11,7 @@ public func render_x86_syscall() : string {
     var title = std::string_view("SYSCALL and the Four Registers It Touches — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

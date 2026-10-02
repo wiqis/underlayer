@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_mensuration() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("Mensuration: Perimeter, Area and Volume - Underlayer")
     page.appendTitle(&title)

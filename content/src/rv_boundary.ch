@@ -13,6 +13,7 @@ public func render_rv_boundary() : string {
     var title = std::string_view("What This Course Measured, and What It Refused To — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

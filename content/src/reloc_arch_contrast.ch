@@ -12,6 +12,7 @@ public func render_reloc_arch_contrast() : string {
     var title = std::string_view("One Relocation, or Two — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

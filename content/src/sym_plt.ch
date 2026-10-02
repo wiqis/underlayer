@@ -12,6 +12,7 @@ public func render_sym_plt() : string {
     var title = std::string_view("The PLT and the GOT — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

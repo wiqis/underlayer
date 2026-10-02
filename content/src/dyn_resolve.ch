@@ -13,6 +13,7 @@ public func render_dyn_resolve() : string {
     var title = std::string_view("Rebuilding the Scope Yourself — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

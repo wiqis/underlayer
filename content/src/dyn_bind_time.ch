@@ -12,6 +12,7 @@ public func render_dyn_bind_time() : string {
     var title = std::string_view("Lazy, Eager, and What Actually Differs — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

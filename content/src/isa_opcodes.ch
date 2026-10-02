@@ -13,6 +13,7 @@ public func render_isa_opcodes() : string {
     var title = std::string_view("The Opcode Map and Its Holes — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

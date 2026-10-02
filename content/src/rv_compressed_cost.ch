@@ -12,6 +12,7 @@ public func render_rv_compressed_cost() : string {
     var title = std::string_view("What Compression Does to the ABI and to Disassembly — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

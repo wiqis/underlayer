@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_hat_error_log() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("The Error Log — Underlayer")
     page.appendTitle(&title)

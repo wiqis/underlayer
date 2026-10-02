@@ -7,6 +7,7 @@ using std::string_view
 
 public func render_jvm_landing() : string {
     var page = HtmlPage()
+    render_lesson_nav(&mut page)
     page.defaultPrepare()
     var title = std::string_view("JVM Class File Format — Underlayer")
     page.appendTitle(&title)

@@ -11,6 +11,7 @@ public func render_compback_landing() : string {
     var title = std::string_view("Compiler Backend: From IR to Machine Code — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

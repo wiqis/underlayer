@@ -20,6 +20,7 @@ public func render_a64_syscall() : string {
     var title = std::string_view("SVC #imm16, and x8 Is a Convention and Not an Architecture — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

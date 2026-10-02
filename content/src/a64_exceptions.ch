@@ -21,6 +21,7 @@ public func render_a64_exceptions() : string {
     var title = std::string_view("One Register, Three Fields, and Thirty-Nine Meanings — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {

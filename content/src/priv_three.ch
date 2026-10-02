@@ -11,6 +11,7 @@ public func render_priv_three() : string {
     var title = std::string_view("The Same Idea Under Three Architectures — Underlayer")
     page.appendTitle(&title)
 
+    render_lesson_nav(&mut page)
     render_lesson_css(&mut page)
 
     #html {
