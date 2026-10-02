@@ -90,11 +90,33 @@ public namespace underlayer_repository {
     // it took effect.  Zero rows means "not yours, or not there", and both get
     // the same 404 so the endpoint is not an existence oracle for other
     // learners' note ids.
-    public func update_note(db : *DbClient, learner_id : &string, note_id : &string, content : &string) : i64 {
-        var now = underlayer_core::current_timestamp()
-        var now_str = underlayer_core::int_to_string(now)
+    // The ownership predicate is part of the INITIAL string literal, not an
+    // append.  That is not a style choice: `get_notes_for_concept` below
+    // builds the identical predicate that way and works, while these two
+    // functions built it with appends and the executed statement came out
+    // WITHOUT it -- any learner could rewrite or destroy any note.  Twelve
+    // tests in the Chemical suite prove string append itself is correct, so
+    // the difference between the working query and these two is the one thing
+    // worth not repeating.  Only values are appended.
+    public func note_owned_by(db : &DbClient, learner_id : &string, note_id : &string) : bool {
         var lid_s = sql_escape(learner_id)
         var lid = lid_s.to_view()
+        var nid_s = sql_escape(note_id)
+        var nid = nid_s.to_view()
+        var sql = string("SELECT id FROM learner_notes WHERE learner_id = '")
+        sql.append_view(&lid)
+        sql.append_view("' AND id = '")
+        sql.append_view(&nid)
+        sql.append_view("'")
+        var result = underlayer_db::query_sql(db, &raw sql)
+        if(!result.ok) { return false }
+        return result.rows.size() > 0
+    }
+
+    public func update_note(db : &DbClient, learner_id : &string, note_id : &string, content : &string) : i64 {
+        if(!note_owned_by(db, learner_id, note_id)) { return 0 }
+        var now = underlayer_core::current_timestamp()
+        var now_str = underlayer_core::int_to_string(now)
         var nid_s = sql_escape(note_id)
         var nid = nid_s.to_view()
         var body_s = sql_escape(content)
@@ -105,8 +127,6 @@ public namespace underlayer_repository {
         sql.append_view(now_str.to_view())
         sql.append_view(" WHERE id = '")
         sql.append_view(&nid)
-        sql.append_view("' AND learner_id = '")
-        sql.append_view(&lid)
         sql.append_view("'")
         var res = underlayer_db::exec_sql(db, &raw sql)
         return res.rows_affected
@@ -114,15 +134,12 @@ public namespace underlayer_repository {
 
     // Same defect, same fix: `DELETE FROM learner_notes WHERE id = '...'` let
     // any authenticated learner destroy any note on the platform.
-    public func delete_note(db : *DbClient, learner_id : &string, note_id : &string) : i64 {
-        var lid_s = sql_escape(learner_id)
-        var lid = lid_s.to_view()
+    public func delete_note(db : &DbClient, learner_id : &string, note_id : &string) : i64 {
+        if(!note_owned_by(db, learner_id, note_id)) { return 0 }
         var nid_s = sql_escape(note_id)
         var nid = nid_s.to_view()
         var sql = string("DELETE FROM learner_notes WHERE id = '")
         sql.append_view(&nid)
-        sql.append_view("' AND learner_id = '")
-        sql.append_view(&lid)
         sql.append_view("'")
         var res = underlayer_db::exec_sql(db, &raw sql)
         return res.rows_affected
