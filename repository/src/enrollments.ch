@@ -130,4 +130,20 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw sql)
     }
 
+    // WHY touch_enrollment AND NOT enroll_learner ON THE READ PATH.
+    // enroll_learner() INSERTs unconditionally, so calling it once per lesson
+    // view inserted a duplicate row every time the learner re-read the same
+    // concept, and "which courses am I taking" became a list with the same
+    // course in it N times.  touch_enrollment() inserts only when there is no
+    // row and otherwise only bumps last_accessed, so exactly one row per
+    // (learner, course) survives however often the course is opened.
+    public func touch_enrollment(db : *DbClient, learner_id : &string, course_id : &string) {
+        var existing = get_enrollment(db, learner_id, course_id)
+        if(existing.id.size() == 0) {
+            enroll_learner(db, learner_id, course_id)
+            return
+        }
+        update_last_accessed(db, &existing.id)
+    }
+
 }

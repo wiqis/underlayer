@@ -212,6 +212,16 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw idx_sp_learner)
         var idx_sp_date = string("CREATE INDEX IF NOT EXISTS idx_sp_date ON study_plans(learner_id, plan_date)")
         underlayer_db::exec_sql(db, &raw idx_sp_date)
+        // Per-exercise attempt history (4.4.1, 4.4.3).  Until this existed the
+        // only record of a graded answer was an aggregate on concept_states,
+        // so "which quiz did I get wrong" had no answer to read.  One row per
+        // submission, never upserted: three misses are three misses.
+        var sql_xa = string("CREATE TABLE IF NOT EXISTS exercise_attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, learner_id TEXT NOT NULL, course_id TEXT NOT NULL, concept_id TEXT NOT NULL, exercise_id TEXT NOT NULL, correct INTEGER NOT NULL DEFAULT 0, question TEXT DEFAULT '', submitted_at INTEGER NOT NULL)")
+        underlayer_db::exec_sql(db, &raw sql_xa)
+        var idx_xa_learner = string("CREATE INDEX IF NOT EXISTS idx_xa_att_learner ON exercise_attempts(learner_id, correct)")
+        underlayer_db::exec_sql(db, &raw idx_xa_learner)
+        var idx_xa_exercise = string("CREATE INDEX IF NOT EXISTS idx_xa_att_exercise ON exercise_attempts(learner_id, exercise_id)")
+        underlayer_db::exec_sql(db, &raw idx_xa_exercise)
     }
 
 }

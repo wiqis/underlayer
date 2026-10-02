@@ -106,20 +106,6 @@ public func template_exercise_focus() : string {
             var url = '/api/review/submit?concept_id=' + encodeURIComponent(ctx.concept) + '&course_id=' + encodeURIComponent(ctx.course) + '&rating=' + rating;
             try { fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(function() {}); } catch (e) {}
         }
-        function __ul_report_view() {
-            var ctx = __ul_ctx();
-            if (!ctx) { return; }
-            var t = __ul_token();
-            if (!t) { return; }
-            try {
-                fetch('/api/learning/view', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
-                    body: JSON.stringify({ course_id: ctx.course, concept_id: ctx.concept })
-                }).catch(function() {});
-            } catch (e) {}
-        }
-        document.addEventListener('DOMContentLoaded', function() { __ul_report_view(); });
         document.addEventListener('click', function(ev) {
             var el = ev.target;
             while (el && el !== document && !(el.classList && el.classList.contains('quiz-option'))) { el = el.parentNode; }

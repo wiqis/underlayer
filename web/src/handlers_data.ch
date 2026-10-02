@@ -201,6 +201,22 @@ public namespace underlayer_web {
         del_sql15.append_string(&learner_id)
         del_sql15.append_view("'")
         underlayer_db::exec_sql(db, &raw del_sql15)
+        // exercise_attempts and enrollments are the two tables this collection
+        // gained when "opening a lesson" and "which quiz did I fail" started
+        // being recorded (2026-10-02).  They are learner rows like every other
+        // row deleted above, so leaving them out of this list means a learner
+        // who deletes their account keeps their graded-answer history and
+        // their course enrollments -- with no learner row left to join them
+        // to.  The list above is hand-written, which is the actual defect: a
+        // new table is invisible to this function until somebody remembers.
+        var del_xa = string("DELETE FROM exercise_attempts WHERE learner_id = '")
+        del_xa.append_string(&learner_id)
+        del_xa.append_view("'")
+        underlayer_db::exec_sql(db, &raw del_xa)
+        var del_en = string("DELETE FROM enrollments WHERE learner_id = '")
+        del_en.append_string(&learner_id)
+        del_en.append_view("'")
+        underlayer_db::exec_sql(db, &raw del_en)
         var ok_body = string("{\"ok\":true,\"message\":\"account deleted\"}")
         send_json_str(res, &raw ok_body)
     }

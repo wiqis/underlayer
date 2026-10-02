@@ -189,6 +189,20 @@ public func main() : int {
         underlayer_web::handle_progress(db, courses_dir, &req, &raw mut res)
     }))
 
+    // ---- What am I doing: courses in progress, coverage, and the exercises
+    // this learner got wrong (4.4.3).  One payload because /dashboard draws
+    // all three at once and three round trips would make it flash.
+    // Deliberately NOT /api/progress/overview: that path is already claimed by
+    // the /api/progress/:courseId route above and would be swallowed by it.
+    srv.router.add("GET", "/api/me/overview", (|&db, &courses_dir|(req, res) => {
+        underlayer_web::handle_my_overview(db, courses_dir, &req, &raw mut res)
+    }))
+
+    // ---- Which quiz did I fail.  The same list without the course summary. ----
+    srv.router.add("GET", "/api/exercises/failures", (|&db|(req, res) => {
+        underlayer_web::handle_exercise_failures(db, &req, &raw mut res)
+    }))
+
     // ---- Progress Export (6.1.7) ----
     srv.router.add("GET", "/api/progress/export", (|&db|(req, res) => {
         underlayer_web::handle_progress_export(db, &req, &raw mut res)
@@ -339,8 +353,10 @@ public func main() : int {
     }))
 
     // ---- Nav Status (P2 7.1.13 progress indicator, P2 7.1.15 due indicator) ----
-    srv.router.add("GET", "/api/nav-status", (|&db|(req, res) => {
-        underlayer_web::handle_nav_status(db, &req, &raw mut res)
+    // Takes ?course_id= because the bar it feeds is drawn by the per-course
+    // landing nav; it used to report elf's numbers on every course page.
+    srv.router.add("GET", "/api/nav-status", (|&db, &courses_dir|(req, res) => {
+        underlayer_web::handle_nav_status(db, courses_dir, &req, &raw mut res)
     }))
 
     // ---- Nav Search / Quick Jump (P2 7.1.10 command palette) ----

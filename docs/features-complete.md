@@ -630,7 +630,17 @@
 
 - [ ] P3 4.4.1 Per-exercise accuracy tracking
 - [ ] P3 4.4.2 Per-exercise time tracking
-- [ ] P3 4.4.3 Per-exercise attempt tracking
+- [x] P3 4.4.3 Per-exercise attempt tracking
+      One row per submission in `exercise_attempts` (never upserted, so three
+      misses are three misses); `/api/exercises/failures` collapses them per
+      exercise and /dashboard lists the question, the miss count and a link to
+      its lesson. Recorded in repository/src/exercise_attempts.ch, gated by
+      tools/progress_check.py sections 8 and 10.
+- [ ] P3 4.4.3a Per-exercise accuracy RATE displayed (correct / attempts)
+      Added 2026-10-02 as a sub-feature of 4.4.3, because the attempt rows
+      carry `correct` and the data supports it but no page shows the number.
+      /dashboard shows the miss count only. Deliberately left unchecked rather
+      than marked done on the strength of the data existing.
 - [ ] P3 4.4.4 Per-exercise hint usage tracking
 - [ ] P3 4.4.5 Per-exercise difficulty estimation (from learner data)
 - [ ] P3 4.4.6 Per-exercise quality estimation (from learner feedback)

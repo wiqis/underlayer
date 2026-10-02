@@ -206,6 +206,13 @@ public namespace underlayer_web {
 
             underlayer_repository::upsert_concept_state(&raw db, &raw state)
 
+            // 4.4.1/4.4.3: the per-attempt row.  Everything around it is an
+            // aggregate over this concept; without one row per submission,
+            // "which quiz did I fail" stays unanswerable no matter what a page
+            // draws, because two wrong answers in a three-exercise concept are
+            // indistinguishable in attempts-minus-correct.
+            underlayer_repository::record_exercise_attempt(&raw db, &learner_id, &course_id, &ex.concept_id, &ex.id, correct, &ex.question)
+
             // Seed (first interaction) then update the review item's schedule
             underlayer_repository::seed_review_items(&raw db, &learner_id, &course_id)
             var item_id = string()

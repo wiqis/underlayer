@@ -26,6 +26,7 @@ public namespace underlayer_content {
             .nav-progress[hidden] { display: none; }
             .nav-progress-track { width: 120px; height: 6px; background: hsl(var(--secondary)); border-radius: 9999px; overflow: hidden; }
             .nav-progress-fill { height: 100%; width: 0%; background: hsl(217 91% 60%); border-radius: 9999px; transition: width 0.3s; }
+            .nav-progress-note { font-size: 0.78rem; color: hsl(var(--muted-foreground)); white-space: nowrap; }
             .nav-due-badge { font-size: 0.75rem; font-weight: 600; color: hsl(0 0% 100%); background: hsl(0 84% 60%); border-radius: 9999px; padding: 0.15rem 0.6rem; text-decoration: none; white-space: nowrap; }
             .nav-due-badge[hidden] { display: none; }
             .nav-due-badge:hover { text-decoration: none; filter: brightness(1.1); }
@@ -100,10 +101,34 @@ public namespace underlayer_content {
             setTheme(getTheme());
             // Nav progress bar + due review badge (P2 7.1.13/7.1.15).
             // Stays hidden in static mode (no backend) — fetch failure is a no-op.
+            //
+            // THIS USED TO FETCH '/api/nav-status' WITH NO ARGUMENTS, and both
+            // omissions were bugs a learner could see.  Measured 2026-10-02:
+            //
+            //   * No course_id: the handler fell back to the literal "elf", so
+            //     /courses/rvasm drew ELF's bar -- a learner 40% through RISC-V
+            //     assembly was told 20%, in the RISC-V page, with a straight
+            //     face.  34 courses, one hardcoded id.
+            //   * No Authorization header: the handler falls back to the
+            //     "demo" learner, so the bar could NEVER show the signed-in
+            //     learner's own numbers no matter how much work they did.  It
+            //     was the demo learner's progress on every learner's page.
+            //
+            // __ul_ctx() above already extracted the course from the pathname
+            // and was dead code; __ul_token() reads the same session_token the
+            // lesson pages use.  Both are now used, and this is the only
+            // progress indicator a course landing page has, so it is the one
+            // that had to be right.
             function loadNavStatus() {
                 var wrap = document.getElementById('nav-progress');
                 if (!wrap) return;
-                fetch('/api/nav-status').then(function(r) {
+                var ctx = __ul_ctx();
+                if (!ctx) return;
+                var headers = {};
+                var t = __ul_token();
+                if (t) { headers['Authorization'] = 'Bearer ' + t; }
+                var url = '/api/nav-status?course_id=' + encodeURIComponent(ctx.course);
+                fetch(url, { headers: headers }).then(function(r) {
                     if (!r.ok) throw new Error('http ' + r.status);
                     return r.json();
                 }).then(function(data) {
@@ -117,6 +142,14 @@ public namespace underlayer_content {
                     if (badge && data.due_reviews > 0) {
                         badge.textContent = data.due_reviews + ' due';
                         badge.hidden = false;
+                    }
+                    // The bar alone does not say how much of the course that
+                    // percentage is.  "40%" of what?  The counts are already
+                    // in the response and cost nothing to show.
+                    var note = document.getElementById('nav-progress-note');
+                    if (note) {
+                        note.textContent = (data.concepts_started || 0) + ' of ' +
+                            (data.concepts_total || 0) + ' read';
                     }
                 }).catch(function() {
                     // No backend available — leave indicators hidden.

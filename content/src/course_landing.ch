@@ -64,6 +64,7 @@ using underlayer_models::Course
                         <div class="nav-progress-track" id="nav-progress-bar" role="progressbar" aria-label="Course progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                             <div class="nav-progress-fill" id="nav-progress-fill"></div>
                         </div>
+                        <span class="nav-progress-note" id="nav-progress-note"></span>
                         <a href="/review" class="nav-due-badge" id="nav-due-badge" hidden></a>
                     </div>
                     <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">

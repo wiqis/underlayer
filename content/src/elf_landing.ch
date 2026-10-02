@@ -234,20 +234,6 @@ public func render_elf_landing() : string {
             var url = '/api/review/submit?concept_id=' + encodeURIComponent(ctx.concept) + '&course_id=' + encodeURIComponent(ctx.course) + '&rating=' + rating;
             try { fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(function() {}); } catch (e) {}
         }
-        function __ul_report_view() {
-            var ctx = __ul_ctx();
-            if (!ctx) { return; }
-            var t = __ul_token();
-            if (!t) { return; }
-            try {
-                fetch('/api/learning/view', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t },
-                    body: JSON.stringify({ course_id: ctx.course, concept_id: ctx.concept })
-                }).catch(function() {});
-            } catch (e) {}
-        }
-        document.addEventListener('DOMContentLoaded', function() { __ul_report_view(); });
         document.addEventListener('click', function(ev) {
             var el = ev.target;
             while (el && el !== document && !(el.classList && el.classList.contains('quiz-option'))) { el = el.parentNode; }
@@ -284,10 +270,21 @@ public func render_elf_landing() : string {
         setTheme(getTheme());
         // P2 7.1.13/7.1.15: Nav progress bar + due review badge.
         // Stays hidden in static mode (no backend) — fetch failure is a no-op.
+        //
+        // Same two bugs as course_landing_assets.ch, fixed the same way: no
+        // course_id meant the handler reported ELF for every course, and no
+        // Authorization header meant it reported the "demo" learner to every
+        // signed-in learner.  __ul_ctx()/__ul_token() already existed here.
         function loadNavStatus() {
             var wrap = document.getElementById('nav-progress');
             if (!wrap) return;
-            fetch('/api/nav-status').then(function(r) {
+            var ctx = __ul_ctx();
+            if (!ctx) return;
+            var headers = {};
+            var t = __ul_token();
+            if (t) { headers['Authorization'] = 'Bearer ' + t; }
+            var url = '/api/nav-status?course_id=' + encodeURIComponent(ctx.course);
+            fetch(url, { headers: headers }).then(function(r) {
                 if (!r.ok) throw new Error('http ' + r.status);
                 return r.json();
             }).then(function(data) {

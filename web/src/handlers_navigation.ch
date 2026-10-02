@@ -6,43 +6,41 @@ using underlayer_db::DbClient
 public namespace underlayer_web {
 
     // P2 7.1.13/7.1.15: Nav status — course progress + due review count for the navbar
-    public func handle_nav_status(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    // WHY THIS NEEDS courses_dir AND A course_id NOW, and it is the second
+    // place this exact bug lived.  The bar this feeds is drawn by the 34
+    // course landing pages' nav, and it was pinned to elf with a hardcoded 24
+    // concepts -- so on /courses/rvasm, a course with a different concept
+    // count, the bar was showing the ELF learner's progress.  And `started`
+    // counted `attempts > 0`, which only an ANSWERED exercise sets; reading
+    // three lessons in a row moved it by zero.  Both fixed: the course comes
+    // from the query string the landing page already knows how to send, the
+    // total comes from the manifest, and "started" means the platform has a
+    // record of the learner being there, which a read now creates.
+    public func handle_nav_status(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = auth_get_learner_id(&raw db, req)
         if(learner_id.size() == 0) {
             learner_id = string("demo")
         }
-        var course_id = string("elf")
+        var course_id = progress_course_id(req)
 
-        // Count concepts the learner has actually attempted
         var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
-        var started : int = 0
-        var si : size_t = 0
-        while(si < states.size()) {
-            var state = states.get_ptr(si)
-            var not_started = string("not_started")
-            if(state.attempts > 0 && !state.status.equals(&not_started)) {
-                started = started + 1
-            }
-            si = si + 1
-        }
-
-        // 24 concepts — matches render_concept mapping in helpers.ch
-        var total : int = 24
-        var pct : int = (started * 100) / total
+        var cov = underlayer_learning::compute_course_coverage(&course_id, &raw states, manifest_concept_total(courses_dir, &course_id))
         var due_items = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, 50)
 
-        var body = string("{\"concepts_started\":")
-        var s_str = underlayer_core::int_to_string(started as i64)
-        body.append_string(&s_str)
+        var body = string("{\"course_id\":\"")
+        body.append_string(&course_id)
+        body.append_view("\",\"concepts_started\":")
+        body.append_string(&underlayer_core::int_to_string(cov.concepts_started as i64))
         body.append_view(",\"concepts_total\":")
-        var t_str = underlayer_core::int_to_string(total as i64)
-        body.append_string(&t_str)
+        body.append_string(&underlayer_core::int_to_string(cov.concepts_total as i64))
+        body.append_view(",\"concepts_mastered\":")
+        body.append_string(&underlayer_core::int_to_string(cov.concepts_mastered as i64))
         body.append_view(",\"progress_pct\":")
-        var p_str = underlayer_core::int_to_string(pct as i64)
-        body.append_string(&p_str)
+        body.append_string(&underlayer_core::int_to_string(cov.progress_percentage as i64))
+        body.append_view(",\"mastery_pct\":")
+        body.append_string(&underlayer_core::int_to_string(cov.mastery_percentage as i64))
         body.append_view(",\"due_reviews\":")
-        var d_str = underlayer_core::int_to_string(due_items.size() as i64)
-        body.append_string(&d_str)
+        body.append_string(&underlayer_core::int_to_string(due_items.size() as i64))
         body.append_view("}")
         send_json_str(res, &raw body)
     }

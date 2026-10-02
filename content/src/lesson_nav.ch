@@ -85,8 +85,25 @@ public namespace underlayer_content {
     // What every course in the collection called from its page builder.  Named
     // for the page it is called from, so the insertions read as what they are;
     // it is the same one nav, through the same one markup block.
+    //
+    // IT ALSO REPORTS THE ENGAGEMENT EVENT, and that is not incidental.  431 of
+    // the 438 page builders in this directory make this call and nothing else
+    // that is universal, which makes it the one place a fact about every lesson
+    // page can live.  Before it, "a learner opened a concept" was reported by
+    // 31 hand-written copies inside 31 pages' own #js blocks and by nobody
+    // else, so FSRS, streaks, achievements and every progress view depended on
+    // an event that seven of every eight pages never produced.  Adding it here
+    // reaches all 431 in one reviewable line, and tools/progress_check.py
+    // fails if it is ever taken out.
+    //
+    // It goes AFTER the nav markup because that is the order the browser wants
+    // -- the strip sits between the nav and the lesson, where a positional fact
+    // about the course belongs -- and because HtmlPage collects blocks
+    // regardless of call order, so neither this nor the caller's
+    // `page.defaultPrepare()` placement changes the output.
     public func render_lesson_nav(page : &mut HtmlPage) {
         render_site_nav(page, true)
+        render_lesson_engagement(page)
     }
 
     // The skip-link, on pages that have something above the nav to skip past.

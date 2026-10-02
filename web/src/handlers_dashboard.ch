@@ -1,25 +1,49 @@
-// underlayer_web — Dashboard handler with universal components.
+// underlayer_web — Dashboard: what am I doing (7.2.4, 7.2.5, 1.5.20).
+//
+// WHAT THIS PAGE ALREADY SHOWED, measured on 2026-10-02, because the
+// instruction was to read it before building anything:
+//
+//   * Four stat cards (total / mastered / learning / reviewing), a Knowledge
+//     Health card with three bars, a Review Queue card with two badges and a
+//     Start Review button.
+//
+// AND WHAT EVERY ONE OF THOSE NUMBERS WAS: `course_id` was the literal "elf",
+// hardcoded on line 14, on a platform with 34 courses.  So "Total Concepts 24"
+// was true only for someone studying ELF, and for a learner deep into the RISC-V
+// assembly course -- a course with a different number of concepts entirely --
+// the dashboard reported ELF's numbers and said so with a straight face.  It is
+// now driven by the same ?course_id= the rest of the progress API reads, and
+// the manifest supplies the total instead of a constant.
+//
+// WHAT IT DID NOT SHOW, which is the whole of the request: nothing about WHICH
+// COURSES the learner is in (the `enrollments` table existed with a full CRUD
+// layer and zero rows, because nothing wrote to it), and nothing about WHICH
+// QUIZES they got wrong (the per-attempt record did not exist -- see
+// repository/src/exercise_attempts.ch for why no view could have shown it).
+//
+// SO THIS PAGE GAINS TWO LISTS, not a new page.  A parallel dashboard would
+// have been the same six questions in a second place with its own stale copy
+// of the answers; the two lists answer the two questions that had none.
 using std::string
 using std::vector
 using underlayer_db::DbClient
 
 public namespace underlayer_web {
 
-    // 7.2.4, 7.2.5, 1.5.20: Dashboard with progress, knowledge health, and stats
     public func handle_dashboard(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = auth_get_learner_id(&raw db, req)
-        if(learner_id.size() == 0) {
-            learner_id = string("demo")
-        }
-        var course_id = string("elf")
+        var signed_in = learner_id.size() > 0
+        if(!signed_in) { learner_id = string("demo") }
+        var course_id = progress_course_id(req)
 
-        // Get knowledge health
         var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
         var health = underlayer_learning::compute_knowledge_health(&raw states)
         var depth = underlayer_learning::compute_depth_score(&raw states)
-        var breadth = underlayer_learning::compute_breadth_score(&raw states, health.total_concepts)
+        var total_concepts = manifest_concept_total(courses_dir, &course_id)
+        if(total_concepts == 0) { total_concepts = health.total_concepts }
+        var breadth = underlayer_learning::compute_breadth_score(&raw states, total_concepts)
+        var cov = underlayer_learning::compute_course_coverage(&course_id, &raw states, total_concepts)
 
-        // Get due items count
         var due_items = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, 1000)
         var new_count = 0
         var due_count = 0
@@ -31,12 +55,12 @@ public namespace underlayer_web {
             i = i + 1
         }
 
-        // Build page with components
         var page = HtmlPage()
         page.defaultUniversalSetup()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
         page.appendTitle(std::string_view("Dashboard — Underlayer"))
+        render_dashboard_css(&mut page)
 
         #html {
             <a href="#main-content" class="skip-link">Skip to content</a>
@@ -72,34 +96,55 @@ public namespace underlayer_web {
             </div>
 
             <div class="container" id="main-content" style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
-                <div style="margin-bottom: 2rem;">
+                <div class="wd-head">
                     <H1>Dashboard</H1>
-                    <Text variant="muted">Welcome back to your learning journey</Text>
+                    <Text variant="muted">Where you are, and what to do next</Text>
                 </div>
 
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
                     <Card>
                         <CardBody>
-                            <Text variant="muted">Total Concepts</Text>
-                            <Text style="font-size: 2rem; font-weight: bold;">{health.total_concepts}</Text>
+                            <Text variant="muted">Concepts in {course_id}</Text>
+                            <Text style="font-size: 2rem; font-weight: bold;">{cov.concepts_total}</Text>
                         </CardBody>
                     </Card>
                     <Card>
                         <CardBody>
-                            <Text variant="muted">Mastered</Text>
-                            <Text style="font-size: 2rem; font-weight: bold; color: var(--primary);">{health.mastered}</Text>
+                            <Text variant="muted">Read</Text>
+                            <Text style="font-size: 2rem; font-weight: bold; color: var(--primary);">{cov.concepts_started}</Text>
                         </CardBody>
                     </Card>
                     <Card>
                         <CardBody>
-                            <Text variant="muted">Learning</Text>
-                            <Text style="font-size: 2rem; font-weight: bold; color: var(--accent);">{health.learning}</Text>
+                            <Text variant="muted">Learned</Text>
+                            <Text style="font-size: 2rem; font-weight: bold; color: var(--accent);">{cov.concepts_mastered}</Text>
                         </CardBody>
                     </Card>
                     <Card>
                         <CardBody>
-                            <Text variant="muted">Reviewing</Text>
-                            <Text style="font-size: 2rem; font-weight: bold; color: var(--destructive);">{health.reviewing}</Text>
+                            <Text variant="muted">Review due</Text>
+                            <Text style="font-size: 2rem; font-weight: bold; color: var(--destructive);">{cov.concepts_due}</Text>
+                        </CardBody>
+                    </Card>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>What am I doing</CardTitle>
+                        </CardHeader>
+                        <CardBody>
+                            <Text variant="muted">Courses you have opened: <span id="wd-courses-count">-</span></Text>
+                            <div id="wd-courses" aria-live="polite"></div>
+                        </CardBody>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Which quizzes I failed</CardTitle>
+                        </CardHeader>
+                        <CardBody>
+                            <Text variant="muted">Distinct questions you got wrong: <span id="wd-failures-count">-</span></Text>
+                            <div id="wd-failures" aria-live="polite"></div>
                         </CardBody>
                     </Card>
                 </div>
@@ -111,9 +156,14 @@ public namespace underlayer_web {
                         </CardHeader>
                         <CardBody>
                             <div style="margin-bottom: 1rem;">
-                                <Text>Health Score</Text>
-                                <Progress value={health.health_score * 100.0} max={100.0} variant="success" />
-                                <Caption>{health.health_score * 100.0}% mastered</Caption>
+                                <Text>Course progress</Text>
+                                <Progress value={cov.progress_percentage} max={100} variant="success" />
+                                <Caption>{cov.concepts_started} of {cov.concepts_total} concepts read</Caption>
+                            </div>
+                            <div style="margin-bottom: 1rem;">
+                                <Text>Mastery (of what you have read)</Text>
+                                <Progress value={cov.mastery_percentage} max={100} variant="info" />
+                                <Caption>{cov.mastery_percentage}% learned</Caption>
                             </div>
                             <div style="margin-bottom: 1rem;">
                                 <Text>Depth Score</Text>
@@ -143,7 +193,7 @@ public namespace underlayer_web {
                                 <Badge variant="success">Mastered: {health.mastered}</Badge>
                             </div>
                             <div style="margin-top: 1rem;">
-                                <Button variant="primary">Start Review</Button>
+                                <a href="/review" class="my-link">Start a review session</a>
                             </div>
                         </CardBody>
                     </Card>
@@ -153,68 +203,7 @@ public namespace underlayer_web {
             <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑ Top</button>
         }
 
-        #css {
-            [data-chx-i] { display: contents; }
-            .skip-link { position: absolute; top: -100%; left: 0; background: hsl(217 91% 60%); color: white; padding: 0.75rem 1.5rem; z-index: 200; font-weight: 600; text-decoration: none; border-radius: 0 0 8px 0; }
-            .skip-link:focus { top: 0; }
-            :focus-visible { outline: 2px solid hsl(217 91% 60%); outline-offset: 2px; }
-            .container { font-family: system-ui, sans-serif; background: hsl(var(--background)); color: hsl(var(--foreground)); min-height: 100vh; }
-            .navbar { background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
-            .nav-inner { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; row-gap: 0.25rem; column-gap: 1rem; }
-            .nav-brand { font-size: 1.25rem; font-weight: 700; color: hsl(var(--foreground)); text-decoration: none; }
-            .nav-brand:hover { color: hsl(217 91% 60%); }
-            .nav-links { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.25rem 0.5rem; flex: 0 1 auto; min-width: 0; }
-            .nav-link { color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.6rem; border-radius: 6px; transition: all 0.15s; white-space: nowrap; }
-            .nav-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
-            .nav-link.active { color: hsl(217 91% 60%); background: hsl(217 91% 60% / 10%); }
-            .nav-right { display: flex; align-items: center; gap: 0.75rem; }
-            .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 0.5rem; }
-            .hamburger-line { display: block; width: 24px; height: 2px; background: hsl(var(--foreground)); margin: 4px 0; transition: all 0.3s; }
-            .theme-toggle { background: none; border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 0.5rem; cursor: pointer; font-size: 1.1rem; line-height: 1; }
-            .theme-toggle:hover { background: hsl(var(--accent)); }
-            .theme-icon-dark { display: none; }
-            .dark .theme-icon-light { display: none; }
-            .dark .theme-icon-dark { display: inline; }
-            @media (max-width: 1300px) {
-                .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); flex-direction: column; padding: 1rem; gap: 0.5rem; }
-                .nav-links.open { display: flex; }
-                .nav-link { padding: 0.75rem 1rem; }
-                .hamburger { display: block; }
-            }
-            @media (max-width: 768px) {
-                .container { padding: 1rem; }
-            }
-            .back-to-top { position: fixed; bottom: 2rem; right: 2rem; padding: 0.6rem 1rem; background: #1f2937; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 50; }
-            .back-to-top.visible { opacity: 1; pointer-events: auto; }
-            .back-to-top:hover { background: #111827; }
-        }
-
-        #js {
-            function getTheme() {
-                var saved = localStorage.getItem('theme');
-                if (saved) return saved;
-                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            }
-            function setTheme(theme) {
-                document.documentElement.classList.toggle('dark', theme === 'dark');
-                localStorage.setItem('theme', theme);
-            }
-            function toggleTheme() {
-                var current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-                setTheme(current === 'dark' ? 'light' : 'dark');
-            }
-            setTheme(getTheme());
-
-            (function() {
-                var btn = document.getElementById('back-to-top');
-                if(btn) {
-                    window.addEventListener('scroll', function() {
-                        if(window.scrollY > 300) { btn.classList.add('visible'); }
-                        else { btn.classList.remove('visible'); }
-                    });
-                }
-            })();
-        }
+        render_dashboard_js(&mut page)
 
         var html_out = page.toString()
         var bv = html_out.to_view()

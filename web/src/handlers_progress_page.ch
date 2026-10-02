@@ -238,19 +238,41 @@ public namespace underlayer_web {
                 loadConceptList();
             });
 
+            // WHY THE AUTHORIZATION HEADER IS HERE AND WAS NOT BEFORE.  The
+            // fetch below ran without it, so auth_get_learner_id() found no
+            // bearer token, fell back to the shared "demo" learner, and the page
+            // reported DEMO'S progress to every signed-in learner on the
+            // platform.  Signed out, this is still the empty state; signed in,
+            // it is now the signed-in learner's own numbers.
+            function ppHeaders() {
+                var h = {};
+                var t = '';
+                try { t = localStorage.getItem('session_token') || ''; } catch (e) { t = ''; }
+                if (t) { h['Authorization'] = 'Bearer ' + t; }
+                return h;
+            }
             function loadProgress() {
-                fetch("/api/progress?course_id=elf")
+                fetch("/api/progress?course_id=elf", { headers: ppHeaders() })
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
-                        setText("total-concepts", data.total_concepts || 24);
-                        setText("mastered-count", data.mastered || 0);
-                        setText("learning-count", data.learning || 0);
+                        // Every field below was read by this page and emitted by
+                        // NOBODY: /api/progress did not send total_concepts,
+                        // health_score, depth or breadth, so the `|| 24` fallback
+                        // below painted a hardcoded 24 and the health bar sat at
+                        // 0% for every learner on the platform.  The API emits all
+                        // four now (handlers_progress_json.ch).  The `|| 0` guards
+                        // stay -- an absent number should read 0, but an absent
+                        // TOTAL should read "no data", not a plausible lie.
+                        var total = data.concepts_total || 0;
+                        var started = data.concepts_started || 0;
+                        var mastered = data.concepts_mastered || 0;
+                        setText("total-concepts", total);
+                        setText("mastered-count", mastered);
+                        setText("learning-count", started);
                         setText("reviewing-count", data.reviewing || 0);
-                        var total = data.total_concepts || 24;
-                        var mastered = data.mastered || 0;
-                        var pct = total > 0 ? Math.round(mastered * 100 / total) : 0;
+                        var pct = data.progress_percentage || 0;
                         setWidth("mastery-fill", pct + "%%");
-                        setText("mastery-label", pct + "%% mastered (" + mastered + " of " + total + " concepts)");
+                        setText("mastery-label", pct + "%% read (" + started + " of " + total + " concepts)");
                         var health = data.health_score || 0;
                         var healthPct = Math.round(health * 100);
                         setText("health-score", fmtPct(healthPct));
@@ -263,13 +285,13 @@ public namespace underlayer_web {
                         setWidth("breadth-fill", Math.round(breadth) + "%%");
                     })
                     .catch(function() {
-                        setText("total-concepts", "24");
+                        setText("total-concepts", "-");
                         setText("mastered-count", "0");
                         setText("learning-count", "0");
                         setText("reviewing-count", "0");
                     });
 
-                fetch("/api/review/due?course_id=elf&limit=1000")
+                fetch("/api/review/due?course_id=elf&limit=1000", { headers: ppHeaders() })
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         var items = data || [];
@@ -288,26 +310,54 @@ public namespace underlayer_web {
                     });
             }
 
+            // The order and titles still come from a hardcoded ELF array -- this
+            // page is the ELF course's progress page and reordering it by hand
+            // would be a 24-entry table to keep in step with the manifest.  What
+            // is NOT hardcoded is the STATUS, which used to be absent: every one
+            // of the 24 rows read identically and said nothing about whether the
+            // learner had been there.  It now comes from the same /api/progress
+            // payload, keyed by concept id, so "which have I completed" is
+            // answerable here rather than only on the lesson strip.
             function loadConceptList() {
                 var list = document.getElementById("concept-list");
                 list.innerHTML = "";
                 var names = ["Bytes and Binary", "Binary Representation", "File Layout", "ELF Identification", "ELF Header Fields", "Entry Point", "Program Header Table", "Segment Types", "Memory Mapping", "Section Header Table", "Common Sections", "Section vs Segment", "Symbol Table", "Symbol Binding", "Symbol Visibility", "Relocation Entries", "Relocation Types", "Dynamic Relocations", "Dynamic Section", "Shared Libraries", "The Dynamic Linker", "The Kernel Loader", "Process Memory Layout", "The Startup Sequence"];
                 var ids = ["bytes", "binary-representation", "file-layout", "elf-identification", "elf-header-fields", "entry-point", "program-header-table", "segment-types", "memory-mapping", "section-header-table", "common-sections", "section-vs-segment", "symbol-table", "binding", "visibility", "relocation-entries", "relocation-types", "dynamic-relocations", "dynamic-section", "shared-libraries", "dynamic-linker", "loader", "memory-layout", "execution"];
+                fetch("/api/progress?course_id=elf", { headers: ppHeaders() })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) { renderConceptRows(list, ids, names, data.concepts || []); })
+                    .catch(function() { renderConceptRows(list, ids, names, []); });
+            }
+            function renderConceptRows(list, ids, names, states) {
+                var byId = {};
+                for (var k = 0; k < states.length; k++) { byId[states[k].concept_id] = states[k]; }
+                var mastered = 0;
                 for(var i = 0; i < names.length; i++) {
                     var row = document.createElement("div");
                     row.className = "concept-row";
                     var nameEl = document.createElement("span");
                     nameEl.className = "concept-name";
                     nameEl.textContent = (i + 1) + ". " + names[i];
+                    var st = byId[ids[i]];
+                    var label = "not started";
+                    if (st) {
+                        if (st.status === "mastered") { label = "learned"; mastered = mastered + 1; }
+                        else if (st.attempts > 0) { label = "read, " + st.attempts + " answered"; }
+                        else { label = "read"; }
+                    }
+                    var badge = document.createElement("span");
+                    badge.className = "concept-link";
+                    badge.textContent = label;
                     var link = document.createElement("a");
                     link.href = "/courses/elf/lessons/" + ids[i];
-                    link.textContent = "Learn";
+                    link.textContent = "Open";
                     link.className = "concept-link";
                     row.appendChild(nameEl);
+                    row.appendChild(badge);
                     row.appendChild(link);
                     list.appendChild(row);
                 }
-                setText("mastered-queue", "0");
+                setText("mastered-queue", String(mastered));
             }
 
             (function() {

@@ -14,18 +14,19 @@ public namespace underlayer_web {
             var sv = segments.get_ptr(2)
             var i : size_t = 0
             while(i < sv.size()) { course_id_raw.append(sv.get(i)); i = i + 1 }
-        } else {
-            course_id_raw = string("elf")
         }
+        if(course_id_raw.size() == 0) { course_id_raw = progress_course_id(req) }
         var learner_id = auth_get_learner_id(&raw db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id_raw)
         var health = underlayer_learning::compute_knowledge_health(&raw states)
+        var cov = underlayer_learning::compute_course_coverage(&course_id_raw, &raw states, manifest_concept_total(courses_dir, &course_id_raw))
         var body = std::string("{\"course_id\":\"")
         body.append_string(&course_id_raw)
         body.append_view("\",\"health\":")
         var health_str = underlayer_core::int_to_string((health.health_score * 100.0) as i64)
         body.append_string(&health_str)
+        append_coverage_json(&raw mut body, &cov, &raw states, &health)
         body.append_view(",\"mastered\":")
         var mastered_str = underlayer_core::int_to_string(health.mastered as i64)
         body.append_string(&mastered_str)
@@ -35,9 +36,6 @@ public namespace underlayer_web {
         body.append_view(",\"reviewing\":")
         var reviewing_str = underlayer_core::int_to_string(health.reviewing as i64)
         body.append_string(&reviewing_str)
-        body.append_view(",\"unlearned\":")
-        var unlearned_str = underlayer_core::int_to_string(health.unlearned as i64)
-        body.append_string(&unlearned_str)
         body.append_view(",\"concepts\":[")
         var ci : size_t = 0
         while(ci < states.size()) {
@@ -63,10 +61,14 @@ public namespace underlayer_web {
     public func handle_progress(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = auth_get_learner_id(&raw db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
-        var course_id = string("elf")
+        // Was the literal "elf" whatever the page asked for.  The page at
+        // /progress has been sending ?course_id=elf since it was written and
+        // the handler has ignored it ever since.
+        var course_id = progress_course_id(req)
 
         var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
         var health = underlayer_learning::compute_knowledge_health(&raw states)
+        var cov = underlayer_learning::compute_course_coverage(&course_id, &raw states, manifest_concept_total(courses_dir, &course_id))
 
         var body = std::string("{\"learner_id\":\"")
         body.append_string(&learner_id)
@@ -75,9 +77,7 @@ public namespace underlayer_web {
         body.append_view("\",\"health\":")
         var health_str = underlayer_core::int_to_string((health.health_score * 100.0) as i64)
         body.append_string(&health_str)
-        // 6.1.3: Progress percentage
-        body.append_view(",\"progress_percentage\":")
-        body.append_string(&health_str)
+        append_coverage_json(&raw mut body, &cov, &raw states, &health)
         body.append_view(",\"mastered\":")
         var mastered_str = underlayer_core::int_to_string(health.mastered as i64)
         body.append_string(&mastered_str)
@@ -87,11 +87,11 @@ public namespace underlayer_web {
         body.append_view(",\"reviewing\":")
         var reviewing_str = underlayer_core::int_to_string(health.reviewing as i64)
         body.append_string(&reviewing_str)
-        body.append_view(",\"unlearned\":")
-        var unlearned_str = underlayer_core::int_to_string(health.unlearned as i64)
-        body.append_string(&unlearned_str)
-        // 6.1.4: Milestones (25%, 50%, 75%, 100%)
-        var pct = (health.health_score * 100.0) as i64
+        // 6.1.4: Milestones (25%, 50%, 75%, 100%).  On the COVERAGE number now.
+        // On the mastery number a milestone was unreachable by reading a
+        // course, which is the whole of defect 2 stated as a feature nobody
+        // could complete.
+        var pct = cov.progress_percentage as i64
         body.append_view(",\"milestones\":{\"reached\":[")
         var first = true
         if(pct >= 25) {
@@ -148,9 +148,9 @@ public namespace underlayer_web {
         body.append_view("}}")
         // 6.1.10: Progress prediction (estimated completion date)
         body.append_view(",\"prediction\":")
-        if(health.mastered > 0 && health.total_concepts > health.mastered) {
+        if(health.mastered > 0 && cov.concepts_started > cov.concepts_mastered) {
             // Simple prediction: if mastered N concepts in last week, predict remaining
-            var remaining = health.total_concepts - health.mastered
+            var remaining = cov.concepts_started - cov.concepts_mastered
             var est_days = remaining * 7  // Rough estimate: 1 concept per day
             body.append_view("{\"estimated_days\":")
             var est_out = underlayer_core::int_to_string(est_days as i64)
