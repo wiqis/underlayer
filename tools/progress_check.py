@@ -67,6 +67,7 @@ import argparse
 import json
 import os
 import shutil
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -111,6 +112,30 @@ def section(title):
 
 
 # ---------------------------------------------------------------- HTTP helpers
+
+# THE LOGIN LIMITER (web/src/rate_limit.ch) caps /api/auth/register and
+# /api/auth/login at 8 attempts per 5 minutes per IP. This script registers and
+# signs in, so it trips the cap -- and the failure it produced was "sign in and
+# get a session token -> 429", which is the limiter working, not a broken check.
+#
+# It made this file ORDER-DEPENDENT in the worst way: it passed on a quiet server
+# and failed on a busy one, with nothing about the platform having changed. A
+# check that passes or fails depending on what ran before it is not a check. So
+# the counters are cleared first. The limiter is asserted directly, from a
+# known-empty counter, in tools/security_check.py CHECK 14.
+DB_PATH = os.environ.get('UL_DB', './underlayer.db')
+
+
+def clear_rate_limits():
+    """Empty the rate_limits table, if it exists. Never raises."""
+    try:
+        c = sqlite3.connect(DB_PATH, timeout=20)
+        c.execute('DELETE FROM rate_limits')
+        c.commit()
+        c.close()
+    except Exception:
+        pass
+
 
 def request(base, path, token=None, method='GET', body=None, timeout=30):
     url = base.rstrip('/') + path
@@ -583,6 +608,9 @@ def run_checks(base, expect_engagement=True):
     stamp = int(time.time())
     email = 'progress-check-%d-%d@example.invalid' % (stamp, os.getpid())
     password = 'Pr0gressCheck!%d' % (stamp % 100000)
+    # Refill the limiter's allowance, so this run measures progress and not the
+    # residue of whatever ran before it. See clear_rate_limits().
+    clear_rate_limits()
     st, reg = request_json(base, '/api/auth/register', method='POST',
                            body={'email': email, 'password': password,
                                  'name': 'Progress Check'})
