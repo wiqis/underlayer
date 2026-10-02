@@ -119,8 +119,17 @@ def check(path):
 
 
 def main():
+    # WHY web/src IS IN HERE NOW.  The bare invocation used to scan only
+    # content/src and courses/*/src -- the lesson corpus.  web/src has 25 files
+    # with #html blocks, including every platform page, and the compiler breaks
+    # on a raw brace in a #html block identically no matter which layer emitted
+    # it.  So "bracecheck exits 0" was reporting on the lesson pages while
+    # saying nothing about the pages a learner reaches between them.  The rule is
+    # the rule; the scan set was narrower than the rule.
     files = sys.argv[1:] or sorted(
-        glob.glob("content/src/*.ch") + glob.glob("courses/*/src/*.ch"))
+        glob.glob("content/src/*.ch")
+        + glob.glob("courses/*/src/*.ch")
+        + glob.glob("web/src/*.ch"))
     problems = 0
     for f in files:
         bad = check(f)

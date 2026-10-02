@@ -9,6 +9,7 @@ import json
 import fs
 import encoding
 import crypto
+import bcrypt
 import osrand
 import page
 import html_cbi

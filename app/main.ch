@@ -120,9 +120,17 @@ public func main() : int {
     srv.router.add("GET", "/api/courses/:courseId/lessons/:conceptId", (|&courses_dir|(req, res) => {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
-        if(segments.size() >= 4) {
-            var course_id = segments.get_ptr(1)
-            var concept_id = segments.get_ptr(3)
+        // Segment indices are absolute positions in the path, and this path
+        // starts with /api -- so the course is segments[2] and the concept
+        // segments[4].  It used to read 1 and 3, which are the literal words
+        // "courses" and "lessons", so handle_lesson was always asked for a
+        // course named "courses" and answered 404 for every lesson in the
+        // product.  The page route /courses/:courseId/lessons/:conceptId below
+        // has no /api prefix and is correctly 1 and 3 -- do not "fix" that one
+        // to match this.
+        if(segments.size() >= 5) {
+            var course_id = segments.get_ptr(2)
+            var concept_id = segments.get_ptr(4)
             underlayer_web::handle_lesson(courses_dir, course_id, concept_id, &req, &raw mut res)
         } else {
             res.status = 400u
@@ -144,7 +152,7 @@ public func main() : int {
     }))
 
     srv.router.add("POST", "/api/review/end", (|&db|(req, res) => {
-        underlayer_web::handle_review_end(db, &raw mut req, &raw mut res)
+        underlayer_web::handle_review_end(db, &req, &raw mut res)
     }))
 
     // ---- Due Items ----
@@ -174,10 +182,12 @@ public func main() : int {
         underlayer_web::handle_search_concepts(courses_dir, &req, &raw mut res)
     }))
 
-    // ---- Filter Courses (7.1.7) ----
-    srv.router.add("GET", "/api/courses/all", (|&courses_dir|(req, res) => {
-        underlayer_web::handle_filter_courses(courses_dir, &req, &raw mut res)
-    }))
+    // NOTE: "GET /api/courses/all" (Filter Courses, 7.1.7) is already
+    // registered near the top of this file, directly after GET /api/courses.
+    // It used to be registered a SECOND time here, byte-identical handler and
+    // all, which left the router holding two entries for one path -- dead
+    // configuration that reads like a second, different endpoint and that
+    // tools/route_check.py flagged.  One registration, one route.
 
     // ---- Recent History (7.1.9) ----
     srv.router.add("GET", "/api/recent", (|&db|(req, res) => {

@@ -489,7 +489,7 @@ public namespace underlayer_web {
         send_json_str(res, &raw resp)
     }
 
-    public func handle_review_end(db : &DbClient, req : *mut http::Request, res : *mut http::ResponseWriter) {
+    public func handle_review_end(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
         var q_sid = string("session_id")
         var sid_v = req.query.get(&q_sid.to_view())
         if(sid_v.size() == 0) {
@@ -497,6 +497,7 @@ public namespace underlayer_web {
             return
         }
         var session_id = sv_to_string(&raw sid_v)
+        if(!require_own_session(&raw db, req, res, &raw session_id)) { return }
         underlayer_repository::finish_session(&raw db, &raw session_id, 0, 0)
 
         var resp = string("{\"status\":\"ok\",\"session_id\":\"")
@@ -629,6 +630,7 @@ public namespace underlayer_web {
             return
         }
         var session_id = sv_to_string(&raw sid_v)
+        if(!require_own_session(&raw db, req, res, &raw session_id)) { return }
 
         var items = underlayer_repository::get_session_items(&raw db, &session_id)
         var stats = underlayer_repository::get_session_stats(&raw db, &session_id)
@@ -676,6 +678,7 @@ public namespace underlayer_web {
             return
         }
         var session_id = sv_to_string(&raw sid_v)
+        if(!require_own_session(&raw db, req, res, &raw session_id)) { return }
         underlayer_repository::pause_session(&raw db, &raw session_id)
         var resp = string("{\"status\":\"ok\",\"session_id\":\"")
         resp.append_string(&session_id)
@@ -692,6 +695,7 @@ public namespace underlayer_web {
             return
         }
         var session_id = sv_to_string(&raw sid_v)
+        if(!require_own_session(&raw db, req, res, &raw session_id)) { return }
         underlayer_repository::resume_session(&raw db, &raw session_id)
         // Return items already reviewed so client can rebuild state
         var items = underlayer_repository::get_session_items(&raw db, &session_id)
@@ -713,6 +717,7 @@ public namespace underlayer_web {
             return
         }
         var session_id = sv_to_string(&raw sid_v)
+        if(!require_own_session(&raw db, req, res, &raw session_id)) { return }
         underlayer_repository::abort_session(&raw db, &raw session_id)
         var resp = string("{\"status\":\"ok\",\"session_id\":\"")
         resp.append_string(&session_id)
@@ -729,6 +734,7 @@ public namespace underlayer_web {
             return
         }
         var session_id = sv_to_string(&raw sid_v)
+        if(!require_own_session(&raw db, req, res, &raw session_id)) { return }
         var undone = underlayer_repository::undo_last_item(&raw db, &raw session_id)
         if(!undone) {
             send_error(res, 404u, &string("no items to undo"))
@@ -751,6 +757,7 @@ public namespace underlayer_web {
             return
         }
         var session_id = sv_to_string(&raw sid_v)
+        if(!require_own_session(&raw db, req, res, &raw session_id)) { return }
         var concept_id = sv_to_string(&raw cid_v)
         underlayer_repository::skip_item(&raw db, &raw session_id, &raw concept_id)
         var resp = string("{\"status\":\"ok\",\"session_id\":\"")

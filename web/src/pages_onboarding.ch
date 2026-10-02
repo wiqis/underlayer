@@ -405,10 +405,14 @@ public namespace underlayer_web {
 
         // Save selected course to learning_goals (existing schema: id, learner_id, course_id, target_date, created_at)
         if(selected_course.size() > 0) {
+            // selected_course comes from the onboarding form's POST body and is
+            // concatenated into two statements.  Escaped here, matching login
+            // and register.
+            var sc_s = underlayer_repository::sql_escape(&selected_course)
             var del_sql = string("DELETE FROM learning_goals WHERE learner_id = '")
             del_sql.append_string(&learner_id)
             del_sql.append_view("' AND course_id = '")
-            del_sql.append_string(&selected_course)
+            del_sql.append_string(&sc_s)
             del_sql.append_view("'")
             underlayer_db::exec_sql(db, &raw del_sql)
             var goal_id = underlayer_core::int_to_string(now)
@@ -417,7 +421,7 @@ public namespace underlayer_web {
             ins_sql.append_view("', '")
             ins_sql.append_string(&learner_id)
             ins_sql.append_view("', '")
-            ins_sql.append_string(&selected_course)
+            ins_sql.append_string(&sc_s)
             ins_sql.append_view("', ")
             ins_sql.append_view(min_str.to_view())
             ins_sql.append_view(", ")

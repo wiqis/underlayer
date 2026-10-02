@@ -63,37 +63,7 @@ public namespace underlayer_web {
         render_dashboard_css(&mut page)
 
         #html {
-            <a href="#main-content" class="skip-link">Skip to content</a>
-            <div class="navbar">
-                <div class="nav-inner">
-                    <a href="/" class="nav-brand">Underlayer</a>
-                    <button class="hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Toggle menu">
-                        <span class="hamburger-line"></span>
-                        <span class="hamburger-line"></span>
-                        <span class="hamburger-line"></span>
-                    </button>
-                    <div class="nav-links">
-                        <a href="/" class="nav-link">Home</a>
-                        <a href="/courses/elf" class="nav-link">Courses</a>
-                        <a href="/dashboard" class="nav-link active">Dashboard</a>
-                        <a href="/review" class="nav-link">Review</a>
-                        <a href="/progress" class="nav-link">Progress</a>
-                        <a href="/bookmarks" class="nav-link">Bookmarks</a>
-                        <a href="/notes" class="nav-link">Notes</a>
-                        <a href="/study-plans" class="nav-link">Planner</a>
-                        <a href="/achievements" class="nav-link">Achievements</a>
-                        <a href="/streaks" class="nav-link">Streaks</a>
-                        <a href="/notifications" class="nav-link">Alerts</a>
-                        <a href="/certificates" class="nav-link">Certificates</a>
-                    </div>
-                    <div class="nav-right">
-                        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-                            <span class="theme-icon-light">☀️</span>
-                            <span class="theme-icon-dark">🌙</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+            {render_nav_bar(&mut page)}
 
             <div class="container" id="main-content" style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
                 <div class="wd-head">

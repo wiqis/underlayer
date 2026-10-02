@@ -8,6 +8,7 @@ that does not match the innermost open tag, and then reports.
 
     python3 tools/html_balance.py content/src/obj_*.ch
 """
+import os
 import re
 import sys
 
@@ -380,11 +381,40 @@ if __name__ == '__main__':
     # "html_balance.py --check" -- keep working unchanged.
     write = '--repair' in args
     args = [a for a in args if a not in ('--check', '--repair')]
+    # WHY A DEFAULT FILE SET NOW EXISTS.  Run with no arguments this tool
+    # iterated over an EMPTY list, set allok = True, and exited 0 -- always, for
+    # every tree, including a tree with an unclosed <div> in every file.  It was
+    # in the gate list as `html_balance.py`, printing nothing, and every status
+    # report that said "html_balance exit 0" was reporting on an empty loop.
+    # That is the worst failure mode a checker has: it looks like coverage and
+    # measures nothing.
+    #
+    # The default set is the same one bracecheck.py uses, because they check the
+    # same thing from two sides -- bracecheck catches a raw brace that ends a
+    # #html block early, this one catches a tag the html_cbi parser will
+    # mis-nest.  Both matter in both layers, so both scan both.
+    if not args:
+        import glob as _glob
+        args = sorted(
+            _glob.glob('content/src/*.ch')
+            + _glob.glob('courses/*/src/*.ch')
+            + _glob.glob('web/src/*.ch'))
+        print('html_balance: no files given, checking the %d-file default set '
+              '(pass file paths to check something else)' % len(args))
     allok = True
+    checked = 0
     for p in args:
+        if not os.path.exists(p):
+            print('html_balance: %s does not exist' % p)
+            allok = False
+            continue
+        checked += 1
         if write:
             n, leftover = repair(p)
             if n:
                 print('repaired %d nesting error(s) in %s' % (n, leftover and p))
         allok &= report(p)
+    if checked == 0:
+        print('html_balance: nothing was checked -- that is NOT a pass')
+        sys.exit(1)
     sys.exit(0 if allok else 1)

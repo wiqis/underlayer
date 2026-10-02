@@ -82,53 +82,36 @@ public namespace underlayer_web {
         res.write_view(&bv)
     }
 
-    // 16.8.6-16.8.7: DELETE /api/user/data/:type — delete specific data type
+    // 16.8.6-16.8.7: DELETE /api/user/data/:type -- delete one category of data
+    //
+    // TWO THINGS CHANGED HERE, both because this endpoint destroys data.
+    //
+    // It required no authentication.  `auth_get_learner_id` returned empty for a
+    // request with no token, the empty id was replaced with the shared `demo`
+    // learner, and the endpoint answered 200 having deleted demo's reviews, or
+    // demo's progress, or all of it.  A DELETE that needs no credentials is not
+    // protected by anything.  The read-only handlers keep the demo fallback on
+    // purpose -- that is how a signed-out page still renders -- but a handler
+    // that writes or destroys is not a page.
+    //
+    // The SQL moved to repository/src/learner_deletion.ch, because all SQL
+    // belongs below web/.  That function also fixes the ordering bug: the old
+    // code deleted `sessions` and then asked `session_items` to delete itself
+    // through a subquery over `sessions`, so it deleted nothing at all.
     public func handle_delete_data(db : *DbClient, data_type : *string, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = auth_get_learner_id(db, req)
-        if(learner_id.size() == 0) { learner_id = string("demo") }
+        if(learner_id.size() == 0) {
+            send_error(res, 401u, &string("unauthorized"))
+            return
+        }
         var dt = data_type.copy()
-        if(dt.equals(&string("reviews"))) {
-            var sql = string("DELETE FROM review_items WHERE learner_id = '")
-            sql.append_string(&learner_id)
-            sql.append_view("'")
-            underlayer_db::exec_sql(db, &raw sql)
-        } else if(dt.equals(&string("progress"))) {
-            var sql = string("DELETE FROM concept_states WHERE learner_id = '")
-            sql.append_string(&learner_id)
-            sql.append_view("'")
-            underlayer_db::exec_sql(db, &raw sql)
-        } else if(dt.equals(&string("analytics"))) {
-            var sql = string("DELETE FROM sessions WHERE learner_id = '")
-            sql.append_string(&learner_id)
-            sql.append_view("'")
-            underlayer_db::exec_sql(db, &raw sql)
-            var sql2 = string("DELETE FROM session_items WHERE session_id IN (SELECT id FROM sessions WHERE learner_id = '")
-            sql2.append_string(&learner_id)
-            sql2.append_view("')")
-            underlayer_db::exec_sql(db, &raw sql2)
-        } else if(dt.equals(&string("all"))) {
-            var sql = string("DELETE FROM concept_states WHERE learner_id = '")
-            sql.append_string(&learner_id)
-            sql.append_view("'")
-            underlayer_db::exec_sql(db, &raw sql)
-            var sql2 = string("DELETE FROM review_items WHERE learner_id = '")
-            sql2.append_string(&learner_id)
-            sql2.append_view("'")
-            underlayer_db::exec_sql(db, &raw sql2)
-            var sql3 = string("DELETE FROM sessions WHERE learner_id = '")
-            sql3.append_string(&learner_id)
-            sql3.append_view("'")
-            underlayer_db::exec_sql(db, &raw sql3)
-            var sql4 = string("DELETE FROM session_items WHERE session_id IN (SELECT id FROM sessions WHERE learner_id = '")
-            sql4.append_string(&learner_id)
-            sql4.append_view("')")
-            underlayer_db::exec_sql(db, &raw sql4)
-            var sql5 = string("DELETE FROM learning_goals WHERE learner_id = '")
-            sql5.append_string(&learner_id)
-            sql5.append_view("'")
-            underlayer_db::exec_sql(db, &raw sql5)
-        } else {
-            send_error(res, 400u, &string("invalid data_type: use reviews, progress, analytics, or all"))
+        var known = dt.equals(&string("reviews")) || dt.equals(&string("progress")) || dt.equals(&string("sessions")) || dt.equals(&string("all"))
+        if(!known) {
+            send_error(res, 400u, &string("invalid data_type: use reviews, progress, sessions, or all"))
+            return
+        }
+        if(!underlayer_repository::delete_learner_data_of_type(db, &learner_id, &dt)) {
+            send_error(res, 400u, &string("could not delete that data type"))
             return
         }
         var ok_body = string("{\"ok\":true,\"data_type\":\"")
@@ -137,87 +120,49 @@ public namespace underlayer_web {
         send_json_str(res, &raw ok_body)
     }
 
-    // 16.8.8-16.8.10: DELETE /api/user/account — delete entire account
+    // 16.8.8-16.8.10: DELETE /api/user/account -- delete the entire account.
+    //
+    // THIS WAS THE WORST FUNCTION IN THE PLATFORM, and none of it was visible
+    // from the outside: the endpoint answered 200 and /api/auth/me then answered
+    // 401, so the lifecycle looked correct.  Three defects, all measured by
+    // counting rows afterwards rather than by reading the code:
+    //
+    //   1. session_items was NEVER deleted.  The order was `DELETE FROM sessions`
+    //      and then `DELETE FROM session_items WHERE session_id IN (SELECT id
+    //      FROM sessions ...)` -- the subquery runs against sessions that are
+    //      already gone, so it matched nothing and every per-item study record
+    //      survived.  A learner who deleted their account kept their history.
+    //
+    //   2. It ran with NO AUTHENTICATION.  An absent token resolved to the
+    //      shared `demo` learner and the delete proceeded, so
+    //      `DELETE /api/user/account` with no Authorization header destroyed
+    //      the demo account.
+    //
+    //   3. It was missing tables, and the comment that used to sit here said so
+    //      itself -- "the list above is hand-written, which is the actual
+    //      defect: a new table is invisible to this function until somebody
+    //      remembers".  It had grown to 17 tables by hand and was still missing
+    //      notifications, learning_streaks, daily_activity, achievements,
+    //      bookmarks, learner_notes, study_plans and certificates.  After a full
+    //      deletion the database held 53 notification rows, 8 streak rows and 8
+    //      activity rows belonging to learners that no longer existed.
+    //
+    // All three are gone because the whole thing is now ONE repository function
+    // (repository/src/learner_deletion.ch) that walks a table LIST, deletes
+    // children before parents, and returns how many tables it cleared -- so the
+    // handler can report a number instead of assuming.  A new table is one line
+    // in a list, not a fourth rewrite of this function.
     public func handle_delete_account(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
         var learner_id = auth_get_learner_id(db, req)
-        if(learner_id.size() == 0) { learner_id = string("demo") }
-        var del_sql = string("DELETE FROM concept_states WHERE learner_id = '")
-        del_sql.append_string(&learner_id)
-        del_sql.append_view("'")
-        underlayer_db::exec_sql(db, &raw del_sql)
-        var del_sql2 = string("DELETE FROM review_items WHERE learner_id = '")
-        del_sql2.append_string(&learner_id)
-        del_sql2.append_view("'")
-        underlayer_db::exec_sql(db, &raw del_sql2)
-        var del_sql3 = string("DELETE FROM sessions WHERE learner_id = '")
-        del_sql3.append_string(&learner_id)
-        del_sql3.append_view("'")
-        underlayer_db::exec_sql(db, &raw del_sql3)
-        var del_sql4 = string("DELETE FROM session_items WHERE session_id IN (SELECT id FROM sessions WHERE learner_id = '")
-        del_sql4.append_string(&learner_id)
-        del_sql4.append_view("')")
-        underlayer_db::exec_sql(db, &raw del_sql4)
-        var del_sql5 = string("DELETE FROM learning_goals WHERE learner_id = '")
-        del_sql5.append_string(&learner_id)
-        del_sql5.append_view("'")
-        underlayer_db::exec_sql(db, &raw del_sql5)
-        var del_sql6 = string("DELETE FROM learner_profiles WHERE learner_id = '")
-        del_sql6.append_string(&learner_id)
-        del_sql6.append_view("'")
-        underlayer_db::exec_sql(db, &raw del_sql6)
-        var del_sql7 = string("DELETE FROM learner_settings WHERE learner_id = '")
-        del_sql7.append_string(&learner_id)
-        del_sql7.append_view("'")
-        underlayer_db::exec_sql(db, &raw del_sql7)
-        var del_sql8 = string("DELETE FROM learning_preferences WHERE learner_id = '")
-        del_sql8.append_string(&learner_id)
-        del_sql8.append_view("'")
-        underlayer_db::exec_sql(db, &raw del_sql8)
-        var del_sql9 = string("DELETE FROM login_history WHERE learner_id = '")
-        del_sql9.append_string(&learner_id)
-        del_sql9.append_view("'")
-        underlayer_db::exec_sql(db, &raw del_sql9)
-        var del_sql10 = string("DELETE FROM auth_sessions WHERE learner_id = '")
-        del_sql10.append_string(&learner_id)
-        del_sql10.append_view("'")
-        underlayer_db::exec_sql(db, &raw del_sql10)
-        var del_sql11 = string("DELETE FROM password_reset_tokens WHERE learner_id = '")
-        del_sql11.append_string(&learner_id)
-        del_sql11.append_view("'")
-        underlayer_db::exec_sql(db, &raw del_sql11)
-        var del_sql12 = string("DELETE FROM email_verification_tokens WHERE learner_id = '")
-        del_sql12.append_string(&learner_id)
-        del_sql12.append_view("'")
-        underlayer_db::exec_sql(db, &raw del_sql12)
-        var del_sql13 = string("DELETE FROM api_keys WHERE learner_id = '")
-        del_sql13.append_string(&learner_id)
-        del_sql13.append_view("'")
-        underlayer_db::exec_sql(db, &raw del_sql13)
-        var del_sql14 = string("DELETE FROM audit_log WHERE learner_id = '")
-        del_sql14.append_string(&learner_id)
-        del_sql14.append_view("'")
-        underlayer_db::exec_sql(db, &raw del_sql14)
-        var del_sql15 = string("DELETE FROM learners WHERE id = '")
-        del_sql15.append_string(&learner_id)
-        del_sql15.append_view("'")
-        underlayer_db::exec_sql(db, &raw del_sql15)
-        // exercise_attempts and enrollments are the two tables this collection
-        // gained when "opening a lesson" and "which quiz did I fail" started
-        // being recorded (2026-10-02).  They are learner rows like every other
-        // row deleted above, so leaving them out of this list means a learner
-        // who deletes their account keeps their graded-answer history and
-        // their course enrollments -- with no learner row left to join them
-        // to.  The list above is hand-written, which is the actual defect: a
-        // new table is invisible to this function until somebody remembers.
-        var del_xa = string("DELETE FROM exercise_attempts WHERE learner_id = '")
-        del_xa.append_string(&learner_id)
-        del_xa.append_view("'")
-        underlayer_db::exec_sql(db, &raw del_xa)
-        var del_en = string("DELETE FROM enrollments WHERE learner_id = '")
-        del_en.append_string(&learner_id)
-        del_en.append_view("'")
-        underlayer_db::exec_sql(db, &raw del_en)
-        var ok_body = string("{\"ok\":true,\"message\":\"account deleted\"}")
+        if(learner_id.size() == 0) {
+            send_error(res, 401u, &string("unauthorized"))
+            return
+        }
+        var cleared = underlayer_repository::delete_learner_everything(db, &learner_id)
+        var ok_body = string("{\"ok\":true,\"message\":\"account deleted\",\"cleared\":")
+        var cs = underlayer_core::int_to_string(cleared)
+        ok_body.append_string(&cs)
+        ok_body.append_view("}")
         send_json_str(res, &raw ok_body)
     }
 
@@ -287,14 +232,22 @@ public namespace underlayer_web {
                 var course_id = json_get_str(item, "course_id")
                 var status = json_get_str(item, "status")
                 if(concept_id.size() > 0) {
+                    // concept_id / course_id / status are attacker-supplied JSON
+                    // from an import file and go straight into SQL literals.  This
+                    // is the same defect that was exploitable on login: an
+                    // import payload of {"concept_id":"x','y','z"} could rewrite
+                    // columns it was never meant to name.
+                    var cid_s = underlayer_repository::sql_escape(&concept_id)
+                    var crs_s = underlayer_repository::sql_escape(&course_id)
+                    var sts_s = underlayer_repository::sql_escape(&status)
                     var sql = string("INSERT OR REPLACE INTO concept_states (learner_id, concept_id, course_id, status, attempts, correct, streak, last_studied, next_review, difficulty_rating) VALUES ('")
                     sql.append_string(&learner_id)
                     sql.append_view("', '")
-                    sql.append_string(&concept_id)
+                    sql.append_string(&cid_s)
                     sql.append_view("', '")
-                    sql.append_string(&course_id)
+                    sql.append_string(&crs_s)
                     sql.append_view("', '")
-                    sql.append_string(&status)
+                    sql.append_string(&sts_s)
                     sql.append_view("', ")
                     var attempts_str = underlayer_core::int_to_string(json_get_int(item, "attempts") as i64)
                     sql.append_view(attempts_str.to_view())
@@ -322,16 +275,19 @@ public namespace underlayer_web {
                 var item_type = json_get_str(item, "type")
                 if(concept_id.size() > 0) {
                     var id_str = underlayer_core::int_to_string(underlayer_core::current_timestamp())
+                    var rcid_s = underlayer_repository::sql_escape(&concept_id)
+                    var rcrs_s = underlayer_repository::sql_escape(&course_id)
+                    var rtyp_s = underlayer_repository::sql_escape(&item_type)
                     var sql = string("INSERT OR IGNORE INTO review_items (id, learner_id, concept_id, course_id, type, front, back, difficulty, stability, retrievability, next_review, last_review, reps, lapses, ease_factor) VALUES ('")
                     sql.append_string(&id_str)
                     sql.append_view("', '")
                     sql.append_string(&learner_id)
                     sql.append_view("', '")
-                    sql.append_string(&concept_id)
+                    sql.append_string(&rcid_s)
                     sql.append_view("', '")
-                    sql.append_string(&course_id)
+                    sql.append_string(&rcrs_s)
                     sql.append_view("', '")
-                    sql.append_string(&item_type)
+                    sql.append_string(&rtyp_s)
                     sql.append_view("', '', '', 5.0, 1.0, 1.0, 0, 0, 0, 0, 2.5)")
                     underlayer_db::exec_sql(db, &raw sql)
                     imported = imported + 1

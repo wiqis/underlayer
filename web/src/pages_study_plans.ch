@@ -13,26 +13,7 @@ public namespace underlayer_web {
         page.appendTitle(std::string_view("Study Planner — Underlayer"))
 
         #html {
-            <a href="#main-content" class="skip-link">Skip to content</a>
-            <div class="navbar">
-                <div class="nav-inner">
-                    <a href="/" class="nav-brand">Underlayer</a>
-                    <div class="nav-links">
-                        <a href="/" class="nav-link">Home</a>
-                        <a href="/courses/elf" class="nav-link">Courses</a>
-                        <a href="/dashboard" class="nav-link">Dashboard</a>
-                        <a href="/review" class="nav-link">Review</a>
-                        <a href="/progress" class="nav-link">Progress</a>
-                        <a href="/study-plans" class="nav-link">Planner</a>
-                    </div>
-                    <div class="nav-right">
-                        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-                            <span class="theme-icon-light">&#9728;</span>
-                            <span class="theme-icon-dark">&#9790;</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+            {render_nav_bar(&mut page)}
 
             <div class="container" id="main-content">
                 <div class="page-header">
@@ -73,7 +54,6 @@ public namespace underlayer_web {
             .navbar { background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
             .nav-inner { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; row-gap: 0.25rem; column-gap: 1rem; }
             .nav-brand { font-size: 1.25rem; font-weight: 700; color: hsl(var(--foreground)); text-decoration: none; } .nav-brand:hover { color: hsl(217 91% 60%); }
-            .nav-links { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.25rem 0.5rem; flex: 0 1 auto; min-width: 0; }
             .nav-link { color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.6rem; border-radius: 6px; transition: all 0.15s; white-space: nowrap; }
             .nav-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
             .nav-right { display: flex; align-items: center; gap: 0.75rem; }
@@ -108,24 +88,9 @@ public namespace underlayer_web {
             .empty-state { text-align: center; padding: 2.5rem 1rem; border: 1px dashed hsl(var(--border)); border-radius: 10px; color: hsl(var(--muted-foreground)); }
             .empty-state h3 { margin: 0 0 0.5rem 0; color: hsl(var(--foreground)); } .empty-state p { margin: 0; font-size: 0.9rem; }
             .muted { color: hsl(var(--muted-foreground)); }
-            @media (max-width: 768px) { .nav-links { display: none; } .container { padding: 1rem; } .form-grid { grid-template-columns: 1fr; } .plan-row { flex-wrap: wrap; } }
         }
 
         #js {
-            function getTheme() {
-                var saved = localStorage.getItem("theme");
-                if (saved) return saved;
-                return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-            }
-            function setTheme(theme) {
-                document.documentElement.classList.toggle("dark", theme === "dark");
-                localStorage.setItem("theme", theme);
-            }
-            function toggleTheme() {
-                var current = document.documentElement.classList.contains("dark") ? "dark" : "light";
-                setTheme(current === "dark" ? "light" : "dark");
-            }
-            setTheme(getTheme());
             var plansBody = document.getElementById("plans-body");
             function authHeaders(extra) {
                 var headers = { "Authorization": "Bearer " + (localStorage.getItem("session_token") || "") };

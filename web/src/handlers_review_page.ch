@@ -13,30 +13,7 @@ public namespace underlayer_web {
         page.appendTitle(std::string_view("Review — Underlayer"))
 
         #html {
-            <a href="#main-content" class="skip-link">Skip to content</a>
-            <div class="navbar">
-                <div class="nav-inner">
-                    <a href="/" class="nav-brand">Underlayer</a>
-                    <button class="hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Toggle menu">
-                        <span class="hamburger-line"></span>
-                        <span class="hamburger-line"></span>
-                        <span class="hamburger-line"></span>
-                    </button>
-                    <div class="nav-links">
-                        <a href="/" class="nav-link">Home</a>
-                        <a href="/courses/elf" class="nav-link">Courses</a>
-                        <a href="/dashboard" class="nav-link">Dashboard</a>
-                        <a href="/review" class="nav-link active">Review</a>
-                        <a href="/progress" class="nav-link">Progress</a>
-                    </div>
-                    <div class="nav-right">
-                        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-                            <span class="theme-icon-light">☀️</span>
-                            <span class="theme-icon-dark">🌙</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+            {render_nav_bar(&mut page)}
 
             <div class="container" id="main-content">
                 <div class="review-header">
@@ -124,7 +101,6 @@ public namespace underlayer_web {
             .nav-inner { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; row-gap: 0.25rem; column-gap: 1rem; }
             .nav-brand { font-size: 1.25rem; font-weight: 700; color: hsl(var(--foreground)); text-decoration: none; }
             .nav-brand:hover { color: hsl(217 91% 60%); text-decoration: none; }
-            .nav-links { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.25rem 0.5rem; flex: 0 1 auto; min-width: 0; }
             .nav-link { color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.6rem; border-radius: 6px; transition: all 0.15s; white-space: nowrap; }
             .nav-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); text-decoration: none; }
             .nav-link.active { color: hsl(217 91% 60%); background: hsl(217 91% 60% / 10%); }
@@ -175,8 +151,6 @@ public namespace underlayer_web {
             .mode-card h3 { font-size: 1rem; margin-bottom: 0.35rem; color: hsl(var(--foreground)); }
             .mode-card p { color: hsl(var(--muted-foreground)); font-size: 0.85rem; margin: 0; }
             @media (max-width: 768px) {
-                .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); flex-direction: column; padding: 1rem; gap: 0.5rem; }
-                .nav-links.open { display: flex; }
                 .nav-link { padding: 0.75rem 1rem; }
                 .hamburger { display: block; }
                 .container { padding: 1rem; }
@@ -191,20 +165,6 @@ public namespace underlayer_web {
         }
 
         #js {
-            function getTheme() {
-                var saved = localStorage.getItem('theme');
-                if (saved) return saved;
-                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            }
-            function setTheme(theme) {
-                document.documentElement.classList.toggle('dark', theme === 'dark');
-                localStorage.setItem('theme', theme);
-            }
-            function toggleTheme() {
-                var current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-                setTheme(current === 'dark' ? 'light' : 'dark');
-            }
-            setTheme(getTheme());
 
             var currentIndex = 0;
             var totalDue = 0;
