@@ -96,6 +96,31 @@ public namespace underlayer_web {
                     <Text variant="muted">Where you are, and what to do next</Text>
                 </div>
 
+                // THE PAGE'S ACTUAL ANSWER, ABOVE THE EVIDENCE FOR IT.
+                //
+                // This dashboard's subtitle has always said "where you are, and
+                // what to do next" and then answered only the first half: four
+                // counters, three knowledge-health bars, a review-queue card.
+                // Those are the evidence. There was no conclusion anywhere on the
+                // page, so a learner who opened the dashboard and found 4%
+                // progress and three failing concepts had to do the arithmetic
+                // themselves about what to open next.
+                //
+                // What they could not do is the part that mattered: the platform
+                // HAD computed it. /api/weaknesses ranks concepts by accuracy and
+                // severity on every single answer, /api/weaknesses/alerts turns
+                // that into "this needs attention", and tools/integration_holes.py
+                // found that no page in the entire UI named either one. A learner
+                // who got five of six questions wrong on three concepts was told
+                // nothing at all.
+                //
+                // So the answer is now the first thing on the page, and the
+                // counters below it are what it is based on -- which is the order
+                // a reader can actually use. See web/src/next_step.ch for the
+                // priority rules, which are the content of this panel, and for why
+                // it ships `hidden` and stays hidden when there is nothing to say.
+                {render_next_step(&mut page)}
+
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
                     <Card>
                         <CardBody>

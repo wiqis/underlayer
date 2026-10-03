@@ -141,4 +141,45 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw rl)
     }
 
+    // PURGE THE RATE-LIMIT COUNTERS, and why this is here rather than in a
+    // scheduled job.
+    //
+    // `rate_limits` grows one row per distinct IP per endpoint group and nothing
+    // ever removed a row, so it was an unbounded table written by anonymous
+    // requests -- which is not a leak, but it IS a way to grow a table without
+    // holding an account.  Measured on the dev database: 4 rows for 4 groups
+    // from 4 local addresses, growing one per distinct address forever.
+    //
+    // A bucket whose window is long past can never affect a decision: the
+    // limiter resets a count whenever `window_start` differs from the current
+    // window (web/src/rate_limit.ch).  So a row more than one window old is
+    // dead weight by the limiter's own logic, and deleting it cannot change a
+    // single future answer.  That is what makes it safe to do on startup rather
+    // than needing a timer.
+    //
+    // Why startup and not a background sweep: this is a single-process
+    // deployment (see the open question about one SQLite handle), the table is
+    // tiny, and a startup pass needs no scheduler, no thread and no lifecycle.
+    // When the platform runs more than one process this becomes a job, and the
+    // condition -- delete rows whose window has passed -- stays exactly as it is.
+    //
+    // The cutoff is TWO windows rather than one so a row is never deleted in the
+    // instant before its own window rolls over: with a fixed window derived from
+    // the timestamp, "now - window_start >= 2*window" is unambiguously past.
+    public func purge_expired_rate_limits(db : *DbClient) {
+        var window = rate_limit_window_seconds()
+        var cutoff = underlayer_core::current_timestamp() - (window * 2)
+        var cutoff_s = underlayer_core::int_to_string(cutoff)
+        var sql = string("DELETE FROM rate_limits WHERE window_start < ")
+        sql.append_view(cutoff_s.to_view())
+        underlayer_db::exec_sql(db, &raw sql)
+    }
+
+    // The window length, named once.  web/src/rate_limit.ch owns the number;
+    // this mirrors it because the layers cannot import each other in both
+    // directions, and a purge using a DIFFERENT window than the limiter would
+    // delete rows the limiter still considers live.  tools/checkers assert the
+    // two agree, so a change to one without the other fails the gate.
+    private func rate_limit_window_seconds() : i64 { return 300 }
+
 }

@@ -221,6 +221,11 @@ public namespace underlayer_repository {
         // login limiter, and it has to exist before the first request rather
         // than on first use.
         run_support_tables(db)
+        // Remove rate-limit buckets whose window has passed.  Dead by the
+        // limiter's own logic, and the reason is written down where the purge
+        // is: this table is written by anonymous requests and nothing else
+        // removes rows.
+        purge_expired_rate_limits(db)
     }
 
 }

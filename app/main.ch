@@ -51,12 +51,31 @@ public func main() : int {
         // Multi-course: loop every course directory found on disk.
         var all_courses = underlayer_repository::list_courses(&courses_dir_pre)
         var seeded_total : i64 = 0
+        var prereq_total : i64 = 0
         var ci : size_t = 0
         while(ci < all_courses.size()) {
             var cptr = all_courses.get_ptr(ci)
             var cid = cptr.id.copy()
             var seeded = underlayer_repository::seed_exercises_from_manifest(&raw db, &courses_dir_pre, &cid)
             seeded_total = seeded_total + seeded
+            // COURSE PREREQUISITES, from the same manifests and in the same loop.
+            //
+            // 32 of the 34 manifests declare `dependencies`, and before this
+            // nothing ever wrote them anywhere: `course_prerequisites` held zero
+            // rows, so GET /api/courses/:id/can-enroll answered
+            // `{"can_enroll": true}` for EVERY course on the platform. The
+            // prerequisite checks all existed and all read an empty table -- a
+            // shipped feature that always says yes, which is worse than an absent
+            // one, because the checklist claims it exists.
+            //
+            // Idempotent, and it also PRUNES: a dependency removed from a
+            // manifest stops being enforced, because the table is derived state
+            // and derived state has to be allowed to shrink.
+            var man_course = underlayer_repository::load_course(&courses_dir_pre, &cid)
+            if(man_course.id.size() > 0) {
+                var np = underlayer_repository::seed_prerequisites_from_manifest(&raw db, &man_course)
+                prereq_total = prereq_total + np
+            }
             ci = ci + 1
         }
         if(seeded_total > 0) {
@@ -79,6 +98,13 @@ public func main() : int {
 
     // ---- Learner CRUD ----
     srv.router.add("POST", "/api/learners", (|db|(req, res) => {
+        // RATE LIMITED.
+        // 8 per 5 min -- the AUTH ceiling, not the learning one, because this inserts into `learners`, which is the ACCOUNTS table.
+        // Measured before this: it answered 200 to an unauthenticated caller, forever, and every call attempted an INSERT with a hardcoded email and no password.
+        // It reads no request body at all and exists for tests/src/additional_api_test.ch
+        // See web/src/rate_limit.ch.
+        // See web/src/rate_limit.ch.
+        if(!underlayer_web::rate_limit_create_learner(&raw db, &req, &raw mut res)) { return }
         underlayer_web::handle_create_learner(&raw db, &req, &raw mut res)
     }))
     srv.router.add("GET", "/api/learners/:learnerId", (|db|(req, res) => {
@@ -373,6 +399,39 @@ public func main() : int {
     }))
 
     // ---- Navigation API (7.1.2, 7.1.3, 7.1.5) ----
+    // THE SAME TREE, WITHOUT A CONCEPT, and this route exists because
+    // /api/navigation required a concept id that a caller asking "what order are
+    // these lessons in?" does not have.
+    //
+    // Measured while building web/src/next_step.ch: the panel needs every concept
+    // in course order, and it has no current concept -- it is on the dashboard,
+    // not in a lesson. The only way to get the tree was to invent a placeholder
+    // concept id, and an invented id returns 200 with the full tree, which means
+    // the parameter was never load-bearing for the tree. It only adds prev/next
+    // and breadcrumbs.
+    //
+    // So the tree is now reachable honestly, and a caller that has a concept
+    // still uses the two-parameter form. Both routes share ONE handler, so there
+    // is no second copy of the tree to drift.
+    srv.router.add("GET", "/api/navigation/:courseId", (|&courses_dir|(req, res) => {
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 3) {
+            var course_id = segments.get_ptr(2)
+            // An empty concept id makes the handler omit the breadcrumbs and the
+            // prev/next block, which is exactly the difference wanted here.
+            var no_concept = std::string_view("")
+            underlayer_web::handle_navigation(courses_dir, course_id, &raw no_concept, &req, &raw mut res)
+        } else {
+            res.status = 400u
+            var ct = std::string_view("application/json")
+            res.set_header_view(std::string_view("Content-Type"), &ct)
+            var body = std::string("{\"error\": \"missing course id\"}")
+            var bv = body.to_view()
+            res.write_view(&bv)
+        }
+    }))
+
     srv.router.add("GET", "/api/navigation/:courseId/:conceptId", (|&courses_dir|(req, res) => {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
@@ -474,7 +533,39 @@ public func main() : int {
         }
     }))
 
+    // THE RATE-LIMIT GATE ON THIS ROUTE, and the reason this closure captures
+    // `db` BY REFERENCE while every other gated route captures it by value.
+    //
+    // Measured: with the `*DbClient` gate and a by-value capture, this compiled,
+    // the gate string was in the binary, and the gate NEVER RAN. 125 consecutive
+    // submissions answered 200 and no `exercise_submit` bucket was ever written.
+    // The same gate on /api/feedback, /api/learners and the four auth routes --
+    // all by-value captures -- works. The difference is the capture, not the gate.
+    //
+    // Two conclusions, and the second is the one that matters:
+    //   * `rate_limit_ok` now has a `&DbClient` entry point, because a
+    //     by-reference closure can pass `db` and cannot pass `&raw db` usefully.
+    //   * A limiter that silently never fires is WORSE THAN NO LIMITER, because
+    //     it reads as coverage. tools/security_check.py CHECK 15 now fires every
+    //     gate and asserts each one refuses, so "the gate is in the source" is
+    //     no longer something anyone has to take on faith.
     srv.router.add("POST", "/api/exercises/submit", (|&db|(req, res) => {
+        // RATE LIMITED.
+        // 120 per 5 min.
+        // Measured before this: ten submissions in ten consecutive requests, all
+        // accepted.
+        // Each inserts into exercise_attempts and re-grades, so it is both a write
+        // amplifier and a way to manufacture a flattering history -- a learner could
+        // inflate their own accuracy, or manufacture weaknesses to dodge a review
+        // they did not do.
+        // 120 is ten times what a reviewer doing a course in one sitting produces
+        // A LOCAL COPY, not `&raw db`.  In a closure that captures `db` BY
+        // REFERENCE, `&raw db` compiles, is present in the binary, and never
+        // runs -- measured: 125 submissions, 125 x 200, no bucket row.  Copying
+        // first gives a real *DbClient, which is the only thing
+        // rate_limit_ok_with can actually use.
+        var dbp = db
+        if(!underlayer_web::rate_limit_exercise_submit(&raw dbp, &req, &raw mut res)) { return }
         underlayer_web::handle_exercise_submit(db, &raw mut req, &raw mut res)
     }))
 
@@ -503,12 +594,12 @@ public func main() : int {
     }))
 
     // Course landing page
-    srv.router.add("GET", "/courses/:courseId", (|&courses_dir|(req, res) => {
+    srv.router.add("GET", "/courses/:courseId", (|&db, &courses_dir|(req, res) => {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 2) {
             var course_id = segments.get_ptr(1)
-            underlayer_web::handle_course_landing(courses_dir, course_id, &req, &raw mut res)
+            underlayer_web::handle_course_landing(db, courses_dir, course_id, &req, &raw mut res)
         } else {
             underlayer_web::handle_home(&req, &raw mut res)
         }
@@ -533,7 +624,7 @@ public func main() : int {
     }))
 
     // Static file serving for course output (HTML, CSS, JS, images)
-    srv.router.add("GET", "/courses/*", (|&courses_dir|(req, res) => {
+    srv.router.add("GET", "/courses/*", (|&db, &courses_dir|(req, res) => {
         var path = req.path.to_view()
         // Only serve files, not directory paths (must have an extension)
         var has_ext = false
@@ -549,7 +640,7 @@ public func main() : int {
             var segments = underlayer_core::path_segments(&path)
             if(segments.size() >= 2) {
                 var course_id = segments.get_ptr(1)
-                underlayer_web::handle_course_landing(courses_dir, course_id, &req, &raw mut res)
+                underlayer_web::handle_course_landing(db, courses_dir, course_id, &req, &raw mut res)
             } else {
                 underlayer_web::handle_home(&req, &raw mut res)
             }
@@ -785,6 +876,11 @@ public func main() : int {
 
     // ---- Content Feedback API ----
     srv.router.add("POST", "/api/feedback", (|db|(req, res) => {
+        // RATE LIMITED.
+        // 120 per 5 min.
+        // It writes into a table a HUMAN reads -- the corrections queue -- so an
+        // unbounded writer fills it with noise and makes the queue unworkable
+        if(!underlayer_web::rate_limit_feedback(&raw db, &req, &raw mut res)) { return }
         underlayer_web::handle_submit_feedback(&raw db, &req, &raw mut res)
     }))
     srv.router.add("GET", "/api/feedback/stats", (|db|(req, res) => {
@@ -797,6 +893,8 @@ public func main() : int {
         underlayer_web::handle_get_admin_reports(&raw db, &req, &raw mut res)
     }))
     srv.router.add("POST", "/api/feedback/report-exercise", (|db|(req, res) => {
+        // RATE LIMITED: 120 per 5 min.  Same queue as /api/feedback: a human has to triage it
+        if(!underlayer_web::rate_limit_report_exercise(&raw db, &req, &raw mut res)) { return }
         underlayer_web::handle_report_exercise(&raw db, &req, &raw mut res)
     }))
     srv.router.add("GET", "/api/feedback/concept/:conceptId", (|db|(req, res) => {

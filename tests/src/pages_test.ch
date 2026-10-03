@@ -386,9 +386,19 @@ public func test_course_landing_returns_200(env : &mut TestEnv) {
     cfg.addr = string("127.0.0.1:19895")
     var srv = server.Server(cfg)
     var course_id = string("elf")
-    srv.router.add("GET", "/courses/elf", (|&courses_dir, &course_id|(req, res) => {
+    // The database is captured too: the course landing page now renders the
+    // enrol control server-side, from the session (web/src/enroll_button.ch,
+    // P1 7.1.23), so the handler needs a DbClient it did not need before.
+    // `&db` and then `&raw dbp`, because a by-reference capture yields
+    // `&DbClient` and the handler wants a `*DbClient` it can copy from.
+    srv.router.add("GET", "/courses/elf", (|&db, &courses_dir, &course_id|(req, res) => {
         var cv = course_id.to_view()
-        underlayer_web::handle_course_landing(courses_dir, &raw cv, &req, &raw mut res)
+        // A local copy inside the closure.  A local declared OUTSIDE it is
+        // "outside of lambda scope", and the outer `db` itself has been moved by
+        // the time the request arrives -- both of which are this codebase's
+        // closure rules, not something about this test.
+        var dbp = db
+        underlayer_web::handle_course_landing(db, courses_dir, &raw cv, &req, &raw mut res)
     }))
     srv.serve_async(19895u)
     std::concurrent.sleep_ms(200u)

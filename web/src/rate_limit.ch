@@ -57,9 +57,33 @@ using underlayer_db::DbClient
 
 public namespace underlayer_web {
 
-    // 8 attempts / 5 minutes.  See the header for the arithmetic.
+    // 8 attempts / 5 minutes for AUTH.  See the header for the arithmetic.
     private func rate_limit_max() : i64 { return 8 }
     private func rate_limit_window() : i64 { return 300 }
+
+    // A DIFFERENT CEILING FOR LEARNING WRITES, and the reason there are two
+    // numbers rather than one configurable limit is that the two surfaces have
+    // opposite shapes.
+    //
+    //   auth       8 / 5 min.  A person types a password.  Anything above ~10
+    //              is a script, and a script here is a DoS because bcrypt costs
+    //              0.44s of CPU per attempt.
+    //
+    //   learning   120 / 5 min.  A person answering exercises does not hit 120;
+    //              a reviewer working through a course deliberately might, and
+    //              this platform's own reviewers are the people most likely to.
+    //              Measured on the lesson page: a reader doing the exercises in
+    //              one sitting produces about 12 submissions.  120 is ten times
+    //              that, so a real reader never sees this ceiling.
+    //
+    // And one endpoint deliberately has NO limit, which is worth stating because
+    // "rate limit everything" is the instinct and it is wrong here:
+    //
+    //   /api/learning/view  POSTed by every lesson page load, for every reader,
+    //                       forever.  Limiting it would break the product.  It
+    //                       also has nothing to gain from: it only advances a
+    //                       timestamp on the caller's OWN row.
+    private func rate_limit_write_max() : i64 { return 120 }
 
     // Create the table.  Idempotent, and called from init_schema's migration
     // path so a fresh database has it.
@@ -98,12 +122,17 @@ public namespace underlayer_web {
     // The window is derived from the timestamp, so no scheduled reset job is
     // needed: a bucket whose window_start is behind the current window starts
     // again at 1.
-    public func rate_limit_ok(db : *DbClient, req : &http::Request, group : &string, res : *mut http::ResponseWriter) : bool {
+    // ONE SIGNATURE, `*DbClient`, because that is what a by-value route closure
+    // can produce (`&raw db`), and eight of the nine gates sit in by-value
+    // closures.  See web/src/rate_limit.ch's header for the by-reference case,
+    // which is handled at the call site with a local copy rather than by adding a
+    // second signature here: two overloads would leave the broken one available
+    // and the bug below would come straight back.
+    public func rate_limit_ok_with(db : *DbClient, req : &http::Request, group : &string, res : *mut http::ResponseWriter, max : i64) : bool {
         var ip = client_ip(req)
         var bucket = rate_limit_bucket(group, &ip)
         var now = underlayer_core::current_timestamp()
         var window = rate_limit_window()
-        var max = rate_limit_max()
         var window_start = now - (now % window)
 
         var bucket_esc = underlayer_repository::sql_escape(&bucket)
@@ -167,22 +196,67 @@ public namespace underlayer_web {
     // reader of the routes will actually have.
     public func rate_limit_login(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) : bool {
         var g = string("login")
-        return rate_limit_ok(db, req, &g, res)
+        return rate_limit_ok_with(db, req, &g, res, rate_limit_max())
     }
 
     public func rate_limit_register(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) : bool {
         var g = string("register")
-        return rate_limit_ok(db, req, &g, res)
+        return rate_limit_ok_with(db, req, &g, res, rate_limit_max())
     }
 
     public func rate_limit_forgot(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) : bool {
         var g = string("forgot")
-        return rate_limit_ok(db, req, &g, res)
+        return rate_limit_ok_with(db, req, &g, res, rate_limit_max())
     }
 
     public func rate_limit_reset(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) : bool {
         var g = string("reset")
-        return rate_limit_ok(db, req, &g, res)
+        return rate_limit_ok_with(db, req, &g, res, rate_limit_max())
+    }
+
+    // ---- the learning-write surface ------------------------------------
+    //
+    // /api/exercises/submit accepted ten submissions in ten consecutive
+    // requests with no objection, measured before this.  Each one inserts into
+    // `exercise_attempts` and re-grades, so the endpoint is both a write
+    // amplifier against the database and a way to manufacture a flattering
+    // history: a learner (or anyone holding a token) could inflate their own
+    // accuracy and manufacture weaknesses to dodge a review they did not do.
+    //
+    // 120 per 5 minutes is the ceiling argued above -- ten times what a
+    // reviewer doing a course in one sitting produces.
+    public func rate_limit_exercise_submit(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) : bool {
+        var g = string("exercise_submit")
+        return rate_limit_ok_with(db, req, &g, res, rate_limit_write_max())
+    }
+
+    // POST /api/feedback and POST /api/feedback/report-exercise.  Both are
+    // unauthenticated-adjacent (they answer 401 without a session) but they
+    // write into a table a human has to READ -- the corrections queue -- so an
+    // unbounded writer fills it with noise and makes the queue unworkable.
+    public func rate_limit_feedback(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) : bool {
+        var g = string("feedback")
+        return rate_limit_ok_with(db, req, &g, res, rate_limit_write_max())
+    }
+
+    public func rate_limit_report_exercise(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) : bool {
+        var g = string("report_exercise")
+        return rate_limit_ok_with(db, req, &g, res, rate_limit_write_max())
+    }
+
+    // POST /api/learners.  This one is NOT a learning write and does not get the
+    // learning ceiling: it inserts into `learners`, which is the ACCOUNTS table,
+    // and it does so with a hardcoded identity (name "learner", email
+    // learner@underlayer.dev, no password) -- there is no request body it reads
+    // at all.  It exists for tests/src/additional_api_test.ch and nothing else.
+    //
+    // So it is limited at the AUTH ceiling, not because it is authentication
+    // but because it creates rows in an accounts table and that is the same
+    // shape of abuse.  Unauthenticated and unbounded, it answered 200 forever
+    // and every call attempted an INSERT with a UNIQUE-violating email.
+    public func rate_limit_create_learner(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) : bool {
+        var g = string("create_learner")
+        return rate_limit_ok_with(db, req, &g, res, rate_limit_max())
     }
 
 }

@@ -543,7 +543,71 @@ def main():
                   'HTTP %d %s' % (stx, bodyx[:90]))
 
         budget()
-        print('=== CHECK 14  the login limiter actually refuses a flood ===')
+        print('=== CHECK 14  EVERY rate-limit gate actually fires ===')
+        # THE ONE THAT MATTERS MOST IN THIS FILE.
+        #
+        # Found on 2026-10-03: the gate on POST /api/exercises/submit COMPILED,
+        # its group string was present in the binary, and it NEVER RAN. 125
+        # consecutive submissions all answered 200 and no bucket row was ever
+        # written. The cause was the closure capture shape -- `&raw db` inside a
+        # closure that captured `db` BY REFERENCE compiles, is emitted, and does
+        # nothing, while the identical call in a by-value closure works.
+        #
+        # That is the worst kind of limiter bug, because every way of checking it
+        # by reading the source says it is in place. So each gate below is FIRED
+        # and each is required to refuse. A gate that appears in the source and
+        # does not refuse here has not been tested -- it has been assumed.
+        #
+        # Each is given its own counter key so one gate cannot be mistaken for
+        # another, and `clear_rate_limits` between them so each refusal is the
+        # gate's own doing.
+        if had_limiter:
+            GATES = [
+                ('/api/auth/login', {'email': 'nobody@t.com',
+                                      'password': 'wrong'}, 8),
+                ('/api/auth/register', {'email': 'gate-probe@t.com',
+                                        'password': 'password123',
+                                        'name': 'Probe'}, 8),
+                ('/api/exercises/submit?exercise_id=elf_bytes_0&answer=a',
+                 {'course_id': 'elf'}, 120),
+                ('/api/feedback', {'course_id': 'elf', 'concept_id': 'bytes',
+                                   'kind': 'correction',
+                                   'message': 'gate probe'}, 120),
+                ('/api/feedback/report-exercise',
+                 {'exercise_id': 'elf_bytes_0', 'reason': 'gate probe'}, 120),
+                ('/api/learners', {}, 8),
+            ]
+            for path, body, ceiling in GATES:
+                clear_rate_limits()
+                # Fire ceiling+4 times; a gate that refuses nothing returns 200
+                # (or 401/403) every time and is caught by the last probe.
+                need = ceiling + 4
+                codes = []
+                for _ in range(need):
+                    stg, _b = http('POST', path, args.port, token=tokens.get(
+                        e1) if path.startswith(('/api/exercises',
+                                               '/api/feedback')) else None,
+                        body=json.dumps(body))
+                    codes.append(stg)
+                refused = [c for c in codes if c == 429]
+                name = path.split('?')[0]
+                check('%s refuses a flood (%d)' % (name, ceiling),
+                      len(refused) > 0,
+                      'no 429 in %d requests (ceiling %d); statuses seen: %s'
+                      % (need, ceiling, sorted(set(codes))))
+                if refused:
+                    first = codes.index(429)
+                    check('%s refuses at the ceiling, not before it'
+                          % name, first == ceiling,
+                          'first 429 at request %s, ceiling is %d'
+                          % (first, ceiling))
+            clear_rate_limits()
+        else:
+            check('every rate-limit gate is present', False,
+                  'no rate_limits table -- this build has no limiter at all, and '
+                  'CHECK 14 above does NOT cover the DoS')
+
+        print('=== CHECK 15  the limiter is not an account-existence oracle ===')
         # This is where the limiter is asserted, deliberately, at the END and
         # after the counters have been cleared for every other check.  Before the
         # limiter existed, twelve wrong passwords in a row answered twelve 401s
