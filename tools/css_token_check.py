@@ -129,8 +129,10 @@ def css_blocks(src):
 
 
 def check_source():
-    sec('1. no `var()` in any #css block may carry a fallback argument')
+    sec('1. css_cbi rewrites two things we rely on -- no var() FALLBACK and no '
+        'hand-written CSS ESCAPE')
     hits = []
+    escapes = []
     for rel in CSS_DIRS:
         d = os.path.join(ROOT, rel)
         if not os.path.isdir(d):
@@ -143,9 +145,19 @@ def check_source():
             for line_no, body in css_blocks(src):
                 for m in re.finditer(r'var\(\s*(--[a-zA-Z0-9-]+)\s*,', body):
                     hits.append(f'{rel}/{name}:{line_no}  {m.group(1)}')
+                # A CSS escape is backslash + up to six hex digits. css_cbi
+                # EMITS one for a literal character and ESCAPES one written by
+                # hand, so a hand-written escape reaches the browser doubled and
+                # renders as its own text. Proven with a probe module:
+                #   content: "▾"    -> content:'\25BE'   correct
+                #   content: "\25BE" -> content:'\\25BE'  broken
+                for m in re.finditer(r'content\s*:\s*["\'][^"\']*\\[0-9a-fA-F]{2,6}', body):
+                    escapes.append(f'{rel}/{name}:{line_no}  {m.group(0)[:60]}')
     ok(f'no var(--x, fallback) survives in {len(CSS_DIRS)} css source dirs',
        not hits, '; '.join(hits[:6]))
-    return not hits
+    ok('no hand-written CSS escape in a content: value',
+       not escapes, '; '.join(escapes[:6]))
+    return not hits and not escapes
 
 
 def fetch(path, port):
@@ -231,6 +243,17 @@ def check_served(port):
        '--muted-foreground);' not in lesson
        and 'hsl(var(--nav-muted))' in lesson,
        'advisory still references an undefined theme token')
+
+    # The nav's disclosure chevrons. A DOUBLED backslash is the tell: the browser
+    # reads `\\25B4` as an escaped backslash followed by literal text, which is
+    # how "Your space" came to display `\25B4` in the header.
+    nav = dict(pages)['/courses/elf/lessons/bytes']
+    doubled = re.findall(r"content:'\\\\[0-9a-fA-F]{2,6}", nav)
+    ok('nav disclosure chevrons are single-escaped, not doubled',
+       not doubled, f'doubled escapes in served CSS: {doubled[:4]}')
+    ok('nav disclosure chevrons are present at all',
+       '25BE' in nav and '25B4' in nav,
+       'no chevron escape found in the served nav CSS')
     return True
 
 

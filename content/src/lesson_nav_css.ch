@@ -37,6 +37,33 @@
 // text so the label stays readable while focused.
 public namespace underlayer_content {
 
+    // THE CHEVRONS ON THE DISCLOSURE ARE LITERAL CHARACTERS, NOT `\25BE` /
+    // `\25B4` ESCAPES, and that is measured rather than preferred. The menu was
+    // rendering the six characters `\25B4` in the header instead of an
+    // up-pointing triangle. A standalone probe module, 2026-10-03:
+    //
+    //     source:  content: "▾"     ->  emits  content:'\25BE'    correct
+    //     source:  content: "\25BE"  ->  emits  content:'\\25BE'   broken
+    //
+    // css_cbi WRITES the CSS escape when it sees the character and ESCAPES the
+    // backslash when it sees one written by hand. A CSS escape is
+    // backslash-plus-hex-digits; handed two backslashes the browser reads the
+    // first as an escaped backslash and the remaining five as literal text,
+    // which is exactly the string a reader saw.
+    //
+    // So: put the character in and let the macro encode it. A `#js` block cannot
+    // take a non-ASCII byte at all; a `#css` block takes one and converts it,
+    // and these two rules are the proof.
+    //
+    // tools/css_token_check.py fails on a hand-written escape in any `content:`
+    // value, and on a doubled one in the served CSS, so this cannot come back.
+    //
+    // The comment is ABOVE the `#css` block rather than inside it because
+    // css_cbi stops at a line that is nothing but `}` -- the closing line of a
+    // comment -- and treats the rest of the block as outside the macro. That is
+    // the same reason lesson_nav.ch writes its two conditionals as early returns
+    // instead of `@if`/`@else` inside the markup, and it cost one failed build to
+    // find the second time.
     public func render_site_nav_css(page : &mut HtmlPage) {
         #css {
             :root { --nav-card: 0 0% 100%; --nav-border: 220 11% 89%; --nav-fg: 221 39% 11%; --nav-muted: 220 9% 46%; --nav-accent: 220 14% 96%; --nav-accent-strong: 220 13% 91%; --nav-ring: 217 91% 60%; }
@@ -58,8 +85,8 @@ public namespace underlayer_content {
             .nav-menu { position: relative; display: inline-block; }
             .nav-menu-summary { list-style: none; }
             .nav-menu-summary::-webkit-details-marker { display: none; }
-            .nav-menu-summary::after { content: " \25BE"; font-size: 0.75em; opacity: 0.7; }
-            .nav-menu[open] .nav-menu-summary::after { content: " \25B4"; }
+            .nav-menu-summary::after { content: " ▾"; font-size: 0.75em; opacity: 0.7; }
+            .nav-menu[open] .nav-menu-summary::after { content: " ▴"; }
             .nav-menu[data-active="true"] > .nav-menu-summary { color: hsl(var(--nav-ring)); background: hsl(var(--nav-ring) / 12%); font-weight: 600; }
             .nav-menu-panel { position: absolute; top: calc(100% + 0.35rem); right: 0; z-index: 120; min-width: 13rem; padding: 0.35rem; background: hsl(var(--nav-card)); border: 1px solid hsl(var(--nav-border)); border-radius: 10px; box-shadow: 0 10px 24px -6px rgb(0 0 0 / 0.18); display: flex; flex-direction: column; }
             .nav-menu-panel .nav-link { width: 100%; text-align: left; }
@@ -82,8 +109,8 @@ public namespace underlayer_content {
                 .nav-links.nav-open { display: flex; }
                 .nav-link { padding: 0.65rem 0.7rem; font-size: 0.95rem; }
                 .nav-menu-panel { position: static; min-width: 0; border: none; box-shadow: none; padding: 0 0 0 0.75rem; margin-left: 0.5rem; border-left: 2px solid hsl(var(--nav-border)); border-radius: 0; }
-                .nav-menu-summary::after { content: " \25BE"; }
-                .nav-menu[open] .nav-menu-summary::after { content: " \25B4"; }
+                .nav-menu-summary::after { content: " ▾"; }
+                .nav-menu[open] .nav-menu-summary::after { content: " ▴"; }
             }
             @media (max-width: 420px) {
                 .nav-inner { padding: 0 1rem; }
