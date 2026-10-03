@@ -10,6 +10,51 @@
 // web/src/nav_bar.ch is now a two-line delegation to this file.  There is one
 // nav here, not one here and one there.
 //
+// WHY FOURTEEN LINKS BECAME FOUR PLUS ONE MENU.  Measured on the served HTML,
+// 2026-10-03: the nav carried fourteen peer links -- Home, Courses, Path,
+// Search, Dashboard, Review, Progress, Bookmarks, Notes, Planner,
+// Achievements, Streaks, Alerts, Certificates -- in one flat `flex-wrap: wrap`
+// row inside a 1400px bar.  On a 1440px screen that is one unreadable line of
+// fourteen equally-weighted words with no grouping and nothing to say which
+// one matters; below 1300px six of those pages hid `.nav-links` outright with
+// no hamburger to restore it, so the whole nav simply vanished on a laptop
+// (see the removal note in web/src/home_assets.ch).  A learner opening
+// Underlayer could not tell what the product was asking of them.
+//
+// docs/ui-ux-design.md:438 already answered this and the code had drifted away
+// from it: it specifies `Header: [Logo] [Courses] [Progress] [Settings]`.  So
+// the nav now leads with the four things a learner actually came for -- Learn,
+// Path, Review, Progress -- plus Search, and puts the ten account-scoped
+// screens behind one "Your space" menu.  Six top-level items instead of
+// fourteen; every route still reachable; and the grouped ones are now visibly
+// grouped, which is the thing a flat list could not say.
+//
+// WHY A MENU AND NOT A TRUNCATED LIST.  Dropping the ten screens would have
+// been cheaper and would have broken tools/nav_check.py, which requires
+// /dashboard and /progress to be present in the nav region precisely so that
+// "a nav is present but empty" cannot pass.  A `<details>` menu keeps every
+// href in the document for that checker AND degrades correctly with scripting
+// off, because `<details>` needs no JavaScript to open.  A button-plus-`hidden`
+// menu would have hidden ten routes from every reader with JS blocked, and it
+// would need an ARIA-expanded/cat-keyboard-close dance to match what
+// `<details>` gives for free.
+//
+// WHY THE ACTIVE LINK IS CHOSEN BY SCRIPT AND WHY NOTHING IS ACTIVE BEFORE IT
+// RUNS.  This function is called from 442 places and none of them knows the
+// request path -- a lesson page knows its course and concept, but not the URL
+// it was served at, and threading a parameter through 442 files to light up
+// one class is the wrong trade.  So the choice is made client-side from
+// `location.pathname`, in the script that every nav already loads.
+//
+// The important half is what it REPLACED.  The markup used to hardcode
+// `class="nav-link active"` on Courses, so every page in the product -- the
+// home page, a lesson, a certificate -- highlighted "Courses" forever.  That is
+// worse than no highlight: it is a confident wrong answer, and on the home page
+// it pointed at a page the reader was not on.  So there is now NO default
+// active class in the markup.  If the script never runs, the reader sees no
+// highlighted link, which is merely uninformative; where before they saw a
+// lie.  See lesson_nav_js.ch for the matcher.
+//
 // WHY A LESSON PAGE GETS A SLIGHTLY SMALLER NAV, and why that is not a second
 // navbar.  Both differences are inside this one component, switched by one
 // flag, and both are because the thing the piece would control is not there:
@@ -66,21 +111,33 @@ public namespace underlayer_content {
             <div class="navbar">
                 <div class="nav-inner">
                     <a href="/" class="nav-brand">Underlayer</a>
-                    <div class="nav-links">
-                        <a href="/" class="nav-link">Home</a>
-                        <a href="/courses" class="nav-link active">Courses</a>
-                        <a href="/learning-path" class="nav-link">Path</a>
-                        <a href="/search" class="nav-link">Search</a>
-                        <a href="/dashboard" class="nav-link">Dashboard</a>
-                        <a href="/review" class="nav-link">Review</a>
-                        <a href="/progress" class="nav-link">Progress</a>
-                        <a href="/bookmarks" class="nav-link">Bookmarks</a>
-                        <a href="/notes" class="nav-link">Notes</a>
-                        <a href="/study-plans" class="nav-link">Planner</a>
-                        <a href="/achievements" class="nav-link">Achievements</a>
-                        <a href="/streaks" class="nav-link">Streaks</a>
-                        <a href="/notifications" class="nav-link">Alerts</a>
-                        <a href="/certificates" class="nav-link">Certificates</a>
+                    <button type="button" class="nav-toggle" id="ul-nav-toggle" aria-expanded="false" aria-controls="ul-nav-links">
+                        <span class="nav-toggle-bars" aria-hidden="true"></span>
+                        <span class="nav-toggle-text">Menu</span>
+                    </button>
+                    <div class="nav-links" id="ul-nav-links">
+                        <a href="/courses" class="nav-link" data-nav="/courses">Learn</a>
+                        <a href="/learning-path" class="nav-link" data-nav="/learning-path">Path</a>
+                        <a href="/review" class="nav-link" data-nav="/review">Review</a>
+                        <a href="/progress" class="nav-link" data-nav="/progress">Progress</a>
+                        <a href="/search" class="nav-link" data-nav="/search">Search</a>
+                        <details class="nav-menu">
+                            <summary class="nav-link nav-menu-summary">Your space</summary>
+                            <div class="nav-menu-panel">
+                                <a href="/dashboard" class="nav-link" data-nav="/dashboard">Dashboard</a>
+                                <a href="/bookmarks" class="nav-link" data-nav="/bookmarks">Bookmarks</a>
+                                <a href="/notes" class="nav-link" data-nav="/notes">Notes</a>
+                                <a href="/study-plans" class="nav-link" data-nav="/study-plans">Study planner</a>
+                                <a href="/achievements" class="nav-link" data-nav="/achievements">Achievements</a>
+                                <a href="/streaks" class="nav-link" data-nav="/streaks">Streaks</a>
+                                <a href="/notifications" class="nav-link" data-nav="/notifications">Alerts</a>
+                                <a href="/certificates" class="nav-link" data-nav="/certificates">Certificates</a>
+                                <div class="nav-menu-rule" role="separator"></div>
+                                <a href="/help" class="nav-link" data-nav="/help">Help</a>
+                                <a href="/faq" class="nav-link" data-nav="/faq">FAQ</a>
+                                <a href="/settings" class="nav-link" data-nav="/settings">Settings</a>
+                            </div>
+                        </details>
                     </div>
                     {nav_right(page, lesson)}
                 </div>
@@ -89,6 +146,17 @@ public namespace underlayer_content {
         render_site_nav_css(page)
         render_identity_css(page)
         render_identity_js(page)
+        render_nav_active_js(page)
+        // The narrow-screen menu script goes on EVERY page, lesson included.
+        //
+        // It used to sit after the `lesson` early-return, which is where it was
+        // when only the THEME was meant to be skipped.  But the toggle BUTTON is
+        // in the shared markup, so a lesson page rendered a nav toggle that did
+        // nothing at all -- the second dead control this component used to
+        // carry, and the more serious of the two, because it is the only way out
+        // of the nav on a narrow screen.  The early-return below is now about
+        // the theme and nothing else, which is what its comment always said.
+        render_nav_toggle_js(page)
         if(lesson) {
             return
         }
@@ -202,7 +270,7 @@ public namespace underlayer_content {
             #html {
                 <div class="nav-right">
                     <span class="nav-identity" id="ul-identity" hidden></span>
-                    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                    <button type="button" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
                         <span class="theme-icon-light">&#9728;</span>
                         <span class="theme-icon-dark">&#9790;</span>
                     </button>
@@ -214,85 +282,6 @@ public namespace underlayer_content {
             <div class="nav-right">
                 <span class="nav-identity" id="ul-identity" hidden></span>
             </div>
-        }
-    }
-
-    // The nav's own styles, so a page that renders the nav cannot render it
-    // unstyled.  `position: sticky` and not `fixed`: a sticky bar stays in the
-    // flow and therefore needs no body offset to clear it, while a fixed bar
-    // needs a hard-coded `padding-top` equal to its own height -- a number
-    // that is wrong the moment the link row wraps onto a second line on a
-    // narrow screen.  All 43 other `.navbar` rules in this collection are
-    // sticky and none is fixed, so this is also the convention.
-    public func render_site_nav_css(page : &mut HtmlPage) {
-        #css {
-            :root { --nav-card: 0 0% 100%; --nav-border: 220 11% 89%; --nav-fg: 221 39% 11%; --nav-muted: 220 9% 46%; --nav-accent: 220 14% 96%; }
-            .dark { --nav-card: 240 10% 3.9%; --nav-border: 240 3.7% 15.9%; --nav-fg: 0 0% 98%; --nav-muted: 240 5% 64.9%; --nav-accent: 240 3.7% 15.9%; }
-            .skip-link { position: absolute; top: -100%; left: 0; background: hsl(217 91% 60%); color: white; padding: 0.75rem 1.5rem; z-index: 200; font-weight: 600; text-decoration: none; border-radius: 0 0 8px 0; }
-            .skip-link:focus { top: 0; }
-            .navbar { background: hsl(var(--nav-card)); border-bottom: 1px solid hsl(var(--nav-border)); padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
-            .nav-inner { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; row-gap: 0.25rem; column-gap: 1rem; }
-            .nav-brand { font-size: 1.25rem; font-weight: 700; color: hsl(var(--nav-fg)); text-decoration: none; }
-            .nav-brand:hover { color: hsl(217 91% 60%); text-decoration: none; }
-            .nav-links { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.25rem 0.5rem; flex: 0 1 auto; min-width: 0; }
-            .nav-link { color: hsl(var(--nav-muted)); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.6rem; border-radius: 6px; transition: all 0.15s; white-space: nowrap; }
-            .nav-link:hover { color: hsl(var(--nav-fg)); background: hsl(var(--nav-accent)); text-decoration: none; }
-            .nav-link.active { color: hsl(217 91% 60%); background: hsl(217 91% 60% / 10%); }
-            .nav-right { display: flex; align-items: center; gap: 0.75rem; }
-            .theme-toggle { background: none; border: 1px solid hsl(var(--nav-border)); border-radius: 8px; padding: 0.5rem; cursor: pointer; font-size: 1.1rem; line-height: 1; }
-            .theme-toggle:hover { background: hsl(var(--nav-accent)); }
-            .theme-icon-dark { display: none; }
-            .dark .theme-icon-light { display: none; }
-            .dark .theme-icon-dark { display: inline; }
-        }
-    }
-
-    // Theme init, shared so every page that offers the toggle behaves the same
-    // way: saved choice first, then the OS preference.  Never emitted on a
-    // lesson page, because no lesson page draws the toggle.
-    public func render_site_nav_js(page : &mut HtmlPage) {
-        #js {
-            function getTheme() {
-                // THE try/catch HERE IS NOT DEFENSIVE NOISE.  localStorage
-                // ACCESS THROWS -- it does not return null -- in a browser with
-                // site data blocked (Firefox "Block cookies and other site
-                // data" on file:// and in private windows; Safari ITP in
-                // third-party contexts).  An unguarded read therefore takes
-                // down the WHOLE script block, not just the theme: every
-                // function defined after this line in the same <script> is
-                // still DEFINED (the block parsed) but never RUNS, because
-                // setTheme(getTheme()) is a top-level statement and its
-                // throw aborts the block.  So the identity loader and the
-                // sign-out handler in the other component -- separate blocks,
-                // separate <script> tags -- survived, while anything in THIS
-                // block did not.
-                //
-                // The same reason the identity helper in lesson_identity.ch
-                // wraps its own read.  It had the guard, this one did not, and
-                // "the theme helper is the one that breaks" is exactly the kind
-                // of asymmetry that a shared helper (web/src/session_js.ch)
-                // exists to remove.
-                var saved = '';
-                try { saved = localStorage.getItem('theme'); } catch (e) { saved = ''; }
-                if (saved) return saved;
-                var prefersDark = false;
-                try { prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches; }
-                catch (e) { prefersDark = false; }
-                return prefersDark ? 'dark' : 'light';
-            }
-            function setTheme(theme) {
-                document.documentElement.classList.toggle('dark', theme === 'dark');
-                // A failed WRITE must not take the toggle down either: the
-                // class has already been applied above, so the visible change
-                // has happened.  Letting the write throw here would undo that
-                // for the reader -- the button would appear not to work.
-                try { localStorage.setItem('theme', theme); } catch (e) { }
-            }
-            function toggleTheme() {
-                var current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-                setTheme(current === 'dark' ? 'light' : 'dark');
-            }
-            setTheme(getTheme());
         }
     }
 

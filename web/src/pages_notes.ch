@@ -36,15 +36,9 @@ public namespace underlayer_web {
 
         #css {
             body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 0; background: hsl(var(--background)); color: hsl(var(--foreground)); }
-            .skip-link { position: absolute; top: -100%; left: 0; background: hsl(217 91% 60%); color: white; padding: 0.75rem 1.5rem; z-index: 200; font-weight: 600; text-decoration: none; border-radius: 0 0 8px 0; }
-            .skip-link:focus { top: 0; } :focus-visible { outline: 2px solid hsl(217 91% 60%); outline-offset: 2px; }
-            .navbar { background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
-            .nav-inner { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; row-gap: 0.25rem; column-gap: 1rem; }
-            .nav-brand { font-size: 1.25rem; font-weight: 700; color: hsl(var(--foreground)); text-decoration: none; } .nav-brand:hover { color: hsl(217 91% 60%); text-decoration: none; }
-            .nav-link { color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.6rem; border-radius: 6px; transition: all 0.15s; white-space: nowrap; }
-            .nav-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); text-decoration: none; } .nav-right { display: flex; align-items: center; gap: 0.75rem; }
-            .theme-toggle { background: none; border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 0.5rem; cursor: pointer; font-size: 1.1rem; line-height: 1; } .theme-toggle:hover { background: hsl(var(--accent)); }
-            .theme-icon-dark { display: none; } .dark .theme-icon-light { display: none; } .dark .theme-icon-dark { display: inline; }
+
+            :focus-visible { outline: 2px solid hsl(217 91% 60%); outline-offset: 2px; }
+
             .container { max-width: 800px; margin: 0 auto; padding: 2rem; } .page-header { margin-bottom: 1.5rem; } .page-header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
             .subtitle { color: hsl(var(--muted-foreground)); margin: 0; } .search-bar { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
             .search-input { flex: 1; padding: 0.75rem 1rem; border: 1px solid hsl(var(--border)); border-radius: 8px; font-size: 0.95rem; background: hsl(var(--background)); color: hsl(var(--foreground)); } .search-input:focus { outline: 2px solid hsl(217 91% 60%); outline-offset: 1px; }
@@ -56,7 +50,7 @@ public namespace underlayer_web {
             .note-actions { display: flex; gap: 0.5rem; } .note-edit-area { width: 100%; box-sizing: border-box; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 8px; font-family: inherit; font-size: 0.95rem; background: hsl(var(--background)); color: hsl(var(--foreground)); resize: vertical; margin-bottom: 0.75rem; }
             .btn { display: inline-block; padding: 0.6rem 1.1rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; } .btn-primary { background: hsl(217 91% 60%); color: white; } .btn-secondary { background: hsl(var(--secondary)); color: hsl(var(--foreground)); border: 1px solid hsl(var(--border)); } .btn-danger { background: hsl(0 72% 51%); color: white; } .btn:disabled { opacity: 0.6; cursor: not-allowed; }
             @media (max-width: 768px) {
-                .nav-links { display: none; } .container { padding: 1rem; } .search-bar { flex-wrap: wrap; }
+                .container { padding: 1rem; } .search-bar { flex-wrap: wrap; }
             }
         }
 

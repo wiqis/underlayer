@@ -19,33 +19,13 @@ public namespace underlayer_web {
     public func render_dashboard_css(page : &mut HtmlPage) {
         #css {
             [data-chx-i] { display: contents; }
-            .skip-link { position: absolute; top: -100%; left: 0; background: hsl(217 91% 60%); color: white; padding: 0.75rem 1.5rem; z-index: 200; font-weight: 600; text-decoration: none; border-radius: 0 0 8px 0; }
-            .skip-link:focus { top: 0; }
+
             :focus-visible { outline: 2px solid hsl(217 91% 60%); outline-offset: 2px; }
             .container { font-family: system-ui, sans-serif; background: hsl(var(--background)); color: hsl(var(--foreground)); min-height: 100vh; }
-            .navbar { background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
-            .nav-inner { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; row-gap: 0.25rem; column-gap: 1rem; }
-            .nav-brand { font-size: 1.25rem; font-weight: 700; color: hsl(var(--foreground)); text-decoration: none; }
-            .nav-brand:hover { color: hsl(217 91% 60%); }
-            .nav-links { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.25rem 0.5rem; flex: 0 1 auto; min-width: 0; }
-            .nav-link { color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.6rem; border-radius: 6px; transition: all 0.15s; white-space: nowrap; }
-            .nav-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
-            .nav-link.active { color: hsl(217 91% 60%); background: hsl(217 91% 60% / 10%); }
-            .nav-right { display: flex; align-items: center; gap: 0.75rem; }
-            .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 0.5rem; }
-            .hamburger-line { display: block; width: 24px; height: 2px; background: hsl(var(--foreground)); margin: 4px 0; transition: all 0.3s; }
-            .theme-toggle { background: none; border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 0.5rem; cursor: pointer; font-size: 1.1rem; line-height: 1; }
-            .theme-toggle:hover { background: hsl(var(--accent)); }
-            .theme-icon-dark { display: none; }
-            .dark .theme-icon-light { display: none; }
-            .dark .theme-icon-dark { display: inline; }
-            @media (max-width: 1300px) {
-                .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); flex-direction: column; padding: 1rem; gap: 0.5rem; }
-                .nav-links.open { display: flex; }
-                .nav-link { padding: 0.75rem 1rem; }
-                .hamburger { display: block; }
+
+            @media (max-width: 768px) {
+                .container { padding: 1rem; }
             }
-            @media (max-width: 768px) { .container { padding: 1rem; } }
             .back-to-top { position: fixed; bottom: 2rem; right: 2rem; padding: 0.6rem 1rem; background: #1f2937; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 50; }
             .back-to-top.visible { opacity: 1; pointer-events: auto; }
             .back-to-top:hover { background: #111827; }

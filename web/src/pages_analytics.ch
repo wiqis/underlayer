@@ -173,24 +173,9 @@ public namespace underlayer_web {
 
         #css {
             body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 0; background: hsl(var(--background)); color: hsl(var(--foreground)); }
-            .skip-link { position: absolute; top: -100%; left: 0; background: hsl(217 91% 60%); color: white; padding: 0.75rem 1.5rem; z-index: 200; font-weight: 600; text-decoration: none; border-radius: 0 0 8px 0; }
-            .skip-link:focus { top: 0; }
+
             :focus-visible { outline: 2px solid hsl(217 91% 60%); outline-offset: 2px; }
-            .navbar { background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
-            .nav-inner { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; row-gap: 0.25rem; column-gap: 1rem; }
-            .nav-brand { font-size: 1.25rem; font-weight: 700; color: hsl(var(--foreground)); text-decoration: none; }
-            .nav-brand:hover { color: hsl(217 91% 60%); text-decoration: none; }
-            .nav-link { color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.6rem; border-radius: 6px; transition: all 0.15s; white-space: nowrap; }
-            .nav-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); text-decoration: none; }
-            .nav-link.active { color: hsl(217 91% 60%); background: hsl(217 91% 60% / 10%); }
-            .nav-right { display: flex; align-items: center; gap: 0.75rem; }
-            .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 0.5rem; }
-            .hamburger-line { display: block; width: 24px; height: 2px; background: hsl(var(--foreground)); margin: 4px 0; transition: all 0.3s; }
-            .theme-toggle { background: none; border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 0.5rem; cursor: pointer; font-size: 1.1rem; line-height: 1; }
-            .theme-toggle:hover { background: hsl(var(--accent)); }
-            .theme-icon-dark { display: none; }
-            .dark .theme-icon-light { display: none; }
-            .dark .theme-icon-dark { display: inline; }
+
             .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
             .page-header { margin-bottom: 2rem; }
             .page-header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
@@ -242,10 +227,7 @@ public namespace underlayer_web {
             .data-table tr:last-child td { border-bottom: none; }
             .data-table tr:hover td { background: hsl(var(--accent) / 50%); }
             .muted { color: hsl(var(--muted-foreground)); text-align: center; padding: 1.5rem; font-size: 0.9rem; }
-            @media (max-width: 1300px) {
-                .nav-link { padding: 0.75rem 1rem; }
-                .hamburger { display: block; }
-            }
+
             @media (max-width: 768px) {
                 .container { padding: 1rem; }
                 .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -497,24 +479,9 @@ public namespace underlayer_web {
 
         #css {
             body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 0; background: hsl(var(--background)); color: hsl(var(--foreground)); }
-            .skip-link { position: absolute; top: -100%; left: 0; background: hsl(217 91% 60%); color: white; padding: 0.75rem 1.5rem; z-index: 200; font-weight: 600; text-decoration: none; border-radius: 0 0 8px 0; }
-            .skip-link:focus { top: 0; }
+
             :focus-visible { outline: 2px solid hsl(217 91% 60%); outline-offset: 2px; }
-            .navbar { background: hsl(var(--card)); border-bottom: 1px solid hsl(var(--border)); padding: 0.75rem 0; position: sticky; top: 0; z-index: 100; }
-            .nav-inner { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; row-gap: 0.25rem; column-gap: 1rem; }
-            .nav-brand { font-size: 1.25rem; font-weight: 700; color: hsl(var(--foreground)); text-decoration: none; }
-            .nav-brand:hover { color: hsl(217 91% 60%); text-decoration: none; }
-            .nav-link { color: hsl(var(--muted-foreground)); text-decoration: none; font-size: 0.9rem; font-weight: 500; padding: 0.5rem 0.6rem; border-radius: 6px; transition: all 0.15s; white-space: nowrap; }
-            .nav-link:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); text-decoration: none; }
-            .nav-link.active { color: hsl(217 91% 60%); background: hsl(217 91% 60% / 10%); }
-            .nav-right { display: flex; align-items: center; gap: 0.75rem; }
-            .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 0.5rem; }
-            .hamburger-line { display: block; width: 24px; height: 2px; background: hsl(var(--foreground)); margin: 4px 0; transition: all 0.3s; }
-            .theme-toggle { background: none; border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 0.5rem; cursor: pointer; font-size: 1.1rem; line-height: 1; }
-            .theme-toggle:hover { background: hsl(var(--accent)); }
-            .theme-icon-dark { display: none; }
-            .dark .theme-icon-light { display: none; }
-            .dark .theme-icon-dark { display: inline; }
+
             .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
             .page-header { margin-bottom: 2rem; }
             .page-header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
@@ -542,10 +509,7 @@ public namespace underlayer_web {
             .data-table td { padding: 0.75rem; border-bottom: 1px solid hsl(var(--border)); color: hsl(var(--foreground)); }
             .data-table tr:last-child td { border-bottom: none; }
             .muted { color: hsl(var(--muted-foreground)); text-align: center; padding: 1.5rem; font-size: 0.9rem; }
-            @media (max-width: 1300px) {
-                .nav-link { padding: 0.75rem 1rem; }
-                .hamburger { display: block; }
-            }
+
             @media (max-width: 768px) {
                 .container { padding: 1rem; }
                 .stats-grid { grid-template-columns: repeat(2, 1fr); }
