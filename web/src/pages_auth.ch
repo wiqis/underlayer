@@ -66,7 +66,19 @@ public namespace underlayer_web {
             </div>
         }
 
+        // `body { margin: 0 }` is HERE because these four pages are the only
+        // pages in the product that do NOT render the shared nav -- and the nav
+        // is where the body reset now lives (content/src/lesson_nav_css.ch). The
+        // sign-in page therefore inherited the browser's DEFAULT 8px body margin,
+        // and because `.auth-page` is `min-height: 100vh` that produced a visible
+        // gutter down both sides AND a page 16px taller than the viewport, so the
+        // sign-in card scrolled vertically for no reason. Reported by a reader as
+        // the sign-in page having "margin from the whole page".
+        //
+        // If these pages ever adopt the shared nav, delete this rule and let the
+        // nav's own reset do it.
         #css {
+            body { margin: 0; }
             .auth-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: hsl(var(--background)); font-family: system-ui, sans-serif; }
             .auth-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 2.5rem; width: 100%; max-width: 420px; margin: 1rem; box-shadow: 0 4px 20px hsl(var(--shadow)); }
             .auth-header { text-align: center; margin-bottom: 2rem; }
@@ -212,7 +224,19 @@ public namespace underlayer_web {
             </div>
         }
 
+        // `body { margin: 0 }` is HERE because these four pages are the only
+        // pages in the product that do NOT render the shared nav -- and the nav
+        // is where the body reset now lives (content/src/lesson_nav_css.ch). The
+        // sign-in page therefore inherited the browser's DEFAULT 8px body margin,
+        // and because `.auth-page` is `min-height: 100vh` that produced a visible
+        // gutter down both sides AND a page 16px taller than the viewport, so the
+        // sign-in card scrolled vertically for no reason. Reported by a reader as
+        // the sign-in page having "margin from the whole page".
+        //
+        // If these pages ever adopt the shared nav, delete this rule and let the
+        // nav's own reset do it.
         #css {
+            body { margin: 0; }
             .auth-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: hsl(var(--background)); font-family: system-ui, sans-serif; }
             .auth-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 2.5rem; width: 100%; max-width: 420px; margin: 1rem; box-shadow: 0 4px 20px hsl(var(--shadow)); }
             .auth-header { text-align: center; margin-bottom: 2rem; }
@@ -366,7 +390,19 @@ public namespace underlayer_web {
             </div>
         }
 
+        // `body { margin: 0 }` is HERE because these four pages are the only
+        // pages in the product that do NOT render the shared nav -- and the nav
+        // is where the body reset now lives (content/src/lesson_nav_css.ch). The
+        // sign-in page therefore inherited the browser's DEFAULT 8px body margin,
+        // and because `.auth-page` is `min-height: 100vh` that produced a visible
+        // gutter down both sides AND a page 16px taller than the viewport, so the
+        // sign-in card scrolled vertically for no reason. Reported by a reader as
+        // the sign-in page having "margin from the whole page".
+        //
+        // If these pages ever adopt the shared nav, delete this rule and let the
+        // nav's own reset do it.
         #css {
+            body { margin: 0; }
             .auth-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: hsl(var(--background)); font-family: system-ui, sans-serif; }
             .auth-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 2.5rem; width: 100%; max-width: 420px; margin: 1rem; box-shadow: 0 4px 20px hsl(var(--shadow)); }
             .auth-header { text-align: center; margin-bottom: 2rem; }
@@ -469,7 +505,19 @@ public namespace underlayer_web {
             </div>
         }
 
+        // `body { margin: 0 }` is HERE because these four pages are the only
+        // pages in the product that do NOT render the shared nav -- and the nav
+        // is where the body reset now lives (content/src/lesson_nav_css.ch). The
+        // sign-in page therefore inherited the browser's DEFAULT 8px body margin,
+        // and because `.auth-page` is `min-height: 100vh` that produced a visible
+        // gutter down both sides AND a page 16px taller than the viewport, so the
+        // sign-in card scrolled vertically for no reason. Reported by a reader as
+        // the sign-in page having "margin from the whole page".
+        //
+        // If these pages ever adopt the shared nav, delete this rule and let the
+        // nav's own reset do it.
         #css {
+            body { margin: 0; }
             .auth-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: hsl(var(--background)); font-family: system-ui, sans-serif; }
             .auth-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 2.5rem; width: 100%; max-width: 420px; margin: 1rem; box-shadow: 0 4px 20px hsl(var(--shadow)); }
             .auth-header { text-align: center; margin-bottom: 2rem; }

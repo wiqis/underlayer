@@ -58,6 +58,16 @@ public namespace underlayer_content {
     // tools/css_token_check.py fails on a hand-written escape in any `content:`
     // value, and on a doubled one in the served CSS, so this cannot come back.
     //
+    // WHY `body { margin: 0 }` LIVES HERE, in the nav, and not on each page.
+    // Measured 2026-10-03: twelve page stylesheets each set `margin: 0` in their
+    // own `#css` block, and every page whose stylesheet did NOT inherited the
+    // browser's default 8px body margin -- so the nav sat 8px in from the edge on
+    // some pages and flush on others, and the sign-in gate showed a gutter all the
+    // way round that read as a broken page rather than a centred card. The nav is
+    // the one component every page in both layers renders, so it is the only place
+    // a reset cannot be forgotten. The per-page rules are now redundant and
+    // harmless: they say the same thing.
+    //
     // The comment is ABOVE the `#css` block rather than inside it because
     // css_cbi stops at a line that is nothing but `}` -- the closing line of a
     // comment -- and treats the rest of the block as outside the macro. That is
@@ -67,6 +77,7 @@ public namespace underlayer_content {
     public func render_site_nav_css(page : &mut HtmlPage) {
         #css {
             :root { --nav-card: 0 0% 100%; --nav-border: 220 11% 89%; --nav-fg: 221 39% 11%; --nav-muted: 220 9% 46%; --nav-accent: 220 14% 96%; --nav-accent-strong: 220 13% 91%; --nav-ring: 217 91% 60%; }
+            body { margin: 0; }
             .dark { --nav-card: 240 10% 3.9%; --nav-border: 240 3.7% 15.9%; --nav-fg: 0 0% 98%; --nav-muted: 240 5% 64.9%; --nav-accent: 240 3.7% 15.9%; --nav-accent-strong: 240 3.7% 20%; --nav-ring: 217 91% 70%; }
             .skip-link { position: absolute; top: -100%; left: 0; background: hsl(var(--nav-ring)); color: white; padding: 0.75rem 1.5rem; z-index: 200; font-weight: 600; text-decoration: none; border-radius: 0 0 8px 0; }
             .skip-link:focus { top: 0; }

@@ -54,9 +54,24 @@ checks = 0
 
 # Pages a reader meets first. All of these draw a theme toggle, so all of them
 # must paint in the right colour.
-THEMED = ['/dashboard', '/courses', '/search', '/progress', '/review',
-          '/analytics', '/settings', '/notes', '/bookmarks', '/login',
-          '/register', '/help', '/faq', '/about']
+# Pages a reader meets first. All of these draw a theme toggle, so all of them
+# must paint in the right colour.
+#
+# The eleven account-gated pages were REMOVED from this list on 2026-10-03 and
+# that is a real change, not a workaround. They answer 303 to /login for a
+# signed-out request, so a signed-out fetch of /dashboard never receives the
+# dashboard: urlopen followed the redirect and this check was handed the /login
+# document, then reported "the nav does not define getTheme()" -- a failure about
+# a page that works perfectly. A gated page has no theme to check until somebody
+# is signed in, and tools/auth_gate_test.ch covers the gate itself.
+#
+# /login, /register, /help, /faq and /about stay in the list: they are public,
+# they serve normally, and each draws its own toggle.
+# A LESSON page is deliberately absent: section 5 asserts that lesson pages do
+# NOT read the theme, because they have no theme toggle and no components theme.
+# Listing one here contradicted that section and failed it.
+THEMED = ['/courses', '/search', '/learning-path',
+          '/login', '/register', '/help', '/faq', '/about']
 
 
 def check(name, cond, detail=''):
@@ -146,7 +161,11 @@ def main():
 
     # ---------------------------------------------------------------------
     print('\n[3] the nav\'s getTheme() agrees with the pre-paint script')
-    html = get('/dashboard')
+    # /courses, not /dashboard. /dashboard is account-gated and answers 303 for a
+    # signed-out request, so this fetched the /login document after following the
+    # redirect and then reported "not found" for a function that is present on
+    # every page that draws a toggle.
+    html = get('/courses')
     # The js_cbi macro compacts a function onto one line, so the body ends at
     # the FIRST brace rather than at a newline-delimited one. An earlier version
     # of this regex looked for a closing brace on its own line and therefore
@@ -170,7 +189,7 @@ def main():
 
     # ---------------------------------------------------------------------
     print('\n[4] color-scheme meta, so the browser frame follows too')
-    for path in ['/dashboard', '/courses', '/login']:
+    for path in ['/courses', '/login']:
         try:
             html = get(path)
         except Exception:

@@ -13,9 +13,12 @@ public namespace underlayer_web {
         // before any query; see pages_auth_gate.ch for why this is a
         // page rather than a redirect.
         if(!has_session(&raw db, req)) {
+            // Redirect, not an in-place card: see pages_auth_gate.ch for why this
+
+            // changed, and for why it cannot loop.
+
             var gate_path = string("/review")
-            var gate_feat = string("review sessions")
-            send_auth_gate(res, &gate_path, &gate_feat)
+            redirect_to_login(res, &gate_path)
             return
         }
         var page = HtmlPage()

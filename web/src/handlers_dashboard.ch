@@ -46,9 +46,12 @@ public namespace underlayer_web {
         // See pages_auth_gate.ch for the full argument, and for which pages are
         // deliberately NOT gated (the ones a stranger has to be able to read).
         if(!has_session(&raw db, req)) {
+            // Redirect, not an in-place card: see pages_auth_gate.ch for why this
+
+            // changed, and for why it cannot loop.
+
             var gate_path = string("/dashboard")
-            var gate_feat = string("the dashboard")
-            send_auth_gate(res, &gate_path, &gate_feat)
+            redirect_to_login(res, &gate_path)
             return
         }
         var learner_id = auth_get_learner_id(&raw db, req)

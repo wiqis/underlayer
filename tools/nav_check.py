@@ -62,7 +62,7 @@ import re
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from urllib.error import HTTPError, URLError
-from urllib.request import urlopen
+from urllib.request import urlopen, build_opener, HTTPRedirectHandler
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASELINE = os.path.join(ROOT, 'tools', 'baseline_urls.txt')
@@ -110,32 +110,61 @@ def nav_region(body):
     return body[m.start():m.start() + NAV_WINDOW]
 
 
+class NoRedirect(HTTPRedirectHandler):
+    """Refuse to follow a 3xx, so `probe` sees the status the server sent.
+
+    urllib follows redirects by default. That is right for a browser and wrong
+    for this checker: eleven account-gated pages answer 303 to /login, and
+    following it handed `probe` the /login document, so it reported "no navbar
+    in the served page" for URLs that are working exactly as intended.
+    """
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
 def probe(base, url, expect_nav):
     full = base + url
+    # The eleven account-gated pages answer 303 to /login for a signed-out
+    # request (web/src/pages_auth_gate.ch, changed 2026-10-03). urlopen FOLLOWS
+    # redirects by default, so this function used to receive the /login document
+    # and report "no navbar in the served page" for eleven URLs that are working
+    # exactly as intended -- the reader never receives those pages at all.
+    #
+    # So redirects are NOT followed here. A gated page is verified by its status
+    # and its Location, which is the assertion that matters; the nav assertion
+    # applies to the pages that actually serve a page.
+    opener = build_opener(NoRedirect)
     try:
-        with urlopen(full, timeout=30) as resp:
+        with opener.open(full, timeout=30) as resp:
             status, body = resp.status, resp.read().decode('utf-8', 'replace')
+            location = resp.headers.get('Location', '')
     except HTTPError as exc:
-        return url, exc.code, [], 'HTTP %d' % exc.code
+        # A 3xx arrives as an HTTPError once the redirect is not followed.
+        if exc.code in (301, 302, 303, 307, 308):
+            return url, exc.code, [], '', exc.headers.get('Location', '')
+        return url, exc.code, [], 'HTTP %d' % exc.code, ''
     except URLError as exc:
-        return url, 0, [], str(exc.reason)
+        return url, 0, [], str(exc.reason), ''
     except Exception as exc:                              # noqa: BLE001
-        return url, 0, [], str(exc)
+        return url, 0, [], str(exc), ''
 
+    if status in (301, 302, 303, 307, 308):
+        return url, status, [], '', location
     if status != 200:
-        return url, status, [], 'HTTP %d' % status
+        return url, status, [], 'HTTP %d' % status, ''
 
     navs = len(NAVBAR.findall(body))
     region = nav_region(body)
     if expect_nav:
         if navs == 0:
-            return url, status, [], 'no navbar in the served page'
+            return url, status, [], 'no navbar in the served page', ''
         if navs > 1:
-            return url, status, [], '%d navbars; exactly one is the point' % navs
+            return url, status, [], '%d navbars; exactly one is the point' % navs, ''
         missing = [r for r in REQUIRED if r not in region]
         if missing:
-            return url, status, [], ('nav is missing %s' % ', '.join(missing))
-    return url, status, navs, ''
+            return url, status, [], ('nav is missing %s' % ', '.join(missing)), ''
+    return url, status, navs, '', ''
 
 
 def main():
@@ -175,9 +204,23 @@ def main():
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         results = list(pool.map(lambda u: probe(base, u, expect), targets))
 
-    bad = [(u, why) for u, _s, _n, why in results if why]
+    # Redirects are verified, not skipped. A gated page that answered 200 with a
+    # page of zeroes would be the exact regression this repo has already shipped
+    # once, so "it redirects to /login and names its own path" is asserted here
+    # rather than assumed.
+    redirects = [(u, _s, loc) for u, _s, _n, _w, loc in results if _s in (301, 302, 303, 307, 308)]
+    bad_redirects = []
+    for url, _status, loc in redirects:
+        if not loc.startswith('/login?next='):
+            bad_redirects.append((url, 'redirects to %r, not to /login?next=...' % loc))
+        elif loc.split('next=', 1)[1] != url:
+            bad_redirects.append((url, 'next=%r does not carry the original path' % loc))
+
+    bad = [(u, why) for u, _s, _n, why, _loc in results if why]
     nav_counts = {}
-    for _u, _s, navs, _why in results:
+    for _u, _s, navs, _why, _loc in results:
+        if _s in (301, 302, 303, 307, 308):
+            continue
         key = navs if navs else 0
         nav_counts[key] = nav_counts.get(key, 0) + 1
 
@@ -185,20 +228,28 @@ def main():
         print('  NO NAV  %-46s %s' % (url, why))
     if len(bad) > 40:
         print('  ... and %d more' % (len(bad) - 40))
+    for url, why in bad_redirects[:20]:
+        print('  BAD 303 %-45s %s' % (url, why))
 
     if not args.quiet:
         for navs in sorted(nav_counts):
             label = ('%d navbar' % navs) if navs else 'no navbar (not required)'
             print('  %-24s %d page(s)' % (label, nav_counts[navs]))
+        if redirects:
+            print('  %-24s %d page(s)  (gated: 303 -> /login?next=)'
+                  % ('redirected', len(redirects)))
 
-    if bad:
+    total_bad = len(bad) + len(bad_redirects)
+    if total_bad:
         print('\nFAIL: %d of %d pages do not serve a usable nav.'
-              % (len(bad), len(targets)))
+              % (total_bad, len(targets)))
         return 1
 
-    print('\nALL CONSISTENT: %d pages, HTTP 200, %s'
+    print('\nALL CONSISTENT: %d pages, %s'
           % (len(targets),
-             'one nav each carrying %s.' % ', '.join(REQUIRED)
+             ('%d with HTTP 200 and one nav carrying %s; %d gated with a 303 to '
+              '/login?next= carrying their own path.'
+              % (len(targets) - len(redirects), ', '.join(REQUIRED), len(redirects)))
              if expect else 'nav presence NOT required (negative control).'))
     return 0
 

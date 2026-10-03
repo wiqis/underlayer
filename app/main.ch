@@ -1293,8 +1293,7 @@ public func main() : int {
     srv.router.add("GET", "/bookmarks", (|db|(req, res) => {
         if(!underlayer_web::has_session(&raw db, &req)) {
             var gate_path = string("/bookmarks")
-            var gate_feat = string("bookmarks")
-            underlayer_web::send_auth_gate(&raw mut res, &gate_path, &gate_feat)
+            underlayer_web::redirect_to_login(&raw mut res, &gate_path)
             return
         }
         var html = underlayer_web::render_bookmarks_page()
@@ -1303,8 +1302,7 @@ public func main() : int {
     srv.router.add("GET", "/notes", (|db|(req, res) => {
         if(!underlayer_web::has_session(&raw db, &req)) {
             var gate_path = string("/notes")
-            var gate_feat = string("notes")
-            underlayer_web::send_auth_gate(&raw mut res, &gate_path, &gate_feat)
+            underlayer_web::redirect_to_login(&raw mut res, &gate_path)
             return
         }
         var html = underlayer_web::render_notes_page()
@@ -1313,8 +1311,7 @@ public func main() : int {
     srv.router.add("GET", "/study-plans", (|db|(req, res) => {
         if(!underlayer_web::has_session(&raw db, &req)) {
             var gate_path = string("/study-plans")
-            var gate_feat = string("the planner")
-            underlayer_web::send_auth_gate(&raw mut res, &gate_path, &gate_feat)
+            underlayer_web::redirect_to_login(&raw mut res, &gate_path)
             return
         }
         var html = underlayer_web::render_study_plans_page()
@@ -1323,8 +1320,7 @@ public func main() : int {
     srv.router.add("GET", "/achievements", (|db|(req, res) => {
         if(!underlayer_web::has_session(&raw db, &req)) {
             var gate_path = string("/achievements")
-            var gate_feat = string("achievements")
-            underlayer_web::send_auth_gate(&raw mut res, &gate_path, &gate_feat)
+            underlayer_web::redirect_to_login(&raw mut res, &gate_path)
             return
         }
         var html = underlayer_web::render_achievements_page()
@@ -1333,8 +1329,7 @@ public func main() : int {
     srv.router.add("GET", "/streaks", (|db|(req, res) => {
         if(!underlayer_web::has_session(&raw db, &req)) {
             var gate_path = string("/streaks")
-            var gate_feat = string("streaks")
-            underlayer_web::send_auth_gate(&raw mut res, &gate_path, &gate_feat)
+            underlayer_web::redirect_to_login(&raw mut res, &gate_path)
             return
         }
         var html = underlayer_web::render_streaks_page()
@@ -1343,8 +1338,7 @@ public func main() : int {
     srv.router.add("GET", "/notifications", (|db|(req, res) => {
         if(!underlayer_web::has_session(&raw db, &req)) {
             var gate_path = string("/notifications")
-            var gate_feat = string("notifications")
-            underlayer_web::send_auth_gate(&raw mut res, &gate_path, &gate_feat)
+            underlayer_web::redirect_to_login(&raw mut res, &gate_path)
             return
         }
         var html = underlayer_web::render_notifications_page()
@@ -1353,8 +1347,7 @@ public func main() : int {
     srv.router.add("GET", "/certificates", (|db|(req, res) => {
         if(!underlayer_web::has_session(&raw db, &req)) {
             var gate_path = string("/certificates")
-            var gate_feat = string("certificates")
-            underlayer_web::send_auth_gate(&raw mut res, &gate_path, &gate_feat)
+            underlayer_web::redirect_to_login(&raw mut res, &gate_path)
             return
         }
         var html = underlayer_web::render_certificates_page()

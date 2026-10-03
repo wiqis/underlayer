@@ -933,12 +933,24 @@ def run_checks(base, expect_engagement=True):
     # So this asserts BOTH halves: the gate refuses an anonymous request, and the
     # dashboard renders the real thing for a signed-in one.  Only the first half
     # could have been written before the gate existed.
+    # The gate is a 303 to /login now (web/src/pages_auth_gate.ch, 2026-10-03),
+    # not an in-place card, so `ul-gate-card` is gone and `request` follows the
+    # redirect to the sign-in page. Asserting on the old markup would fail on a
+    # correctly-gated page.
+    #
+    # What matters is unchanged and is asserted directly: an anonymous request
+    # must not receive ANY learner data. The markers below are the dashboard's own
+    # containers, so finding one means the gate let the page through. This holds
+    # whichever way the gate is implemented, which is why it is written this way
+    # rather than against a class name.
     st_anon, dash_anon = request(base, '/dashboard')
-    if 'ul-gate-card' in dash_anon:
+    leaked = [p for p in ('wd-courses', 'wd-failures', 'wd-next-step')
+              if p in dash_anon]
+    if not leaked:
         ok('/dashboard gates an anonymous visitor (no learner data without a session)')
     else:
         bad('/dashboard gates an anonymous visitor',
-            'a signed-out request received the real dashboard')
+            'a signed-out request received the real dashboard: %s' % ', '.join(leaked))
 
     st, dash = request(base, '/dashboard', token=token)
     if st != 200:

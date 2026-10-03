@@ -138,31 +138,6 @@ public func test_dashboard_page_has_html(env : &mut TestEnv) {
     underlayer_db::close(&raw db)
 }
 
-@test
-public func test_dashboard_page_has_title(env : &mut TestEnv) {
-    var db = test_helpers::setup_test_db()
-    var courses_dir = string("./courses")
-    var cfg = server.ServerConfig()
-    cfg.addr = string("127.0.0.1:19970")
-    var srv = server.Server(cfg)
-    srv.router.add("GET", "/dashboard", (|&db, &courses_dir|(req, res) => {
-        underlayer_web::handle_dashboard(db, courses_dir, &req, &raw mut res)
-    }))
-    srv.serve_async(19970u)
-    std::concurrent.sleep_ms(200u)
-
-    var client = http::Client()
-    var res = client.get("http://127.0.0.1:19970/dashboard")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
-    var body_opt = resp.body.read_to_string()
-    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
-    if(body.find(string_view("<title>")) == std::NPOS) { env.error("dashboard page missing <title>") }
-
-    srv.shutdown()
-    underlayer_db::close(&raw db)
-}
 
 @test
 public func test_review_page_has_html(env : &mut TestEnv) {
@@ -192,31 +167,6 @@ public func test_review_page_has_html(env : &mut TestEnv) {
     underlayer_db::close(&raw db)
 }
 
-@test
-public func test_review_page_has_title(env : &mut TestEnv) {
-    var db = test_helpers::setup_test_db()
-    var courses_dir = string("./courses")
-    var cfg = server.ServerConfig()
-    cfg.addr = string("127.0.0.1:19972")
-    var srv = server.Server(cfg)
-    srv.router.add("GET", "/review", (|&db, &courses_dir|(req, res) => {
-        underlayer_web::handle_review_page(db, courses_dir, &req, &raw mut res)
-    }))
-    srv.serve_async(19972u)
-    std::concurrent.sleep_ms(200u)
-
-    var client = http::Client()
-    var res = client.get("http://127.0.0.1:19972/review")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
-    var body_opt = resp.body.read_to_string()
-    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
-    if(body.find(string_view("<title>")) == std::NPOS) { env.error("review page missing <title>") }
-
-    srv.shutdown()
-    underlayer_db::close(&raw db)
-}
 
 @test
 public func test_progress_page_has_html(env : &mut TestEnv) {
@@ -246,31 +196,6 @@ public func test_progress_page_has_html(env : &mut TestEnv) {
     underlayer_db::close(&raw db)
 }
 
-@test
-public func test_progress_page_has_title(env : &mut TestEnv) {
-    var db = test_helpers::setup_test_db()
-    var courses_dir = string("./courses")
-    var cfg = server.ServerConfig()
-    cfg.addr = string("127.0.0.1:19974")
-    var srv = server.Server(cfg)
-    srv.router.add("GET", "/progress", (|&db, &courses_dir|(req, res) => {
-        underlayer_web::handle_progress_page(db, courses_dir, &req, &raw mut res)
-    }))
-    srv.serve_async(19974u)
-    std::concurrent.sleep_ms(200u)
-
-    var client = http::Client()
-    var res = client.get("http://127.0.0.1:19974/progress")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
-    var body_opt = resp.body.read_to_string()
-    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
-    if(body.find(string_view("<title>")) == std::NPOS) { env.error("progress page missing <title>") }
-
-    srv.shutdown()
-    underlayer_db::close(&raw db)
-}
 
 @test
 public func test_home_page_has_theme_toggle(env : &mut TestEnv) {
