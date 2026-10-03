@@ -130,17 +130,41 @@ public namespace underlayer_learning {
     }
 
     // 1.5.14: Knowledge breadth score (0-100)
-    // How many concepts are covered vs total
+    // How much of the course the learner has reached, as a percentage.
+    //
+    // A concept counts as covered when the learner has a state row for it,
+    // which is what "covered" means to a reader: a row is created the first
+    // time a lesson is opened (handlers_learning.ch record_concept_read) and
+    // also by answering exercises, so either activity counts.
+    //
+    // It used to require `attempts > 0`, and that was wrong in a way that only
+    // shows up for someone who is actually reading. Answering an exercise
+    // increments attempts; opening a lesson does not -- record_concept_read
+    // sets last_studied and leaves attempts alone. So a learner who had read
+    // five lessons and answered nothing was told they had covered 0% of the
+    // course, on a page whose subject is coverage.
+    //
+    // Measured on a fresh account after reading 5 ELF lessons:
+    //   /api/health/knowledge -> {"total_concepts":5,"learning":5,...}
+    //   coverage headline      -> 0%
+    // Five concepts had state rows. The five were not counted because attempts
+    // was 0 on all of them.
+    //
+    // An empty status is not counted either: ConceptState::make() leaves it "",
+    // and a row can exist with no status if something upserts without setting
+    // one. Treating "" as covered would inflate the figure on a half-written
+    // row, so coverage requires a row that has actually been classified.
     public func compute_breadth_score(states : *vector<ConceptState>, total_concepts : int) : f64 {
         if(total_concepts == 0) { return 0.0 }
-        var reviewed : int = 0
+        var covered : int = 0
         var i : size_t = 0
         while(i < states.size()) {
             var state = states.get_ptr(i)
-            if(state.attempts > 0) { reviewed = reviewed + 1 }
+            // A row with no status has not been classified as started yet.
+            if(state.status.size() > 0) { covered = covered + 1 }
             i = i + 1
         }
-        return (reviewed as f64) / (total_concepts as f64) * 100.0
+        return (covered as f64) / (total_concepts as f64) * 100.0
     }
 
     // 1.5.17: Knowledge health goals

@@ -207,6 +207,65 @@ public func test_retention_analytics_returns_rates(env : &mut TestEnv) {
     underlayer_db::close(&raw db)
 }
 
+// P2 6.2.12 regression: a learner with NO sessions must not be handed a
+// fabricated "days since last session".
+//
+// This is the test that makes the fix non-vacuous.  The bug it pins: over an
+// empty sessions table MAX(start_time) is SQL NULL, parse_i64 reads NULL as 0,
+// and (now - 0)/86400 evaluated to 20729 — so a learner who had just created an
+// account was told by the API they had not studied in 56 years, and
+// return_rate_pct came back as 0/1 = "you never come back".
+//
+// The assertion is on the absence of the fabricated number, not merely on the
+// presence of a key.  Asserting `"days_since_last_session"` exists would have
+// passed on the broken code too, which is exactly the kind of check that
+// protects nothing.
+@test
+public func test_retention_analytics_no_sessions_reports_null_not_a_fake_gap(env : &mut TestEnv) {
+    var db = test_helpers::setup_test_db()
+    var cfg = server.ServerConfig()
+    cfg.addr = string("127.0.0.1:20150")
+    var srv = server.Server(cfg)
+    srv.router.add("GET", "/api/analytics/retention", (|&db|(req, res) => {
+        underlayer_web::handle_retention_analytics(db, &req, &raw mut res)
+    }))
+    srv.serve_async(20150u)
+    std::concurrent.sleep_ms(200u)
+
+    var client = http::Client()
+    var res = client.get("http://127.0.0.1:20150/api/analytics/retention")
+    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Ok(resp) = res else unreachable
+    var body_opt = resp.body.read_to_string()
+    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Some(body) = body_opt else unreachable
+
+    // No sessions exist for this learner, so the response must say so.
+    // NOTE: env.error takes a *char, and string.c_str() is private to std, so
+    // these messages are literals -- as they are in every other test here. Each
+    // one names its own assertion so a failure still identifies itself.
+    if(body.find(string_view("\"has_history\":false")) == std::NPOS) {
+        env.error("retention: expected has_history:false for a learner with no sessions")
+    }
+    // The three figures that need a history must be null, not arithmetic on NULL.
+    if(body.find(string_view("\"days_since_last_session\":null")) == std::NPOS) {
+        env.error("retention: expected days_since_last_session:null, not a fabricated gap")
+    }
+    if(body.find(string_view("\"return_rate_pct\":null")) == std::NPOS) {
+        env.error("retention: expected return_rate_pct:null for a learner with no sessions")
+    }
+    if(body.find(string_view("\"span_weeks\":null")) == std::NPOS) {
+        env.error("retention: expected span_weeks:null for a learner with no sessions")
+    }
+    // The count of sessions is still a real measurement and must survive.
+    if(body.find(string_view("\"total_sessions\":0")) == std::NPOS) {
+        env.error("retention: expected total_sessions:0 to still be reported")
+    }
+
+    srv.shutdown()
+    underlayer_db::close(&raw db)
+}
+
 @test
 public func test_dropoff_analytics_returns_items(env : &mut TestEnv) {
     var db = test_helpers::setup_test_db()

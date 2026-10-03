@@ -186,33 +186,10 @@ public namespace underlayer_web {
         send_json_str(res, &raw body)
     }
 
-    // 6.1.5: Set learning goal
-    public func handle_set_goal(db : &DbClient, req : *mut http::Request, res : *mut http::ResponseWriter) {
-        var q_td = string("target_date")
-        var td_v = req.query.get(&q_td.to_view())
-        if(td_v.size() == 0) {
-            var err_msg = string("missing query param: target_date")
-            send_error(res, 400u, &err_msg)
-            return
-        }
-        var target_date = parse_i64(td_v) as i64
-        var learner_id = auth_get_learner_id(&raw db, &*req)
-        if(learner_id.size() == 0) { learner_id = string("demo") }
-        var course_id = string("elf")
-        underlayer_repository::set_learning_goal(&raw db, &learner_id, &course_id, target_date)
-        var ok_body = string("{\"ok\":true}")
-        send_json_str(res, &raw ok_body)
-    }
-
-    // 6.1.5: Delete learning goal
-    public func handle_delete_goal(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
-        if(learner_id.size() == 0) { learner_id = string("demo") }
-        var course_id = string("elf")
-        underlayer_repository::delete_learning_goal(&raw db, &learner_id, &course_id)
-        var ok_body = string("{\"ok\":true}")
-        send_json_str(res, &raw ok_body)
-    }
+    // 6.1.5 goal handlers moved to web/src/handlers_goals.ch. They lived here
+    // alongside the progress reads, which pushed this file past its 250-line
+    // ceiling, and the set/delete pair hardcoded course_id="elf" so a goal could
+    // never be read back for any other course. See handlers_goals.ch.
 
     // 6.1.7: Progress export (JSON)
     public func handle_progress_export(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {

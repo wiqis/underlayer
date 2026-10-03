@@ -73,11 +73,29 @@ public namespace underlayer_web {
             var _w0 = wrow.vals.get_ptr(0).copy()
             active_weeks = underlayer_repository::parse_i64(_w0.to_view())
         }
+        // A learner with no sessions has no last session.  MAX(start_time) over
+        // an empty set is SQL NULL, parse_i64 reads that as 0, and
+        // (now - 0) / 86400 is 20729 -- so a brand-new account was told it had
+        // not studied in 56 years, and a return rate of 0/1 read as "you never
+        // come back".  Both are fabricated: they are arithmetic on a missing
+        // value, not a measurement.  So every figure that needs a history is
+        // null unless there is one, and `has_history` says which shape the
+        // caller is looking at.
+        //
+        // Measured before this change, on an account created minutes earlier:
+        //   {"active_days":0,...,"return_rate_pct":0,...,
+        //    "days_since_last_session":20729}
+        var has_history = total_sessions > 0
+
         // Span in weeks (min 1), return rate = active weeks / span weeks
-        var span_days = (last_session - first_session) / 86400
-        var span_weeks = span_days / 7
-        if(span_weeks < 1) { span_weeks = 1 }
-        var return_rate : i64 = (active_weeks * 100) / span_weeks
+        var span_weeks : i64 = 0
+        var return_rate : i64 = 0
+        if(has_history) {
+            var span_days = (last_session - first_session) / 86400
+            span_weeks = span_days / 7
+            if(span_weeks < 1) { span_weeks = 1 }
+            return_rate = (active_weeks * 100) / span_weeks
+        }
 
         var body = string("{\"active_days\":")
         var _b0 = underlayer_core::int_to_string(active_days)
@@ -86,20 +104,34 @@ public namespace underlayer_web {
         var _b1 = underlayer_core::int_to_string(active_weeks)
         body.append_string(&_b1)
         body.append_view(",\"span_weeks\":")
-        var _b2 = underlayer_core::int_to_string(span_weeks)
-        body.append_string(&_b2)
+        if(has_history) {
+            var _b2 = underlayer_core::int_to_string(span_weeks)
+            body.append_string(&_b2)
+        } else {
+            body.append_view("null")
+        }
         body.append_view(",\"return_rate_pct\":")
-        var _b3 = underlayer_core::int_to_string(return_rate)
-        body.append_string(&_b3)
+        if(has_history) {
+            var _b3 = underlayer_core::int_to_string(return_rate)
+            body.append_string(&_b3)
+        } else {
+            body.append_view("null")
+        }
         body.append_view(",\"total_sessions\":")
         var _b4 = underlayer_core::int_to_string(total_sessions)
         body.append_string(&_b4)
+        body.append_view(",\"has_history\":")
+        if(has_history) { body.append_view("true") } else { body.append_view("false") }
         body.append_view(",\"days_since_last_session\":")
-        var now = underlayer_core::current_timestamp()
-        var gap = (now - last_session) / 86400
-        if(gap < 0) { gap = 0 }
-        var _b5 = underlayer_core::int_to_string(gap)
-        body.append_string(&_b5)
+        if(has_history) {
+            var now = underlayer_core::current_timestamp()
+            var gap = (now - last_session) / 86400
+            if(gap < 0) { gap = 0 }
+            var _b5 = underlayer_core::int_to_string(gap)
+            body.append_string(&_b5)
+        } else {
+            body.append_view("null")
+        }
         body.append_view("}")
         send_json_str(res, &raw body)
     }

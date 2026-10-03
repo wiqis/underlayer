@@ -99,6 +99,10 @@ public namespace underlayer_web {
                             <h3>Track Progress</h3>
                             <p>See how far you've come and what's left to master.</p>
                         </a>
+                        <a href="/health" class="action-card">
+                            <h3>Knowledge Health</h3>
+                            <p>What you've covered, how well you know it, and what you'll have forgotten by day 30.</p>
+                        </a>
                     </div>
                 </div>
             </div>

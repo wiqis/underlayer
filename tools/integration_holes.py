@@ -210,6 +210,62 @@ def scan_ui():
 # ---------------------------------------------------------------------------
 UI_LAYER_DIRS = ('web/src', 'content/src')
 
+# ---------------------------------------------------------------------------
+# 4b. SERVER-RENDERED EQUIVALENTS.
+#
+# A hole is "shipped, and nobody can see it".  That is not the same as "no
+# page-building file contains this string", and conflating the two makes the
+# tool report work that is already done -- which is how a report gets ignored.
+#
+# The platform renders many pages entirely on the server: the handler computes
+# from the repository and writes HTML, so the page never fetches anything and
+# the endpoint it mirrors is named nowhere in the UI layer.  Measured: adding the
+# server-rendered /health page took the count from 36 to 37, because
+# /api/health/knowledge, /per-module, /projection and /api/goals are all
+# consumed by underlayer_web::render_knowledge_health_page calling
+# compute_knowledge_health / compute_module_health /
+# compute_retention_projection / list_learning_goals directly.
+#
+# The data reaches the reader; only the fetch is absent.  Reporting those as
+# holes would be wrong, so each equivalence below is declared WITH THE PAGE THAT
+# RENDERS IT, and the claim is checkable with one grep.
+#
+# The declarations are deliberately explicit and few. An automatic inference
+# ("any route whose name appears in a render function is covered") would be
+# self-certifying: the thing being checked would be doing the checking.
+#
+#   endpoint-pattern                      rendered by (grep this)
+#   ------------------------------------------------------------------------
+#   /api/health/knowledge                 web/src/pages_health.ch
+#   /api/health/knowledge/per-module      web/src/pages_health.ch
+#   /api/health/knowledge/projection      web/src/pages_health.ch
+#   /api/goals                            web/src/pages_health.ch
+#   /api/analytics/retention              (none yet -- see below)
+SERVER_RENDERED = [
+    # (route prefix, page file that renders the same data server-side)
+    ('/api/health/knowledge', 'web/src/pages_health.ch'),
+    ('/api/goals', 'web/src/pages_health.ch'),
+]
+
+
+def server_rendered_evidence(path):
+    """Pages that render this endpoint's data without fetching it.
+
+    Returns the page paths, or [] when the route really is invisible. The
+    declared page must exist on disk: a declaration pointing at a deleted file
+    would otherwise keep reporting coverage for a page that is gone.
+    """
+    ev = []
+    for prefix, page in SERVER_RENDERED:
+        if path == prefix or path.startswith(prefix + '/'):
+            if os.path.isfile(os.path.join(ROOT, page)):
+                ev.append(page + ' (server-rendered, no fetch)')
+            else:
+                print('  WARNING: SERVER_RENDERED names %s for %s but that '
+                      'file does not exist; treating it as a hole.'
+                      % (page, path))
+    return ev
+
 
 def ui_only(callers_found, routes):
     """Recompute the caller set using ONLY page-building sources."""
@@ -247,12 +303,14 @@ def main():
     api_routes = [(m, p) for m, p in routes if p.startswith('/api/')]
 
     def who(path):
-        # A route is reached if ANY caller path matches it, and the evidence
-        # names the files -- so every claim in the report is one grep away.
+        # A route is reached if ANY caller path matches it, OR a page renders
+        # its data server-side. Either way the evidence names the files -- so
+        # every claim in the report is one grep away.
         ev = []
         for cp, files in callers_found.items():
             if _matches(cp, path):
                 ev.extend(files)
+        ev.extend(server_rendered_evidence(path))
         return sorted(set(ev))
 
     invisible = [(m, p) for m, p in api_routes if not who(p)]

@@ -143,6 +143,12 @@ public func main() : int {
         underlayer_web::handle_dashboard(db, courses_dir, &req, &raw mut res)
     }))
 
+    // Knowledge Health page. Server-rendered from the learner's own rows, so it
+    // works with JS off; gated because unsigned it would be four zeroes.
+    srv.router.add("GET", "/health", (|&db, &courses_dir|(req, res) => {
+        underlayer_web::handle_knowledge_health_page(db, courses_dir, &req, &raw mut res)
+    }))
+
     // Course listing
     srv.router.add("GET", "/api/courses", (|&courses_dir|(req, res) => {
         underlayer_web::handle_list_courses(courses_dir, &req, &raw mut res)
@@ -371,6 +377,10 @@ public func main() : int {
     }))
 
     // ---- Learning Goals (6.1.5) ----
+    // GET was missing: the feature could write a goal and never read one back.
+    srv.router.add("GET", "/api/goals", (|&db|(req, res) => {
+        underlayer_web::handle_get_goals(db, &req, &raw mut res)
+    }))
     srv.router.add("POST", "/api/goals", (|&db|(req, res) => {
         underlayer_web::handle_set_goal(db, &raw mut req, &raw mut res)
     }))
@@ -1355,8 +1365,17 @@ public func main() : int {
     }))
 
     // ---- Learning Loop API ----
-    srv.router.add("POST", "/api/learning/view", (|db|(req, res) => {
-        underlayer_web::handle_learning_view(&raw db, &req, &raw mut res)
+    // courses_dir is passed so the handler can check the concept id against the
+    // course manifest before writing a row. See handle_learning_view.
+    // `|&db|` BY REFERENCE, like every other handler route here (see
+    // /api/review/start directly above). The closure was by-value `|db|` and
+    // that is the exact pairing 2.2.46 records: a by-value capture copied the
+    // DbClient, so the handler was handed a struct whose sqlite_handle was not
+    // the live connection and every statement prepared on it failed with
+    // SQLITE_MISUSE. The type error that this line now reports is the compiler
+    // catching it at build time rather than at request time.
+    srv.router.add("POST", "/api/learning/view", (|&db, &courses_dir|(req, res) => {
+        underlayer_web::handle_learning_view(db, courses_dir, &req, &raw mut res)
     }))
 
     // ---- Notes API ----

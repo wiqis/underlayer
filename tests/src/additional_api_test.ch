@@ -132,6 +132,83 @@ public func test_set_goal_returns_200(env : &mut TestEnv) {
     underlayer_db::close(&raw db)
 }
 
+// 6.1.5: a goal could be written but never read back.
+//
+// POST and DELETE /api/goals shipped with no GET, so the read side of the
+// feature did not exist: measured on the running server, GET answered 404 while
+// POST answered 200. This pins that the route answers and returns the shape the
+// page reads.
+@test
+public func test_get_goals_returns_200_and_lists(env : &mut TestEnv) {
+    var db = test_helpers::setup_test_db()
+    var cfg = server.ServerConfig()
+    cfg.addr = string("127.0.0.1:20160")
+    var srv = server.Server(cfg)
+    srv.router.add("GET", "/api/goals", (|&db|(req, res) => {
+        underlayer_web::handle_get_goals(db, &req, &raw mut res)
+    }))
+    srv.serve_async(20160u)
+    std::concurrent.sleep_ms(200u)
+
+    var client = http::Client()
+    var res = client.get("http://127.0.0.1:20160/api/goals")
+    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Ok(resp) = res else unreachable
+    if(resp.status != 200u) { env.error("expected status 200") }
+    var body_opt = resp.body.read_to_string()
+    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var Some(body) = body_opt else unreachable
+    if(body.find(string_view("\"goals\"")) == std::NPOS) { env.error("get_goals: missing goals array") }
+    if(body.find(string_view("\"count\"")) == std::NPOS) { env.error("get_goals: missing count") }
+
+    srv.shutdown()
+    underlayer_db::close(&raw db)
+}
+
+// 6.1.5 regression: two goals set inside the same second must both survive.
+//
+// `learning_goals.id` is the PRIMARY KEY and the id used to be
+// current_timestamp(), which has one-second resolution. Two goals set back to
+// back collided on the key, the second INSERT was dropped, exec_sql's result was
+// never checked, and both POSTs answered {"ok":true} regardless. Measured
+// before the fix: POST elf then POST a64asm in the same second produced
+// count 1 — the a64asm goal was silently lost.
+//
+// This calls the repository twice with no sleep in between, which is exactly
+// the collision window. Asserting only that both calls returned would pass on
+// the broken code, so the assertion is on the rows that exist afterwards.
+@test
+public func test_two_goals_set_in_the_same_second_both_persist(env : &mut TestEnv) {
+    var db = test_helpers::setup_test_db()
+    var learner = string("collision-learner")
+    var elf = string("elf")
+    var a64 = string("a64asm")
+    var target = 1800000000
+
+    // No sleep between these two on purpose: same wall-clock second.
+    underlayer_repository::set_learning_goal(&raw db, &learner, &elf, target)
+    underlayer_repository::set_learning_goal(&raw db, &learner, &a64, target)
+
+    var goals = underlayer_repository::list_learning_goals(&raw db, &learner)
+    if(goals.size() != 2) {
+        env.error("same-second collision: expected 2 goals to survive, the primary key ate one")
+    }
+    // And they must be distinct rows for distinct courses, not one row twice.
+    var seen_elf = false
+    var seen_a64 = false
+    var gi : size_t = 0
+    while(gi < goals.size()) {
+        var g = goals.get_ptr(gi)
+        if(g.course_id.equals(&elf)) { seen_elf = true }
+        if(g.course_id.equals(&a64)) { seen_a64 = true }
+        gi = gi + 1
+    }
+    if(!seen_elf) { env.error("same-second collision: the elf goal was lost") }
+    if(!seen_a64) { env.error("same-second collision: the a64asm goal was lost") }
+
+    underlayer_db::close(&raw db)
+}
+
 @test
 public func test_delete_goal_returns_200(env : &mut TestEnv) {
     var db = test_helpers::setup_test_db()

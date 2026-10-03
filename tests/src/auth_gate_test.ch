@@ -57,7 +57,7 @@ using std::Option
 public namespace underlayer_tests {
 
     // 1-5. The whole contract, for whichever page `kind` selects.
-    // `kind`: 1 = /review, 2 = /progress, 3 = /dashboard.
+    // `kind`: 1 = /review, 2 = /progress, 3 = /dashboard, 4 = /health.
     public func assert_gated_page_redirects(
         env : &mut TestEnv,
         kind : i64,
@@ -68,6 +68,22 @@ public namespace underlayer_tests {
         var db = test_helpers::setup_test_db()
         var courses_dir = string("./courses")
         var cfg = server.ServerConfig()
+        if(kind == 4) {
+            // /health is the fourth gated page. It needs the gate more than the
+            // other three: every figure on it is derived from the signed-in
+            // learner's own concept_states and goals, so unsigned it would be
+            // coverage 0%, depth 0, three retention numbers at 0% -- a page of
+            // zeroes that reads as failure at something nobody has started.
+            cfg.addr = string("127.0.0.1:19993")
+            var srv = server.Server(cfg)
+            srv.router.add("GET", "/health", (|&db, &courses_dir|(req, res) => {
+                underlayer_web::handle_knowledge_health_page(db, courses_dir, &req, &raw mut res)
+            }))
+            srv.serve_async(port)
+            std::concurrent.sleep_ms(200u)
+            run_redirect_checks(env, &raw mut srv, &raw db, url, expected)
+            return
+        }
         if(kind == 1) {
             cfg.addr = string("127.0.0.1:19990")
             var srv = server.Server(cfg)
@@ -355,6 +371,14 @@ public func test_progress_page_redirects_signed_out_reader(env : &mut TestEnv) {
 @test
 public func test_dashboard_redirects_signed_out_reader(env : &mut TestEnv) {
     underlayer_tests::assert_gated_page_redirects(env, 3i64, 19992u, &string("http://127.0.0.1:19992/dashboard"), &string("/dashboard"))
+}
+
+// /health renders every learner's health score, coverage and goals, so it is
+// gated on the same terms as /dashboard. It answers 303 to
+// /login?next=/health when there is no session.
+@test
+public func test_health_page_redirects_signed_out_reader(env : &mut TestEnv) {
+    underlayer_tests::assert_gated_page_redirects(env, 4i64, 19993u, &string("http://127.0.0.1:19993/health"), &string("/health"))
 }
 
 @test
