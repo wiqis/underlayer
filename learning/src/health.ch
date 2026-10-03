@@ -241,13 +241,34 @@ public namespace underlayer_learning {
         var days_30 : f64
         var days_60 : f64
         var days_90 : f64
+        // How many concepts carry an attempt. The three figures above are an
+        // AVERAGE over this many things; when it is zero the average is
+        // arithmetic over no data at all.
+        //
+        // This is the same defect 2.2.119 fixed in compute_breadth_score, one
+        // layer over: `measured` is what stops a caller reading 0.0 as a
+        // measurement. Measured before this field existed, on a learner who had
+        // read 5 ELF lessons and answered nothing:
+        //
+        //   {"days_30":0.0,"days_60":0.0,"days_90":0.0}
+        //
+        // and the /health page rendered that as "0.0% in 30 days" under the
+        // heading "What you will remember" -- a confident prediction that a
+        // learner who read five lessons would retain nothing, produced by a
+        // loop that skipped every row because `attempts > 0` was false on all
+        // of them. The projection is gated on attempts because stability is
+        // derived from `streak`, which only answering exercises moves; that
+        // reasoning is sound. What was wrong was reporting the result of a
+        // skipped loop as a number.
+        var measured : int
 
         @make
         func make() : RetentionProjection {
             return RetentionProjection {
                 days_30 = 0.0,
                 days_60 = 0.0,
-                days_90 = 0.0
+                days_90 = 0.0,
+                measured = 0
             }
         }
     }
@@ -279,6 +300,7 @@ public namespace underlayer_learning {
             }
             i = i + 1
         }
+        proj.measured = count as int
         if(count > 0.0) {
             proj.days_30 = (total_retrievability_30 / count) * 100.0
             proj.days_60 = (total_retrievability_60 / count) * 100.0

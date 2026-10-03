@@ -127,14 +127,40 @@ public namespace underlayer_repository {
         return out
     }
 
-    // Format an f64 with two decimal places (repository-local copy of
-    // underlayer_learning::f64_to_string — the repository layer sits below
-    // learning and must not import it).
+    // Format an f64 for SQL. Repository-local copy of the learning-layer
+    // formatter — the repository layer sits below learning and must not import
+    // it. Kept in step with learning/src/utils.ch deliberately: two copies of
+    // "number to text" is one too many, and the two have already disagreed once
+    // (this one gained zero-padding while that one had not).
+    //
+    // FOUR decimals, not two, and the reason is the FSRS round trip.
+    // `review_items.stability` is written here and read back by the scheduler
+    // on the next rating. S0("Good") is w[3] = 0.1901 and the next-stability
+    // formula grows it through 0.1985 and 0.2080 -- all below 0.20. At two
+    // decimals every one of those is "0.19", so the value was rounded flat on
+    // the way in and the scheduler read the same number forever: ten successful
+    // reviews moved stability from 0.19 to 0.19. Two decimals is right for a
+    // figure a person reads and wrong for a value the next step depends on.
     public func f64_to_string(val : f64) : string {
+        return f64_to_string_prec(val, 4)
+    }
+
+    public func f64_to_string_prec(val : f64, places : i64) : string {
         var int_part = val as i64
-        var frac_part = ((val - (int_part as f64)) * 100.0) as i64
+        var scale = 1.0
+        var k : i64 = 0
+        while(k < places) { scale = scale * 10.0; k = k + 1 }
+        var frac_part = ((val - (int_part as f64)) * scale) as i64
         var result = underlayer_core::int_to_string(int_part)
         result.append_view(".")
+        // Zero-pad, or a small fraction produces a MALFORMED number rather than
+        // a rounded one: 0.05 at two places came out as "0.5" -- ten times the
+        // value -- because the single digit was appended with no tens place.
+        var pad = places - 1
+        while(pad > 0) {
+            if(frac_part < 100) { result.append_view("0") }
+            pad = pad - 1
+        }
         var frac_str = underlayer_core::int_to_string(frac_part)
         result.append_view(frac_str.to_view())
         return result

@@ -68,6 +68,27 @@ public namespace underlayer_web {
         var started : int = states.size() as int
         var has_history = started > 0
 
+        // Depth and the retention projection are both averages over concepts
+        // that have been ANSWERED, because stability comes from `streak` and
+        // only answering moves it. A learner who has read five lessons and
+        // answered none is therefore in the same position as one who has done
+        // nothing -- and both produce 0.
+        //
+        // Rendering that 0 under "What you will remember" tells a reader who
+        // has read five lessons that they will retain nothing, which is a
+        // prediction with no data behind it. So `answered` is counted here and
+        // the section says what is missing instead of printing the figure.
+        var answered : int = 0
+        var ai : size_t = 0
+        while(ai < states.size()) {
+            var st = states.get_ptr(ai)
+            if(st.attempts > 0) { answered = answered + 1 }
+            ai = ai + 1
+        }
+        var has_answers = answered > 0
+        var answered_val = answered as i64
+        var proj_note_answered = answered as i64
+
         // Per-module rows.
         var course = underlayer_repository::load_course_from_disk(courses_dir, course_id)
         var module_rows = vector<HealthModuleRow>()
@@ -147,6 +168,12 @@ public namespace underlayer_web {
         if(left_to_start < 0) { left_to_start = 0 }
         var left_val = left_to_start as i64
         var has_history_flag = has_history
+        var has_answers_flag = has_answers
+        // A ternary cannot live inside a `{...}` interpolation (dots are not
+        // allowed there), so the plural is resolved here. Only reached when
+        // has_answers is true, so it is never "0 answered concepts".
+        var concepts_word = string("concepts")
+        if(answered == 1) { concepts_word = string("concept") }
         var module_count = module_rows.size() as i64
         var goal_count = goal_rows.size() as i64
         var course_title_esc = underlayer_core::html_escape(&course.title)
@@ -185,9 +212,15 @@ public namespace underlayer_web {
                             <div class="stat-sub">{started_val} of {course_total_val} concepts started</div>
                         </div>
                         <div class="stat-card stat-depth">
-                            <div class="stat-number" id="depth-val">{depth_pct}</div>
-                            <div class="stat-label">depth score</div>
-                            <div class="stat-sub">accuracy weighted by how often you have been asked</div>
+                            @if(has_answers_flag) {
+                                <div class="stat-number" id="depth-val">{depth_pct}</div>
+                                <div class="stat-label">depth score</div>
+                                <div class="stat-sub">accuracy weighted by how often you have been asked</div>
+                            } @else {
+                                <div class="stat-number stat-pending" id="depth-val">&mdash;</div>
+                                <div class="stat-label">depth score</div>
+                                <div class="stat-sub">nothing answered yet, so there is no accuracy to weigh</div>
+                            }
                         </div>
                         <div class="stat-card stat-left">
                             <div class="stat-number" id="left-val">{left_val}</div>
@@ -198,22 +231,28 @@ public namespace underlayer_web {
 
                     <div class="section-card">
                         <h2>What you will remember</h2>
-                        <p class="section-desc">An estimate from the forgetting curve, using how many times you have successfully recalled each concept. It is a prediction, not a measurement &mdash; the only way to move it is to answer the reviews.</p>
-                        <div class="proj-grid">
-                            <div class="proj-col">
-                                <div class="proj-val" id="proj-30">{proj30}%</div>
-                                <div class="proj-label">in 30 days</div>
+                        @if(!has_answers_flag) {
+                            <p class="section-desc">This estimate comes from how many times you have successfully <em>recalled</em> a concept, not how many times you have read it. Reading a lesson tells the platform you were there; only answering tells it what stuck. So this section is empty on purpose rather than showing you a number derived from nothing.</p>
+                            <p class="proj-empty">You have started {started_val} of {course_total_val} concepts and answered questions in none of them yet. Answer a few and three figures appear here &mdash; what you will probably still recall in 30, 60 and 90 days.</p>
+                            <p class="proj-note"><a href="/review">Answer your reviews</a> &mdash; that is what fills this in, and it is also the only thing that moves the numbers afterwards.</p>
+                        } @else {
+                            <p class="section-desc">An estimate from the forgetting curve, using how many times you have successfully recalled each concept. It is a prediction, not a measurement &mdash; the only way to move it is to answer the reviews.</p>
+                            <div class="proj-grid">
+                                <div class="proj-col">
+                                    <div class="proj-val" id="proj-30">{proj30}%</div>
+                                    <div class="proj-label">in 30 days</div>
+                                </div>
+                                <div class="proj-col">
+                                    <div class="proj-val" id="proj-60">{proj60}%</div>
+                                    <div class="proj-label">in 60 days</div>
+                                </div>
+                                <div class="proj-col">
+                                    <div class="proj-val" id="proj-90">{proj90}%</div>
+                                    <div class="proj-label">in 90 days</div>
+                                </div>
                             </div>
-                            <div class="proj-col">
-                                <div class="proj-val" id="proj-60">{proj60}%</div>
-                                <div class="proj-label">in 60 days</div>
-                            </div>
-                            <div class="proj-col">
-                                <div class="proj-val" id="proj-90">{proj90}%</div>
-                                <div class="proj-label">in 90 days</div>
-                            </div>
-                        </div>
-                        <p class="proj-note">Numbers move in one direction on their own. That is what the review queue is for.</p>
+                            <p class="proj-note">Based on {proj_note_answered} answered {concepts_word}. These numbers move in one direction on their own. That is what the review queue is for.</p>
+                        }
                     </div>
 
                     <div class="section-card">
@@ -266,6 +305,11 @@ public namespace underlayer_web {
             .proj-val { font-size: 1.5rem; font-weight: 650; color: #b45309; }
             .proj-label { font-size: 0.82rem; color: var(--muted, #6b7280); margin-top: 0.25rem; }
             .proj-note { font-size: 0.82rem; color: var(--muted, #6b7280); margin: 1rem 0 0; }
+            .proj-empty { font-size: 0.92rem; line-height: 1.6; margin: 0.75rem 0 0; }
+            .proj-note a { color: #2563eb; }
+            /* An em dash, not a 0: this card is deliberately showing that the
+               figure is unavailable rather than that it is zero. */
+            .stat-pending { color: var(--muted, #9ca3af); }
             .module-list, .goal-list { list-style: none; margin: 0; padding: 0; }
             .module-row { padding: 0.85rem 0; border-bottom: 1px solid var(--border, #f1f5f9); }
             .module-row:last-child { border-bottom: none; }

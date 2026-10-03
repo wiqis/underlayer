@@ -94,7 +94,33 @@ public namespace underlayer_learning {
             var s_new = *params.w.get_ptr(12) * pow(state.difficulty, -*params.w.get_ptr(13))
             s_new = s_new * pow(state.stability + 1.0, *params.w.get_ptr(14)) - 1.0
             s_new = s_new * exp(*params.w.get_ptr(15) * (1.0 - r))
-            if(s_new < 1.0) { s_new = 1.0 }
+            // NO 1.0 FLOOR HERE, and this is the second defect this function had
+            // in the same family as the stability reset: the lapse branch used
+            // to clamp `s_new < 1.0` to 1.0.
+            //
+            // Stability is measured in DAYS, and the whole sub-1.0 range is
+            // real -- S0("Good") is w[3] = 0.1901 days, which is under five
+            // hours. A floor at 1.0 therefore does not tidy a degenerate value,
+            // it OVERWRITES the majority of a young card's stability with a day.
+            //
+            // The consequence is that forgetting RAISED stability. Measured, one
+            // concept rated "Good" four times (stability 0.2178 days) and then
+            // rated "Again" -- the learner admitting they did not remember it:
+            //
+            //   before Again: stability 0.2178
+            //   after  Again: stability 1.0000     <- and stored as 1.0
+            //
+            // The platform recorded a lapse as the learner getting better at
+            // something, which is the exact opposite of what the rating means,
+            // and it also pushed next_review a day out for a card the learner
+            // had just failed.
+            //
+            // The floor that IS wanted is a small positive epsilon, so a
+            // pathological parameter set cannot produce a zero or negative
+            // stability (which would make retrievability divide by zero). 0.01
+            // days is ~15 minutes: below any real review spacing, and far under
+            // the 0.19 that a genuinely new "Good" card starts from.
+            if(s_new < 0.01) { s_new = 0.01 }
             return s_new
         }
 
@@ -199,10 +225,19 @@ public namespace underlayer_learning {
 
             if(rating == RATING_AGAIN) {
                 new_state.lapses = state.lapses + 1
-                // 1.1.14: Lapse recovery — when R < 0.5, reset stability to 50% of previous
+                // 1.1.14: Lapse recovery — when R < 0.5, halve the stability.
+                //
+                // This is a post-hoc adjustment applied ON TOP of the value
+                // fsrs_next_stability already computed for the lapse, so the two
+                // compound. It is kept because 1.1.14 specifies it, but it is
+                // noted here because it means the stability of a "Again" is the
+                // product of two reductions rather than the paper's single
+                // formula, and because a half can take a young card's stability
+                // below the epsilon fsrs_next_stability floors at.
                 var r = fsrs_retrievability(state, state.elapsed_days as f64)
                 if(r < 0.5) {
                     new_state.stability = state.stability * 0.5
+                    if(new_state.stability < 0.01) { new_state.stability = 0.01 }
                 }
             } else {
                 new_state.lapses = state.lapses

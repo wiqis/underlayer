@@ -380,16 +380,78 @@ public namespace underlayer_web {
         state.course_id = course_id.copy()
 
         var params = underlayer_learning::init_fsrs_params()
+
+        // THE STORED FSRS MEMORY, NOT A FRESH CARD.
+        //
+        // This block used to read:
+        //
+        //   rs.stability = 1.0
+        //   rs.reps      = state.attempts
+        //   rs.lapses    = state.attempts - state.correct
+        //   rs.elapsed_days = 0
+        //
+        // `concept_states` has attempts, correct, streak and two timestamps. It
+        // has no stability, and there is no field in it from which stability can
+        // be recovered -- stability is an output of the scheduler, not a count
+        // of anything the learner did. So it was set to 1.0, a literal, on every
+        // single rating.
+        //
+        // That is fatal, because fsrs_next_stability is
+        //
+        //   s_new = S * exp(w16 * S^(-w17))
+        //
+        // which is strictly increasing in S. Handing it S = 1.0 every time
+        // means it can only ever return its S = 1.0 answer: stability froze at
+        // 1.25 from the second review onward, and a concept the learner had
+        // recalled correctly eight times never got an interval longer than one
+        // day. Measured, eight consecutive "Good" ratings:
+        //
+        //   1: stability 0.19  interval 3
+        //   2: stability 1.25  interval 1
+        //   3..8: stability 1.25  interval 1     (unchanged)
+        //
+        // The scheduler was correct and was being handed a new card every time.
+        //
+        // `review_items` is where that memory is stored -- it has carried a
+        // stability column since the table was created, and the three existing
+        // read functions all select it. It was simply never read on the write
+        // path, so this now reads it via get_review_item_by_concept.
+        //
+        // The fallbacks matter and are deliberate. A concept with no review item
+        // is genuinely new, so reps 0 and stability 0.0 -- which sends
+        // fsrs_update_state down its `state.reps == 0` new-card branch, where
+        // init_stability and the graduation steps apply. That branch is the
+        // correct path for a first review and it was being skipped for every
+        // concept, including first ones.
+        var stored = underlayer_repository::get_review_item_by_concept(&raw db, &learner_id, &course_id, &concept_id)
         var rs = ReviewState::make()
         rs.difficulty = state.difficulty_rating
         if(rs.difficulty < 1.0) { rs.difficulty = 5.0 }
         if(rs.difficulty > 10.0) { rs.difficulty = 5.0 }
-        rs.stability = 1.0
-        rs.reps = state.attempts
-        rs.lapses = state.attempts - state.correct
-        rs.elapsed_days = 0
-        rs.scheduled_days = state.next_review - state.last_studied
-        if(rs.scheduled_days < 0) { rs.scheduled_days = 0 }
+        if(stored.id.size() > 0) {
+            rs.stability = stored.stability
+            if(rs.stability < 0.01) { rs.stability = 0.0 }
+            rs.reps = stored.reps
+            rs.lapses = stored.lapses
+            rs.ease_factor = stored.ease_factor
+            if(rs.ease_factor < 1.3) { rs.ease_factor = 2.5 }
+            if(rs.ease_factor > 3.0) { rs.ease_factor = 3.0 }
+            // How long the learner actually waited, which is what retrievability
+            // is a function of. Previously a literal 0, so R was always 1.0 and
+            // the difficulty/stability drift never saw a lapse in memory.
+            var waited = underlayer_core::current_timestamp() - stored.next_review
+            if(waited < 0) { waited = 0 }
+            rs.elapsed_days = (waited / 86400) as i64
+            rs.scheduled_days = state.next_review - state.last_studied
+            if(rs.scheduled_days < 0) { rs.scheduled_days = 0 }
+        } else {
+            // No stored item: a first review. reps 0 takes the new-card branch.
+            rs.stability = 0.0
+            rs.reps = 0
+            rs.lapses = 0
+            rs.elapsed_days = 0
+            rs.scheduled_days = 0
+        }
 
         var new_rs = underlayer_learning::fsrs_update_state(&params, &rs, rating)
 
@@ -408,6 +470,62 @@ public namespace underlayer_web {
         underlayer_repository::upsert_concept_state(&raw db, &raw state)
         underlayer_repository::record_activity(&raw db, &learner_id)
         underlayer_repository::run_achievement_checks(&raw db, &learner_id)
+
+        // WRITE THE SCHEDULER'S OUTPUT BACK. Without this the stability that
+        // fsrs_update_state just computed is returned to the caller and then
+        // discarded, so the next rating would read the same stale row again --
+        // the read fix above would have no effect, because nothing would have
+        // changed between the two calls.
+        if(stored.id.size() > 0) {
+            stored.stability = new_rs.stability
+            stored.difficulty = new_rs.difficulty
+            stored.ease_factor = new_rs.ease_factor
+            stored.next_review = state.next_review
+            stored.last_review = state.last_studied
+            stored.reps = new_rs.reps
+            stored.lapses = new_rs.lapses
+            underlayer_repository::update_review_item(&raw db, &raw stored)
+        } else {
+            // FIRST RATING ON THIS CONCEPT, SO NO ROW EXISTS YET.
+            //
+            // This branch is load-bearing and its absence is why the first
+            // version of the read fix appeared to do nothing: every rating was
+            // still scheduled as a new card. seed_review_items only creates rows
+            // for concepts with `attempts > 0`, and `attempts` is incremented
+            // AFTER this point in the handler -- so on the first rating there is
+            // no row to read and no row to update, and the computed stability
+            // was returned to the caller and thrown away.
+            //
+            // Measured with the read fix but not this: ten consecutive "Good"
+            // ratings, and reps stayed at 1 and the interval at 3 days for all
+            // ten. The lookup found nothing, every call took the new-card
+            // branch, and nothing was ever persisted.
+            //
+            // So the first rating INSERTS the row, carrying the scheduler's
+            // output. The id matches the convention seed_review_items uses
+            // (`<learner>_<course>_<concept>`) so the later INSERT OR IGNORE in
+            // the seeding pass cannot create a second row for the same concept.
+            var fresh = underlayer_models::ReviewItem::make()
+            var fresh_id = learner_id.copy()
+            fresh_id.append_view("_")
+            fresh_id.append_string(&course_id)
+            fresh_id.append_view("_")
+            fresh_id.append_string(&concept_id)
+            fresh.id = fresh_id
+            fresh.learner_id = learner_id.copy()
+            fresh.concept_id = concept_id.copy()
+            fresh.course_id = course_id.copy()
+            fresh.item_type = string("recall")
+            fresh.stability = new_rs.stability
+            fresh.difficulty = new_rs.difficulty
+            fresh.ease_factor = new_rs.ease_factor
+            fresh.retrievability = 1.0
+            fresh.next_review = state.next_review
+            fresh.last_review = state.last_studied
+            fresh.reps = new_rs.reps
+            fresh.lapses = new_rs.lapses
+            underlayer_repository::insert_review_item(&raw db, &raw fresh)
+        }
 
         // 1.2.16: Compute session accuracy from state
         var session_accuracy : f64 = 0.0

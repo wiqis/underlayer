@@ -59,8 +59,8 @@ public namespace underlayer_repository {
                 item.front = row.vals.get_ptr(3).copy()
                 item.back = row.vals.get_ptr(4).copy()
                 item.difficulty = parse_i64(row.vals.get_ptr(5).to_view()) as f64
-                item.stability = parse_i64(row.vals.get_ptr(6).to_view()) as f64
-                item.retrievability = parse_i64(row.vals.get_ptr(7).to_view()) as f64
+                item.stability = parse_f64(row.vals.get_ptr(6).to_view())
+                item.retrievability = parse_f64(row.vals.get_ptr(7).to_view())
                 item.next_review = parse_i64(row.vals.get_ptr(8).to_view())
                 item.reps = parse_i64(row.vals.get_ptr(9).to_view()) as int
                 item.lapses = parse_i64(row.vals.get_ptr(10).to_view()) as int
@@ -99,8 +99,8 @@ public namespace underlayer_repository {
                 item.front = row.vals.get_ptr(3).copy()
                 item.back = row.vals.get_ptr(4).copy()
                 item.difficulty = parse_i64(row.vals.get_ptr(5).to_view()) as f64
-                item.stability = parse_i64(row.vals.get_ptr(6).to_view()) as f64
-                item.retrievability = parse_i64(row.vals.get_ptr(7).to_view()) as f64
+                item.stability = parse_f64(row.vals.get_ptr(6).to_view())
+                item.retrievability = parse_f64(row.vals.get_ptr(7).to_view())
                 item.next_review = parse_i64(row.vals.get_ptr(8).to_view())
                 item.reps = parse_i64(row.vals.get_ptr(9).to_view()) as int
                 item.lapses = parse_i64(row.vals.get_ptr(10).to_view()) as int
@@ -114,15 +114,94 @@ public namespace underlayer_repository {
         return items
     }
 
+    // The stored FSRS memory for one (learner, concept) pair, or an item with
+    // id "" when there is none.
+    //
+    // WHY THIS EXISTS.  Spaced repetition is a function of what happened LAST
+    // TIME, and `review_items` is where that memory lives -- it has carried a
+    // `stability` column since the table was created, and get_review_item /
+    // get_due_review_items / get_all_review_items all read it. Nothing read it
+    // on the WRITE path.
+    //
+    // handlers_review.ch built its ReviewState out of `concept_states` instead,
+    // which has attempts, correct, streak and two timestamps but no stability,
+    // and then set `rs.stability = 1.0` as a literal. So every rating was
+    // scheduled as though the learner had never seen the concept before, and
+    // fsrs_next_stability -- which is S * exp(w16 * S^-w17), strictly increasing
+    // in S -- could only ever return its S=1.0 answer.
+    //
+    // Measured on a learner rating one concept eight times "Good" in a row:
+    //
+    //   review 1: stability 0.19  interval 3 days
+    //   review 2: stability 1.25  interval 1 day
+    //   review 3: stability 1.25  interval 1 day     <- and 4, 5, 6, 7, 8
+    //
+    // Eight successful recalls, and the concept never left a 1-day interval. The
+    // scheduler was working; it was being handed a fresh card every time.
+    //
+    // `get_review_item` takes an item id, and the submit handler knows a
+    // concept_id rather than an item id, so this lookup is what makes the stored
+    // state reachable at all. Returns reps/lapses/ease_factor/stability for the
+    // concept's recall item; the id convention is the same one
+    // seed_review_items writes (`<learner>_<course>_<concept>`).
+    public func get_review_item_by_concept(db : *DbClient, learner_id : &string, course_id : &string, concept_id : &string) : ReviewItem {
+        var sql = string("SELECT id, concept_id, type, front, back, difficulty, stability, retrievability, next_review, reps, lapses, ease_factor FROM review_items WHERE learner_id = '")
+        sql.append_string(learner_id)
+        sql.append_view("' AND course_id = '")
+        sql.append_string(course_id)
+        sql.append_view("' AND concept_id = '")
+        sql.append_string(concept_id)
+        sql.append_view("' ORDER BY last_review DESC LIMIT 1")
+        var result = underlayer_db::query_sql(db, &raw sql)
+        var item = ReviewItem::make()
+        if(result.rows.size() > 0) {
+            var row = result.rows.get_ptr(0)
+            if(row.vals.size() >= 12) {
+                item.id = row.vals.get_ptr(0).copy()
+                item.learner_id = learner_id.copy()
+                item.concept_id = row.vals.get_ptr(1).copy()
+                item.course_id = course_id.copy()
+                item.item_type = row.vals.get_ptr(2).copy()
+                item.front = row.vals.get_ptr(3).copy()
+                item.back = row.vals.get_ptr(4).copy()
+                item.difficulty = parse_f64(row.vals.get_ptr(5).to_view())
+                item.stability = parse_f64(row.vals.get_ptr(6).to_view())
+                item.retrievability = parse_f64(row.vals.get_ptr(7).to_view())
+                item.next_review = parse_i64(row.vals.get_ptr(8).to_view())
+                item.reps = parse_i64(row.vals.get_ptr(9).to_view()) as int
+                item.lapses = parse_i64(row.vals.get_ptr(10).to_view()) as int
+                item.ease_factor = parse_f64(row.vals.get_ptr(11).to_view())
+            }
+        }
+        return item
+    }
+
     public func update_review_item(db : *DbClient, item : *ReviewItem) {
         var sql = string("UPDATE review_items SET difficulty = ")
         var diff_str = underlayer_core::int_to_string(item.difficulty as i64)
         sql.append_view(diff_str.to_view())
         sql.append_view(", stability = ")
-        var stab_str = underlayer_core::int_to_string(item.stability as i64)
+        // stability and retrievability are f64, written with FOUR decimals.
+        //
+        // They were int_to_string(x as i64), which discarded the fraction
+        // entirely: every stability in (0,1) stored as 0, and 1.25 stored as 1.
+        //
+        // Two decimals was tried next and is ALSO wrong, which is the more
+        // interesting half. FSRS initialises stability from w[rating] and
+        // w[3] -- S0 for "Good" -- is 0.1901. The scheduler does raise it
+        // (0.1901 -> 0.1985 -> 0.2080), but all of those sit below 0.20, so two
+        // decimals cannot tell them apart: each computed stability was rounded
+        // back to 0.19 on the way into the column and the next rating read 0.19
+        // again. Ten successful reviews moved it from 0.19 to 0.19. A ROUND TRIP
+        // HAS TO PRESERVE EVERY BIT THE NEXT STEP DEPENDS ON, and fixing the
+        // write-up while rounding at the boundary leaves the loop intact.
+        //
+        // Four decimals covers the whole sub-1.0 range the scheduler spends its
+        // early reviews in and is exact for f64 at these magnitudes.
+        var stab_str = underlayer_repository::f64_to_string_prec(item.stability, 4)
         sql.append_view(stab_str.to_view())
         sql.append_view(", retrievability = ")
-        var ret_str = underlayer_core::int_to_string(item.retrievability as i64)
+        var ret_str = underlayer_repository::f64_to_string_prec(item.retrievability, 4)
         sql.append_view(ret_str.to_view())
         sql.append_view(", next_review = ")
         var nr_str = underlayer_core::int_to_string(item.next_review)
@@ -168,10 +247,13 @@ public namespace underlayer_repository {
         var diff_str = underlayer_core::int_to_string(item.difficulty as i64)
         sql.append_view(diff_str.to_view())
         sql.append_view(", ")
-        var stab_str = underlayer_core::int_to_string(item.stability as i64)
+        // Four decimals, for the reason given on update_review_item. Truncating to an
+        // integer discarded the scheduler's memory entirely, and two decimals
+        // rounded away precisely the 0.19-0.20 band that S0("Good") sits in.
+        var stab_str = underlayer_repository::f64_to_string_prec(item.stability, 4)
         sql.append_view(stab_str.to_view())
         sql.append_view(", ")
-        var ret_str = underlayer_core::int_to_string(item.retrievability as i64)
+        var ret_str = underlayer_repository::f64_to_string_prec(item.retrievability, 4)
         sql.append_view(ret_str.to_view())
         sql.append_view(", ")
         var nr_str = underlayer_core::int_to_string(item.next_review)

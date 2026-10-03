@@ -91,6 +91,16 @@ public namespace underlayer_web {
         resp.append_view(",\"days_90\":")
         var d90 = underlayer_learning::f64_to_string(proj.days_90)
         resp.append_string(&d90)
+        // `measured` is what distinguishes "you will retain nothing" from
+        // "nothing has been measured yet". Both are days_30 == 0.0, and a
+        // client that cannot tell them apart will confidently tell a learner
+        // who has read five lessons that they will forget all of it.
+        //
+        // Measured before this field existed, on a learner with 5 lessons read
+        // and 0 answered: {"days_30":0.0,"days_60":0.0,"days_90":0.0}
+        resp.append_view(",\"measured\":")
+        var measured = underlayer_core::int_to_string(proj.measured as i64)
+        resp.append_string(&measured)
         resp.append_view("}")
         send_json_str(res, &raw resp)
     }
