@@ -189,7 +189,21 @@ public namespace underlayer_web {
         js.append_string(&cid_lit)
         js.append_view(";var btn=document.getElementById('enroll-btn');if(!btn){return;}")
         js.append_view("var why=document.getElementById('enroll-why');")
-        js.append_view("function tok(){try{return localStorage.getItem('ul_session_token')||'';}catch(e){return '';}}")
+        // THE KEY IS `session_token`, and it was `ul_session_token` until
+        // 2026-10-03.  Nothing anywhere writes that name: the login and register
+        // handlers in pages_auth.ch:123,306 write `session_token`, and all 20-odd
+        // readers in content/src read `session_token`.  So `tok()` always returned
+        // "", `hdr()` always sent no Authorization header, and both fetches below
+        // answered 401 -- which is why the Enroll button is dead on all 34 course
+        // landing pages while the page still returned 200 and the button still
+        // looked live.
+        //
+        // It survived because tools/enroll_check.py checks that the button
+        // renders in the right STATE and that the served script PARSES.  Both
+        // were true.  Reading the key is the part neither check looked at, which
+        // is the same shape as the old hamburger test: a check on the thing that
+        // exists rather than on the thing that has to be true.
+        js.append_view("function tok(){try{return localStorage.getItem('session_token')||'';}catch(e){return '';}}")
         js.append_view("function hdr(){var h={'Content-Type':'application/json'};var t=tok();if(t){h['Authorization']='Bearer '+t;}return h;}")
         // ASK WHY FIRST, so an unmet prerequisite is explained BEFORE the reader
         // presses a button that would fail.

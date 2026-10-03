@@ -1,5 +1,5 @@
-// ELF Course — Concept 5: ELF Header Fields
-// Every field in the ELF header and what it tells the system.
+                                            
+                                                              
 public namespace underlayer_content {
 
 using std::string
@@ -362,139 +362,12 @@ public func render_elf_header_fields() : string {
             }
         })();
 
-        function setFontSize(v) { localStorage.setItem('ulf-font-size', v); applySettings(); }
-        function setLineHeight(v) { localStorage.setItem('ulf-line-height', v); applySettings(); }
-        function setLetterSpacing(v) { localStorage.setItem('ulf-letter-spacing', v); applySettings(); }
-        function setContentWidth(v) { localStorage.setItem('ulf-content-width', v); applySettings(); }
-        function applySettings() {
-            var lesson = document.querySelector('.lesson');
-            if(!lesson) return;
-            lesson.classList.remove('font-small','font-large','lh-compact','lh-relaxed','ls-tight','ls-loose','w-narrow','w-wide');
-            var fs = localStorage.getItem('ulf-font-size') || 'medium';
-            if(fs === 'small') lesson.classList.add('font-small');
-            if(fs === 'large') lesson.classList.add('font-large');
-            var lh = localStorage.getItem('ulf-line-height') || 'normal';
-            if(lh === 'compact') lesson.classList.add('lh-compact');
-            if(lh === 'relaxed') lesson.classList.add('lh-relaxed');
-            var ls = localStorage.getItem('ulf-letter-spacing') || 'normal';
-            if(ls === 'tight') lesson.classList.add('ls-tight');
-            if(ls === 'loose') lesson.classList.add('ls-loose');
-            var cw = localStorage.getItem('ulf-content-width') || 'normal';
-            if(cw === 'narrow') lesson.classList.add('w-narrow');
-            if(cw === 'wide') lesson.classList.add('w-wide');
-            var fsEl = document.getElementById('font-size');
-            var lhEl = document.getElementById('line-height');
-            var lsEl = document.getElementById('letter-spacing');
-            var cwEl = document.getElementById('content-width');
-            if(fsEl) fsEl.value = fs;
-            if(lhEl) lhEl.value = lh;
-            if(lsEl) lsEl.value = ls;
-            if(cwEl) cwEl.value = cw;
-        }
-        applySettings();
-
-        function toggleHighContrast() {
-            var lesson = document.querySelector('.lesson');
-            if(!lesson) return;
-            lesson.classList.toggle('high-contrast');
-            localStorage.setItem('ulf-high-contrast', lesson.classList.contains('high-contrast') ? '1' : '0');
-            var btn = document.querySelectorAll('.a11y-btn')[0];
-            if(btn) btn.classList.toggle('active', lesson.classList.contains('high-contrast'));
-        }
-        function toggleReducedMotion() {
-            var lesson = document.querySelector('.lesson');
-            if(!lesson) return;
-            lesson.classList.toggle('reduced-motion');
-            localStorage.setItem('ulf-reduced-motion', lesson.classList.contains('reduced-motion') ? '1' : '0');
-            var btn = document.querySelectorAll('.a11y-btn')[1];
-            if(btn) btn.classList.toggle('active', lesson.classList.contains('reduced-motion'));
-        }
-        function openShortcuts() { document.getElementById('shortcuts-modal').classList.add('open'); }
-        function closeShortcuts() { document.getElementById('shortcuts-modal').classList.remove('open'); }
-        (function() {
-            var lesson = document.querySelector('.lesson');
-            if(!lesson) return;
-            if(localStorage.getItem('ulf-high-contrast') === '1') { lesson.classList.add('high-contrast'); var b = document.querySelectorAll('.a11y-btn')[0]; if(b) b.classList.add('active'); }
-            if(localStorage.getItem('ulf-reduced-motion') === '1') { lesson.classList.add('reduced-motion'); var b2 = document.querySelectorAll('.a11y-btn')[1]; if(b2) b2.classList.add('active'); }
-            else if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) { lesson.classList.add('reduced-motion'); var b3 = document.querySelectorAll('.a11y-btn')[1]; if(b3) b3.classList.add('active'); }
-            document.addEventListener('keydown', function(e) { if(e.key === 'Escape') closeShortcuts(); });
-        })();
-
-        function setColorBlind(mode) {
-            var lesson = document.querySelector('.lesson');
-            if(!lesson) return;
-            var filters = { 'protanopia': 'url(#protanopia)', 'deuteranopia': 'url(#deuteranopia)', 'tritanopia': 'url(#tritanopia)' };
-            lesson.style.filter = filters[mode] || "";
-            localStorage.setItem('ulf-color-blind', mode);
-            document.querySelectorAll('.cb-controls .a11y-btn').forEach(function(b) { b.classList.remove('active'); });
-            var id = mode === 'none' ? 'cb-none' : 'cb-' + mode.substring(0,3);
-            var activeBtn = document.getElementById(id);
-            if(activeBtn) activeBtn.classList.add('active');
-        }
-        (function() {
-            var cb = localStorage.getItem('ulf-color-blind') || 'none';
-            if(cb !== 'none') { setColorBlind(cb); }
-            else { var b = document.getElementById('cb-none'); if(b) b.classList.add('active'); }
-        })();
-
-        function showToast(msg) {
-            var t = document.getElementById('a11y-toast');
-            if(!t) { t = document.createElement('div'); t.id = 'a11y-toast'; t.className = 'a11y-toast'; document.body.appendChild(t); }
-            t.textContent = msg;
-            t.classList.add('show');
-            setTimeout(function() { t.classList.remove('show'); }, 1500);
-        }
-        document.addEventListener('keydown', function(e) {
-            if(e.altKey && e.key === 'c') { e.preventDefault(); toggleHighContrast(); showToast('High contrast toggled'); }
-            if(e.altKey && e.key === 'r') { e.preventDefault(); toggleReducedMotion(); showToast('Reduced motion toggled'); }
-            if(e.altKey && e.key === '=') { e.preventDefault(); cycleFontSize(); }
-        });
-        function cycleFontSize() {
-            var sizes = ['small','medium','large'];
-            var current = localStorage.getItem('ulf-font-size') || 'medium';
-            var idx = (sizes.indexOf(current) + 1) % sizes.length;
-            var lesson = document.querySelector('.lesson');
-            if(!lesson) return;
-            lesson.classList.remove('font-small','font-large');
-            if(sizes[idx] === 'small') lesson.classList.add('font-small');
-            if(sizes[idx] === 'large') lesson.classList.add('font-large');
-            localStorage.setItem('ulf-font-size', sizes[idx]);
-            var el = document.getElementById('font-size');
-            if(el) el.value = sizes[idx];
-            showToast('Font size: ' + sizes[idx]);
-        }
-        function addFeedbackRatings() {
-            var feedbacks = document.querySelectorAll('.quiz-feedback, .tf-feedback, .recognize-feedback, .app-feedback, .match-feedback, .fill-feedback');
-            for(var i = 0; i < feedbacks.length; i++) {
-                var fb = feedbacks[i];
-                if(fb.nextElementSibling && fb.nextElementSibling.classList.contains('feedback-rating')) continue;
-                var div = document.createElement('div');
-                div.className = 'feedback-rating';
-                div.innerHTML = '<span>Was this helpful?</span><button class="feedback-btn" onclick="rateFeedback(this, true)">&#x1f44d;</button><button class="feedback-btn" onclick="rateFeedback(this, false)">&#x1f44e;</button><span class="feedback-thanks">Thanks!</span>';
-                fb.parentNode.insertBefore(div, fb.nextSibling);
-            }
-        }
-        function rateFeedback(btn, helpful) {
-            var container = btn.parentElement;
-            var btns = container.querySelectorAll('.feedback-btn');
-            for(var i = 0; i < btns.length; i++) btns[i].disabled = true;
-            btn.classList.add('selected');
-            container.querySelector('.feedback-thanks').style.display = 'inline';
-        }
-        addFeedbackRatings();
+        
 
         (function() {
             var touchStartX = 0;
             var touchStartY = 0;
             var longPressTimer = null;
-            document.addEventListener('touchstart', function(e) {
-                touchStartX = e.changedTouches[0].screenX;
-                touchStartY = e.changedTouches[0].screenY;
-                var target = e.target;
-                if(target.closest('.quiz-option, .tf-option, .recognize-option')) {
-                    longPressTimer = setTimeout(function() { target.style.background = 'rgb(219,234,254)'; }, 500);
-                }
-            }, { passive: true });
             document.addEventListener('touchend', function(e) {
                 clearTimeout(longPressTimer);
                 var dx = e.changedTouches[0].screenX - touchStartX;

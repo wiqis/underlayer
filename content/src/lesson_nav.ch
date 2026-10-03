@@ -204,6 +204,21 @@ public namespace underlayer_content {
         render_signin_advisory_js(page)
         render_lesson_engagement(page)
         render_lesson_tools(page)
+        // THE READING CONTROLS' BEHAVIOUR, for every lesson page.
+        //
+        // 100 lesson pages ship the markup -- three accessibility buttons, four
+        // reading dropdowns, a shortcuts dialog -- and 21 of them ship the
+        // JavaScript that makes it work. The other 79 raised
+        // `ReferenceError: toggleHighContrast is not defined` on click, and their
+        // four <select>s silently reverted, because `onchange` on a missing
+        // function throws the same way.
+        //
+        // It is called HERE, inside render_lesson_nav, rather than inside
+        // render_lesson_js, because 435 page builders call this function and only
+        // 333 call that one. Putting it next to the 79 pages that were broken is
+        // the whole point; putting it in the less-reached helper would leave them
+        // broken.
+        render_lesson_controls_js(page)
     }
 
     // Reveal the advisory for a signed-out reader.

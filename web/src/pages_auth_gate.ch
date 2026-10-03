@@ -153,19 +153,33 @@ public namespace underlayer_web {
         res.write_view(&ov)
     }
 
+    // WHY THIS BLOCK USES `--nav-*` AND NOT THE SHADCN TOKENS.
+    //
+    // The gate was written with `var(--border, hsl(var(--nav-border)))` and
+    // friends, on the assumption that the fallback would carry it on a page
+    // without the components theme.  css_cbi drops the second argument, so the
+    // served rule was `border: 1px solid var(--border)` with `--border`
+    // undefined -- and the gate is shown to exactly the readers least likely to
+    // have a components theme loaded, because the gate only appears when there
+    // is no session.
+    //
+    // `--nav-*` is defined on `:root` by the nav component on EVERY page in both
+    // layers, so it is the one set of tokens this can rely on without a
+    // conditional.  `render_auth_gate` calls `render_nav_bar`, so those tokens
+    // are guaranteed present on the page that carries this stylesheet.
     public func render_auth_gate_css(page : &mut HtmlPage) {
         #css {
             .ul-gate-page { display: flex; justify-content: center; padding: 4rem 1.5rem 5rem; }
-            .ul-gate-card { max-width: 26rem; width: 100%; text-align: center; border: 1px solid var(--border, hsl(var(--nav-border))); border-radius: 12px; padding: 2.5rem 2rem; background: var(--card, hsl(var(--nav-card))); }
+            .ul-gate-card { max-width: 26rem; width: 100%; text-align: center; border: 1px solid hsl(var(--nav-border)); border-radius: 12px; padding: 2.5rem 2rem; background: hsl(var(--nav-card)); }
             .ul-gate-icon { color: hsl(217 91% 60%); margin-bottom: 1rem; }
-            .ul-gate-title { font-size: 1.35rem; font-weight: 700; margin: 0 0 0.5rem; color: var(--foreground, hsl(var(--nav-fg))); }
-            .ul-gate-why { margin: 0 0 1.75rem; color: var(--muted-foreground, hsl(var(--nav-muted))); font-size: 0.95rem; line-height: 1.5; }
+            .ul-gate-title { font-size: 1.35rem; font-weight: 700; margin: 0 0 0.5rem; color: hsl(var(--nav-fg)); }
+            .ul-gate-why { margin: 0 0 1.75rem; color: hsl(var(--nav-muted)); font-size: 0.95rem; line-height: 1.5; }
             .ul-gate-actions { display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; }
             .ul-gate-primary { background: hsl(217 91% 60%); color: white; text-decoration: none; font-weight: 600; font-size: 0.95rem; padding: 0.6rem 1.3rem; border-radius: 8px; }
             .ul-gate-primary:hover { background: hsl(217 91% 50%); text-decoration: none; }
-            .ul-gate-secondary { border: 1px solid var(--border, hsl(var(--nav-border))); color: var(--foreground, hsl(var(--nav-fg))); text-decoration: none; font-weight: 600; font-size: 0.95rem; padding: 0.6rem 1.3rem; border-radius: 8px; }
-            .ul-gate-secondary:hover { text-decoration: none; background: var(--accent, hsl(var(--nav-accent))); }
-            .ul-gate-foot { margin: 1.75rem 0 0; font-size: 0.82rem; color: var(--muted-foreground, hsl(var(--nav-muted))); }
+            .ul-gate-secondary { border: 1px solid hsl(var(--nav-border)); color: hsl(var(--nav-fg)); text-decoration: none; font-weight: 600; font-size: 0.95rem; padding: 0.6rem 1.3rem; border-radius: 8px; }
+            .ul-gate-secondary:hover { text-decoration: none; background: hsl(var(--nav-accent)); }
+            .ul-gate-foot { margin: 1.75rem 0 0; font-size: 0.82rem; color: hsl(var(--nav-muted)); }
         }
     }
 

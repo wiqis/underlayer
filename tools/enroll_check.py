@@ -332,6 +332,11 @@ const fs = require('fs');
 const SCRIPT = fs.readFileSync(__SCRIPT_PATH__, 'utf8');
 const PORT = __PORT__, COURSE = __COURSE__, TOKEN = __TOKEN__;
 
+// What a real browser would hold after a successful login. Only 'session_token'
+// is in here, because that is the only key pages_auth.ch writes -- see the note
+// on the localStorage stub below.
+const STORE = { 'session_token': TOKEN };
+
 function el(tag) {
   return { tagName: tag, className: '', textContent: '', hidden: true,
            children: [], attrs: {}, disabled: false,
@@ -355,7 +360,19 @@ const sandbox = {
   document: { getElementById: get, createElement: el,
               addEventListener: () => {} },
   window: {},
-  localStorage: { getItem: () => TOKEN, setItem: () => {} },
+  // A REAL localStorage, not `getItem: () => TOKEN`.  The stub answered the
+  // same value for EVERY key, so it could not tell a script reading the right
+  // key from one reading a key nothing writes -- which is exactly the bug this
+  // check missed: the served script asked for 'ul_session_token' while login
+  // writes 'session_token', and with a stub that returns the token for any
+  // string, both the can-enroll call and the enroll POST carried a valid
+  // Authorization header and every state came out right.
+  //
+  // KEYING THE STUB IS THE ASSERTION.  A key that is not in STORE behaves the
+  // way a browser behaves when it is absent: undefined.  Now the script can
+  // only pass by asking for the name the rest of the product writes.
+  localStorage: { getItem: (k) => (Object.prototype.hasOwnProperty.call(STORE, k) ? STORE[k] : undefined),
+                  setItem: () => {} },
   encodeURIComponent, Promise, JSON, String, Number, Math, Array, Object,
   fetch: (u, o) => fetch('http://localhost:' + PORT + u, o),
   setTimeout, clearTimeout,

@@ -48,13 +48,34 @@ public namespace underlayer_content {
         render_signin_advisory_css(page)
     }
 
+    // THE COLOUR IS `hsl(var(--nav-muted))` AND NOT `var(--muted-foreground,
+    // hsl(var(--nav-muted)))`, and the reason is a compiler bug this file was
+    // the fourth site of.
+    //
+    // css_cbi SILENTLY DROPS the second argument of `var()`.  Verified on the
+    // served HTML of every lesson page: the rule here used to emit
+    //
+    //     .ul-advisory-text { color: var(--muted-foreground); }
+    //
+    // -- the fallback gone.  That is only harmless on a page that DEFINES
+    // `--muted-foreground`, which is what `injectDefaultComponentsTheme()` does,
+    // and only 7 of the 466 page builders call it.  A LESSON page does not, so
+    // on all 398 of them the advisory's text and its "or create an account"
+    // link resolved `var(--muted-foreground)` against nothing and inherited the
+    // body colour instead of the muted grey they were written to be.
+    //
+    // `--nav-muted` is defined on `:root` by the nav component on EVERY page,
+    // lesson or not, which is why it is the one token this can rely on.  The
+    // same bug and the same reasoning are written down in lesson_nav.ch,
+    // lesson_nav_css.ch, lesson_tools_css.ch and lesson_engagement_css.ch; this
+    // is the place that had it in the CSS rather than only in the comments.
     public func render_signin_advisory_css(page : &mut HtmlPage) {
         #css {
             .ul-signin-advisory { display: flex; align-items: center; justify-content: center; gap: 0.6rem; flex-wrap: wrap; margin: 0.75rem auto; max-width: 52rem; padding: 0.6rem 1rem; border: 1px solid hsl(217 91% 60% / 30%); border-radius: 8px; background: hsl(217 91% 60% / 6%); font-size: 0.88rem; }
-            .ul-advisory-text { color: var(--muted-foreground, hsl(var(--nav-muted))); }
+            .ul-advisory-text { color: hsl(var(--nav-muted)); }
             .ul-advisory-cta { color: hsl(217 91% 60%); font-weight: 600; text-decoration: none; }
             .ul-advisory-cta:hover { text-decoration: underline; }
-            .ul-advisory-alt { color: var(--muted-foreground, hsl(var(--nav-muted))); text-decoration: underline; font-size: 0.82rem; }
+            .ul-advisory-alt { color: hsl(var(--nav-muted)); text-decoration: underline; font-size: 0.82rem; }
         }
     }
 

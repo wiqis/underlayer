@@ -102,18 +102,37 @@ public namespace underlayer_web {
         render_next_step_js(page)
     }
 
+    // NO `var(--x, fallback)` IN THE BLOCK BELOW, and the reason is the same one
+    // that put `--nav-*` tokens in the nav: css_cbi drops the second argument
+    // silently.  These were written as `var(--card, hsl(var(--card)))`, which is
+    // not a fallback at all -- it is the same token wrapped in a function, so the
+    // "fallback" resolved to `hsl(var(--card))`, and dropping it changed
+    // `background` from `hsl(var(--card))` to `var(--card)`, i.e. the raw triple
+    // `0 0% 100%`, which paints nothing.  The dashboard therefore shipped a card
+    // with no background at all, and no error anywhere.
+    //
+    // `hsl(var(--card))` is the correct form and is what the rest of the web layer
+    // already uses; this block had drifted by writing the token bare inside a
+    // function it did not need.  The dashboard injects the components theme, so
+    // the token is always defined here.
+    //
+    // The comment is ABOVE the `#css` and not inside it because css_cbi stops at
+    // the first `}` on a line of its own -- the line closing a comment block --
+    // which is the same reason lesson_nav.ch writes its two `if`s as early
+    // returns rather than as `@if`/`@else` inside the macro.  A `//` comment
+    // inside a `#css` block is not reliably handled by the macro either.
     public func render_next_step_css(page : &mut HtmlPage) {
         #css {
-            .ns-card { border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 1.1rem 1.25rem; margin: 0 0 1.5rem; background: var(--card, hsl(var(--card))); }
+            .ns-card { border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 1.1rem 1.25rem; margin: 0 0 1.5rem; background: hsl(var(--card)); }
             .ns-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
-            .ns-title { font-size: 1.05rem; font-weight: 700; margin: 0; color: var(--foreground, hsl(var(--foreground))); }
-            .ns-course { font-size: 0.8rem; color: var(--muted-foreground, hsl(var(--muted-foreground))); }
+            .ns-title { font-size: 1.05rem; font-weight: 700; margin: 0; color: hsl(var(--foreground)); }
+            .ns-course { font-size: 0.8rem; color: hsl(var(--muted-foreground)); }
             .ns-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.55rem; }
             .ns-item { display: flex; gap: 0.65rem; align-items: flex-start; border: 1px solid hsl(var(--border)); border-radius: 9px; padding: 0.7rem 0.85rem; }
             .ns-rank { flex: 0 0 auto; width: 1.35rem; height: 1.35rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; background: hsl(var(--muted)); color: hsl(var(--background)); }
             .ns-body { flex: 1 1 auto; min-width: 0; }
             .ns-what { font-size: 0.93rem; margin: 0 0 0.15rem; }
-            .ns-why { font-size: 0.83rem; margin: 0; color: var(--muted-foreground, hsl(var(--muted-foreground))); }
+            .ns-why { font-size: 0.83rem; margin: 0; color: hsl(var(--muted-foreground)); }
             .ns-go { display: inline-block; margin-top: 0.4rem; font-size: 0.85rem; font-weight: 600; color: hsl(217 91% 60%); text-decoration: none; }
             .ns-go:hover { text-decoration: underline; }
             /* A review outranks a new concept, so it is the one item allowed to
@@ -121,7 +140,7 @@ public namespace underlayer_web {
                weight: a learner who feels ranked will study the ranking. */
             .ns-item.ns-review { border-color: hsl(217 91% 60% / 45%); background: hsl(217 91% 60% / 5%); }
             .ns-item.ns-struggle { border-color: hsl(38 92% 50% / 45%); background: hsl(38 92% 50% / 6%); }
-            .ns-foot { margin: 0.8rem 0 0; font-size: 0.82rem; color: var(--muted-foreground, hsl(var(--muted-foreground))); }
+            .ns-foot { margin: 0.8rem 0 0; font-size: 0.82rem; color: hsl(var(--muted-foreground)); }
             @media (max-width: 640px) { .ns-head { flex-direction: column; gap: 0.2rem; } }
         }
     }
