@@ -13,7 +13,7 @@ public func test_list_courses_scans_dir(env : &mut TestEnv) {
     var found_hat = false
     var i : size_t = 0
     while(i < courses.size()) {
-        var cptr = courses.get_ptr(i)
+        var cptr = courses.at_ref(i)
         var cid = cptr.id.copy()
         var elf_id = string("elf")
         var hat_id = string("hat")

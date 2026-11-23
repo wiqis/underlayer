@@ -7,6 +7,7 @@ import cstd
 import http
 import json
 import fs
+import compression
 import path
 import encoding
 import crypto

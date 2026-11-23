@@ -98,7 +98,6 @@ public namespace test_helpers {
         if(u_opt is std::Option.None) { return std::Result.Err<http::Response, std::string>(string("invalid URL")) }
         var Some(u) = u_opt else unsafe { unreachable }
         var rb = http::RequestBuilder("GET", std::replace(&mut u, http::URL()))
-        rb.timeout(client.default_timeout_secs)
         var auth_value = string("Bearer ")
         auth_value.append_string(token)
         rb.header_view(string_view("Authorization"), &auth_value.to_view())
@@ -112,7 +111,6 @@ public namespace test_helpers {
         var Some(u) = u_opt else unsafe { unreachable }
         var rb = http::RequestBuilder("POST", std::replace(&mut u, http::URL()))
         rb.set_body(body, content_type)
-        rb.timeout(client.default_timeout_secs)
         var auth_value = string("Bearer ")
         auth_value.append_string(token)
         rb.header_view(string_view("Authorization"), &auth_value.to_view())
