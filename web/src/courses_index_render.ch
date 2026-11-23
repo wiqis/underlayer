@@ -32,7 +32,7 @@ public namespace underlayer_web {
         var n : size_t = links.size()
         var i : size_t = 0
         while(i < n) {
-            var link = links.get_ptr(i)
+            var link = links.at_ref(i)
             var tag = string()
             if(link.module_title.size() > 0) {
                 tag = link.module_title.copy()
@@ -49,7 +49,7 @@ public namespace underlayer_web {
 
     // One course card.  Balanced and self-contained so a plain Chemical while
     // loop can emit one per course.
-    public func render_catalog_card(card : *CatalogCard, page : &mut HtmlPage) {
+    public func render_catalog_card(card : &CatalogCard, page : &mut HtmlPage) {
         #html {
             <article class="course-card">
                 <div class="course-badge">{card.modules} modules</div>
@@ -85,7 +85,7 @@ public namespace underlayer_web {
         var i : size_t = 0
         var n : size_t = cards.size()
         while(i < n) {
-            render_catalog_card(cards.get_ptr(i), page)
+            render_catalog_card(cards.at_ref(i), page)
             i = i + 1
         }
     }

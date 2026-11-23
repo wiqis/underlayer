@@ -33,8 +33,8 @@ public namespace underlayer_web {
         if(at > lead) {
             start = snap_to_char_start(desc, at as size_t - lead as size_t)
             var j = start
-            while(j < desc.size() && !is_space_byte(desc.get(j))) { j = j + 1 }
-            while(j < desc.size() && is_space_byte(desc.get(j))) { j = j + 1 }
+            while(j < desc.size() && !is_space_byte(desc.at(j))) { j = j + 1 }
+            while(j < desc.size() && is_space_byte(desc.at(j))) { j = j + 1 }
             start = j
         }
         var out = string()
@@ -45,11 +45,11 @@ public namespace underlayer_web {
         } else {
             end = snap_to_char_start(desc, end)
             var k = end
-            while(k > start && !is_space_byte(desc.get(k - 1))) { k = k - 1 }
+            while(k > start && !is_space_byte(desc.at(k - 1))) { k = k - 1 }
             if(k > start) { end = k }
         }
         var i = start
-        while(i < end) { out.append(desc.get(i)); i = i + 1 }
+        while(i < end) { out.append(desc.at(i)); i = i + 1 }
         if(end < desc.size()) { out.append_view(string_view("...")) }
         return out
     }
@@ -64,8 +64,8 @@ public namespace underlayer_web {
         var n = a.size()
         if(b.size() < n) { n = b.size() }
         while(i < n) {
-            var ca = a.get(i)
-            var cb = b.get(i)
+            var ca = a.at(i)
+            var cb = b.at(i)
             if(ca >= 'A' && ca <= 'Z') { ca = ca + 32 }
             if(cb >= 'A' && cb <= 'Z') { cb = cb + 32 }
             if(ca != cb) { return ca < cb }
@@ -78,15 +78,15 @@ public namespace underlayer_web {
     // ascending.  The last key makes the order TOTAL, which matters because
     // list_courses() reads a directory: without it two runs over the same
     // collection could order equal-scoring hits differently.
-    public func sort_hits(hits : &vector<SearchHit>) {
+    public func sort_hits(hits : &mut vector<SearchHit>) {
         var n : size_t = hits.size()
         var i : size_t = 0
         while(i < n) {
             var best = i
             var j = i + 1
             while(j < n) {
-                var a = hits.get_ptr(j)
-                var b = hits.get_ptr(best)
+                var a = hits.at_ref(j)
+                var b = hits.at_ref(best)
                 var take = false
                 if(a.score > b.score) {
                     take = true
@@ -109,40 +109,51 @@ public namespace underlayer_web {
         }
     }
 
-    // Element swap through pointers.  Written out field by field rather than
-    // as a struct assignment because the compiler rejects a move of a value
-    // held behind get_ptr() ("cannot move this value without re-initializing
-    // memory"), and every field here is a string that needs copying anyway.
-    func swap_hits(hits : &vector<SearchHit>, i : size_t, j : size_t) {
-        var a = hits.get_ptr(i)
-        var b = hits.get_ptr(j)
-        var s_score = a.score
-        var s_title = a.concept_title.copy()
-        var s_cid = a.concept_id.copy()
-        var s_course = a.course_id.copy()
-        var s_ctitle = a.course_title.copy()
-        var s_desc = a.concept_description.copy()
-        var s_module = a.module_title.copy()
-        var s_href = a.href.copy()
-        var s_field = a.matched_field.copy()
-        a.score = b.score
-        a.concept_title = b.concept_title.copy()
-        a.concept_id = b.concept_id.copy()
-        a.course_id = b.course_id.copy()
-        a.course_title = b.course_title.copy()
-        a.concept_description = b.concept_description.copy()
-        a.module_title = b.module_title.copy()
-        a.href = b.href.copy()
-        a.matched_field = b.matched_field.copy()
-        b.score = s_score
-        b.concept_title = s_title
-        b.concept_id = s_cid
-        b.course_id = s_course
-        b.course_title = s_ctitle
-        b.concept_description = s_desc
-        b.module_title = s_module
-        b.href = s_href
-        b.matched_field = s_field
+    // One hit, copied out.  `SearchHit` owns its strings, so a swap cannot move
+    // through a borrow; it copies each side out and writes it back.
+    func copy_hit(src : &SearchHit) : SearchHit {
+        var out = SearchHit::make()
+        out.score = src.score
+        out.concept_title = src.concept_title.copy()
+        out.concept_id = src.concept_id.copy()
+        out.course_id = src.course_id.copy()
+        out.course_title = src.course_title.copy()
+        out.concept_description = src.concept_description.copy()
+        out.module_title = src.module_title.copy()
+        out.href = src.href.copy()
+        out.matched_field = src.matched_field.copy()
+        return out
+    }
+
+    // Swap two hits.  Each side is copied out, then written back under its own
+    // short mutable borrow, so the two borrows never overlap.
+    func swap_hits(hits : &mut vector<SearchHit>, i : size_t, j : size_t) {
+        var a_copy = copy_hit(hits.at_ref(i))
+        var b_copy = copy_hit(hits.at_ref(j))
+        {
+            var a = hits.at_mut(i)
+            a.score = b_copy.score
+            a.concept_title = b_copy.concept_title.copy()
+            a.concept_id = b_copy.concept_id.copy()
+            a.course_id = b_copy.course_id.copy()
+            a.course_title = b_copy.course_title.copy()
+            a.concept_description = b_copy.concept_description.copy()
+            a.module_title = b_copy.module_title.copy()
+            a.href = b_copy.href.copy()
+            a.matched_field = b_copy.matched_field.copy()
+        }
+        {
+            var b = hits.at_mut(j)
+            b.score = a_copy.score
+            b.concept_title = a_copy.concept_title.copy()
+            b.concept_id = a_copy.concept_id.copy()
+            b.course_id = a_copy.course_id.copy()
+            b.course_title = a_copy.course_title.copy()
+            b.concept_description = a_copy.concept_description.copy()
+            b.module_title = a_copy.module_title.copy()
+            b.href = a_copy.href.copy()
+            b.matched_field = a_copy.matched_field.copy()
+        }
     }
 
 }

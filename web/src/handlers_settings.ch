@@ -8,32 +8,25 @@ using underlayer_repository::parse_f64
 public namespace underlayer_web {
 
     // GET /settings — render settings page
-    public func handle_settings_page(req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_settings_page(req : &http::Request) : http::Response {
         var html_out = render_settings_page()
         var bv = html_out.to_view()
-        res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
-        res.write_view(&bv)
+        return underlayer_web::send_html(&html_out)
     }
 
     // GET /u/:username — render public profile page
-    public func handle_profile_page(req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_profile_page(req : &http::Request) : http::Response {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() < 2) {
-            res.status = 404u
-            var ct = std::string_view("text/plain")
-            res.set_header_view(std::string_view("Content-Type"), &ct)
             var body = std::string("Not found")
-            var bv = body.to_view()
-            res.write_view(&bv)
-            return
+            return underlayer_web::send_status_text(404u, &body)
         }
-        var username_sv = segments.get_ptr(1)
+        var username_sv = segments.at_ref(1)
         var username = username_sv.to_string()
-        var html_out = render_profile_page(&raw username)
+        var html_out = render_profile_page(&username)
         var bv = html_out.to_view()
-        res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
-        res.write_view(&bv)
+        return underlayer_web::send_html(&html_out)
     }
 
     // POST /api/auth/register — real implementation in handlers_auth.ch
@@ -83,26 +76,25 @@ public namespace underlayer_web {
     // POST /api/progress/import — real implementation in handlers_data.ch
 
     // POST /api/fsrs/optimize — optimize parameters from review history
-    public func handle_fsrs_optimize(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
+    public func handle_fsrs_optimize(db : *DbClient, req : &http::Request) : http::Response {
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
-        var history = underlayer_repository::get_all_review_history(&raw db, &learner_id)
+        var history = underlayer_repository::get_all_review_history(db, &learner_id)
         if(history.size() < 10) {
             var err_msg = string("need at least 10 reviews for optimization")
-            send_error(res, 400u, &err_msg)
-            return
+            return send_error(400u, &err_msg)
         }
         // Extract ratings and intervals
         var ratings = vector<int>()
         var intervals = vector<i64>()
         var hi : size_t = 0
         while(hi < history.size()) {
-            var item = history.get_ptr(hi)
+            var item = history.at_ref(hi)
             ratings.push(item.rating)
             // Compute interval from consecutive reviews
             var interval : i64 = 1
             if(hi > 0) {
-                var prev = history.get_ptr(hi - 1)
+                var prev = history.at_ref(hi - 1)
                 interval = item.reviewed_at - prev.reviewed_at
                 if(interval < 1) { interval = 1 }
             }
@@ -116,37 +108,36 @@ public namespace underlayer_web {
         var body = std::string("{\"ok\":true,\"log\":")
         body.append_view(&log_entry.to_view())
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // POST /api/fsrs/reset — reset parameters to defaults
-    public func handle_fsrs_reset(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_fsrs_reset(db : *DbClient, req : &http::Request) : http::Response {
         var new_params = underlayer_learning::reset_fsrs_params()
         var exported = underlayer_learning::export_fsrs_params(&new_params)
         var body = std::string("{\"ok\":true,\"params\":")
         body.append_view(&exported.to_view())
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // GET /api/fsrs/export — export current parameters
-    public func handle_fsrs_export(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_fsrs_export(db : *DbClient, req : &http::Request) : http::Response {
         var params = underlayer_learning::init_fsrs_params()
         var exported = underlayer_learning::export_fsrs_params(&params)
-        send_json_str(res, &raw exported)
+        return send_json_str(&exported)
     }
 
     // POST /api/fsrs/import — import FSRS parameters from Anki JSON (1.1.26)
     // Accepts JSON array of weights: [0.4072, 0.3366, ...] or full object {"w":[...]}
-    public func handle_fsrs_import(db : &DbClient, req : *mut http::Request, res : *mut http::ResponseWriter) {
+    public func handle_fsrs_import(db : *DbClient, req : &mut http::Request) : http::Response {
         var q_weights = string("weights")
-        var weights_v = req.query.get(&q_weights.to_view())
+        var weights_v = sv_or_empty(req.query.get(std::str.make_view(q_weights.to_view())))
         if(weights_v.size() == 0) {
             var err_msg = string("missing query param: weights (JSON array of floats)")
-            send_error(res, 400u, &err_msg)
-            return
+            return send_error(400u, &err_msg)
         }
-        var weights_str = sv_to_string(&raw weights_v)
+        var weights_str = sv_to_string(&weights_v)
         var weights_view = weights_str.to_view()
         // Parse JSON array of floats
         var new_params = underlayer_learning::FSRSParams::make()
@@ -154,15 +145,15 @@ public namespace underlayer_web {
         // Strip [ and ] if present
         var start : size_t = 0
         var end : size_t = weights_view.size()
-        if(weights_view.get(0) == '[') { start = 1 }
-        if(weights_view.get(end - 1) == ']') { end = end - 1 }
+        if(weights_view.at(0) == '[') { start = 1 }
+        if(weights_view.at(end - 1) == ']') { end = end - 1 }
         var pos : size_t = start
         while(pos < end) {
             // Find next comma or end
             var comma_pos = end
             var ci : size_t = pos
             while(ci < end) {
-                if(weights_view.get(ci) == ',') {
+                if(weights_view.at(ci) == ',') {
                     comma_pos = ci
                     ci = end
                 }
@@ -172,7 +163,7 @@ public namespace underlayer_web {
             var num_str = string()
             var ni : size_t = pos
             while(ni < comma_pos) {
-                var c = weights_view.get(ni)
+                var c = weights_view.at(ni)
                 if(c != ' ' && c != '\n' && c != '\r') {
                     num_str.append(c)
                 }
@@ -192,7 +183,7 @@ public namespace underlayer_web {
         var body = std::string("{\"ok\":true,\"params\":")
         body.append_view(&exported.to_view())
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
 }

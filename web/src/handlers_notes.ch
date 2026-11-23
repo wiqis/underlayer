@@ -6,21 +6,21 @@ using underlayer_db::DbClient
 public namespace underlayer_web {
 
     // POST /api/notes — Create a note
-    public func handle_create_note(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_create_note(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
+            return send_error(401u, &err)
         } else {
-            var body_str = read_body(&raw mut req)
+            var body_str = read_body(req)
             if(body_str.size() == 0) {
                 var err = string("empty request body")
-                send_error(res, 400u, &err)
+                return send_error(400u, &err)
             } else {
                 var parse_result = json::parse(body_str.to_view())
                 if(parse_result is std::Result.Err) {
                     var err = string("invalid JSON")
-                    send_error(res, 400u, &err)
+                    return send_error(400u, &err)
                 } else {
                     var Ok(parsed) = parse_result else unsafe { unreachable }
                     var concept_id = json_get_str(&parsed, "concept_id")
@@ -29,17 +29,17 @@ public namespace underlayer_web {
                     var section_ref = json_get_str(&parsed, "section_ref")
                     if(concept_id.size() == 0) {
                         var err = string("concept_id is required")
-                        send_error(res, 400u, &err)
+                        return send_error(400u, &err)
                     } else {
                         if(content.size() == 0) {
                             var err = string("content is required")
-                            send_error(res, 400u, &err)
+                            return send_error(400u, &err)
                         } else {
                             var note_id = underlayer_repository::create_note(db, &learner_id, &concept_id, &course_id, &content, &section_ref)
                             var resp = string("{\"ok\":true,\"id\":\"")
                             resp.append_string(&note_id)
                             resp.append_view("\"}")
-                            send_json_str(res, &raw resp)
+                            return send_json_str(&resp)
                         }
                     }
                 }
@@ -56,27 +56,27 @@ public namespace underlayer_web {
     // then acted as anybody.  Any authenticated learner could rewrite any note
     // on the platform.  The repository now filters on learner_id and returns
     // how many rows it touched, and zero is a 404.
-    public func handle_update_note(db : *DbClient, note_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_update_note(db : *DbClient, note_id : &string, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
+            return send_error(401u, &err)
         } else {
-            var body_str = read_body(&raw mut req)
+            var body_str = read_body(req)
             if(body_str.size() == 0) {
                 var err = string("empty request body")
-                send_error(res, 400u, &err)
+                return send_error(400u, &err)
             } else {
                 var parse_result = json::parse(body_str.to_view())
                 if(parse_result is std::Result.Err) {
                     var err = string("invalid JSON")
-                    send_error(res, 400u, &err)
+                    return send_error(400u, &err)
                 } else {
                     var Ok(parsed) = parse_result else unsafe { unreachable }
                     var content = json_get_str(&parsed, "content")
                     if(content.size() == 0) {
                         var err = string("content is required")
-                        send_error(res, 400u, &err)
+                        return send_error(400u, &err)
                     } else {
                         var touched = underlayer_repository::update_note(db, &learner_id, note_id, &content)
                         if(touched <= 0) {
@@ -84,10 +84,10 @@ public namespace underlayer_web {
                             // endpoint must not be an oracle that tells a caller
                             // which note ids are real.
                             var gone = string("note not found")
-                            send_error(res, 404u, &gone)
+                            return send_error(404u, &gone)
                         } else {
                             var resp = string("{\"ok\":true}")
-                            send_json_str(res, &raw resp)
+                            return send_json_str(&resp)
                         }
                     }
                 }
@@ -100,36 +100,36 @@ public namespace underlayer_web {
     // ownership predicate, so any authenticated learner could destroy any
     // note.  A note is the learner's own words about a lesson; losing it to
     // another account is not recoverable.
-    public func handle_delete_note(db : *DbClient, note_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_delete_note(db : *DbClient, note_id : &string, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
+            return send_error(401u, &err)
         } else {
             var touched = underlayer_repository::delete_note(db, &learner_id, note_id)
             if(touched <= 0) {
                 var gone = string("note not found")
-                send_error(res, 404u, &gone)
+                return send_error(404u, &gone)
             } else {
                 var resp = string("{\"ok\":true}")
-                send_json_str(res, &raw resp)
+                return send_json_str(&resp)
             }
         }
     }
 
     // GET /api/notes/concept/:conceptId — Get notes for a concept
-    public func handle_get_concept_notes(db : *DbClient, concept_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_get_concept_notes(db : *DbClient, concept_id : &string, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
+            return send_error(401u, &err)
         } else {
             var notes = underlayer_repository::get_notes_for_concept(db, &learner_id, concept_id)
             var resp = string("[")
             var ri : size_t = 0
             while(ri < notes.size()) {
                 if(ri > 0) { resp.append_view(",") } else { }
-                var n = notes.get_ptr(ri)
+                var n = notes.at_ref(ri)
                 resp.append_view("{\"id\":\"")
                 resp.append_string(&n.id)
                 resp.append_view("\",\"concept_id\":\"")
@@ -150,23 +150,23 @@ public namespace underlayer_web {
                 ri = ri + 1
             }
             resp.append_view("]")
-            send_json_str(res, &raw resp)
+            return send_json_str(&resp)
         }
     }
 
     // GET /api/notes — Get all notes for the authenticated learner
-    public func handle_get_notes(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_get_notes(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
+            return send_error(401u, &err)
         } else {
             var notes = underlayer_repository::get_all_notes(db, &learner_id)
             var resp = string("[")
             var ri : size_t = 0
             while(ri < notes.size()) {
                 if(ri > 0) { resp.append_view(",") } else { }
-                var n = notes.get_ptr(ri)
+                var n = notes.at_ref(ri)
                 resp.append_view("{\"id\":\"")
                 resp.append_string(&n.id)
                 resp.append_view("\",\"concept_id\":\"")
@@ -187,31 +187,31 @@ public namespace underlayer_web {
                 ri = ri + 1
             }
             resp.append_view("]")
-            send_json_str(res, &raw resp)
+            return send_json_str(&resp)
         }
     }
 
     // GET /api/notes/search?q=query — Search notes
-    public func handle_search_notes(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_search_notes(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
+            return send_error(401u, &err)
         } else {
             var query = string()
             var q_key = string("q")
-            var qv = req.query.get(&q_key.to_view())
-            if(qv.size() > 0) { query = sv_to_string(&raw qv) }
+            var qv = sv_or_empty(req.query.get(std::str.make_view(q_key.to_view())))
+            if(qv.size() > 0) { query = sv_to_string(&qv) }
             if(query.size() == 0) {
                 var err = string("q parameter is required")
-                send_error(res, 400u, &err)
+                return send_error(400u, &err)
             } else {
                 var notes = underlayer_repository::search_notes(db, &learner_id, &query)
                 var resp = string("[")
                 var ri : size_t = 0
                 while(ri < notes.size()) {
                     if(ri > 0) { resp.append_view(",") } else { }
-                    var n = notes.get_ptr(ri)
+                    var n = notes.at_ref(ri)
                     resp.append_view("{\"id\":\"")
                     resp.append_string(&n.id)
                     resp.append_view("\",\"concept_id\":\"")
@@ -232,7 +232,7 @@ public namespace underlayer_web {
                     ri = ri + 1
                 }
                 resp.append_view("]")
-                send_json_str(res, &raw resp)
+                return send_json_str(&resp)
             }
         }
     }

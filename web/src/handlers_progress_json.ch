@@ -44,17 +44,17 @@ public namespace underlayer_web {
     // The course_id to report on: the query string, else elf.
     public func progress_course_id(req : &http::Request) : string {
         var q = string("course_id")
-        var v = req.query.get(&q.to_view())
+        var v = sv_or_empty(req.query.get(std::str.make_view(q.to_view())))
         if(v.size() == 0) { return string("elf") }
-        var cid = sv_to_string(&raw v)
+        var cid = sv_to_string(&v)
         if(cid.size() == 0) { return string("elf") }
         return cid
     }
 
     public func append_coverage_json(
-        body : *mut string,
+        body : &mut string,
         cov : &underlayer_learning::CourseCoverage,
-        states : *vector<ConceptState>,
+        states : &vector<ConceptState>,
         health : &underlayer_learning::KnowledgeHealth
     ) {
         var depth = underlayer_learning::compute_depth_score(states)
@@ -106,11 +106,11 @@ public namespace underlayer_web {
         var total_concepts : i64 = 0
         var i : size_t = 0
         while(i < enrollments.size()) {
-            var e = enrollments.get_ptr(i)
+            var e = enrollments.at_ref(i)
             var cid = e.course_id.copy()
             var states = underlayer_repository::get_all_concept_states(db, learner_id, &cid)
             var total = manifest_concept_total(courses_dir, &cid)
-            var cov = underlayer_learning::compute_course_coverage(&cid, &raw states, total)
+            var cov = underlayer_learning::compute_course_coverage(&cid, &states, total)
             var course = underlayer_repository::load_course(courses_dir, &cid)
             var title = string("Underlayer")
             if(course.id.size() > 0) { title = course.title.copy() }
@@ -153,7 +153,7 @@ public namespace underlayer_web {
         var failed_n = underlayer_repository::count_failed_exercises(db, learner_id)
         body.append_string(&underlayer_core::int_to_string(failed_n as i64))
         body.append_view(",\"failed_exercises\":")
-        append_failed_json(db, learner_id, &raw mut body)
+        append_failed_json(db, learner_id, &mut body)
         body.append_view("}")
         return body
     }
@@ -164,7 +164,7 @@ public namespace underlayer_web {
         var body = string("{\"learner_id\":\"")
         body.append_string(learner_id)
         body.append_view("\",\"failed_exercises\":")
-        append_failed_json(db, learner_id, &raw mut body)
+        append_failed_json(db, learner_id, &mut body)
         body.append_view("}")
         return body
     }
@@ -172,12 +172,12 @@ public namespace underlayer_web {
     // One row per MISSED exercise, most-missed first.  The question text comes
     // back with it so the dashboard can say what was missed without a second
     // request per row.
-    func append_failed_json(db : *DbClient, learner_id : &string, body : *mut string) {
+    func append_failed_json(db : *DbClient, learner_id : &string, body : &mut string) {
         var failed = underlayer_repository::get_failed_exercises(db, learner_id, 25)
         body.append_view("[")
         var i : size_t = 0
         while(i < failed.size()) {
-            var f = failed.get_ptr(i)
+            var f = failed.at_ref(i)
             if(i > 0) { body.append_view(",") }
             body.append_view("{\"exercise_id\":\"")
             body.append_string(&f.exercise_id)

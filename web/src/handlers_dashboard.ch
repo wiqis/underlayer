@@ -30,7 +30,7 @@ using underlayer_db::DbClient
 
 public namespace underlayer_web {
 
-    public func handle_dashboard(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_dashboard(db : *DbClient, courses_dir : &string, req : &http::Request) : http::Response {
         // THE SIGN-IN GATE, BEFORE ANY QUERY.
         //
         // This used to resolve a learner and fall back to the shared "demo"
@@ -45,33 +45,35 @@ public namespace underlayer_web {
         // all, so there is nothing to leak and nothing to cache wrongly.
         // See pages_auth_gate.ch for the full argument, and for which pages are
         // deliberately NOT gated (the ones a stranger has to be able to read).
-        if(!has_session(&raw db, req)) {
+        if(!has_session(db, req)) {
             // Redirect, not an in-place card: see pages_auth_gate.ch for why this
 
             // changed, and for why it cannot loop.
 
             var gate_path = string("/dashboard")
-            redirect_to_login(res, &gate_path)
-            return
+            return redirect_to_login(&gate_path)
         }
-        var learner_id = auth_get_learner_id(&raw db, req)
+        var learner_id = auth_get_learner_id(db, req)
         var signed_in = learner_id.size() > 0
         var course_id = progress_course_id(req)
 
-        var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
-        var health = underlayer_learning::compute_knowledge_health(&raw states)
-        var depth = underlayer_learning::compute_depth_score(&raw states)
+        var states = underlayer_repository::get_all_concept_states(db, &learner_id, &course_id)
+        var health = underlayer_learning::compute_knowledge_health(&states)
+        var depth = underlayer_learning::compute_depth_score(&states)
         var total_concepts = manifest_concept_total(courses_dir, &course_id)
         if(total_concepts == 0) { total_concepts = health.total_concepts }
-        var breadth = underlayer_learning::compute_breadth_score(&raw states, total_concepts)
-        var cov = underlayer_learning::compute_course_coverage(&course_id, &raw states, total_concepts)
+        var breadth = underlayer_learning::compute_breadth_score(&states, total_concepts)
+        // The Progress component takes an int percentage; the scores are doubles.
+        var depth_as_int = depth as int
+        var breadth_as_int = breadth as int
+        var cov = underlayer_learning::compute_course_coverage(&course_id, &states, total_concepts)
 
-        var due_items = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, 1000)
+        var due_items = underlayer_repository::get_due_review_items(db, &learner_id, &course_id, 1000)
         var new_count = 0
         var due_count = 0
         var i : size_t = 0
         while(i < due_items.size()) {
-            var item = due_items.get_ptr(i)
+            var item = due_items.at_ref(i)
             if(item.last_review == 0) { new_count = new_count + 1 }
             else { due_count = due_count + 1 }
             i = i + 1
@@ -96,7 +98,7 @@ public namespace underlayer_web {
             <div class="container" id="main-content" style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
                 <div class="wd-head">
                     <H1>Dashboard</H1>
-                    <Text variant="muted">Where you are, and what to do next</Text>
+                    <Text muted={true}>Where you are, and what to do next</Text>
                 </div>
 
                 // THE PAGE'S ACTUAL ANSWER, ABOVE THE EVIDENCE FOR IT.
@@ -127,25 +129,25 @@ public namespace underlayer_web {
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
                     <Card>
                         <CardBody>
-                            <Text variant="muted">Concepts in {course_id}</Text>
+                            <Text muted={true}>Concepts in {course_id}</Text>
                             <Text style="font-size: 2rem; font-weight: bold;">{cov.concepts_total}</Text>
                         </CardBody>
                     </Card>
                     <Card>
                         <CardBody>
-                            <Text variant="muted">Read</Text>
+                            <Text muted={true}>Read</Text>
                             <Text style="font-size: 2rem; font-weight: bold; color: var(--primary);">{cov.concepts_started}</Text>
                         </CardBody>
                     </Card>
                     <Card>
                         <CardBody>
-                            <Text variant="muted">Learned</Text>
+                            <Text muted={true}>Learned</Text>
                             <Text style="font-size: 2rem; font-weight: bold; color: var(--accent);">{cov.concepts_mastered}</Text>
                         </CardBody>
                     </Card>
                     <Card>
                         <CardBody>
-                            <Text variant="muted">Review due</Text>
+                            <Text muted={true}>Review due</Text>
                             <Text style="font-size: 2rem; font-weight: bold; color: var(--destructive);">{cov.concepts_due}</Text>
                         </CardBody>
                     </Card>
@@ -157,7 +159,7 @@ public namespace underlayer_web {
                             <CardTitle>What am I doing</CardTitle>
                         </CardHeader>
                         <CardBody>
-                            <Text variant="muted">Courses you have opened: <span id="wd-courses-count">-</span></Text>
+                            <Text muted={true}>Courses you have opened: <span id="wd-courses-count">-</span></Text>
                             <div id="wd-courses" aria-live="polite"></div>
                         </CardBody>
                     </Card>
@@ -166,7 +168,7 @@ public namespace underlayer_web {
                             <CardTitle>Which quizzes I failed</CardTitle>
                         </CardHeader>
                         <CardBody>
-                            <Text variant="muted">Distinct questions you got wrong: <span id="wd-failures-count">-</span></Text>
+                            <Text muted={true}>Distinct questions you got wrong: <span id="wd-failures-count">-</span></Text>
                             <div id="wd-failures" aria-live="polite"></div>
                         </CardBody>
                     </Card>
@@ -190,12 +192,12 @@ public namespace underlayer_web {
                             </div>
                             <div style="margin-bottom: 1rem;">
                                 <Text>Depth Score</Text>
-                                <Progress value={depth} max={100.0} variant="info" />
+                                <Progress value={depth_as_int} max={100} variant="info" />
                                 <Caption>{depth}% understanding</Caption>
                             </div>
                             <div>
                                 <Text>Breadth Score</Text>
-                                <Progress value={breadth} max={100.0} variant="accent" />
+                                <Progress value={breadth_as_int} max={100} variant="accent" />
                                 <Caption>{breadth}% coverage</Caption>
                             </div>
                         </CardBody>
@@ -230,9 +232,7 @@ public namespace underlayer_web {
 
         var html_out = page.toString()
         var bv = html_out.to_view()
-        res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
-        apply_security_headers(res)
-        res.write_view(&bv)
+        return underlayer_web::send_html(&html_out)
     }
 
 }

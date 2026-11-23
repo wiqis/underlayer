@@ -6,27 +6,27 @@ using underlayer_repository::parse_i64
 
 public namespace underlayer_web {
 
-    public func handle_course_progress(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_course_progress(db : *DbClient, courses_dir : &string, req : &http::Request) : http::Response {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         var course_id_raw = string()
         if(segments.size() >= 3) {
-            var sv = segments.get_ptr(2)
+            var sv = segments.at_ref(2)
             var i : size_t = 0
-            while(i < sv.size()) { course_id_raw.append(sv.get(i)); i = i + 1 }
+            while(i < sv.size()) { course_id_raw.append(sv.at(i)); i = i + 1 }
         }
         if(course_id_raw.size() == 0) { course_id_raw = progress_course_id(req) }
-        var learner_id = auth_get_learner_id(&raw db, req)
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
-        var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id_raw)
-        var health = underlayer_learning::compute_knowledge_health(&raw states)
-        var cov = underlayer_learning::compute_course_coverage(&course_id_raw, &raw states, manifest_concept_total(courses_dir, &course_id_raw))
+        var states = underlayer_repository::get_all_concept_states(db, &learner_id, &course_id_raw)
+        var health = underlayer_learning::compute_knowledge_health(&states)
+        var cov = underlayer_learning::compute_course_coverage(&course_id_raw, &states, manifest_concept_total(courses_dir, &course_id_raw))
         var body = std::string("{\"course_id\":\"")
         body.append_string(&course_id_raw)
         body.append_view("\",\"health\":")
         var health_str = underlayer_core::int_to_string((health.health_score * 100.0) as i64)
         body.append_string(&health_str)
-        append_coverage_json(&raw mut body, &cov, &raw states, &health)
+        append_coverage_json(&mut body, &cov, &states, &health)
         body.append_view(",\"mastered\":")
         var mastered_str = underlayer_core::int_to_string(health.mastered as i64)
         body.append_string(&mastered_str)
@@ -40,7 +40,7 @@ public namespace underlayer_web {
         var ci : size_t = 0
         while(ci < states.size()) {
             if(ci > 0) { body.append_view(",") }
-            var s = states.get_ptr(ci)
+            var s = states.at_ref(ci)
             body.append_view("{\"concept_id\":\"")
             body.append_string(&s.concept_id)
             body.append_view("\",\"status\":\"")
@@ -55,20 +55,20 @@ public namespace underlayer_web {
             ci = ci + 1
         }
         body.append_view("]}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
-    public func handle_progress(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
+    public func handle_progress(db : *DbClient, courses_dir : &string, req : &http::Request) : http::Response {
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         // Was the literal "elf" whatever the page asked for.  The page at
         // /progress has been sending ?course_id=elf since it was written and
         // the handler has ignored it ever since.
         var course_id = progress_course_id(req)
 
-        var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
-        var health = underlayer_learning::compute_knowledge_health(&raw states)
-        var cov = underlayer_learning::compute_course_coverage(&course_id, &raw states, manifest_concept_total(courses_dir, &course_id))
+        var states = underlayer_repository::get_all_concept_states(db, &learner_id, &course_id)
+        var health = underlayer_learning::compute_knowledge_health(&states)
+        var cov = underlayer_learning::compute_course_coverage(&course_id, &states, manifest_concept_total(courses_dir, &course_id))
 
         var body = std::string("{\"learner_id\":\"")
         body.append_string(&learner_id)
@@ -77,7 +77,7 @@ public namespace underlayer_web {
         body.append_view("\",\"health\":")
         var health_str = underlayer_core::int_to_string((health.health_score * 100.0) as i64)
         body.append_string(&health_str)
-        append_coverage_json(&raw mut body, &cov, &raw states, &health)
+        append_coverage_json(&mut body, &cov, &states, &health)
         body.append_view(",\"mastered\":")
         var mastered_str = underlayer_core::int_to_string(health.mastered as i64)
         body.append_string(&mastered_str)
@@ -122,7 +122,7 @@ public namespace underlayer_web {
         else { body.append_view("null") }
         body.append_view("}")
         // 6.1.5: Goal
-        var goal_result = underlayer_repository::get_learning_goal(&raw db, &learner_id, &course_id)
+        var goal_result = underlayer_repository::get_learning_goal(db, &learner_id, &course_id)
         body.append_view(",\"goal\":")
         if(goal_result.found) {
             body.append_view("{\"target_date\":")
@@ -135,7 +135,7 @@ public namespace underlayer_web {
         // 6.1.9: Progress comparison (anonymous, vs average)
         body.append_view(",\"comparison\":{\"vs_average\":")
         var avg_score : f64 = 0.3  // Assume average is 30%
-        var comparison = underlayer_learning::compute_health_comparison(&raw health, avg_score)
+        var comparison = underlayer_learning::compute_health_comparison(&health, avg_score)
         body.append_view("{\"user_score\":")
         var user_out = underlayer_learning::f64_to_string(comparison.user_score)
         body.append_string(&user_out)
@@ -164,7 +164,7 @@ public namespace underlayer_web {
         var i : size_t = 0
         while(i < states.size()) {
             if(i > 0) { body.append_view(",") }
-            var s = states.get_ptr(i)
+            var s = states.at_ref(i)
             body.append_view("{\"concept_id\":\"")
             body.append_string(&s.concept_id)
             body.append_view("\",\"status\":\"")
@@ -183,7 +183,7 @@ public namespace underlayer_web {
         }
 
         body.append_view("]}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // 6.1.5 goal handlers moved to web/src/handlers_goals.ch. They lived here
@@ -192,13 +192,13 @@ public namespace underlayer_web {
     // never be read back for any other course. See handlers_goals.ch.
 
     // 6.1.7: Progress export (JSON)
-    public func handle_progress_export(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
+    public func handle_progress_export(db : *DbClient, req : &http::Request) : http::Response {
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
-        var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
-        var sessions = underlayer_repository::get_learner_sessions(&raw db, &learner_id, 100)
-        var health = underlayer_learning::compute_knowledge_health(&raw states)
+        var states = underlayer_repository::get_all_concept_states(db, &learner_id, &course_id)
+        var sessions = underlayer_repository::get_learner_sessions(db, &learner_id, 100)
+        var health = underlayer_learning::compute_knowledge_health(&states)
 
         var body = string("{\"learner_id\":\"")
         body.append_string(&learner_id)
@@ -224,7 +224,7 @@ public namespace underlayer_web {
         var i : size_t = 0
         while(i < states.size()) {
             if(i > 0) { body.append_view(",") }
-            var s = states.get_ptr(i)
+            var s = states.at_ref(i)
             body.append_view("{\"concept_id\":\"")
             body.append_string(&s.concept_id)
             body.append_view("\",\"status\":\"")
@@ -242,22 +242,22 @@ public namespace underlayer_web {
             i = i + 1
         }
         body.append_view("]}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // 6.2.1: Session analytics (length, accuracy, time)
-    public func handle_session_analytics(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
+    public func handle_session_analytics(db : *DbClient, req : &http::Request) : http::Response {
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
-        var sessions = underlayer_repository::get_learner_sessions(&raw db, &learner_id, 50)
+        var sessions = underlayer_repository::get_learner_sessions(db, &learner_id, 50)
         var total_items : int = 0
         var total_correct : int = 0
         var total_duration_ms : i64 = 0
 
         var i : size_t = 0
         while(i < sessions.size()) {
-            var s = sessions.get_ptr(i)
+            var s = sessions.at_ref(i)
             total_duration_ms = total_duration_ms + ((s.end_time - s.start_time) * 1000)
             total_correct = total_correct + s.exercises_correct
             total_items = total_items + s.exercises_attempted
@@ -285,17 +285,17 @@ public namespace underlayer_web {
         var dur_out = underlayer_core::int_to_string(total_duration_ms / 1000)
         body.append_string(&dur_out)
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // 6.2.2: Concept analytics (mastery, time, attempts)
-    public func handle_concept_analytics(db : &DbClient, concept_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
+    public func handle_concept_analytics(db : *DbClient, concept_id : &string_view, req : &http::Request) : http::Response {
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var cid = sv_to_string(concept_id)
         var course_id = string("elf")
-        var state = underlayer_repository::get_concept_state(&raw db, &learner_id, &course_id, &cid)
-        var sessions = underlayer_repository::get_learner_sessions(&raw db, &learner_id, 50)
+        var state = underlayer_repository::get_concept_state(db, &learner_id, &course_id, &cid)
+        var sessions = underlayer_repository::get_learner_sessions(db, &learner_id, 50)
 
         var total_time_ms : i64 = 0
         var attempts : int = 0
@@ -303,11 +303,11 @@ public namespace underlayer_web {
 
         var i : size_t = 0
         while(i < sessions.size()) {
-            var s = sessions.get_ptr(i)
-            var items = underlayer_repository::get_session_items(&raw db, &s.id)
+            var s = sessions.at_ref(i)
+            var items = underlayer_repository::get_session_items(db, &s.id)
             var j : size_t = 0
             while(j < items.size()) {
-                var item = items.get_ptr(j)
+                var item = items.at_ref(j)
                 var item_copy = item.concept_id.copy()
                 if(item_copy.equals(&cid)) {
                     total_time_ms = total_time_ms + item.time_spent_ms
@@ -344,7 +344,7 @@ public namespace underlayer_web {
         var streak_out = underlayer_core::int_to_string(state.streak as i64)
         body.append_string(&streak_out)
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
 }

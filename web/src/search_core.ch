@@ -58,7 +58,7 @@ public namespace underlayer_web {
             var j : size_t = 0
             var ok = true
             while(j < needle.size()) {
-                if(hay.get(i + j) != needle.get(j)) { ok = false; break }
+                if(hay.at(i + j) != needle.at(j)) { ok = false; break }
                 j = j + 1
             }
             if(ok) { return i as int }
@@ -87,7 +87,7 @@ public namespace underlayer_web {
     func snap_to_char_start(s : &string, at : size_t) : size_t {
         var i = at
         while(i > 0) {
-            var b = s.get(i) as u8
+            var b = s.at(i) as u8
             if((b & 0xC0) != 0x80) { break }
             i = i - 1
         }
@@ -100,19 +100,19 @@ public namespace underlayer_web {
 
     public func trim_start(s : &string) : string {
         var i : size_t = 0
-        while(i < s.size() && is_space_byte(s.get(i))) { i = i + 1 }
+        while(i < s.size() && is_space_byte(s.at(i))) { i = i + 1 }
         var out = string()
         var j = i
-        while(j < s.size()) { out.append(s.get(j)); j = j + 1 }
+        while(j < s.size()) { out.append(s.at(j)); j = j + 1 }
         return out
     }
 
     public func trim_end(s : &string) : string {
         var end = s.size()
-        while(end > 0 && is_space_byte(s.get(end - 1))) { end = end - 1 }
+        while(end > 0 && is_space_byte(s.at(end - 1))) { end = end - 1 }
         var out = string()
         var i : size_t = 0
-        while(i < end) { out.append(s.get(i)); i = i + 1 }
+        while(i < end) { out.append(s.at(i)); i = i + 1 }
         return out
     }
 

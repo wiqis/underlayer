@@ -71,20 +71,20 @@ public namespace underlayer_web {
     // Length of a bcrypt modular-crypt string: $2b$NN$ + 53 base64 chars.
     public const BCRYPT_HASH_LEN : size_t = 60
 
-    private func looks_like_bcrypt(stored : *string) : bool {
+    private func looks_like_bcrypt(stored : &string) : bool {
         if(stored.size() < 4u) { return false }
-        if(stored.get(0) != '$') { return false }
-        if(stored.get(1) != '2') { return false }
+        if(stored.at(0) != '$') { return false }
+        if(stored.at(1) != '2') { return false }
         // 4th char is the cost tens digit; a bcrypt setting always has one.
-        if(stored.get(3) != '$') { return false }
+        if(stored.at(3) != '$') { return false }
         return true
     }
 
-    private func looks_like_legacy_sha256_hex(stored : *string) : bool {
+    private func looks_like_legacy_sha256_hex(stored : &string) : bool {
         if(stored.size() != 64u) { return false }
         var i : size_t = 0
         while(i < 64u) {
-            var c = stored.get(i)
+            var c = stored.at(i)
             var is_digit = c >= '0' && c <= '9'
             var is_lower = c >= 'a' && c <= 'f'
             if(!is_digit && !is_lower) { return false }
@@ -95,14 +95,14 @@ public namespace underlayer_web {
 
     // Hash a password for storage.  Returns the bcrypt modular-crypt string,
     // which carries its own version, salt and work factor.
-    public func hash_password(password : *string) : string {
+    public func hash_password(password : &string) : string {
         if(password.size() == 0) { return string() }
         return bcrypt::hash_password(password.to_view())
     }
 
     // Which scheme a stored value is in.  Callers use this to decide whether a
     // successful login has just earned an upgrade.
-    public func password_is_legacy_sha256(stored : *string) : bool {
+    public func password_is_legacy_sha256(stored : &string) : bool {
         return looks_like_legacy_sha256_hex(stored)
     }
 
@@ -113,7 +113,7 @@ public namespace underlayer_web {
     // report which scheme matched -- that is the caller's job via
     // password_is_legacy_sha256(), and keeping it separate stops a caller from
     // accidentally upgrading a row it has not actually matched.
-    public func verify_password(password : *string, stored : *string) : bool {
+    public func verify_password(password : &string, stored : &string) : bool {
         if(password.size() == 0 || stored.size() == 0) { return false }
 
         if(looks_like_bcrypt(stored)) {
@@ -123,26 +123,20 @@ public namespace underlayer_web {
             var setting = stored.to_view().subview(0u, 29u)
             var computed = bcrypt::bf_crypt(password.to_view(), setting)
             if(computed.size() != BCRYPT_HASH_LEN) { return false }
-            var a = computed.data() as *u8
-            var b = stored.data() as *u8
-            return crypto::constant_time_equal(a, b, BCRYPT_HASH_LEN)
+            var a : &[u8] = computed.as_bytes()
+            var b : &[u8] = stored.as_bytes()
+            return crypto::constant_time_equal(a, b)
         }
 
         if(looks_like_legacy_sha256_hex(stored)) {
             // The old scheme: one unsalted SHA-256, compared byte for byte.
             // Kept ONLY so an existing learner is not locked out.  Any row that
             // still verifies this way is rewritten in bcrypt by the caller.
-            var digest : [32]u8
-            var di : size_t = 0
-            while(di < 32u) { digest[di] = 0; di = di + 1 }
-            crypto::sha256_hash(password.data() as *u8, password.size(), &raw mut digest[0])
-            var hex_out : [65]char
-            var hi : size_t = 0
-            while(hi < 65u) { hex_out[hi] = 0; hi = hi + 1 }
-            encoding::hex_encode(&raw digest[0], 32u, &raw mut hex_out[0], 65u)
+            var password_view = password.to_view()
+            var computed_hex = underlayer_core::sha256_hex(&password_view)
             var i : size_t = 0
             while(i < 64u) {
-                if(hex_out[i] != stored.get(i)) { return false }
+                if(computed_hex.at(i) != stored.at(i)) { return false }
                 i = i + 1
             }
             return true
@@ -156,11 +150,11 @@ public namespace underlayer_web {
     // "rehash on login if the cost went up" pass has a number to compare
     // against PASSWORD_COST, and so tools/security_check.py can assert the
     // stored rows really do carry the factor this build claims to use.
-    public func bcrypt_cost_of(stored : *string) : int {
+    public func bcrypt_cost_of(stored : &string) : int {
         if(!looks_like_bcrypt(stored)) { return 0 }
         if(stored.size() < 7u) { return 0 }
-        var tens = stored.get(4) - '0' as char
-        var ones = stored.get(5) - '0' as char
+        var tens = stored.at(4) - '0' as char
+        var ones = stored.at(5) - '0' as char
         return ((tens as i32) * 10 + (ones as i32))
     }
 

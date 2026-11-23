@@ -55,7 +55,7 @@ public namespace underlayer_web {
     public func course_index(courses : &vector<Course>, course_id : &string) : int {
         var i : size_t = 0
         while(i < courses.size()) {
-            var c = courses.get_ptr(i)
+            var c = courses.at_ref(i)
             if(c.id.equals(course_id)) { return i as int }
             i = i + 1
         }
@@ -65,7 +65,7 @@ public namespace underlayer_web {
     public func list_has(list : &vector<string>, value : &string) : bool {
         var i : size_t = 0
         while(i < list.size()) {
-            var v = list.get_ptr(i)
+            var v = list.at_ref(i)
             if(v.equals(value)) { return true }
             i = i + 1
         }
@@ -77,10 +77,10 @@ public namespace underlayer_web {
         var seen = vector<string>()
         var ri : size_t = 0
         while(ri < routes.size()) {
-            var route = routes.get_ptr(ri)
+            var route = routes.at_ref(ri)
             var si : size_t = 0
             while(si < route.steps.size()) {
-                var step = route.steps.get_ptr(si)
+                var step = route.steps.at_ref(si)
                 var cid = step.course_id.copy()
                 var idx = course_index(courses, &cid)
                 if(idx < 0) {
@@ -94,10 +94,10 @@ public namespace underlayer_web {
                         d.append_string(&cid)
                         chk.duplicates.push(d)
                     }
-                    var c = courses.get_ptr(idx as size_t)
+                    var c = courses.at_ref(idx as size_t)
                     var di : size_t = 0
                     while(di < c.dependencies.size()) {
-                        var dep = c.dependencies.get_ptr(di).copy()
+                        var dep = c.dependencies.at_ref(di).copy()
                         chk.total = chk.total + 1
                         if(list_has(&seen, &dep)) {
                             chk.satisfied = chk.satisfied + 1

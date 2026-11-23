@@ -10,23 +10,13 @@ public namespace underlayer_web {
         if(auth_opt is std::Option.None) { return string() }
         var Some(auth_header) = auth_opt else return string()
         if(auth_header.size() < 8) { return string() }
-        var ok = auth_header.get(0) == 'B' && auth_header.get(1) == 'e' && auth_header.get(2) == 'a' && auth_header.get(3) == 'r' && auth_header.get(4) == 'e' && auth_header.get(5) == 'r' && auth_header.get(6) == ' '
+        var ok = auth_header.at(0) == 'B' && auth_header.at(1) == 'e' && auth_header.at(2) == 'a' && auth_header.at(3) == 'r' && auth_header.at(4) == 'e' && auth_header.at(5) == 'r' && auth_header.at(6) == ' '
         if(!ok) { return string() }
         var token = string()
         var ti : size_t = 7
-        while(ti < auth_header.size()) { token.append(auth_header.get(ti)); ti = ti + 1 }
-        var data = token.data() as *u8
-        var digest : [32]u8
-        var di : size_t = 0
-        while(di < 32) { digest[di] = 0; di = di + 1 }
-        crypto::sha256_hash(data, token.size(), &raw mut digest[0])
-        var hex_out : [65]char
-        var hi : size_t = 0
-        while(hi < 65) { hex_out[hi] = 0; hi = hi + 1 }
-        encoding::hex_encode(&raw digest[0], 32, &raw mut hex_out[0], 65)
-        var token_hash = string()
-        hi = 0
-        while(hi < 64 && hex_out[hi] != 0) { token_hash.append(hex_out[hi]); hi = hi + 1 }
+        while(ti < auth_header.size()) { token.append(auth_header.at(ti)); ti = ti + 1 }
+        var token_view = token.to_view()
+        var token_hash = underlayer_core::sha256_hex(&token_view)
         var sql = string("SELECT learner_id FROM auth_sessions WHERE token_hash = '")
         sql.append_string(&token_hash)
         sql.append_view("' AND expires_at > ")
@@ -35,20 +25,19 @@ public namespace underlayer_web {
         sql.append_view(" LIMIT 1")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() > 0) {
-                return row.vals.get_ptr(0).copy()
+                return row.vals.at_ref(0).copy()
             }
         }
         return string()
     }
 
-    public func handle_get_profile(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_get_profile(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = get_learner_id_from_token(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         var profile = underlayer_repository::get_profile(db, &learner_id)
         var body = std::string("{\"learner_id\":\"")
@@ -76,29 +65,26 @@ public namespace underlayer_web {
         body.append_view("\",\"visibility\":\"")
         body.append_string(&profile.visibility)
         body.append_view("\"}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
-    public func handle_update_profile(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_update_profile(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = get_learner_id_from_token(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         var profile = underlayer_repository::get_profile(db, &learner_id)
         profile.learner_id = learner_id.copy()
-        var body_str = read_body(&raw mut req)
+        var body_str = read_body(req)
         if(body_str.size() == 0) {
             var err = string("empty request body")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         var parse_result = json::parse(body_str.to_view())
         if(parse_result is std::Result.Err) {
             var err = string("invalid JSON")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         var Ok(parsed) = parse_result else unsafe { unreachable }
         var dn = json_get_str(&parsed, "display_name")
@@ -107,25 +93,22 @@ public namespace underlayer_web {
         if(un.size() > 0) {
             if(un.size() < 3 || un.size() > 20) {
                 var err = string("username must be 3-20 characters")
-                send_error(res, 400u, &err)
-                return
+                return send_error(400u, &err)
             }
             var valid = true
             var ci : size_t = 0
             while(ci < un.size()) {
-                var c = un.get(ci)
+                var c = un.at(ci)
                 if(!(c >= 'a' && c <= 'z') && !(c >= 'A' && c <= 'Z') && !(c >= '0' && c <= '9') && c != '_') { valid = false; ci = un.size() }
                 ci = ci + 1
             }
             if(!valid) {
                 var err = string("username must be alphanumeric or underscore")
-                send_error(res, 400u, &err)
-                return
+                return send_error(400u, &err)
             }
             if(!underlayer_repository::is_username_available(db, &un, &learner_id)) {
                 var err = string("username already taken")
-                send_error(res, 409u, &err)
-                return
+                return send_error(409u, &err)
             }
             profile.username = un
             profile.username_changed_at = underlayer_core::current_timestamp()
@@ -144,34 +127,31 @@ public namespace underlayer_web {
         if(li.size() > 0) { profile.social_linkedin = li }
         var vis = json_get_str(&parsed, "visibility")
         if(vis.size() > 0) { profile.visibility = vis }
-        underlayer_repository::upsert_profile(db, &raw profile)
+        underlayer_repository::upsert_profile(db, &profile)
         var body = std::string("{\"ok\":true}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
-    public func handle_get_public_profile(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_get_public_profile(db : *DbClient, req : &http::Request) : http::Response {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() < 3) {
             var err = string("missing username")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
-        var username_raw = segments.get_ptr(segments.size() - 1)
+        var username_raw = segments.at_ref(segments.size() - 1)
         var username = string()
         var ui : size_t = 0
-        while(ui < username_raw.size()) { username.append(username_raw.get(ui)); ui = ui + 1 }
+        while(ui < username_raw.size()) { username.append(username_raw.at(ui)); ui = ui + 1 }
         var profile = underlayer_repository::get_profile_by_username(db, &username)
         if(profile.learner_id.size() == 0) {
             var err = string("profile not found")
-            send_error(res, 404u, &err)
-            return
+            return send_error(404u, &err)
         }
         var private_vis = string("private")
         if(profile.visibility.equals(&private_vis)) {
             var err = string("profile is private")
-            send_error(res, 403u, &err)
-            return
+            return send_error(403u, &err)
         }
         var body = std::string("{\"display_name\":\"")
         body.append_string(&profile.display_name)
@@ -196,23 +176,21 @@ public namespace underlayer_web {
         body.append_view("\",\"visibility\":\"")
         body.append_string(&profile.visibility)
         body.append_view("\"}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // 8.1.13: GET /api/user/:username/stats — profile statistics
-    public func handle_profile_stats(db : *DbClient, username : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_profile_stats(db : *DbClient, username : &string, req : &http::Request) : http::Response {
         // Look up learner by username
         var profile = underlayer_repository::get_profile_by_username(db, username)
         if(profile.learner_id.size() == 0) {
             var err = string("profile not found")
-            send_error(res, 404u, &err)
-            return
+            return send_error(404u, &err)
         }
         var private_vis = string("private")
         if(profile.visibility.equals(&private_vis)) {
             var err = string("profile is private")
-            send_error(res, 403u, &err)
-            return
+            return send_error(403u, &err)
         }
 
         // Get enrollments for this learner
@@ -231,7 +209,7 @@ public namespace underlayer_web {
         var course_json = string("[")
         var ei : size_t = 0
         while(ei < enrollments.size()) {
-            var enrollment = enrollments.get_ptr(ei)
+            var enrollment = enrollments.at_ref(ei)
 
             if(enrollment.status.equals(string("completed"))) {
                 courses_completed = courses_completed + 1
@@ -245,7 +223,7 @@ public namespace underlayer_web {
             var concepts_mastered : int = 0
             var si : size_t = 0
             while(si < states.size()) {
-                var state = states.get_ptr(si)
+                var state = states.at_ref(si)
                 if(state.attempts > 0) { concepts_started = concepts_started + 1 }
                 if(state.status.equals(string("mastered"))) { concepts_mastered = concepts_mastered + 1 }
                 si = si + 1
@@ -264,9 +242,9 @@ public namespace underlayer_web {
             var sess_result = underlayer_db::query_sql(db, &raw sess_sql)
             var course_time_ms : i64 = 0
             if(sess_result.rows.size() > 0) {
-                var srow = sess_result.rows.get_ptr(0)
+                var srow = sess_result.rows.at_ref(0)
                 if(srow.vals.size() > 0) {
-                    course_time_ms = underlayer_repository::parse_i64(srow.vals.get_ptr(0).to_view())
+                    course_time_ms = underlayer_repository::parse_i64(srow.vals.at_ref(0).to_view())
                 }
             }
             total_time_ms = total_time_ms + course_time_ms
@@ -282,9 +260,9 @@ public namespace underlayer_web {
             var ex_result = underlayer_db::query_sql(db, &raw ex_sql)
             var course_exercises : i64 = 0
             if(ex_result.rows.size() > 0) {
-                var erow = ex_result.rows.get_ptr(0)
+                var erow = ex_result.rows.at_ref(0)
                 if(erow.vals.size() > 0) {
-                    course_exercises = underlayer_repository::parse_i64(erow.vals.get_ptr(0).to_view())
+                    course_exercises = underlayer_repository::parse_i64(erow.vals.at_ref(0).to_view())
                 }
             }
             total_exercises_completed = total_exercises_completed + course_exercises
@@ -341,29 +319,27 @@ public namespace underlayer_web {
         body.append_view(",\"courses\":")
         body.append_string(&course_json)
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // 8.1.17: GET /api/user/:username/courses — courses in progress and completed
-    public func handle_profile_courses(db : *DbClient, username : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_profile_courses(db : *DbClient, username : &string, req : &http::Request) : http::Response {
         var profile = underlayer_repository::get_profile_by_username(db, username)
         if(profile.learner_id.size() == 0) {
             var err = string("profile not found")
-            send_error(res, 404u, &err)
-            return
+            return send_error(404u, &err)
         }
         var private_vis = string("private")
         if(profile.visibility.equals(&private_vis)) {
             var err = string("profile is private")
-            send_error(res, 403u, &err)
-            return
+            return send_error(403u, &err)
         }
 
         var enrollments = underlayer_repository::get_learner_enrollments(db, &profile.learner_id)
         var arr = string("[")
         var ei : size_t = 0
         while(ei < enrollments.size()) {
-            var enrollment = enrollments.get_ptr(ei)
+            var enrollment = enrollments.at_ref(ei)
 
             // Get concept states for progress calculation
             var states = underlayer_repository::get_all_concept_states(db, &profile.learner_id, &enrollment.course_id)
@@ -372,7 +348,7 @@ public namespace underlayer_web {
             var total_concepts : int = states.size() as int
             var si : size_t = 0
             while(si < states.size()) {
-                var state = states.get_ptr(si)
+                var state = states.at_ref(si)
                 if(state.attempts > 0) { concepts_started = concepts_started + 1 }
                 if(state.status.equals(string("mastered"))) { concepts_mastered = concepts_mastered + 1 }
                 si = si + 1
@@ -418,7 +394,7 @@ public namespace underlayer_web {
             ei = ei + 1
         }
         arr.append_view("]")
-        send_json_str(res, &raw arr)
+        return send_json_str(&arr)
     }
 
     // Routes:

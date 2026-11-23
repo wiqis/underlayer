@@ -58,22 +58,7 @@
 using std::string
 using std::string_view
 
-public namespace underlayer_web {
-
-    // Called by every send_* helper.  Safe to call more than once per response:
-    // set_header_view overwrites, and the values are constants.
-    public func apply_security_headers(res : *mut http::ResponseWriter) {
-        var nosniff = string_view("nosniff")
-        res.set_header_view(string_view("X-Content-Type-Options"), &nosniff)
-
-        var deny = string_view("DENY")
-        res.set_header_view(string_view("X-Frame-Options"), &deny)
-
-        var referrer = string_view("strict-origin-when-cross-origin")
-        res.set_header_view(string_view("Referrer-Policy"), &referrer)
-
-        var hsts = string_view("max-age=31536000")
-        res.set_header_view(string_view("Strict-Transport-Security"), &hsts)
-    }
-
-}
+// The headers themselves are set by `apply_security_headers` in `responses.ch`,
+// next to the four functions that build a response.  The rationale above is why
+// they are what they are; the code that sends them lives beside the code that
+// sends the body, so the two cannot drift apart.

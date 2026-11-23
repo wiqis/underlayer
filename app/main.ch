@@ -3,6 +3,44 @@
 using std::string
 using std::string_view
 
+// ---- Process-wide state ------------------------------------------------
+//
+// The router stores handlers as `Send + Sync + 'static`, so a handler cannot
+// capture the `DbClient` or the courses directory by reference -- and a
+// `DbClient` holds the live SQLite handle, which is not `Send`.  There is one of
+// each per process, so they live here and are reached through the two accessors
+// below.  Those two `unsafe` blocks are the whole of the process-wide state
+// handling in the application; every route stays safe and captures nothing.
+//
+// The value is a POINTER, not a copy: copying a `DbClient` would copy the
+// `http::Client`'s mutex and hand out a second view of one connection, which is
+// exactly the by-value-capture bug recorded at the /api/exercises/submit route.
+// A pointer to the `DbClient` main() owns, and a copy of the courses directory.
+// Storing the address is deliberate: copying a `DbClient` would copy the
+// `http::Client`'s mutex and hand out a second view of one connection.
+@never_destructed
+var g_db : *underlayer_db::DbClient
+@never_destructed
+var g_courses_dir : string
+
+// Fill the two values once, before the server starts accepting.
+func set_process_state(dbv : *underlayer_db::DbClient, courses : &string) {
+    unsafe {
+        g_db = dbv
+        g_courses_dir = std::replace(&mut g_courses_dir, courses.copy())
+    }
+}
+
+// The process's database handle.  Valid for the life of the process.
+public func request_db() : *underlayer_db::DbClient {
+    return unsafe(g_db)
+}
+
+// The courses directory, as a value: handlers take `&string` and must not hold a
+// view into the global.
+public func request_courses_dir() : string {
+    return unsafe(g_courses_dir.copy())
+}
 public func main() : int {
     // ---- Config & DB ----
     var cfg = underlayer_core::load_config()
@@ -10,9 +48,13 @@ public func main() : int {
     var db_url = cfg.db_url.copy()
     var db_token = cfg.db_token.copy()
 
-    printf("[underlayer] Starting Underlayer on port %s\n", underlayer_core::u32_to_string(port).data())
+    var start_msg = std::string("[underlayer] Starting Underlayer on port ")
+    start_msg.append_string(&underlayer_core::u32_to_string(port))
+    underlayer_core::log_line(&start_msg)
 
     var db = underlayer_db::make_client(db_url.copy(), db_token.copy())
+    var courses_dir_value = cfg.courses_dir.copy()
+    set_process_state(&raw db, &courses_dir_value)
 
     // ---- REFUSE AN UNUSABLE DATABASE, BEFORE SERVING ANYTHING ---------
     //
@@ -36,15 +78,16 @@ public func main() : int {
     if(db.is_sqlite && db.sqlite_handle != null) { sqlite_ok = true }
     if(underlayer_db::is_unusable_config(&db_url, sqlite_ok)) {
         var fatal = underlayer_db::unusable_config_message(&db_url)
-        printf("%s", fatal.data())
-        fflush(stdout)
+        underlayer_core::log_line(&fatal)
         return 1
     }
-    printf("[underlayer] Database OK: %s\n", db_url.data())
+    var ok_msg = std::string("[underlayer] Database OK: ")
+    ok_msg.append_string(&db_url)
+    underlayer_core::log_line(&ok_msg)
     var courses_dir_pre = cfg.courses_dir.copy()
 
     // ---- Init schema (skip for remote DB) ----
-    if(!underlayer_db::is_remote_url(&raw db_url)) {
+    if(!underlayer_db::is_remote_url(&db_url)) {
         underlayer_repository::init_schema(&raw db)
 
         // 4.1.27: seed exercises from course manifests at startup (idempotent).
@@ -54,7 +97,7 @@ public func main() : int {
         var prereq_total : i64 = 0
         var ci : size_t = 0
         while(ci < all_courses.size()) {
-            var cptr = all_courses.get_ptr(ci)
+            var cptr = all_courses.at_ref(ci)
             var cid = cptr.id.copy()
             var seeded = underlayer_repository::seed_exercises_from_manifest(&raw db, &courses_dir_pre, &cid)
             seeded_total = seeded_total + seeded
@@ -79,7 +122,10 @@ public func main() : int {
             ci = ci + 1
         }
         if(seeded_total > 0) {
-            printf("[underlayer] Seeded %s exercises from manifests\n", underlayer_core::int_to_string(seeded_total).data())
+            var seed_msg = std::string("[underlayer] Seeded ")
+            seed_msg.append_string(&underlayer_core::int_to_string(seeded_total))
+            seed_msg.append_view(" exercises from manifests")
+            underlayer_core::log_line(&seed_msg)
         }
     }
 
@@ -97,87 +143,85 @@ public func main() : int {
     // ---- Routes ----
 
     // ---- Learner CRUD ----
-    srv.router.add("POST", "/api/learners", (|db|(req, res) => {
+    srv.router.add("POST", "/api/learners", ||(req) => {
+        var db = request_db()
         // RATE LIMITED.
         // 8 per 5 min -- the AUTH ceiling, not the learning one, because this inserts into `learners`, which is the ACCOUNTS table.
         // Measured before this: it answered 200 to an unauthenticated caller, forever, and every call attempted an INSERT with a hardcoded email and no password.
         // It reads no request body at all and exists for tests/src/additional_api_test.ch
         // See web/src/rate_limit.ch.
         // See web/src/rate_limit.ch.
-        if(!underlayer_web::rate_limit_create_learner(&raw db, &req, &raw mut res)) { return }
-        underlayer_web::handle_create_learner(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/learners/:learnerId", (|db|(req, res) => {
+
+        return underlayer_web::handle_create_learner(db, &req)
+    })
+    srv.router.add("GET", "/api/learners/:learnerId", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var learner_id = segments.get_ptr(2)
-            underlayer_web::handle_get_learner(&raw db, learner_id, &req, &raw mut res)
+            var learner_id = segments.at_ref(2)
+            return underlayer_web::handle_get_learner(db, learner_id, &req)
         } else {
-            res.status = 400u
-            var ct = std::string_view("application/json")
-            res.set_header_view(std::string_view("Content-Type"), &ct)
             var body = std::string("{\"error\": \"missing learner id\"}")
-            var bv = body.to_view()
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-
+    })
     // ---- Health check ----
-    srv.router.add("GET", "/api/health", (req, res) => {
-        underlayer_web::handle_health(&req, &raw mut res)
+    srv.router.add("GET", "/api/health", ||(req) => {
+        return underlayer_web::handle_health(&req)
     })
 
     // Review page (HTML UI)
-    srv.router.add("GET", "/review", (|&db, &courses_dir|(req, res) => {
-        underlayer_web::handle_review_page(db, courses_dir, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/review", ||(req) => {
+        var courses_dir = request_courses_dir()
+        var db = request_db()
+        return underlayer_web::handle_review_page(db, &courses_dir, &req)
+    })
     // Progress page (HTML UI)
-    srv.router.add("GET", "/progress", (|&db, &courses_dir|(req, res) => {
-        underlayer_web::handle_progress_page(db, courses_dir, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/progress", ||(req) => {
+        var courses_dir = request_courses_dir()
+        var db = request_db()
+        return underlayer_web::handle_progress_page(db, &courses_dir, &req)
+    })
     // Dashboard page (7.2.4, 7.2.5, 1.5.20)
-    srv.router.add("GET", "/dashboard", (|&db, &courses_dir|(req, res) => {
-        underlayer_web::handle_dashboard(db, courses_dir, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/dashboard", ||(req) => {
+        var courses_dir = request_courses_dir()
+        var db = request_db()
+        return underlayer_web::handle_dashboard(db, &courses_dir, &req)
+    })
     // Knowledge Health page. Server-rendered from the learner's own rows, so it
     // works with JS off; gated because unsigned it would be four zeroes.
-    srv.router.add("GET", "/health", (|&db, &courses_dir|(req, res) => {
-        underlayer_web::handle_knowledge_health_page(db, courses_dir, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/health", ||(req) => {
+        var courses_dir = request_courses_dir()
+        var db = request_db()
+        return underlayer_web::handle_knowledge_health_page(db, &courses_dir, &req)
+    })
     // Course listing
-    srv.router.add("GET", "/api/courses", (|&courses_dir|(req, res) => {
-        underlayer_web::handle_list_courses(courses_dir, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/courses", ||(req) => {
+        var courses_dir = request_courses_dir()
+        return underlayer_web::handle_list_courses(&courses_dir, &req)
+    })
     // Filter Courses (7.1.7)
-    srv.router.add("GET", "/api/courses/all", (|&courses_dir|(req, res) => {
-        underlayer_web::handle_filter_courses(courses_dir, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/courses/all", ||(req) => {
+        var courses_dir = request_courses_dir()
+        return underlayer_web::handle_filter_courses(&courses_dir, &req)
+    })
     // Course detail
-    srv.router.add("GET", "/api/courses/:courseId", (|&courses_dir|(req, res) => {
+    srv.router.add("GET", "/api/courses/:courseId", ||(req) => {
+        var courses_dir = request_courses_dir()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var course_id = segments.get_ptr(2)
-            underlayer_web::handle_get_course(courses_dir, course_id, &req, &raw mut res)
+            var course_id = segments.at_ref(2)
+            return underlayer_web::handle_get_course(&courses_dir, course_id, &req)
         } else {
-            res.status = 400u
-            var ct = std::string_view("application/json")
-            res.set_header_view(std::string_view("Content-Type"), &ct)
             var body = std::string("{\"error\": \"missing course id\"}")
-            var bv = body.to_view()
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-
+    })
     // Lesson viewer via API
-    srv.router.add("GET", "/api/courses/:courseId/lessons/:conceptId", (|&courses_dir|(req, res) => {
+    srv.router.add("GET", "/api/courses/:courseId/lessons/:conceptId", ||(req) => {
+        var courses_dir = request_courses_dir()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         // Segment indices are absolute positions in the path, and this path
@@ -189,59 +233,56 @@ public func main() : int {
         // has no /api prefix and is correctly 1 and 3 -- do not "fix" that one
         // to match this.
         if(segments.size() >= 5) {
-            var course_id = segments.get_ptr(2)
-            var concept_id = segments.get_ptr(4)
-            underlayer_web::handle_lesson(courses_dir, course_id, concept_id, &req, &raw mut res)
+            var course_id = segments.at_ref(2)
+            var concept_id = segments.at_ref(4)
+            return underlayer_web::handle_lesson(&courses_dir, course_id, concept_id, &req)
         } else {
-            res.status = 400u
-            var ct = std::string_view("application/json")
-            res.set_header_view(std::string_view("Content-Type"), &ct)
             var body = std::string("{\"error\": \"missing course or concept id\"}")
-            var bv = body.to_view()
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-
+    })
     // ---- Review API ----
-    srv.router.add("GET", "/api/review/start", (|&db, &courses_dir|(req, res) => {
-        underlayer_web::handle_review_start(db, courses_dir, &req, &raw mut res)
-    }))
-
-    srv.router.add("POST", "/api/review/submit", (|&db|(req, res) => {
-        underlayer_web::handle_review_submit(db, &raw mut req, &raw mut res)
-    }))
-
-    srv.router.add("POST", "/api/review/end", (|&db|(req, res) => {
-        underlayer_web::handle_review_end(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/review/start", ||(req) => {
+        var courses_dir = request_courses_dir()
+        var db = request_db()
+        return underlayer_web::handle_review_start(db, &courses_dir, &req)
+    })
+    srv.router.add("POST", "/api/review/submit", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_review_submit(db, &mut req)
+    })
+    srv.router.add("POST", "/api/review/end", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_review_end(db, &req)
+    })
     // ---- Due Items ----
-    srv.router.add("GET", "/api/review/due", (|&db, &courses_dir|(req, res) => {
-        underlayer_web::handle_review_due(db, courses_dir, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/review/due", ||(req) => {
+        var courses_dir = request_courses_dir()
+        var db = request_db()
+        return underlayer_web::handle_review_due(db, &courses_dir, &req)
+    })
     // ---- Session Recommendations (1.2.25) ----
-    srv.router.add("GET", "/api/review/recommendations", (|&db|(req, res) => {
-        underlayer_web::handle_session_recommendations(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/review/recommendations", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_session_recommendations(db, &req)
+    })
     // ---- Time-of-Day Recommendation (1.2.27) ----
-    srv.router.add("GET", "/api/review/time-recommendation", (|&db|(req, res) => {
-        underlayer_web::handle_session_time_recommendation(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/review/time-recommendation", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_session_time_recommendation(db, &req)
+    })
     // ---- Search (7.1.6) ----
-    srv.router.add("GET", "/api/search", (|&courses_dir|(req, res) => {
-        underlayer_web::handle_search(courses_dir, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/search", ||(req) => {
+        var courses_dir = request_courses_dir()
+        return underlayer_web::handle_search(&courses_dir, &req)
+    })
     // Concept search: titles, descriptions, module names and course titles
     // across all courses. Additive — /api/search's response shape is a
     // shipped contract and is left alone.
-    srv.router.add("GET", "/api/search/concepts", (|&courses_dir|(req, res) => {
-        underlayer_web::handle_search_concepts(courses_dir, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/search/concepts", ||(req) => {
+        var courses_dir = request_courses_dir()
+        return underlayer_web::handle_search_concepts(&courses_dir, &req)
+    })
     // NOTE: "GET /api/courses/all" (Filter Courses, 7.1.7) is already
     // registered near the top of this file, directly after GET /api/courses.
     // It used to be registered a SECOND time here, byte-identical handler and
@@ -250,164 +291,161 @@ public func main() : int {
     // tools/route_check.py flagged.  One registration, one route.
 
     // ---- Recent History (7.1.9) ----
-    srv.router.add("GET", "/api/recent", (|&db|(req, res) => {
-        underlayer_web::handle_recent_history(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/recent", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_recent_history(db, &req)
+    })
     // ---- Progress API ----
-    srv.router.add("GET", "/api/progress", (|&db, &courses_dir|(req, res) => {
-        underlayer_web::handle_progress(db, courses_dir, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/progress", ||(req) => {
+        var courses_dir = request_courses_dir()
+        var db = request_db()
+        return underlayer_web::handle_progress(db, &courses_dir, &req)
+    })
     // ---- What am I doing: courses in progress, coverage, and the exercises
     // this learner got wrong (4.4.3).  One payload because /dashboard draws
     // all three at once and three round trips would make it flash.
     // Deliberately NOT /api/progress/overview: that path is already claimed by
     // the /api/progress/:courseId route above and would be swallowed by it.
-    srv.router.add("GET", "/api/me/overview", (|&db, &courses_dir|(req, res) => {
-        underlayer_web::handle_my_overview(db, courses_dir, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/me/overview", ||(req) => {
+        var courses_dir = request_courses_dir()
+        var db = request_db()
+        return underlayer_web::handle_my_overview(db, &courses_dir, &req)
+    })
     // ---- Which quiz did I fail.  The same list without the course summary. ----
-    srv.router.add("GET", "/api/exercises/failures", (|&db|(req, res) => {
-        underlayer_web::handle_exercise_failures(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/exercises/failures", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_exercise_failures(db, &req)
+    })
     // ---- Progress Export (6.1.7) ----
-    srv.router.add("GET", "/api/progress/export", (|&db|(req, res) => {
-        underlayer_web::handle_progress_export(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/progress/export", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_progress_export(db, &req)
+    })
     // ---- Session Analytics (6.2.1) ----
-    srv.router.add("GET", "/api/analytics/sessions", (|&db|(req, res) => {
-        underlayer_web::handle_session_analytics(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/analytics/sessions", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_session_analytics(db, &req)
+    })
     // ---- Concept Analytics (6.2.2) ----
-    srv.router.add("GET", "/api/analytics/concept/:conceptId", (|&db, &courses_dir|(req, res) => {
+    srv.router.add("GET", "/api/analytics/concept/:conceptId", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
-            var concept_id = segments.get_ptr(3)
+            var concept_id = segments.at_ref(3)
             var course_id = string("elf")
-            underlayer_web::handle_concept_analytics(db, concept_id, &req, &raw mut res)
+            return underlayer_web::handle_concept_analytics(db, concept_id, &req)
         } else {
-            res.status = 400u
-            var ct = std::string_view("application/json")
-            res.set_header_view(std::string_view("Content-Type"), &ct)
             var body = std::string("{\"error\": \"missing concept id\"}")
-            var bv = body.to_view()
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-
+    })
     // ---- Course Analytics (6.2.3) ----
-    srv.router.add("GET", "/api/analytics/course/:courseId", (|&db|(req, res) => {
+    srv.router.add("GET", "/api/analytics/course/:courseId", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
-            var course_id = segments.get_ptr(3)
-            underlayer_web::handle_course_analytics(db, course_id, &req, &raw mut res)
+            var course_id = segments.at_ref(3)
+            return underlayer_web::handle_course_analytics(db, course_id, &req)
         } else {
-            res.status = 400u
-            var ct = std::string_view("application/json")
-            res.set_header_view(std::string_view("Content-Type"), &ct)
             var body = std::string("{\"error\": \"missing course id\"}")
-            var bv = body.to_view()
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-
+    })
     // ---- Difficulty Analytics (6.2.8) ----
-    srv.router.add("GET", "/api/analytics/difficulty", (|&db|(req, res) => {
-        underlayer_web::handle_difficulty_analytics(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/analytics/difficulty", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_difficulty_analytics(db, &req)
+    })
     // ---- Error Analytics (6.2.9) ----
-    srv.router.add("GET", "/api/analytics/errors", (|&db|(req, res) => {
-        underlayer_web::handle_error_analytics(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/analytics/errors", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_error_analytics(db, &req)
+    })
     // ---- Engagement Analytics (6.2.13) ----
-    srv.router.add("GET", "/api/analytics/engagement", (|&db|(req, res) => {
-        underlayer_web::handle_engagement_analytics(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/analytics/engagement", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_engagement_analytics(db, &req)
+    })
     // ---- Velocity Analytics (6.2.14) ----
-    srv.router.add("GET", "/api/analytics/velocity", (|&db|(req, res) => {
-        underlayer_web::handle_velocity_analytics(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/analytics/velocity", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_velocity_analytics(db, &req)
+    })
     // ---- Learning Analytics (P2 6.2.4-6.2.7, 6.2.10-6.2.12, 6.2.15) ----
-    srv.router.add("GET", "/api/analytics/temporal", (|&db|(req, res) => {
-        underlayer_web::handle_temporal_analytics(db, &req, &raw mut res)
-    }))
-
-    srv.router.add("GET", "/api/analytics/retention", (|&db|(req, res) => {
-        underlayer_web::handle_retention_analytics(db, &req, &raw mut res)
-    }))
-
-    srv.router.add("GET", "/api/analytics/dropoff", (|&db|(req, res) => {
-        underlayer_web::handle_dropoff_analytics(db, &req, &raw mut res)
-    }))
-
-    srv.router.add("GET", "/api/analytics/funnel", (|&db|(req, res) => {
-        underlayer_web::handle_funnel_analytics(db, &req, &raw mut res)
-    }))
-
-    srv.router.add("GET", "/api/analytics/comparative", (|&db|(req, res) => {
-        underlayer_web::handle_comparative_analytics(db, &req, &raw mut res)
-    }))
-
-    srv.router.add("GET", "/api/analytics/platform", (|&db|(req, res) => {
-        underlayer_web::handle_platform_analytics(db, &req, &raw mut res)
-    }))
-
-    srv.router.add("GET", "/api/analytics/cohorts", (|&db|(req, res) => {
-        underlayer_web::handle_cohort_analytics(db, &req, &raw mut res)
-    }))
-
-    srv.router.add("GET", "/api/analytics/devices", (|&db|(req, res) => {
-        underlayer_web::handle_device_analytics(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/analytics/temporal", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_temporal_analytics(db, &req)
+    })
+    srv.router.add("GET", "/api/analytics/retention", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_retention_analytics(db, &req)
+    })
+    srv.router.add("GET", "/api/analytics/dropoff", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_dropoff_analytics(db, &req)
+    })
+    srv.router.add("GET", "/api/analytics/funnel", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_funnel_analytics(db, &req)
+    })
+    srv.router.add("GET", "/api/analytics/comparative", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_comparative_analytics(db, &req)
+    })
+    srv.router.add("GET", "/api/analytics/platform", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_platform_analytics(db, &req)
+    })
+    srv.router.add("GET", "/api/analytics/cohorts", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_cohort_analytics(db, &req)
+    })
+    srv.router.add("GET", "/api/analytics/devices", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_device_analytics(db, &req)
+    })
     // ---- Course Progress API ----
-    srv.router.add("GET", "/api/progress/:courseId", (|&db, &courses_dir|(req, res) => {
-        underlayer_web::handle_course_progress(db, courses_dir, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/progress/:courseId", ||(req) => {
+        var courses_dir = request_courses_dir()
+        var db = request_db()
+        return underlayer_web::handle_course_progress(db, &courses_dir, &req)
+    })
     // ---- Learning Goals (6.1.5) ----
     // GET was missing: the feature could write a goal and never read one back.
-    srv.router.add("GET", "/api/goals", (|&db|(req, res) => {
-        underlayer_web::handle_get_goals(db, &req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/goals", (|&db|(req, res) => {
-        underlayer_web::handle_set_goal(db, &raw mut req, &raw mut res)
-    }))
-    srv.router.add("DELETE", "/api/goals", (|&db|(req, res) => {
-        underlayer_web::handle_delete_goal(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/goals", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_get_goals(db, &req)
+    })
+    srv.router.add("POST", "/api/goals", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_set_goal(db, &mut req)
+    })
+    srv.router.add("DELETE", "/api/goals", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_delete_goal(db, &req)
+    })
     // ---- Weakness Dashboard (1.4.21) ----
-    srv.router.add("GET", "/api/weaknesses", (|&db|(req, res) => {
-        underlayer_web::handle_weakness_dashboard(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/weaknesses", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_weakness_dashboard(db, &req)
+    })
     // ---- Weakness Export (1.4.23) ----
-    srv.router.add("GET", "/api/weaknesses/export", (|&db|(req, res) => {
-        underlayer_web::handle_weakness_export(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/weaknesses/export", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_weakness_export(db, &req)
+    })
     // ---- Weakness Compare (1.4.22) ----
-    srv.router.add("GET", "/api/weaknesses/compare", (|&db|(req, res) => {
-        underlayer_web::handle_weakness_compare(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/weaknesses/compare", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_weakness_compare(db, &req)
+    })
     // ---- Weakness Alerts (1.4.24) ----
-    srv.router.add("GET", "/api/weaknesses/alerts", (|&db|(req, res) => {
-        underlayer_web::handle_weakness_alerts(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/weaknesses/alerts", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_weakness_alerts(db, &req)
+    })
     // ---- Navigation API (7.1.2, 7.1.3, 7.1.5) ----
     // THE SAME TREE, WITHOUT A CONCEPT, and this route exists because
     // /api/navigation required a concept id that a caller asking "what order are
@@ -423,126 +461,125 @@ public func main() : int {
     // So the tree is now reachable honestly, and a caller that has a concept
     // still uses the two-parameter form. Both routes share ONE handler, so there
     // is no second copy of the tree to drift.
-    srv.router.add("GET", "/api/navigation/:courseId", (|&courses_dir|(req, res) => {
+    srv.router.add("GET", "/api/navigation/:courseId", ||(req) => {
+        var courses_dir = request_courses_dir()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var course_id = segments.get_ptr(2)
+            var course_id = segments.at_ref(2)
             // An empty concept id makes the handler omit the breadcrumbs and the
             // prev/next block, which is exactly the difference wanted here.
             var no_concept = std::string_view("")
-            underlayer_web::handle_navigation(courses_dir, course_id, &raw no_concept, &req, &raw mut res)
+            return underlayer_web::handle_navigation(&courses_dir, course_id, &no_concept, &req)
         } else {
-            res.status = 400u
-            var ct = std::string_view("application/json")
-            res.set_header_view(std::string_view("Content-Type"), &ct)
             var body = std::string("{\"error\": \"missing course id\"}")
-            var bv = body.to_view()
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-
-    srv.router.add("GET", "/api/navigation/:courseId/:conceptId", (|&courses_dir|(req, res) => {
+    })
+    srv.router.add("GET", "/api/navigation/:courseId/:conceptId", ||(req) => {
+        var courses_dir = request_courses_dir()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
-            var course_id = segments.get_ptr(2)
-            var concept_id = segments.get_ptr(3)
-            underlayer_web::handle_navigation(courses_dir, course_id, concept_id, &req, &raw mut res)
+            var course_id = segments.at_ref(2)
+            var concept_id = segments.at_ref(3)
+            return underlayer_web::handle_navigation(&courses_dir, course_id, concept_id, &req)
         } else {
-            res.status = 400u
-            var ct = std::string_view("application/json")
-            res.set_header_view(std::string_view("Content-Type"), &ct)
             var body = std::string("{\"error\": \"missing course or concept id\"}")
-            var bv = body.to_view()
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-
+    })
     // ---- Nav Status (P2 7.1.13 progress indicator, P2 7.1.15 due indicator) ----
     // Takes ?course_id= because the bar it feeds is drawn by the per-course
     // landing nav; it used to report elf's numbers on every course page.
-    srv.router.add("GET", "/api/nav-status", (|&db, &courses_dir|(req, res) => {
-        underlayer_web::handle_nav_status(db, courses_dir, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/nav-status", ||(req) => {
+        var courses_dir = request_courses_dir()
+        var db = request_db()
+        return underlayer_web::handle_nav_status(db, &courses_dir, &req)
+    })
     // ---- Nav Search / Quick Jump (P2 7.1.10 command palette) ----
-    srv.router.add("GET", "/api/nav-search", (req, res) => {
-        underlayer_web::handle_nav_search(&req, &raw mut res)
+    srv.router.add("GET", "/api/nav-search", ||(req) => {
+        return underlayer_web::handle_nav_search(&req)
     })
 
     // ---- FSRS Settings (1.1.24-1.1.28) ----
-    srv.router.add("POST", "/api/fsrs/optimize", (|&db|(req, res) => {
-        underlayer_web::handle_fsrs_optimize(db, &req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/fsrs/reset", (|&db|(req, res) => {
-        underlayer_web::handle_fsrs_reset(db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/fsrs/export", (|&db|(req, res) => {
-        underlayer_web::handle_fsrs_export(db, &req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/fsrs/import", (|&db|(req, res) => {
-        underlayer_web::handle_fsrs_import(db, &raw mut req, &raw mut res)
-    }))
-
+    srv.router.add("POST", "/api/fsrs/optimize", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_fsrs_optimize(db, &req)
+    })
+    srv.router.add("POST", "/api/fsrs/reset", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_fsrs_reset(db, &req)
+    })
+    srv.router.add("GET", "/api/fsrs/export", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_fsrs_export(db, &req)
+    })
+    srv.router.add("POST", "/api/fsrs/import", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_fsrs_import(db, &mut req)
+    })
     // ---- Session History (1.2.21, 1.2.22) ----
-    srv.router.add("GET", "/api/sessions", (|&db|(req, res) => {
-        underlayer_web::handle_session_history(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/sessions", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_session_history(db, &req)
+    })
     // ---- Session Detail (1.2.22) ----
-    srv.router.add("GET", "/api/sessions/:sessionId", (|&db|(req, res) => {
-        underlayer_web::handle_session_detail(db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/session/detail", (|&db|(req, res) => {
-        underlayer_web::handle_session_detail(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/sessions/:sessionId", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_session_detail(db, &req)
+    })
+    srv.router.add("GET", "/api/session/detail", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_session_detail(db, &req)
+    })
     // ---- Session Management (1.2.9-1.2.13) ----
-    srv.router.add("POST", "/api/session/pause", (|&db|(req, res) => {
-        underlayer_web::handle_session_pause(db, &req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/session/resume", (|&db|(req, res) => {
-        underlayer_web::handle_session_resume(db, &req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/session/abort", (|&db|(req, res) => {
-        underlayer_web::handle_session_abort(db, &req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/session/undo", (|&db|(req, res) => {
-        underlayer_web::handle_session_undo(db, &req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/session/skip", (|&db|(req, res) => {
-        underlayer_web::handle_session_skip(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("POST", "/api/session/pause", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_session_pause(db, &req)
+    })
+    srv.router.add("POST", "/api/session/resume", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_session_resume(db, &req)
+    })
+    srv.router.add("POST", "/api/session/abort", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_session_abort(db, &req)
+    })
+    srv.router.add("POST", "/api/session/undo", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_session_undo(db, &req)
+    })
+    srv.router.add("POST", "/api/session/skip", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_session_skip(db, &req)
+    })
     // ---- Bulk Exercise Import API ----
-    srv.router.add("POST", "/api/exercises/import", (|db|(req, res) => {
-        underlayer_web::refuse_exercise_import(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/exercises/seed", (|db|(req, res) => {
-        underlayer_web::refuse_exercise_seed(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/exercises/stats", (|&db|(req, res) => {
-        underlayer_web::handle_exercise_stats(db, &req, &raw mut res)
-    }))
-
+    srv.router.add("POST", "/api/exercises/import", ||(req) => {
+        var db = request_db()
+        return underlayer_web::refuse_exercise_import(db, &req)
+    })
+    srv.router.add("POST", "/api/exercises/seed", ||(req) => {
+        var db = request_db()
+        return underlayer_web::refuse_exercise_seed(db, &req)
+    })
+    srv.router.add("GET", "/api/exercises/stats", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_exercise_stats(db, &req)
+    })
     // ---- Exercise API (4.1.1-4.1.5, 4.2.1-4.2.5) ----
-    srv.router.add("GET", "/api/exercises/:conceptId", (|&db|(req, res) => {
+    srv.router.add("GET", "/api/exercises/:conceptId", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var concept_id = segments.get_ptr(2)
-            underlayer_web::handle_get_exercises(db, concept_id, &req, &raw mut res)
+            var concept_id = segments.at_ref(2)
+            return underlayer_web::handle_get_exercises(db, concept_id, &req)
         } else {
-            res.status = 400u
-            var ct = std::string_view("application/json")
-            res.set_header_view(std::string_view("Content-Type"), &ct)
             var body = std::string("{\"error\": \"missing concept id\"}")
-            var bv = body.to_view()
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-
+    })
     // THE RATE-LIMIT GATE ON THIS ROUTE, and the reason this closure captures
     // `db` BY REFERENCE while every other gated route captures it by value.
     //
@@ -559,7 +596,8 @@ public func main() : int {
     //     it reads as coverage. tools/security_check.py CHECK 15 now fires every
     //     gate and asserts each one refuses, so "the gate is in the source" is
     //     no longer something anyone has to take on faith.
-    srv.router.add("POST", "/api/exercises/submit", (|&db|(req, res) => {
+    srv.router.add("POST", "/api/exercises/submit", ||(req) => {
+        var db = request_db()
         // RATE LIMITED.
         // 120 per 5 min.
         // Measured before this: ten submissions in ten consecutive requests, all
@@ -575,126 +613,123 @@ public func main() : int {
         // first gives a real *DbClient, which is the only thing
         // rate_limit_ok_with can actually use.
         var dbp = db
-        if(!underlayer_web::rate_limit_exercise_submit(&raw dbp, &req, &raw mut res)) { return }
-        underlayer_web::handle_exercise_submit(db, &raw mut req, &raw mut res)
-    }))
-
-    srv.router.add("GET", "/api/exercises/hint", (|&db|(req, res) => {
-        underlayer_web::handle_exercise_hint(db, &req, &raw mut res)
-    }))
-
+        var gate = underlayer_web::rate_limit_exercise_submit(dbp, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return refusal
+        }
+        return underlayer_web::handle_exercise_submit(db, &mut req)
+    })
+    srv.router.add("GET", "/api/exercises/hint", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_exercise_hint(db, &req)
+    })
     // Course index — /courses. Registered BEFORE /courses/:courseId so the
     // exact path wins over the parameterised one. This is the page every
     // lesson's "All courses" back-link points at, 42 times across 32 files,
     // and it did not exist until now; tools/link_check.py is what stops that
     // from being true again.
-    srv.router.add("GET", "/courses", (|&courses_dir|(req, res) => {
-        underlayer_web::handle_courses_page(courses_dir, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/courses", ||(req) => {
+        var courses_dir = request_courses_dir()
+        return underlayer_web::handle_courses_page(&courses_dir, &req)
+    })
     // Learning path — the three routes through the collection. Distinct from
     // /courses/:courseId/path, which is the per-course dependency graph.
-    srv.router.add("GET", "/learning-path", (|&courses_dir|(req, res) => {
-        underlayer_web::handle_learning_path_index(courses_dir, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/learning-path", ||(req) => {
+        var courses_dir = request_courses_dir()
+        return underlayer_web::handle_learning_path_index(&courses_dir, &req)
+    })
     // Search — concept search, server-rendered from ?q=
-    srv.router.add("GET", "/search", (|&courses_dir|(req, res) => {
-        underlayer_web::handle_search_page(courses_dir, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/search", ||(req) => {
+        var courses_dir = request_courses_dir()
+        return underlayer_web::handle_search_page(&courses_dir, &req)
+    })
     // Course landing page
-    srv.router.add("GET", "/courses/:courseId", (|&db, &courses_dir|(req, res) => {
+    srv.router.add("GET", "/courses/:courseId", ||(req) => {
+        var courses_dir = request_courses_dir()
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 2) {
-            var course_id = segments.get_ptr(1)
-            underlayer_web::handle_course_landing(db, courses_dir, course_id, &req, &raw mut res)
+            var course_id = segments.at_ref(1)
+            return underlayer_web::handle_course_landing(db, &courses_dir, course_id, &req)
         } else {
-            underlayer_web::handle_home(&req, &raw mut res)
+            return underlayer_web::handle_home(&req)
         }
-    }))
-
+    })
     // Lesson viewer via URL path
-    srv.router.add("GET", "/courses/:courseId/lessons/:conceptId", (|&courses_dir|(req, res) => {
+    srv.router.add("GET", "/courses/:courseId/lessons/:conceptId", ||(req) => {
+        var courses_dir = request_courses_dir()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
-            var course_id = segments.get_ptr(1)
-            var concept_id = segments.get_ptr(3)
-            underlayer_web::handle_lesson(courses_dir, course_id, concept_id, &req, &raw mut res)
+            var course_id = segments.at_ref(1)
+            var concept_id = segments.at_ref(3)
+            return underlayer_web::handle_lesson(&courses_dir, course_id, concept_id, &req)
         } else {
-            res.status = 404u
-            var ct = std::string_view("text/plain")
-            res.set_header_view(std::string_view("Content-Type"), &ct)
             var body = std::string("Not found")
-            var bv = body.to_view()
-            res.write_view(&bv)
+            return underlayer_web::send_status_text(404u, &body)
         }
-    }))
-
+    })
     // Static file serving for course output (HTML, CSS, JS, images)
-    srv.router.add("GET", "/courses/*", (|&db, &courses_dir|(req, res) => {
+    srv.router.add("GET", "/courses/*", ||(req) => {
+        var courses_dir = request_courses_dir()
+        var db = request_db()
         var path = req.path.to_view()
         // Only serve files, not directory paths (must have an extension)
         var has_ext = false
         var i : size_t = 0
         while(i < path.size()) {
-            if(path.get(i) == '.') { has_ext = true }
+            if(path.at(i) == '.') { has_ext = true }
             i = i + 1
         }
         if(has_ext) {
-            underlayer_web::handle_static_file(courses_dir, &raw path, &raw mut res)
+            return underlayer_web::handle_static_file(&courses_dir, &path)
         } else {
             // Try course landing page
             var segments = underlayer_core::path_segments(&path)
             if(segments.size() >= 2) {
-                var course_id = segments.get_ptr(1)
-                underlayer_web::handle_course_landing(db, courses_dir, course_id, &req, &raw mut res)
+                var course_id = segments.at_ref(1)
+                return underlayer_web::handle_course_landing(db, &courses_dir, course_id, &req)
             } else {
-                underlayer_web::handle_home(&req, &raw mut res)
+                return underlayer_web::handle_home(&req)
             }
         }
-    }))
-
+    })
     // Home page
-    srv.router.add("GET", "/", (req, res) => {
-        underlayer_web::handle_home(&req, &raw mut res)
+    srv.router.add("GET", "/", ||(req) => {
+        return underlayer_web::handle_home(&req)
     })
 
     // ---- Account management routes (Section 16) ----
     // Auth pages
-    srv.router.add("GET", "/login", (req, res) => {
-        underlayer_web::handle_login_page(&req, &raw mut res)
+    srv.router.add("GET", "/login", ||(req) => {
+        return underlayer_web::handle_login_page(&req)
     })
-    srv.router.add("GET", "/register", (req, res) => {
-        underlayer_web::handle_register_page(&req, &raw mut res)
+    srv.router.add("GET", "/register", ||(req) => {
+        return underlayer_web::handle_register_page(&req)
     })
-    srv.router.add("GET", "/forgot-password", (req, res) => {
-        underlayer_web::handle_forgot_password_page(&req, &raw mut res)
+    srv.router.add("GET", "/forgot-password", ||(req) => {
+        return underlayer_web::handle_forgot_password_page(&req)
     })
-    srv.router.add("GET", "/reset-password", (req, res) => {
-        underlayer_web::handle_reset_password_page(&req, &raw mut res)
+    srv.router.add("GET", "/reset-password", ||(req) => {
+        return underlayer_web::handle_reset_password_page(&req)
     })
     // Settings page
-    srv.router.add("GET", "/settings", (req, res) => {
-        underlayer_web::handle_settings_page(&req, &raw mut res)
+    srv.router.add("GET", "/settings", ||(req) => {
+        return underlayer_web::handle_settings_page(&req)
     })
-    srv.router.add("GET", "/components", (req, res) => {
-        underlayer_web::handle_components_demo_page(&req, &raw mut res)
+    srv.router.add("GET", "/components", ||(req) => {
+        return underlayer_web::handle_components_demo_page(&req)
     })
-    srv.router.add("GET", "/u/:username", (req, res) => {
+    srv.router.add("GET", "/u/:username", ||(req) => {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 2) {
-            underlayer_web::handle_profile_page(&req, &raw mut res)
+            return underlayer_web::handle_profile_page(&req)
         } else {
-            res.status = 404u
-            var ct = std::string_view("text/plain")
-            res.set_header_view(std::string_view("Content-Type"), &ct)
             var body = std::string("Not found")
-            var bv = body.to_view()
-            res.write_view(&bv)
+            return underlayer_web::send_status_text(404u, &body)
         }
     })
     // Rate-limit bucket names.  Declared here rather than inline as literals
@@ -702,415 +737,435 @@ public func main() : int {
     // one place, and so the four are named identically by construction.
 
     // Auth API (from handlers_auth.ch)
-    srv.router.add("POST", "/api/auth/register", (|db|(req, res) => {
+    srv.router.add("POST", "/api/auth/register", ||(req) => {
+        var db = request_db()
         // RATE LIMITED: 8 attempts per 5 minutes per IP.  bcrypt cost 12 costs
         // this server ~0.44s of CPU per login attempt, so an unthrottled login
         // endpoint is a denial-of-service from a single HTTP client.  Measured
         // before the limiter: twelve wrong passwords in a row, twelve 401s, no
         // delay and no counter.  See web/src/rate_limit.ch.
-        if(!underlayer_web::rate_limit_register(&raw db, &req, &raw mut res)) { return }
-        underlayer_web::handle_register(&raw db, &raw mut req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/auth/login", (|db|(req, res) => {
-        // RATE LIMITED: 8 attempts per 5 minutes per IP.  bcrypt cost 12 costs
-        // this server ~0.44s of CPU per login attempt, so an unthrottled login
-        // endpoint is a denial-of-service from a single HTTP client.  Measured
-        // before the limiter: twelve wrong passwords in a row, twelve 401s, no
-        // delay and no counter.  See web/src/rate_limit.ch.
-        if(!underlayer_web::rate_limit_login(&raw db, &req, &raw mut res)) { return }
-        underlayer_web::handle_login(&raw db, &raw mut req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/auth/logout", (|db|(req, res) => {
-        underlayer_web::handle_logout(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/auth/me", (|db|(req, res) => {
-        underlayer_web::handle_get_me(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/auth/forgot-password", (|db|(req, res) => {
-        // RATE LIMITED: 8 attempts per 5 minutes per IP.  bcrypt cost 12 costs
-        // this server ~0.44s of CPU per login attempt, so an unthrottled login
-        // endpoint is a denial-of-service from a single HTTP client.  Measured
-        // before the limiter: twelve wrong passwords in a row, twelve 401s, no
-        // delay and no counter.  See web/src/rate_limit.ch.
-        if(!underlayer_web::rate_limit_forgot(&raw db, &req, &raw mut res)) { return }
-        underlayer_web::handle_forgot_password(&raw db, &raw mut req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/auth/reset-password", (|db|(req, res) => {
-        // RATE LIMITED: 8 attempts per 5 minutes per IP.  bcrypt cost 12 costs
-        // this server ~0.44s of CPU per login attempt, so an unthrottled login
-        // endpoint is a denial-of-service from a single HTTP client.  Measured
-        // before the limiter: twelve wrong passwords in a row, twelve 401s, no
-        // delay and no counter.  See web/src/rate_limit.ch.
-        if(!underlayer_web::rate_limit_reset(&raw db, &req, &raw mut res)) { return }
-        underlayer_web::handle_reset_password(&raw db, &raw mut req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/auth/verify-email", (|db|(req, res) => {
-        underlayer_web::handle_verify_email(&raw db, &raw mut req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/user/login-history", (|db|(req, res) => {
-        underlayer_web::handle_login_history(&raw db, &req, &raw mut res)
-    }))
-    // Profile API (from handlers_profiles.ch)
-    srv.router.add("GET", "/api/user/profile", (|db|(req, res) => {
-        underlayer_web::handle_get_profile(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("PUT", "/api/user/profile", (|db|(req, res) => {
-        underlayer_web::handle_update_profile(&raw db, &req, &raw mut res)
-    }))
-    // Settings API (from handlers_settings.ch)
-    srv.router.add("GET", "/api/user/settings", (|db|(req, res) => {
-        underlayer_web::handle_get_settings(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("PUT", "/api/user/settings", (|db|(req, res) => {
-        underlayer_web::handle_update_settings(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/user/learning-preferences", (|db|(req, res) => {
-        underlayer_web::handle_get_learning_preferences(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("PUT", "/api/user/learning-preferences", (|db|(req, res) => {
-        underlayer_web::handle_update_learning_preferences(&raw db, &req, &raw mut res)
-    }))
-    // Data management API (from handlers_data.ch)
-    srv.router.add("GET", "/api/user/export", (|db|(req, res) => {
-        underlayer_web::handle_export_data(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("DELETE", "/api/user/data/:type", (|db|(req, res) => {
-        var path = req.path.to_view()
-        var segments = underlayer_core::path_segments(&path)
-        if(segments.size() >= 4) {
-            var type_sv = segments.get_ptr(3)
-            var data_type = type_sv.to_string()
-            underlayer_web::handle_delete_data(&raw db, &raw data_type, &req, &raw mut res)
-        } else {
-            res.status = 400u
-            var body = std::string("{\"error\":\"missing type parameter\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+        var gate = underlayer_web::rate_limit_register(db, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return refusal
         }
-    }))
-    srv.router.add("DELETE", "/api/user/account", (|db|(req, res) => {
-        underlayer_web::handle_delete_account(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/user/deactivate", (|db|(req, res) => {
-        underlayer_web::handle_deactivate_account(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/user/reactivate", (|db|(req, res) => {
-        underlayer_web::handle_reactivate_account(&raw db, &req, &raw mut res)
-    }))
-    // Progress sharing (from handlers_data.ch)
-    srv.router.add("POST", "/api/progress/share", (|db|(req, res) => {
-        underlayer_web::handle_share_progress(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/progress/shared/:token", (|db|(req, res) => {
-        var path = req.path.to_view()
-        var segments = underlayer_core::path_segments(&path)
-        if(segments.size() >= 4) {
-            var token_sv = segments.get_ptr(3)
-            underlayer_web::handle_get_shared_progress(&raw db, token_sv, &raw mut res)
-        } else {
-            res.status = 400u
-            var body = std::string("{\"error\":\"missing token\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
-        }
-    }))
-    srv.router.add("POST", "/api/progress/import", (|db|(req, res) => {
-        underlayer_web::handle_import_progress(&raw db, &mut req, &raw mut res)
-    }))
-
-    srv.router.add("GET", "/api/user/:username", (|db|(req, res) => {
-        underlayer_web::handle_get_public_profile(&raw db, &req, &raw mut res)
-    }))
-
-    // ---- Knowledge Health API (1.5.20) ----
-    srv.router.add("GET", "/api/health/knowledge", (|db|(req, res) => {
-        underlayer_web::handle_knowledge_health(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/health/knowledge/per-module", (|db, &courses_dir|(req, res) => {
-        underlayer_web::handle_knowledge_health_per_module(&raw db, courses_dir, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/health/knowledge/projection", (|db|(req, res) => {
-        underlayer_web::handle_knowledge_projection(&raw db, &req, &raw mut res)
-    }))
-
-    // ---- Course Enrollment API ----
-    srv.router.add("POST", "/api/courses/:courseId/enroll", (|db|(req, res) => {
-        underlayer_web::handle_enroll_course(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/enrollments", (|db|(req, res) => {
-        underlayer_web::handle_get_enrollments(&raw db, &req, &raw mut res)
-    }))
-
-    // ---- Onboarding (Agent 1) ----
-    srv.router.add("GET", "/onboarding", (req, res) => {
-        underlayer_web::handle_onboarding_page(&req, &raw mut res)
+        return underlayer_web::handle_register(db, &mut req)
     })
-    srv.router.add("POST", "/api/onboarding/complete", (|db|(req, res) => {
-        underlayer_web::handle_onboarding_complete(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/onboarding/check", (|db|(req, res) => {
-        underlayer_web::handle_check_onboarding(&raw db, &req, &raw mut res)
-    }))
-
+    srv.router.add("POST", "/api/auth/login", ||(req) => {
+        var db = request_db()
+        // RATE LIMITED: 8 attempts per 5 minutes per IP.  bcrypt cost 12 costs
+        // this server ~0.44s of CPU per login attempt, so an unthrottled login
+        // endpoint is a denial-of-service from a single HTTP client.  Measured
+        // before the limiter: twelve wrong passwords in a row, twelve 401s, no
+        // delay and no counter.  See web/src/rate_limit.ch.
+        var gate = underlayer_web::rate_limit_login(db, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return refusal
+        }
+        return underlayer_web::handle_login(db, &mut req)
+    })
+    srv.router.add("POST", "/api/auth/logout", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_logout(db, &req)
+    })
+    srv.router.add("GET", "/api/auth/me", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_get_me(db, &req)
+    })
+    srv.router.add("POST", "/api/auth/forgot-password", ||(req) => {
+        var db = request_db()
+        // RATE LIMITED: 8 attempts per 5 minutes per IP.  bcrypt cost 12 costs
+        // this server ~0.44s of CPU per login attempt, so an unthrottled login
+        // endpoint is a denial-of-service from a single HTTP client.  Measured
+        // before the limiter: twelve wrong passwords in a row, twelve 401s, no
+        // delay and no counter.  See web/src/rate_limit.ch.
+        var gate = underlayer_web::rate_limit_forgot(db, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return refusal
+        }
+        return underlayer_web::handle_forgot_password(db, &mut req)
+    })
+    srv.router.add("POST", "/api/auth/reset-password", ||(req) => {
+        var db = request_db()
+        // RATE LIMITED: 8 attempts per 5 minutes per IP.  bcrypt cost 12 costs
+        // this server ~0.44s of CPU per login attempt, so an unthrottled login
+        // endpoint is a denial-of-service from a single HTTP client.  Measured
+        // before the limiter: twelve wrong passwords in a row, twelve 401s, no
+        // delay and no counter.  See web/src/rate_limit.ch.
+        var gate = underlayer_web::rate_limit_reset(db, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return refusal
+        }
+        return underlayer_web::handle_reset_password(db, &mut req)
+    })
+    srv.router.add("POST", "/api/auth/verify-email", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_verify_email(db, &mut req)
+    })
+    srv.router.add("GET", "/api/user/login-history", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_login_history(db, &req)
+    })
+    // Profile API (from handlers_profiles.ch)
+    srv.router.add("GET", "/api/user/profile", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_get_profile(db, &req)
+    })
+    srv.router.add("PUT", "/api/user/profile", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_update_profile(db, &req)
+    })
+    // Settings API (from handlers_settings.ch)
+    srv.router.add("GET", "/api/user/settings", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_get_settings(db, &req)
+    })
+    srv.router.add("PUT", "/api/user/settings", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_update_settings(db, &req)
+    })
+    srv.router.add("GET", "/api/user/learning-preferences", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_get_learning_preferences(db, &req)
+    })
+    srv.router.add("PUT", "/api/user/learning-preferences", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_update_learning_preferences(db, &req)
+    })
+    // Data management API (from handlers_data.ch)
+    srv.router.add("GET", "/api/user/export", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_export_data(db, &req)
+    })
+    srv.router.add("DELETE", "/api/user/data/:type", ||(req) => {
+        var db = request_db()
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 4) {
+            var type_sv = segments.at_ref(3)
+            var data_type = type_sv.to_string()
+            return underlayer_web::handle_delete_data(db, &data_type, &req)
+        } else {
+            var body = std::string("{\"error\":\"missing type parameter\"}")
+            return underlayer_web::send_json_status(400u, &body)
+        }
+    })
+    srv.router.add("DELETE", "/api/user/account", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_delete_account(db, &req)
+    })
+    srv.router.add("POST", "/api/user/deactivate", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_deactivate_account(db, &req)
+    })
+    srv.router.add("POST", "/api/user/reactivate", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_reactivate_account(db, &req)
+    })
+    // Progress sharing (from handlers_data.ch)
+    srv.router.add("POST", "/api/progress/share", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_share_progress(db, &req)
+    })
+    srv.router.add("GET", "/api/progress/shared/:token", ||(req) => {
+        var db = request_db()
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 4) {
+            var token_sv = segments.at_ref(3)
+            return underlayer_web::handle_get_shared_progress(db, token_sv)
+        } else {
+            var body = std::string("{\"error\":\"missing token\"}")
+            return underlayer_web::send_json_status(400u, &body)
+        }
+    })
+    srv.router.add("POST", "/api/progress/import", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_import_progress(db, &mut req)
+    })
+    srv.router.add("GET", "/api/user/:username", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_get_public_profile(db, &req)
+    })
+    // ---- Knowledge Health API (1.5.20) ----
+    srv.router.add("GET", "/api/health/knowledge", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_knowledge_health(db, &req)
+    })
+    srv.router.add("GET", "/api/health/knowledge/per-module", ||(req) => {
+        var courses_dir = request_courses_dir()
+        var db = request_db()
+        return underlayer_web::handle_knowledge_health_per_module(db, &courses_dir, &req)
+    })
+    srv.router.add("GET", "/api/health/knowledge/projection", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_knowledge_projection(db, &req)
+    })
+    // ---- Course Enrollment API ----
+    srv.router.add("POST", "/api/courses/:courseId/enroll", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_enroll_course(db, &req)
+    })
+    srv.router.add("GET", "/api/enrollments", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_get_enrollments(db, &req)
+    })
+    // ---- Onboarding (Agent 1) ----
+    srv.router.add("GET", "/onboarding", ||(req) => {
+        return underlayer_web::handle_onboarding_page(&req)
+    })
+    srv.router.add("POST", "/api/onboarding/complete", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_onboarding_complete(db, &req)
+    })
+    srv.router.add("GET", "/api/onboarding/check", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_check_onboarding(db, &req)
+    })
     // ---- Profile stats & courses (Agent 5) ----
-    srv.router.add("GET", "/api/user/:username/stats", (|db|(req, res) => {
+    srv.router.add("GET", "/api/user/:username/stats", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var username = segments.get_ptr(2).to_string()
-            underlayer_web::handle_profile_stats(&raw db, &username, &req, &raw mut res)
+            var username = segments.at_ref(2).to_string()
+            return underlayer_web::handle_profile_stats(db, &username, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing username\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("GET", "/api/user/:username/courses", (|db|(req, res) => {
+    })
+    srv.router.add("GET", "/api/user/:username/courses", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var username = segments.get_ptr(2).to_string()
-            underlayer_web::handle_profile_courses(&raw db, &username, &req, &raw mut res)
+            var username = segments.at_ref(2).to_string()
+            return underlayer_web::handle_profile_courses(db, &username, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing username\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-
+    })
     // ---- Content Feedback API ----
-    srv.router.add("POST", "/api/feedback", (|db|(req, res) => {
+    srv.router.add("POST", "/api/feedback", ||(req) => {
+        var db = request_db()
         // RATE LIMITED.
         // 120 per 5 min.
         // It writes into a table a HUMAN reads -- the corrections queue -- so an
         // unbounded writer fills it with noise and makes the queue unworkable
-        if(!underlayer_web::rate_limit_feedback(&raw db, &req, &raw mut res)) { return }
-        underlayer_web::handle_submit_feedback(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/feedback/stats", (|db|(req, res) => {
-        underlayer_web::handle_feedback_stats(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/feedback/admin", (|db|(req, res) => {
-        underlayer_web::handle_get_admin_feedback(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/feedback/admin/reports", (|db|(req, res) => {
-        underlayer_web::handle_get_admin_reports(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/feedback/report-exercise", (|db|(req, res) => {
+        var gate = underlayer_web::rate_limit_feedback(db, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return refusal
+        }
+        return underlayer_web::handle_submit_feedback(db, &req)
+    })
+    srv.router.add("GET", "/api/feedback/stats", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_feedback_stats(db, &req)
+    })
+    srv.router.add("GET", "/api/feedback/admin", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_get_admin_feedback(db, &req)
+    })
+    srv.router.add("GET", "/api/feedback/admin/reports", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_get_admin_reports(db, &req)
+    })
+    srv.router.add("POST", "/api/feedback/report-exercise", ||(req) => {
+        var db = request_db()
         // RATE LIMITED: 120 per 5 min.  Same queue as /api/feedback: a human has to triage it
-        if(!underlayer_web::rate_limit_report_exercise(&raw db, &req, &raw mut res)) { return }
-        underlayer_web::handle_report_exercise(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/feedback/concept/:conceptId", (|db|(req, res) => {
+        var gate = underlayer_web::rate_limit_report_exercise(db, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return refusal
+        }
+        return underlayer_web::handle_report_exercise(db, &req)
+    })
+    srv.router.add("GET", "/api/feedback/concept/:conceptId", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
-            var concept_id = segments.get_ptr(3).to_string()
-            underlayer_web::handle_get_concept_feedback(&raw db, &concept_id, &req, &raw mut res)
+            var concept_id = segments.at_ref(3).to_string()
+            return underlayer_web::handle_get_concept_feedback(db, &concept_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing concept id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("PUT", "/api/feedback/:id/status", (|db|(req, res) => {
+    })
+    srv.router.add("PUT", "/api/feedback/:id/status", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
-            var feedback_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_update_feedback_status(&raw db, &feedback_id, &req, &raw mut res)
+            var feedback_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_update_feedback_status(db, &feedback_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing feedback id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-
+    })
     // ---- Notifications API ----
-    srv.router.add("GET", "/api/notifications", (|db|(req, res) => {
-        underlayer_web::handle_get_notifications(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/notifications/unread-count", (|db|(req, res) => {
-        underlayer_web::handle_unread_count(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/notifications/read-all", (|db|(req, res) => {
-        underlayer_web::handle_mark_all_read(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/notifications/:id/read", (|db|(req, res) => {
-        underlayer_web::handle_mark_read(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("DELETE", "/api/notifications/:id", (|db|(req, res) => {
-        underlayer_web::handle_delete_notification(&raw db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/notifications", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_get_notifications(db, &req)
+    })
+    srv.router.add("GET", "/api/notifications/unread-count", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_unread_count(db, &req)
+    })
+    srv.router.add("POST", "/api/notifications/read-all", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_mark_all_read(db, &req)
+    })
+    srv.router.add("POST", "/api/notifications/:id/read", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_mark_read(db, &req)
+    })
+    srv.router.add("DELETE", "/api/notifications/:id", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_delete_notification(db, &req)
+    })
     // ---- Course Prerequisites API ----
-    srv.router.add("GET", "/api/courses/:courseId/prerequisites", (|db|(req, res) => {
+    srv.router.add("GET", "/api/courses/:courseId/prerequisites", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var course_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_get_prerequisites(&raw db, &course_id, &req, &raw mut res)
+            var course_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_get_prerequisites(db, &course_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing course id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("POST", "/api/courses/:courseId/prerequisites", (|db|(req, res) => {
+    })
+    srv.router.add("POST", "/api/courses/:courseId/prerequisites", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var course_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_add_prerequisite(&raw db, &course_id, &req, &raw mut res)
+            var course_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_add_prerequisite(db, &course_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing course id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("DELETE", "/api/courses/:courseId/prerequisites/:requiredId", (|db|(req, res) => {
+    })
+    srv.router.add("DELETE", "/api/courses/:courseId/prerequisites/:requiredId", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
-            var course_id = segments.get_ptr(2).to_string()
-            var required_id = segments.get_ptr(3).to_string()
-            underlayer_web::handle_remove_prerequisite(&raw db, &course_id, &required_id, &req, &raw mut res)
+            var course_id = segments.at_ref(2).to_string()
+            var required_id = segments.at_ref(3).to_string()
+            return underlayer_web::handle_remove_prerequisite(db, &course_id, &required_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing course or required id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("GET", "/api/courses/:courseId/can-enroll", (|db|(req, res) => {
+    })
+    srv.router.add("GET", "/api/courses/:courseId/can-enroll", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var course_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_can_enroll(&raw db, &course_id, &req, &raw mut res)
+            var course_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_can_enroll(db, &course_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing course id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("POST", "/api/courses/:courseId/assess", (|db|(req, res) => {
+    })
+    srv.router.add("POST", "/api/courses/:courseId/assess", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var course_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_skill_assessment(&raw db, &course_id, &req, &raw mut res)
+            var course_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_skill_assessment(db, &course_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing course id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("GET", "/api/courses/:courseId/assessment", (|db|(req, res) => {
+    })
+    srv.router.add("GET", "/api/courses/:courseId/assessment", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var course_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_get_assessment(&raw db, &course_id, &req, &raw mut res)
+            var course_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_get_assessment(db, &course_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing course id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-
+    })
     // ---- Course Reviews API ----
-    srv.router.add("POST", "/api/courses/:courseId/reviews", (|db|(req, res) => {
+    srv.router.add("POST", "/api/courses/:courseId/reviews", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var course_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_submit_review(&raw db, &course_id, &req, &raw mut res)
+            var course_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_submit_review(db, &course_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing course id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("GET", "/api/courses/:courseId/reviews", (|db|(req, res) => {
+    })
+    srv.router.add("GET", "/api/courses/:courseId/reviews", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var course_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_get_course_reviews(&raw db, &course_id, &req, &raw mut res)
+            var course_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_get_course_reviews(db, &course_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing course id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("GET", "/api/courses/:courseId/rating", (|db|(req, res) => {
+    })
+    srv.router.add("GET", "/api/courses/:courseId/rating", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var course_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_course_rating_summary(&raw db, &course_id, &req, &raw mut res)
+            var course_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_course_rating_summary(db, &course_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing course id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("PUT", "/api/reviews/:id", (|db|(req, res) => {
+    })
+    srv.router.add("PUT", "/api/reviews/:id", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var review_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_update_review(&raw db, &review_id, &req, &raw mut res)
+            var review_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_update_review(db, &review_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing review id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("DELETE", "/api/reviews/:id", (|db|(req, res) => {
+    })
+    srv.router.add("DELETE", "/api/reviews/:id", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var review_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_delete_review(&raw db, &review_id, &req, &raw mut res)
+            var review_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_delete_review(db, &review_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing review id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
+    })
     // A SESSION IS REQUIRED, and it is a smaller change than it looks: this was
     // an unauthenticated vote with no dedupe, so `curl` in a loop on any
     // review id moved `helpful_count` without limit -- and the count is what
@@ -1120,167 +1175,157 @@ public func main() : int {
     // needs a per-learner "already voted" column, which is a schema change
     // rather than a gate.  What this does stop is a vote with no identity at
     // all.  See docs/audit-2026-10-02-production.md.
-    srv.router.add("POST", "/api/reviews/:id/helpful", (|db|(req, res) => {
-        if(!underlayer_web::has_session(&raw db, &req)) {
+    srv.router.add("POST", "/api/reviews/:id/helpful", ||(req) => {
+        var db = request_db()
+        if(!underlayer_web::has_session(db, &req)) {
             var anon = string("unauthorized")
-            underlayer_web::send_error(&raw mut res, 401u, &anon)
-            return
-        }
-        var path = req.path.to_view()
-        var segments = underlayer_core::path_segments(&path)
-        if(segments.size() >= 3) {
-            var review_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_mark_review_helpful(&raw db, &review_id, &req, &raw mut res)
-        } else {
-            res.status = 400u
-            var body = std::string("{\"error\":\"missing review id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
-        }
-    }))
+            return underlayer_web::send_error(401u, &anon)
 
-    // ---- Bookmarks API ----
-    srv.router.add("POST", "/api/bookmarks", (|db|(req, res) => {
-        underlayer_web::handle_add_bookmark(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("DELETE", "/api/bookmarks/:conceptId", (|db|(req, res) => {
+        }
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var concept_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_remove_bookmark(&raw db, &concept_id, &req, &raw mut res)
+            var review_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_mark_review_helpful(db, &review_id, &req)
         } else {
-            res.status = 400u
-            var body = std::string("{\"error\":\"missing concept id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            var body = std::string("{\"error\":\"missing review id\"}")
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("GET", "/api/bookmarks", (|db|(req, res) => {
-        underlayer_web::handle_get_bookmarks(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/bookmarks/check/:conceptId", (|db|(req, res) => {
+    })
+    // ---- Bookmarks API ----
+    srv.router.add("POST", "/api/bookmarks", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_add_bookmark(db, &req)
+    })
+    srv.router.add("DELETE", "/api/bookmarks/:conceptId", ||(req) => {
+        var db = request_db()
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 3) {
+            var concept_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_remove_bookmark(db, &concept_id, &req)
+        } else {
+            var body = std::string("{\"error\":\"missing concept id\"}")
+            return underlayer_web::send_json_status(400u, &body)
+        }
+    })
+    srv.router.add("GET", "/api/bookmarks", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_get_bookmarks(db, &req)
+    })
+    srv.router.add("GET", "/api/bookmarks/check/:conceptId", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
-            var concept_id = segments.get_ptr(3).to_string()
-            underlayer_web::handle_check_bookmark(&raw db, &concept_id, &req, &raw mut res)
+            var concept_id = segments.at_ref(3).to_string()
+            return underlayer_web::handle_check_bookmark(db, &concept_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing concept id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-
+    })
     // ---- Certificates API ----
-    srv.router.add("POST", "/api/certificates", (|db, &courses_dir|(req, res) => {
-        underlayer_web::handle_issue_certificate(&raw db, courses_dir, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/certificates", (|db|(req, res) => {
-        underlayer_web::handle_get_certificates(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/certificates/:id", (|db|(req, res) => {
+    srv.router.add("POST", "/api/certificates", ||(req) => {
+        var courses_dir = request_courses_dir()
+        var db = request_db()
+        return underlayer_web::handle_issue_certificate(db, &courses_dir, &req)
+    })
+    srv.router.add("GET", "/api/certificates", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_get_certificates(db, &req)
+    })
+    srv.router.add("GET", "/api/certificates/:id", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var cert_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_get_certificate(&raw db, &cert_id, &req, &raw mut res)
+            var cert_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_get_certificate(db, &cert_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing certificate id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("GET", "/certificates/:id", (|db|(req, res) => {
+    })
+    srv.router.add("GET", "/certificates/:id", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 2) {
-            var cert_id = segments.get_ptr(1).to_string()
-            underlayer_web::handle_certificate_page(&raw db, &cert_id, &req, &raw mut res)
+            var cert_id = segments.at_ref(1).to_string()
+            return underlayer_web::handle_certificate_page(db, &cert_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("missing certificate id")
-            var bv = body.to_view()
-            res.write_view(&bv)
+            return underlayer_web::send_status_text(400u, &body)
         }
-    }))
-
+    })
     // ---- Analytics Dashboard ----
-    srv.router.add("GET", "/analytics", (|db|(req, res) => {
-        underlayer_web::handle_analytics_page(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/analytics/overview", (|db|(req, res) => {
-        underlayer_web::handle_analytics_overview_api(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/analytics/:courseId", (|db|(req, res) => {
+    srv.router.add("GET", "/analytics", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_analytics_page(db, &req)
+    })
+    srv.router.add("GET", "/api/analytics/overview", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_analytics_overview_api(db, &req)
+    })
+    srv.router.add("GET", "/analytics/:courseId", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 2) {
-            var course_id = segments.get_ptr(1).to_string()
-            underlayer_web::handle_course_analytics_page(&raw db, &course_id, &req, &raw mut res)
+            var course_id = segments.at_ref(1).to_string()
+            return underlayer_web::handle_course_analytics_page(db, &course_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("missing course id")
-            var bv = body.to_view()
-            res.write_view(&bv)
+            return underlayer_web::send_status_text(400u, &body)
         }
-    }))
-
+    })
     // ---- Learning Path Visualization ----
-    srv.router.add("GET", "/api/courses/:courseId/path", (|db, &courses_dir|(req, res) => {
+    srv.router.add("GET", "/api/courses/:courseId/path", ||(req) => {
+        var courses_dir = request_courses_dir()
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var course_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_learning_path_api(&raw db, courses_dir, &course_id, &req, &raw mut res)
+            var course_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_learning_path_api(db, &courses_dir, &course_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing course id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("GET", "/courses/:courseId/path", (|db, &courses_dir|(req, res) => {
+    })
+    srv.router.add("GET", "/courses/:courseId/path", ||(req) => {
+        var courses_dir = request_courses_dir()
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var course_id = segments.get_ptr(1).to_string()
-            underlayer_web::handle_learning_path_page(&raw db, courses_dir, &course_id, &req, &raw mut res)
+            var course_id = segments.at_ref(1).to_string()
+            return underlayer_web::handle_learning_path_page(db, &courses_dir, &course_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("missing course id")
-            var bv = body.to_view()
-            res.write_view(&bv)
+            return underlayer_web::send_status_text(400u, &body)
         }
-    }))
-
+    })
     // ---- Help & Guide Pages ----
-    srv.router.add("GET", "/help", (|db|(req, res) => {
-        underlayer_web::handle_help_page(&req, &raw mut res)
-    }))
-    srv.router.add("GET", "/shortcuts", (|db|(req, res) => {
-        underlayer_web::handle_shortcuts_page(&req, &raw mut res)
-    }))
-    srv.router.add("GET", "/faq", (|db|(req, res) => {
-        underlayer_web::handle_faq_page(&req, &raw mut res)
-    }))
-    srv.router.add("GET", "/about", (|db|(req, res) => {
-        underlayer_web::handle_about_page(&req, &raw mut res)
-    }))
-    srv.router.add("GET", "/terms", (|db|(req, res) => {
-        underlayer_web::handle_terms_page(&req, &raw mut res)
-    }))
-    srv.router.add("GET", "/privacy", (|db|(req, res) => {
-        underlayer_web::handle_privacy_page(&req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/help", ||(req) => {
+        return underlayer_web::handle_help_page(&req)
+    })
+    srv.router.add("GET", "/shortcuts", ||(req) => {
+        return underlayer_web::handle_shortcuts_page(&req)
+    })
+    srv.router.add("GET", "/faq", ||(req) => {
+        return underlayer_web::handle_faq_page(&req)
+    })
+    srv.router.add("GET", "/about", ||(req) => {
+        return underlayer_web::handle_about_page(&req)
+    })
+    srv.router.add("GET", "/terms", ||(req) => {
+        return underlayer_web::handle_terms_page(&req)
+    })
+    srv.router.add("GET", "/privacy", ||(req) => {
+        return underlayer_web::handle_privacy_page(&req)
+    })
     // ---- Feature Pages (bookmarks, notes, planner, achievements, streaks, notifications, certificates) ----
     //
     // ALL SEVEN ARE GATED, and the gate is here rather than inside each page's
@@ -1300,70 +1345,76 @@ public func main() : int {
     //
     // `next` is the page they asked for, so signing in brings them back to it
     // rather than to the home page.
-    srv.router.add("GET", "/bookmarks", (|db|(req, res) => {
-        if(!underlayer_web::has_session(&raw db, &req)) {
+    srv.router.add("GET", "/bookmarks", ||(req) => {
+        var db = request_db()
+        if(!underlayer_web::has_session(db, &req)) {
             var gate_path = string("/bookmarks")
-            underlayer_web::redirect_to_login(&raw mut res, &gate_path)
-            return
+            return underlayer_web::redirect_to_login(&gate_path)
+
         }
         var html = underlayer_web::render_bookmarks_page()
-        underlayer_web::send_html(&raw mut res, &raw html)
-    }))
-    srv.router.add("GET", "/notes", (|db|(req, res) => {
-        if(!underlayer_web::has_session(&raw db, &req)) {
+        return underlayer_web::send_html(&html)
+    })
+    srv.router.add("GET", "/notes", ||(req) => {
+        var db = request_db()
+        if(!underlayer_web::has_session(db, &req)) {
             var gate_path = string("/notes")
-            underlayer_web::redirect_to_login(&raw mut res, &gate_path)
-            return
+            return underlayer_web::redirect_to_login(&gate_path)
+
         }
         var html = underlayer_web::render_notes_page()
-        underlayer_web::send_html(&raw mut res, &raw html)
-    }))
-    srv.router.add("GET", "/study-plans", (|db|(req, res) => {
-        if(!underlayer_web::has_session(&raw db, &req)) {
+        return underlayer_web::send_html(&html)
+    })
+    srv.router.add("GET", "/study-plans", ||(req) => {
+        var db = request_db()
+        if(!underlayer_web::has_session(db, &req)) {
             var gate_path = string("/study-plans")
-            underlayer_web::redirect_to_login(&raw mut res, &gate_path)
-            return
+            return underlayer_web::redirect_to_login(&gate_path)
+
         }
         var html = underlayer_web::render_study_plans_page()
-        underlayer_web::send_html(&raw mut res, &raw html)
-    }))
-    srv.router.add("GET", "/achievements", (|db|(req, res) => {
-        if(!underlayer_web::has_session(&raw db, &req)) {
+        return underlayer_web::send_html(&html)
+    })
+    srv.router.add("GET", "/achievements", ||(req) => {
+        var db = request_db()
+        if(!underlayer_web::has_session(db, &req)) {
             var gate_path = string("/achievements")
-            underlayer_web::redirect_to_login(&raw mut res, &gate_path)
-            return
+            return underlayer_web::redirect_to_login(&gate_path)
+
         }
         var html = underlayer_web::render_achievements_page()
-        underlayer_web::send_html(&raw mut res, &raw html)
-    }))
-    srv.router.add("GET", "/streaks", (|db|(req, res) => {
-        if(!underlayer_web::has_session(&raw db, &req)) {
+        return underlayer_web::send_html(&html)
+    })
+    srv.router.add("GET", "/streaks", ||(req) => {
+        var db = request_db()
+        if(!underlayer_web::has_session(db, &req)) {
             var gate_path = string("/streaks")
-            underlayer_web::redirect_to_login(&raw mut res, &gate_path)
-            return
+            return underlayer_web::redirect_to_login(&gate_path)
+
         }
         var html = underlayer_web::render_streaks_page()
-        underlayer_web::send_html(&raw mut res, &raw html)
-    }))
-    srv.router.add("GET", "/notifications", (|db|(req, res) => {
-        if(!underlayer_web::has_session(&raw db, &req)) {
+        return underlayer_web::send_html(&html)
+    })
+    srv.router.add("GET", "/notifications", ||(req) => {
+        var db = request_db()
+        if(!underlayer_web::has_session(db, &req)) {
             var gate_path = string("/notifications")
-            underlayer_web::redirect_to_login(&raw mut res, &gate_path)
-            return
+            return underlayer_web::redirect_to_login(&gate_path)
+
         }
         var html = underlayer_web::render_notifications_page()
-        underlayer_web::send_html(&raw mut res, &raw html)
-    }))
-    srv.router.add("GET", "/certificates", (|db|(req, res) => {
-        if(!underlayer_web::has_session(&raw db, &req)) {
+        return underlayer_web::send_html(&html)
+    })
+    srv.router.add("GET", "/certificates", ||(req) => {
+        var db = request_db()
+        if(!underlayer_web::has_session(db, &req)) {
             var gate_path = string("/certificates")
-            underlayer_web::redirect_to_login(&raw mut res, &gate_path)
-            return
+            return underlayer_web::redirect_to_login(&gate_path)
+
         }
         var html = underlayer_web::render_certificates_page()
-        underlayer_web::send_html(&raw mut res, &raw html)
-    }))
-
+        return underlayer_web::send_html(&html)
+    })
     // ---- Learning Loop API ----
     // courses_dir is passed so the handler can check the concept id against the
     // course manifest before writing a row. See handle_learning_view.
@@ -1374,124 +1425,126 @@ public func main() : int {
     // the live connection and every statement prepared on it failed with
     // SQLITE_MISUSE. The type error that this line now reports is the compiler
     // catching it at build time rather than at request time.
-    srv.router.add("POST", "/api/learning/view", (|&db, &courses_dir|(req, res) => {
-        underlayer_web::handle_learning_view(db, courses_dir, &req, &raw mut res)
-    }))
-
+    srv.router.add("POST", "/api/learning/view", ||(req) => {
+        var courses_dir = request_courses_dir()
+        var db = request_db()
+        return underlayer_web::handle_learning_view(db, &courses_dir, &req)
+    })
     // ---- Notes API ----
-    srv.router.add("GET", "/api/notes", (|db|(req, res) => {
-        underlayer_web::handle_get_notes(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/notes", (|db|(req, res) => {
-        underlayer_web::handle_create_note(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("PUT", "/api/notes/:id", (|db|(req, res) => {
+    srv.router.add("GET", "/api/notes", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_get_notes(db, &req)
+    })
+    srv.router.add("POST", "/api/notes", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_create_note(db, &req)
+    })
+    srv.router.add("PUT", "/api/notes/:id", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var note_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_update_note(&raw db, &note_id, &req, &raw mut res)
+            var note_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_update_note(db, &note_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing note id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("DELETE", "/api/notes/:id", (|db|(req, res) => {
+    })
+    srv.router.add("DELETE", "/api/notes/:id", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var note_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_delete_note(&raw db, &note_id, &req, &raw mut res)
+            var note_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_delete_note(db, &note_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing note id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("GET", "/api/notes/concept/:conceptId", (|db|(req, res) => {
+    })
+    srv.router.add("GET", "/api/notes/concept/:conceptId", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
-            var concept_id = segments.get_ptr(3).to_string()
-            underlayer_web::handle_get_concept_notes(&raw db, &concept_id, &req, &raw mut res)
+            var concept_id = segments.at_ref(3).to_string()
+            return underlayer_web::handle_get_concept_notes(db, &concept_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing concept id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("GET", "/api/notes/search", (|db|(req, res) => {
-        underlayer_web::handle_search_notes(&raw db, &req, &raw mut res)
-    }))
-
+    })
+    srv.router.add("GET", "/api/notes/search", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_search_notes(db, &req)
+    })
     // ---- Achievements API ----
-    srv.router.add("GET", "/api/achievements", (|db|(req, res) => {
-        underlayer_web::handle_get_achievements(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/achievements/check", (|db|(req, res) => {
-        underlayer_web::handle_check_achievements(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/achievements/count", (|db|(req, res) => {
-        underlayer_web::handle_achievement_count(&raw db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/achievements", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_get_achievements(db, &req)
+    })
+    srv.router.add("POST", "/api/achievements/check", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_check_achievements(db, &req)
+    })
+    srv.router.add("GET", "/api/achievements/count", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_achievement_count(db, &req)
+    })
     // ---- Streaks API ----
-    srv.router.add("GET", "/api/streaks", (|db|(req, res) => {
-        underlayer_web::handle_get_streak(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("POST", "/api/streaks/activity", (|db|(req, res) => {
-        underlayer_web::handle_record_activity(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/streaks/weekly", (|db|(req, res) => {
-        underlayer_web::handle_weekly_activity(&raw db, &req, &raw mut res)
-    }))
-
+    srv.router.add("GET", "/api/streaks", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_get_streak(db, &req)
+    })
+    srv.router.add("POST", "/api/streaks/activity", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_record_activity(db, &req)
+    })
+    srv.router.add("GET", "/api/streaks/weekly", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_weekly_activity(db, &req)
+    })
     // ---- Study Planner API ----
-    srv.router.add("POST", "/api/study-plans", (|db|(req, res) => {
-        underlayer_web::handle_create_study_plan(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("GET", "/api/study-plans", (|db|(req, res) => {
-        underlayer_web::handle_get_study_plans(&raw db, &req, &raw mut res)
-    }))
-    srv.router.add("PUT", "/api/study-plans/:id", (|db|(req, res) => {
+    srv.router.add("POST", "/api/study-plans", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_create_study_plan(db, &req)
+    })
+    srv.router.add("GET", "/api/study-plans", ||(req) => {
+        var db = request_db()
+        return underlayer_web::handle_get_study_plans(db, &req)
+    })
+    srv.router.add("PUT", "/api/study-plans/:id", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var plan_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_update_study_plan(&raw db, &plan_id, &req, &raw mut res)
+            var plan_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_update_study_plan(db, &plan_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing plan id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-    srv.router.add("DELETE", "/api/study-plans/:id", (|db|(req, res) => {
+    })
+    srv.router.add("DELETE", "/api/study-plans/:id", ||(req) => {
+        var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
-            var plan_id = segments.get_ptr(2).to_string()
-            underlayer_web::handle_delete_study_plan(&raw db, &plan_id, &req, &raw mut res)
+            var plan_id = segments.at_ref(2).to_string()
+            return underlayer_web::handle_delete_study_plan(db, &plan_id, &req)
         } else {
-            res.status = 400u
             var body = std::string("{\"error\":\"missing plan id\"}")
-            var bv = body.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-            res.write_view(&bv)
+            return underlayer_web::send_json_status(400u, &body)
         }
-    }))
-
+    })
     // ---- Start server ----
-    printf("[underlayer] Server running at http://localhost:%s\n", underlayer_core::u32_to_string(port).data())
-    printf("[underlayer] Courses dir: %s\n", cfg.courses_dir.data())
+    var listen_msg = std::string("[underlayer] Server running at http://localhost:")
+    listen_msg.append_string(&underlayer_core::u32_to_string(port))
+    underlayer_core::log_line(&listen_msg)
+    var courses_msg = std::string("[underlayer] Courses dir: ")
+    courses_msg.append_string(&cfg.courses_dir)
+    underlayer_core::log_line(&courses_msg)
     srv.serve()
 
     underlayer_db::close(&raw db)

@@ -20,18 +20,17 @@ using underlayer_db::DbClient
 
 public namespace underlayer_web {
 
-    // Returns true when the caller may act on `session_id`.  On false the
-    // response has already been written.
-    public func require_own_session(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter, session_id : *string) : bool {
+    // `None` when the caller may act on `session_id`; `Some(response)` when it
+    // may not, and that response is the 403 to send.
+    public func require_own_session(db : *DbClient, req : &http::Request, session_id : &string) : std::Option<http::Response> {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var sid = session_id.copy()
         if(underlayer_repository::session_belongs_to(db, &sid, &learner_id)) {
-            return true
+            return std::Option.None<http::Response>()
         }
         var err = string("this session belongs to another learner")
-        send_error(res, 403u, &err)
-        return false
+        return std::Option.Some<http::Response>(send_error(403u, &err))
     }
 
 }

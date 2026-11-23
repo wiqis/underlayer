@@ -4,12 +4,12 @@ using std::string_view
 
 public namespace underlayer_web {
 
-    public func handle_health(req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_health(req : &http::Request) : http::Response {
         var body = std::string("{\"status\": \"ok\", \"version\": \"0.1.0\"}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
-    public func handle_home(req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_home(req : &http::Request) : http::Response {
         var page = HtmlPage()
         page.defaultUniversalSetup()
         page.defaultPrepare()
@@ -112,7 +112,7 @@ public namespace underlayer_web {
         render_home_js(&mut page)
         render_home_search_js(&mut page)
 
-        send_page(res, &raw page)
+        return send_page(&page)
     }
 
 }

@@ -6,22 +6,20 @@ using underlayer_models::ConceptRef
 
 public namespace underlayer_web {
 
-    public func handle_lesson(courses_dir : &string, course_id : *string_view, concept_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_lesson(courses_dir : &string, course_id : &string_view, concept_id : &string_view, req : &http::Request) : http::Response {
         // Validate the course exists — unknown courses get a 404 instead of
         // silently falling back to ELF content (multi-course correctness).
         var cidsv = sv_to_string(course_id)
         var course = underlayer_repository::load_course(courses_dir, &cidsv)
         if(course.id.size() == 0) {
             var err = std::string("course not found")
-            send_error(res, 404u, &err)
-            return
+            return send_error(404u, &err)
         }
         var pid = sv_to_string(concept_id)
-        var html = render_concept(&raw pid)
+        var html = render_concept(&pid)
         if(html.size() == 0) {
             var err = std::string("lesson not found")
-            send_error(res, 404u, &err)
-            return
+            return send_error(404u, &err)
         }
         // Prev/next links, resolved HERE rather than in the lesson's own
         // script.  The course manifest is already loaded above -- it is what
@@ -46,9 +44,7 @@ public namespace underlayer_web {
         // been in hand since line 12 of this function, where it decides whether
         // the lesson exists at all.
         var headed = apply_lesson_header(&paged, &course, &pid)
-        var ct = std::string_view("text/html; charset=utf-8")
-        res.set_header_view(std::string_view("Content-Type"), &ct)
-        apply_security_headers(res)
+
         // The header's own styles, emitted as a <style> block rather than a
         // <link>, for the two reasons in web/src/lesson_header_css.ch: one
         // request per lesson page, and a file:// lesson with no stylesheet.
@@ -62,20 +58,17 @@ public namespace underlayer_web {
             var full = std::string("<!DOCTYPE html><html><head>")
             full.append_string(&tag)
             var rest = headed.to_view()
-            var do_idx = rest.find(string_view("<head>"))
+            var do_idx = rest.find_or_npos(string_view("<head>"))
             if(do_idx != std::NPOS) {
                 var after = do_idx + 6
                 full.append_view(headed.to_view().subview(after, headed.size()))
-                var pv2 = full.to_view()
-                res.write_view(&pv2)
-                return
+                return send_html(&full)
             }
         }
-        var pv = headed.to_view()
-        res.write_view(&pv)
+        return send_html(&headed)
     }
 
-    public func handle_course_landing(db : &DbClient, courses_dir : &string, course_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_course_landing(db : *DbClient, courses_dir : &string, course_id : &string_view, req : &http::Request) : http::Response {
         // A local copy, giving the `*DbClient` the repository layer takes.
         //
         // The two course routes capture the database BY REFERENCE -- they already
@@ -91,8 +84,7 @@ public namespace underlayer_web {
         var course = underlayer_repository::load_course(courses_dir, &cidsv)
         if(course.id.size() == 0) {
             var err = std::string("course not found")
-            send_error(res, 404u, &err)
-            return
+            return send_error(404u, &err)
         }
         var html = underlayer_content::render_course_landing(&course)
         // THE ENROL CONTROL.  (P1 7.1.23)
@@ -107,14 +99,11 @@ public namespace underlayer_web {
         // client-rendered Enrol button gets a 401 with nothing around it to
         // explain. The session is right here; handle_course_landing is given the
         // request.
-        var has_session = has_session_for(&raw dbp, req)
-        var enrolled_at = enrollment_state(&raw dbp, req, &cidsv)
+        var has_session = has_session_for(dbp, req)
+        var enrolled_at = enrollment_state(dbp, req, &cidsv)
         html = apply_enroll_control(&html, &cidsv, enrolled_at, has_session)
-        var ct = std::string_view("text/html; charset=utf-8")
-        res.set_header_view(std::string_view("Content-Type"), &ct)
-        apply_security_headers(res)
-        var hv = html.to_view()
-        res.write_view(&hv)
+
+        return send_html(&html)
     }
 
 }

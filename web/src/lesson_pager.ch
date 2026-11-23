@@ -79,7 +79,7 @@ public namespace underlayer_web {
     // repository/src/notes.ch, and it is why each patch below is applied to a
     // NEWLY NAMED variable instead of back into itself.
     private func patch_once(src : &string, needle : &string_view, value : &string) : string {
-        var at = src.find(needle)
+        var at = src.find_or_npos(needle)
         if(at == std::NPOS) { return src.copy() }
         var after = at + needle.size()
         var built = std::string()
@@ -112,7 +112,7 @@ public namespace underlayer_web {
         var idx : i64 = -1
         var ci : size_t = 0
         while(ci < course.concepts.size()) {
-            if(course.concepts.get_ptr(ci).id.equals(concept_id)) { idx = ci as i64 }
+            if(course.concepts.at_ref(ci).id.equals(concept_id)) { idx = ci as i64 }
             ci = ci + 1
         }
         // An unknown concept is not an error here: handle_lesson has already
@@ -128,11 +128,11 @@ public namespace underlayer_web {
         // "Concept 3 of 24 in Fundamentals".  The module name comes from the
         // manifest, so it is the module the learner sees in the sidebar.
         var module_title = std::string()
-        var mid = course.concepts.get_ptr(idx as size_t).module_id.copy()
+        var mid = course.concepts.at_ref(idx as size_t).module_id.copy()
         if(mid.size() > 0) {
             var mi : size_t = 0
             while(mi < course.modules.size()) {
-                var m = course.modules.get_ptr(mi)
+                var m = course.modules.at_ref(mi)
                 if(m.id.equals(&mid)) { module_title = m.title.copy() }
                 mi = mi + 1
             }
@@ -161,14 +161,14 @@ public namespace underlayer_web {
         // the reader is already on, which would make "Previous" reload the
         // current lesson.
         if(idx > 0) {
-            var prev_concept = course.concepts.get_ptr((idx - 1) as size_t).id.copy()
+            var prev_concept = course.concepts.at_ref((idx - 1) as size_t).id.copy()
             var prev_url = string("/courses/")
             prev_url.append_view(c_esc.to_view())
             prev_url.append_view("/lessons/")
             var p_esc = underlayer_core::html_escape(&prev_concept)
             prev_url.append_view(p_esc.to_view())
 
-            var prev_title = course.concepts.get_ptr((idx - 1) as size_t).title.copy()
+            var prev_title = course.concepts.at_ref((idx - 1) as size_t).title.copy()
             var pt_esc = underlayer_core::html_escape(&prev_title)
             var prev_anchor = string("<a class=\"ul-step\" id=\"ul-prev\" rel=\"prev\" href=\"")
             prev_anchor.append_view(prev_url.to_view())
@@ -187,14 +187,14 @@ public namespace underlayer_web {
         // --- 3. next --------------------------------------------------------
         // The LAST concept gets no next link, for the same reason.
         if((idx as size_t) + 1 < course.concepts.size()) {
-            var next_concept = course.concepts.get_ptr((idx + 1) as size_t).id.copy()
+            var next_concept = course.concepts.at_ref((idx + 1) as size_t).id.copy()
             var next_url = string("/courses/")
             next_url.append_view(c_esc.to_view())
             next_url.append_view("/lessons/")
             var n_esc = underlayer_core::html_escape(&next_concept)
             next_url.append_view(n_esc.to_view())
 
-            var next_title = course.concepts.get_ptr((idx + 1) as size_t).title.copy()
+            var next_title = course.concepts.at_ref((idx + 1) as size_t).title.copy()
             var nt_esc = underlayer_core::html_escape(&next_title)
             var next_anchor = string("<a class=\"ul-step\" id=\"ul-next\" rel=\"next\" href=\"")
             next_anchor.append_view(next_url.to_view())

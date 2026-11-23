@@ -80,7 +80,7 @@ public namespace underlayer_web {
         var searched : int = 0
         var ci : size_t = 0
         while(ci < courses.size()) {
-            var c = courses.get_ptr(ci)
+            var c = courses.at_ref(ci)
             searched = searched + c.concepts.size() as int
             ci = ci + 1
         }
@@ -137,7 +137,7 @@ public namespace underlayer_web {
         var i : size_t = 0
         while(i < hits.size()) {
             if(i >= shown as size_t) { break }
-            var hit = hits.get_ptr(i)
+            var hit = hits.at_ref(i)
             var href_esc = underlayer_core::html_escape(&hit.href)
             var title_esc = underlayer_core::html_escape(&hit.concept_title)
             var course_esc = underlayer_core::html_escape(&hit.course_title)

@@ -10,9 +10,9 @@ using underlayer_repository::parse_i64
 public namespace underlayer_web {
 
     // GET /api/exercises/:conceptId — Get exercises for a concept (4.1.1-4.1.5)
-    public func handle_get_exercises(db : &DbClient, concept_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_get_exercises(db : *DbClient, concept_id : &string_view, req : &http::Request) : http::Response {
         var cid = sv_to_string(concept_id)
-        var exercises = underlayer_repository::get_exercises_for_concept(&raw db, &cid, 5)
+        var exercises = underlayer_repository::get_exercises_for_concept(db, &cid, 5)
 
         var body = std::string("{\"concept_id\":\"")
         body.append_string(&cid)
@@ -20,7 +20,7 @@ public namespace underlayer_web {
         var i : size_t = 0
         while(i < exercises.size()) {
             if(i > 0) { body.append_view(",") }
-            var ex = exercises.get_ptr(i)
+            var ex = exercises.at_ref(i)
             body.append_view("{\"id\":\"")
             body.append_string(&ex.id)
             body.append_view("\",\"type\":\"")
@@ -36,7 +36,7 @@ public namespace underlayer_web {
                 while(oi < ex.options.size()) {
                     if(oi > 0) { body.append_view(",") }
                     body.append_view("\"")
-                    var opt_ptr = ex.options.get_ptr(oi)
+                    var opt_ptr = ex.options.at_ref(oi)
                     var opt_esc = underlayer_core::json_escape(&opt_ptr.to_view())
                     body.append_string(&opt_esc)
                     body.append_view("\"")
@@ -53,11 +53,11 @@ public namespace underlayer_web {
                 var ai : size_t = 0
                 var cur = string()
                 while(ai <= ex.answer.size()) {
-                    if(ai == ex.answer.size() || ex.answer.get(ai) == '|') {
+                    if(ai == ex.answer.size() || ex.answer.at(ai) == '|') {
                         rights.push(cur)
                         cur = string()
                     } else {
-                        cur.append(ex.answer.get(ai))
+                        cur.append(ex.answer.at(ai))
                     }
                     ai = ai + 1
                 }
@@ -67,7 +67,7 @@ public namespace underlayer_web {
                     ri = ri - 1
                     if(ri < rights.size() - 1) { body.append_view(",") }
                     body.append_view("\"")
-                    var r_ptr = rights.get_ptr(ri)
+                    var r_ptr = rights.at_ref(ri)
                     var r_esc = underlayer_core::json_escape(&r_ptr.to_view())
                     body.append_string(&r_esc)
                     body.append_view("\"")
@@ -80,7 +80,7 @@ public namespace underlayer_web {
                 var blanks : i64 = 1
                 var li : size_t = 0
                 while(li < ex.answer.size()) {
-                    if(ex.answer.get(li) == '|') { blanks = blanks + 1 }
+                    if(ex.answer.at(li) == '|') { blanks = blanks + 1 }
                     li = li + 1
                 }
                 body.append_view(",\"blank_count\":")
@@ -96,29 +96,27 @@ public namespace underlayer_web {
         var total_str = underlayer_core::int_to_string(exercises.size() as i64)
         body.append_string(&total_str)
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // POST /api/exercises/submit — Submit an answer (4.2.1-4.2.3)
     // Query params: exercise_id, answer
-    public func handle_exercise_submit(db : &DbClient, req : *mut http::Request, res : *mut http::ResponseWriter) {
+    public func handle_exercise_submit(db : *DbClient, req : &mut http::Request) : http::Response {
         var q_eid = string("exercise_id")
         var q_ans = string("answer")
-        var eid_v = req.query.get(&q_eid.to_view())
-        var ans_v = req.query.get(&q_ans.to_view())
+        var eid_v = sv_or_empty(req.query.get(std::str.make_view(q_eid.to_view())))
+        var ans_v = sv_or_empty(req.query.get(std::str.make_view(q_ans.to_view())))
         if(eid_v.size() == 0 || ans_v.size() == 0) {
             var err_msg = string("missing query params: exercise_id, answer")
-            send_error(res, 400u, &err_msg)
-            return
+            return send_error(400u, &err_msg)
         }
-        var exercise_id = sv_to_string(&raw eid_v)
-        var user_answer = sv_to_string(&raw ans_v)
+        var exercise_id = sv_to_string(&eid_v)
+        var user_answer = sv_to_string(&ans_v)
 
-        var ex = underlayer_repository::get_exercise(&raw db, &exercise_id)
+        var ex = underlayer_repository::get_exercise(db, &exercise_id)
         if(ex.id.size() == 0) {
             var err_msg2 = string("exercise not found")
-            send_error(res, 404u, &err_msg2)
-            return
+            return send_error(404u, &err_msg2)
         }
 
         // 4.2.1: Immediate correctness feedback — all 8 lesson UI types (4.1.29)
@@ -144,15 +142,15 @@ public namespace underlayer_web {
         // so practice had zero effect on scheduling. Map correct/incorrect to an
         // FSRS rating (Good=3 / Again=1), update the concept state, and seed/update
         // the concept's review item — same pipeline as /api/review/submit.
-        var learner_id = auth_get_learner_id(&raw db, &*req)
+        var learner_id = auth_get_learner_id(db, &*req)
         var authenticated = learner_id.size() > 0
         // Multi-course: the lesson page passes its course (query param or JSON
         // body). Deterministic fallback: look up which seeded course owns this
         // concept id before defaulting to "elf".
         var q_cid2 = string("course_id")
-        var cid_v2 = req.query.get(&q_cid2.to_view())
+        var cid_v2 = sv_or_empty(req.query.get(std::str.make_view(q_cid2.to_view())))
         var course_id = string()
-        if(cid_v2.size() > 0) { course_id = sv_to_string(&raw cid_v2) }
+        if(cid_v2.size() > 0) { course_id = sv_to_string(&cid_v2) }
         if(course_id.size() == 0) {
             var body_str2 = read_body(req)
             if(body_str2.size() > 0) {
@@ -164,14 +162,14 @@ public namespace underlayer_web {
             }
         }
         if(course_id.size() == 0) {
-            var owner = underlayer_repository::find_course_for_concept(&raw db, &ex.concept_id)
+            var owner = underlayer_repository::find_course_for_concept(db, &ex.concept_id)
             if(owner.size() > 0) { course_id = owner } else { course_id = string("elf") }
         }
         if(authenticated) {
             var rating : int = 1
             if(correct) { rating = 3 }
 
-            var state = underlayer_repository::get_concept_state(&raw db, &learner_id, &ex.concept_id, &course_id)
+            var state = underlayer_repository::get_concept_state(db, &learner_id, &ex.concept_id, &course_id)
             state.learner_id = learner_id.copy()
             state.concept_id = ex.concept_id.copy()
             state.course_id = course_id.copy()
@@ -206,24 +204,24 @@ public namespace underlayer_web {
             else if(new_rs.reps >= 5 && state.streak >= 3) { state.status = string("mastered") }
             else { state.status = string("reviewing") }
 
-            underlayer_repository::upsert_concept_state(&raw db, &raw state)
+            underlayer_repository::upsert_concept_state(db, &state)
 
             // 4.4.1/4.4.3: the per-attempt row.  Everything around it is an
             // aggregate over this concept; without one row per submission,
             // "which quiz did I fail" stays unanswerable no matter what a page
             // draws, because two wrong answers in a three-exercise concept are
             // indistinguishable in attempts-minus-correct.
-            underlayer_repository::record_exercise_attempt(&raw db, &learner_id, &course_id, &ex.concept_id, &ex.id, correct, &ex.question)
+            underlayer_repository::record_exercise_attempt(db, &learner_id, &course_id, &ex.concept_id, &ex.id, correct, &ex.question)
 
             // Seed (first interaction) then update the review item's schedule
-            underlayer_repository::seed_review_items(&raw db, &learner_id, &course_id)
+            underlayer_repository::seed_review_items(db, &learner_id, &course_id)
             var item_id = string()
             item_id.append_string(&learner_id)
             item_id.append_view("_")
             item_id.append_string(&course_id)
             item_id.append_view("_")
             item_id.append_string(&ex.concept_id)
-            var item = underlayer_repository::get_review_item(&raw db, &item_id)
+            var item = underlayer_repository::get_review_item(db, &item_id)
             if(item.id.size() > 0) {
                 item.last_review = now
                 item.reps = item.reps + 1
@@ -231,10 +229,10 @@ public namespace underlayer_web {
                 item.difficulty = new_rs.difficulty
                 item.stability = new_rs.stability
                 item.next_review = now + new_rs.scheduled_days * 86400
-                underlayer_repository::update_review_item(&raw db, &raw item)
+                underlayer_repository::update_review_item(db, &item)
             }
 
-            underlayer_repository::record_activity(&raw db, &learner_id)
+            underlayer_repository::record_activity(db, &learner_id)
         }
 
         // 4.2.9: Related concept suggestions
@@ -248,7 +246,7 @@ public namespace underlayer_web {
         // 4.2.13: Streak indicator (real value when authenticated — 4.2.19)
         body.append_view(",\"streak\":")
         if(authenticated) {
-            var post_state = underlayer_repository::get_concept_state(&raw db, &learner_id, &ex.concept_id, &course_id)
+            var post_state = underlayer_repository::get_concept_state(db, &learner_id, &ex.concept_id, &course_id)
             var streak_str = underlayer_core::int_to_string(post_state.streak as i64)
             body.append_string(&streak_str)
         } else {
@@ -263,7 +261,7 @@ public namespace underlayer_web {
             msgs.push(string("Keep it up!"))
             msgs.push(string("Perfect!"))
             var idx = (now as size_t) % msgs.size()
-            var msg = msgs.get_ptr(idx).copy()
+            var msg = msgs.at_ref(idx).copy()
             body.append_string(&msg)
         } else {
             body.append_view("Don't give up! You'll get it next time.")
@@ -279,22 +277,21 @@ public namespace underlayer_web {
         body.append_view(",\"time_spent_seconds\":0")
         // 4.2.12: Accuracy trend indicator (based on recent attempts)
         body.append_view(",\"accuracy_trend\":\"stable\"}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // GET /api/exercises/hint — Get a progressive hint (4.2.4, 4.2.5)
     // Query params: exercise_id, level (1, 2, or 3)
-    public func handle_exercise_hint(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_exercise_hint(db : *DbClient, req : &http::Request) : http::Response {
         var q_eid = string("exercise_id")
         var q_lvl = string("level")
-        var eid_v = req.query.get(&q_eid.to_view())
-        var lvl_v = req.query.get(&q_lvl.to_view())
+        var eid_v = sv_or_empty(req.query.get(std::str.make_view(q_eid.to_view())))
+        var lvl_v = sv_or_empty(req.query.get(std::str.make_view(q_lvl.to_view())))
         if(eid_v.size() == 0) {
             var err_msg = string("missing query param: exercise_id")
-            send_error(res, 400u, &err_msg)
-            return
+            return send_error(400u, &err_msg)
         }
-        var exercise_id = sv_to_string(&raw eid_v)
+        var exercise_id = sv_to_string(&eid_v)
         var level : int = 1
         if(lvl_v.size() > 0) {
             level = underlayer_repository::parse_i64(lvl_v) as int
@@ -302,11 +299,10 @@ public namespace underlayer_web {
         if(level < 1) { level = 1 }
         if(level > 3) { level = 3 }
 
-        var ex = underlayer_repository::get_exercise(&raw db, &exercise_id)
+        var ex = underlayer_repository::get_exercise(db, &exercise_id)
         if(ex.id.size() == 0) {
             var err_msg2 = string("exercise not found")
-            send_error(res, 404u, &err_msg2)
-            return
+            return send_error(404u, &err_msg2)
         }
 
         var hint = string()
@@ -322,7 +318,7 @@ public namespace underlayer_web {
         var lvl_str = underlayer_core::int_to_string(level as i64)
         body.append_string(&lvl_str)
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
 }

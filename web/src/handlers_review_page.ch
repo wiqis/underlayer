@@ -5,21 +5,20 @@ using underlayer_db::DbClient
 
 public namespace underlayer_web {
 
-    public func handle_review_page(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_review_page(db : *DbClient, courses_dir : &string, req : &http::Request) : http::Response {
         // THE SIGN-IN GATE.  Every number on this page is read from
         // the signed-in learner's own rows, so with no account there
         // is nothing to show and the page rendered zeros -- which reads
         // as failure rather than as "you are not signed in".  Checked
         // before any query; see pages_auth_gate.ch for why this is a
         // page rather than a redirect.
-        if(!has_session(&raw db, req)) {
+        if(!has_session(db, req)) {
             // Redirect, not an in-place card: see pages_auth_gate.ch for why this
 
             // changed, and for why it cannot loop.
 
             var gate_path = string("/review")
-            redirect_to_login(res, &gate_path)
-            return
+            return redirect_to_login(&gate_path)
         }
         var page = HtmlPage()
         page.defaultUniversalSetup()
@@ -514,9 +513,7 @@ public namespace underlayer_web {
 
         var html_out = page.toString()
         var bv = html_out.to_view()
-        res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
-        apply_security_headers(res)
-        res.write_view(&bv)
+        return underlayer_web::send_html(&html_out)
     }
 
 }

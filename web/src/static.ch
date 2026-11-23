@@ -4,7 +4,7 @@ using std::string_view
 
 public namespace underlayer_web {
 
-    public func content_type_for_ext(ext : *string) : string {
+    public func content_type_for_ext(ext : &string) : string {
         if(ext.equals(string("html"))) { return string("text/html; charset=utf-8") }
         if(ext.equals(string("css"))) { return string("text/css; charset=utf-8") }
         if(ext.equals(string("js"))) { return string("application/javascript; charset=utf-8") }
@@ -21,44 +21,45 @@ public namespace underlayer_web {
         return string("application/octet-stream")
     }
 
-    public func file_extension(path : *string_view) : string {
+    public func file_extension(path : &string_view) : string {
         var last_dot : size_t = 0
         var i : size_t = 0
         while(i < path.size()) {
-            if(path.get(i) == '.') { last_dot = i }
+            if(path.at(i) == '.') { last_dot = i }
             i = i + 1
         }
         if(last_dot == 0 || last_dot >= path.size() - 1) { return string() }
         var ext = string()
         var j : size_t = last_dot + 1
         while(j < path.size()) {
-            ext.append(path.get(j))
+            ext.append(path.at(j))
             j = j + 1
         }
         return ext
     }
 
-    public func handle_static_file(courses_dir : &string, req_path : *string_view, res : *mut http::ResponseWriter) {
+    public func handle_static_file(courses_dir : &string, req_path : &string_view) : http::Response {
         var fs_path = courses_dir.copy()
         var req_str = req_path.to_string()
         fs_path.append_string(&req_str)
 
-        var content_res = fs::read_entire_file(fs_path.data())
+        var path_view = std::str.make_view(fs_path.to_view())
+        var file_path = path::Path.new(path_view)
+        var content_res = fs::read(&file_path)
         if(content_res is std::Result.Err) {
             var err_msg = std::string("file not found")
-            send_error(res, 404u, &err_msg)
-            return
+            return send_error(404u, &err_msg)
         }
         var Ok(bytes) = content_res else unsafe { unreachable }
 
         var ext = file_extension(req_path)
-        var ct = content_type_for_ext(&raw ext)
+        var ct = content_type_for_ext(&ext)
+        var res = http::Response()
         var ct_view = ct.to_view()
         res.set_header_view(std::string_view("Content-Type"), &ct_view)
-        apply_security_headers(res)
-
-        var body_view = std::string_view(bytes.data() as *char, bytes.size())
-        res.write_view(&body_view)
+        apply_security_headers(&mut res)
+        res.bytes(bytes.as_span())
+        return res
     }
 
 }

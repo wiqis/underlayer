@@ -11,45 +11,44 @@ public namespace underlayer_web {
 
     // 5.1.1-5.1.5: Review session types via mode parameter
     // mode=new (5.1.1), due (5.1.2), cram (5.1.3), targeted (5.1.4), weakness (5.1.5)
-    public func handle_review_start(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_review_start(db : *DbClient, courses_dir : &string, req : &http::Request) : http::Response {
         // 5.1.19: resolve the learner from the bearer token only. No anonymous
         // "demo" fallback — otherwise anonymous sessions and ratings would be
         // written to a shared learner and pollute real progress data.
-        var learner_id = auth_get_learner_id(&raw db, req)
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         var course_id = string("elf")
 
         // Check for mode parameter (5.1.1-5.1.5)
         var q_mode = string("mode")
-        var mode_v = req.query.get(&q_mode.to_view())
+        var mode_v = sv_or_empty(req.query.get(std::str.make_view(q_mode.to_view())))
         var mode = string("due")
         if(mode_v.size() > 0) {
-            mode = sv_to_string(&raw mode_v)
+            mode = sv_to_string(&mode_v)
         }
 
         // Check for targeted concept (5.1.4)
         var q_concept = string("concept_id")
-        var concept_v = req.query.get(&q_concept.to_view())
+        var concept_v = sv_or_empty(req.query.get(std::str.make_view(q_concept.to_view())))
 
         // 2.4.21: lazily seed review items so the queue is never permanently empty
-        underlayer_repository::seed_review_items(&raw db, &learner_id, &course_id)
+        underlayer_repository::seed_review_items(db, &learner_id, &course_id)
 
-        var due_items : std::vector<underlayer_models::ReviewItem> = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, 10)
+        var due_items : std::vector<underlayer_models::ReviewItem> = underlayer_repository::get_due_review_items(db, &learner_id, &course_id, 10)
 
         // 5.1.3: Cramming mode — return all review items (ignore next_review)
         if(mode.equals(string("cram"))) {
-            due_items = underlayer_repository::get_all_review_items(&raw db, &learner_id, &course_id, 50)
+            due_items = underlayer_repository::get_all_review_items(db, &learner_id, &course_id, 50)
         }
         // 1.2.28: Lightning mode — only new items (never reviewed)
         if(mode.equals(string("lightning"))) {
             var filtered = std::vector<underlayer_models::ReviewItem>()
             var fi : size_t = 0
             while(fi < due_items.size()) {
-                var item = due_items.get_ptr(fi)
+                var item = due_items.at_ref(fi)
                 if(item.reps == 0) {
                     var copy = underlayer_models::ReviewItem::make()
                     copy.id = item.id.copy()
@@ -78,7 +77,7 @@ public namespace underlayer_web {
             var filtered = std::vector<underlayer_models::ReviewItem>()
             var fi : size_t = 0
             while(fi < due_items.size()) {
-                var item = due_items.get_ptr(fi)
+                var item = due_items.at_ref(fi)
                 if(item.reps > 0) {
                     var copy = underlayer_models::ReviewItem::make()
                     copy.id = item.id.copy()
@@ -116,13 +115,13 @@ public namespace underlayer_web {
         // 5.1.10: Custom review — user-selected items (via item_ids query param)
         if(mode.equals(string("custom"))) {
             var q_items = string("item_ids")
-            var items_v = req.query.get(&q_items.to_view())
+            var items_v = sv_or_empty(req.query.get(std::str.make_view(q_items.to_view())))
             if(items_v.size() > 0) {
-                var items_str = sv_to_string(&raw items_v)
+                var items_str = sv_to_string(&items_v)
                 var filtered = std::vector<underlayer_models::ReviewItem>()
                 var fi : size_t = 0
                 while(fi < due_items.size()) {
-                    var item = due_items.get_ptr(fi)
+                    var item = due_items.at_ref(fi)
                     // Simple substring match to check if this item is in the list
                     var item_copy = item.id.copy()
                     var items_copy = items_str.copy()
@@ -133,7 +132,7 @@ public namespace underlayer_web {
                             var match = true
                             var qi : size_t = 0
                             while(qi < item_copy.size()) {
-                                if(items_copy.get(ti + qi) != item_copy.get(qi)) { match = false }
+                                if(items_copy.at(ti + qi) != item_copy.at(qi)) { match = false }
                                 qi = qi + 1
                             }
                             if(match) { found = true }
@@ -166,11 +165,11 @@ public namespace underlayer_web {
         }
         // 5.1.4: Targeted review — filter to specific concept
         if(mode.equals(string("targeted")) && concept_v.size() > 0) {
-            var target_concept = sv_to_string(&raw concept_v)
+            var target_concept = sv_to_string(&concept_v)
             var filtered = std::vector<underlayer_models::ReviewItem>()
             var fi : size_t = 0
             while(fi < due_items.size()) {
-                var item = due_items.get_ptr(fi)
+                var item = due_items.at_ref(fi)
                 if(item.concept_id.equals(&target_concept)) {
                     var copy = underlayer_models::ReviewItem::make()
                     copy.id = item.id.copy()
@@ -196,11 +195,11 @@ public namespace underlayer_web {
         }
         // 5.1.5: Weakness repair — get states, find weak concepts, filter items
         if(mode.equals(string("weakness"))) {
-            var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
+            var states = underlayer_repository::get_all_concept_states(db, &learner_id, &course_id)
             var weak_concepts = std::vector<std::string>()
             var si : size_t = 0
             while(si < states.size()) {
-                var state = states.get_ptr(si)
+                var state = states.at_ref(si)
                 if(state.attempts > 0) {
                     var accuracy = (state.correct as f64) / (state.attempts as f64)
                     if(accuracy < 0.6) {
@@ -212,10 +211,10 @@ public namespace underlayer_web {
             var filtered = std::vector<underlayer_models::ReviewItem>()
             var fi : size_t = 0
             while(fi < due_items.size()) {
-                var item = due_items.get_ptr(fi)
+                var item = due_items.at_ref(fi)
                 var wi : size_t = 0
                 while(wi < weak_concepts.size()) {
-                    var wc_ptr = weak_concepts.get_ptr(wi)
+                    var wc_ptr = weak_concepts.at_ref(wi)
                     var wc_copy = wc_ptr.copy()
                     if(item.concept_id.equals(&wc_copy)) {
                         var copy = underlayer_models::ReviewItem::make()
@@ -245,7 +244,7 @@ public namespace underlayer_web {
 
         var now = underlayer_core::current_timestamp()
         var session_id = underlayer_core::int_to_string(now)
-        underlayer_repository::create_session(&raw db, &raw session_id, &raw learner_id, now)
+        underlayer_repository::create_session(db, &session_id, &learner_id, now)
 
         var body = std::string("{\"session_id\":\"")
         body.append_string(&session_id)
@@ -253,7 +252,7 @@ public namespace underlayer_web {
         var i : size_t = 0
         while(i < due_items.size()) {
             if(i > 0) { body.append_view(",") }
-            var item = due_items.get_ptr(i)
+            var item = due_items.at_ref(i)
             body.append_view("{\"id\":\"")
             body.append_string(&item.id)
             body.append_view("\",\"concept\":\"")
@@ -289,9 +288,9 @@ public namespace underlayer_web {
         body.append_view(",\"session_length_suggestion\":")
         // 1.2.26: Suggest session length based on energy level
         var q_energy = string("energy")
-        var energy_v = req.query.get(&q_energy.to_view())
+        var energy_v = sv_or_empty(req.query.get(std::str.make_view(q_energy.to_view())))
         if(energy_v.size() > 0) {
-            var energy = sv_to_string(&raw energy_v)
+            var energy = sv_to_string(&energy_v)
             if(energy.equals(string("high"))) { body.append_view("1800") }
             else if(energy.equals(string("medium"))) { body.append_view("900") }
             else if(energy.equals(string("low"))) { body.append_view("300") }
@@ -300,10 +299,10 @@ public namespace underlayer_web {
             body.append_view("900")
         }
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
-    public func handle_review_submit(db : &DbClient, req : *mut http::Request, res : *mut http::ResponseWriter) {
+    public func handle_review_submit(db : *DbClient, req : &mut http::Request) : http::Response {
         // Accept BOTH query params and a JSON body — the review page posts a
         // JSON body ({concept_id, rating, course_id, time_spent}); API consumers
         // may use query params. Body fields fill any param that is missing.
@@ -312,11 +311,11 @@ public namespace underlayer_web {
         var q_rat = string("rating")
         var q_sid = string("session_id")
         var q_time = string("time_spent_ms")
-        var cid_v = req.query.get(&q_cid.to_view())
-        var crsid_v = req.query.get(&q_crsid.to_view())
-        var rat_v = req.query.get(&q_rat.to_view())
-        var sid_v = req.query.get(&q_sid.to_view())
-        var time_v = req.query.get(&q_time.to_view())
+        var cid_v = sv_or_empty(req.query.get(std::str.make_view(q_cid.to_view())))
+        var crsid_v = sv_or_empty(req.query.get(std::str.make_view(q_crsid.to_view())))
+        var rat_v = sv_or_empty(req.query.get(std::str.make_view(q_rat.to_view())))
+        var sid_v = sv_or_empty(req.query.get(std::str.make_view(q_sid.to_view())))
+        var time_v = sv_or_empty(req.query.get(std::str.make_view(q_time.to_view())))
 
         var body_concept = string()
         var body_course = string()
@@ -353,19 +352,17 @@ public namespace underlayer_web {
         if(time_v.size() == 0) { time_v = body_time.to_view() }
         if(cid_v.size() == 0 || crsid_v.size() == 0 || rat_v.size() == 0) {
             var err_msg = string("missing concept_id, course_id, or rating (query params or JSON body)")
-            send_error(res, 400u, &err_msg)
-            return
+            return send_error(400u, &err_msg)
         }
-        var concept_id = sv_to_string(&raw cid_v)
-        var course_id = sv_to_string(&raw crsid_v)
-        var rating_str = sv_to_string(&raw rat_v)
+        var concept_id = sv_to_string(&cid_v)
+        var course_id = sv_to_string(&crsid_v)
+        var rating_str = sv_to_string(&rat_v)
         // 5.1.19: resolve the learner from the bearer token only. No anonymous
         // "demo" fallback — anonymous ratings must not pollute learner data.
-        var learner_id = auth_get_learner_id(&raw db, &*req)
+        var learner_id = auth_get_learner_id(db, &*req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
 
         var rating : int = 3
@@ -374,7 +371,7 @@ public namespace underlayer_web {
         if(rating_str.equals(string("good")) || rating_str.equals(string("3"))) { rating = 3 }
         if(rating_str.equals(string("easy")) || rating_str.equals(string("4"))) { rating = 4 }
 
-        var state = underlayer_repository::get_concept_state(&raw db, &learner_id, &concept_id, &course_id)
+        var state = underlayer_repository::get_concept_state(db, &learner_id, &concept_id, &course_id)
         state.learner_id = learner_id.copy()
         state.concept_id = concept_id.copy()
         state.course_id = course_id.copy()
@@ -423,7 +420,7 @@ public namespace underlayer_web {
         // init_stability and the graduation steps apply. That branch is the
         // correct path for a first review and it was being skipped for every
         // concept, including first ones.
-        var stored = underlayer_repository::get_review_item_by_concept(&raw db, &learner_id, &course_id, &concept_id)
+        var stored = underlayer_repository::get_review_item_by_concept(db, &learner_id, &course_id, &concept_id)
         var rs = ReviewState::make()
         rs.difficulty = state.difficulty_rating
         if(rs.difficulty < 1.0) { rs.difficulty = 5.0 }
@@ -467,9 +464,9 @@ public namespace underlayer_web {
         else if(new_rs.reps >= 5 && state.streak >= 3) { state.status = string("mastered") }
         else { state.status = string("reviewing") }
 
-        underlayer_repository::upsert_concept_state(&raw db, &raw state)
-        underlayer_repository::record_activity(&raw db, &learner_id)
-        underlayer_repository::run_achievement_checks(&raw db, &learner_id)
+        underlayer_repository::upsert_concept_state(db, &state)
+        underlayer_repository::record_activity(db, &learner_id)
+        underlayer_repository::run_achievement_checks(db, &learner_id)
 
         // WRITE THE SCHEDULER'S OUTPUT BACK. Without this the stability that
         // fsrs_update_state just computed is returned to the caller and then
@@ -484,7 +481,7 @@ public namespace underlayer_web {
             stored.last_review = state.last_studied
             stored.reps = new_rs.reps
             stored.lapses = new_rs.lapses
-            underlayer_repository::update_review_item(&raw db, &raw stored)
+            underlayer_repository::update_review_item(db, &stored)
         } else {
             // FIRST RATING ON THIS CONCEPT, SO NO ROW EXISTS YET.
             //
@@ -524,7 +521,7 @@ public namespace underlayer_web {
             fresh.last_review = state.last_studied
             fresh.reps = new_rs.reps
             fresh.lapses = new_rs.lapses
-            underlayer_repository::insert_review_item(&raw db, &raw fresh)
+            underlayer_repository::insert_review_item(db, &fresh)
         }
 
         // 1.2.16: Compute session accuracy from state
@@ -537,12 +534,12 @@ public namespace underlayer_web {
 
         // Record session item if session_id provided (1.2.6, 1.2.7)
         if(sid_v.size() > 0) {
-            var session_id = sv_to_string(&raw sid_v)
+            var session_id = sv_to_string(&sid_v)
             var time_spent : i64 = 0
             if(time_v.size() > 0) {
                 time_spent = underlayer_repository::parse_i64(time_v)
             }
-            underlayer_repository::record_session_item(&raw db, &session_id, &concept_id, rating, time_spent)
+            underlayer_repository::record_session_item(db, &session_id, &concept_id, rating, time_spent)
         }
 
         var resp = string("{\"status\":\"ok\",\"rating\":")
@@ -587,11 +584,11 @@ public namespace underlayer_web {
         // P2 4.2.16/4.2.17: Mistake pattern + personalized feedback
         var pattern_states = std::vector<underlayer_models::ConceptState>()
         pattern_states.push(state)
-        var patterns = underlayer_learning::detect_mistake_patterns(&raw pattern_states)
+        var patterns = underlayer_learning::detect_mistake_patterns(&pattern_states)
         var none_pat = string("none")
         var feedback = string()
         if(patterns.size() > 0) {
-            var p0 = patterns.get_ptr(0)
+            var p0 = patterns.at_ref(0)
             resp.append_view(",\"mistake_pattern\":\"")
             resp.append_string(&p0.pattern)
             resp.append_view("\"")
@@ -605,42 +602,45 @@ public namespace underlayer_web {
         var fb_escaped = underlayer_core::json_escape(&feedback.to_view())
         resp.append_string(&fb_escaped)
         resp.append_view("\"}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
-    public func handle_review_end(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_review_end(db : *DbClient, req : &http::Request) : http::Response {
         var q_sid = string("session_id")
-        var sid_v = req.query.get(&q_sid.to_view())
+        var sid_v = sv_or_empty(req.query.get(std::str.make_view(q_sid.to_view())))
         if(sid_v.size() == 0) {
             var err_msg = string("missing query param: session_id")
-            send_error(res, 400u, &err_msg)
-            return
+            return send_error(400u, &err_msg)
         }
-        var session_id = sv_to_string(&raw sid_v)
-        if(!require_own_session(&raw db, req, res, &raw session_id)) { return }
-        underlayer_repository::finish_session(&raw db, &raw session_id, 0, 0)
+        var session_id = sv_to_string(&sid_v)
+        var guard = require_own_session(db, req, &session_id)
+        if(guard is std::Option.Some) {
+            var Some(refusal) = guard else unsafe { unreachable }
+            return refusal
+        }
+        underlayer_repository::finish_session(db, &session_id, 0, 0)
 
         var resp = string("{\"status\":\"ok\",\"session_id\":\"")
         resp.append_string(&session_id)
         resp.append_view("\"}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
-    public func handle_review_due(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
+    public func handle_review_due(db : *DbClient, courses_dir : &string, req : &http::Request) : http::Response {
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
         var limit : int = 10
 
         // 2.4.21: lazily seed review items so the queue is never permanently empty
-        underlayer_repository::seed_review_items(&raw db, &learner_id, &course_id)
+        underlayer_repository::seed_review_items(db, &learner_id, &course_id)
 
-        var due_items = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, limit)
+        var due_items = underlayer_repository::get_due_review_items(db, &learner_id, &course_id, limit)
         var body = std::string("{\"items\":[")
         var i : size_t = 0
         while(i < due_items.size()) {
             if(i > 0) { body.append_view(",") }
-            var item = due_items.get_ptr(i)
+            var item = due_items.at_ref(i)
             body.append_view("{\"id\":\"")
             body.append_string(&item.id)
             body.append_view("\",\"concept\":\"")
@@ -658,20 +658,20 @@ public namespace underlayer_web {
         var total_str = underlayer_core::int_to_string(due_items.size() as i64)
         body.append_string(&total_str)
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // ---- Session History (1.2.21, 1.2.22, 1.2.23, 1.2.24) ----
-    public func handle_session_history(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
+    public func handle_session_history(db : *DbClient, req : &http::Request) : http::Response {
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
-        var sessions = underlayer_repository::get_learner_sessions(&raw db, &learner_id, 20)
+        var sessions = underlayer_repository::get_learner_sessions(db, &learner_id, 20)
 
         var body = std::string("{\"sessions\":[")
         var i : size_t = 0
         while(i < sessions.size()) {
             if(i > 0) { body.append_view(",") }
-            var s = sessions.get_ptr(i)
+            var s = sessions.at_ref(i)
             body.append_view("{\"id\":\"")
             body.append_string(&s.id)
             body.append_view("\",\"start_time\":")
@@ -711,8 +711,8 @@ public namespace underlayer_web {
         body.append_view("],\"trends\":{")
         // Compute trends across sessions
         if(sessions.size() >= 2) {
-            var first = sessions.get_ptr(0)
-            var last = sessions.get_ptr(sessions.size() - 1)
+            var first = sessions.at_ref(0)
+            var last = sessions.at_ref(sessions.size() - 1)
             var first_acc : f64 = 0.0
             var last_acc : f64 = 0.0
             if(first.exercises_attempted > 0) {
@@ -731,30 +731,33 @@ public namespace underlayer_web {
             body.append_view("\"accuracy_trend\":\"insufficient_data\"")
         }
         body.append_view("}}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // ---- Session Detail (1.2.22) ----
-    public func handle_session_detail(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_session_detail(db : *DbClient, req : &http::Request) : http::Response {
         var q_sid = string("session_id")
-        var sid_v = req.query.get(&q_sid.to_view())
+        var sid_v = sv_or_empty(req.query.get(std::str.make_view(q_sid.to_view())))
         if(sid_v.size() == 0) {
             var path = req.path.to_view()
             var segments = underlayer_core::path_segments(&path)
             if(segments.size() >= 2) {
-                sid_v = *segments.get_ptr(segments.size() - 1)
+                sid_v = *segments.at_ref(segments.size() - 1)
             }
         }
         if(sid_v.size() == 0) {
             var err_msg = string("missing session_id param or path segment")
-            send_error(res, 400u, &err_msg)
-            return
+            return send_error(400u, &err_msg)
         }
-        var session_id = sv_to_string(&raw sid_v)
-        if(!require_own_session(&raw db, req, res, &raw session_id)) { return }
+        var session_id = sv_to_string(&sid_v)
+        var guard = require_own_session(db, req, &session_id)
+        if(guard is std::Option.Some) {
+            var Some(refusal) = guard else unsafe { unreachable }
+            return refusal
+        }
 
-        var items = underlayer_repository::get_session_items(&raw db, &session_id)
-        var stats = underlayer_repository::get_session_stats(&raw db, &session_id)
+        var items = underlayer_repository::get_session_items(db, &session_id)
+        var stats = underlayer_repository::get_session_stats(db, &session_id)
 
         var body = std::string("{\"session_id\":\"")
         body.append_string(&session_id)
@@ -771,7 +774,7 @@ public namespace underlayer_web {
         var i : size_t = 0
         while(i < items.size()) {
             if(i > 0) { body.append_view(",") }
-            var item = items.get_ptr(i)
+            var item = items.at_ref(i)
             body.append_view("{\"concept\":\"")
             body.append_string(&item.concept_id)
             body.append_view("\",\"rating\":")
@@ -787,125 +790,139 @@ public namespace underlayer_web {
             i = i + 1
         }
         body.append_view("]}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // ---- Session Pause (1.2.9) ----
-    public func handle_session_pause(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_session_pause(db : *DbClient, req : &http::Request) : http::Response {
         var q_sid = string("session_id")
-        var sid_v = req.query.get(&q_sid.to_view())
+        var sid_v = sv_or_empty(req.query.get(std::str.make_view(q_sid.to_view())))
         if(sid_v.size() == 0) {
             var err_msg = string("missing query param: session_id")
-            send_error(res, 400u, &err_msg)
-            return
+            return send_error(400u, &err_msg)
         }
-        var session_id = sv_to_string(&raw sid_v)
-        if(!require_own_session(&raw db, req, res, &raw session_id)) { return }
-        underlayer_repository::pause_session(&raw db, &raw session_id)
+        var session_id = sv_to_string(&sid_v)
+        var guard = require_own_session(db, req, &session_id)
+        if(guard is std::Option.Some) {
+            var Some(refusal) = guard else unsafe { unreachable }
+            return refusal
+        }
+        underlayer_repository::pause_session(db, &session_id)
         var resp = string("{\"status\":\"ok\",\"session_id\":\"")
         resp.append_string(&session_id)
         resp.append_view("\",\"state\":\"paused\"}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // ---- Session Resume (1.2.10) ----
-    public func handle_session_resume(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_session_resume(db : *DbClient, req : &http::Request) : http::Response {
         var q_sid = string("session_id")
-        var sid_v = req.query.get(&q_sid.to_view())
+        var sid_v = sv_or_empty(req.query.get(std::str.make_view(q_sid.to_view())))
         if(sid_v.size() == 0) {
             var err_msg = string("missing query param: session_id")
-            send_error(res, 400u, &err_msg)
-            return
+            return send_error(400u, &err_msg)
         }
-        var session_id = sv_to_string(&raw sid_v)
-        if(!require_own_session(&raw db, req, res, &raw session_id)) { return }
-        underlayer_repository::resume_session(&raw db, &raw session_id)
+        var session_id = sv_to_string(&sid_v)
+        var guard = require_own_session(db, req, &session_id)
+        if(guard is std::Option.Some) {
+            var Some(refusal) = guard else unsafe { unreachable }
+            return refusal
+        }
+        underlayer_repository::resume_session(db, &session_id)
         // Return items already reviewed so client can rebuild state
-        var items = underlayer_repository::get_session_items(&raw db, &session_id)
+        var items = underlayer_repository::get_session_items(db, &session_id)
         var resp = string("{\"status\":\"ok\",\"session_id\":\"")
         resp.append_string(&session_id)
         resp.append_view("\",\"state\":\"active\",\"reviewed\":")
         var t_str = underlayer_core::int_to_string(items.size() as i64)
         resp.append_string(&t_str)
         resp.append_view("}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // ---- Session Abort (1.2.11) ----
-    public func handle_session_abort(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_session_abort(db : *DbClient, req : &http::Request) : http::Response {
         var q_sid = string("session_id")
-        var sid_v = req.query.get(&q_sid.to_view())
+        var sid_v = sv_or_empty(req.query.get(std::str.make_view(q_sid.to_view())))
         if(sid_v.size() == 0) {
             var err_msg = string("missing query param: session_id")
-            send_error(res, 400u, &err_msg)
-            return
+            return send_error(400u, &err_msg)
         }
-        var session_id = sv_to_string(&raw sid_v)
-        if(!require_own_session(&raw db, req, res, &raw session_id)) { return }
-        underlayer_repository::abort_session(&raw db, &raw session_id)
+        var session_id = sv_to_string(&sid_v)
+        var guard = require_own_session(db, req, &session_id)
+        if(guard is std::Option.Some) {
+            var Some(refusal) = guard else unsafe { unreachable }
+            return refusal
+        }
+        underlayer_repository::abort_session(db, &session_id)
         var resp = string("{\"status\":\"ok\",\"session_id\":\"")
         resp.append_string(&session_id)
         resp.append_view("\",\"state\":\"aborted\"}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // ---- Session Undo (1.2.12) ----
-    public func handle_session_undo(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_session_undo(db : *DbClient, req : &http::Request) : http::Response {
         var q_sid = string("session_id")
-        var sid_v = req.query.get(&q_sid.to_view())
+        var sid_v = sv_or_empty(req.query.get(std::str.make_view(q_sid.to_view())))
         if(sid_v.size() == 0) {
             var err_msg = string("missing query param: session_id")
-            send_error(res, 400u, &err_msg)
-            return
+            return send_error(400u, &err_msg)
         }
-        var session_id = sv_to_string(&raw sid_v)
-        if(!require_own_session(&raw db, req, res, &raw session_id)) { return }
-        var undone = underlayer_repository::undo_last_item(&raw db, &raw session_id)
+        var session_id = sv_to_string(&sid_v)
+        var guard = require_own_session(db, req, &session_id)
+        if(guard is std::Option.Some) {
+            var Some(refusal) = guard else unsafe { unreachable }
+            return refusal
+        }
+        var undone = underlayer_repository::undo_last_item(db, &session_id)
         if(!undone) {
             var err_msg2 = string("no items to undo")
-            send_error(res, 404u, &err_msg2)
-            return
+            return send_error(404u, &err_msg2)
         }
         var resp = string("{\"status\":\"ok\",\"session_id\":\"")
         resp.append_string(&session_id)
         resp.append_view("\",\"undone\":true}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // ---- Session Skip (1.2.13) ----
-    public func handle_session_skip(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_session_skip(db : *DbClient, req : &http::Request) : http::Response {
         var q_sid = string("session_id")
         var q_cid = string("concept_id")
-        var sid_v = req.query.get(&q_sid.to_view())
-        var cid_v = req.query.get(&q_cid.to_view())
+        var sid_v = sv_or_empty(req.query.get(std::str.make_view(q_sid.to_view())))
+        var cid_v = sv_or_empty(req.query.get(std::str.make_view(q_cid.to_view())))
         if(sid_v.size() == 0 || cid_v.size() == 0) {
             var err_msg = string("missing query params: session_id, concept_id")
-            send_error(res, 400u, &err_msg)
-            return
+            return send_error(400u, &err_msg)
         }
-        var session_id = sv_to_string(&raw sid_v)
-        if(!require_own_session(&raw db, req, res, &raw session_id)) { return }
-        var concept_id = sv_to_string(&raw cid_v)
-        underlayer_repository::skip_item(&raw db, &raw session_id, &raw concept_id)
+        var session_id = sv_to_string(&sid_v)
+        var guard = require_own_session(db, req, &session_id)
+        if(guard is std::Option.Some) {
+            var Some(refusal) = guard else unsafe { unreachable }
+            return refusal
+        }
+        var concept_id = sv_to_string(&cid_v)
+        underlayer_repository::skip_item(db, &session_id, &concept_id)
         var resp = string("{\"status\":\"ok\",\"session_id\":\"")
         resp.append_string(&session_id)
         resp.append_view("\",\"skipped\":\"")
         resp.append_string(&concept_id)
         resp.append_view("\"}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // 1.2.25: Session recommendations — suggest session type based on due items
-    public func handle_session_recommendations(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
+    public func handle_session_recommendations(db : *DbClient, req : &http::Request) : http::Response {
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
-        var due_items = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, 50)
+        var due_items = underlayer_repository::get_due_review_items(db, &learner_id, &course_id, 50)
         var new_count : int = 0
         var review_count : int = 0
         var i : size_t = 0
         while(i < due_items.size()) {
-            var item = due_items.get_ptr(i)
+            var item = due_items.at_ref(i)
             if(item.reps == 0) { new_count = new_count + 1 }
             else { review_count = review_count + 1 }
             i = i + 1
@@ -952,14 +969,14 @@ public namespace underlayer_web {
             body.append_view("}")
         }
         body.append_view("]}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // 1.2.27: Session recommendations — suggest time of day based on past performance
-    public func handle_session_time_recommendation(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
+    public func handle_session_time_recommendation(db : *DbClient, req : &http::Request) : http::Response {
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
-        var sessions = underlayer_repository::get_learner_sessions(&raw db, &learner_id, 50)
+        var sessions = underlayer_repository::get_learner_sessions(db, &learner_id, 50)
 
         // Analyze which hours have best accuracy
         var hourly_accuracy : vector<f64> = vector<f64>()
@@ -972,7 +989,7 @@ public namespace underlayer_web {
         }
         var si : size_t = 0
         while(si < sessions.size()) {
-            var s = sessions.get_ptr(si)
+            var s = sessions.at_ref(si)
             // Approximate hour from timestamp (hour = (timestamp % 86400) / 3600)
             var hour = ((s.start_time % 86400) / 3600) as size_t
             if(hour < 24) {
@@ -980,8 +997,8 @@ public namespace underlayer_web {
                 if(s.exercises_attempted > 0) {
                     acc = (s.exercises_correct as f64) / (s.exercises_attempted as f64)
                 }
-                var prev_acc = hourly_accuracy.get(hour)
-                var prev_count = hourly_count.get(hour)
+                var prev_acc = hourly_accuracy.at(hour)
+                var prev_count = hourly_count.at(hour)
                 hourly_accuracy.set(hour, prev_acc + acc)
                 hourly_count.set(hour, prev_count + 1)
             }
@@ -993,9 +1010,9 @@ public namespace underlayer_web {
         var best_acc : f64 = 0.0
         var hi2 : size_t = 0
         while(hi2 < 24) {
-            var cnt = hourly_count.get(hi2)
+            var cnt = hourly_count.at(hi2)
             if(cnt > 0) {
-                var avg = hourly_accuracy.get(hi2) / (cnt as f64)
+                var avg = hourly_accuracy.at(hi2) / (cnt as f64)
                 if(avg > best_acc) {
                     best_acc = avg
                     best_hour = hi2 as i64
@@ -1019,7 +1036,7 @@ public namespace underlayer_web {
             body.append_view("Complete more sessions to get personalized recommendations")
         }
         body.append_view("\"}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
 }

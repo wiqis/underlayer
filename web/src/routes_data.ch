@@ -88,10 +88,10 @@ public namespace underlayer_web {
         var seen = vector<string>()
         var ri : size_t = 0
         while(ri < routes.size()) {
-            var r = routes.get_ptr(ri)
+            var r = routes.at_ref(ri)
             var si : size_t = 0
             while(si < r.steps.size()) {
-                var st = r.steps.get_ptr(si)
+                var st = r.steps.at_ref(si)
                 seen.push(st.course_id.copy())
                 si = si + 1
             }

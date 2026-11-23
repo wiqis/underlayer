@@ -27,37 +27,23 @@ public namespace underlayer_web {
     // verification tokens with it.  That is the rule in AGENTS.md -- a
     // private helper shared across files becomes public -- and leaving it
     // private is a link error, not a style note.
+    // A lowercase hex string of `len` characters, from `len / 2` random bytes.
+    //
+    // Both this and `sha256_hex` are one line over `underlayer_core`, which owns
+    // the randomness source and the digest.  They used to be two hand-written
+    // 12-line bodies with their own fixed-size buffers, and the same body
+    // appeared again in handlers_profiles, handlers_settings_api and
+    // password_hash.
     public func generate_random_hex(len : size_t) : string {
-        var buf : [64]u8
-        var fill_len = len / 2
-        if(fill_len > 64) { fill_len = 64 }
-        osrand::random_fill(&raw mut buf[0], fill_len)
-        var hex_out : [129]char
-        var i0 : size_t = 0
-        while(i0 < 129) { hex_out[i0] = 0; i0 = i0 + 1 }
-        encoding::hex_encode(&raw buf[0], fill_len, &raw mut hex_out[0], 129)
-        var result = string()
-        var i : size_t = 0
-        while(i < len && hex_out[i] != 0) { result.append(hex_out[i]); i = i + 1 }
-        return result
+        var full = underlayer_core::random_hex((len + 1) / 2)
+        if(full.size() <= len) { return full }
+        return full.substring(0, len)
     }
 
-    // public for the same reason as generate_random_hex above.
-    public func sha256_hex(data : *u8, data_len : size_t) : string {
-        var digest : [32]u8
-        var di : size_t = 0
-        while(di < 32) { digest[di] = 0; di = di + 1 }
-        crypto::sha256_hash(data, data_len, &raw mut digest[0])
-        var hex_out : [65]char
-        var hi : size_t = 0
-        while(hi < 65) { hex_out[hi] = 0; hi = hi + 1 }
-        encoding::hex_encode(&raw digest[0], 32, &raw mut hex_out[0], 65)
-        var result = string()
-        var ri : size_t = 0
-        while(ri < 64 && hex_out[ri] != 0) { result.append(hex_out[ri]); ri = ri + 1 }
-        return result
+    // Lowercase hex SHA-256 of `text`.
+    public func sha256_hex(text : &std::string_view) : string {
+        return underlayer_core::sha256_hex(text)
     }
-
     // Session and reset tokens are stored as SHA-256 of the token.  That is
     // correct and unchanged: a token is 64 hex characters of CSPRNG output, so
     // there is nothing to guess and nothing to brute-force -- the database copy
@@ -65,8 +51,9 @@ public namespace underlayer_web {
     // is to use the same primitive for PASSWORDS, which is why that lives in
     // password_hash.ch and comes back here through these two functions.
     // public for the same reason as generate_random_hex above.
-    public func hash_token(token : *string) : string {
-        return sha256_hex(token.data() as *u8, token.size())
+    public func hash_token(token : &string) : string {
+        var tv = token.to_view()
+        return underlayer_core::sha256_hex(&tv)
     }
 
     // Password hashing lives in password_hash.ch, not here.  `hash_password`
@@ -84,18 +71,18 @@ public namespace underlayer_web {
         if(auth_opt is std::Option.None) { return string() }
         var Some(auth_header) = auth_opt else return string()
         if(auth_header.size() < 8) { return string() }
-        var ok = auth_header.get(0) == 'B' && auth_header.get(1) == 'e' && auth_header.get(2) == 'a' && auth_header.get(3) == 'r' && auth_header.get(4) == 'e' && auth_header.get(5) == 'r' && auth_header.get(6) == ' '
+        var ok = auth_header.at(0) == 'B' && auth_header.at(1) == 'e' && auth_header.at(2) == 'a' && auth_header.at(3) == 'r' && auth_header.at(4) == 'e' && auth_header.at(5) == 'r' && auth_header.at(6) == ' '
         if(!ok) { return string() }
         var token = string()
         var ti : size_t = 7
-        while(ti < auth_header.size()) { token.append(auth_header.get(ti)); ti = ti + 1 }
+        while(ti < auth_header.size()) { token.append(auth_header.at(ti)); ti = ti + 1 }
         return token
     }
 
     public func auth_get_learner_id(db : *DbClient, req : &http::Request) : string {
         var token = extract_bearer_token(req)
         if(token.size() == 0) { return string() }
-        var token_hash = hash_token(&raw token)
+        var token_hash = hash_token(&token)
         var sql = string("SELECT learner_id FROM auth_sessions WHERE token_hash = '")
         sql.append_string(&token_hash)
         sql.append_view("' AND expires_at > ")
@@ -104,17 +91,17 @@ public namespace underlayer_web {
         sql.append_view(" LIMIT 1")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() > 0) {
-                return row.vals.get_ptr(0).copy()
+                return row.vals.at_ref(0).copy()
             }
         }
         return string()
     }
 
-    private func create_session(db : *DbClient, learner_id : *string) : string {
+    private func create_session(db : *DbClient, learner_id : &string) : string {
         var token = generate_random_hex(64)
-        var token_hash = hash_token(&raw token)
+        var token_hash = hash_token(&token)
         var session_id = generate_random_hex(32)
         var now = underlayer_core::current_timestamp()
         var expires_at = now + 2592000
@@ -139,18 +126,16 @@ public namespace underlayer_web {
 
     // ---- 16.1.1: POST /api/auth/register ----
 
-    public func handle_register(db : *DbClient, req : *mut http::Request, res : *mut http::ResponseWriter) {
+    public func handle_register(db : *DbClient, req : &mut http::Request) : http::Response {
         var body_str = read_body(req)
         if(body_str.size() == 0) {
             var err = string("empty request body")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         var parse_result = json::parse(body_str.to_view())
         if(parse_result is std::Result.Err) {
             var err = string("invalid JSON")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         var Ok(parsed) = parse_result else unsafe { unreachable }
         var email = json_get_str(&parsed, "email")
@@ -158,27 +143,24 @@ public namespace underlayer_web {
         var name = json_get_str(&parsed, "name")
         if(email.size() == 0) {
             var err = string("email is required")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         if(password.size() < 8) {
             var err = string("password must be at least 8 characters")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         var has_at = false
         var has_dot = false
         var ei : size_t = 0
         while(ei < email.size()) {
-            var c = email.get(ei)
+            var c = email.at(ei)
             if(c == '@') { has_at = true }
             if(c == '.') { has_dot = true }
             ei = ei + 1
         }
         if(!has_at || !has_dot) {
             var err = string("invalid email format")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         // email and name are request text concatenated into SQL literals.  Escaping
         // here is what stops a name like "O'Brien" from turning the INSERT into
@@ -193,10 +175,9 @@ public namespace underlayer_web {
         var existing = underlayer_db::query_sql(db, &raw check_sql)
         if(existing.rows.size() > 0) {
             var err = string("email already registered")
-            send_error(res, 409u, &err)
-            return
+            return send_error(409u, &err)
         }
-        var pw_hash = hash_password(&raw password)
+        var pw_hash = hash_password(&password)
         var learner_id = generate_random_hex(32)
         var learner_safe = underlayer_repository::sql_escape(&learner_id)
         var hash_safe = underlayer_repository::sql_escape(&pw_hash)
@@ -207,8 +188,7 @@ public namespace underlayer_web {
         var insert_rows = underlayer_repository::create_learner_with_hash(db, &learner_id, &name, &email, &pw_hash)
         if(insert_rows == 0) {
             var err = string("could not create the account")
-            send_error(res, 500u, &err)
-            return
+            return send_error(500u, &err)
         }
         var now = underlayer_core::current_timestamp()
         var now_str = underlayer_core::int_to_string(now)
@@ -245,37 +225,34 @@ public namespace underlayer_web {
         var wconcept = string("")
         var wurl = string("/courses/elf")
         underlayer_repository::create_notification(db, &learner_id, &wtype, &wtitle, &wmsg, &wcourse, &wconcept, &wurl)
-        var token = create_session(db, &raw learner_id)
+        var token = create_session(db, &learner_id)
         var resp = string("{\"learner_id\":\"")
         resp.append_string(&learner_id)
         resp.append_view("\",\"session_token\":\"")
         resp.append_string(&token)
         resp.append_view("\"}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // ---- 16.2.1: POST /api/auth/login ----
 
-    public func handle_login(db : *DbClient, req : *mut http::Request, res : *mut http::ResponseWriter) {
+    public func handle_login(db : *DbClient, req : &mut http::Request) : http::Response {
         var body_str = read_body(req)
         if(body_str.size() == 0) {
             var err = string("empty request body")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         var parse_result = json::parse(body_str.to_view())
         if(parse_result is std::Result.Err) {
             var err = string("invalid JSON")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         var Ok(parsed) = parse_result else unsafe { unreachable }
         var email = json_get_str(&parsed, "email")
         var password = json_get_str(&parsed, "password")
         if(email.size() == 0 || password.size() == 0) {
             var err = string("email and password are required")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         // The email arrives in a JSON body and is concatenated straight into a
         // SQL literal.  Escaped here, in the handler, because this is the one
@@ -296,16 +273,15 @@ public namespace underlayer_web {
             fail_sql.append_view(")")
             underlayer_db::exec_sql(db, &raw fail_sql)
             var err = string("invalid email or password")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
-        var row = result.rows.get_ptr(0)
-        var learner_id = row.vals.get_ptr(0).copy()
-        var stored_hash = row.vals.get_ptr(2).copy()
+        var row = result.rows.at_ref(0)
+        var learner_id = row.vals.at_ref(0).copy()
+        var stored_hash = row.vals.at_ref(2).copy()
         // Verify, do not re-hash-and-compare.  verify_password understands both
         // the current bcrypt form and the legacy unsalted SHA-256 rows, so a
         // learner created before the fix can still sign in.
-        if(!verify_password(&raw password, &raw stored_hash)) {
+        if(!verify_password(&password, &stored_hash)) {
             var now = underlayer_core::current_timestamp()
             var now_str = underlayer_core::int_to_string(now)
             var learner_safe = underlayer_repository::sql_escape(&learner_id)
@@ -316,16 +292,15 @@ public namespace underlayer_web {
             fail_sql.append_view(")")
             underlayer_db::exec_sql(db, &raw fail_sql)
             var err = string("invalid email or password")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         // Self-upgrading migration.  A row that still verified against the old
         // scheme is rewritten in bcrypt here, on the one request where we have
         // just proved we know the plaintext.  Nothing is migrated in bulk, so
         // no account is locked out by a bad migration script, and the fleet
         // converges one real login at a time.
-        if(underlayer_web::password_is_legacy_sha256(&raw stored_hash)) {
-            var upgraded = hash_password(&raw password)
+        if(underlayer_web::password_is_legacy_sha256(&stored_hash)) {
+            var upgraded = hash_password(&password)
             if(upgraded.size() > 0u) {
                 var up_learner = underlayer_repository::sql_escape(&learner_id)
                 var up_hash = underlayer_repository::sql_escape(&upgraded)
@@ -337,7 +312,7 @@ public namespace underlayer_web {
                 underlayer_db::exec_sql(db, &raw up_sql)
             }
         }
-        var token = create_session(db, &raw learner_id)
+        var token = create_session(db, &learner_id)
         var now = underlayer_core::current_timestamp()
         var now_str = underlayer_core::int_to_string(now)
         var hist_sql = string("INSERT INTO login_history (learner_id, success, created_at) VALUES ('")
@@ -351,41 +326,38 @@ public namespace underlayer_web {
         resp.append_view("\",\"session_token\":\"")
         resp.append_string(&token)
         resp.append_view("\"}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // ---- 16.2.17: POST /api/auth/logout ----
 
-    public func handle_logout(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_logout(db : *DbClient, req : &http::Request) : http::Response {
         var token = extract_bearer_token(req)
         if(token.size() == 0) {
             var err = string("missing token")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
-        var token_hash = hash_token(&raw token)
+        var token_hash = hash_token(&token)
         var sql = string("DELETE FROM auth_sessions WHERE token_hash = '")
         sql.append_string(&token_hash)
         sql.append_view("'")
         underlayer_db::exec_sql(db, &raw sql)
         var resp = string("{\"ok\":true}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // ---- 16.2.14: GET /api/auth/me ----
 
-    public func handle_get_me(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_get_me(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         var learner = underlayer_repository::get_learner(db, &learner_id)
         if(learner.id.size() == 0) {
             var err = string("learner not found")
-            send_error(res, 404u, &err)
-            return
+            return send_error(404u, &err)
         }
         var profile = underlayer_repository::get_profile(db, &learner_id)
         var resp = string("{\"learner_id\":\"")
@@ -401,7 +373,7 @@ public namespace underlayer_web {
         resp.append_view("\",\"avatar_url\":\"")
         resp.append_string(&profile.avatar_url)
         resp.append_view("\"}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
 }

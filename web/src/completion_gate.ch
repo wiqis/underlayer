@@ -57,13 +57,12 @@ public namespace underlayer_web {
         db : *DbClient,
         courses_dir : &string,
         learner_id : &string,
-        course_id : &string,
-        res : *mut http::ResponseWriter
-    ) : bool {
+        course_id : &string
+    ) : std::Option<http::Response> {
         var states = underlayer_repository::get_all_concept_states(db, learner_id, course_id)
         var total = manifest_concept_total(courses_dir, course_id)
-        var cov = underlayer_learning::compute_course_coverage(course_id, &raw states, total)
-        if(cov.concepts_total > 0 && cov.progress_percentage >= 100) { return true }
+        var cov = underlayer_learning::compute_course_coverage(course_id, &states, total)
+        if(cov.concepts_total > 0 && cov.progress_percentage >= 100) { return std::Option.None<http::Response>() }
 
         // Named locals, not `&underlayer_core::int_to_string(...)` inline:
         // taking the address of a temporary is the shape that
@@ -81,9 +80,9 @@ public namespace underlayer_web {
         reason.append_view(",\"progress_percentage\":")
         reason.append_string(&pct_s)
         reason.append_view("}")
-        res.status = 403u
-        send_json_str(res, &raw reason)
-        return false
+        var refusal = send_json_str(&reason)
+        refusal.status = 403u
+        return std::Option.Some<http::Response>(refusal)
     }
 
 }

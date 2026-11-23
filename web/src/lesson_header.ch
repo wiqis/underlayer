@@ -89,7 +89,7 @@ public namespace underlayer_web {
     private func lesson_module_title(course : &Course, module_id : &string) : string {
         var i : size_t = 0
         while(i < course.modules.size()) {
-            var m = course.modules.get_ptr(i)
+            var m = course.modules.at_ref(i)
             if(m.id.equals(module_id)) { return m.title.copy() }
             i = i + 1
         }
@@ -99,7 +99,7 @@ public namespace underlayer_web {
     private func lesson_module_order(course : &Course, module_id : &string) : int {
         var i : size_t = 0
         while(i < course.modules.size()) {
-            var m = course.modules.get_ptr(i)
+            var m = course.modules.at_ref(i)
             if(m.id.equals(module_id)) { return m.order }
             i = i + 1
         }
@@ -122,7 +122,7 @@ public namespace underlayer_web {
         var found = false
         var i : size_t = 0
         while(i < course.concepts.size()) {
-            var c = course.concepts.get_ptr(i)
+            var c = course.concepts.at_ref(i)
             if(c.id.equals(concept_id)) {
                 module_id = c.module_id.copy()
                 minutes = c.estimated_minutes
@@ -211,11 +211,11 @@ public namespace underlayer_web {
         var first = true
         var pi2 : size_t = 0
         while(pi2 < course.concepts.size()) {
-            var c2 = course.concepts.get_ptr(pi2)
+            var c2 = course.concepts.at_ref(pi2)
             if(c2.prerequisites.size() > 0 && c2.id.equals(concept_id)) {
                 var pk : size_t = 0
                 while(pk < c2.prerequisites.size()) {
-                    prereqs.push_back(c2.prerequisites.get_ptr(pk).copy())
+                    prereqs.push_back(c2.prerequisites.at_ref(pk).copy())
                     pk = pk + 1
                 }
             }
@@ -250,7 +250,7 @@ public namespace underlayer_web {
             out.append_view("<span class=\"lesson-head-prereq\">")
             var pi : size_t = 0
             while(pi < prereqs.size()) {
-                var pidv = prereqs.get_ptr(pi).copy()
+                var pidv = prereqs.at_ref(pi).copy()
                 if(pi > 0) {
                     if(pi + 1 == prereqs.size()) { out.append_view(" and") }
                     else { out.append_view(",") }
@@ -292,10 +292,10 @@ public namespace underlayer_web {
     // </h1>.  See the file header for why "exactly one" is a safety condition
     // rather than a convenience.
     public func apply_lesson_header(src : &string, course : &Course, concept_id : &string) : string {
-        var first = src.find(string_view("</h1>"))
+        var first = src.find_or_npos(string_view("</h1>"))
         if(first == std::NPOS) { return src.copy() }
         // A second one means this is not the shape we know how to patch.
-        var second = src.to_view().subview(first + 5, src.size()).find(string_view("</h1>"))
+        var second = src.to_view().subview(first + 5, src.size()).find_or_npos(string_view("</h1>"))
         if(second != std::NPOS) { return src.copy() }
 
         var header = lesson_header_html(course, concept_id)

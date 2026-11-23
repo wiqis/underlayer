@@ -96,15 +96,16 @@ public namespace underlayer_web {
     // `__ulNextPath` rejects anything that is not a single leading `/`, so
     // `//evil.example` -- protocol-relative, and it would leave the site -- could
     // not be honoured even if it were somehow constructed here.
-    public func redirect_to_login(res : *mut http::ResponseWriter, path : &string) {
+    public func redirect_to_login(path : &string) : http::Response {
         var esc = underlayer_core::html_escape(path)
         var loc = string("/login?next=")
         loc.append_string(&esc)
 
+        var res = http::Response()
         res.status = 303u
         var loc_view = loc.to_view()
         res.set_header_view(std::string_view("Location"), &loc_view)
-        apply_security_headers(res)
+        apply_security_headers(&mut res)
 
         // A body, because a 303 with none is legal and some clients render a
         // blank page instead of following. It repeats the link, so a reader whose
@@ -132,7 +133,8 @@ public namespace underlayer_web {
         var out = page.toString()
         var ov = out.to_view()
         res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
-        res.write_view(&ov)
+        res.html(&ov)
+        return res
     }
 
 }

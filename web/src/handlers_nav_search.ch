@@ -7,23 +7,23 @@ using std::string_view
 
 public namespace underlayer_web {
 
-    public func handle_nav_search(req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_nav_search(req : &http::Request) : http::Response {
         var body = string("{\"entries\":[")
         body.append_view("{\"label\":\"Home\",\"url\":\"/\",\"kind\":\"page\"}")
         body.append_view(",{\"label\":\"Dashboard\",\"url\":\"/dashboard\",\"kind\":\"page\"}")
         body.append_view(",{\"label\":\"Review\",\"url\":\"/review\",\"kind\":\"page\"}")
         body.append_view(",{\"label\":\"Progress\",\"url\":\"/progress\",\"kind\":\"page\"}")
 
-        append_elf_nav_entries(&raw body)
-        append_pe_nav_entries(&raw body)
-        append_macho_nav_entries(&raw body)
+        append_elf_nav_entries(&mut body)
+        append_pe_nav_entries(&mut body)
+        append_macho_nav_entries(&mut body)
 
         body.append_view("]}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // 24 ELF concepts in course order.
-    func append_elf_nav_entries(body : *string) {
+    func append_elf_nav_entries(body : &mut string) {
         append_nav_entry(body, string("Bytes and Binary"), string("elf"), string("bytes"))
         append_nav_entry(body, string("Binary Representation"), string("elf"), string("binary-representation"))
         append_nav_entry(body, string("File Layout"), string("elf"), string("file-layout"))
@@ -51,7 +51,7 @@ public namespace underlayer_web {
     }
 
     // 24 PE concepts in course order.
-    func append_pe_nav_entries(body : *string) {
+    func append_pe_nav_entries(body : &mut string) {
         append_nav_entry(body, string("PE: Why PE Exists"), string("pe"), string("pe-intro"))
         append_nav_entry(body, string("PE: File Layout"), string("pe"), string("pe-file-layout"))
         append_nav_entry(body, string("PE: The COFF Heritage"), string("pe"), string("pe-coff-basics"))
@@ -79,7 +79,7 @@ public namespace underlayer_web {
     }
 
     // 24 Mach-O concepts in course order.
-    func append_macho_nav_entries(body : *string) {
+    func append_macho_nav_entries(body : &mut string) {
         append_nav_entry(body, string("Mach-O: Why Mach-O Exists"), string("macho"), string("macho-intro"))
         append_nav_entry(body, string("Mach-O: File Layout"), string("macho"), string("macho-file-layout"))
         append_nav_entry(body, string("Mach-O: Magic Numbers"), string("macho"), string("macho-magic"))
@@ -107,7 +107,7 @@ public namespace underlayer_web {
     }
 
     // Append one concept entry (adds comma before every entry).
-    func append_nav_entry(body : *string, label : string, course_id : string, concept_id : string) {
+    func append_nav_entry(body : &mut string, label : string, course_id : string, concept_id : string) {
         body.append_view(",{\"label\":\"")
         body.append_string(&label)
         body.append_view("\",\"url\":\"/courses/")

@@ -7,7 +7,7 @@ public namespace underlayer_web {
 
     // ---- GET /onboarding — Onboarding page ----
 
-    public func handle_onboarding_page(req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_onboarding_page(req : &http::Request) : http::Response {
         var page = HtmlPage()
         page.defaultUniversalSetup()
         page.defaultPrepare()
@@ -373,31 +373,26 @@ public namespace underlayer_web {
 
         var html_out = page.toString()
         var bv = html_out.to_view()
-        res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
-        apply_security_headers(res)
-        res.write_view(&bv)
+        return underlayer_web::send_html(&html_out)
     }
 
     // ---- POST /api/onboarding/complete — Save onboarding goals ----
 
-    public func handle_onboarding_complete(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_onboarding_complete(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
-        var body_str = read_body(&raw mut req)
+        var body_str = read_body(req)
         if(body_str.size() == 0) {
             var err = string("empty request body")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         var parse_result = json::parse(body_str.to_view())
         if(parse_result is std::Result.Err) {
             var err = string("invalid JSON")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         var Ok(parsed) = parse_result else unsafe { unreachable }
         var daily_minutes = json_get_int(&parsed, "daily_minutes")
@@ -467,7 +462,7 @@ public namespace underlayer_web {
         underlayer_repository::mark_onboarding_complete(db, &learner_id, now)
 
         var resp = string("{\"ok\":true}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // ---- GET /api/onboarding/check — Has this learner finished onboarding? ----
@@ -481,23 +476,22 @@ public namespace underlayer_web {
     // typing /onboarding.  The reasoning is in repository/src/onboarding.ch and
     // the column in repository/src/schema_migrations.ch; the short version is
     // that a DEFAULT cannot be evidence that someone chose something.
-    public func handle_check_onboarding(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_check_onboarding(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var unauth = string("{\"completed\":false,\"authenticated\":false}")
-            send_json_str(res, &raw unauth)
-            return
+            return send_json_str(&unauth)
         }
         var completed = underlayer_repository::is_onboarding_complete(db, &learner_id)
         var resp = string("{\"completed\":")
         if(completed) { resp.append_view("true") } else { resp.append_view("false") }
         resp.append_view(",\"authenticated\":true}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
 }
 
 // Routes to add to app/main.ch:
 // srv.router.add("GET", "/onboarding", (|db|(req, res) => { underlayer_web::handle_onboarding_page(&req, &raw mut res) }))
-// srv.router.add("POST", "/api/onboarding/complete", (|db|(req, res) => { underlayer_web::handle_onboarding_complete(&raw db, &raw mut req, &raw mut res) }))
-// srv.router.add("GET", "/api/onboarding/check", (|db|(req, res) => { underlayer_web::handle_check_onboarding(&raw db, &req, &raw mut res) }))
+// srv.router.add("POST", "/api/onboarding/complete", (|db|(req, res) => { underlayer_web::handle_onboarding_complete(db, &raw mut req, &raw mut res) }))
+// srv.router.add("GET", "/api/onboarding/check", (|db|(req, res) => { underlayer_web::handle_check_onboarding(db, &req, &raw mut res) }))

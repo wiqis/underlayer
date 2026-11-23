@@ -10,26 +10,26 @@ public namespace underlayer_web {
 
     // GET /courses — the index.  Every lesson's back-link points here, so it
     // is the most-requested page in the collection and was returning 404.
-    public func handle_courses_page(courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_courses_page(courses_dir : &string, req : &http::Request) : http::Response {
         var html = render_courses_page(courses_dir)
-        send_html(res, &raw html)
+        return send_html(&html)
     }
 
     // GET /learning-path — the three routes in full.
-    public func handle_learning_path_index(courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_learning_path_index(courses_dir : &string, req : &http::Request) : http::Response {
         var html = render_learning_path_page_index(courses_dir)
-        send_html(res, &raw html)
+        return send_html(&html)
     }
 
     // GET /search — concept search.  Results are server-rendered from the
     // `q` query parameter, so the page works with JavaScript disabled and the
     // URL is shareable.
-    public func handle_search_page(courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_search_page(courses_dir : &string, req : &http::Request) : http::Response {
         var q_key = string("q")
-        var q_v = req.query.get(&q_key.to_view())
-        var query = sv_to_string(&raw q_v)
+        var q_v = sv_or_empty(req.query.get(std::str.make_view(q_key.to_view())))
+        var query = sv_to_string(&q_v)
         var html = render_search_page(courses_dir, &query)
-        send_html(res, &raw html)
+        return send_html(&html)
     }
 
 }

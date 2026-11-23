@@ -16,16 +16,16 @@ public namespace underlayer_web {
     // from the query string the landing page already knows how to send, the
     // total comes from the manifest, and "started" means the platform has a
     // record of the learner being there, which a read now creates.
-    public func handle_nav_status(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
+    public func handle_nav_status(db : *DbClient, courses_dir : &string, req : &http::Request) : http::Response {
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             learner_id = string("demo")
         }
         var course_id = progress_course_id(req)
 
-        var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
-        var cov = underlayer_learning::compute_course_coverage(&course_id, &raw states, manifest_concept_total(courses_dir, &course_id))
-        var due_items = underlayer_repository::get_due_review_items(&raw db, &learner_id, &course_id, 50)
+        var states = underlayer_repository::get_all_concept_states(db, &learner_id, &course_id)
+        var cov = underlayer_learning::compute_course_coverage(&course_id, &states, manifest_concept_total(courses_dir, &course_id))
+        var due_items = underlayer_repository::get_due_review_items(db, &learner_id, &course_id, 50)
 
         var body = string("{\"course_id\":\"")
         body.append_string(&course_id)
@@ -42,18 +42,17 @@ public namespace underlayer_web {
         body.append_view(",\"due_reviews\":")
         body.append_string(&underlayer_core::int_to_string(due_items.size() as i64))
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // GET /api/navigation/:courseId/:conceptId — returns sidebar, prev/next, breadcrumbs
-    public func handle_navigation(courses_dir : &string, course_id : *string_view, concept_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_navigation(courses_dir : &string, course_id : &string_view, concept_id : &string_view, req : &http::Request) : http::Response {
         var cid = sv_to_string(course_id)
         var concept = sv_to_string(concept_id)
         var course = underlayer_repository::load_course(courses_dir, &cid)
         if(course.id.size() == 0) {
             var err_msg = string("course not found")
-            send_error(res, 404u, &err_msg)
-            return
+            return send_error(404u, &err_msg)
         }
 
         var body = std::string("{\"course_id\":\"")
@@ -67,7 +66,7 @@ public namespace underlayer_web {
         body.append_view("\",\"modules\":[")
         var mi : size_t = 0
         while(mi < course.modules.size()) {
-            var mod = course.modules.get_ptr(mi)
+            var mod = course.modules.at_ref(mi)
             if(mi > 0) { body.append(',') }
             body.append_view("{\"id\":\"")
             var mid_esc = underlayer_core::json_escape(&mod.id.to_view())
@@ -83,7 +82,7 @@ public namespace underlayer_web {
             var first_concept = true
             var ci : size_t = 0
             while(ci < course.concepts.size()) {
-                var cref = course.concepts.get_ptr(ci)
+                var cref = course.concepts.at_ref(ci)
                 if(cref.module_id.equals(&mod.id)) {
                     if(!first_concept) { body.append(',') }
                     first_concept = false
@@ -108,7 +107,7 @@ public namespace underlayer_web {
         var current_concept_title = string()
         var ci : size_t = 0
         while(ci < course.concepts.size()) {
-            var cref = course.concepts.get_ptr(ci)
+            var cref = course.concepts.at_ref(ci)
             if(cref.id.equals(&concept)) {
                 current_module_id = cref.module_id.copy()
                 current_concept_title = cref.title.copy()
@@ -117,7 +116,7 @@ public namespace underlayer_web {
         }
         var mi2 : size_t = 0
         while(mi2 < course.modules.size()) {
-            var mod2 = course.modules.get_ptr(mi2)
+            var mod2 = course.modules.at_ref(mi2)
             if(mod2.id.equals(&current_module_id)) {
                 current_module_title = mod2.title.copy()
             }
@@ -153,7 +152,7 @@ public namespace underlayer_web {
         var found_current = false
         var ci2 : size_t = 0
         while(ci2 < course.concepts.size()) {
-            var cref = course.concepts.get_ptr(ci2)
+            var cref = course.concepts.at_ref(ci2)
             if(cref.id.equals(&concept)) {
                 found_current = true
             } else if(!found_current) {
@@ -191,7 +190,7 @@ public namespace underlayer_web {
         }
 
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
 

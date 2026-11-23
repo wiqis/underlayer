@@ -14,32 +14,32 @@ public namespace underlayer_web {
     public func search_concepts(courses : &vector<Course>, query_raw : &string) : vector<SearchHit> {
         var hits = vector<SearchHit>()
         var qsv = query_raw.to_view()
-        var query = ascii_lower(&raw qsv)
+        var query = ascii_lower(&qsv)
         if(query.size() == 0) { return hits }
         var ci : size_t = 0
         while(ci < courses.size()) {
-            var course = courses.get_ptr(ci)
+            var course = courses.at_ref(ci)
             var ct_view = course.title.to_view()
-            var course_title_l = ascii_lower(&raw ct_view)
+            var course_title_l = ascii_lower(&ct_view)
             var course_title_hit = find_bytes(&course_title_l, &query)
             var course_desc = course.description.copy()
             var cd_view = course_desc.to_view()
-            var course_desc_l = ascii_lower(&raw cd_view)
+            var course_desc_l = ascii_lower(&cd_view)
             var course_desc_hit = find_bytes(&course_desc_l, &query)
             var course_id = course.id.copy()
             var kci : size_t = 0
             while(kci < course.concepts.size()) {
-                var cref = course.concepts.get_ptr(kci)
+                var cref = course.concepts.at_ref(kci)
                 var title = cref.title.copy()
                 var desc = cref.description.copy()
                 var ti_view = title.to_view()
-                var title_l = ascii_lower(&raw ti_view)
+                var title_l = ascii_lower(&ti_view)
                 var de_view = desc.to_view()
-                var desc_l = ascii_lower(&raw de_view)
+                var desc_l = ascii_lower(&de_view)
                 var concept_id = cref.id.copy()
                 var module_title = module_title_for(course, &concept_id)
                 var mo_view = module_title.to_view()
-                var module_l = ascii_lower(&raw mo_view)
+                var module_l = ascii_lower(&mo_view)
 
                 var score = hit_score(&query, &title_l, &desc_l)
                 var field = string()
@@ -84,7 +84,7 @@ public namespace underlayer_web {
             }
             ci = ci + 1
         }
-        sort_hits(&hits)
+        sort_hits(&mut hits)
         return hits
     }
 

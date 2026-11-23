@@ -345,7 +345,7 @@ public namespace underlayer_web {
     }
 
     // Public profile page with learning progress
-    public func render_profile_page(username_str : *string) : string {
+    public func render_profile_page(username_str : &string) : string {
         var page = HtmlPage()
         page.defaultUniversalSetup()
         page.defaultPrepare()

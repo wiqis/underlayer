@@ -6,28 +6,26 @@ using underlayer_db::DbClient
 public namespace underlayer_web {
 
     // ---- 1.5.20: GET /api/health/knowledge ----
-    public func handle_knowledge_health(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_knowledge_health(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         var course_id = extract_query_param(req, "course_id")
         if(course_id.size() == 0) { course_id = string("elf") }
         var states = underlayer_repository::get_all_concept_states(db, &learner_id, &course_id)
-        var health = underlayer_learning::compute_knowledge_health(&raw states)
-        var resp = underlayer_learning::export_health_json(&raw health)
-        send_json_str(res, &raw resp)
+        var health = underlayer_learning::compute_knowledge_health(&states)
+        var resp = underlayer_learning::export_health_json(&health)
+        return send_json_str(&resp)
     }
 
     // ---- 1.5.2-1.5.3: GET /api/health/knowledge/per-module ----
-    public func handle_knowledge_health_per_module(db : *DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_knowledge_health_per_module(db : *DbClient, courses_dir : &string, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         var course_id = extract_query_param(req, "course_id")
         if(course_id.size() == 0) { course_id = string("elf") }
@@ -36,9 +34,9 @@ public namespace underlayer_web {
         var resp = string("[")
         var mi : size_t = 0
         while(mi < course.modules.size()) {
-            var mod = course.modules.get_ptr(mi)
+            var mod = course.modules.at_ref(mi)
             if(mi > 0) { resp.append_view(",") }
-            var mod_health = underlayer_learning::compute_module_health(&raw states, &raw mod.concepts)
+            var mod_health = underlayer_learning::compute_module_health(&states, &mod.concepts)
             resp.append_view("{\"module_id\":\"")
             var mid = mod.id.copy()
             resp.append_string(&mid)
@@ -67,21 +65,20 @@ public namespace underlayer_web {
             mi = mi + 1
         }
         resp.append_view("]")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // ---- 1.5.9: GET /api/health/knowledge/projection ----
-    public func handle_knowledge_projection(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_knowledge_projection(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         var course_id = extract_query_param(req, "course_id")
         if(course_id.size() == 0) { course_id = string("elf") }
         var states = underlayer_repository::get_all_concept_states(db, &learner_id, &course_id)
-        var proj = underlayer_learning::compute_retention_projection(&raw states)
+        var proj = underlayer_learning::compute_retention_projection(&states)
         var resp = string("{\"days_30\":")
         var d30 = underlayer_learning::f64_to_string(proj.days_30)
         resp.append_string(&d30)
@@ -102,57 +99,53 @@ public namespace underlayer_web {
         var measured = underlayer_core::int_to_string(proj.measured as i64)
         resp.append_string(&measured)
         resp.append_view("}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // ---- Course Enrollment API ----
 
     // POST /api/courses/:courseId/enroll
-    public func handle_enroll_course(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_enroll_course(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() < 3) {
             var err = string("missing course id")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
-        var course_id = segments.get_ptr(2).to_string()
+        var course_id = segments.at_ref(2).to_string()
         var existing = underlayer_repository::get_enrollment(db, &learner_id, &course_id)
         if(existing.id.size() > 0) {
             var resp = string("{\"ok\":true,\"enrollment_id\":\"")
             var eid = existing.id.copy()
             resp.append_string(&eid)
             resp.append_view("\",\"status\":\"already_enrolled\"}")
-            send_json_str(res, &raw resp)
-            return
+            return send_json_str(&resp)
         }
         var enrollment_id = underlayer_repository::enroll_learner(db, &learner_id, &course_id)
         var resp = string("{\"ok\":true,\"enrollment_id\":\"")
         resp.append_string(&enrollment_id)
         resp.append_view("\"}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // GET /api/enrollments
-    public func handle_get_enrollments(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_get_enrollments(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         var enrollments = underlayer_repository::get_learner_enrollments(db, &learner_id)
         var resp = string("[")
         var ei : size_t = 0
         while(ei < enrollments.size()) {
             if(ei > 0) { resp.append_view(",") }
-            var e = enrollments.get_ptr(ei)
+            var e = enrollments.at_ref(ei)
             resp.append_view("{\"id\":\"")
             var eid = e.id.copy()
             resp.append_string(&eid)
@@ -178,18 +171,18 @@ public namespace underlayer_web {
             ei = ei + 1
         }
         resp.append_view("]")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // ---- Helpers ----
 
     private func extract_query_param(req : &http::Request, key : *char) : string {
-        var key_str = string::make_no_len(key)
+        var key_str = unsafe(std::string::make_no_len(key))
         var key_sv = key_str.to_view()
-        var val = req.query.get(&key_sv)
+        var val = sv_or_empty(req.query.get(std::str.make_view(key_sv)))
         var result = string()
         var i : size_t = 0
-        while(i < val.size()) { result.append(val.get(i)); i = i + 1 }
+        while(i < val.size()) { result.append(val.at(i)); i = i + 1 }
         return result
     }
 

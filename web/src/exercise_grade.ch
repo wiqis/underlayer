@@ -10,12 +10,12 @@ public namespace underlayer_web {
     private func trim_lower(s : &string) : string {
         var start : size_t = 0
         var end : size_t = s.size()
-        while(start < end && (s.get(start) == ' ' || s.get(start) == '\t')) { start = start + 1 }
-        while(end > start && (s.get(end - 1) == ' ' || s.get(end - 1) == '\t')) { end = end - 1 }
+        while(start < end && (s.at(start) == ' ' || s.at(start) == '\t')) { start = start + 1 }
+        while(end > start && (s.at(end - 1) == ' ' || s.at(end - 1) == '\t')) { end = end - 1 }
         var out = string()
         var i : size_t = start
         while(i < end) {
-            var c = s.get(i)
+            var c = s.at(i)
             if(c >= 'A' && c <= 'Z') { c = c + 32 }
             out.append(c)
             i = i + 1
@@ -26,10 +26,10 @@ public namespace underlayer_web {
     // Hex answers: accept "40", "0x40", "0X40" as the same value.
     private func normalize_hex(s : &string) : string {
         var t = trim_lower(s)
-        if(t.size() > 2 && t.get(0) == '0' && t.get(1) == 'x') {
+        if(t.size() > 2 && t.at(0) == '0' && t.at(1) == 'x') {
             var out = string()
             var i : size_t = 2
-            while(i < t.size()) { out.append(t.get(i)); i = i + 1 }
+            while(i < t.size()) { out.append(t.at(i)); i = i + 1 }
             return out
         }
         return t
@@ -40,8 +40,8 @@ public namespace underlayer_web {
         var cur = string()
         var i : size_t = 0
         while(i < s.size()) {
-            if(s.get(i) == '|') { parts.push(cur); cur = string() }
-            else { cur.append(s.get(i)) }
+            if(s.at(i) == '|') { parts.push(cur); cur = string() }
+            else { cur.append(s.at(i)) }
             i = i + 1
         }
         parts.push(cur)
@@ -52,8 +52,8 @@ public namespace underlayer_web {
         if(a.size() != b.size()) { return false }
         var i : size_t = 0
         while(i < a.size()) {
-            var ap = a.get_ptr(i)
-            var bp = b.get_ptr(i)
+            var ap = a.at_ref(i)
+            var bp = b.at_ref(i)
             var as = ap.copy()
             var bs = bp.copy()
             var la = trim_lower(&as)
@@ -69,10 +69,10 @@ public namespace underlayer_web {
         var ui_start : size_t = 0
         var ui : size_t = 0
         while(ui <= user_answer.size()) {
-            if(ui == user_answer.size() || user_answer.get(ui) == ',') {
+            if(ui == user_answer.size() || user_answer.at(ui) == ',') {
                 var num_str = string()
                 var uj : size_t = ui_start
-                while(uj < ui) { num_str.append(user_answer.get(uj)); uj = uj + 1 }
+                while(uj < ui) { num_str.append(user_answer.at(uj)); uj = uj + 1 }
                 if(num_str.size() > 0) {
                     user_indices.push(underlayer_repository::parse_i64(num_str.to_view()) as int)
                 }
@@ -83,11 +83,11 @@ public namespace underlayer_web {
         if(user_indices.size() != ex.correct_indices.size()) { return false }
         var uii : size_t = 0
         while(uii < user_indices.size()) {
-            var user_idx = user_indices.get(uii)
+            var user_idx = user_indices.at(uii)
             var found = false
             var cii : size_t = 0
             while(cii < ex.correct_indices.size()) {
-                if(ex.correct_indices.get(cii) == user_idx) { found = true }
+                if(ex.correct_indices.at(cii) == user_idx) { found = true }
                 cii = cii + 1
             }
             if(!found) { return false }
@@ -100,7 +100,7 @@ public namespace underlayer_web {
         var ans_idx = -1
         var ai : size_t = 0
         while(ai < ex.options.size()) {
-            var opt_ptr = ex.options.get_ptr(ai)
+            var opt_ptr = ex.options.at_ref(ai)
             if(opt_ptr.to_view().equals(&user_answer.to_view())) { ans_idx = ai as int }
             ai = ai + 1
         }

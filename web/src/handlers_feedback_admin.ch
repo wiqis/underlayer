@@ -40,35 +40,34 @@ public namespace underlayer_web {
     // 401 when there is no token at all -- that is an anonymous caller, full
     // stop.  403 when there is a token: the caller is known and still may not
     // read across learners, because this platform has no role that may.
-    private func refuse_without_reviewer_role(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    private func refuse_without_reviewer_role(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var anon = string("unauthorized")
-            send_error(res, 401u, &anon)
-            return
+            return send_error(401u, &anon)
         }
         var msg = string("no reviewer role exists on this platform, so cross-learner feedback is not readable; a learner can read their own feedback at GET /api/feedback/concept/:conceptId")
-        send_error(res, 403u, &msg)
+        return send_error(403u, &msg)
     }
 
     // GET /api/feedback/admin — was: every pending feedback row from every
     // learner, to anyone, including people with no account.
-    public func handle_get_admin_feedback(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        refuse_without_reviewer_role(db, req, res)
+    public func handle_get_admin_feedback(db : *DbClient, req : &http::Request) : http::Response {
+        return refuse_without_reviewer_role(db, req)
     }
 
     // GET /api/feedback/admin/reports — was: every exercise report from every
     // learner, to anyone.
-    public func handle_get_admin_reports(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        refuse_without_reviewer_role(db, req, res)
+    public func handle_get_admin_reports(db : *DbClient, req : &http::Request) : http::Response {
+        return refuse_without_reviewer_role(db, req)
     }
 
     // PUT /api/feedback/:id/status — was: unauthenticated, and wrote to any
     // feedback row in the table by id.  `feedback_id` is deliberately unused:
     // the request is refused before the id is looked at, so a caller learns
     // nothing about which ids exist.
-    public func handle_update_feedback_status(db : *DbClient, feedback_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
-        refuse_without_reviewer_role(db, req, res)
+    public func handle_update_feedback_status(db : *DbClient, feedback_id : &string, req : &http::Request) : http::Response {
+        return refuse_without_reviewer_role(db, req)
     }
 
 }

@@ -12,12 +12,12 @@ using underlayer_models::Course
 
 public namespace underlayer_web {
 
-    public func concept_links_for(course : *Course) : vector<ConceptLink> {
+    public func concept_links_for(course : &Course) : vector<ConceptLink> {
         var out = vector<ConceptLink>()
         var cid_raw = course.id.copy()
         var ci : size_t = 0
         while(ci < course.concepts.size()) {
-            var cref = course.concepts.get_ptr(ci)
+            var cref = course.concepts.at_ref(ci)
             var link = ConceptLink::make()
             var href = string("/courses/")
             href.append_string(&cid_raw)
@@ -39,18 +39,18 @@ public namespace underlayer_web {
         return out
     }
 
-    public func minutes_of(course : *Course) : int {
+    public func minutes_of(course : &Course) : int {
         var total = 0
         var ci : size_t = 0
         while(ci < course.concepts.size()) {
-            var cref = course.concepts.get_ptr(ci)
+            var cref = course.concepts.at_ref(ci)
             total = total + cref.estimated_minutes
             ci = ci + 1
         }
         return total
     }
 
-    public func build_card(course : *Course, routes : &vector<PathRoute>) : CatalogCard {
+    public func build_card(course : &Course, routes : &vector<PathRoute>) : CatalogCard {
         var card = CatalogCard::make()
         var href = string("/courses/")
         var cid = course.id.copy()
@@ -84,7 +84,7 @@ public namespace underlayer_web {
         var out = vector<CatalogCard>()
         var i : size_t = 0
         while(i < courses.size()) {
-            var c = courses.get_ptr(i)
+            var c = courses.at_ref(i)
             var card = build_card(c, routes)
             out.push(card)
             i = i + 1
@@ -132,13 +132,13 @@ public namespace underlayer_web {
         rc.card.title = id_esc
         var idx = course_index(courses, &cid)
         if(idx < 0) { return rc }
-        var c = courses.get_ptr(idx as size_t)
+        var c = courses.at_ref(idx as size_t)
         var real = build_card(c, routes)
         rc.card = real
         rc.card.place.step = step_no
         var di : size_t = 0
         while(di < c.dependencies.size()) {
-            var dep = c.dependencies.get_ptr(di).copy()
+            var dep = c.dependencies.at_ref(di).copy()
             rc.deps.push(dep)
             di = di + 1
         }

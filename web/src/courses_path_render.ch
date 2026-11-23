@@ -16,7 +16,7 @@ public namespace underlayer_web {
     // prerequisites that justify the position.  Both facts come from data --
     // the reason from the authored route, the prerequisite list from the
     // manifest.
-    public func render_route_step(rc : *RouteCourse, page : &mut HtmlPage) {
+    public func render_route_step(rc : &RouteCourse, page : &mut HtmlPage) {
         #html {
             <li class="route-step">
                 <div class="step-head">
@@ -66,7 +66,7 @@ public namespace underlayer_web {
         }
         var i : size_t = 0
         while(i < n) {
-            var dep_ptr = deps.get_ptr(i)
+            var dep_ptr = deps.at_ref(i)
             var dep = dep_ptr.copy()
             var dep_esc = underlayer_core::html_escape(&dep)
             #html {
@@ -104,7 +104,7 @@ public namespace underlayer_web {
     public func render_unmet(unmet : &vector<string>, page : &mut HtmlPage) {
         var i : size_t = 0
         while(i < unmet.size()) {
-            var u_ptr = unmet.get_ptr(i)
+            var u_ptr = unmet.at_ref(i)
             var u = u_ptr.copy()
             var u_esc = underlayer_core::html_escape(&u)
             #html {
@@ -115,12 +115,12 @@ public namespace underlayer_web {
     }
 
     // Every step of one route, as one <ol>'s worth of <li>.
-    public func render_all_steps(route : *PathRoute, courses : &vector<Course>, routes : &vector<PathRoute>, page : &mut HtmlPage) {
+    public func render_all_steps(route : &PathRoute, courses : &vector<Course>, routes : &vector<PathRoute>, page : &mut HtmlPage) {
         var si : size_t = 0
         while(si < route.steps.size()) {
-            var step = route.steps.get_ptr(si)
+            var step = route.steps.at_ref(si)
             var rc = resolve_route_course(courses, routes, &step.course_id, si as int + 1)
-            render_route_step(&raw mut rc, page)
+            render_route_step(&mut rc, page)
             si = si + 1
         }
     }
@@ -131,7 +131,7 @@ public namespace underlayer_web {
     public func render_all_routes(routes : &vector<PathRoute>, courses : &vector<Course>, page : &mut HtmlPage) {
         var ri : size_t = 0
         while(ri < routes.size()) {
-            var route = routes.get_ptr(ri)
+            var route = routes.at_ref(ri)
             var name = route.name.copy()
             var name_esc = underlayer_core::html_escape(&name)
             var tagline = route.tagline.copy()

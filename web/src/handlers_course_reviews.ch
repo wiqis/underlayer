@@ -6,24 +6,21 @@ using underlayer_db::DbClient
 public namespace underlayer_web {
 
     // POST /api/courses/:courseId/reviews — Submit a review
-    public func handle_submit_review(db : *DbClient, course_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_submit_review(db : *DbClient, course_id : &string, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
-        var body_str = read_body(&raw mut req)
+        var body_str = read_body(req)
         if(body_str.size() == 0) {
             var err = string("empty request body")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         var parse_result = json::parse(body_str.to_view())
         if(parse_result is std::Result.Err) {
             var err = string("invalid JSON")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         var Ok(parsed) = parse_result else unsafe { unreachable }
         var rating = json_get_int(&parsed, "rating")
@@ -31,30 +28,28 @@ public namespace underlayer_web {
         var review_text = json_get_str(&parsed, "review_text")
         if(rating < 1 || rating > 5) {
             var err = string("rating must be between 1 and 5")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         var existing = underlayer_repository::get_learner_review(db, &learner_id, course_id)
         if(existing.id.size() > 0) {
             var err = string("you have already reviewed this course")
-            send_error(res, 409u, &err)
-            return
+            return send_error(409u, &err)
         }
         var review_id = underlayer_repository::submit_review(db, &learner_id, course_id, rating, &title, &review_text)
         var resp = string("{\"ok\":true,\"id\":\"")
         resp.append_view(review_id.to_view())
         resp.append_view("\"}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // GET /api/courses/:courseId/reviews — Get all reviews for a course
-    public func handle_get_course_reviews(db : *DbClient, course_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_get_course_reviews(db : *DbClient, course_id : &string, req : &http::Request) : http::Response {
         var reviews = underlayer_repository::get_reviews_for_course(db, course_id)
         var resp = string("[")
         var ri : size_t = 0
         while(ri < reviews.size()) {
             if(ri > 0) { resp.append_view(",") }
-            var rv = reviews.get_ptr(ri)
+            var rv = reviews.at_ref(ri)
             resp.append_view("{\"id\":\"")
             resp.append_string(&rv.id)
             resp.append_view("\",\"learner_id\":\"")
@@ -81,28 +76,25 @@ public namespace underlayer_web {
             ri = ri + 1
         }
         resp.append_view("]")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // PUT /api/reviews/:id — Update a review
-    public func handle_update_review(db : *DbClient, review_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_update_review(db : *DbClient, review_id : &string, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
-        var body_str = read_body(&raw mut req)
+        var body_str = read_body(req)
         if(body_str.size() == 0) {
             var err = string("empty request body")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         var parse_result = json::parse(body_str.to_view())
         if(parse_result is std::Result.Err) {
             var err = string("invalid JSON")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         var Ok(parsed) = parse_result else unsafe { unreachable }
         var rating = json_get_int(&parsed, "rating")
@@ -110,36 +102,34 @@ public namespace underlayer_web {
         var review_text = json_get_str(&parsed, "review_text")
         if(rating < 1 || rating > 5) {
             var err = string("rating must be between 1 and 5")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         underlayer_repository::update_review(db, review_id, rating, &title, &review_text)
         var resp = string("{\"ok\":true}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // DELETE /api/reviews/:id — Delete a review
-    public func handle_delete_review(db : *DbClient, review_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_delete_review(db : *DbClient, review_id : &string, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         underlayer_repository::delete_review(db, review_id)
         var resp = string("{\"ok\":true}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // POST /api/reviews/:id/helpful — Mark a review as helpful
-    public func handle_mark_review_helpful(db : *DbClient, review_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_mark_review_helpful(db : *DbClient, review_id : &string, req : &http::Request) : http::Response {
         underlayer_repository::mark_helpful(db, review_id)
         var resp = string("{\"ok\":true}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // GET /api/courses/:courseId/rating — Get rating summary for a course
-    public func handle_course_rating_summary(db : *DbClient, course_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_course_rating_summary(db : *DbClient, course_id : &string, req : &http::Request) : http::Response {
         var summary = underlayer_repository::get_course_rating_summary(db, course_id)
         var resp = string("{\"course_id\":\"")
         resp.append_string(&summary.course_id)
@@ -165,7 +155,7 @@ public namespace underlayer_web {
         var r1_str = underlayer_core::int_to_string(summary.rating_1 as i64)
         resp.append_view(r1_str.to_view())
         resp.append_view("}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
 }

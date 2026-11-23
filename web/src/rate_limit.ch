@@ -128,7 +128,7 @@ public namespace underlayer_web {
     // which is handled at the call site with a local copy rather than by adding a
     // second signature here: two overloads would leave the broken one available
     // and the bug below would come straight back.
-    public func rate_limit_ok_with(db : *DbClient, req : &http::Request, group : &string, res : *mut http::ResponseWriter, max : i64) : bool {
+    public func rate_limit_ok_with(db : *DbClient, req : &http::Request, group : &string, max : i64) : std::Option<http::Response> {
         var ip = client_ip(req)
         var bucket = rate_limit_bucket(group, &ip)
         var now = underlayer_core::current_timestamp()
@@ -143,14 +143,14 @@ public namespace underlayer_web {
 
         var count : i64 = 0
         if(existing.ok && existing.rows.size() > 0) {
-            var row = existing.rows.get_ptr(0)
+            var row = existing.rows.at_ref(0)
             if(row.vals.size() >= 2) {
-                var prior_window = underlayer_repository::parse_int(row.vals.get_ptr(0).to_view()) as i64
+                var prior_window = underlayer_repository::parse_int(row.vals.at_ref(0).to_view()) as i64
                 // Only carry the count forward inside the SAME window.  A bucket
                 // from a previous window resets, which is what stops a reader
                 // who waits out five minutes from being locked out forever.
                 if(prior_window == window_start) {
-                    count = underlayer_repository::parse_int(row.vals.get_ptr(1).to_view()) as i64
+                    count = underlayer_repository::parse_int(row.vals.at_ref(1).to_view()) as i64
                 }
             }
         }
@@ -158,16 +158,16 @@ public namespace underlayer_web {
         if(count >= max) {
             var retry = window - (now % window)
             var retry_s = underlayer_core::int_to_string(retry)
-            // The header NAME goes to set_header_view; putting it in the value
-            // as well produced "Retry-After: Retry-After: 229" on the wire.
-            var hdr_v = retry_s.to_view()
-            res.set_header_view(string_view("Retry-After"), &hdr_v)
-            res.status = 429u
             var msg = string("{\"error\":\"too many attempts; try again in ")
             msg.append_string(&retry_s)
             msg.append_view(" seconds\"}")
-            send_json_str(res, &raw msg)
-            return false
+            var refusal = send_json_str(&msg)
+            // The header NAME goes to set_header_view; putting it in the value
+            // as well produced "Retry-After: Retry-After: 229" on the wire.
+            var hdr_v = retry_s.to_view()
+            refusal.set_header_view(string_view("Retry-After"), &hdr_v)
+            refusal.status = 429u
+            return std::Option.Some<http::Response>(refusal)
         }
 
         var next = count + 1
@@ -184,7 +184,7 @@ public namespace underlayer_web {
         upsert.append_view(", count = ")
         upsert.append_view(ct_s.to_view())
         underlayer_db::exec_sql(db, &raw upsert)
-        return true
+        return std::Option.None<http::Response>()
     }
 
     // One named gate per guarded endpoint, so app/main.ch passes a literal and
@@ -194,24 +194,24 @@ public namespace underlayer_web {
     // compiles from a route registration.  The four names are also the four
     // places to look when asking "what is throttled", which is the question a
     // reader of the routes will actually have.
-    public func rate_limit_login(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) : bool {
+    public func rate_limit_login(db : *DbClient, req : &http::Request) : std::Option<http::Response> {
         var g = string("login")
-        return rate_limit_ok_with(db, req, &g, res, rate_limit_max())
+        return rate_limit_ok_with(db, req, &g, rate_limit_max())
     }
 
-    public func rate_limit_register(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) : bool {
+    public func rate_limit_register(db : *DbClient, req : &http::Request) : std::Option<http::Response> {
         var g = string("register")
-        return rate_limit_ok_with(db, req, &g, res, rate_limit_max())
+        return rate_limit_ok_with(db, req, &g, rate_limit_max())
     }
 
-    public func rate_limit_forgot(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) : bool {
+    public func rate_limit_forgot(db : *DbClient, req : &http::Request) : std::Option<http::Response> {
         var g = string("forgot")
-        return rate_limit_ok_with(db, req, &g, res, rate_limit_max())
+        return rate_limit_ok_with(db, req, &g, rate_limit_max())
     }
 
-    public func rate_limit_reset(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) : bool {
+    public func rate_limit_reset(db : *DbClient, req : &http::Request) : std::Option<http::Response> {
         var g = string("reset")
-        return rate_limit_ok_with(db, req, &g, res, rate_limit_max())
+        return rate_limit_ok_with(db, req, &g, rate_limit_max())
     }
 
     // ---- the learning-write surface ------------------------------------
@@ -225,23 +225,23 @@ public namespace underlayer_web {
     //
     // 120 per 5 minutes is the ceiling argued above -- ten times what a
     // reviewer doing a course in one sitting produces.
-    public func rate_limit_exercise_submit(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) : bool {
+    public func rate_limit_exercise_submit(db : *DbClient, req : &http::Request) : std::Option<http::Response> {
         var g = string("exercise_submit")
-        return rate_limit_ok_with(db, req, &g, res, rate_limit_write_max())
+        return rate_limit_ok_with(db, req, &g, rate_limit_write_max())
     }
 
     // POST /api/feedback and POST /api/feedback/report-exercise.  Both are
     // unauthenticated-adjacent (they answer 401 without a session) but they
     // write into a table a human has to READ -- the corrections queue -- so an
     // unbounded writer fills it with noise and makes the queue unworkable.
-    public func rate_limit_feedback(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) : bool {
+    public func rate_limit_feedback(db : *DbClient, req : &http::Request) : std::Option<http::Response> {
         var g = string("feedback")
-        return rate_limit_ok_with(db, req, &g, res, rate_limit_write_max())
+        return rate_limit_ok_with(db, req, &g, rate_limit_write_max())
     }
 
-    public func rate_limit_report_exercise(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) : bool {
+    public func rate_limit_report_exercise(db : *DbClient, req : &http::Request) : std::Option<http::Response> {
         var g = string("report_exercise")
-        return rate_limit_ok_with(db, req, &g, res, rate_limit_write_max())
+        return rate_limit_ok_with(db, req, &g, rate_limit_write_max())
     }
 
     // POST /api/learners.  This one is NOT a learning write and does not get the
@@ -254,9 +254,9 @@ public namespace underlayer_web {
     // but because it creates rows in an accounts table and that is the same
     // shape of abuse.  Unauthenticated and unbounded, it answered 200 forever
     // and every call attempted an INSERT with a UNIQUE-violating email.
-    public func rate_limit_create_learner(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) : bool {
+    public func rate_limit_create_learner(db : *DbClient, req : &http::Request) : std::Option<http::Response> {
         var g = string("create_learner")
-        return rate_limit_ok_with(db, req, &g, res, rate_limit_max())
+        return rate_limit_ok_with(db, req, &g, rate_limit_max())
     }
 
 }

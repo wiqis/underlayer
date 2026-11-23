@@ -22,24 +22,21 @@ using underlayer_db::DbClient
 
 public namespace underlayer_web {
 
-    public func handle_knowledge_health_page(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
-        if(!has_session(&raw db, req)) {
+    public func handle_knowledge_health_page(db : *DbClient, courses_dir : &string, req : &http::Request) : http::Response {
+        if(!has_session(db, req)) {
             var gate_path = string("/health")
-            redirect_to_login(res, &gate_path)
-            return
+            return redirect_to_login(&gate_path)
         }
-        var learner_id = auth_get_learner_id(&raw db, req)
+        var learner_id = auth_get_learner_id(db, req)
 
         // progress_course_id reads ?course_id= and falls back to elf. Reused
         // rather than reimplemented so /health, /progress and /dashboard cannot
         // drift on which course they are showing.
         var course_id = progress_course_id(req)
 
-        var html_out = render_knowledge_health_page(&raw mut db, courses_dir, &learner_id, &course_id)
+        var html_out = render_knowledge_health_page(db, courses_dir, &learner_id, &course_id)
         var bv = html_out.to_view()
-        res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
-        apply_security_headers(res)
-        res.write_view(&bv)
+        return underlayer_web::send_html(&html_out)
     }
 
 }

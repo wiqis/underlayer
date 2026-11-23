@@ -6,22 +6,21 @@ using underlayer_db::DbClient
 public namespace underlayer_web {
 
     // 7.1.6: Search functionality (full-text search)
-    public func handle_search(courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_search(courses_dir : &string, req : &http::Request) : http::Response {
         var q_query = string("q")
-        var q_v = req.query.get(&q_query.to_view())
+        var q_v = sv_or_empty(req.query.get(std::str.make_view(q_query.to_view())))
         if(q_v.size() == 0) {
             var err_msg = string("missing query param: q")
-            send_error(res, 400u, &err_msg)
-            return
+            return send_error(400u, &err_msg)
         }
-        var query = sv_to_string(&raw q_v)
+        var query = sv_to_string(&q_v)
         var results = vector<string>()
 
         // Search through available courses
         var courses = underlayer_repository::list_courses(courses_dir)
         var i : size_t = 0
         while(i < courses.size()) {
-            var course = courses.get_ptr(i)
+            var course = courses.at_ref(i)
             // Simple substring match on course title
             var title_copy = course.title.copy()
             var query_copy = query.copy()
@@ -33,7 +32,7 @@ public namespace underlayer_web {
                     var match = true
                     var qi : size_t = 0
                     while(qi < query_copy.size()) {
-                        if(title_copy.get(ti + qi) != query_copy.get(qi)) { match = false }
+                        if(title_copy.at(ti + qi) != query_copy.at(qi)) { match = false }
                         qi = qi + 1
                     }
                     if(match) { found = true }
@@ -53,7 +52,7 @@ public namespace underlayer_web {
         while(j < results.size()) {
             if(j > 0) { body.append_view(",") }
             body.append_view("{\"id\":\"")
-            var r = results.get_ptr(j)
+            var r = results.at_ref(j)
             var r_copy = r.copy()
             body.append_string(&r_copy)
             body.append_view("\"}")
@@ -63,17 +62,17 @@ public namespace underlayer_web {
         var total_out = underlayer_core::int_to_string(results.size() as i64)
         body.append_string(&total_out)
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // 7.1.7: Filter/sort courses (by topic, difficulty, rating)
-    public func handle_filter_courses(courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_filter_courses(courses_dir : &string, req : &http::Request) : http::Response {
         var courses = underlayer_repository::list_courses(courses_dir)
         var body = string("{\"courses\":[")
         var i : size_t = 0
         while(i < courses.size()) {
             if(i > 0) { body.append_view(",") }
-            var c = courses.get_ptr(i)
+            var c = courses.at_ref(i)
             body.append_view("{\"id\":\"")
             body.append_string(&c.id)
             body.append_view("\",\"title\":\"")
@@ -85,29 +84,29 @@ public namespace underlayer_web {
         var total_out = underlayer_core::int_to_string(courses.size() as i64)
         body.append_string(&total_out)
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // 7.1.9: Recent history (last 10 visited concepts)
-    public func handle_recent_history(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
+    public func handle_recent_history(db : *DbClient, req : &http::Request) : http::Response {
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
-        var sessions = underlayer_repository::get_learner_sessions(&raw db, &learner_id, 10)
+        var sessions = underlayer_repository::get_learner_sessions(db, &learner_id, 10)
         var recent = vector<string>()
 
         var i : size_t = 0
         while(i < sessions.size()) {
-            var s = sessions.get_ptr(i)
+            var s = sessions.at_ref(i)
             // Get session items to find concepts
-            var items = underlayer_repository::get_session_items(&raw db, &s.id)
+            var items = underlayer_repository::get_session_items(db, &s.id)
             var j : size_t = 0
             while(j < items.size()) {
-                var item = items.get_ptr(j)
+                var item = items.at_ref(j)
                 // Add concept if not already in recent list
                 var found = false
                 var k : size_t = 0
                 while(k < recent.size()) {
-                    var existing = recent.get_ptr(k)
+                    var existing = recent.at_ref(k)
                     var existing_copy = existing.copy()
                     var item_copy = item.concept_id.copy()
                     if(existing_copy.equals(&item_copy)) { found = true }
@@ -128,7 +127,7 @@ public namespace underlayer_web {
         while(i2 < limit) {
             if(i2 > 0) { body.append_view(",") }
             body.append_view("{\"concept_id\":\"")
-            var r = recent.get_ptr(i2)
+            var r = recent.at_ref(i2)
             var r_copy = r.copy()
             body.append_string(&r_copy)
             body.append_view("\"}")
@@ -138,7 +137,7 @@ public namespace underlayer_web {
         var total_out = underlayer_core::int_to_string(limit as i64)
         body.append_string(&total_out)
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
 }

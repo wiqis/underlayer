@@ -4,7 +4,7 @@ using std::string_view
 
 public namespace underlayer_web {
 
-    public func handle_login_page(req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_login_page(req : &http::Request) : http::Response {
         var page = HtmlPage()
         page.defaultUniversalSetup()
         page.defaultPrepare()
@@ -145,12 +145,10 @@ public namespace underlayer_web {
 
         var html_out = page.toString()
         var bv = html_out.to_view()
-        res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
-        apply_security_headers(res)
-        res.write_view(&bv)
+        return underlayer_web::send_html(&html_out)
     }
 
-    public func handle_register_page(req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_register_page(req : &http::Request) : http::Response {
         var page = HtmlPage()
         page.defaultUniversalSetup()
         page.defaultPrepare()
@@ -340,12 +338,10 @@ public namespace underlayer_web {
 
         var html_out = page.toString()
         var bv = html_out.to_view()
-        res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
-        apply_security_headers(res)
-        res.write_view(&bv)
+        return underlayer_web::send_html(&html_out)
     }
 
-    public func handle_forgot_password_page(req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_forgot_password_page(req : &http::Request) : http::Response {
         var page = HtmlPage()
         page.defaultUniversalSetup()
         page.defaultPrepare()
@@ -445,12 +441,10 @@ public namespace underlayer_web {
 
         var html_out = page.toString()
         var bv = html_out.to_view()
-        res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
-        apply_security_headers(res)
-        res.write_view(&bv)
+        return underlayer_web::send_html(&html_out)
     }
 
-    public func handle_reset_password_page(req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_reset_password_page(req : &http::Request) : http::Response {
         var page = HtmlPage()
         page.defaultUniversalSetup()
         page.defaultPrepare()
@@ -582,9 +576,7 @@ public namespace underlayer_web {
 
         var html_out = page.toString()
         var bv = html_out.to_view()
-        res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
-        apply_security_headers(res)
-        res.write_view(&bv)
+        return underlayer_web::send_html(&html_out)
     }
 
 }

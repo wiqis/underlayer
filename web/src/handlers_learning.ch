@@ -26,28 +26,28 @@ public namespace underlayer_web {
     // mismatch was hidden behind `&raw` and the handler received a client whose
     // handle was not the live connection. Here the types are declared to match
     // the call sites rather than papered over.)
-    public func handle_learning_view(db : &DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
+    public func handle_learning_view(db : *DbClient, courses_dir : &string, req : &http::Request) : http::Response {
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var anon = string("{\"ok\":true,\"recorded\":false}")
-            send_json_str(res, &raw anon)
+            return send_json_str(&anon)
         } else {
-            var body_str = read_body(&raw mut req)
+            var body_str = read_body(req)
             if(body_str.size() == 0) {
                 var err = string("empty request body")
-                send_error(res, 400u, &err)
+                return send_error(400u, &err)
             } else {
                 var parse_result = json::parse(body_str.to_view())
                 if(parse_result is std::Result.Err) {
                     var err = string("invalid JSON")
-                    send_error(res, 400u, &err)
+                    return send_error(400u, &err)
                 } else {
                     var Ok(parsed) = parse_result else unsafe { unreachable }
                     var course_id = json_get_str(&parsed, "course_id")
                     var concept_id = json_get_str(&parsed, "concept_id")
                     if(concept_id.size() == 0 || course_id.size() == 0) {
                         var err = string("course_id and concept_id are required")
-                        send_error(res, 400u, &err)
+                        return send_error(400u, &err)
                     } else if(!course_has_concept(courses_dir, &course_id, &concept_id)) {
                         // THE CONCEPT ID IS CHECKED AGAINST THE MANIFEST BEFORE
                         // ANY WRITE.  It was not, and because this endpoint
@@ -88,9 +88,9 @@ public namespace underlayer_web {
                         // send_json_str takes &string, so the view is kept alive in a local
                         // rather than passed as a temporary.
                         var nfb = nf
-                        send_json_str(res, &raw nfb)
+                        return send_json_str(&nfb)
                     } else {
-                        record_concept_read(&raw db, &learner_id, &course_id, &concept_id, res)
+                        return record_concept_read(db, &learner_id, &course_id, &concept_id)
                     }
                 }
             }
@@ -121,7 +121,7 @@ public namespace underlayer_web {
         // "unresolved child 'copy' in parent 'c'".)
         var ci : size_t = 0
         while(ci < course.concepts.size()) {
-            var cref = course.concepts.get_ptr(ci)
+            var cref = course.concepts.at_ref(ci)
             var cid = cref.id.copy()
             // equals takes &string, so the view is materialised into a local first.
             if(cid.equals(concept_id)) { return true }
@@ -129,10 +129,10 @@ public namespace underlayer_web {
         }
         var mi : size_t = 0
         while(mi < course.modules.size()) {
-            var mod = course.modules.get_ptr(mi)
+            var mod = course.modules.at_ref(mi)
             var cj : size_t = 0
             while(cj < mod.concepts.size()) {
-                var mc = mod.concepts.get_ptr(cj)
+                var mc = mod.concepts.at_ref(cj)
                 var mcid = mc.copy()
                 if(mcid.equals(concept_id)) { return true }
                 cj = cj + 1
@@ -156,9 +156,8 @@ public namespace underlayer_web {
         db : *DbClient,
         learner_id : &string,
         course_id : &string,
-        concept_id : &string,
-        res : *mut http::ResponseWriter
-    ) {
+        concept_id : &string
+    ) : http::Response {
         var state = underlayer_repository::get_concept_state(db, learner_id, concept_id, course_id)
         var first_time = state.last_studied == 0
         var times_seen = state.attempts
@@ -169,7 +168,7 @@ public namespace underlayer_web {
         if(state.status.size() == 0) { state.status = string("learning") }
         else if(state.status.equals(&not_started)) { state.status = string("learning") }
         state.last_studied = underlayer_core::current_timestamp()
-        underlayer_repository::upsert_concept_state(db, &raw state)
+        underlayer_repository::upsert_concept_state(db, &state)
         underlayer_repository::record_activity(db, learner_id)
         // "Which course am I taking" has to be an answer, not an inference.
         // enrollments existed and had a full CRUD layer; nothing ever wrote to
@@ -187,7 +186,7 @@ public namespace underlayer_web {
         ok.append_view("\",\"times_seen\":")
         ok.append_string(&underlayer_core::int_to_string(times_seen as i64))
         ok.append_view("}")
-        send_json_str(res, &raw ok)
+        return send_json_str(&ok)
     }
 
 }

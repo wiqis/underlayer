@@ -35,9 +35,9 @@ public namespace underlayer_web {
         while(mi < course.modules.size()) {
             // modules.get_ptr yields *Module, and the render helpers take
             // references, so each is re-borrowed rather than passed as a pointer.
-            var mod = course.modules.get_ptr(mi)
+            var mod = course.modules.at_ref(mi)
             if(mod.concepts.size() > 0) {
-                var first = mod.concepts.get_ptr(0)
+                var first = mod.concepts.at_ref(0)
                 var first_id = first.copy()
                 var href = string("/courses/")
                 href.append_string(course_id)
@@ -58,9 +58,9 @@ public namespace underlayer_web {
         var course_total = manifest_concept_total(courses_dir, course_id)
 
         // Coverage: the one breadth figure computed against the real total.
-        var breadth = underlayer_learning::compute_breadth_score(&raw states, course_total)
-        var depth = underlayer_learning::compute_depth_score(&raw states)
-        var proj = underlayer_learning::compute_retention_projection(&raw states)
+        var breadth = underlayer_learning::compute_breadth_score(&states, course_total)
+        var depth = underlayer_learning::compute_depth_score(&states)
+        var proj = underlayer_learning::compute_retention_projection(&states)
 
         // How many concepts have been started at all. This is the number the
         // health model's own "total_concepts" is, and it is not the same thing
@@ -81,7 +81,7 @@ public namespace underlayer_web {
         var answered : int = 0
         var ai : size_t = 0
         while(ai < states.size()) {
-            var st = states.get_ptr(ai)
+            var st = states.at_ref(ai)
             if(st.attempts > 0) { answered = answered + 1 }
             ai = ai + 1
         }
@@ -94,7 +94,7 @@ public namespace underlayer_web {
         var module_rows = vector<HealthModuleRow>()
         var mi : size_t = 0
         while(mi < course.modules.size()) {
-            var mod = course.modules.get_ptr(mi)
+            var mod = course.modules.at_ref(mi)
             // `&mod.concepts` does not type-check through a get_ptr borrow
             // (`*mut string` against `&string`), and re-binding the field with
             // `=` moves it, which the compiler refuses ("cannot move this value
@@ -104,12 +104,12 @@ public namespace underlayer_web {
             var mod_concepts = vector<string>()
             var ci : size_t = 0
             while(ci < mod.concepts.size()) {
-                var one = mod.concepts.get_ptr(ci)
+                var one = mod.concepts.at_ref(ci)
                 var one_copy = one.copy()
                 mod_concepts.push_back(one_copy)
                 ci = ci + 1
             }
-            var mh = underlayer_learning::compute_module_health(&raw states, &raw mod_concepts)
+            var mh = underlayer_learning::compute_module_health(&states, &mod_concepts)
             var row = HealthModuleRow::make()
             var mtitle = mod.title.copy()
             row.title = mtitle
@@ -141,7 +141,7 @@ public namespace underlayer_web {
         var now = underlayer_core::current_timestamp()
         var gi : size_t = 0
         while(gi < raw_goals.size()) {
-            var g = raw_goals.get_ptr(gi)
+            var g = raw_goals.at_ref(gi)
             var grows = HealthGoalRow::make()
             var gcid = g.course_id.copy()
             grows.course_id = gcid

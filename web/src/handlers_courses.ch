@@ -5,12 +5,12 @@ using std::vector
 
 public namespace underlayer_web {
 
-    public func handle_list_courses(courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_list_courses(courses_dir : &string, req : &http::Request) : http::Response {
         var courses = underlayer_repository::list_courses(courses_dir)
         var body = std::string("[")
         var ci : size_t = 0
         while(ci < courses.size()) {
-            var course = courses.get_ptr(ci)
+            var course = courses.at_ref(ci)
             if(ci > 0) { body.append(',') }
             body.append_view("{\"id\":\"")
             var id_sv = course.id.to_view()
@@ -41,16 +41,15 @@ public namespace underlayer_web {
             ci = ci + 1
         }
         body.append(']')
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
-    public func handle_get_course(courses_dir : &string, course_id : *string_view, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_get_course(courses_dir : &string, course_id : &string_view, req : &http::Request) : http::Response {
         var cid = sv_to_string(course_id)
         var course = underlayer_repository::load_course(courses_dir, &cid)
         if(course.id.size() == 0) {
             var err = std::string("course not found")
-            send_error(res, 404u, &err)
-            return
+            return send_error(404u, &err)
         }
         var body = std::string("{\"id\":\"")
         var id_sv2 = course.id.to_view()
@@ -84,7 +83,7 @@ public namespace underlayer_web {
         while(di < course.dependencies.size()) {
             if(di > 0) { body.append_view(",") }
             body.append_view("\"")
-            var dep = course.dependencies.get_ptr(di).copy()
+            var dep = course.dependencies.at_ref(di).copy()
             body.append_string(&dep)
             body.append_view("\"")
             di = di + 1
@@ -92,7 +91,7 @@ public namespace underlayer_web {
         body.append_view("],\"modules\":[")
         var mi : size_t = 0
         while(mi < course.modules.size()) {
-            var mod = course.modules.get_ptr(mi)
+            var mod = course.modules.at_ref(mi)
             if(mi > 0) { body.append(',') }
             body.append_view("{\"id\":\"")
             var mid_sv = mod.id.to_view()
@@ -118,7 +117,7 @@ public namespace underlayer_web {
         body.append_view("],\"concepts\":[")
         var ci : size_t = 0
         while(ci < course.concepts.size()) {
-            var cref = course.concepts.get_ptr(ci)
+            var cref = course.concepts.at_ref(ci)
             if(ci > 0) { body.append(',') }
             body.append_view("{\"id\":\"")
             var cid2_sv = cref.id.to_view()
@@ -143,7 +142,7 @@ public namespace underlayer_web {
             ci = ci + 1
         }
         body.append_view("]}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
 }

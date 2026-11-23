@@ -23,7 +23,7 @@ public namespace underlayer_web {
         var total = 0
         var i : size_t = 0
         while(i < cards.size()) {
-            var card = cards.get_ptr(i)
+            var card = cards.at_ref(i)
             total = total + card.minutes
             i = i + 1
         }
@@ -34,7 +34,7 @@ public namespace underlayer_web {
         var total = 0
         var i : size_t = 0
         while(i < cards.size()) {
-            var card = cards.get_ptr(i)
+            var card = cards.at_ref(i)
             total = total + card.concepts
             i = i + 1
         }

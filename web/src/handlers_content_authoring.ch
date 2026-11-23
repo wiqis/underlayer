@@ -53,15 +53,14 @@ public namespace underlayer_web {
     // 401 when there is no token -- an anonymous caller, full stop.
     // 403 when there is one: the caller is known and still may not write course
     // content, because no role on this platform may.
-    private func refuse_without_author_role(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    private func refuse_without_author_role(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var anon = string("unauthorized")
-            send_error(res, 401u, &anon)
-            return
+            return send_error(401u, &anon)
         }
         var msg = string("no content-author role exists on this platform, so course exercises cannot be written over HTTP; they are seeded from the course manifests at startup instead")
-        send_error(res, 403u, &msg)
+        return send_error(403u, &msg)
     }
 
     // POST /api/exercises/import.  Named `refuse_` rather than shadowing
@@ -72,14 +71,14 @@ public namespace underlayer_web {
     //
     // was: unauthenticated, and inserted
     // caller-supplied questions and answer keys into the global exercise bank.
-    public func refuse_exercise_import(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        refuse_without_author_role(db, req, res)
+    public func refuse_exercise_import(db : *DbClient, req : &http::Request) : http::Response {
+        return refuse_without_author_role(db, req)
     }
 
     // POST /api/exercises/seed -- was: unauthenticated, and repopulated the
     // global bank from a caller-supplied course id.
-    public func refuse_exercise_seed(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        refuse_without_author_role(db, req, res)
+    public func refuse_exercise_seed(db : *DbClient, req : &http::Request) : http::Response {
+        return refuse_without_author_role(db, req)
     }
 
 }

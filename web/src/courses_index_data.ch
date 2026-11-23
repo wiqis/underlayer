@@ -90,10 +90,10 @@ public namespace underlayer_web {
         var cid = course_id.copy()
         var ri : size_t = 0
         while(ri < routes.size()) {
-            var route = routes.get_ptr(ri)
+            var route = routes.at_ref(ri)
             var si : size_t = 0
             while(si < route.steps.size()) {
-                var step = route.steps.get_ptr(si)
+                var step = route.steps.at_ref(si)
                 var scid = step.course_id.copy()
                 if(scid.equals(&cid)) {
                     p.route_id = route.id.copy()
@@ -109,14 +109,14 @@ public namespace underlayer_web {
         return p
     }
 
-    func module_title_for(course : *Course, concept_id : &string) : string {
+    func module_title_for(course : &Course, concept_id : &string) : string {
         var cid = concept_id.copy()
         var mi : size_t = 0
         while(mi < course.modules.size()) {
-            var m = course.modules.get_ptr(mi)
+            var m = course.modules.at_ref(mi)
             var ci : size_t = 0
             while(ci < m.concepts.size()) {
-                var mid = m.concepts.get_ptr(ci)
+                var mid = m.concepts.at_ref(ci)
                 var mcid = mid.copy()
                 if(mcid.equals(&cid)) { return m.title.copy() }
                 ci = ci + 1

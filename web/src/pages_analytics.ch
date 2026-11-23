@@ -11,7 +11,7 @@ public namespace underlayer_web {
     public func render_analytics_page(db : *DbClient, learner_id : &string) : string {
         var course_id = string("elf")
         var states = underlayer_repository::get_all_concept_states(db, learner_id, &course_id)
-        var health = underlayer_learning::compute_knowledge_health(&raw states)
+        var health = underlayer_learning::compute_knowledge_health(&states)
         var sessions = underlayer_repository::get_learner_sessions(db, learner_id, 100)
 
         // Compute accuracy across all sessions
@@ -20,7 +20,7 @@ public namespace underlayer_web {
         var total_duration : i64 = 0
         var si : size_t = 0
         while(si < sessions.size()) {
-            var s = sessions.get_ptr(si)
+            var s = sessions.at_ref(si)
             total_items = total_items + s.exercises_attempted
             total_correct = total_correct + s.exercises_correct
             total_duration = total_duration + (s.end_time - s.start_time)
@@ -36,7 +36,7 @@ public namespace underlayer_web {
         var hard_count : i64 = 0
         var ci : size_t = 0
         while(ci < states.size()) {
-            var s = states.get_ptr(ci)
+            var s = states.at_ref(ci)
             if(s.difficulty_rating < 3.0) { easy_count = easy_count + 1 }
             else if(s.difficulty_rating < 6.0) { medium_count = medium_count + 1 }
             else { hard_count = hard_count + 1 }
@@ -377,7 +377,7 @@ public namespace underlayer_web {
     // Render course-specific analytics page
     public func render_course_analytics_page(db : *DbClient, course_id : &string, learner_id : &string) : string {
         var states = underlayer_repository::get_all_concept_states(db, learner_id, course_id)
-        var health = underlayer_learning::compute_knowledge_health(&raw states)
+        var health = underlayer_learning::compute_knowledge_health(&states)
         var sessions = underlayer_repository::get_learner_sessions(db, learner_id, 50)
 
         // Compute accuracy
@@ -385,7 +385,7 @@ public namespace underlayer_web {
         var total_correct : int = 0
         var si : size_t = 0
         while(si < sessions.size()) {
-            var s = sessions.get_ptr(si)
+            var s = sessions.at_ref(si)
             total_items = total_items + s.exercises_attempted
             total_correct = total_correct + s.exercises_correct
             si = si + 1

@@ -5,70 +5,37 @@ using std::string_view
 
 public namespace underlayer_web {
 
-    public func send_page(res : *mut http::ResponseWriter, page : *HtmlPage) {
-        var ct = std::string_view("text/html; charset=utf-8")
-        res.set_header_view(std::string_view("Content-Type"), &ct)
-        apply_security_headers(res)
-        var html = page.toString()
-        var hv = html.to_view()
-        res.write_view(&hv)
+    // A decoded value-or-empty form of `QueryMap.get`, which returns an Option.
+    // Every call site that wants "the value, or nothing" reads through this.
+    public func sv_or_empty(value : std::Option<std::string_view>) : std::string_view {
+        if(value is std::Option.None) { return std::string_view("") }
+        var Some(v) = value else unsafe { unreachable }
+        return v
     }
 
-    public func send_html(res : *mut http::ResponseWriter, html : *string) {
-        var ct = std::string_view("text/html; charset=utf-8")
-        res.set_header_view(std::string_view("Content-Type"), &ct)
-        apply_security_headers(res)
-        var hv = html.to_view()
-        res.write_view(&hv)
-    }
-
-    public func send_json_str(res : *mut http::ResponseWriter, body : *string) {
-        var ct = std::string_view("application/json")
-        res.set_header_view(std::string_view("Content-Type"), &ct)
-        apply_security_headers(res)
-        var bv = body.to_view()
-        res.write_view(&bv)
-    }
-
-    public func send_error(res : *mut http::ResponseWriter, status : uint, msg : &string) {
-        res.status = status
-        var ct = std::string_view("application/json")
-        res.set_header_view(std::string_view("Content-Type"), &ct)
-        apply_security_headers(res)
-        var body = std::string("{\"error\":\"")
-        body.append_string(msg)
-        body.append_view("\"}")
-        var bv = body.to_view()
-        res.write_view(&bv)
-    }
-
-    public func sv_to_string(sv : *string_view) : string {
+    public func sv_to_string(sv : &string_view) : string {
         var out = std::string()
         var i : size_t = 0
-        while(i < sv.size()) { out.append(sv.get(i)); i = i + 1 }
+        while(i < sv.size()) { out.append(sv.at(i)); i = i + 1 }
         return out
     }
 
-    public func read_body(req : *mut http::Request) : string {
-        // Content-Length 0 (or absent) + not chunked = no body. The HTTP
-        // server leaves Body.remaining as -1 in that case, which would block
-        // forever on an empty POST (CL=0 is not treated as body_len > 0).
-        if(req.body_len == 0u && !req.body.is_chunked()) { return std::string() }
-        var buf : [8192]u8
+    // The request body as text.
+    //
+    // The framework has already framed and buffered the body (bounded by
+    // `ServerConfig.max_body_bytes`), so a handler reads it out of the request
+    // rather than off the socket.  The old version streamed `req.body.read(...)`
+    // into an 8 KiB stack buffer and had to special-case an empty body.
+    public func read_body(req : &http::Request) : string {
+        var text = req.body_text()
         var out = std::string()
-        while(true) {
-            var n = req.body.read(&raw mut buf[0], 8192)
-            if(n <= 0) { break }
-            var i : size_t = 0
-            while(i < (n as size_t)) { out.append(buf[i] as char); i = i + 1 }
-        }
+        out.append_view(&text)
         return out
     }
-
     // HAT course concept ids. The HAT course lives in the same content module
     // as the ELF course, so ids are namespaced with a `hat-` prefix to stay
     // unique across courses.
-    public func render_hat_concept(concept_id : *string) : string {
+    public func render_hat_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var exam_overview_id = std::string("hat-exam-overview")
         var weightage_id = std::string("hat-weightage-strategy")
@@ -214,7 +181,7 @@ public namespace underlayer_web {
 
     // PE course concept ids. Prefixed with `pe-` to stay unique across
     // courses (same convention as the HAT `hat-` prefix).
-    public func render_pe_concept(concept_id : *string) : string {
+    public func render_pe_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var intro_id = std::string("pe-intro")
         var layout_id = std::string("pe-file-layout")
@@ -271,7 +238,7 @@ public namespace underlayer_web {
     // DWARF course concept ids. Prefixed with `dwarf-` to stay unique across
     // courses (same convention as the HAT `hat-`, PE `pe-` and Mach-O
     // `macho-` prefixes).
-    public func render_dwarf_concept(concept_id : *string) : string {
+    public func render_dwarf_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var intro_id = std::string("dwarf-intro")
         var sections_id = std::string("dwarf-sections")
@@ -326,7 +293,7 @@ public namespace underlayer_web {
     // COFF course concept ids. Prefixed with `coff-` to stay unique across
     // courses (same convention as the HAT `hat-`, PE `pe-`, Mach-O `macho-`
     // and DWARF `dwarf-` prefixes).
-    public func render_coff_concept(concept_id : *string) : string {
+    public func render_coff_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var intro_id = std::string("coff-intro")
         var fileheader_id = std::string("coff-file-header")
@@ -370,7 +337,7 @@ public namespace underlayer_web {
 
     // Mach-O course concept ids. Prefixed with `macho-` to stay unique across
     // courses (same convention as the HAT `hat-` and PE `pe-` prefixes).
-    public func render_macho_concept(concept_id : *string) : string {
+    public func render_macho_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var intro_id = std::string("macho-intro")
         var layout_id = std::string("macho-file-layout")
@@ -428,7 +395,7 @@ public namespace underlayer_web {
     // across courses (same convention as the `dwarf-`, `coff-` and `macho-`
     // prefixes). Returns an empty string for ids it does not own, so
     // render_concept can fall through.
-    public func render_wasm_concept(concept_id : *string) : string {
+    public func render_wasm_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var intro_id = std::string("wasm-intro")
         var header_id = std::string("wasm-header")
@@ -466,7 +433,7 @@ public namespace underlayer_web {
     // Object Files course concept ids. The `obj-` prefix, same convention as
     // the `jvm-`, `wasm-`, `dwarf-`, `coff-` and `macho-` prefixes. Returns an
     // empty string for ids it does not own so render_concept can fall through.
-    public func render_obj_concept(concept_id : *string) : string {
+    public func render_obj_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var intro_id = std::string("obj-intro")
         var hole_id = std::string("obj-the-hole")
@@ -508,7 +475,7 @@ public namespace underlayer_web {
         return string()
     }
 
-    public func render_jvm_concept(concept_id : *string) : string {
+    public func render_jvm_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var intro_id = std::string("jvm-intro")
         var header_id = std::string("jvm-header")
@@ -552,7 +519,7 @@ public namespace underlayer_web {
 
     // Symbol Resolution and Symbol Tables. Owns the 12 `sym-*` ids; returns an
     // empty string for anything else so the fall-through chain keeps working.
-    public func render_sym_concept(concept_id : *string) : string {
+    public func render_sym_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var intro_id = std::string("sym-intro")
         var binding_id = std::string("sym-binding")
@@ -586,7 +553,7 @@ public namespace underlayer_web {
     // for anything else so the fall-through chain keeps working. Only the
     // vocabulary module is prefixed `reloc-`, because `pie-`, `pic-` and
     // `tls-` are the other concepts' prefixes.
-    public func render_reloc_concept(concept_id : *string) : string {
+    public func render_reloc_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var arch_id = std::string("reloc-arch-contrast")
         var why_id = std::string("reloc-why-so-many")
@@ -614,7 +581,7 @@ public namespace underlayer_web {
     // string for anything else so the fall-through chain keeps working. Only
     // the script module is prefixed `link-`, because `pie-`, `pic-` and `tls-`
     // are the other concepts' prefixes.
-    public func render_link_concept(concept_id : *string) : string {
+    public func render_link_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var default_script_id = std::string("link-default-script")
         var language_id = std::string("link-script-language")
@@ -644,7 +611,7 @@ public namespace underlayer_web {
     // empty string for anything else so the fall-through chain keeps working.
     // Only the scope module is prefixed `dyn-`, because `pie-`, `pic-` and
     // `tls-` are other concepts' prefixes.
-    public func render_dyn_concept(concept_id : *string) : string {
+    public func render_dyn_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var scope_id = std::string("dyn-scope")
         var interpose_id = std::string("dyn-interpose")
@@ -672,7 +639,7 @@ public namespace underlayer_web {
 
     // Executable images and OS loading. Same fall-through contract: empty
     // string for anything else. `img-` is a prefix no other course uses.
-    public func render_img_concept(concept_id : *string) : string {
+    public func render_img_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var auxv_id = std::string("img-auxv")
         var stack_id = std::string("img-stack")
@@ -692,7 +659,7 @@ public namespace underlayer_web {
 
     // Executable security and hardening. Same fall-through contract: empty
     // string for anything else. `sec-` is a prefix no other course uses.
-    public func render_sec_concept(concept_id : *string) : string {
+    public func render_sec_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var defaults_id = std::string("sec-defaults")
         var canary_id = std::string("sec-canary")
@@ -714,7 +681,7 @@ public namespace underlayer_web {
 
     // Instruction set architecture. Same fall-through contract: empty string
     // for anything else. `isa-` is a prefix no other course uses.
-    public func render_isa_concept(concept_id : *string) : string {
+    public func render_isa_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var modes_id = std::string("isa-modes")
         var opcodes_id = std::string("isa-opcodes")
@@ -736,7 +703,7 @@ public namespace underlayer_web {
 
     // CPU execution and microarchitecture. Same fall-through contract:
     // empty string for anything else. `exe-` is a prefix no other course uses.
-    public func render_exe_concept(concept_id : *string) : string {
+    public func render_exe_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var inst_id = std::string("exe-instrument")
         var lat_id = std::string("exe-latency")
@@ -756,7 +723,7 @@ public namespace underlayer_web {
 
     // The memory hierarchy. Same fall-through contract: empty string for
     // anything else. `mem-` is a prefix no other course uses.
-    public func render_mem_concept(concept_id : *string) : string {
+    public func render_mem_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var inst_id = std::string("mem-instrument")
         var lat_id = std::string("mem-latency")
@@ -780,7 +747,7 @@ public namespace underlayer_web {
 
     // Exceptions, privilege and mode changes. Same fall-through contract:
     // empty string for anything else. `priv-` is a prefix no other course uses.
-    public func render_priv_concept(concept_id : *string) : string {
+    public func render_priv_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var table_id = std::string("priv-table")
         var vectors_id = std::string("priv-vectors")
@@ -804,7 +771,7 @@ public namespace underlayer_web {
 
     // Multiprocessor architecture. Same fall-through contract: empty string
     // for anything else. `smp-` is a prefix no other course uses.
-    public func render_smp_concept(concept_id : *string) : string {
+    public func render_smp_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var topology_id = std::string("smp-topology")
         var sharing_id = std::string("smp-sharing")
@@ -830,7 +797,7 @@ public namespace underlayer_web {
     // that one and the two are different subjects: this one is the set of
     // instructions and the encodings behind the escapes, that one is how to
     // read an encoding one byte at a time.
-    public func render_x86asm_concept(concept_id : *string) : string {
+    public func render_x86asm_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var asm_id = std::string("x86-asm")
         var integers_id = std::string("x86-integers")
@@ -855,7 +822,7 @@ public namespace underlayer_web {
     // with no course in the key, so a collision is silent -- the first
     // course to claim a name keeps it and every later one that asks for it
     // gets this course's page.
-    public func render_a64asm_concept(concept_id : *string) : string {
+    public func render_a64asm_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var asm_id = std::string("a64-asm")
         var encoding_id = std::string("a64-encoding")
@@ -882,7 +849,7 @@ public namespace underlayer_web {
     // this file: render_concept() resolves ids GLOBALLY with no course in the
     // key, so a collision is silent and the first course to claim a name
     // keeps it.
-    public func render_a64abi_concept(concept_id : *string) : string {
+    public func render_a64abi_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var aapcs_id = std::string("a64-aapcs")
         var registers_id = std::string("a64-registers")
@@ -927,7 +894,7 @@ public namespace underlayer_web {
     // x86-64 section made the same substitution twice -- `x86-verify` became
     // `x86-boundary` and then `x86-bytes` -- and both are about the artifact
     // rather than about the word "verify".
-    public func render_a64sys_concept(concept_id : *string) : string {
+    public func render_a64sys_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var syscall_id = std::string("a64-syscall")
         var exceptions_id = std::string("a64-exceptions")
@@ -972,7 +939,7 @@ public namespace underlayer_web {
     // a concept id is resolved GLOBALLY by render_concept() with no course in
     // the key -- so a name reused here would shadow whatever course got it
     // first, silently, with no diagnostic from anywhere.
-    public func render_a64simd_concept(concept_id : *string) : string {
+    public func render_a64simd_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var neon_id = std::string("a64-neon")
         var neonspace_id = std::string("a64-neonspace")
@@ -1026,7 +993,7 @@ public namespace underlayer_web {
     //                  exactly one thing the page is about.
     //   rv-verify      the decoder, the two-reader cross-check and the
     //                  four poisons.
-    public func render_rvasm_concept(concept_id : *string) : string {
+    public func render_rvasm_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var isa_id = std::string("rv-isa")
         var encoding_id = std::string("rv-encoding")
@@ -1073,7 +1040,7 @@ public namespace underlayer_web {
     //                       CONSEQUENCE (a spill, a hot loop, a call/return
     //                       pair, and the two-bit length rule).  The `-cost`
     //                       suffix is what keeps the two apart.
-    public func render_rvabi_concept(concept_id : *string) : string {
+    public func render_rvabi_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var calling_id = std::string("rv-calling")
         var noflags_id = std::string("rv-noflags")
@@ -1123,7 +1090,7 @@ public namespace underlayer_web {
     //                they can, and the retractions.  It is also the last
     //                concept, so "boundary" is literally where the course
     //                ends.
-    public func render_rvpriv_concept(concept_id : *string) : string {
+    public func render_rvpriv_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var modes_id = std::string("rv-modes")
         var paging_id = std::string("rv-paging")
@@ -1154,7 +1121,7 @@ public namespace underlayer_web {
     // `rv-isa`, `rv-encoding`, `rv-compressed`, `rv-immediate` (rvasm);
     // `rv-calling`, `rv-noflags`, `rv-registers`, `rv-compressed-cost` (rvabi);
     // `rv-modes`, `rv-paging`, `rv-traps`, `rv-boundary` (rvpriv).
-    public func render_rvat_concept(concept_id : *string) : string {
+    public func render_rvat_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var amo_id = std::string("rv-amo")
         var fence_id = std::string("rv-fence")
@@ -1175,7 +1142,7 @@ public namespace underlayer_web {
     // this one owns the contract two compilers agree on, which is a different
     // subject with a different kind of evidence -- faults and bit patterns
     // rather than decodes.
-    public func render_x86abi_concept(concept_id : *string) : string {
+    public func render_x86abi_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var calling_id = std::string("x86-calling")
         var frame_id = std::string("x86-frame")
@@ -1198,7 +1165,7 @@ public namespace underlayer_web {
     // already in use by the assembly and ABI courses, so these nine ids
     // continue it rather than introducing a fourth prefix; the subjects are
     // different enough that no id collides.
-    public func render_x86sys_concept(concept_id : *string) : string {
+    public func render_x86sys_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var syscall_id = std::string("x86-syscall")
         var exceptions_id = std::string("x86-exceptions")
@@ -1229,7 +1196,7 @@ public namespace underlayer_web {
     // x86 course needed, which is not an accident: a concept id is
     // resolved GLOBALLY by render_concept() with no course in the key, so
     // the only ids that survive are the ones nobody thought of first.
-    public func render_x86simd_concept(concept_id : *string) : string {
+    public func render_x86simd_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var sse_id = std::string("x86-sse")
         var avx_id = std::string("x86-avx")
@@ -1249,7 +1216,7 @@ public namespace underlayer_web {
 
     // SIMD and vector processing. Same fall-through contract: empty string
     // for anything else. `simd-` is a prefix no other course uses.
-    public func render_simd_concept(concept_id : *string) : string {
+    public func render_simd_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var width_id = std::string("simd-width")
         var compiler_id = std::string("simd-compiler")
@@ -1316,7 +1283,7 @@ public namespace underlayer_web {
     //                course is named for the thing it does, which is
     //                verification, and the boundary is what the last third of
     //                the page is about.
-    public func render_compback_concept(concept_id : *string) : string {
+    public func render_compback_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         var ir_id = std::string("cb-ir")
         var isel_id = std::string("cb-isel")
@@ -1334,7 +1301,7 @@ public namespace underlayer_web {
         return string()
     }
 
-    public func render_concept(concept_id : *string) : string {
+    public func render_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         // HAT concepts are resolved first; render_hat_concept returns an empty
         // string for ids it does not own, so unknown ids fall through to the

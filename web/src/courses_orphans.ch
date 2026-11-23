@@ -24,7 +24,7 @@ public namespace underlayer_web {
         var orphans = vector<CatalogCard>()
         var i : size_t = 0
         while(i < courses.size()) {
-            var c = courses.get_ptr(i)
+            var c = courses.at_ref(i)
             var cid = c.id.copy()
             if(!list_has(claimed, &cid)) {
                 var card = CatalogCard::make()
@@ -69,7 +69,7 @@ public namespace underlayer_web {
         var dropped = 0
         var oi : size_t = 0
         while(oi < orphans.size()) {
-            var oc = orphans.get_ptr(oi)
+            var oc = orphans.at_ref(oi)
             dropped = dropped + oc.concepts
             oi = oi + 1
         }
@@ -89,7 +89,7 @@ public namespace underlayer_web {
     public func render_orphan_rows(orphans : &vector<CatalogCard>, page : &mut HtmlPage) {
         var i : size_t = 0
         while(i < orphans.size()) {
-            var card = orphans.get_ptr(i)
+            var card = orphans.at_ref(i)
             #html {
                 <div class="orphan-row">
                     <a href={card.href}>{card.title}</a>

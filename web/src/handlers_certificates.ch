@@ -17,31 +17,27 @@ public namespace underlayer_web {
     // construction.  `courses_dir` was not a parameter before and is now,
     // because the denominator is the course manifest and the manifest loader
     // lives above this layer.
-    public func handle_issue_certificate(db : *DbClient, courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_issue_certificate(db : *DbClient, courses_dir : &string, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
-        var body_str = read_body(&raw mut req)
+        var body_str = read_body(req)
         if(body_str.size() == 0) {
             var err = string("empty request body")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         var parse_result = json::parse(body_str.to_view())
         if(parse_result is std::Result.Err) {
             var err = string("invalid JSON")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         var Ok(parsed) = parse_result else unsafe { unreachable }
         var course_id = json_get_str(&parsed, "course_id")
         if(course_id.size() == 0) {
             var err = string("course_id is required")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
         // The duplicate check stays ABOVE the gate.  A learner who already has
         // a certificate for a course must be able to ask for it again and get
@@ -53,7 +49,7 @@ public namespace underlayer_web {
             var existing_certs = underlayer_repository::get_learner_certificates(db, &learner_id)
             var fi : size_t = 0
             while(fi < existing_certs.size()) {
-                var c = existing_certs.get_ptr(fi)
+                var c = existing_certs.at_ref(fi)
                 if(c.course_id.equals(&course_id)) {
                     resp.append_string(&c.id)
                     break
@@ -61,10 +57,13 @@ public namespace underlayer_web {
                 fi = fi + 1
             }
             resp.append_view("\"}")
-            send_json_str(res, &raw resp)
-            return
+            return send_json_str(&resp)
         }
-        if(!require_course_complete(db, courses_dir, &learner_id, &course_id, res)) { return }
+        var gate = require_course_complete(db, courses_dir, &learner_id, &course_id)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return refusal
+        }
         var learner = underlayer_repository::get_learner(db, &learner_id)
         var learner_name = learner.name.copy()
         if(learner_name.size() == 0) { learner_name = string("Learner") }
@@ -103,17 +102,16 @@ public namespace underlayer_web {
         resp.append_view("\",\"certificate_url\":\"/certificates/")
         resp.append_string(&cert_id)
         resp.append_view("\"}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // ---- GET /api/certificates/:id — Get a specific certificate ----
 
-    public func handle_get_certificate(db : *DbClient, cert_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_get_certificate(db : *DbClient, cert_id : &string, req : &http::Request) : http::Response {
         var cert = underlayer_repository::get_certificate(db, cert_id)
         if(cert.id.size() == 0) {
             var err = string("certificate not found")
-            send_error(res, 404u, &err)
-            return
+            return send_error(404u, &err)
         }
         var resp = string("{\"id\":\"")
         resp.append_string(&cert.id)
@@ -135,24 +133,23 @@ public namespace underlayer_web {
         var cat_str = underlayer_core::int_to_string(cert.created_at)
         resp.append_string(&cat_str)
         resp.append_view("}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // ---- GET /api/certificates — List user's certificates ----
 
-    public func handle_get_certificates(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_get_certificates(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         var certs = underlayer_repository::get_learner_certificates(db, &learner_id)
         var resp = string("[")
         var ci : size_t = 0
         while(ci < certs.size()) {
             if(ci > 0) { resp.append_view(",") }
-            var cert = certs.get_ptr(ci)
+            var cert = certs.at_ref(ci)
             resp.append_view("{\"id\":\"")
             resp.append_string(&cert.id)
             resp.append_view("\",\"course_id\":\"")
@@ -174,17 +171,16 @@ public namespace underlayer_web {
             ci = ci + 1
         }
         resp.append_view("]")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // ---- GET /certificates/:id — HTML certificate page ----
 
-    public func handle_certificate_page(db : *DbClient, cert_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_certificate_page(db : *DbClient, cert_id : &string, req : &http::Request) : http::Response {
         var cert = underlayer_repository::get_certificate(db, cert_id)
         if(cert.id.size() == 0) {
             var err = string("certificate not found")
-            send_error(res, 404u, &err)
-            return
+            return send_error(404u, &err)
         }
         var page = HtmlPage()
         page.defaultUniversalSetup()
@@ -218,7 +214,8 @@ public namespace underlayer_web {
         html.append_view("</div></div>")
         html.append_view("</div></div></div></div>")
 
-        page.append_html(html.data(), html.size())
+        var html_str = std::str.make_view(html.to_view())
+        page.append_html(&html_str)
 
         #css {
             .cert-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: hsl(var(--background)); padding: 2rem; font-family: Georgia, 'Times New Roman', serif; }
@@ -244,9 +241,7 @@ public namespace underlayer_web {
 
         var html_out = page.toString()
         var bv = html_out.to_view()
-        res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
-        apply_security_headers(res)
-        res.write_view(&bv)
+        return underlayer_web::send_html(&html_out)
     }
 
 }

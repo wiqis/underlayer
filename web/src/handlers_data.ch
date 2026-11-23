@@ -7,7 +7,7 @@ using underlayer_repository::parse_i64
 public namespace underlayer_web {
 
     // 16.8.1-16.8.5: GET /api/user/export — export all user data as JSON
-    public func handle_export_data(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_export_data(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var learner = underlayer_repository::get_learner(db, &learner_id)
@@ -29,7 +29,7 @@ public namespace underlayer_web {
         var ci : size_t = 0
         while(ci < states.size()) {
             if(ci > 0) { body.append_view(",") }
-            var s = states.get_ptr(ci)
+            var s = states.at_ref(ci)
             body.append_view("{\"concept_id\":\"")
             body.append_string(&s.concept_id)
             body.append_view("\",\"course_id\":\"")
@@ -52,7 +52,7 @@ public namespace underlayer_web {
         var si : size_t = 0
         while(si < sessions.size()) {
             if(si > 0) { body.append_view(",") }
-            var sess = sessions.get_ptr(si)
+            var sess = sessions.at_ref(si)
             body.append_view("{\"id\":\"")
             body.append_string(&sess.id)
             body.append_view("\",\"start_time\":")
@@ -77,10 +77,10 @@ public namespace underlayer_web {
         var now_str = underlayer_core::int_to_string(now)
         body.append_string(&now_str)
         body.append_view("}")
-        res.set_header_view(std::string_view("Content-Type"), &std::string_view("application/json"))
-        res.set_header_view(std::string_view("Content-Disposition"), &std::string_view("attachment; filename=\"underlayer_export.json\""))
-        var bv = body.to_view()
-        res.write_view(&bv)
+        var res = send_json_str(&body)
+        var disposition = std::string_view("attachment; filename=\"underlayer_export.json\"")
+        res.set_header_view(std::string_view("Content-Disposition"), &disposition)
+        return res
     }
 
     // 16.8.6-16.8.7: DELETE /api/user/data/:type -- delete one category of data
@@ -99,12 +99,11 @@ public namespace underlayer_web {
     // belongs below web/.  That function also fixes the ordering bug: the old
     // code deleted `sessions` and then asked `session_items` to delete itself
     // through a subquery over `sessions`, so it deleted nothing at all.
-    public func handle_delete_data(db : *DbClient, data_type : *string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_delete_data(db : *DbClient, data_type : &string, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err_msg = string("unauthorized")
-            send_error(res, 401u, &err_msg)
-            return
+            return send_error(401u, &err_msg)
         }
         var dt = data_type.copy()
         var k_reviews = string("reviews")
@@ -114,18 +113,16 @@ public namespace underlayer_web {
         var known = dt.equals(&k_reviews) || dt.equals(&k_progress) || dt.equals(&k_sessions) || dt.equals(&k_all)
         if(!known) {
             var err_msg2 = string("invalid data_type: use reviews, progress, sessions, or all")
-            send_error(res, 400u, &err_msg2)
-            return
+            return send_error(400u, &err_msg2)
         }
         if(!underlayer_repository::delete_learner_data_of_type(db, &learner_id, &dt)) {
             var err_msg3 = string("could not delete that data type")
-            send_error(res, 400u, &err_msg3)
-            return
+            return send_error(400u, &err_msg3)
         }
         var ok_body = string("{\"ok\":true,\"data_type\":\"")
         ok_body.append_string(&dt)
         ok_body.append_view("\"}")
-        send_json_str(res, &raw ok_body)
+        return send_json_str(&ok_body)
     }
 
     // 16.8.8-16.8.10: DELETE /api/user/account -- delete the entire account.
@@ -160,23 +157,22 @@ public namespace underlayer_web {
     // children before parents, and returns how many tables it cleared -- so the
     // handler can report a number instead of assuming.  A new table is one line
     // in a list, not a fourth rewrite of this function.
-    public func handle_delete_account(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_delete_account(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err_msg = string("unauthorized")
-            send_error(res, 401u, &err_msg)
-            return
+            return send_error(401u, &err_msg)
         }
         var cleared = underlayer_repository::delete_learner_everything(db, &learner_id)
         var ok_body = string("{\"ok\":true,\"message\":\"account deleted\",\"cleared\":")
         var cs = underlayer_core::int_to_string(cleared)
         ok_body.append_string(&cs)
         ok_body.append_view("}")
-        send_json_str(res, &raw ok_body)
+        return send_json_str(&ok_body)
     }
 
     // 16.8.12: POST /api/user/deactivate — deactivate account (temporary)
-    public func handle_deactivate_account(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_deactivate_account(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var now = underlayer_core::current_timestamp()
@@ -194,11 +190,11 @@ public namespace underlayer_web {
         del_sql.append_view("'")
         underlayer_db::exec_sql(db, &raw del_sql)
         var ok_body = string("{\"ok\":true,\"message\":\"account deactivated\"}")
-        send_json_str(res, &raw ok_body)
+        return send_json_str(&ok_body)
     }
 
     // 16.8.13: POST /api/user/reactivate — reactivate account
-    public func handle_reactivate_account(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_reactivate_account(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var now = underlayer_core::current_timestamp()
@@ -212,33 +208,32 @@ public namespace underlayer_web {
         sql.append_view(")")
         underlayer_db::exec_sql(db, &raw sql)
         var ok_body = string("{\"ok\":true,\"message\":\"account reactivated\"}")
-        send_json_str(res, &raw ok_body)
+        return send_json_str(&ok_body)
     }
 
     // 6.1.8: POST /api/progress/import — import progress from another account
-    public func handle_import_progress(db : *DbClient, req : &mut http::Request, res : *mut http::ResponseWriter) {
+    public func handle_import_progress(db : *DbClient, req : &mut http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
-        var body_str = read_body(&raw mut req)
+        var body_str = read_body(req)
         if(body_str.size() == 0) {
             var err_msg = string("missing request body")
-            send_error(res, 400u, &err_msg)
-            return
+            return send_error(400u, &err_msg)
         }
         var parse_result = json::parse(body_str.to_view())
         if(parse_result is std::Result.Err) {
             var err_msg2 = string("invalid JSON")
-            send_error(res, 400u, &err_msg2)
-            return
+            return send_error(400u, &err_msg2)
         }
         var Ok(parsed) = parse_result else unsafe { unreachable }
         var imported : int = 0
-        var states_val = json_get(&parsed, "concept_states")
-        if(states_val is JsonValue.Array) {
+        var states_opt = json_get(&parsed, "concept_states")
+        if(states_opt is std::Option.Some) {
+            var Some(states_val) = states_opt else unsafe { unreachable }
             var Array(states_arr) = states_val else unsafe { unreachable }
             var i : size_t = 0
             while(i < states_arr.size()) {
-                var item = states_arr.get_ptr(i)
+                var item = states_arr.at_ref(i)
                 var concept_id = json_get_str(item, "concept_id")
                 var course_id = json_get_str(item, "course_id")
                 var status = json_get_str(item, "status")
@@ -275,12 +270,13 @@ public namespace underlayer_web {
                 i = i + 1
             }
         }
-        var reviews_val = json_get(&parsed, "review_items")
-        if(reviews_val is JsonValue.Array) {
-            var Array(reviews_arr) = reviews_val else unsafe { unreachable }
+        var reviews_opt2 = json_get(&parsed, "review_items")
+        if(reviews_opt2 is std::Option.Some) {
+            var Some(reviews_val2) = reviews_opt2 else unsafe { unreachable }
+            var Array(reviews_arr) = reviews_val2 else unsafe { unreachable }
             var j : size_t = 0
             while(j < reviews_arr.size()) {
-                var item = reviews_arr.get_ptr(j)
+                var item = reviews_arr.at_ref(j)
                 var concept_id = json_get_str(item, "concept_id")
                 var course_id = json_get_str(item, "course_id")
                 var item_type = json_get_str(item, "type")
@@ -310,26 +306,26 @@ public namespace underlayer_web {
         var imp_str = underlayer_core::int_to_string(imported as i64)
         ok_body.append_string(&imp_str)
         ok_body.append_view("}")
-        send_json_str(res, &raw ok_body)
+        return send_json_str(&ok_body)
     }
 
     // 6.1.6: POST /api/progress/share — create public sharing token
-    public func handle_share_progress(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_share_progress(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var token = underlayer_core::int_to_string(underlayer_core::current_timestamp())
         var body = string("{\"share_url\":\"/u/demo/progress/")
         body.append_view(token.to_view())
         body.append_view("\"}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // GET /api/progress/shared/:token — get shared progress
-    public func handle_get_shared_progress(db : *DbClient, token : *string_view, res : *mut http::ResponseWriter) {
+    public func handle_get_shared_progress(db : *DbClient, token : &string_view) : http::Response {
         var learner_id = string("demo")
         var elf_course = string("elf")
         var states = underlayer_repository::get_all_concept_states(db, &learner_id, &elf_course)
-        var health = underlayer_learning::compute_knowledge_health(&raw states)
+        var health = underlayer_learning::compute_knowledge_health(&states)
         var body = string("{\"health_score\":")
         var hs_str = underlayer_learning::f64_to_string(health.health_score)
         body.append_string(&hs_str)
@@ -340,7 +336,7 @@ public namespace underlayer_web {
         var tc_str = underlayer_core::int_to_string(health.total_concepts as i64)
         body.append_string(&tc_str)
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
 }

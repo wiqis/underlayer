@@ -11,12 +11,11 @@ using underlayer_db::DbClient
 public namespace underlayer_web {
     // ---- 16.10.1: GET /api/user/login-history ----
 
-    public func handle_login_history(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_login_history(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         var learner_safe = underlayer_repository::sql_escape(&learner_id)
         var sel_sql = string("SELECT id, learner_id, ip_address, user_agent, success, failure_reason, created_at FROM login_history WHERE learner_id = '")
@@ -27,14 +26,14 @@ public namespace underlayer_web {
         var ri : size_t = 0
         while(ri < result.rows.size()) {
             if(ri > 0) { resp.append_view(",") }
-            var row = result.rows.get_ptr(ri)
-            var val0 = row.vals.get_ptr(0).copy()
-            var val1 = row.vals.get_ptr(1).copy()
-            var val2 = row.vals.get_ptr(2).copy()
-            var val3 = row.vals.get_ptr(3).copy()
-            var val4 = row.vals.get_ptr(4).copy()
-            var val5 = row.vals.get_ptr(5).copy()
-            var val6 = row.vals.get_ptr(6).copy()
+            var row = result.rows.at_ref(ri)
+            var val0 = row.vals.at_ref(0).copy()
+            var val1 = row.vals.at_ref(1).copy()
+            var val2 = row.vals.at_ref(2).copy()
+            var val3 = row.vals.at_ref(3).copy()
+            var val4 = row.vals.at_ref(4).copy()
+            var val5 = row.vals.at_ref(5).copy()
+            var val6 = row.vals.at_ref(6).copy()
             resp.append_view("{\"id\":")
             resp.append_string(&val0)
             resp.append_view(",\"learner_id\":\"")
@@ -54,7 +53,7 @@ public namespace underlayer_web {
             ri = ri + 1
         }
         resp.append_view("]")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
 }

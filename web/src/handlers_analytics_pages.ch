@@ -6,7 +6,7 @@ using underlayer_db::DbClient
 public namespace underlayer_web {
 
     // GET /analytics — HTML analytics dashboard
-    public func handle_analytics_page(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_analytics_page(db : *DbClient, req : &http::Request) : http::Response {
         // THE SIGN-IN GATE.  Every number on this page is read from the
         // signed-in learner's own rows, so with no account there is nothing to
         // show and the page rendered about 30 zeroes -- which reads as failure
@@ -18,37 +18,32 @@ public namespace underlayer_web {
             // changed, and for why it cannot loop.
 
             var gate_path = string("/analytics")
-            redirect_to_login(res, &gate_path)
-            return
+            return redirect_to_login(&gate_path)
         }
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var html_out = render_analytics_page(db, &learner_id)
         var bv = html_out.to_view()
-        res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
-        apply_security_headers(res)
-        res.write_view(&bv)
+        return underlayer_web::send_html(&html_out)
     }
 
     // GET /analytics/:courseId — HTML course-specific analytics
-    public func handle_course_analytics_page(db : *DbClient, course_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_course_analytics_page(db : *DbClient, course_id : &string, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var html_out = render_course_analytics_page(db, course_id, &learner_id)
         var bv = html_out.to_view()
-        res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
-        apply_security_headers(res)
-        res.write_view(&bv)
+        return underlayer_web::send_html(&html_out)
     }
 
     // GET /api/analytics/overview — JSON overview stats
-    public func handle_analytics_overview_api(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_analytics_overview_api(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
 
         var states = underlayer_repository::get_all_concept_states(db, &learner_id, &course_id)
-        var health = underlayer_learning::compute_knowledge_health(&raw states)
+        var health = underlayer_learning::compute_knowledge_health(&states)
         var sessions = underlayer_repository::get_learner_sessions(db, &learner_id, 1000)
 
         // Compute accuracy
@@ -56,7 +51,7 @@ public namespace underlayer_web {
         var total_correct : int = 0
         var si : size_t = 0
         while(si < sessions.size()) {
-            var s = sessions.get_ptr(si)
+            var s = sessions.at_ref(si)
             total_items = total_items + s.exercises_attempted
             total_correct = total_correct + s.exercises_correct
             si = si + 1
@@ -74,7 +69,7 @@ public namespace underlayer_web {
             var found_today = false
             var si2 : size_t = 0
             while(si2 < sessions.size()) {
-                var s2 = sessions.get_ptr(si2)
+                var s2 = sessions.at_ref(si2)
                 var session_day = s2.start_time / day_seconds
                 if(session_day == current_day) { found_today = true }
                 si2 = si2 + 1
@@ -85,7 +80,7 @@ public namespace underlayer_web {
                 var found_yesterday = false
                 var si3 : size_t = 0
                 while(si3 < sessions.size()) {
-                    var s3 = sessions.get_ptr(si3)
+                    var s3 = sessions.at_ref(si3)
                     var session_day = s3.start_time / day_seconds
                     if(session_day == yesterday) { found_yesterday = true }
                     si3 = si3 + 1
@@ -102,7 +97,7 @@ public namespace underlayer_web {
                     var found = false
                     var si4 : size_t = 0
                     while(si4 < sessions.size()) {
-                        var s4 = sessions.get_ptr(si4)
+                        var s4 = sessions.at_ref(si4)
                         var session_day = s4.start_time / day_seconds
                         if(session_day == check_day) { found = true }
                         si4 = si4 + 1
@@ -132,7 +127,7 @@ public namespace underlayer_web {
         var st_out = underlayer_core::int_to_string(streak)
         body.append_string(&st_out)
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
 }

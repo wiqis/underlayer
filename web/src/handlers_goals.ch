@@ -27,11 +27,11 @@ public namespace underlayer_web {
     // now see every course instead of only the one that was assumed.
     private func goal_course_id(req : &http::Request) : string {
         var key = string("course_id")
-        var val = req.query.get(&key.to_view())
+        var val = sv_or_empty(req.query.get(std::str.make_view(key.to_view())))
         if(val.size() == 0) { return string("elf") }
         var out = string()
         var i : size_t = 0
-        while(i < val.size()) { out.append(val.get(i)); i = i + 1 }
+        while(i < val.size()) { out.append(val.at(i)); i = i + 1 }
         if(out.size() == 0) { return string("elf") }
         return out
     }
@@ -42,17 +42,17 @@ public namespace underlayer_web {
     // only ever hold one goal per learner in practice (one hardcoded course),
     // and a read API that silently returns only the first of several rows is how
     // this bug started.
-    public func handle_get_goals(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
+    public func handle_get_goals(db : *DbClient, req : &http::Request) : http::Response {
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
-        var goals = underlayer_repository::list_learning_goals(&raw db, &learner_id)
+        var goals = underlayer_repository::list_learning_goals(db, &learner_id)
         var now = underlayer_core::current_timestamp()
 
         var body = string("{\"goals\":[")
         var i : size_t = 0
         while(i < goals.size()) {
             if(i > 0) { body.append_view(",") }
-            var g = goals.get_ptr(i)
+            var g = goals.at_ref(i)
             body.append_view("{\"id\":\"")
             var gid = g.id.copy()
             body.append_string(&gid)
@@ -81,41 +81,40 @@ public namespace underlayer_web {
         var cnt = underlayer_core::int_to_string(goals.size() as i64)
         body.append_string(&cnt)
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // 6.1.5: Set learning goal
-    public func handle_set_goal(db : &DbClient, req : *mut http::Request, res : *mut http::ResponseWriter) {
+    public func handle_set_goal(db : *DbClient, req : &mut http::Request) : http::Response {
         var q_td = string("target_date")
-        var td_v = req.query.get(&q_td.to_view())
+        var td_v = sv_or_empty(req.query.get(std::str.make_view(q_td.to_view())))
         if(td_v.size() == 0) {
             var err_msg = string("missing query param: target_date")
-            send_error(res, 400u, &err_msg)
-            return
+            return send_error(400u, &err_msg)
         }
         var target_date = parse_i64(td_v) as i64
-        var learner_id = auth_get_learner_id(&raw db, &*req)
+        var learner_id = auth_get_learner_id(db, &*req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = goal_course_id(&*req)
-        underlayer_repository::set_learning_goal(&raw db, &learner_id, &course_id, target_date)
+        underlayer_repository::set_learning_goal(db, &learner_id, &course_id, target_date)
         var ok_body = string("{\"ok\":true,\"course_id\":\"")
         var cid = course_id.copy()
         ok_body.append_string(&cid)
         ok_body.append_view("\"}")
-        send_json_str(res, &raw ok_body)
+        return send_json_str(&ok_body)
     }
 
     // 6.1.5: Delete learning goal
-    public func handle_delete_goal(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
+    public func handle_delete_goal(db : *DbClient, req : &http::Request) : http::Response {
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = goal_course_id(req)
-        underlayer_repository::delete_learning_goal(&raw db, &learner_id, &course_id)
+        underlayer_repository::delete_learning_goal(db, &learner_id, &course_id)
         var ok_body = string("{\"ok\":true,\"course_id\":\"")
         var cid = course_id.copy()
         ok_body.append_string(&cid)
         ok_body.append_view("\"}")
-        send_json_str(res, &raw ok_body)
+        return send_json_str(&ok_body)
     }
 
 }

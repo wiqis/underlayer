@@ -92,7 +92,7 @@ public namespace underlayer_web {
     // One module. A module the learner has not touched renders its bar at 0%
     // but keeps its real concept count visible, so "0 of 14" reads as "not
     // started yet" rather than as a mistake.
-    public func render_health_module_row(row : *HealthModuleRow, page : &mut HtmlPage) {
+    public func render_health_module_row(row : &HealthModuleRow, page : &mut HtmlPage) {
         var pct_val = row.pct
         var total_val = row.total
         var mastered_val = row.mastered
@@ -130,7 +130,7 @@ public namespace underlayer_web {
     public func render_all_module_rows(rows : &vector<HealthModuleRow>, page : &mut HtmlPage) {
         var i : size_t = 0
         while(i < rows.size()) {
-            render_health_module_row(rows.get_ptr(i), page)
+            render_health_module_row(rows.at_ref(i), page)
             i = i + 1
         }
     }
@@ -138,7 +138,7 @@ public namespace underlayer_web {
     // One goal. An overdue goal is labelled as missed rather than shown as a
     // negative countdown: a learner who set a date and did not hit it should be
     // able to set a new one, not be told they are -4 days from a deadline.
-    public func render_health_goal_row(row : *HealthGoalRow, page : &mut HtmlPage) {
+    public func render_health_goal_row(row : &HealthGoalRow, page : &mut HtmlPage) {
         var course_esc = underlayer_core::html_escape(&row.course_id)
         var days_val = row.days_remaining
         var course_link = string("/courses/")
@@ -159,7 +159,7 @@ public namespace underlayer_web {
     public func render_all_goal_rows(rows : &vector<HealthGoalRow>, page : &mut HtmlPage) {
         var i : size_t = 0
         while(i < rows.size()) {
-            render_health_goal_row(rows.get_ptr(i), page)
+            render_health_goal_row(rows.at_ref(i), page)
             i = i + 1
         }
     }

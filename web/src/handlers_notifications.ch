@@ -6,19 +6,18 @@ using underlayer_db::DbClient
 public namespace underlayer_web {
 
     // GET /api/notifications — Get notifications for current user
-    public func handle_get_notifications(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_get_notifications(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         var notifs = underlayer_repository::get_notifications(db, &learner_id, 50)
         var resp = string("[")
         var i : size_t = 0
         while(i < notifs.size()) {
             if(i > 0) { resp.append_view(",") }
-            var n = notifs.get_ptr(i)
+            var n = notifs.at_ref(i)
             resp.append_view("{\"id\":\"")
             resp.append_string(&n.id)
             resp.append_view("\",\"type\":\"")
@@ -42,78 +41,72 @@ public namespace underlayer_web {
             i = i + 1
         }
         resp.append_view("]")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // GET /api/notifications/unread-count — Get unread count
-    public func handle_unread_count(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_unread_count(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         var count = underlayer_repository::get_unread_count(db, &learner_id)
         var resp = string("{\"count\":")
         var count_str = underlayer_core::int_to_string(count)
         resp.append_view(count_str.to_view())
         resp.append_view("}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // POST /api/notifications/:id/read — Mark one as read
-    public func handle_mark_read(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_mark_read(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() < 4) {
             var err = string("missing notification id")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
-        var notif_id = segments.get_ptr(3).to_string()
+        var notif_id = segments.at_ref(3).to_string()
         underlayer_repository::mark_read(db, &notif_id)
         var resp = string("{\"ok\":true}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // POST /api/notifications/read-all — Mark all as read
-    public func handle_mark_all_read(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_mark_all_read(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         underlayer_repository::mark_all_read(db, &learner_id)
         var resp = string("{\"ok\":true}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
     // DELETE /api/notifications/:id — Delete a notification
-    public func handle_delete_notification(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_delete_notification(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() < 4) {
             var err = string("missing notification id")
-            send_error(res, 400u, &err)
-            return
+            return send_error(400u, &err)
         }
-        var notif_id = segments.get_ptr(3).to_string()
+        var notif_id = segments.at_ref(3).to_string()
         underlayer_repository::delete_notification(db, &notif_id)
         var resp = string("{\"ok\":true}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
 }

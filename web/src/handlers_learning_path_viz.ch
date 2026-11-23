@@ -8,38 +8,33 @@ using underlayer_db::DbClient
 public namespace underlayer_web {
 
     // GET /courses/:courseId/path — HTML learning path page
-    public func handle_learning_path_page(db : *DbClient, courses_dir : &string, course_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_learning_path_page(db : *DbClient, courses_dir : &string, course_id : &string, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             // Not logged in — render page; client-side JS will redirect if the API returns 401
             var anon_learner = string("demo")
             var anon_html = render_learning_path_page(db, course_id, &anon_learner)
             var anon_bv = anon_html.to_view()
-            res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
-            res.write_view(&anon_bv)
-            return
+            return underlayer_web::send_html(&anon_html)
         }
         var html = render_learning_path_page(db, course_id, &learner_id)
         var bv = html.to_view()
-        res.set_header_view(std::string_view("Content-Type"), &std::string_view("text/html; charset=utf-8"))
-        res.write_view(&bv)
+        return underlayer_web::send_html(&html)
     }
 
     // GET /api/courses/:courseId/path — JSON data for the learning path
-    public func handle_learning_path_api(db : *DbClient, courses_dir : &string, course_id : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_learning_path_api(db : *DbClient, courses_dir : &string, course_id : &string, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) {
             var err = string("unauthorized")
-            send_error(res, 401u, &err)
-            return
+            return send_error(401u, &err)
         }
 
         // Load course
         var course = underlayer_repository::load_course_from_disk(courses_dir, course_id)
         if(course.id.size() == 0) {
             var err = string("course not found")
-            send_error(res, 404u, &err)
-            return
+            return send_error(404u, &err)
         }
 
         // Load concept states
@@ -55,7 +50,7 @@ public namespace underlayer_web {
 
         var mi : size_t = 0
         while(mi < course.modules.size()) {
-            var mod = course.modules.get_ptr(mi)
+            var mod = course.modules.at_ref(mi)
             if(mi > 0) { resp.append_view(",") }
             resp.append_view("{\"id\":\"")
             var mid = mod.id.copy()
@@ -70,7 +65,7 @@ public namespace underlayer_web {
 
             var ci : size_t = 0
             while(ci < mod.concepts.size()) {
-                var concept_id_ptr = mod.concepts.get_ptr(ci)
+                var concept_id_ptr = mod.concepts.at_ref(ci)
                 var concept_id = concept_id_ptr.copy()
                 if(ci > 0) { resp.append_view(",") }
 
@@ -79,7 +74,7 @@ public namespace underlayer_web {
                 var concept_desc = string()
                 var cii : size_t = 0
                 while(cii < course.concepts.size()) {
-                    var cref = course.concepts.get_ptr(cii)
+                    var cref = course.concepts.at_ref(cii)
                     if(cref.id.equals(&concept_id)) {
                         concept_title = cref.title.copy()
                         concept_desc = cref.description.copy()
@@ -95,7 +90,7 @@ public namespace underlayer_web {
                 var streak = 0
                 var si : size_t = 0
                 while(si < states.size()) {
-                    var st = states.get_ptr(si)
+                    var st = states.at_ref(si)
                     if(st.concept_id.equals(&concept_id)) {
                         status = st.status.copy()
                         attempts = st.attempts
@@ -133,7 +128,7 @@ public namespace underlayer_web {
         }
 
         resp.append_view("]}")
-        send_json_str(res, &raw resp)
+        return send_json_str(&resp)
     }
 
 }

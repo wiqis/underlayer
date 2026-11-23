@@ -11,15 +11,14 @@ using std::vector
 
 public namespace underlayer_web {
 
-    public func handle_search_concepts(courses_dir : &string, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_search_concepts(courses_dir : &string, req : &http::Request) : http::Response {
         var q_key = string("q")
-        var q_v = req.query.get(&q_key.to_view())
+        var q_v = sv_or_empty(req.query.get(std::str.make_view(q_key.to_view())))
         if(q_v.size() == 0) {
             var err_msg = string("missing query param: q")
-            send_error(res, 400u, &err_msg)
-            return
+            return send_error(400u, &err_msg)
         }
-        var query = sv_to_string(&raw q_v)
+        var query = sv_to_string(&q_v)
         var courses = underlayer_repository::list_courses(courses_dir)
         var hits = search_concepts(&courses, &query)
         var total = hits.size() as int
@@ -39,7 +38,7 @@ public namespace underlayer_web {
         var searched : int = 0
         var ci : size_t = 0
         while(ci < courses.size()) {
-            var c = courses.get_ptr(ci)
+            var c = courses.at_ref(ci)
             searched = searched + c.concepts.size() as int
             ci = ci + 1
         }
@@ -49,7 +48,7 @@ public namespace underlayer_web {
 
         var i : size_t = 0
         while(i < hits.size()) {
-            var hit = hits.get_ptr(i)
+            var hit = hits.at_ref(i)
             if(i >= shown as size_t) { break }
             if(i > 0) { body.append_view(",") }
             body.append_view("{\"course_id\":\"")
@@ -86,7 +85,7 @@ public namespace underlayer_web {
             i = i + 1
         }
         body.append_view("]}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
 }

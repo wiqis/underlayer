@@ -5,7 +5,7 @@ using underlayer_db::DbClient
 
 public namespace underlayer_web {
 
-    public func handle_get_streak(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_get_streak(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var streak = underlayer_repository::get_streak(db, &learner_id)
@@ -23,10 +23,10 @@ public namespace underlayer_web {
         body.append_view(",\"last_active_date\":\"")
         body.append_string(&streak.last_active_date)
         body.append_view("\"}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
-    public func handle_record_activity(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_record_activity(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var streak = underlayer_repository::record_activity(db, &learner_id)
@@ -44,10 +44,10 @@ public namespace underlayer_web {
         body.append_view(",\"last_active_date\":\"")
         body.append_string(&streak.last_active_date)
         body.append_view("\"}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
-    public func handle_weekly_activity(db : *DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_weekly_activity(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var days = underlayer_repository::get_weekly_activity(db, &learner_id)
@@ -57,7 +57,7 @@ public namespace underlayer_web {
         var i : size_t = 0
         while(i < days.size()) {
             if(i > 0) { body.append_view(",") }
-            var d = days.get_ptr(i)
+            var d = days.at_ref(i)
             body.append_view("{\"date\":\"")
             body.append_string(&d.date)
             body.append_view("\",\"active\":")
@@ -69,7 +69,7 @@ public namespace underlayer_web {
             i = i + 1
         }
         body.append_view("]}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
 }

@@ -126,10 +126,10 @@ public namespace underlayer_web {
     // missing Enrol control on a course page is the checklist item, so the
     // caller is told by the return value being the unchanged source.
     public func apply_enroll_control(src : &string, course_id : &string, enrolled_at : i64, has_session : bool) : string {
-        var marker = src.find(string_view("course-actions"))
+        var marker = src.find_or_npos(string_view("course-actions"))
         if(marker == std::NPOS) { return src.copy() }
         // The opening tag ends with '>'; the control goes just inside it.
-        var gt = src.to_view().subview(marker, src.size()).find(string_view(">"))
+        var gt = src.to_view().subview(marker, src.size()).find_or_npos(string_view(">"))
         if(gt == std::NPOS) { return src.copy() }
         var control = render_enroll_control(course_id, enrolled_at, has_session)
         if(control.size() == 0) { return src.copy() }

@@ -12,19 +12,19 @@ using underlayer_learning::track_weakness_resolution
 public namespace underlayer_web {
 
     // 1.4.21: Weakness dashboard — all weak concepts with severity and trend
-    public func handle_weakness_dashboard(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
+    public func handle_weakness_dashboard(db : *DbClient, req : &http::Request) : http::Response {
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
-        var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
-        var weaknesses = detect_weaknesses(&raw states)
-        var clusters = cluster_weaknesses(&raw weaknesses)
+        var states = underlayer_repository::get_all_concept_states(db, &learner_id, &course_id)
+        var weaknesses = detect_weaknesses(&states)
+        var clusters = cluster_weaknesses(&weaknesses)
 
         var body = string("{\"weaknesses\":[")
         var i : size_t = 0
         while(i < weaknesses.size()) {
             if(i > 0) { body.append_view(",") }
-            var w = weaknesses.get_ptr(i)
+            var w = weaknesses.at_ref(i)
             body.append_view("{\"concept_id\":\"")
             body.append_string(&w.concept_id)
             body.append_view("\",\"accuracy\":")
@@ -42,7 +42,7 @@ public namespace underlayer_web {
         i = 0
         while(i < clusters.size()) {
             if(i > 0) { body.append_view(",") }
-            var c = clusters.get_ptr(i)
+            var c = clusters.at_ref(i)
             body.append_view("{\"module\":\"")
             body.append_string(&c.module_prefix)
             body.append_view("\",\"count\":")
@@ -55,22 +55,22 @@ public namespace underlayer_web {
             i = i + 1
         }
         body.append_view("]}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // 1.4.23: Weakness export — download weakness report as JSON
-    public func handle_weakness_export(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
+    public func handle_weakness_export(db : *DbClient, req : &http::Request) : http::Response {
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
-        var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
-        var weaknesses = detect_weaknesses(&raw states)
+        var states = underlayer_repository::get_all_concept_states(db, &learner_id, &course_id)
+        var weaknesses = detect_weaknesses(&states)
 
         var body = string("[")
         var i : size_t = 0
         while(i < weaknesses.size()) {
             if(i > 0) { body.append_view(",") }
-            var w = weaknesses.get_ptr(i)
+            var w = weaknesses.at_ref(i)
             body.append_view("{\"concept_id\":\"")
             body.append_string(&w.concept_id)
             body.append_view("\",\"accuracy\":")
@@ -91,23 +91,22 @@ public namespace underlayer_web {
             i = i + 1
         }
         body.append_view("]")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // 1.4.22: Weakness comparison — anonymous how others find this concept
-    public func handle_weakness_compare(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_weakness_compare(db : *DbClient, req : &http::Request) : http::Response {
         var q_cid = string("concept_id")
-        var cid_v = req.query.get(&q_cid.to_view())
+        var cid_v = sv_or_empty(req.query.get(std::str.make_view(q_cid.to_view())))
         if(cid_v.size() == 0) {
             var err_msg = string("missing query param: concept_id")
-            send_error(res, 400u, &err_msg)
-            return
+            return send_error(400u, &err_msg)
         }
-        var concept_id = sv_to_string(&raw cid_v)
+        var concept_id = sv_to_string(&cid_v)
         var course_id = string("elf")
 
         // Aggregate stats across ALL learners for this concept
-        var stats = underlayer_repository::get_aggregate_concept_stats(&raw db, &concept_id, &course_id)
+        var stats = underlayer_repository::get_aggregate_concept_stats(db, &concept_id, &course_id)
 
         var body = string("{\"concept_id\":\"")
         body.append_string(&concept_id)
@@ -124,22 +123,22 @@ public namespace underlayer_web {
         var sev_out = underlayer_learning::f64_to_string(stats.average_severity)
         body.append_string(&sev_out)
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
     // 1.4.24: Weakness alerts — notify when new concept becomes weak
-    public func handle_weakness_alerts(db : &DbClient, req : &http::Request, res : *mut http::ResponseWriter) {
-        var learner_id = auth_get_learner_id(&raw db, req)
+    public func handle_weakness_alerts(db : *DbClient, req : &http::Request) : http::Response {
+        var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
-        var states = underlayer_repository::get_all_concept_states(&raw db, &learner_id, &course_id)
-        var weaknesses = detect_weaknesses(&raw states)
+        var states = underlayer_repository::get_all_concept_states(db, &learner_id, &course_id)
+        var weaknesses = detect_weaknesses(&states)
         var alerts = vector<string>()
 
         // Find newly weak concepts (accuracy dropped below 60%)
         var i : size_t = 0
         while(i < weaknesses.size()) {
-            var w = weaknesses.get_ptr(i)
+            var w = weaknesses.at_ref(i)
             if(w.severity > 50) {
                 alerts.push(w.concept_id.copy())
             }
@@ -151,7 +150,7 @@ public namespace underlayer_web {
         while(j < alerts.size()) {
             if(j > 0) { body.append_view(",") }
             body.append_view("{\"concept\":\"")
-            var alert_copy = alerts.get_ptr(j).copy()
+            var alert_copy = alerts.at_ref(j).copy()
             body.append_string(&alert_copy)
             body.append_view("\",\"severity\":\"high\",\"message\":\"This concept needs attention\"}")
             j = j + 1
@@ -160,7 +159,7 @@ public namespace underlayer_web {
         var cnt_out = underlayer_core::int_to_string(alerts.size() as i64)
         body.append_string(&cnt_out)
         body.append_view("}")
-        send_json_str(res, &raw body)
+        return send_json_str(&body)
     }
 
 }

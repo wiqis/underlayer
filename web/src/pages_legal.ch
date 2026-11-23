@@ -197,14 +197,14 @@ public namespace underlayer_web {
         return page.toString()
     }
 
-    public func handle_terms_page(req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_terms_page(req : &http::Request) : http::Response {
         var html = render_terms_page()
-        send_html(res, &raw html)
+        return send_html(&html)
     }
 
-    public func handle_privacy_page(req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_privacy_page(req : &http::Request) : http::Response {
         var html = render_privacy_page()
-        send_html(res, &raw html)
+        return send_html(&html)
     }
 
 }

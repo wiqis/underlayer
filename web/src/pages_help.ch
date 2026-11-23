@@ -631,40 +631,24 @@ public namespace underlayer_web {
 
     // ---- Handler functions ----
 
-    public func handle_help_page(req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_help_page(req : &http::Request) : http::Response {
         var html = render_help_page()
-        var ct = std::string_view("text/html; charset=utf-8")
-        res.set_header_view(std::string_view("Content-Type"), &ct)
-        apply_security_headers(res)
-        var hv = html.to_view()
-        res.write_view(&hv)
+        return underlayer_web::send_html(&html)
     }
 
-    public func handle_shortcuts_page(req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_shortcuts_page(req : &http::Request) : http::Response {
         var html = render_shortcuts_page()
-        var ct = std::string_view("text/html; charset=utf-8")
-        res.set_header_view(std::string_view("Content-Type"), &ct)
-        apply_security_headers(res)
-        var hv = html.to_view()
-        res.write_view(&hv)
+        return underlayer_web::send_html(&html)
     }
 
-    public func handle_faq_page(req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_faq_page(req : &http::Request) : http::Response {
         var html = render_faq_page()
-        var ct = std::string_view("text/html; charset=utf-8")
-        res.set_header_view(std::string_view("Content-Type"), &ct)
-        apply_security_headers(res)
-        var hv = html.to_view()
-        res.write_view(&hv)
+        return underlayer_web::send_html(&html)
     }
 
-    public func handle_about_page(req : &http::Request, res : *mut http::ResponseWriter) {
+    public func handle_about_page(req : &http::Request) : http::Response {
         var html = render_about_page()
-        var ct = std::string_view("text/html; charset=utf-8")
-        res.set_header_view(std::string_view("Content-Type"), &ct)
-        apply_security_headers(res)
-        var hv = html.to_view()
-        res.write_view(&hv)
+        return underlayer_web::send_html(&html)
     }
 
 }
