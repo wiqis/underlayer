@@ -20,14 +20,30 @@ using std::string_view
 // `http::Client`'s mutex and hand out a second view of one connection.
 @never_destructed
 var g_db : *underlayer_db::DbClient
+// The courses directory, as a fixed buffer rather than a `string` global: a
+// zero-initialised `@never_destructed` global is not a constructed value, and a
+// `string` global assigned at startup read back EMPTY at request time (measured:
+// every manifest path came out as "/<course>/manifest.json", i.e. with an empty
+// prefix).  A char array has no constructor to be missing.
+comptime const COURSES_DIR_MAX : size_t = 512
 @never_destructed
-var g_courses_dir : string
+var g_courses_buf : [COURSES_DIR_MAX]char
+@never_destructed
+var g_courses_len : size_t
 
 // Fill the two values once, before the server starts accepting.
 func set_process_state(dbv : *underlayer_db::DbClient, courses : &string) {
     unsafe {
         g_db = dbv
-        g_courses_dir = std::replace(&mut g_courses_dir, courses.copy())
+        var n = courses.size()
+        if(n >= COURSES_DIR_MAX) { n = COURSES_DIR_MAX - 1 }
+        var i : size_t = 0
+        while(i < n) {
+            g_courses_buf[i] = courses.at(i)
+            i = i + 1
+        }
+        g_courses_buf[n] = 0
+        g_courses_len = n
     }
 }
 
@@ -39,7 +55,14 @@ public func request_db() : *underlayer_db::DbClient {
 // The courses directory, as a value: handlers take `&string` and must not hold a
 // view into the global.
 public func request_courses_dir() : string {
-    return unsafe(g_courses_dir.copy())
+    var out = std::string()
+    var n = unsafe(g_courses_len)
+    var i : size_t = 0
+    while(i < n) {
+        out.append(unsafe(g_courses_buf[i]))
+        i = i + 1
+    }
+    return out
 }
 public func main() : int {
     // ---- Config & DB ----
