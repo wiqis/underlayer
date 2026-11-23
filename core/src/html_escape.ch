@@ -7,7 +7,7 @@ public namespace underlayer_core {
         var out = std::string()
         var i : size_t = 0
         while(i < s.size()) {
-            var c = s.get(i)
+            var c = s.at(i)
             if(c == '&') { out.append_view(std::string_view("&amp;")) }
             else if(c == '<') { out.append_view(std::string_view("&lt;")) }
             else if(c == '>') { out.append_view(std::string_view("&gt;")) }

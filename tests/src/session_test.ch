@@ -20,7 +20,7 @@ public func test_session_history_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19930/api/sessions")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()
@@ -43,10 +43,10 @@ public func test_session_history_returns_json_array(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19931/api/sessions")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("sessions")) == std::NPOS) { env.error("expected 'sessions' key in body") }
 
     srv.shutdown()
@@ -69,7 +69,7 @@ public func test_session_recommendations_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19932/api/review/recommendations")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()
@@ -92,7 +92,7 @@ public func test_session_time_recommendation_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19933/api/review/time-recommendation")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()
@@ -115,7 +115,7 @@ public func test_recent_history_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19934/api/recent")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()
@@ -138,10 +138,10 @@ public func test_recent_history_returns_json(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19935/api/recent")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var ct = resp.headers.get("Content-Type")
     if(ct is Option.None) { env.error("missing Content-Type"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(ct_val) = ct else unreachable
+    var Some(ct_val) = ct else unsafe { unreachable }
     if(ct_val.find(string_view("application/json")) == std::NPOS) { env.error("Content-Type is not application/json") }
 
     srv.shutdown()

@@ -1,86 +1,53 @@
-// underlayer_web — JSON parsing helpers.
+// underlayer_web — JSON body helpers.
+//
+// Request bodies are parsed once into an owned `JsonValue`, and the handlers
+// read fields out of it by reference.  The functions here are thin names for
+// the repository ones, which own the actual matching logic: one implementation
+// of "read a field" instead of two that can drift (this file and
+// `repository/src/helpers.ch` had already drifted — this copy tested
+// `obj is JsonValue.Object` on a raw pointer).
+//
+// `*char` keys are C string literals ("rating", "concept_id"); that conversion
+// happens in the repository helpers.
 using std::string
 
 public namespace underlayer_web {
 
-    public func json_get(obj : *JsonValue, key : *char) : *mut JsonValue {
-        if(obj == null) { return null }
-        if(!(obj is JsonValue.Object)) { return null }
-        var Object(map) = *obj else unreachable
-        var k = string::make_no_len(key)
-        return map.get_ptr(&k)
+    public func json_get(obj : &JsonValue, key : *char) : std::Option<&JsonValue> {
+        return underlayer_repository::json_get(obj, key)
     }
 
-    public func json_str(val : *JsonValue) : string {
-        if(val == null) { return string() }
-        if(val is JsonValue.String) {
-            var String(s) = *val else unreachable
-            return s.copy()
-        }
-        return string()
+    public func json_str(val : &JsonValue) : string {
+        return underlayer_repository::json_str(val)
     }
 
-    public func json_get_str(obj : *JsonValue, key : *char) : string {
-        var field = json_get(obj, key)
-        return json_str(field)
+    public func json_get_str(obj : &JsonValue, key : *char) : string {
+        return underlayer_repository::json_get_str(obj, key)
     }
 
-    public func json_int(val : *JsonValue) : i64 {
-        if(val == null) { return 0 }
-        if(val is JsonValue.Number) {
-            var Number(s) = *val else unreachable
-            var result : i64 = 0
-            var negative = false
-            var i : size_t = 0
-            if(s.size() > 0 && s.get(0) == '-') { negative = true; i = 1 }
-            while(i < s.size()) {
-                var c = s.get(i)
-                if(c >= '0' && c <= '9') { result = result * 10 + (c as i64 - 48) }
-                i = i + 1
-            }
-            if(negative) { result = -result }
-            return result
-        }
-        return 0
+    public func json_int(val : &JsonValue) : i64 {
+        return underlayer_repository::json_i64(val)
     }
 
-    public func json_get_int(obj : *JsonValue, key : *char) : int {
-        var field = json_get(obj, key)
-        return json_int(field) as int
+    public func json_get_int(obj : &JsonValue, key : *char) : int {
+        return underlayer_repository::json_get_int(obj, key)
     }
 
-    public func json_get_bool(obj : *JsonValue, key : *char) : bool {
-        var field = json_get(obj, key)
-        if(field == null) { return false }
-        if(field is JsonValue.Bool) {
-            var Bool(b) = *field else unreachable
-            return b
-        }
-        if(field is JsonValue.String) {
-            var String(s) = *field else unreachable
-            if(s.to_view().equals(std::string_view("true"))) { return true }
-        }
-        if(field is JsonValue.Number) {
-            var Number(n) = *field else unreachable
-            if(underlayer_repository::parse_i64(n.to_view()) != 0) { return true }
-        }
-        return false
+    public func json_get_bool(obj : &JsonValue, key : *char) : bool {
+        return underlayer_repository::json_get_bool(obj, key)
     }
 
     // Field as string, tolerant of JSON numbers (e.g. {"rating":3}) — renders
     // the number's literal text. Returns "" for null/missing/other types.
-    public func json_get_str_or_num(obj : *JsonValue, key : *char) : string {
-        var field = json_get(obj, key)
-        if(field == null) { return string() }
-        if(field is JsonValue.String) {
-            var String(s) = *field else unreachable
-            return s.copy()
+    public func json_get_str_or_num(obj : &JsonValue, key : *char) : string {
+        var found = json_get(obj, key)
+        if(found is std::Option.None) { return string() }
+        var Some(node) = found else unsafe { unreachable }
+        switch(node) {
+            String(s) => { return s.copy() }
+            Number(n) => { return n.copy() }
+            default => { return string() }
         }
-        if(field is JsonValue.Number) {
-            var Number(n) = *field else unreachable
-            return n.copy()
-        }
-        return string()
     }
 
 }

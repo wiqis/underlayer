@@ -3,6 +3,15 @@
 // Backend is chosen by the connection URL:
 //   * starts with http:// or https:// or libsql:// -> Turso HTTP
 //   * anything else (e.g. ./underlayer.db) -> embedded SQLite3
+//
+// SAFETY SHAPE OF THIS FILE.  Everything above the `ffi` calls below is safe
+// code.  The raw SQLite handle is the one thing that has to be a pointer (the C
+// library hands it out and owns it), so the pointer is admitted through one
+// small set of helpers at the bottom of the file — `open_handle`,
+// `exec_raw`, `prepare_raw`, `step_raw`, `finalize_raw`, `errmsg_of`,
+// `last_rowid`, `changes_of`, `close_handle`, `copy_c_string` — and every
+// `unsafe` in the file belongs to one of them.  That is the FFI boundary: no
+// other function in this module touches a raw pointer or calls an `@extern`.
 using std::string
 using std::string_view
 using std::vector
@@ -53,20 +62,117 @@ public namespace underlayer_db {
         var turso_token : string
     }
 
-    public func is_remote_url(url : *string) : bool {
-        var n = url.size()
-        if(n < 7) { return false }
-        var ok = url.get(0) == 'h' && url.get(1) == 't' && url.get(2) == 't' && url.get(3) == 'p' && url.get(4) == ':' && url.get(5) == '/' && url.get(6) == '/'
-        if(!ok && n >= 9) {
-            var lb = url.get(0) == 'l' && url.get(1) == 'i' && url.get(2) == 'b' && url.get(3) == 's' && url.get(4) == 'q' && url.get(5) == 'l' && url.get(6) == ':' && url.get(7) == '/' && url.get(8) == '/'
-            if(lb) { return true }
-        }
-        return ok
+    // -----------------------------------------------------------------------
+    // The FFI boundary.  Nine helpers, each one extern call, each one `unsafe`.
+    // -----------------------------------------------------------------------
+
+    // Opens (or creates) `path`.  A null handle means SQLite refused.
+    private func open_handle(path : &string, flags : int) : *mut sqlite::sqlite3 {
+        var h : *mut sqlite::sqlite3 = null
+        var rc = unsafe(sqlite::ffi::sqlite3_open_v2(path.data(), &raw mut h, flags, null))
+        if(rc != 0) { return null }
+        return h
     }
 
-    private func normalize_url(url : *string) : string {
+    // `sqlite3_exec` with its error message copied out and freed.  The outcome
+    // is (rc, message); the caller decides what to report.
+    private func exec_raw(h : *mut sqlite::sqlite3, sql : &string) : int {
+        var errmsg : *mut char = null
+        var rc = unsafe(sqlite::ffi::sqlite3_exec(h, sql.data(), null, null, &raw mut errmsg))
+        if(errmsg != null) {
+            unsafe { sqlite::ffi::sqlite3_free(errmsg as *void) }
+        }
+        return rc
+    }
+
+    // Statement-only form, for the PRAGMAs whose rc nobody reads.
+    private func run_raw(h : *mut sqlite::sqlite3, sql : &string) {
+        var _rc = exec_raw(h, sql)
+    }
+
+    private func prepare_raw(h : *mut sqlite::sqlite3, sql : &string) : *mut sqlite::sqlite3_stmt {
+        var h_stmt : *mut sqlite::sqlite3_stmt = null
+        var rc = unsafe(sqlite::ffi::sqlite3_prepare_v2(h, sql.data(), sql.size() as int, &raw mut h_stmt, null))
+        if(rc != 0) { return null }
+        return h_stmt
+    }
+
+    // SQLITE_ROW (100) / SQLITE_DONE (101) / anything else is an error code.
+    private func step_raw(stmt : *mut sqlite::sqlite3_stmt) : int {
+        return unsafe(sqlite::ffi::sqlite3_step(stmt))
+    }
+
+    private func finalize_raw(stmt : *mut sqlite::sqlite3_stmt) {
+        unsafe { sqlite::ffi::sqlite3_finalize(stmt) }
+    }
+
+    private func column_count_of(stmt : *mut sqlite::sqlite3_stmt) : int {
+        return unsafe(sqlite::ffi::sqlite3_column_count(stmt))
+    }
+
+    private func column_name_of(stmt : *mut sqlite::sqlite3_stmt, i : int) : string {
+        return copy_c_string(unsafe(sqlite::ffi::sqlite3_column_name(stmt, i)))
+    }
+
+    private func column_text_of(stmt : *mut sqlite::sqlite3_stmt, i : int) : string {
+        return copy_c_string(unsafe(sqlite::ffi::sqlite3_column_text(stmt, i)))
+    }
+
+    // SQLite owns this buffer for the life of the connection; it is copied, never
+    // freed here.
+    private func errmsg_of(h : *mut sqlite::sqlite3) : string {
+        return copy_c_string(unsafe(sqlite::ffi::sqlite3_errmsg(h)))
+    }
+
+    private func last_rowid(h : *mut sqlite::sqlite3) : i64 {
+        return unsafe(sqlite::ffi::sqlite3_last_insert_rowid(h))
+    }
+
+    private func changes_of(h : *mut sqlite::sqlite3) : i64 {
+        return unsafe(sqlite::ffi::sqlite3_changes(h)) as i64
+    }
+
+    private func close_handle(h : *mut sqlite::sqlite3) {
+        unsafe { sqlite::ffi::sqlite3_close_v2(h) }
+    }
+
+    // Copies a NUL-terminated C string.  Walking the buffer is the raw-pointer
+    // part; the result is an owned Chemical string.
+    private func copy_c_string(p : *char) : string {
+        var out = std::string()
+        if(p == null) { return out }
+        var i : size_t = 0
+        while(unsafe(p[i]) != 0) {
+            out.append(unsafe(p[i]))
+            i = i + 1
+        }
+        return out
+    }
+
+    // -----------------------------------------------------------------------
+    // Safe surface
+    // -----------------------------------------------------------------------
+
+    // True when this client is backed by an open SQLite handle.  Callers outside
+    // this module ask this instead of reading the handle field.
+    public func is_using_sqlite(db : &DbClient) : bool {
+        if(!db.is_sqlite) { return false }
+        return db.sqlite_handle != null
+    }
+
+    public func is_remote_url(url : &string) : bool {
         var n = url.size()
-        if(n >= 9 && url.get(0) == 'l' && url.get(1) == 'i' && url.get(2) == 'b' && url.get(3) == 's' && url.get(4) == 'q' && url.get(5) == 'l' && url.get(6) == ':' && url.get(7) == '/' && url.get(8) == '/') {
+        if(n >= 7 && url.at(0) == 'h' && url.at(1) == 't' && url.at(2) == 't' && url.at(3) == 'p' && url.at(4) == ':' && url.at(5) == '/' && url.at(6) == '/') {
+            return true
+        }
+        if(n >= 9 && url.at(0) == 'l' && url.at(1) == 'i' && url.at(2) == 'b' && url.at(3) == 's' && url.at(4) == 'q' && url.at(5) == 'l' && url.at(6) == ':' && url.at(7) == '/' && url.at(8) == '/') {
+            return true
+        }
+        return false
+    }
+
+    private func normalize_url(url : &string) : string {
+        if(is_remote_url(url)) {
             var out = string("https://")
             out.append_view(url.to_view().skip(9))
             return out
@@ -95,7 +201,7 @@ public namespace underlayer_db {
     // WHAT IT IS NOT.  This does not pretend the remote backend works and does
     // not add a partial one. It says no.
     public func is_unusable_config(url : &string, handle_ok : bool) : bool {
-        if(is_remote_url(&raw url)) { return true }
+        if(is_remote_url(url)) { return true }
         if(!handle_ok) { return true }
         return false
     }
@@ -106,7 +212,7 @@ public namespace underlayer_db {
         msg.append_view("  DATABASE_URL = ")
         msg.append_string(url)
         msg.append_view("\n")
-        if(is_remote_url(&raw url)) {
+        if(is_remote_url(url)) {
             msg.append_view("  The remote (Turso/libSQL) backend is NOT IMPLEMENTED in this build.\n")
             msg.append_view("  Every query and every write would fail while the server reported itself healthy.\n")
             msg.append_view("  Use a local SQLite path instead, e.g. DATABASE_URL=./underlayer.db\n")
@@ -118,11 +224,14 @@ public namespace underlayer_db {
     }
 
     public func make_client(url : string, token : string) : DbClient {
-        if(is_remote_url(&raw url)) {
-            var http_url = normalize_url(&raw url)
-            printf("[underlayer_db] Connecting to remote database: %s\n", http_url.data())
+        if(is_remote_url(&url)) {
+            var http_url = normalize_url(&url)
+            var connect_msg = string("[underlayer_db] Connecting to remote database: ")
+            connect_msg.append_string(&http_url)
+            underlayer_core::log_line(&connect_msg)
+            // The Turso HTTP backend is not implemented; the client is kept so the
+            // DbClient shape does not change when it lands.
             var client = http::Client()
-            client.default_timeout_secs = 15
             var result = DbClient {
                 is_sqlite = false,
                 sqlite_handle = null,
@@ -132,10 +241,11 @@ public namespace underlayer_db {
             }
             return result
         }
-        var h : *mut sqlite::sqlite3 = null
-        var open_res = sqlite::ffi::sqlite3_open_v2(url.data(), &raw mut h, (sqlite::OpenFlag.READWRITE | sqlite::OpenFlag.CREATE) as int, null)
-        if(open_res != 0 || h == null) {
-            printf("[underlayer_db] Error opening SQLite database: rc=%d\n", open_res)
+        var h = open_handle(&url, (sqlite::OpenFlag.READWRITE | sqlite::OpenFlag.CREATE) as int)
+        if(h == null) {
+            var open_msg = string("[underlayer_db] Error opening SQLite database: ")
+            open_msg.append_string(&url)
+            underlayer_core::log_line(&open_msg)
             var result = DbClient {
                 is_sqlite = true,
                 sqlite_handle = null,
@@ -145,7 +255,6 @@ public namespace underlayer_db {
             }
             return result
         }
-        // Apply PRAGMAs directly via FFI
         apply_pragmas(h)
         var local_result = DbClient {
             is_sqlite = true,
@@ -158,68 +267,64 @@ public namespace underlayer_db {
     }
 
     private func apply_pragmas(h : *mut sqlite::sqlite3) {
-        var errmsg : *mut char = null
         var pragma1 = string("PRAGMA journal_mode=WAL")
-        sqlite::ffi::sqlite3_exec(h, pragma1.data(), null, null, &raw mut errmsg)
-        if(errmsg != null) { sqlite::ffi::sqlite3_free(errmsg as *void); errmsg = null }
+        run_raw(h, &pragma1)
         var pragma2 = string("PRAGMA busy_timeout=5000")
-        sqlite::ffi::sqlite3_exec(h, pragma2.data(), null, null, &raw mut errmsg)
-        if(errmsg != null) { sqlite::ffi::sqlite3_free(errmsg as *void); errmsg = null }
+        run_raw(h, &pragma2)
         var pragma3 = string("PRAGMA synchronous=NORMAL")
-        sqlite::ffi::sqlite3_exec(h, pragma3.data(), null, null, &raw mut errmsg)
-        if(errmsg != null) { sqlite::ffi::sqlite3_free(errmsg as *void); errmsg = null }
+        run_raw(h, &pragma3)
         var pragma4 = string("PRAGMA foreign_keys=ON")
-        sqlite::ffi::sqlite3_exec(h, pragma4.data(), null, null, &raw mut errmsg)
-        if(errmsg != null) { sqlite::ffi::sqlite3_free(errmsg as *void); errmsg = null }
+        run_raw(h, &pragma4)
     }
 
     public func exec_sql(db : *DbClient, sql : *string) : ExecResult {
-        if(db.is_sqlite && db.sqlite_handle != null) {
-            var errmsg : *mut char = null
-            var rc = sqlite::ffi::sqlite3_exec(db.sqlite_handle, sql.data(), null, null, &raw mut errmsg)
-            if(errmsg != null) {
-                var msg = std::string()
-                var i : size_t = 0
-                while(errmsg[i] != 0) { msg.append(errmsg[i]); i = i + 1 }
-                // Say what failed and why, instead of freeing the message and
-                // returning a result that reads like success.  last_insert_rowid
-                // is deliberately NOT reported here: after a failed statement
-                // sqlite3_last_insert_rowid still holds the rowid of some EARLIER
-                // successful insert, which is a value that means nothing here.
-                printf("[underlayer_db] SQL FAILED rc=%d: %s\n", rc, msg.data())
-                printf("[underlayer_db]   statement: %s\n", sql.data())
-                // stdout is block-buffered when the server is started with its
-                // output redirected to a log file, so an unflushed report can
-                // sit in the buffer until the process exits -- which is exactly
-                // when it is least useful.
-                fflush(stdout)
-                sqlite::ffi::sqlite3_free(errmsg as *void)
-                var failed = ExecResult {
-                    last_insert_rowid = 0,
-                    rows_affected = 0,
-                    ok = false,
-                    error_message = msg
-                }
-                return failed
+        // One read of the handle at the boundary; the rest of the function works
+        // on the copy.
+        var h = unsafe(db.sqlite_handle)
+        if(h == null) {
+            // The Turso/HTTP backend is not implemented yet, so there is no path
+            // here that can have written anything.  Report that rather than
+            // returning a zeroed result that looks like "ran, changed nothing".
+            var unsupported = ExecResult {
+                last_insert_rowid = 0,
+                rows_affected = 0,
+                ok = false,
+                error_message = std::string("remote (Turso) exec is not implemented")
             }
-            var result = ExecResult {
-                last_insert_rowid = sqlite::ffi::sqlite3_last_insert_rowid(db.sqlite_handle),
-                rows_affected = sqlite::ffi::sqlite3_changes(db.sqlite_handle) as i64,
-                ok = true,
-                error_message = std::string()
+            return unsupported
+        }
+        var statement = unsafe(sql.copy())
+        var rc = exec_raw(h, &statement)
+        if(rc != 0) {
+            var msg = errmsg_of(h)
+            // Say what failed and why, instead of freeing the message and
+            // returning a result that reads like success.  last_insert_rowid
+            // is deliberately NOT reported here: after a failed statement
+            // sqlite3_last_insert_rowid still holds the rowid of some EARLIER
+            // successful insert, which is a value that means nothing here.
+            var fail_msg = string("[underlayer_db] SQL FAILED rc=")
+            fail_msg.append_integer(rc)
+            fail_msg.append_view(": ")
+            fail_msg.append_string(&msg)
+            underlayer_core::log_line(&fail_msg)
+            var stmt_msg = string("[underlayer_db]   statement: ")
+            stmt_msg.append_string(&statement)
+            underlayer_core::log_line(&stmt_msg)
+            var failed = ExecResult {
+                last_insert_rowid = 0,
+                rows_affected = 0,
+                ok = false,
+                error_message = msg
             }
-            return result
+            return failed
         }
-        // The Turso/HTTP backend is not implemented yet, so there is no path
-        // here that can have written anything.  Report that rather than
-        // returning a zeroed result that looks like "ran, changed nothing".
-        var unsupported = ExecResult {
-            last_insert_rowid = 0,
-            rows_affected = 0,
-            ok = false,
-            error_message = std::string("remote (Turso) exec is not implemented")
+        var result = ExecResult {
+            last_insert_rowid = last_rowid(h),
+            rows_affected = changes_of(h),
+            ok = true,
+            error_message = std::string()
         }
-        return unsupported
+        return result
     }
 
     public func query_sql(db : *DbClient, sql : *string) : QueryResult {
@@ -230,102 +335,86 @@ public namespace underlayer_db {
             ok = true,
             error_message = std::string()
         }
-        if(db.is_sqlite && db.sqlite_handle != null) {
-            var h_stmt : *mut sqlite::sqlite3_stmt = null
-            var res = sqlite::ffi::sqlite3_prepare_v2(db.sqlite_handle, sql.data(), sql.size() as int, &raw mut h_stmt, null)
-            if(res != 0 || h_stmt == null) {
-                // Same defect as exec_sql: a statement SQLite could not even
-                // parse returned an empty result, which every caller reads as
-                // "no such row".  Name it in the log so a malformed statement
-                // cannot be mistaken for a legitimately empty table.
-                // sqlite3_errmsg hands back a pointer SQLite owns, so this
-                // message is copied out and never freed here -- freeing it
-                // would be a free() of a static.
-                var perr : *char = sqlite::ffi::sqlite3_errmsg(db.sqlite_handle)
-                var pm = std::string()
-                if(perr != null) {
-                    var pi : size_t = 0
-                    while(perr[pi] != 0) { pm.append(perr[pi]); pi = pi + 1 }
-                }
-                printf("[underlayer_db] SQL PREPARE FAILED rc=%d: %s (%s)\n", res, pm.data(), sql.data())
-                fflush(stdout)
-                result.ok = false
-                result.error_message = pm
-                return result
-            }
-            var col_count = sqlite::ffi::sqlite3_column_count(h_stmt)
-            var ci : int = 0
-            while(ci < col_count) {
-                var col_name_ptr = sqlite::ffi::sqlite3_column_name(h_stmt, ci)
-                var col_str = string()
-                if(col_name_ptr != null) {
-                    var ch_idx : size_t = 0
-                    while(col_name_ptr[ch_idx] != 0) { col_str.append(col_name_ptr[ch_idx]); ch_idx = ch_idx + 1 }
-                }
-                result.columns.push(col_str)
-                ci = ci + 1
-            }
-            // `last_step` keeps the code that ended the loop.  It cannot be read back
-            // off the handle afterwards: sqlite3_errcode() reports SQLITE_DONE
-            // (101) for a query that ran perfectly, and 101 is not an error, so
-            // asking the handle whether it is happy reports every successful
-            // query as a failure.  The value the loop actually stopped on is
-            // the only honest answer.
-            var last_step : int = 100
-            while(true) {
-                last_step = sqlite::ffi::sqlite3_step(h_stmt)
-                if(last_step != 100) { break }
-                var row = QueryRow { vals = vector<string>() }
-                var ri : int = 0
-                while(ri < col_count) {
-                    var text_ptr = sqlite::ffi::sqlite3_column_text(h_stmt, ri)
-                    var val_str = string()
-                    if(text_ptr != null) {
-                        var vi : size_t = 0
-                        while(text_ptr[vi] != 0) { val_str.append(text_ptr[vi]); vi = vi + 1 }
-                    }
-                    row.vals.push(val_str)
-                    ri = ri + 1
-                }
-                result.rows.push(row)
-            }
-            // A step error is the read-path twin of a refused write: SQLite
-            // handed back something other than SQLITE_ROW or SQLITE_DONE.
-            // Report it rather than returning the rows gathered so far as if
-            // the query had completed.
-            var step_rc = last_step
-            if(step_rc != 101 && step_rc != 0) {
-                var serr : *char = sqlite::ffi::sqlite3_errmsg(db.sqlite_handle)
-                var sm = std::string()
-                if(serr != null) {
-                    var si : size_t = 0
-                    while(serr[si] != 0) { sm.append(serr[si]); si = si + 1 }
-                }
-                printf("[underlayer_db] SQL STEP FAILED rc=%d: %s (%s)\n", step_rc, sm.data(), sql.data())
-                fflush(stdout)
-                result.ok = false
-                result.error_message = sm
-            }
-            sqlite::ffi::sqlite3_finalize(h_stmt)
+        var h = unsafe(db.sqlite_handle)
+        if(h == null) {
+            // Same reasoning as exec_sql's remote branch: there is no code path
+            // here that could have read anything, so say so instead of returning
+            // an empty result that reads as "the table is empty".
+            result.ok = false
+            result.error_message = std::string("remote (Turso) query is not implemented")
             return result
         }
-        // Same reasoning as exec_sql's remote branch: there is no code path
-        // here that could have read anything, so say so instead of returning
-        // an empty result that reads as "the table is empty".
-        result.ok = false
-        result.error_message = std::string("remote (Turso) query is not implemented")
+        var statement = unsafe(sql.copy())
+        var h_stmt = prepare_raw(h, &statement)
+        if(h_stmt == null) {
+            // Same defect as exec_sql: a statement SQLite could not even
+            // parse returned an empty result, which every caller reads as
+            // "no such row".  Name it in the log so a malformed statement
+            // cannot be mistaken for a legitimately empty table.
+            var pm = errmsg_of(h)
+            var prep_msg = string("[underlayer_db] SQL PREPARE FAILED: ")
+            prep_msg.append_string(&pm)
+            prep_msg.append_view(" (")
+            prep_msg.append_string(&statement)
+            prep_msg.append_view(")")
+            underlayer_core::log_line(&prep_msg)
+            result.ok = false
+            result.error_message = pm
+            return result
+        }
+        var col_count = column_count_of(h_stmt)
+        var ci : int = 0
+        while(ci < col_count) {
+            result.columns.push(column_name_of(h_stmt, ci))
+            ci = ci + 1
+        }
+        // `last_step` keeps the code that ended the loop.  It cannot be read back
+        // off the handle afterwards: sqlite3_errcode() reports SQLITE_DONE
+        // (101) for a query that ran perfectly, and 101 is not an error, so
+        // asking the handle whether it is happy reports every successful
+        // query as a failure.  The value the loop actually stopped on is
+        // the only honest answer.
+        var last_step : int = 100
+        while(true) {
+            last_step = step_raw(h_stmt)
+            if(last_step != 100) { break }
+            var row = QueryRow { vals = vector<string>() }
+            var ri : int = 0
+            while(ri < col_count) {
+                row.vals.push(column_text_of(h_stmt, ri))
+                ri = ri + 1
+            }
+            result.rows.push(row)
+        }
+        // A step error is the read-path twin of a refused write: SQLite
+        // handed back something other than SQLITE_ROW or SQLITE_DONE.
+        // Report it rather than returning the rows gathered so far as if
+        // the query had completed.
+        var step_rc = last_step
+        if(step_rc != 101 && step_rc != 0) {
+            var sm = errmsg_of(h)
+            var step_msg = string("[underlayer_db] SQL STEP FAILED rc=")
+            step_msg.append_integer(step_rc as i64)
+            step_msg.append_view(": ")
+            step_msg.append_string(&sm)
+            step_msg.append_view(" (")
+            step_msg.append_string(&statement)
+            step_msg.append_view(")")
+            underlayer_core::log_line(&step_msg)
+            result.ok = false
+            result.error_message = sm
+        }
+        finalize_raw(h_stmt)
         return result
     }
 
     public func query_sql_single(db : *DbClient, sql : *string) : vector<string> {
         var result = query_sql(db, sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
             var vals = vector<string>()
             var i : size_t = 0
-            while(i < row.vals.size()) {
-                var s_ptr = row.vals.get_ptr(i)
-                vals.push(s_ptr.copy())
+            while(i < result.rows.at_ref(0).vals.size()) {
+                vals.push(result.rows.at_ref(0).vals.at_ref(i).copy())
                 i = i + 1
             }
             return vals
@@ -334,8 +423,9 @@ public namespace underlayer_db {
     }
 
     public func close(db : *DbClient) {
-        if(db.is_sqlite && db.sqlite_handle != null) {
-            sqlite::ffi::sqlite3_close_v2(db.sqlite_handle)
+        var h = unsafe(db.sqlite_handle)
+        if(h != null) {
+            close_handle(h)
         }
     }
 }

@@ -49,7 +49,7 @@ public namespace underlayer_web {
             send_error(res, 404u, &err_msg)
             return
         }
-        var Ok(bytes) = content_res else unreachable
+        var Ok(bytes) = content_res else unsafe { unreachable }
 
         var ext = file_extension(req_path)
         var ct = content_type_for_ext(&raw ext)

@@ -25,10 +25,10 @@ public namespace underlayer_web {
             send_error(res, 400u, &err)
             return
         }
-        var Ok(parsed) = parse_result else unreachable
-        var rating = json_get_int(&raw parsed, "rating")
-        var title = json_get_str(&raw parsed, "title")
-        var review_text = json_get_str(&raw parsed, "review_text")
+        var Ok(parsed) = parse_result else unsafe { unreachable }
+        var rating = json_get_int(&parsed, "rating")
+        var title = json_get_str(&parsed, "title")
+        var review_text = json_get_str(&parsed, "review_text")
         if(rating < 1 || rating > 5) {
             var err = string("rating must be between 1 and 5")
             send_error(res, 400u, &err)
@@ -104,10 +104,10 @@ public namespace underlayer_web {
             send_error(res, 400u, &err)
             return
         }
-        var Ok(parsed) = parse_result else unreachable
-        var rating = json_get_int(&raw parsed, "rating")
-        var title = json_get_str(&raw parsed, "title")
-        var review_text = json_get_str(&raw parsed, "review_text")
+        var Ok(parsed) = parse_result else unsafe { unreachable }
+        var rating = json_get_int(&parsed, "rating")
+        var title = json_get_str(&parsed, "title")
+        var review_text = json_get_str(&parsed, "review_text")
         if(rating < 1 || rating > 5) {
             var err = string("rating must be between 1 and 5")
             send_error(res, 400u, &err)

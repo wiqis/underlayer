@@ -75,13 +75,13 @@ public func test_learning_view_rejects_a_concept_that_does_not_exist(env : &mut 
     var body = string("{\"course_id\":\"elf\",\"concept_id\":\"this-concept-does-not-exist\"}")
     var res = test_helpers::authed_post(&client, &string("http://127.0.0.1:20170/api/learning/view"), &token, &body.to_view(), "application/json")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
 
     // The response must say it did not record, and why -- so a caller can tell
     // "I learned nothing" from "the server refused this".
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(rb) = body_opt else unreachable
+    var Some(rb) = body_opt else unsafe { unreachable }
     if(rb.find(string_view("\"recorded\":false")) == std::NPOS) {
         env.error("learning_view: expected recorded:false for a concept that does not exist")
     }
@@ -131,10 +131,10 @@ public func test_learning_view_still_records_a_real_concept(env : &mut TestEnv) 
     var body = string("{\"course_id\":\"elf\",\"concept_id\":\"bytes\"}")
     var res = test_helpers::authed_post(&client, &string("http://127.0.0.1:20171/api/learning/view"), &token, &body.to_view(), "application/json")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(rb) = body_opt else unreachable
+    var Some(rb) = body_opt else unsafe { unreachable }
     if(rb.find(string_view("\"recorded\":true")) == std::NPOS) {
         env.error("learning_view: a real concept (elf/bytes) must still be recorded")
     }
@@ -182,10 +182,10 @@ public func test_learning_view_checks_the_course_not_just_the_id(env : &mut Test
     var ok_body = string("{\"course_id\":\"elf\",\"concept_id\":\"entry-point\"}")
     var ok_res = test_helpers::authed_post(&client, &string("http://127.0.0.1:20172/api/learning/view"), &token, &ok_body.to_view(), "application/json")
     if(ok_res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(ok_resp) = ok_res else unreachable
+    var Ok(ok_resp) = ok_res else unsafe { unreachable }
     var ok_opt = ok_resp.body.read_to_string()
     if(ok_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(ok_rb) = ok_opt else unreachable
+    var Some(ok_rb) = ok_opt else unsafe { unreachable }
     if(ok_rb.find(string_view("\"recorded\":true")) == std::NPOS) {
         env.error("learning_view: elf/entry-point is listed in a module and must be accepted")
     }
@@ -194,10 +194,10 @@ public func test_learning_view_checks_the_course_not_just_the_id(env : &mut Test
     var no_body = string("{\"course_id\":\"elf\",\"concept_id\":\"jvm-header\"}")
     var no_res = test_helpers::authed_post(&client, &string("http://127.0.0.1:20172/api/learning/view"), &token, &no_body.to_view(), "application/json")
     if(no_res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(no_resp) = no_res else unreachable
+    var Ok(no_resp) = no_res else unsafe { unreachable }
     var no_opt = no_resp.body.read_to_string()
     if(no_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(no_rb) = no_opt else unreachable
+    var Some(no_rb) = no_opt else unsafe { unreachable }
     if(no_rb.find(string_view("\"recorded\":false")) == std::NPOS) {
         env.error("learning_view: jvm-header is not an elf concept and must not be recorded against elf")
     }

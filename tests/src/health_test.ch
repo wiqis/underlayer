@@ -161,7 +161,7 @@ public func test_health_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19876/api/health")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()
@@ -184,10 +184,10 @@ public func test_health_returns_json_content_type(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19877/api/health")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var ct = resp.headers.get("Content-Type")
     if(ct is Option.None) { env.error("missing Content-Type"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(ct_val) = ct else unreachable
+    var Some(ct_val) = ct else unsafe { unreachable }
     if(ct_val.find(string_view("application/json")) == std::NPOS) { env.error("Content-Type is not application/json") }
 
     srv.shutdown()
@@ -210,10 +210,10 @@ public func test_health_body_contains_status(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19878/api/health")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     var has_ok = body.find(string_view("ok")) != std::NPOS
     var has_status = body.find(string_view("status")) != std::NPOS
     if(!has_ok && !has_status) { env.error("health body missing expected content") }

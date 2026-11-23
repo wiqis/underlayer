@@ -122,15 +122,15 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var i : size_t = 0
         while(i < result.rows.size()) {
-            var row = result.rows.get_ptr(i)
+            var row = result.rows.at_ref(i)
             if(row.vals.size() >= 6) {
                 var a = ExerciseAttempt::make()
-                a.exercise_id = row.vals.get_ptr(0).copy()
-                a.course_id = row.vals.get_ptr(1).copy()
-                a.concept_id = row.vals.get_ptr(2).copy()
-                a.misses = parse_i64(row.vals.get_ptr(3).to_view()) as int
-                a.submitted_at = parse_i64(row.vals.get_ptr(4).to_view())
-                a.question = row.vals.get_ptr(5).copy()
+                a.exercise_id = row.vals.at_ref(0).copy()
+                a.course_id = row.vals.at_ref(1).copy()
+                a.concept_id = row.vals.at_ref(2).copy()
+                a.misses = parse_i64(row.vals.at_ref(3).to_view()) as int
+                a.submitted_at = parse_i64(row.vals.at_ref(4).to_view())
+                a.question = row.vals.at_ref(5).copy()
                 a.correct = 0
                 out.push(a)
             }
@@ -148,9 +148,9 @@ public namespace underlayer_repository {
         sql.append_view("' AND correct = 0")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() > 0) {
-                return parse_i64(row.vals.get_ptr(0).to_view()) as int
+                return parse_i64(row.vals.at_ref(0).to_view()) as int
             }
         }
         return 0

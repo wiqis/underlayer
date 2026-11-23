@@ -82,63 +82,63 @@ public func test_exercise_submit_grades_all_types(env : &mut TestEnv) {
     // hex: 0x41 normalizes to 41, matching answer 41
     var r1 = client.post("http://127.0.0.1:20127/api/exercises/submit?exercise_id=t_hex&answer=0x41", &ebv, "application/json")
     if(r1 is Result.Err) { env.error("hex request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(b1) = r1 else unreachable
+    var Ok(b1) = r1 else unsafe { unreachable }
     var o1 = b1.body.read_to_string()
     if(o1 is Option.None) { env.error("hex no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(t1) = o1 else unreachable
+    var Some(t1) = o1 else unsafe { unreachable }
     if(t1.find(string_view("\"correct\":true")) == std::NPOS) { env.error("hex 0x41 should grade correct") }
 
     // ordering exact
     var r2 = client.post("http://127.0.0.1:20127/api/exercises/submit?exercise_id=t_ord&answer=A%7CB%7CC", &ebv, "application/json")
     if(r2 is Result.Err) { env.error("ord request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(b2) = r2 else unreachable
+    var Ok(b2) = r2 else unsafe { unreachable }
     var o2 = b2.body.read_to_string()
     if(o2 is Option.None) { env.error("ord no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(t2) = o2 else unreachable
+    var Some(t2) = o2 else unsafe { unreachable }
     if(t2.find(string_view("\"correct\":true")) == std::NPOS) { env.error("ordering A|B|C should grade correct") }
 
     // labeling
     var r3 = client.post("http://127.0.0.1:20127/api/exercises/submit?exercise_id=t_lab&answer=One%7CTwo", &ebv, "application/json")
     if(r3 is Result.Err) { env.error("lab request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(b3) = r3 else unreachable
+    var Ok(b3) = r3 else unsafe { unreachable }
     var o3 = b3.body.read_to_string()
     if(o3 is Option.None) { env.error("lab no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(t3) = o3 else unreachable
+    var Some(t3) = o3 else unsafe { unreachable }
     if(t3.find(string_view("\"correct\":true")) == std::NPOS) { env.error("labeling One|Two should grade correct") }
 
     // multi correct + wrong
     var r4 = client.post("http://127.0.0.1:20127/api/exercises/submit?exercise_id=t_multi_g&answer=0%2C2", &ebv, "application/json")
     if(r4 is Result.Err) { env.error("multi request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(b4) = r4 else unreachable
+    var Ok(b4) = r4 else unsafe { unreachable }
     var o4 = b4.body.read_to_string()
     if(o4 is Option.None) { env.error("multi no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(t4) = o4 else unreachable
+    var Some(t4) = o4 else unsafe { unreachable }
     if(t4.find(string_view("\"correct\":true")) == std::NPOS) { env.error("multi 0,2 should grade correct") }
 
     var r4b = client.post("http://127.0.0.1:20127/api/exercises/submit?exercise_id=t_multi_g&answer=0", &ebv, "application/json")
     if(r4b is Result.Err) { env.error("multi wrong request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(b4b) = r4b else unreachable
+    var Ok(b4b) = r4b else unsafe { unreachable }
     var o4b = b4b.body.read_to_string()
     if(o4b is Option.None) { env.error("multi wrong no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(t4b) = o4b else unreachable
+    var Some(t4b) = o4b else unsafe { unreachable }
     if(t4b.find(string_view("\"correct\":false")) == std::NPOS) { env.error("multi partial should grade wrong") }
 
     // predict with options (MC-style)
     var r5 = client.post("http://127.0.0.1:20127/api/exercises/submit?exercise_id=t_pred&answer=It%20fails", &ebv, "application/json")
     if(r5 is Result.Err) { env.error("pred request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(b5) = r5 else unreachable
+    var Ok(b5) = r5 else unsafe { unreachable }
     var o5 = b5.body.read_to_string()
     if(o5 is Option.None) { env.error("pred no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(t5) = o5 else unreachable
+    var Some(t5) = o5 else unsafe { unreachable }
     if(t5.find(string_view("\"correct\":true")) == std::NPOS) { env.error("predict option should grade correct") }
 
     // fill_blank case-insensitive trim
     var r6 = client.post("http://127.0.0.1:20127/api/exercises/submit?exercise_id=t_fill&answer=%20NOR%20", &ebv, "application/json")
     if(r6 is Result.Err) { env.error("fill request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(b6) = r6 else unreachable
+    var Ok(b6) = r6 else unsafe { unreachable }
     var o6 = b6.body.read_to_string()
     if(o6 is Option.None) { env.error("fill no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(t6) = o6 else unreachable
+    var Some(t6) = o6 else unsafe { unreachable }
     if(t6.find(string_view("\"correct\":true")) == std::NPOS) { env.error("fill_blank ' NOR ' should grade correct") }
 
     srv.shutdown()

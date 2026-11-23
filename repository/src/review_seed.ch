@@ -30,7 +30,7 @@ public namespace underlayer_repository {
         var now = underlayer_core::current_timestamp()
         var i : size_t = 0
         while(i < course.concepts.size()) {
-            var concept = course.concepts.get_ptr(i)
+            var concept = course.concepts.at_ref(i)
 
             // Only seed for concepts the learner has engaged with at least once
             var state = get_concept_state(db, learner_id, &concept.id, course_id)
@@ -69,7 +69,7 @@ public namespace underlayer_repository {
                 item.ease_factor = 2.5
 
                 var before = count_review_items(db, learner_id, course_id)
-                insert_review_item(db, &raw item)
+                insert_review_item(db, &item)
                 var after = count_review_items(db, learner_id, course_id)
                 if(after > before) { created = created + 1 }
             }
@@ -88,7 +88,7 @@ public namespace underlayer_repository {
         sql.append_view("'")
         var result = underlayer_db::query_sql_single(db, &raw sql)
         if(result.size() == 0) { return 0 }
-        return parse_int(result.get_ptr(0).to_view())
+        return parse_int(result.at_ref(0).to_view())
     }
 
     // Courses directory — same default as core load_config. Kept local to the
@@ -111,30 +111,26 @@ public namespace underlayer_repository {
         manifest_path.append_string(course_id)
         manifest_path.append_view("/manifest.json")
 
-        var manifest_result = fs::read_entire_file(manifest_path.data())
+        var manifest_view = std::str.make_view(manifest_path.to_view())
+        var manifest_file = path::Path.new(manifest_view)
+        var manifest_result = fs::read_to_string(&manifest_file)
         if(manifest_result is std::Result.Err) { return 0 }
-        var Ok(manifest_data) = manifest_result else unreachable
-
-        var manifest_content = string()
-        var di2 : size_t = 0
-        while(di2 < manifest_data.size()) {
-            manifest_content.append(manifest_data.get(di2) as char)
-            di2 = di2 + 1
-        }
+        var Ok(manifest_content) = manifest_result else unsafe { unreachable }
         if(manifest_content.size() == 0) { return 0 }
 
         var manifest_json = json::parse(manifest_content.to_view())
         if(manifest_json is std::Result.Err) { return 0 }
-        var Ok(manifest_val) = manifest_json else unreachable
+        var Ok(manifest_val) = manifest_json else unsafe { unreachable }
 
-        var exercise_decls = json_get(&raw manifest_val, "exercise_decls")
-        if(exercise_decls == null) { return 0 }
-        if(!(exercise_decls is JsonValue.Array)) { return 0 }
-        var Array(decls) = *exercise_decls else unreachable
+        var exercise_decls = json_get(&manifest_val, "exercise_decls")
+        if(exercise_decls is std::Option.None) { return 0 }
+        var Some(decls_node) = exercise_decls else unsafe { unreachable }
+        if(!(decls_node is JsonValue.Array)) { return 0 }
+        var Array(decls) = decls_node else unsafe { unreachable }
 
         var di : size_t = 0
         while(di < decls.size()) {
-            var decl_ptr = decls.get_ptr(di)
+            var decl_ptr = decls.at_ref(di)
             var ex = Exercise::make()
             ex.concept_id = json_get_str(decl_ptr, "concept_id")
             ex.question = json_get_str(decl_ptr, "question")
@@ -145,9 +141,12 @@ public namespace underlayer_repository {
             ex.hint3 = json_get_str(decl_ptr, "hint3")
             ex.correct_index = json_get_int(decl_ptr, "correct_index")
             var diff_val = json_get(decl_ptr, "difficulty")
-            if(diff_val != null && diff_val is JsonValue.Number) {
-                var Number(diff_num) = *diff_val else unreachable
-                ex.difficulty = parse_f64(diff_num.to_view()) as float
+            if(diff_val is std::Option.Some) {
+                var Some(diff_node) = diff_val else unsafe { unreachable }
+                if(diff_node is JsonValue.Number) {
+                    var Number(diff_num) = diff_node else unsafe { unreachable }
+                    ex.difficulty = parse_f64(diff_num.to_view()) as float
+                }
             }
 
             var type_str = json_get_str(decl_ptr, "type")
@@ -159,10 +158,10 @@ public namespace underlayer_repository {
                 var ci_start : size_t = 0
                 var cii : size_t = 0
                 while(cii <= ci_str.size()) {
-                    if(cii == ci_str.size() || ci_str.get(cii) == ',') {
+                    if(cii == ci_str.size() || ci_str.at(cii) == ',') {
                         var num_str = string()
                         var cj : size_t = ci_start
-                        while(cj < cii) { num_str.append(ci_str.get(cj)); cj = cj + 1 }
+                        while(cj < cii) { num_str.append(ci_str.at(cj)); cj = cj + 1 }
                         if(num_str.size() > 0) {
                             ex.correct_indices.push(parse_i64(num_str.to_view()) as int)
                         }
@@ -177,11 +176,11 @@ public namespace underlayer_repository {
                 var opt_start : size_t = 0
                 var oi : size_t = 0
                 while(oi <= options_str.size()) {
-                    if(oi == options_str.size() || options_str.get(oi) == '|') {
+                    if(oi == options_str.size() || options_str.at(oi) == '|') {
                         var opt = string()
                         var oj : size_t = opt_start
                         while(oj < oi) {
-                            opt.append(options_str.get(oj))
+                            opt.append(options_str.at(oj))
                             oj = oj + 1
                         }
                         ex.options.push(opt)
@@ -202,7 +201,7 @@ public namespace underlayer_repository {
 
             if(ex.concept_id.size() > 0) {
                 var before = count_exercises(db, &ex.concept_id)
-                insert_exercise(db, &raw ex)
+                insert_exercise(db, &ex)
                 var after = count_exercises(db, &ex.concept_id)
                 if(after > before) { inserted_count = inserted_count + 1 }
             }

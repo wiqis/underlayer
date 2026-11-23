@@ -49,9 +49,9 @@ public namespace underlayer_web {
             send_error(res, 400u, &err)
             return
         }
-        var Ok(parsed) = parse_result else unreachable
-        var required_id = json_get_str(&raw parsed, "required_course_id")
-        var min_mastery = json_get_int(&raw parsed, "min_mastery_pct")
+        var Ok(parsed) = parse_result else unsafe { unreachable }
+        var required_id = json_get_str(&parsed, "required_course_id")
+        var min_mastery = json_get_int(&parsed, "min_mastery_pct")
         if(required_id.size() == 0) {
             var err = string("missing required_course_id")
             send_error(res, 400u, &err)

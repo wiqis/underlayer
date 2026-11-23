@@ -25,10 +25,10 @@ public namespace underlayer_web {
             send_error(res, 400u, &err)
             return
         }
-        var Ok(parsed) = parse_result else unreachable
-        var concept_id = json_get_str(&raw parsed, "concept_id")
-        var course_id = json_get_str(&raw parsed, "course_id")
-        var note = json_get_str(&raw parsed, "note")
+        var Ok(parsed) = parse_result else unsafe { unreachable }
+        var concept_id = json_get_str(&parsed, "concept_id")
+        var course_id = json_get_str(&parsed, "course_id")
+        var note = json_get_str(&parsed, "note")
         if(concept_id.size() == 0) {
             var err = string("concept_id is required")
             send_error(res, 400u, &err)

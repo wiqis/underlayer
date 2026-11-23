@@ -27,16 +27,7 @@ public namespace underlayer_repository {
     }
 
     private func generate_bookmark_id() : string {
-        var buf : [16]u8
-        osrand::random_fill(&raw mut buf[0], 16)
-        var hex_out : [33]char
-        var i0 : size_t = 0
-        while(i0 < 33) { hex_out[i0] = 0; i0 = i0 + 1 }
-        encoding::hex_encode(&raw buf[0], 16, &raw mut hex_out[0], 33)
-        var result = string()
-        var i : size_t = 0
-        while(i < 32 && hex_out[i] != 0) { result.append(hex_out[i]); i = i + 1 }
-        return result
+        return random_hex_id()
     }
 
     public func add_bookmark(db : *DbClient, learner_id : &string, concept_id : &string, course_id : &string, note : &string) : string {
@@ -77,15 +68,15 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 6) {
                 var bm = Bookmark::make()
-                bm.id = row.vals.get_ptr(0).copy()
-                bm.learner_id = row.vals.get_ptr(1).copy()
-                bm.concept_id = row.vals.get_ptr(2).copy()
-                bm.course_id = row.vals.get_ptr(3).copy()
-                bm.note = row.vals.get_ptr(4).copy()
-                bm.created_at = parse_i64(row.vals.get_ptr(5).to_view())
+                bm.id = row.vals.at_ref(0).copy()
+                bm.learner_id = row.vals.at_ref(1).copy()
+                bm.concept_id = row.vals.at_ref(2).copy()
+                bm.course_id = row.vals.at_ref(3).copy()
+                bm.note = row.vals.at_ref(4).copy()
+                bm.created_at = parse_i64(row.vals.at_ref(5).to_view())
                 bookmarks.push(bm)
             }
             ri = ri + 1
@@ -103,15 +94,15 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 6) {
                 var bm = Bookmark::make()
-                bm.id = row.vals.get_ptr(0).copy()
-                bm.learner_id = row.vals.get_ptr(1).copy()
-                bm.concept_id = row.vals.get_ptr(2).copy()
-                bm.course_id = row.vals.get_ptr(3).copy()
-                bm.note = row.vals.get_ptr(4).copy()
-                bm.created_at = parse_i64(row.vals.get_ptr(5).to_view())
+                bm.id = row.vals.at_ref(0).copy()
+                bm.learner_id = row.vals.at_ref(1).copy()
+                bm.concept_id = row.vals.at_ref(2).copy()
+                bm.course_id = row.vals.at_ref(3).copy()
+                bm.note = row.vals.at_ref(4).copy()
+                bm.created_at = parse_i64(row.vals.at_ref(5).to_view())
                 bookmarks.push(bm)
             }
             ri = ri + 1
@@ -127,9 +118,9 @@ public namespace underlayer_repository {
         sql.append_view("'")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() > 0) {
-                var count = parse_i64(row.vals.get_ptr(0).to_view())
+                var count = parse_i64(row.vals.at_ref(0).to_view())
                 if(count > 0) { return true }
             }
         }

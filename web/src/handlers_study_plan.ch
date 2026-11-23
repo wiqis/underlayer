@@ -25,12 +25,12 @@ public namespace underlayer_web {
             send_error(res, 400u, &err)
             return
         }
-        var Ok(parsed) = parse_result else unreachable
-        var course_id = json_get_str(&raw parsed, "course_id")
-        var plan_date = json_get_str(&raw parsed, "plan_date")
-        var start_hour = json_get_int(&raw parsed, "start_hour")
-        var duration_minutes = json_get_int(&raw parsed, "duration_minutes")
-        var focus_concepts = json_get_str(&raw parsed, "focus_concepts")
+        var Ok(parsed) = parse_result else unsafe { unreachable }
+        var course_id = json_get_str(&parsed, "course_id")
+        var plan_date = json_get_str(&parsed, "plan_date")
+        var start_hour = json_get_int(&parsed, "start_hour")
+        var duration_minutes = json_get_int(&parsed, "duration_minutes")
+        var focus_concepts = json_get_str(&parsed, "focus_concepts")
         if(course_id.size() == 0) {
             var err = string("course_id is required")
             send_error(res, 400u, &err)
@@ -123,8 +123,8 @@ public namespace underlayer_web {
             send_error(res, 400u, &err)
             return
         }
-        var Ok(parsed) = parse_result else unreachable
-        var status = json_get_str(&raw parsed, "status")
+        var Ok(parsed) = parse_result else unsafe { unreachable }
+        var status = json_get_str(&parsed, "status")
         if(status.size() == 0) {
             var err = string("status is required")
             send_error(res, 400u, &err)

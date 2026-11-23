@@ -31,7 +31,7 @@ public namespace underlayer_repository {
         }
     }
 
-    public func report_exercise(db : *DbClient, report : *ExerciseReport) : string {
+    public func report_exercise(db : *DbClient, report : &ExerciseReport) : string {
         var report_id = generate_feedback_id()
         var now = underlayer_core::current_timestamp()
         var now_str = underlayer_core::int_to_string(now)
@@ -70,34 +70,34 @@ public namespace underlayer_repository {
         var sql = string("SELECT id, learner_id, exercise_id, concept_id, report_type, message, status, created_at FROM exercise_reports WHERE exercise_id = '")
         sql.append_string(&eid)
         sql.append_view("' ORDER BY created_at DESC")
-        return read_report_rows(db, &raw sql)
+        return read_report_rows(db, &sql)
     }
 
     // Every report from every learner.  NOT REACHABLE: see the file header.
     public func get_all_exercise_reports(db : *DbClient) : vector<ExerciseReport> {
         var sql = string("SELECT id, learner_id, exercise_id, concept_id, report_type, message, status, created_at FROM exercise_reports ORDER BY created_at DESC")
-        return read_report_rows(db, &raw sql)
+        return read_report_rows(db, &sql)
     }
 
     // public because the two queries above are byte-identical apart from their
     // WHERE clause, and a third copy of this loop is how the row-index bug
     // would happen again.
-    public func read_report_rows(db : *DbClient, sql : *string) : vector<ExerciseReport> {
+    public func read_report_rows(db : *DbClient, sql : &string) : vector<ExerciseReport> {
         var reports = vector<ExerciseReport>()
-        var result = underlayer_db::query_sql(db, sql)
+        var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 8) {
                 var r = ExerciseReport::make()
-                r.id = row.vals.get_ptr(0).copy()
-                r.learner_id = row.vals.get_ptr(1).copy()
-                r.exercise_id = row.vals.get_ptr(2).copy()
-                r.concept_id = row.vals.get_ptr(3).copy()
-                r.report_type = row.vals.get_ptr(4).copy()
-                r.message = row.vals.get_ptr(5).copy()
-                r.status = row.vals.get_ptr(6).copy()
-                r.created_at = parse_i64(row.vals.get_ptr(7).to_view())
+                r.id = row.vals.at_ref(0).copy()
+                r.learner_id = row.vals.at_ref(1).copy()
+                r.exercise_id = row.vals.at_ref(2).copy()
+                r.concept_id = row.vals.at_ref(3).copy()
+                r.report_type = row.vals.at_ref(4).copy()
+                r.message = row.vals.at_ref(5).copy()
+                r.status = row.vals.at_ref(6).copy()
+                r.created_at = parse_i64(row.vals.at_ref(7).to_view())
                 reports.push(r)
             }
             ri = ri + 1

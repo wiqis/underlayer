@@ -20,7 +20,7 @@ public func test_progress_export_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19940/api/progress/export")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()
@@ -43,10 +43,10 @@ public func test_progress_export_returns_json(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19941/api/progress/export")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var ct = resp.headers.get("Content-Type")
     if(ct is Option.None) { env.error("missing Content-Type"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(ct_val) = ct else unreachable
+    var Some(ct_val) = ct else unsafe { unreachable }
     if(ct_val.find(string_view("application/json")) == std::NPOS) { env.error("Content-Type is not application/json") }
 
     srv.shutdown()
@@ -69,7 +69,7 @@ public func test_session_analytics_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19942/api/analytics/sessions")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()
@@ -92,10 +92,10 @@ public func test_session_analytics_returns_json_array(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19943/api/analytics/sessions")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("total_sessions")) == std::NPOS) { env.error("expected 'total_sessions' in body") }
 
     srv.shutdown()
@@ -118,7 +118,7 @@ public func test_fsrs_export_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19944/api/fsrs/export")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()
@@ -141,10 +141,10 @@ public func test_fsrs_export_returns_json(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19945/api/fsrs/export")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var ct = resp.headers.get("Content-Type")
     if(ct is Option.None) { env.error("missing Content-Type"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(ct_val) = ct else unreachable
+    var Some(ct_val) = ct else unsafe { unreachable }
     if(ct_val.find(string_view("application/json")) == std::NPOS) { env.error("Content-Type is not application/json") }
 
     srv.shutdown()
@@ -169,11 +169,11 @@ public func test_temporal_analytics_returns_buckets(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20092/api/analytics/temporal")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("by_hour")) == std::NPOS) { env.error("missing by_hour") }
     if(body.find(string_view("by_weekday")) == std::NPOS) { env.error("missing by_weekday") }
 
@@ -196,10 +196,10 @@ public func test_retention_analytics_returns_rates(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20093/api/analytics/retention")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("active_days")) == std::NPOS) { env.error("missing active_days") }
     if(body.find(string_view("return_rate_pct")) == std::NPOS) { env.error("missing return_rate_pct") }
 
@@ -235,10 +235,10 @@ public func test_retention_analytics_no_sessions_reports_null_not_a_fake_gap(env
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20150/api/analytics/retention")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
 
     // No sessions exist for this learner, so the response must say so.
     // NOTE: env.error takes a *char, and string.c_str() is private to std, so
@@ -281,10 +281,10 @@ public func test_dropoff_analytics_returns_items(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20094/api/analytics/dropoff")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("count")) == std::NPOS) { env.error("missing count key") }
 
     srv.shutdown()
@@ -306,10 +306,10 @@ public func test_funnel_analytics_returns_stages(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20095/api/analytics/funnel")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("registered")) == std::NPOS) { env.error("missing registered") }
     if(body.find(string_view("concepts_mastered")) == std::NPOS) { env.error("missing concepts_mastered") }
 
@@ -332,10 +332,10 @@ public func test_comparative_analytics_returns_percentile(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20096/api/analytics/comparative")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("my_accuracy")) == std::NPOS) { env.error("missing my_accuracy") }
     if(body.find(string_view("percentile")) == std::NPOS) { env.error("missing percentile") }
 
@@ -364,25 +364,25 @@ public func test_platform_cohorts_devices_return_200(env : &mut TestEnv) {
     var client = http::Client()
     var res1 = client.get("http://127.0.0.1:20097/api/analytics/platform")
     if(res1 is Result.Err) { env.error("platform request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(r1) = res1 else unreachable
+    var Ok(r1) = res1 else unsafe { unreachable }
     if(r1.status != 200u) { env.error("platform expected 200") }
     var b1_opt = r1.body.read_to_string()
     if(b1_opt is Option.None) { env.error("platform no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(b1) = b1_opt else unreachable
+    var Some(b1) = b1_opt else unsafe { unreachable }
     if(b1.find(string_view("total_learners")) == std::NPOS) { env.error("missing total_learners") }
 
     var res2 = client.get("http://127.0.0.1:20097/api/analytics/cohorts")
     if(res2 is Result.Err) { env.error("cohorts request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(r2) = res2 else unreachable
+    var Ok(r2) = res2 else unsafe { unreachable }
     if(r2.status != 200u) { env.error("cohorts expected 200") }
 
     var res3 = client.get("http://127.0.0.1:20097/api/analytics/devices")
     if(res3 is Result.Err) { env.error("devices request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(r3) = res3 else unreachable
+    var Ok(r3) = res3 else unsafe { unreachable }
     if(r3.status != 200u) { env.error("devices expected 200") }
     var b3_opt = r3.body.read_to_string()
     if(b3_opt is Option.None) { env.error("devices no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(b3) = b3_opt else unreachable
+    var Some(b3) = b3_opt else unsafe { unreachable }
     if(b3.find(string_view("total_logins")) == std::NPOS) { env.error("missing total_logins") }
 
     srv.shutdown()
@@ -406,11 +406,11 @@ public func test_components_page_renders(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20098/components")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     // House pattern (see pages_test.ch): assert HTML-ness, not needles —
     // find() on a short needle inside a large body can crash the test runtime.
     var has_html = body.find(string_view("<html")) != std::NPOS

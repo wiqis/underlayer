@@ -27,7 +27,7 @@ public func test_hat_course_api_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20110/api/courses/hat")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()
@@ -52,10 +52,10 @@ public func test_hat_course_api_lists_full_manifest(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20111/api/courses/hat")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("hat-number-properties")) == std::NPOS) { env.error("manifest missing hat-number-properties") }
     if(body.find(string_view("hat-paragraph-completion")) == std::NPOS) { env.error("manifest missing hat-paragraph-completion") }
     if(body.find(string_view("hat-cause-effect")) == std::NPOS) { env.error("manifest missing hat-cause-effect") }
@@ -95,11 +95,11 @@ public func test_hat_network_routing_lesson_is_served(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20117/api/courses/hat/lessons/hat-network-routing")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("Network Routing Sets")) == std::NPOS) { env.error("network lesson missing its title") }
     if(body.find(string_view("One-way circuit")) == std::NPOS) { env.error("network lesson missing the circuit setup") }
     if(body.find(string_view("exactly one intermediary")) == std::NPOS) { env.error("network lesson missing the intermediary quiz") }
@@ -129,11 +129,11 @@ public func test_hat_rc_multi_paragraph_is_served(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20118/api/courses/hat/lessons/hat-reading-comprehension")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("Multi-paragraph passages change where answers live")) == std::NPOS) { env.error("rc lesson missing multi-paragraph section") }
     if(body.find(string_view("quiz-4")) == std::NPOS) { env.error("rc lesson missing multi-paragraph quiz") }
     if(body.find(string_view("data-answer=\"opening\"")) == std::NPOS) { env.error("rc lesson missing multi-paragraph retrieval blanks") }
@@ -162,11 +162,11 @@ public func test_hat_geometry_clock_similarity_is_served(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20119/api/courses/hat/lessons/hat-geometry")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("Clock angles")) == std::NPOS) { env.error("geometry lesson missing clock-angle section") }
     if(body.find(string_view("77.5 degrees")) == std::NPOS) { env.error("geometry lesson missing the 2:25 answer") }
     if(body.find(string_view("3 : 4")) == std::NPOS) { env.error("geometry lesson missing similarity altitude ratio") }
@@ -197,11 +197,11 @@ public func test_hat_sequences_ap_inverse_is_served(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20120/api/courses/hat/lessons/hat-sequences")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("The inverse trick")) == std::NPOS) { env.error("sequences lesson missing AP inverse section") }
     if(body.find(string_view("quiz-5")) == std::NPOS) { env.error("sequences lesson missing AP inverse quiz") }
     if(body.find(string_view("data-answer=\"0\"")) == std::NPOS) { env.error("sequences lesson missing (p+q)th term blank") }
@@ -230,11 +230,11 @@ public func test_hat_logs_lesson_is_served(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20121/api/courses/hat/lessons/hat-exponents-roots")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("Logarithms are the inverse")) == std::NPOS) { env.error("exponents lesson missing log definition") }
     if(body.find(string_view("Chain (telescoping)")) == std::NPOS) { env.error("exponents lesson missing chain rule") }
     if(body.find(string_view("quiz-6")) == std::NPOS) { env.error("exponents lesson missing log chain quiz") }
@@ -263,11 +263,11 @@ public func test_hat_algebra_degree_is_served(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20122/api/courses/hat/lessons/hat-algebra")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("Degree of a polynomial")) == std::NPOS) { env.error("algebra lesson missing degree section") }
     if(body.find(string_view("quiz-4")) == std::NPOS) { env.error("algebra lesson missing degree quiz") }
     if(body.find(string_view("data-answer=\"9\"")) == std::NPOS) { env.error("algebra lesson missing degree blank") }
@@ -299,11 +299,11 @@ public func test_hat_variance_is_served(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20123/api/courses/hat/lessons/hat-data-probability")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("Variance and standard deviation")) == std::NPOS) { env.error("data lesson missing variance section") }
     if(body.find(string_view("quiz-4")) == std::NPOS) { env.error("data lesson missing variance quiz") }
     if(body.find(string_view("data-answer=\"8\"")) == std::NPOS) { env.error("data lesson missing variance blank") }
@@ -332,11 +332,11 @@ public func test_hat_cartesian_product_is_served(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20124/api/courses/hat/lessons/hat-sets-venn")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("Cartesian product")) == std::NPOS) { env.error("sets lesson missing Cartesian product") }
     if(body.find(string_view("quiz-5")) == std::NPOS) { env.error("sets lesson missing product quiz") }
     if(body.find(string_view("3 &times; 5 = 15")) == std::NPOS) { env.error("sets lesson missing 3x5=15") }
@@ -365,11 +365,11 @@ public func test_hat_rational_irrational_is_served(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20125/api/courses/hat/lessons/hat-number-properties")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("Rational vs irrational")) == std::NPOS) { env.error("number lesson missing rational/irrational section") }
     if(body.find(string_view("quiz-8")) == std::NPOS) { env.error("number lesson missing irrational quiz") }
     if(body.find(string_view("data-answer=\"irrational\"")) == std::NPOS) { env.error("number lesson missing irrational blank") }
@@ -398,11 +398,11 @@ public func test_hat_new_lesson_is_served(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20112/api/courses/hat/lessons/hat-number-properties")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("Number Properties")) == std::NPOS) { env.error("lesson missing its title") }
     if(body.find(string_view("division (ladder) method")) == std::NPOS) { env.error("lesson missing the ladder method section") }
     if(body.find(string_view("HCF of 24 and 36")) == std::NPOS) { env.error("lesson missing the HCF quiz") }
@@ -432,11 +432,11 @@ public func test_hat_exam_day_lesson_is_served(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20113/api/courses/hat/lessons/hat-exam-day")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("Exam Day")) == std::NPOS) { env.error("exam-day lesson missing its title") }
     if(body.find(string_view("negative marking")) == std::NPOS) { env.error("exam-day lesson missing the no-negative-marking fact") }
 
@@ -464,11 +464,11 @@ public func test_hat_orientation_rejects_technical_section(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20114/api/courses/hat/lessons/hat-exam-overview")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("no technical section")) == std::NPOS) { env.error("orientation lesson must state HAT-1 has no technical section") }
 
     srv.shutdown()
@@ -495,11 +495,11 @@ public func test_hat_diagnostic_test_has_interactive_bank(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20116/api/courses/hat/lessons/hat-diagnostic-test")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("hat-diag-root")) == std::NPOS) { env.error("diagnostic missing its runner root") }
     if(body.find(string_view("HAT_DIAG_QUANT")) == std::NPOS) { env.error("diagnostic missing the quantitative bank") }
     if(body.find(string_view("HAT_DIAG_VERBAL")) == std::NPOS) { env.error("diagnostic missing the verbal bank") }
@@ -531,7 +531,7 @@ public func test_hat_unknown_lesson_returns_404(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20115/api/courses/hat/lessons/hat-not-a-real-lesson")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 404u) { env.error("expected 404 for unknown hat lesson") }
 
     srv.shutdown()

@@ -35,16 +35,7 @@ public namespace underlayer_repository {
     }
 
     private func generate_notification_id() : string {
-        var buf : [16]u8
-        osrand::random_fill(&raw mut buf[0], 16)
-        var hex_out : [33]char
-        var i0 : size_t = 0
-        while(i0 < 33) { hex_out[i0] = 0; i0 = i0 + 1 }
-        encoding::hex_encode(&raw buf[0], 16, &raw mut hex_out[0], 33)
-        var result = string()
-        var i : size_t = 0
-        while(i < 32 && hex_out[i] != 0) { result.append(hex_out[i]); i = i + 1 }
-        return result
+        return random_hex_id()
     }
 
     public func create_notification(db : *DbClient, learner_id : &string, notif_type : &string, title : &string, message : &string, course_id : &string, concept_id : &string, action_url : &string) : string {
@@ -84,19 +75,19 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 10) {
                 var n = Notification::make()
-                n.id = row.vals.get_ptr(0).copy()
-                n.learner_id = row.vals.get_ptr(1).copy()
-                n.type = row.vals.get_ptr(2).copy()
-                n.title = row.vals.get_ptr(3).copy()
-                n.message = row.vals.get_ptr(4).copy()
-                n.course_id = row.vals.get_ptr(5).copy()
-                n.concept_id = row.vals.get_ptr(6).copy()
-                n.is_read = parse_i64(row.vals.get_ptr(7).to_view()) != 0
-                n.action_url = row.vals.get_ptr(8).copy()
-                n.created_at = parse_i64(row.vals.get_ptr(9).to_view())
+                n.id = row.vals.at_ref(0).copy()
+                n.learner_id = row.vals.at_ref(1).copy()
+                n.type = row.vals.at_ref(2).copy()
+                n.title = row.vals.at_ref(3).copy()
+                n.message = row.vals.at_ref(4).copy()
+                n.course_id = row.vals.at_ref(5).copy()
+                n.concept_id = row.vals.at_ref(6).copy()
+                n.is_read = parse_i64(row.vals.at_ref(7).to_view()) != 0
+                n.action_url = row.vals.at_ref(8).copy()
+                n.created_at = parse_i64(row.vals.at_ref(9).to_view())
                 notifications.push(n)
             }
             ri = ri + 1
@@ -110,9 +101,9 @@ public namespace underlayer_repository {
         sql.append_view("' AND is_read = 0")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() > 0) {
-                return parse_int(row.vals.get_ptr(0).to_view())
+                return parse_int(row.vals.at_ref(0).to_view())
             }
         }
         return 0

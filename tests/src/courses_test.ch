@@ -20,7 +20,7 @@ public func test_list_courses_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19880/api/courses")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()
@@ -43,10 +43,10 @@ public func test_list_courses_returns_json_array(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19881/api/courses")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.size() == 0u || body.get(0) != '[') { env.error("expected JSON array") }
 
     srv.shutdown()
@@ -71,7 +71,7 @@ public func test_get_course_elf_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19882/api/courses/elf")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()
@@ -96,10 +96,10 @@ public func test_get_course_elf_contains_title(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19883/api/courses/elf")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("elf")) == std::NPOS) { env.error("body missing 'elf'") }
 
     srv.shutdown()
@@ -124,7 +124,7 @@ public func test_get_nonexistent_course_returns_404(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19884/api/courses/nonexistent")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 404u) { env.error("expected 404") }
 
     srv.shutdown()
@@ -151,7 +151,7 @@ public func test_get_lesson_bytes_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19885/api/courses/elf/lessons/bytes")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()
@@ -178,7 +178,7 @@ public func test_get_nonexistent_lesson_returns_404(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19886/api/courses/elf/lessons/nonexistent")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 404u) { env.error("expected 404") }
 
     srv.shutdown()
@@ -201,7 +201,7 @@ public func test_search_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19887/api/search?q=bytes")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()

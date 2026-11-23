@@ -8,9 +8,9 @@ public namespace underlayer_repository {
         var result : i64 = 0
         var negative = false
         var i : size_t = 0
-        if(v.size() > 0 && v.get(0) == '-') { negative = true; i = 1 }
+        if(v.size() > 0 && v.at(0) == '-') { negative = true; i = 1 }
         while(i < v.size()) {
-            var c = v.get(i)
+            var c = v.at(i)
             if(c >= '0' && c <= '9') { result = result * 10 + (c as i64 - 48) }
             i = i + 1
         }
@@ -27,10 +27,10 @@ public namespace underlayer_repository {
         var result : f64 = 0.0
         var negative = false
         var i : size_t = 0
-        if(v.size() > 0 && v.get(0) == '-') { negative = true; i = 1 }
+        if(v.size() > 0 && v.at(0) == '-') { negative = true; i = 1 }
         // Integer part
         while(i < v.size()) {
-            var c = v.get(i)
+            var c = v.at(i)
             if(c >= '0' && c <= '9') { result = result * 10.0 + ((c as i64 - 48) as f64) }
             else if(c == '.') { i = i + 1; break }
             i = i + 1
@@ -38,7 +38,7 @@ public namespace underlayer_repository {
         // Fractional part
         var frac_mult : f64 = 0.1
         while(i < v.size()) {
-            var c = v.get(i)
+            var c = v.at(i)
             if(c >= '0' && c <= '9') {
                 result = result + ((c as i64 - 48) as f64) * frac_mult
                 frac_mult = frac_mult * 0.1
@@ -49,62 +49,109 @@ public namespace underlayer_repository {
         return result
     }
 
-    public func json_str(val : *JsonValue) : string {
-        if(val == null) { return string() }
-        if(val is JsonValue.String) {
-            var String(s) = *val else unreachable
-            return s.copy()
+    // ---- JSON helpers ----
+    //
+    // A manifest node is looked up by reference: `json_get` returns
+    // `Option<&JsonValue>` borrowed from the document the caller owns, and the
+    // callers `switch` on that reference.  This replaces a `*JsonValue` API that
+    // (a) could not be dereferenced without `unsafe` and (b) returned a pointer
+    // into a *copy* of the object it looked in, so the pointer outlived the map
+    // it pointed at.  No pointer is returned and no node is copied.
+
+    // The child of `obj` named `key`, or `None` when absent or when `obj` is not
+    // an object.
+    public func json_get(obj : &JsonValue, key : *char) : std::Option<&JsonValue> {
+        // `key` is a C string literal; turning it into a `string` is the one
+        // boundary in this block.
+        var k = unsafe(std::string::make_no_len(key))
+        switch(obj) {
+            Object(values) => {
+                return values.get(&k)
+            }
+            default => {
+                return std::Option.None<&JsonValue>()
+            }
+        }
+    }
+
+    // Number of elements in an array node (0 when the node is not an array).
+    public func json_len(node : &JsonValue) : size_t {
+        switch(node) {
+            Array(values) => { return values.size() }
+            default => { return 0 }
+        }
+    }
+
+    // Element `i` of an array node.
+    public func json_at(node : &JsonValue, i : size_t) : std::Option<&JsonValue> {
+        switch(node) {
+            Array(values) => {
+                if(i >= values.size()) { return std::Option.None<&JsonValue>() }
+                return values.get(i)
+            }
+            default => {
+                return std::Option.None<&JsonValue>()
+            }
+        }
+    }
+
+    // The text of a String node, or "" for anything else.
+    public func json_str(val : &JsonValue) : string {
+        switch(val) {
+            String(s) => { return s.copy() }
+            default => { return string() }
+        }
+    }
+
+    // The integer value of a Number node, or 0 for anything else.
+    public func json_i64(val : &JsonValue) : i64 {
+        switch(val) {
+            Number(n) => { return parse_i64(n.to_view()) }
+            default => { return 0 }
+        }
+    }
+
+    public func json_int(val : &JsonValue) : int {
+        return json_i64(val) as int
+    }
+
+    public func json_get_str(obj : &JsonValue, key : *char) : string {
+        var found = json_get(obj, key)
+        if(found is std::Option.Some) {
+            var Some(node) = found else unsafe { unreachable }
+            return json_str(node)
         }
         return string()
     }
 
-    public func json_i64(val : *JsonValue) : i64 {
-        if(val == null) { return 0 }
-        if(val is JsonValue.Number) {
-            var Number(s) = *val else unreachable
-            return parse_i64(s.to_view())
+    public func json_get_int(obj : &JsonValue, key : *char) : int {
+        var found = json_get(obj, key)
+        if(found is std::Option.Some) {
+            var Some(node) = found else unsafe { unreachable }
+            return json_int(node)
         }
         return 0
     }
 
-    public func json_int(val : *JsonValue) : int {
-        return json_i64(val) as int
-    }
-
-    public func json_get(obj : *JsonValue, key : *char) : *mut JsonValue {
-        if(obj == null) { return null }
-        if(!(obj is JsonValue.Object)) { return null }
-        var Object(map) = *obj else unreachable
-        var k = string::make_no_len(key)
-        return map.get_ptr(&k)
-    }
-
-    public func json_get_str(obj : *JsonValue, key : *char) : string {
-        var field = json_get(obj, key)
-        return json_str(field)
-    }
-
-    public func json_get_int(obj : *JsonValue, key : *char) : int {
-        var field = json_get(obj, key)
-        return json_int(field)
-    }
-
-    public func json_get_bool(obj : *JsonValue, key : *char) : bool {
-        var field = json_get(obj, key)
-        if(field == null) { return false }
-        if(field is JsonValue.Bool) {
-            var Bool(b) = *field else unreachable
-            return b
+    public func json_get_bool(obj : &JsonValue, key : *char) : bool {
+        var found = json_get(obj, key)
+        if(found is std::Option.None) { return false }
+        var Some(node) = found else unsafe { unreachable }
+        switch(node) {
+            Bool(b) => { return b }
+            String(s) => { return s.to_view().equals(string_view("true")) }
+            Number(n) => { return parse_i64(n.to_view()) != 0 }
+            default => { return false }
         }
-        if(field is JsonValue.String) {
-            var String(s) = *field else unreachable
-            if(s.to_view().equals(string_view("true"))) { return true }
-        }
-        if(field is JsonValue.Number) {
-            var Number(n) = *field else unreachable
-            if(parse_i64(n.to_view()) != 0) { return true }
-        }
-        return false
+    }
+    // A 32-hex-character random identifier: 16 random bytes, hex encoded.
+    //
+    // This exists because the same twelve-line sequence had been copied into
+    // every repository file that mints an id.  One implementation is also one
+    // place where the randomness source has to be right, instead of ten; the
+    // implementation itself lives in `core`, so the web layer can mint ids too.
+    public func random_hex_id() : string {
+        return underlayer_core::random_hex_id()
     }
 
     // Escape a string for embedding inside a single-quoted SQL literal:
@@ -115,7 +162,7 @@ public namespace underlayer_repository {
         var out = string()
         var i : size_t = 0
         while(i < s.size()) {
-            var c = s.get(i)
+            var c = s.at(i)
             if(c == '\'') {
                 out.append('\'')
                 out.append('\'')

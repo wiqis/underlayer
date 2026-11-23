@@ -31,7 +31,7 @@ public namespace underlayer_learning {
     // learning = reviewed at least once, not yet mastered
     // reviewing = mastered but due for review
     // unlearned = never reviewed
-    func classify_status(state : *ConceptState) : string {
+    func classify_status(state : &ConceptState) : string {
         if(state.attempts == 0) { return string("unlearned") }
         var accuracy = (state.correct as f64) / (state.attempts as f64)
         if(accuracy > 0.8 && state.streak >= 3) { return string("mastered") }
@@ -39,13 +39,13 @@ public namespace underlayer_learning {
         return string("reviewing")
     }
 
-    public func compute_knowledge_health(states : *vector<ConceptState>) : KnowledgeHealth {
+    public func compute_knowledge_health(states : &vector<ConceptState>) : KnowledgeHealth {
         var health = KnowledgeHealth::make()
         health.total_concepts = states.size() as int
 
         var i : size_t = 0
         while(i < states.size()) {
-            var state = states.get_ptr(i)
+            var state = states.at_ref(i)
             if(state.status.equals(string("mastered"))) {
                 health.mastered = health.mastered + 1
             } else if(state.status.equals(string("learning"))) {
@@ -66,7 +66,7 @@ public namespace underlayer_learning {
     }
 
     // 1.5.2: Compute knowledge health for a subset of concepts (per-module)
-    public func compute_module_health(states : *vector<ConceptState>, module_concept_ids : *vector<string>) : KnowledgeHealth {
+    public func compute_module_health(states : &vector<ConceptState>, module_concept_ids : &vector<string>) : KnowledgeHealth {
         var health = KnowledgeHealth::make()
         var total : int = 0
         var mastered : int = 0
@@ -75,12 +75,12 @@ public namespace underlayer_learning {
         var unlearned : int = 0
         var mi : size_t = 0
         while(mi < module_concept_ids.size()) {
-            var cid_ptr = module_concept_ids.get_ptr(mi)
+            var cid_ptr = module_concept_ids.at_ref(mi)
             var cid_copy = cid_ptr.copy()
             // Find matching state
             var si : size_t = 0
             while(si < states.size()) {
-                var state = states.get_ptr(si)
+                var state = states.at_ref(si)
                 if(state.concept_id.equals(&cid_copy)) {
                     total = total + 1
                     if(state.status.equals(string("mastered"))) { mastered = mastered + 1 }
@@ -105,14 +105,14 @@ public namespace underlayer_learning {
 
     // 1.5.13: Knowledge depth score (0-100)
     // How well concepts are understood based on average accuracy and stability
-    public func compute_depth_score(states : *vector<ConceptState>) : f64 {
+    public func compute_depth_score(states : &vector<ConceptState>) : f64 {
         if(states.size() == 0) { return 0.0 }
         var total_accuracy : f64 = 0.0
         var total_reps : i64 = 0
         var count : i64 = 0
         var i : size_t = 0
         while(i < states.size()) {
-            var state = states.get_ptr(i)
+            var state = states.at_ref(i)
             if(state.attempts > 0) {
                 total_accuracy = total_accuracy + ((state.correct as f64) / (state.attempts as f64))
                 total_reps = total_reps + (state.attempts as i64)
@@ -154,12 +154,12 @@ public namespace underlayer_learning {
     // and a row can exist with no status if something upserts without setting
     // one. Treating "" as covered would inflate the figure on a half-written
     // row, so coverage requires a row that has actually been classified.
-    public func compute_breadth_score(states : *vector<ConceptState>, total_concepts : int) : f64 {
+    public func compute_breadth_score(states : &vector<ConceptState>, total_concepts : int) : f64 {
         if(total_concepts == 0) { return 0.0 }
         var covered : int = 0
         var i : size_t = 0
         while(i < states.size()) {
-            var state = states.get_ptr(i)
+            var state = states.at_ref(i)
             // A row with no status has not been classified as started yet.
             if(state.status.size() > 0) { covered = covered + 1 }
             i = i + 1
@@ -183,7 +183,7 @@ public namespace underlayer_learning {
         }
     }
 
-    public func compute_health_goal(current_health : *KnowledgeHealth, target_pct : f64) : HealthGoal {
+    public func compute_health_goal(current_health : &KnowledgeHealth, target_pct : f64) : HealthGoal {
         var goal = HealthGoal::make()
         goal.target_score = target_pct
         goal.current_score = current_health.health_score * 100.0
@@ -209,7 +209,7 @@ public namespace underlayer_learning {
         }
     }
 
-    public func check_milestones(current_health : *KnowledgeHealth, first_mastered_at : i64) : vector<HealthMilestone> {
+    public func check_milestones(current_health : &KnowledgeHealth, first_mastered_at : i64) : vector<HealthMilestone> {
         var milestones = vector<HealthMilestone>()
         var thresholds = vector<f64>()
         thresholds.push(25.0)
@@ -225,8 +225,8 @@ public namespace underlayer_learning {
         var i : size_t = 0
         while(i < thresholds.size()) {
             var m = HealthMilestone::make()
-            m.threshold = thresholds.get(i)
-            var lbl = labels.get_ptr(i)
+            m.threshold = thresholds.at(i)
+            var lbl = labels.at_ref(i)
             m.label = lbl.copy()
             m.achieved = pct >= m.threshold
             if(m.achieved) { m.achieved_at = first_mastered_at }
@@ -275,7 +275,7 @@ public namespace underlayer_learning {
 
     // 1.5.10: Model knowledge decay using forgetting curves
     // Simple exponential decay: R = e^(-t/S) where S is stability in days
-    public func compute_retention_projection(states : *vector<ConceptState>) : RetentionProjection {
+    public func compute_retention_projection(states : &vector<ConceptState>) : RetentionProjection {
         var proj = RetentionProjection::make()
         if(states.size() == 0) { return proj }
         var total_retrievability_30 : f64 = 0.0
@@ -284,7 +284,7 @@ public namespace underlayer_learning {
         var count : f64 = 0.0
         var i : size_t = 0
         while(i < states.size()) {
-            var state = states.get_ptr(i)
+            var state = states.at_ref(i)
             if(state.attempts > 0) {
                 // Stability approximation: use reps * 2 as stability days
                 var stability = (state.streak + 1) as f64
@@ -311,19 +311,19 @@ public namespace underlayer_learning {
 
     // 1.5.11: Identify knowledge gaps (prerequisites not met)
     public func identify_knowledge_gaps(
-        states : *vector<ConceptState>,
-        concept_ids : *vector<string>
+        states : &vector<ConceptState>,
+        concept_ids : &vector<string>
     ) : vector<string> {
         var gaps = vector<string>()
         var i : size_t = 0
         while(i < concept_ids.size()) {
-            var cid_ptr = concept_ids.get_ptr(i)
+            var cid_ptr = concept_ids.at_ref(i)
             var cid_copy = cid_ptr.copy()
             // Check if concept has been reviewed
             var reviewed = false
             var j : size_t = 0
             while(j < states.size()) {
-                var state = states.get_ptr(j)
+                var state = states.at_ref(j)
                 if(state.concept_id.equals(&cid_copy) && state.attempts > 0) {
                     reviewed = true
                 }
@@ -354,11 +354,11 @@ public namespace underlayer_learning {
     }
 
     public func compute_health_trend(
-        historical_scores : *vector<HealthTrend>
+        historical_scores : &vector<HealthTrend>
     ) : string {
         if(historical_scores.size() < 2) { return string("insufficient_data") }
-        var latest = historical_scores.get_ptr(historical_scores.size() - 1)
-        var prev = historical_scores.get_ptr(historical_scores.size() - 2)
+        var latest = historical_scores.at_ref(historical_scores.size() - 1)
+        var prev = historical_scores.at_ref(historical_scores.size() - 2)
         var delta = latest.health_score - prev.health_score
         if(delta > 0.05) { return string("improving") }
         if(delta < -0.05) { return string("declining") }
@@ -382,7 +382,7 @@ public namespace underlayer_learning {
     }
 
     public func compute_health_comparison(
-        user_health : *KnowledgeHealth,
+        user_health : &KnowledgeHealth,
         avg_score : f64
     ) : HealthComparison {
         var comp = HealthComparison::make()
@@ -399,18 +399,18 @@ public namespace underlayer_learning {
     }
 
     // 1.5.12: Identify knowledge overlap (redundant concepts)
-    public func identify_knowledge_overlap(states : *vector<ConceptState>) : vector<string> {
+    public func identify_knowledge_overlap(states : &vector<ConceptState>) : vector<string> {
         var overlap = vector<string>()
         var i : size_t = 0
         while(i < states.size()) {
-            var a = states.get_ptr(i)
+            var a = states.at_ref(i)
             if(a.attempts < 3) { i = i + 1; continue }
             var acc_a = (a.correct as f64) / (a.attempts as f64)
             if(acc_a < 0.9) { i = i + 1; continue }
             // Check if any other concept has very similar accuracy and both are mastered
             var j : size_t = i + 1
             while(j < states.size()) {
-                var b = states.get_ptr(j)
+                var b = states.at_ref(j)
                 if(b.attempts >= 3) {
                     var acc_b = (b.correct as f64) / (b.attempts as f64)
                     if(acc_b >= 0.9) {
@@ -427,7 +427,7 @@ public namespace underlayer_learning {
     }
 
     // 1.5.19: Knowledge health export (JSON string)
-    public func export_health_json(health : *KnowledgeHealth) : string {
+    public func export_health_json(health : &KnowledgeHealth) : string {
         var json = string("{\"total_concepts\":")
         var tc = underlayer_core::int_to_string(health.total_concepts as i64)
         json.append_string(&tc)

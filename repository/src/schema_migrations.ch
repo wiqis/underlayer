@@ -43,11 +43,11 @@ public namespace underlayer_repository {
         if(!res.ok) { return false }
         var i : size_t = 0
         while(i < res.rows.size()) {
-            var row = res.rows.get_ptr(i)
+            var row = res.rows.at_ref(i)
             // table_info columns: (0)cid (1)name (2)type (3)notnull
             // (4)dflt_value (5)pk -- so the NAME is index 1.
             if(row.vals.size() >= 2) {
-                if(row.vals.get_ptr(1).to_view().equals(column)) { return true }
+                if(row.vals.at_ref(1).to_view().equals(column)) { return true }
             }
             i = i + 1
         }

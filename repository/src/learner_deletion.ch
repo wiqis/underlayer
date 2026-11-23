@@ -102,7 +102,7 @@ public namespace underlayer_repository {
         direct.push(string("email_verification_tokens"))
         var di : size_t = 0
         while(di < direct.size()) {
-            var t = direct.get_ptr(di).copy()
+            var t = direct.at_ref(di).copy()
             var t_safe = sql_escape(&t)
             var stmt = string("DELETE FROM ")
             stmt.append_string(&t_safe)

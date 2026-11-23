@@ -71,7 +71,7 @@ public func test_review_due_seeds_automatically(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19979/api/review/due?course_id=elf")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected 200") }
 
     // The response is for the anonymous "demo" learner. Assert the seeding

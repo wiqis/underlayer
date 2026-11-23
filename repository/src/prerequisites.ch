@@ -39,12 +39,12 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 3) {
                 var prereq = CoursePrerequisite::make()
-                prereq.course_id = row.vals.get_ptr(0).copy()
-                prereq.required_course_id = row.vals.get_ptr(1).copy()
-                prereq.min_mastery_pct = parse_int(row.vals.get_ptr(2).to_view())
+                prereq.course_id = row.vals.at_ref(0).copy()
+                prereq.required_course_id = row.vals.at_ref(1).copy()
+                prereq.min_mastery_pct = parse_int(row.vals.at_ref(2).to_view())
                 prereqs.push(prereq)
             }
             ri = ri + 1
@@ -78,7 +78,7 @@ public namespace underlayer_repository {
         if(prereqs.size() == 0) { return true }
         var i : size_t = 0
         while(i < prereqs.size()) {
-            var prereq = prereqs.get_ptr(i)
+            var prereq = prereqs.at_ref(i)
             var req_id = prereq.required_course_id.copy()
             var enrollment = get_enrollment(db, learner_id, &req_id)
             if(enrollment.status.equals(string("completed"))) { i = i + 1; continue }
@@ -88,7 +88,7 @@ public namespace underlayer_repository {
             var total_states = states.size()
             var si : size_t = 0
             while(si < states.size()) {
-                var state = states.get_ptr(si)
+                var state = states.at_ref(si)
                 if(state.attempts > 0 && state.correct > 0) {
                     var mastery = (state.correct * 100) / state.attempts
                     if(mastery >= prereq.min_mastery_pct) { mastered = mastered + 1 }
@@ -112,7 +112,7 @@ public namespace underlayer_repository {
         if(prereqs.size() == 0) { return missing }
         var i : size_t = 0
         while(i < prereqs.size()) {
-            var prereq = prereqs.get_ptr(i)
+            var prereq = prereqs.at_ref(i)
             var req_id = prereq.required_course_id.copy()
             var enrollment = get_enrollment(db, learner_id, &req_id)
             if(enrollment.status.equals(string("completed"))) { i = i + 1; continue }
@@ -123,7 +123,7 @@ public namespace underlayer_repository {
                 var total_states = states.size()
                 var si : size_t = 0
                 while(si < states.size()) {
-                    var state = states.get_ptr(si)
+                    var state = states.at_ref(si)
                     if(state.attempts > 0 && state.correct > 0) {
                         var mastery = (state.correct * 100) / state.attempts
                         if(mastery >= prereq.min_mastery_pct) { mastered = mastered + 1 }
@@ -147,7 +147,7 @@ public namespace underlayer_repository {
         return missing
     }
 
-    public func save_assessment_result(db : *DbClient, result : *SkillAssessmentResult) {
+    public func save_assessment_result(db : *DbClient, result : &SkillAssessmentResult) {
         var now = underlayer_core::current_timestamp()
         var now_str = underlayer_core::int_to_string(now)
         var sql = string("INSERT INTO skill_assessments (learner_id, course_id, score, total, placement, recommended_start, created_at) VALUES ('")
@@ -179,15 +179,15 @@ public namespace underlayer_repository {
         sql.append_view("' ORDER BY created_at DESC LIMIT 1")
         var query_result = underlayer_db::query_sql(db, &raw sql)
         if(query_result.rows.size() > 0) {
-            var row = query_result.rows.get_ptr(0)
+            var row = query_result.rows.at_ref(0)
             if(row.vals.size() >= 7) {
-                result.learner_id = row.vals.get_ptr(0).copy()
-                result.course_id = row.vals.get_ptr(1).copy()
-                result.score = parse_int(row.vals.get_ptr(2).to_view())
-                result.total = parse_int(row.vals.get_ptr(3).to_view())
-                result.placement = row.vals.get_ptr(4).copy()
-                result.recommended_start = row.vals.get_ptr(5).copy()
-                result.created_at = parse_i64(row.vals.get_ptr(6).to_view())
+                result.learner_id = row.vals.at_ref(0).copy()
+                result.course_id = row.vals.at_ref(1).copy()
+                result.score = parse_int(row.vals.at_ref(2).to_view())
+                result.total = parse_int(row.vals.at_ref(3).to_view())
+                result.placement = row.vals.at_ref(4).copy()
+                result.recommended_start = row.vals.at_ref(5).copy()
+                result.created_at = parse_i64(row.vals.at_ref(6).to_view())
             }
         }
         return result

@@ -32,8 +32,8 @@ public namespace underlayer_web {
             send_error(res, 400u, &err)
             return
         }
-        var Ok(parsed) = parse_result else unreachable
-        var email = json_get_str(&raw parsed, "email")
+        var Ok(parsed) = parse_result else unsafe { unreachable }
+        var email = json_get_str(&parsed, "email")
         if(email.size() == 0) {
             var err = string("email is required")
             send_error(res, 400u, &err)
@@ -92,9 +92,9 @@ public namespace underlayer_web {
             send_error(res, 400u, &err)
             return
         }
-        var Ok(parsed) = parse_result else unreachable
-        var token = json_get_str(&raw parsed, "token")
-        var new_password = json_get_str(&raw parsed, "password")
+        var Ok(parsed) = parse_result else unsafe { unreachable }
+        var token = json_get_str(&parsed, "token")
+        var new_password = json_get_str(&parsed, "password")
         if(token.size() == 0 || new_password.size() == 0) {
             var err = string("token and password are required")
             send_error(res, 400u, &err)
@@ -164,8 +164,8 @@ public namespace underlayer_web {
             send_error(res, 400u, &err)
             return
         }
-        var Ok(parsed) = parse_result else unreachable
-        var token = json_get_str(&raw parsed, "token")
+        var Ok(parsed) = parse_result else unsafe { unreachable }
+        var token = json_get_str(&parsed, "token")
         if(token.size() == 0) {
             var err = string("token is required")
             send_error(res, 400u, &err)

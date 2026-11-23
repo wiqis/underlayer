@@ -44,12 +44,12 @@ public namespace underlayer_repository {
         if(!res.ok) { return false }
         var ri : size_t = 0
         while(ri < res.rows.size()) {
-            var row = res.rows.get_ptr(ri)
+            var row = res.rows.at_ref(ri)
             if(row.vals.size() >= 1) {
                 // SQLite hands back NULL as an empty/absent column.  A row whose
                 // timestamp is 0 means "the column exists but was never set",
                 // which is exactly the not-onboarded case.
-                var v = row.vals.get_ptr(0)
+                var v = row.vals.at_ref(0)
                 if(v.size() > 0) {
                     var n = parse_i64(v.to_view())
                     if(n != 0) { return true }

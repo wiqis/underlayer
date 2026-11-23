@@ -100,10 +100,10 @@ public namespace underlayer_web {
             send_error(res, 400u, &err)
             return
         }
-        var Ok(parsed) = parse_result else unreachable
-        var dn = json_get_str(&raw parsed, "display_name")
+        var Ok(parsed) = parse_result else unsafe { unreachable }
+        var dn = json_get_str(&parsed, "display_name")
         if(dn.size() > 0) { profile.display_name = dn }
-        var un = json_get_str(&raw parsed, "username")
+        var un = json_get_str(&parsed, "username")
         if(un.size() > 0) {
             if(un.size() < 3 || un.size() > 20) {
                 var err = string("username must be 3-20 characters")
@@ -130,19 +130,19 @@ public namespace underlayer_web {
             profile.username = un
             profile.username_changed_at = underlayer_core::current_timestamp()
         }
-        var bio = json_get_str(&raw parsed, "bio")
+        var bio = json_get_str(&parsed, "bio")
         if(bio.size() > 0) { profile.bio = bio }
-        var loc = json_get_str(&raw parsed, "location")
+        var loc = json_get_str(&parsed, "location")
         if(loc.size() > 0) { profile.location = loc }
-        var web = json_get_str(&raw parsed, "website")
+        var web = json_get_str(&parsed, "website")
         if(web.size() > 0) { profile.website = web }
-        var tw = json_get_str(&raw parsed, "social_twitter")
+        var tw = json_get_str(&parsed, "social_twitter")
         if(tw.size() > 0) { profile.social_twitter = tw }
-        var gh = json_get_str(&raw parsed, "social_github")
+        var gh = json_get_str(&parsed, "social_github")
         if(gh.size() > 0) { profile.social_github = gh }
-        var li = json_get_str(&raw parsed, "social_linkedin")
+        var li = json_get_str(&parsed, "social_linkedin")
         if(li.size() > 0) { profile.social_linkedin = li }
-        var vis = json_get_str(&raw parsed, "visibility")
+        var vis = json_get_str(&parsed, "visibility")
         if(vis.size() > 0) { profile.visibility = vis }
         underlayer_repository::upsert_profile(db, &raw profile)
         var body = std::string("{\"ok\":true}")

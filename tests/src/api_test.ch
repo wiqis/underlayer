@@ -20,7 +20,7 @@ public func test_progress_api_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19900/api/progress")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected 200") }
 
     srv.shutdown()
@@ -56,7 +56,7 @@ public func test_review_start_returns_200(env : &mut TestEnv) {
     // accepted every caller.
     var anon_res = client.get("http://127.0.0.1:19901/api/review/start")
     if(anon_res is Result.Err) { env.error("anonymous request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(anon_resp) = anon_res else unreachable
+    var Ok(anon_resp) = anon_res else unsafe { unreachable }
     if(anon_resp.status != 401u) {
         env.error("expected 401 for an anonymous review start, not 200: the shared demo learner must not receive anonymous sessions")
     }
@@ -66,7 +66,7 @@ public func test_review_start_returns_200(env : &mut TestEnv) {
     var url = string("http://127.0.0.1:19901/api/review/start")
     var res = test_helpers::authed_get(&client, &url, &token)
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected 200 for an authenticated review start") }
 
     srv.shutdown()
@@ -89,7 +89,7 @@ public func test_review_due_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19902/api/review/due")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected 200") }
 
     srv.shutdown()
@@ -112,10 +112,10 @@ public func test_search_returns_json(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19903/api/search?q=bytes")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var ct = resp.headers.get("Content-Type")
     if(ct is Option.None) { env.error("missing Content-Type"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(ct_val) = ct else unreachable
+    var Some(ct_val) = ct else unsafe { unreachable }
     if(ct_val.find(string_view("application/json")) == std::NPOS) { env.error("not JSON") }
 
     srv.shutdown()

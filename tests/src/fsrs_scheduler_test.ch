@@ -69,10 +69,10 @@ func rate_and_read_stability(
     var ebv = empty_body.to_view()
     var res = test_helpers::authed_post(client, &url, token, &ebv, "application/json")
     if(res is Result.Err) { env.error("review submit failed"); return -1.0 }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body from review submit"); return -1.0 }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     var key = string("\"stability\":")
     var at = body.find(key.to_view())
     if(at == std::NPOS) { env.error("review submit response has no stability"); return -1.0 }

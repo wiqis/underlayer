@@ -42,9 +42,9 @@ public namespace underlayer_web {
                     var err = string("invalid JSON")
                     send_error(res, 400u, &err)
                 } else {
-                    var Ok(parsed) = parse_result else unreachable
-                    var course_id = json_get_str(&raw parsed, "course_id")
-                    var concept_id = json_get_str(&raw parsed, "concept_id")
+                    var Ok(parsed) = parse_result else unsafe { unreachable }
+                    var course_id = json_get_str(&parsed, "course_id")
+                    var concept_id = json_get_str(&parsed, "concept_id")
                     if(concept_id.size() == 0 || course_id.size() == 0) {
                         var err = string("course_id and concept_id are required")
                         send_error(res, 400u, &err)

@@ -30,7 +30,7 @@ public namespace underlayer_learning {
 
     // Classify one concept state. Returns "no_pattern" when there is not
     // enough signal (fewer than 3 attempts, or accuracy high with streak intact).
-    public func classify_mistake_pattern(state : *ConceptState) : string {
+    public func classify_mistake_pattern(state : &ConceptState) : string {
         if(state.attempts < 3) { return string("no_pattern") }
         var accuracy = (state.correct as f64) / (state.attempts as f64)
         // P2 4.2.16: consistent failure — keeps getting it wrong
@@ -44,11 +44,11 @@ public namespace underlayer_learning {
 
     // Detect mistake patterns across all concept states.
     // Only concepts with a real pattern are included (no_pattern is skipped).
-    public func detect_mistake_patterns(states : *vector<ConceptState>) : vector<MistakePattern> {
+    public func detect_mistake_patterns(states : &vector<ConceptState>) : vector<MistakePattern> {
         var patterns = vector<MistakePattern>()
         var i : size_t = 0
         while(i < states.size()) {
-            var state = states.get_ptr(i)
+            var state = states.at_ref(i)
             if(state.attempts > 0) {
                 var kind = classify_mistake_pattern(state)
                 var none = string("no_pattern")
@@ -72,7 +72,7 @@ public namespace underlayer_learning {
 
     // P2 4.2.17: Personalized feedback text tailored to the mistake pattern.
     // Returns an empty string when there is no pattern to act on.
-    public func personalized_feedback(pattern : *MistakePattern) : string {
+    public func personalized_feedback(pattern : &MistakePattern) : string {
         var cf = string("consistent_failure")
         var it = string("intermittent")
         var sr = string("streak_reset")

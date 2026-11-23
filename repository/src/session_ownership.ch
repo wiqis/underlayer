@@ -47,9 +47,9 @@ public namespace underlayer_repository {
         sql.append_view("' LIMIT 1")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() == 0) { return false }
-        var row = result.rows.get_ptr(0)
+        var row = result.rows.at_ref(0)
         if(row.vals.size() < 1) { return false }
-        var owner = row.vals.get_ptr(0).copy()
+        var owner = row.vals.at_ref(0).copy()
         return owner.equals(learner_id)
     }
 

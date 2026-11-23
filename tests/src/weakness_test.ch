@@ -79,7 +79,7 @@ public func test_weakness_dashboard_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19920/api/weaknesses")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()
@@ -102,7 +102,7 @@ public func test_weakness_export_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19921/api/weaknesses/export")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()
@@ -124,10 +124,10 @@ public func test_weakness_compare_returns_json(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19925/api/weaknesses/compare?concept_id=bytes")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     // Verify real aggregated data fields are present
     if(body.find(string_view("anonymous_accuracy")) == std::NPOS) { env.error("missing anonymous_accuracy") }
     if(body.find(string_view("anonymous_total_attempts")) == std::NPOS) { env.error("missing anonymous_total_attempts") }
@@ -153,7 +153,7 @@ public func test_weakness_alerts_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19923/api/weaknesses/alerts")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()
@@ -176,10 +176,10 @@ public func test_weakness_dashboard_returns_json(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19924/api/weaknesses")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var ct = resp.headers.get("Content-Type")
     if(ct is Option.None) { env.error("missing Content-Type"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(ct_val) = ct else unreachable
+    var Some(ct_val) = ct else unsafe { unreachable }
     if(ct_val.find(string_view("application/json")) == std::NPOS) { env.error("Content-Type is not application/json") }
 
     srv.shutdown()

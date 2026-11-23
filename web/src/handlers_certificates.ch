@@ -36,8 +36,8 @@ public namespace underlayer_web {
             send_error(res, 400u, &err)
             return
         }
-        var Ok(parsed) = parse_result else unreachable
-        var course_id = json_get_str(&raw parsed, "course_id")
+        var Ok(parsed) = parse_result else unsafe { unreachable }
+        var course_id = json_get_str(&parsed, "course_id")
         if(course_id.size() == 0) {
             var err = string("course_id is required")
             send_error(res, 400u, &err)

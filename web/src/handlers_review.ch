@@ -327,16 +327,16 @@ public namespace underlayer_web {
         if(body_str.size() > 0) {
             var parse_result = json::parse(body_str.to_view())
             if(parse_result is std::Result.Ok) {
-                var Ok(parsed) = parse_result else unreachable
-                body_concept = json_get_str_or_num(&raw parsed, "concept_id")
-                body_course = json_get_str_or_num(&raw parsed, "course_id")
-                body_rating = json_get_str_or_num(&raw parsed, "rating")
-                body_session = json_get_str_or_num(&raw parsed, "session_id")
+                var Ok(parsed) = parse_result else unsafe { unreachable }
+                body_concept = json_get_str_or_num(&parsed, "concept_id")
+                body_course = json_get_str_or_num(&parsed, "course_id")
+                body_rating = json_get_str_or_num(&parsed, "rating")
+                body_session = json_get_str_or_num(&parsed, "session_id")
                 // Accept both time_spent and time_spent_ms (the review page
                 // sends seconds; the API documents milliseconds).
-                body_time = json_get_str_or_num(&raw parsed, "time_spent_ms")
+                body_time = json_get_str_or_num(&parsed, "time_spent_ms")
                 if(body_time.size() == 0) {
-                    var tsec = json_get_str_or_num(&raw parsed, "time_spent")
+                    var tsec = json_get_str_or_num(&parsed, "time_spent")
                     if(tsec.size() > 0) {
                         var tsec_v = tsec.to_view()
                         var tsec_i = underlayer_repository::parse_i64(tsec_v)

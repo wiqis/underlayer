@@ -231,11 +231,11 @@ public namespace underlayer_web {
             send_error(res, 400u, &err_msg2)
             return
         }
-        var Ok(parsed) = parse_result else unreachable
+        var Ok(parsed) = parse_result else unsafe { unreachable }
         var imported : int = 0
-        var states_val = json_get(&raw parsed, "concept_states")
-        if(states_val != null && states_val is JsonValue.Array) {
-            var Array(states_arr) = *states_val else unreachable
+        var states_val = json_get(&parsed, "concept_states")
+        if(states_val is JsonValue.Array) {
+            var Array(states_arr) = states_val else unsafe { unreachable }
             var i : size_t = 0
             while(i < states_arr.size()) {
                 var item = states_arr.get_ptr(i)
@@ -275,9 +275,9 @@ public namespace underlayer_web {
                 i = i + 1
             }
         }
-        var reviews_val = json_get(&raw parsed, "review_items")
-        if(reviews_val != null && reviews_val is JsonValue.Array) {
-            var Array(reviews_arr) = *reviews_val else unreachable
+        var reviews_val = json_get(&parsed, "review_items")
+        if(reviews_val is JsonValue.Array) {
+            var Array(reviews_arr) = reviews_val else unsafe { unreachable }
             var j : size_t = 0
             while(j < reviews_arr.size()) {
                 var item = reviews_arr.get_ptr(j)

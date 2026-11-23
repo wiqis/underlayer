@@ -158,8 +158,8 @@ public namespace underlayer_web {
             if(body_str2.size() > 0) {
                 var pr2 = json::parse(body_str2.to_view())
                 if(pr2 is std::Result.Ok) {
-                    var Ok(parsed2) = pr2 else unreachable
-                    course_id = json_get_str(&raw parsed2, "course_id")
+                    var Ok(parsed2) = pr2 else unsafe { unreachable }
+                    course_id = json_get_str(&parsed2, "course_id")
                 }
             }
         }

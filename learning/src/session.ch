@@ -26,10 +26,14 @@ public namespace underlayer_learning {
         return session
     }
 
-    public func get_current_item(session : &ReviewSession, out : *mut ReviewItem) {
+    // The item at the session's current position, or a default item (empty id)
+    // when the session is complete.  This used to write through an `out :
+    // *mut ReviewItem`, which meant every field was a raw-pointer write.
+    public func get_current_item(session : &ReviewSession) : ReviewItem {
+        var out = ReviewItem::make()
         if(session.current_index < session.items.size()) {
             var idx = session.current_index as size_t
-            var src = session.items.get_ptr(idx)
+            var src = session.items.at_ref(idx)
             out.id = src.id.copy()
             out.learner_id = src.learner_id.copy()
             out.concept_id = src.concept_id.copy()
@@ -46,6 +50,7 @@ public namespace underlayer_learning {
             out.lapses = src.lapses
             out.ease_factor = src.ease_factor
         }
+        return out
     }
 
     public func advance_session(session : &mut ReviewSession) {

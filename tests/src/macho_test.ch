@@ -26,7 +26,7 @@ public func test_macho_course_api_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20140/api/courses/macho")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()
@@ -51,10 +51,10 @@ public func test_macho_course_api_lists_full_manifest(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20141/api/courses/macho")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("macho-intro")) == std::NPOS) { env.error("manifest missing macho-intro") }
     if(body.find(string_view("macho-execution")) == std::NPOS) { env.error("manifest missing macho-execution") }
     if(body.find(string_view("macho-load-commands")) == std::NPOS) { env.error("manifest missing macho-load-commands") }
@@ -84,11 +84,11 @@ public func test_macho_intro_lesson_is_served(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20142/api/courses/macho/lessons/macho-intro")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("Why Mach-O Exists")) == std::NPOS) { env.error("intro lesson missing its title") }
     if(body.find(string_view("unit-why")) == std::NPOS) { env.error("intro lesson missing unit-why") }
     if(body.find(string_view("quiz-option")) == std::NPOS) { env.error("intro lesson missing quiz options") }
@@ -117,11 +117,11 @@ public func test_macho_last_lesson_is_served(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20143/api/courses/macho/lessons/macho-execution")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("The Startup Sequence")) == std::NPOS) { env.error("execution lesson missing its title") }
 
     srv.shutdown()
@@ -143,11 +143,11 @@ public func test_nav_search_includes_macho_entries(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20144/api/nav-search")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("/courses/macho/lessons/macho-intro")) == std::NPOS) { env.error("missing macho-intro entry") }
     if(body.find(string_view("/courses/macho/lessons/macho-execution")) == std::NPOS) { env.error("missing macho-execution entry") }
     if(body.find(string_view("/courses/elf/lessons/bytes")) == std::NPOS) { env.error("elf entries must remain") }

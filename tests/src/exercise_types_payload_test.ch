@@ -61,21 +61,21 @@ public func test_exercise_get_all_types_payload(env : &mut TestEnv) {
 
     var res1 = client.get("http://127.0.0.1:20126/api/exercises/t-concept-multi")
     if(res1 is Result.Err) { env.error("multi request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp1) = res1 else unreachable
+    var Ok(resp1) = res1 else unsafe { unreachable }
     if(resp1.status != 200u) { env.error("multi expected 200") }
     var body1_opt = resp1.body.read_to_string()
     if(body1_opt is Option.None) { env.error("multi no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body1) = body1_opt else unreachable
+    var Some(body1) = body1_opt else unsafe { unreachable }
     if(body1.find(string_view("\"type\":\"multi_recognize\"")) == std::NPOS) {
         env.error("multi missing type multi_recognize")
     }
 
     var res2 = client.get("http://127.0.0.1:20126/api/exercises/t-concept-match")
     if(res2 is Result.Err) { env.error("match request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp2) = res2 else unreachable
+    var Ok(resp2) = res2 else unsafe { unreachable }
     var body2_opt = resp2.body.read_to_string()
     if(body2_opt is Option.None) { env.error("match no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body2) = body2_opt else unreachable
+    var Some(body2) = body2_opt else unsafe { unreachable }
     if(body2.find(string_view("\"type\":\"matching\"")) == std::NPOS) {
         env.error("match missing type matching")
     }
@@ -89,10 +89,10 @@ public func test_exercise_get_all_types_payload(env : &mut TestEnv) {
 
     var res3 = client.get("http://127.0.0.1:20126/api/exercises/t-concept-label")
     if(res3 is Result.Err) { env.error("label request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp3) = res3 else unreachable
+    var Ok(resp3) = res3 else unsafe { unreachable }
     var body3_opt = resp3.body.read_to_string()
     if(body3_opt is Option.None) { env.error("label no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body3) = body3_opt else unreachable
+    var Some(body3) = body3_opt else unsafe { unreachable }
     if(body3.find(string_view("blank_count")) == std::NPOS) {
         env.error("label missing blank_count")
     }

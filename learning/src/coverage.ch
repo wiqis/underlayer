@@ -79,7 +79,7 @@ public namespace underlayer_learning {
     // repository/ and learning/ is below web/ but must not depend on it.
     public func compute_course_coverage(
         course_id : &string,
-        states : *vector<ConceptState>,
+        states : &vector<ConceptState>,
         concepts_total_from_manifest : int
     ) : CourseCoverage {
         var cov = CourseCoverage::make()
@@ -88,7 +88,7 @@ public namespace underlayer_learning {
 
         var i : size_t = 0
         while(i < states.size()) {
-            var s = states.get_ptr(i)
+            var s = states.at_ref(i)
             if(s.status.equals(string("mastered"))) {
                 cov.concepts_mastered = cov.concepts_mastered + 1
             }

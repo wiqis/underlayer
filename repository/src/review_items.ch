@@ -14,21 +14,21 @@ public namespace underlayer_repository {
         sql.append_view("' LIMIT 1")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() == 0) { return item }
-        var row = result.rows.get_ptr(0)
+        var row = result.rows.at_ref(0)
         if(row.vals.size() < 13) { return item }
-        item.id = row.vals.get_ptr(0).copy()
-        item.concept_id = row.vals.get_ptr(1).copy()
-        item.item_type = row.vals.get_ptr(2).copy()
-        item.front = row.vals.get_ptr(3).copy()
-        item.back = row.vals.get_ptr(4).copy()
-        item.difficulty = parse_f64(row.vals.get_ptr(5).to_view())
-        item.stability = parse_f64(row.vals.get_ptr(6).to_view())
-        item.retrievability = parse_f64(row.vals.get_ptr(7).to_view())
-        item.next_review = parse_i64(row.vals.get_ptr(8).to_view())
-        item.last_review = parse_i64(row.vals.get_ptr(9).to_view())
-        item.reps = parse_i64(row.vals.get_ptr(10).to_view()) as int
-        item.lapses = parse_i64(row.vals.get_ptr(11).to_view()) as int
-        item.ease_factor = parse_f64(row.vals.get_ptr(12).to_view())
+        item.id = row.vals.at_ref(0).copy()
+        item.concept_id = row.vals.at_ref(1).copy()
+        item.item_type = row.vals.at_ref(2).copy()
+        item.front = row.vals.at_ref(3).copy()
+        item.back = row.vals.at_ref(4).copy()
+        item.difficulty = parse_f64(row.vals.at_ref(5).to_view())
+        item.stability = parse_f64(row.vals.at_ref(6).to_view())
+        item.retrievability = parse_f64(row.vals.at_ref(7).to_view())
+        item.next_review = parse_i64(row.vals.at_ref(8).to_view())
+        item.last_review = parse_i64(row.vals.at_ref(9).to_view())
+        item.reps = parse_i64(row.vals.at_ref(10).to_view()) as int
+        item.lapses = parse_i64(row.vals.at_ref(11).to_view()) as int
+        item.ease_factor = parse_f64(row.vals.at_ref(12).to_view())
         return item
     }
 
@@ -48,25 +48,25 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 11) {
                 var item = ReviewItem::make()
-                item.id = row.vals.get_ptr(0).copy()
+                item.id = row.vals.at_ref(0).copy()
                 item.learner_id = learner_id.copy()
-                item.concept_id = row.vals.get_ptr(1).copy()
+                item.concept_id = row.vals.at_ref(1).copy()
                 item.course_id = course_id.copy()
-                item.item_type = row.vals.get_ptr(2).copy()
-                item.front = row.vals.get_ptr(3).copy()
-                item.back = row.vals.get_ptr(4).copy()
-                item.difficulty = parse_i64(row.vals.get_ptr(5).to_view()) as f64
-                item.stability = parse_f64(row.vals.get_ptr(6).to_view())
-                item.retrievability = parse_f64(row.vals.get_ptr(7).to_view())
-                item.next_review = parse_i64(row.vals.get_ptr(8).to_view())
-                item.reps = parse_i64(row.vals.get_ptr(9).to_view()) as int
-                item.lapses = parse_i64(row.vals.get_ptr(10).to_view()) as int
+                item.item_type = row.vals.at_ref(2).copy()
+                item.front = row.vals.at_ref(3).copy()
+                item.back = row.vals.at_ref(4).copy()
+                item.difficulty = parse_i64(row.vals.at_ref(5).to_view()) as f64
+                item.stability = parse_f64(row.vals.at_ref(6).to_view())
+                item.retrievability = parse_f64(row.vals.at_ref(7).to_view())
+                item.next_review = parse_i64(row.vals.at_ref(8).to_view())
+                item.reps = parse_i64(row.vals.at_ref(9).to_view()) as int
+                item.lapses = parse_i64(row.vals.at_ref(10).to_view()) as int
                 // 1.1.15: read ease_factor (column 11, may not exist in old DBs)
                 if(row.vals.size() >= 12) {
-                    item.ease_factor = parse_i64(row.vals.get_ptr(11).to_view()) as f64
+                    item.ease_factor = parse_i64(row.vals.at_ref(11).to_view()) as f64
                 }
                 items.push(item)
             }
@@ -88,24 +88,24 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 11) {
                 var item = ReviewItem::make()
-                item.id = row.vals.get_ptr(0).copy()
+                item.id = row.vals.at_ref(0).copy()
                 item.learner_id = learner_id.copy()
-                item.concept_id = row.vals.get_ptr(1).copy()
+                item.concept_id = row.vals.at_ref(1).copy()
                 item.course_id = course_id.copy()
-                item.item_type = row.vals.get_ptr(2).copy()
-                item.front = row.vals.get_ptr(3).copy()
-                item.back = row.vals.get_ptr(4).copy()
-                item.difficulty = parse_i64(row.vals.get_ptr(5).to_view()) as f64
-                item.stability = parse_f64(row.vals.get_ptr(6).to_view())
-                item.retrievability = parse_f64(row.vals.get_ptr(7).to_view())
-                item.next_review = parse_i64(row.vals.get_ptr(8).to_view())
-                item.reps = parse_i64(row.vals.get_ptr(9).to_view()) as int
-                item.lapses = parse_i64(row.vals.get_ptr(10).to_view()) as int
+                item.item_type = row.vals.at_ref(2).copy()
+                item.front = row.vals.at_ref(3).copy()
+                item.back = row.vals.at_ref(4).copy()
+                item.difficulty = parse_i64(row.vals.at_ref(5).to_view()) as f64
+                item.stability = parse_f64(row.vals.at_ref(6).to_view())
+                item.retrievability = parse_f64(row.vals.at_ref(7).to_view())
+                item.next_review = parse_i64(row.vals.at_ref(8).to_view())
+                item.reps = parse_i64(row.vals.at_ref(9).to_view()) as int
+                item.lapses = parse_i64(row.vals.at_ref(10).to_view()) as int
                 if(row.vals.size() >= 12) {
-                    item.ease_factor = parse_i64(row.vals.get_ptr(11).to_view()) as f64
+                    item.ease_factor = parse_i64(row.vals.at_ref(11).to_view()) as f64
                 }
                 items.push(item)
             }
@@ -155,28 +155,28 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var item = ReviewItem::make()
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() >= 12) {
-                item.id = row.vals.get_ptr(0).copy()
+                item.id = row.vals.at_ref(0).copy()
                 item.learner_id = learner_id.copy()
-                item.concept_id = row.vals.get_ptr(1).copy()
+                item.concept_id = row.vals.at_ref(1).copy()
                 item.course_id = course_id.copy()
-                item.item_type = row.vals.get_ptr(2).copy()
-                item.front = row.vals.get_ptr(3).copy()
-                item.back = row.vals.get_ptr(4).copy()
-                item.difficulty = parse_f64(row.vals.get_ptr(5).to_view())
-                item.stability = parse_f64(row.vals.get_ptr(6).to_view())
-                item.retrievability = parse_f64(row.vals.get_ptr(7).to_view())
-                item.next_review = parse_i64(row.vals.get_ptr(8).to_view())
-                item.reps = parse_i64(row.vals.get_ptr(9).to_view()) as int
-                item.lapses = parse_i64(row.vals.get_ptr(10).to_view()) as int
-                item.ease_factor = parse_f64(row.vals.get_ptr(11).to_view())
+                item.item_type = row.vals.at_ref(2).copy()
+                item.front = row.vals.at_ref(3).copy()
+                item.back = row.vals.at_ref(4).copy()
+                item.difficulty = parse_f64(row.vals.at_ref(5).to_view())
+                item.stability = parse_f64(row.vals.at_ref(6).to_view())
+                item.retrievability = parse_f64(row.vals.at_ref(7).to_view())
+                item.next_review = parse_i64(row.vals.at_ref(8).to_view())
+                item.reps = parse_i64(row.vals.at_ref(9).to_view()) as int
+                item.lapses = parse_i64(row.vals.at_ref(10).to_view()) as int
+                item.ease_factor = parse_f64(row.vals.at_ref(11).to_view())
             }
         }
         return item
     }
 
-    public func update_review_item(db : *DbClient, item : *ReviewItem) {
+    public func update_review_item(db : *DbClient, item : &ReviewItem) {
         var sql = string("UPDATE review_items SET difficulty = ")
         var diff_str = underlayer_core::int_to_string(item.difficulty as i64)
         sql.append_view(diff_str.to_view())
@@ -226,7 +226,7 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw sql)
     }
 
-    public func insert_review_item(db : *DbClient, item : *ReviewItem) {
+    public func insert_review_item(db : *DbClient, item : &ReviewItem) {
         var sql = string("INSERT OR IGNORE INTO review_items (id, learner_id, concept_id, course_id, type, front, back, difficulty, stability, retrievability, next_review, last_review, reps, lapses, ease_factor) VALUES ('")
         sql.append_string(&item.id)
         sql.append_view("', '")

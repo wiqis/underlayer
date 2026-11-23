@@ -26,7 +26,7 @@ public func test_pe_course_api_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20130/api/courses/pe")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
     srv.shutdown()
@@ -51,10 +51,10 @@ public func test_pe_course_api_lists_full_manifest(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20131/api/courses/pe")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("pe-intro")) == std::NPOS) { env.error("manifest missing pe-intro") }
     if(body.find(string_view("pe-execution")) == std::NPOS) { env.error("manifest missing pe-execution") }
     if(body.find(string_view("pe-imports")) == std::NPOS) { env.error("manifest missing pe-imports") }
@@ -84,11 +84,11 @@ public func test_pe_intro_lesson_is_served(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20132/api/courses/pe/lessons/pe-intro")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("Why the Portable Executable Format Exists")) == std::NPOS) { env.error("intro lesson missing its title") }
     if(body.find(string_view("unit-why")) == std::NPOS) { env.error("intro lesson missing unit-why") }
     if(body.find(string_view("quiz-option")) == std::NPOS) { env.error("intro lesson missing quiz options") }
@@ -117,11 +117,11 @@ public func test_pe_last_lesson_is_served(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20133/api/courses/pe/lessons/pe-execution")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("The Startup Sequence")) == std::NPOS) { env.error("execution lesson missing its title") }
 
     srv.shutdown()
@@ -143,11 +143,11 @@ public func test_nav_search_includes_pe_entries(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20134/api/nav-search")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("/courses/pe/lessons/pe-intro")) == std::NPOS) { env.error("missing pe-intro entry") }
     if(body.find(string_view("/courses/pe/lessons/pe-execution")) == std::NPOS) { env.error("missing pe-execution entry") }
     if(body.find(string_view("/courses/elf/lessons/bytes")) == std::NPOS) { env.error("elf entries must remain") }

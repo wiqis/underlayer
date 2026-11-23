@@ -30,26 +30,26 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 13) {
                 var ex = Exercise::make()
-                ex.id = row.vals.get_ptr(0).copy()
-                ex.concept_id = row.vals.get_ptr(1).copy()
-                var type_str = row.vals.get_ptr(2).copy()
+                ex.id = row.vals.at_ref(0).copy()
+                ex.concept_id = row.vals.at_ref(1).copy()
+                var type_str = row.vals.at_ref(2).copy()
                 ex.exercise_type = exercise_type_from_str(&type_str)
-                ex.question = row.vals.get_ptr(3).copy()
-                ex.answer = row.vals.get_ptr(4).copy()
+                ex.question = row.vals.at_ref(3).copy()
+                ex.answer = row.vals.at_ref(4).copy()
                 // Parse options from pipe-separated string
-                var opts_str = row.vals.get_ptr(5).to_view()
+                var opts_str = row.vals.at_ref(5).to_view()
                 if(opts_str.size() > 0) {
                     var opt_start : size_t = 0
                     var oi : size_t = 0
                     while(oi <= opts_str.size()) {
-                        if(oi == opts_str.size() || opts_str.get(oi) == '|') {
+                        if(oi == opts_str.size() || opts_str.at(oi) == '|') {
                             var opt = string()
                             var oj : size_t = opt_start
                             while(oj < oi) {
-                                opt.append(opts_str.get(oj))
+                                opt.append(opts_str.at(oj))
                                 oj = oj + 1
                             }
                             ex.options.push(opt)
@@ -58,14 +58,14 @@ public namespace underlayer_repository {
                         oi = oi + 1
                     }
                 }
-                ex.correct_index = parse_i64(row.vals.get_ptr(6).to_view()) as int
-                ex.explanation = row.vals.get_ptr(7).copy()
-                ex.hint1 = row.vals.get_ptr(8).copy()
-                ex.hint2 = row.vals.get_ptr(9).copy()
-                ex.hint3 = row.vals.get_ptr(10).copy()
-                ex.difficulty = parse_f64(row.vals.get_ptr(11).to_view()) as float
+                ex.correct_index = parse_i64(row.vals.at_ref(6).to_view()) as int
+                ex.explanation = row.vals.at_ref(7).copy()
+                ex.hint1 = row.vals.at_ref(8).copy()
+                ex.hint2 = row.vals.at_ref(9).copy()
+                ex.hint3 = row.vals.at_ref(10).copy()
+                ex.difficulty = parse_f64(row.vals.at_ref(11).to_view()) as float
                 // Parse correct_indices from comma-separated string (12th column)
-                var ci_str = row.vals.get_ptr(12).to_view()
+                var ci_str = row.vals.at_ref(12).to_view()
                 if(ci_str.size() > 2) {
                     // Strip [ and ] brackets
                     var inner_start : size_t = 1
@@ -73,11 +73,11 @@ public namespace underlayer_repository {
                     var ci_start : size_t = inner_start
                     var cii : size_t = inner_start
                     while(cii <= inner_end) {
-                        if(cii == inner_end || ci_str.get(cii) == ',') {
+                        if(cii == inner_end || ci_str.at(cii) == ',') {
                             var num_str = string()
                             var cij : size_t = ci_start
                             while(cij < cii) {
-                                num_str.append(ci_str.get(cij))
+                                num_str.append(ci_str.at(cij))
                                 cij = cij + 1
                             }
                             if(num_str.size() > 0) {
@@ -103,24 +103,24 @@ public namespace underlayer_repository {
         sql.append_view("'")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() >= 13) {
-                ex.id = row.vals.get_ptr(0).copy()
-                ex.concept_id = row.vals.get_ptr(1).copy()
-                var type_str = row.vals.get_ptr(2).copy()
+                ex.id = row.vals.at_ref(0).copy()
+                ex.concept_id = row.vals.at_ref(1).copy()
+                var type_str = row.vals.at_ref(2).copy()
                 ex.exercise_type = exercise_type_from_str(&type_str)
-                ex.question = row.vals.get_ptr(3).copy()
-                ex.answer = row.vals.get_ptr(4).copy()
-                var opts_str = row.vals.get_ptr(5).to_view()
+                ex.question = row.vals.at_ref(3).copy()
+                ex.answer = row.vals.at_ref(4).copy()
+                var opts_str = row.vals.at_ref(5).to_view()
                 if(opts_str.size() > 0) {
                     var opt_start : size_t = 0
                     var oi : size_t = 0
                     while(oi <= opts_str.size()) {
-                        if(oi == opts_str.size() || opts_str.get(oi) == '|') {
+                        if(oi == opts_str.size() || opts_str.at(oi) == '|') {
                             var opt = string()
                             var oj : size_t = opt_start
                             while(oj < oi) {
-                                opt.append(opts_str.get(oj))
+                                opt.append(opts_str.at(oj))
                                 oj = oj + 1
                             }
                             ex.options.push(opt)
@@ -129,25 +129,25 @@ public namespace underlayer_repository {
                         oi = oi + 1
                     }
                 }
-                ex.correct_index = parse_i64(row.vals.get_ptr(6).to_view()) as int
-                ex.explanation = row.vals.get_ptr(7).copy()
-                ex.hint1 = row.vals.get_ptr(8).copy()
-                ex.hint2 = row.vals.get_ptr(9).copy()
-                ex.hint3 = row.vals.get_ptr(10).copy()
-                ex.difficulty = parse_f64(row.vals.get_ptr(11).to_view()) as float
+                ex.correct_index = parse_i64(row.vals.at_ref(6).to_view()) as int
+                ex.explanation = row.vals.at_ref(7).copy()
+                ex.hint1 = row.vals.at_ref(8).copy()
+                ex.hint2 = row.vals.at_ref(9).copy()
+                ex.hint3 = row.vals.at_ref(10).copy()
+                ex.difficulty = parse_f64(row.vals.at_ref(11).to_view()) as float
                 // Parse correct_indices
-                var ci_str = row.vals.get_ptr(12).to_view()
+                var ci_str = row.vals.at_ref(12).to_view()
                 if(ci_str.size() > 2) {
                     var inner_start : size_t = 1
                     var inner_end : size_t = ci_str.size() - 1
                     var ci_start : size_t = inner_start
                     var cii : size_t = inner_start
                     while(cii <= inner_end) {
-                        if(cii == inner_end || ci_str.get(cii) == ',') {
+                        if(cii == inner_end || ci_str.at(cii) == ',') {
                             var num_str = string()
                             var cij : size_t = ci_start
                             while(cij < cii) {
-                                num_str.append(ci_str.get(cij))
+                                num_str.append(ci_str.at(cij))
                                 cij = cij + 1
                             }
                             if(num_str.size() > 0) {
@@ -164,7 +164,7 @@ public namespace underlayer_repository {
     }
 
     // Insert an exercise
-    public func insert_exercise(db : *DbClient, ex : *Exercise) {
+    public func insert_exercise(db : *DbClient, ex : &Exercise) {
         var sql = string("INSERT OR IGNORE INTO exercises (id, concept_id, type, question, answer, options_json, correct_index, explanation, hint1, hint2, hint3, difficulty, correct_indices_json) VALUES ('")
         sql.append_string(&ex.id)
         sql.append_view("', '")
@@ -186,11 +186,11 @@ public namespace underlayer_repository {
         var oi : size_t = 0
         while(oi < ex.options.size()) {
             if(oi > 0) { opts.append('|') }
-            var opt_ptr = ex.options.get_ptr(oi)
+            var opt_ptr = ex.options.at_ref(oi)
             var opt_view = opt_ptr.to_view()
             var oj : size_t = 0
             while(oj < opt_view.size()) {
-                opts.append(opt_view.get(oj))
+                opts.append(opt_view.at(oj))
                 oj = oj + 1
             }
             oi = oi + 1
@@ -227,7 +227,7 @@ public namespace underlayer_repository {
         var cii : size_t = 0
         while(cii < ex.correct_indices.size()) {
             if(cii > 0) { ci_json.append(',') }
-            var idx_val = ex.correct_indices.get(cii)
+            var idx_val = ex.correct_indices.at(cii)
             var idx_str = underlayer_core::int_to_string(idx_val as i64)
             ci_json.append_view(idx_str.to_view())
             cii = cii + 1
@@ -245,20 +245,20 @@ public namespace underlayer_repository {
         sql.append_view("'")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() >= 1) {
-                return parse_i64(row.vals.get_ptr(0).to_view()) as int
+                return parse_i64(row.vals.at_ref(0).to_view()) as int
             }
         }
         return 0
     }
 
     // Bulk insert exercises
-    public func insert_exercises_bulk(db : *DbClient, exercises : *vector<Exercise>) : int {
+    public func insert_exercises_bulk(db : *DbClient, exercises : &vector<Exercise>) : int {
         var inserted_count = 0
         var i : size_t = 0
         while(i < exercises.size()) {
-            var ex = exercises.get_ptr(i)
+            var ex = exercises.at_ref(i)
             insert_exercise(db, ex)
             inserted_count = inserted_count + 1
             i = i + 1
@@ -273,13 +273,13 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var i : size_t = 0
         while(i < result.rows.size()) {
-            var row = result.rows.get_ptr(i)
+            var row = result.rows.at_ref(i)
             if(row.vals.size() >= 3) {
                 var stat = ExerciseStats::make()
-                stat.concept_id = row.vals.get_ptr(0).copy()
-                stat.exercise_count = parse_i64(row.vals.get_ptr(1).to_view()) as int
+                stat.concept_id = row.vals.at_ref(0).copy()
+                stat.exercise_count = parse_i64(row.vals.at_ref(1).to_view()) as int
                 // Parse average difficulty
-                var avg_diff_str = row.vals.get_ptr(2).to_view()
+                var avg_diff_str = row.vals.at_ref(2).to_view()
                 if(avg_diff_str.size() > 0) {
                     stat.avg_difficulty = parse_i64(avg_diff_str) as f64
                 }
@@ -300,8 +300,8 @@ public namespace underlayer_repository {
         sql.append_view("' LIMIT 1")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() == 0) { return string() }
-        var row = result.rows.get_ptr(0)
-        var ex_id = row.vals.get_ptr(0).copy()
+        var row = result.rows.at_ref(0)
+        var ex_id = row.vals.at_ref(0).copy()
         // id = course + "_" + concept + "_" + index; strip the concept and
         // index suffixes. Concept ids may themselves contain underscores, so
         // match the "_" + concept_id + "_" boundary from the end.
@@ -315,7 +315,7 @@ public namespace underlayer_repository {
             var matches = true
             var k : size_t = 0
             while(k < suffix.size()) {
-                if(ex_id.get(si as size_t + k) != suffix.get(k)) { matches = false; break }
+                if(ex_id.at(si as size_t + k) != suffix.at(k)) { matches = false; break }
                 k = k + 1
             }
             if(matches) { pos = si; break }
@@ -324,7 +324,7 @@ public namespace underlayer_repository {
         if(pos < 0) { return string() }
         var course = string()
         var ci : size_t = 0
-        while(ci < pos as size_t) { course.append(ex_id.get(ci)); ci = ci + 1 }
+        while(ci < pos as size_t) { course.append(ex_id.at(ci)); ci = ci + 1 }
         return course
     }
 

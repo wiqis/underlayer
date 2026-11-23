@@ -69,31 +69,48 @@ public namespace underlayer_learning {
     }
 
     func fsrs_init_difficulty(params : &FSRSParams, rating : int) : f64 {
-        var d = *params.w.get_ptr(4) - (*params.w.get_ptr(5) * ((rating - 1) as f64))
+        var d = *params.w.at_ref(4) - (*params.w.at_ref(5) * ((rating - 1) as f64))
         if(d < 1.0) { d = 1.0 }
         if(d > 10.0) { d = 10.0 }
         return d
     }
 
     func fsrs_init_stability(params : &FSRSParams, rating : int) : f64 {
-        return *params.w.get_ptr((rating - 1 + 1) as size_t)
+        return *params.w.at_ref((rating - 1 + 1) as size_t)
     }
 
+    // ---- libm boundary ----
+    //
+    // `exp`, `log` and `pow` are C library functions, so calling them is an FFI
+    // operation and must be marked as one.  These three wrappers are the whole
+    // boundary: the FSRS formulas below read as maths, and the `unsafe` count is
+    // three lines in one place instead of nine scattered through the scheduler.
+    private func m_exp(x : f64) : f64 {
+        return unsafe(exp(x))
+    }
+
+    private func m_log(x : f64) : f64 {
+        return unsafe(log(x))
+    }
+
+    private func m_pow(base : f64, exponent : f64) : f64 {
+        return unsafe(pow(base, exponent))
+    }
     public func fsrs_retrievability(state : &ReviewState, elapsed_days : f64) : f64 {
         if(state.stability <= 0.0) { return 0.0 }
         var base = 1.0 + (elapsed_days / state.stability)
-        var log_base = log(base)
+        var log_base = m_log(base)
         var exponent = -0.0380 * log_base
-        return exp(exponent)
+        return m_exp(exponent)
     }
 
     func fsrs_next_stability(params : &FSRSParams, state : &ReviewState, rating : int) : f64 {
         var r = fsrs_retrievability(state, state.elapsed_days as f64)
 
         if(rating == RATING_AGAIN) {
-            var s_new = *params.w.get_ptr(12) * pow(state.difficulty, -*params.w.get_ptr(13))
-            s_new = s_new * pow(state.stability + 1.0, *params.w.get_ptr(14)) - 1.0
-            s_new = s_new * exp(*params.w.get_ptr(15) * (1.0 - r))
+            var s_new = *params.w.at_ref(12) * m_pow(state.difficulty, -*params.w.at_ref(13))
+            s_new = s_new * m_pow(state.stability + 1.0, *params.w.at_ref(14)) - 1.0
+            s_new = s_new * m_exp(*params.w.at_ref(15) * (1.0 - r))
             // NO 1.0 FLOOR HERE, and this is the second defect this function had
             // in the same family as the stability reset: the lapse branch used
             // to clamp `s_new < 1.0` to 1.0.
@@ -125,11 +142,11 @@ public namespace underlayer_learning {
         }
 
         var hard_factor = 1.0
-        if(rating == RATING_HARD) { hard_factor = *params.w.get_ptr(19) }
-        if(rating == RATING_EASY) { hard_factor = *params.w.get_ptr(20) }
+        if(rating == RATING_HARD) { hard_factor = *params.w.at_ref(19) }
+        if(rating == RATING_EASY) { hard_factor = *params.w.at_ref(20) }
 
-        var stability_factor = *params.w.get_ptr(16) * pow(state.stability, *params.w.get_ptr(17))
-        var s_new = state.stability * (exp(stability_factor) * hard_factor)
+        var stability_factor = *params.w.at_ref(16) * m_pow(state.stability, *params.w.at_ref(17))
+        var s_new = state.stability * (m_exp(stability_factor) * hard_factor)
         if(s_new < state.stability) { s_new = state.stability }
         return s_new
     }
@@ -137,12 +154,12 @@ public namespace underlayer_learning {
     public func fsrs_next_interval(params : &FSRSParams, state : &ReviewState, rating : int) : i64 {
         var s_new = fsrs_next_stability(params, state, rating)
         // 1.1.4: Use target retention instead of hardcoded 0.9
-        var d_factor = exp(*params.w.get_ptr(8) * (state.difficulty - 3.0)) - 1.0
+        var d_factor = m_exp(*params.w.at_ref(8) * (state.difficulty - 3.0)) - 1.0
         var interval = s_new * (d_factor * params.target_retention / 0.9)
 
         if(rating == RATING_AGAIN) { interval = 1.0 }
-        if(rating == RATING_HARD) { interval = interval * *params.w.get_ptr(9) }
-        if(rating == RATING_EASY) { interval = interval * *params.w.get_ptr(10) }
+        if(rating == RATING_HARD) { interval = interval * *params.w.at_ref(9) }
+        if(rating == RATING_EASY) { interval = interval * *params.w.at_ref(10) }
 
         if(interval < 1.0) { interval = 1.0 }
         if(interval > 36500.0) { interval = 36500.0 }
@@ -214,7 +231,7 @@ public namespace underlayer_learning {
 
             // 1.1.16: Per-item difficulty drift based on review history
             // Use FSRS v4 formula: D' = D - w6 * (rating - 3)
-            var w6 = *params.w.get_ptr(6)
+            var w6 = *params.w.at_ref(6)
             new_state.difficulty = state.difficulty - w6 * ((rating - 3) as f64)
             if(new_state.difficulty < 1.0) { new_state.difficulty = 1.0 }
             if(new_state.difficulty > 10.0) { new_state.difficulty = 10.0 }
@@ -262,10 +279,10 @@ public namespace underlayer_learning {
         var state = ReviewState::make()
         var i : size_t = 0
         while(i < history_ratings.size()) {
-            var rating = history_ratings.get(i)
+            var rating = history_ratings.at(i)
             var elapsed : f64 = 0.0
             if(i > 0) {
-                elapsed = history_intervals.get(i - 1) as f64
+                elapsed = history_intervals.at(i - 1) as f64
             }
             var predicted_r = fsrs_retrievability(&state, elapsed)
             var actual : f64 = 0.0
@@ -285,7 +302,7 @@ public namespace underlayer_learning {
         var best = FSRSParams::make()
         var pi : size_t = 0
         while(pi < params.w.size()) {
-            best.w.push(params.w.get(pi))
+            best.w.push(params.w.at(pi))
             pi = pi + 1
         }
         best.target_retention = params.target_retention
@@ -300,10 +317,10 @@ public namespace underlayer_learning {
                 var ti : size_t = 0
                 while(ti < best.w.size()) {
                     if(ti == di) {
-                        if(d == 0) { trial.w.push(best.w.get(ti) + delta) }
-                        else { trial.w.push(best.w.get(ti) - delta) }
+                        if(d == 0) { trial.w.push(best.w.at(ti) + delta) }
+                        else { trial.w.push(best.w.at(ti) - delta) }
                     } else {
-                        trial.w.push(best.w.get(ti))
+                        trial.w.push(best.w.at(ti))
                     }
                     ti = ti + 1
                 }
@@ -331,7 +348,7 @@ public namespace underlayer_learning {
         var i : size_t = 0
         while(i < params.w.size()) {
             if(i > 0) { json.append(',') }
-            var val = params.w.get(i)
+            var val = params.w.at(i)
             var int_part = val as i64
             var frac = val - (int_part as f64)
             var frac_int = (frac * 10000.0) as i64
@@ -368,8 +385,8 @@ public namespace underlayer_learning {
         var i : size_t = 0
         var first = true
         while(i < old_params.w.size()) {
-            var old_val = old_params.w.get(i)
-            var new_val = new_params.w.get(i)
+            var old_val = old_params.w.at(i)
+            var new_val = new_params.w.at(i)
             var diff = old_val - new_val
             if(diff < 0) { diff = -diff }
             if(diff > 0.0001) {

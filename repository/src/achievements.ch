@@ -29,16 +29,7 @@ public namespace underlayer_repository {
     }
 
     private func generate_achievement_id() : string {
-        var buf : [16]u8
-        osrand::random_fill(&raw mut buf[0], 16)
-        var hex_out : [33]char
-        var i0 : size_t = 0
-        while(i0 < 33) { hex_out[i0] = 0; i0 = i0 + 1 }
-        encoding::hex_encode(&raw buf[0], 16, &raw mut hex_out[0], 33)
-        var result = string()
-        var i : size_t = 0
-        while(i < 32 && hex_out[i] != 0) { result.append(hex_out[i]); i = i + 1 }
-        return result
+        return random_hex_id()
     }
 
     public func grant_achievement(db : *DbClient, learner_id : &string, badge_type : &string, badge_name : &string, description : &string, icon : &string) : string {
@@ -79,16 +70,16 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 7) {
                 var a = Achievement::make()
-                a.id = row.vals.get_ptr(0).copy()
-                a.learner_id = row.vals.get_ptr(1).copy()
-                a.badge_type = row.vals.get_ptr(2).copy()
-                a.badge_name = row.vals.get_ptr(3).copy()
-                a.description = row.vals.get_ptr(4).copy()
-                a.icon = row.vals.get_ptr(5).copy()
-                a.earned_at = parse_i64(row.vals.get_ptr(6).to_view())
+                a.id = row.vals.at_ref(0).copy()
+                a.learner_id = row.vals.at_ref(1).copy()
+                a.badge_type = row.vals.at_ref(2).copy()
+                a.badge_name = row.vals.at_ref(3).copy()
+                a.description = row.vals.at_ref(4).copy()
+                a.icon = row.vals.at_ref(5).copy()
+                a.earned_at = parse_i64(row.vals.at_ref(6).to_view())
                 achievements.push(a)
             }
             ri = ri + 1
@@ -104,9 +95,9 @@ public namespace underlayer_repository {
         sql.append_view("'")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() > 0) {
-                return parse_int(row.vals.get_ptr(0).to_view()) > 0
+                return parse_int(row.vals.at_ref(0).to_view()) > 0
             }
         }
         return false
@@ -118,9 +109,9 @@ public namespace underlayer_repository {
         sql.append_view("'")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() > 0) {
-                return parse_int(row.vals.get_ptr(0).to_view())
+                return parse_int(row.vals.at_ref(0).to_view())
             }
         }
         return 0

@@ -29,16 +29,7 @@ public namespace underlayer_repository {
     }
 
     private func generate_enrollment_id() : string {
-        var buf : [16]u8
-        osrand::random_fill(&raw mut buf[0], 16)
-        var hex_out : [33]char
-        var i0 : size_t = 0
-        while(i0 < 33) { hex_out[i0] = 0; i0 = i0 + 1 }
-        encoding::hex_encode(&raw buf[0], 16, &raw mut hex_out[0], 33)
-        var result = string()
-        var i : size_t = 0
-        while(i < 32 && hex_out[i] != 0) { result.append(hex_out[i]); i = i + 1 }
-        return result
+        return random_hex_id()
     }
 
     public func enroll_learner(db : *DbClient, learner_id : &string, course_id : &string) : string {
@@ -69,15 +60,15 @@ public namespace underlayer_repository {
         sql.append_view("' LIMIT 1")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() >= 7) {
-                enrollment.id = row.vals.get_ptr(0).copy()
-                enrollment.learner_id = row.vals.get_ptr(1).copy()
-                enrollment.course_id = row.vals.get_ptr(2).copy()
-                enrollment.enrolled_at = parse_i64(row.vals.get_ptr(3).to_view())
-                enrollment.last_accessed = parse_i64(row.vals.get_ptr(4).to_view())
-                enrollment.completed_at = parse_i64(row.vals.get_ptr(5).to_view())
-                enrollment.status = row.vals.get_ptr(6).copy()
+                enrollment.id = row.vals.at_ref(0).copy()
+                enrollment.learner_id = row.vals.at_ref(1).copy()
+                enrollment.course_id = row.vals.at_ref(2).copy()
+                enrollment.enrolled_at = parse_i64(row.vals.at_ref(3).to_view())
+                enrollment.last_accessed = parse_i64(row.vals.at_ref(4).to_view())
+                enrollment.completed_at = parse_i64(row.vals.at_ref(5).to_view())
+                enrollment.status = row.vals.at_ref(6).copy()
             }
         }
         return enrollment
@@ -91,16 +82,16 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 7) {
                 var e = Enrollment::make()
-                e.id = row.vals.get_ptr(0).copy()
-                e.learner_id = row.vals.get_ptr(1).copy()
-                e.course_id = row.vals.get_ptr(2).copy()
-                e.enrolled_at = parse_i64(row.vals.get_ptr(3).to_view())
-                e.last_accessed = parse_i64(row.vals.get_ptr(4).to_view())
-                e.completed_at = parse_i64(row.vals.get_ptr(5).to_view())
-                e.status = row.vals.get_ptr(6).copy()
+                e.id = row.vals.at_ref(0).copy()
+                e.learner_id = row.vals.at_ref(1).copy()
+                e.course_id = row.vals.at_ref(2).copy()
+                e.enrolled_at = parse_i64(row.vals.at_ref(3).to_view())
+                e.last_accessed = parse_i64(row.vals.at_ref(4).to_view())
+                e.completed_at = parse_i64(row.vals.at_ref(5).to_view())
+                e.status = row.vals.at_ref(6).copy()
                 enrollments.push(e)
             }
             ri = ri + 1

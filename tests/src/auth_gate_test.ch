@@ -135,7 +135,7 @@ public namespace underlayer_tests {
             underlayer_db::close(db)
             return
         }
-        var Ok(resp) = res else unreachable
+        var Ok(resp) = res else unsafe { unreachable }
 
         // 1. The status. 200 here means the reader was handed a page that looks
         //    like the one they asked for, which is the bug this replaced.
@@ -154,7 +154,7 @@ public namespace underlayer_tests {
             underlayer_db::close(db)
             return
         }
-        var Some(loc) = loc_opt else unreachable
+        var Some(loc) = loc_opt else unsafe { unreachable }
         var want = string("/login?next=")
         want.append_string(expected)
         if(!loc.equals(&want)) {
@@ -175,7 +175,7 @@ public namespace underlayer_tests {
             underlayer_db::close(db)
             return
         }
-        var Some(body) = body_opt else unreachable
+        var Some(body) = body_opt else unsafe { unreachable }
         // Five separate checks rather than a loop over a literal array: the
         // array's element type is not inferrable here, and the first version of
         // this file failed to build with "unresolved child 'size' in parent
@@ -228,7 +228,7 @@ public namespace underlayer_tests {
             underlayer_db::close(&raw db)
             return
         }
-        var Ok(resp) = res else unreachable
+        var Ok(resp) = res else unsafe { unreachable }
         if(resp.status == 303u) {
             env.error("/login redirects too -- every gated page points here, so this is a loop")
             srv.shutdown()
@@ -249,7 +249,7 @@ public namespace underlayer_tests {
             underlayer_db::close(&raw db)
             return
         }
-        var Some(body) = body_opt else unreachable
+        var Some(body) = body_opt else unsafe { unreachable }
         if(body.find(string_view("__ulNextPath")) == std::NPOS) {
             env.error("/login cannot read ?next=, so sign-in loses the page")
             srv.shutdown()
@@ -315,7 +315,7 @@ public namespace underlayer_tests {
             underlayer_db::close(db)
             return
         }
-        var Ok(resp) = res else unreachable
+        var Ok(resp) = res else unsafe { unreachable }
         var body_opt = resp.body.read_to_string()
         if(body_opt is Option.None) {
             env.error("no body")
@@ -323,7 +323,7 @@ public namespace underlayer_tests {
             underlayer_db::close(db)
             return
         }
-        var Some(body) = body_opt else unreachable
+        var Some(body) = body_opt else unsafe { unreachable }
         // Both spellings css_cbi is known to emit, because it rewrites the
         // spacing and an earlier version of this assertion matched only the
         // first one -- so all three tests failed against pages that were already

@@ -31,16 +31,7 @@ public namespace underlayer_repository {
     }
 
     private func generate_note_id() : string {
-        var buf : [16]u8
-        osrand::random_fill(&raw mut buf[0], 16)
-        var hex_out : [33]char
-        var i0 : size_t = 0
-        while(i0 < 33) { hex_out[i0] = 0; i0 = i0 + 1 }
-        encoding::hex_encode(&raw buf[0], 16, &raw mut hex_out[0], 33)
-        var result = string()
-        var i : size_t = 0
-        while(i < 32 && hex_out[i] != 0) { result.append(hex_out[i]); i = i + 1 }
-        return result
+        return random_hex_id()
     }
 
     // Every value goes through sql_escape.  `content` and `section_ref` are
@@ -158,17 +149,17 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 8) {
                 var n = Note::make()
-                n.id = row.vals.get_ptr(0).copy()
-                n.learner_id = row.vals.get_ptr(1).copy()
-                n.concept_id = row.vals.get_ptr(2).copy()
-                n.course_id = row.vals.get_ptr(3).copy()
-                n.content = row.vals.get_ptr(4).copy()
-                n.section_ref = row.vals.get_ptr(5).copy()
-                n.created_at = parse_i64(row.vals.get_ptr(6).to_view())
-                n.updated_at = parse_i64(row.vals.get_ptr(7).to_view())
+                n.id = row.vals.at_ref(0).copy()
+                n.learner_id = row.vals.at_ref(1).copy()
+                n.concept_id = row.vals.at_ref(2).copy()
+                n.course_id = row.vals.at_ref(3).copy()
+                n.content = row.vals.at_ref(4).copy()
+                n.section_ref = row.vals.at_ref(5).copy()
+                n.created_at = parse_i64(row.vals.at_ref(6).to_view())
+                n.updated_at = parse_i64(row.vals.at_ref(7).to_view())
                 notes.push(n)
             }
             ri = ri + 1
@@ -186,17 +177,17 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 8) {
                 var n = Note::make()
-                n.id = row.vals.get_ptr(0).copy()
-                n.learner_id = row.vals.get_ptr(1).copy()
-                n.concept_id = row.vals.get_ptr(2).copy()
-                n.course_id = row.vals.get_ptr(3).copy()
-                n.content = row.vals.get_ptr(4).copy()
-                n.section_ref = row.vals.get_ptr(5).copy()
-                n.created_at = parse_i64(row.vals.get_ptr(6).to_view())
-                n.updated_at = parse_i64(row.vals.get_ptr(7).to_view())
+                n.id = row.vals.at_ref(0).copy()
+                n.learner_id = row.vals.at_ref(1).copy()
+                n.concept_id = row.vals.at_ref(2).copy()
+                n.course_id = row.vals.at_ref(3).copy()
+                n.content = row.vals.at_ref(4).copy()
+                n.section_ref = row.vals.at_ref(5).copy()
+                n.created_at = parse_i64(row.vals.at_ref(6).to_view())
+                n.updated_at = parse_i64(row.vals.at_ref(7).to_view())
                 notes.push(n)
             }
             ri = ri + 1
@@ -214,17 +205,17 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 8) {
                 var n = Note::make()
-                n.id = row.vals.get_ptr(0).copy()
-                n.learner_id = row.vals.get_ptr(1).copy()
-                n.concept_id = row.vals.get_ptr(2).copy()
-                n.course_id = row.vals.get_ptr(3).copy()
-                n.content = row.vals.get_ptr(4).copy()
-                n.section_ref = row.vals.get_ptr(5).copy()
-                n.created_at = parse_i64(row.vals.get_ptr(6).to_view())
-                n.updated_at = parse_i64(row.vals.get_ptr(7).to_view())
+                n.id = row.vals.at_ref(0).copy()
+                n.learner_id = row.vals.at_ref(1).copy()
+                n.concept_id = row.vals.at_ref(2).copy()
+                n.course_id = row.vals.at_ref(3).copy()
+                n.content = row.vals.at_ref(4).copy()
+                n.section_ref = row.vals.at_ref(5).copy()
+                n.created_at = parse_i64(row.vals.at_ref(6).to_view())
+                n.updated_at = parse_i64(row.vals.at_ref(7).to_view())
                 notes.push(n)
             }
             ri = ri + 1
@@ -240,17 +231,17 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 8) {
                 var n = Note::make()
-                n.id = row.vals.get_ptr(0).copy()
-                n.learner_id = row.vals.get_ptr(1).copy()
-                n.concept_id = row.vals.get_ptr(2).copy()
-                n.course_id = row.vals.get_ptr(3).copy()
-                n.content = row.vals.get_ptr(4).copy()
-                n.section_ref = row.vals.get_ptr(5).copy()
-                n.created_at = parse_i64(row.vals.get_ptr(6).to_view())
-                n.updated_at = parse_i64(row.vals.get_ptr(7).to_view())
+                n.id = row.vals.at_ref(0).copy()
+                n.learner_id = row.vals.at_ref(1).copy()
+                n.concept_id = row.vals.at_ref(2).copy()
+                n.course_id = row.vals.at_ref(3).copy()
+                n.content = row.vals.at_ref(4).copy()
+                n.section_ref = row.vals.at_ref(5).copy()
+                n.created_at = parse_i64(row.vals.at_ref(6).to_view())
+                n.updated_at = parse_i64(row.vals.at_ref(7).to_view())
                 notes.push(n)
             }
             ri = ri + 1

@@ -20,7 +20,7 @@ public func test_home_page_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19890/")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected 200") }
 
     srv.shutdown()
@@ -43,10 +43,10 @@ public func test_home_page_is_html(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19891/")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     var has_html = body.find(string_view("<html")) != std::NPOS
     var has_doctype = body.find(string_view("<!DOCTYPE")) != std::NPOS
     if(!has_html && !has_doctype) { env.error("not HTML") }
@@ -88,11 +88,11 @@ public func test_review_page_renders_session_in_page(env : &mut TestEnv) {
     var anon_url = string("http://127.0.0.1:19897/review")
     var res = test_helpers::authed_get(&client, &anon_url, &token)
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected 200") }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
 
     // The mode cards must call startMode(), which fetches the start endpoint.
     if(body.find(string_view("function startMode(")) == std::NPOS) {
@@ -189,10 +189,10 @@ public func test_review_session_end_marks_completed(env : &mut TestEnv) {
     var start_url = string("http://127.0.0.1:19898/api/review/start?course_id=elf&mode=due&count=5")
     var start_res = test_helpers::authed_get(&client, &start_url, &token)
     if(start_res is Result.Err) { env.error("start request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(start_resp) = start_res else unreachable
+    var Ok(start_resp) = start_res else unsafe { unreachable }
     var start_body_opt = start_resp.body.read_to_string()
     if(start_body_opt is Option.None) { env.error("start no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(start_body) = start_body_opt else unreachable
+    var Some(start_body) = start_body_opt else unsafe { unreachable }
     if(start_body.find(string_view("\"session_id\":\"")) == std::NPOS) {
         env.error("start response missing session_id")
         srv.shutdown(); underlayer_db::close(&raw db); return
@@ -340,7 +340,7 @@ public func test_course_landing_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19895/courses/elf")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected 200") }
 
     srv.shutdown()
@@ -367,7 +367,7 @@ public func test_lesson_page_returns_200(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19896/courses/elf/lessons/bytes")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected 200") }
 
     srv.shutdown()

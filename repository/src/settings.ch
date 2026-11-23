@@ -13,18 +13,18 @@ public namespace underlayer_repository {
         sql.append_view("'")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() >= 9) {
                 settings.learner_id = learner_id.copy()
-                settings.theme = row.vals.get_ptr(0).copy()
-                settings.font_size = row.vals.get_ptr(1).copy()
-                settings.language = row.vals.get_ptr(2).copy()
-                settings.timezone = row.vals.get_ptr(3).copy()
-                settings.date_format = row.vals.get_ptr(4).copy()
-                settings.email_notifications = parse_i64(row.vals.get_ptr(5).to_view()) != 0
-                settings.push_notifications = parse_i64(row.vals.get_ptr(6).to_view()) != 0
-                settings.in_app_notifications = parse_i64(row.vals.get_ptr(7).to_view()) != 0
-                settings.compact_mode = parse_i64(row.vals.get_ptr(8).to_view()) != 0
+                settings.theme = row.vals.at_ref(0).copy()
+                settings.font_size = row.vals.at_ref(1).copy()
+                settings.language = row.vals.at_ref(2).copy()
+                settings.timezone = row.vals.at_ref(3).copy()
+                settings.date_format = row.vals.at_ref(4).copy()
+                settings.email_notifications = parse_i64(row.vals.at_ref(5).to_view()) != 0
+                settings.push_notifications = parse_i64(row.vals.at_ref(6).to_view()) != 0
+                settings.in_app_notifications = parse_i64(row.vals.at_ref(7).to_view()) != 0
+                settings.compact_mode = parse_i64(row.vals.at_ref(8).to_view()) != 0
             }
         }
         return settings
@@ -34,7 +34,7 @@ public namespace underlayer_repository {
         if(v) { return 1 } else { return 0 }
     }
 
-    public func upsert_settings(db : *DbClient, settings : *LearnerSettings) {
+    public func upsert_settings(db : *DbClient, settings : &LearnerSettings) {
         var now = underlayer_core::int_to_string(underlayer_core::current_timestamp())
         var sql = string("INSERT OR REPLACE INTO learner_settings (learner_id, theme, font_size, language, timezone, date_format, email_notifications, push_notifications, in_app_notifications, compact_mode, updated_at) VALUES ('")
         sql.append_string(&settings.learner_id)
@@ -77,28 +77,28 @@ public namespace underlayer_repository {
         sql.append_view("'")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() >= 13) {
                 prefs.learner_id = learner_id.copy()
-                prefs.daily_goal_minutes = parse_i64(row.vals.get_ptr(0).to_view()) as int
-                prefs.daily_review_items = parse_i64(row.vals.get_ptr(1).to_view()) as int
-                prefs.session_length_minutes = parse_i64(row.vals.get_ptr(2).to_view()) as int
-                prefs.break_reminder_minutes = parse_i64(row.vals.get_ptr(3).to_view()) as int
-                prefs.preferred_session_time = row.vals.get_ptr(4).copy()
-                prefs.energy_checkin = parse_i64(row.vals.get_ptr(5).to_view()) != 0
-                prefs.difficulty_preference = row.vals.get_ptr(6).copy()
-                prefs.interleaving_preference = row.vals.get_ptr(7).copy()
-                prefs.review_scheduling = row.vals.get_ptr(8).copy()
-                prefs.show_streaks = parse_i64(row.vals.get_ptr(9).to_view()) != 0
-                prefs.show_leaderboards = parse_i64(row.vals.get_ptr(10).to_view()) != 0
-                prefs.show_achievements = parse_i64(row.vals.get_ptr(11).to_view()) != 0
-                prefs.auto_play_audio = parse_i64(row.vals.get_ptr(12).to_view()) != 0
+                prefs.daily_goal_minutes = parse_i64(row.vals.at_ref(0).to_view()) as int
+                prefs.daily_review_items = parse_i64(row.vals.at_ref(1).to_view()) as int
+                prefs.session_length_minutes = parse_i64(row.vals.at_ref(2).to_view()) as int
+                prefs.break_reminder_minutes = parse_i64(row.vals.at_ref(3).to_view()) as int
+                prefs.preferred_session_time = row.vals.at_ref(4).copy()
+                prefs.energy_checkin = parse_i64(row.vals.at_ref(5).to_view()) != 0
+                prefs.difficulty_preference = row.vals.at_ref(6).copy()
+                prefs.interleaving_preference = row.vals.at_ref(7).copy()
+                prefs.review_scheduling = row.vals.at_ref(8).copy()
+                prefs.show_streaks = parse_i64(row.vals.at_ref(9).to_view()) != 0
+                prefs.show_leaderboards = parse_i64(row.vals.at_ref(10).to_view()) != 0
+                prefs.show_achievements = parse_i64(row.vals.at_ref(11).to_view()) != 0
+                prefs.auto_play_audio = parse_i64(row.vals.at_ref(12).to_view()) != 0
             }
         }
         return prefs
     }
 
-    public func upsert_learning_preferences(db : *DbClient, prefs : *LearningPreferences) {
+    public func upsert_learning_preferences(db : *DbClient, prefs : &LearningPreferences) {
         var now = underlayer_core::int_to_string(underlayer_core::current_timestamp())
         var sql = string("INSERT OR REPLACE INTO learning_preferences (learner_id, daily_goal_minutes, daily_review_items, session_length_minutes, break_reminder_minutes, preferred_session_time, energy_checkin, difficulty_preference, interleaving_preference, review_scheduling, show_streaks, show_leaderboards, show_achievements, auto_play_audio, updated_at) VALUES ('")
         sql.append_string(&prefs.learner_id)

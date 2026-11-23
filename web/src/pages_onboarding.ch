@@ -399,10 +399,10 @@ public namespace underlayer_web {
             send_error(res, 400u, &err)
             return
         }
-        var Ok(parsed) = parse_result else unreachable
-        var daily_minutes = json_get_int(&raw parsed, "daily_minutes")
-        var session_length = json_get_str(&raw parsed, "session_length")
-        var selected_course = json_get_str(&raw parsed, "selected_course")
+        var Ok(parsed) = parse_result else unsafe { unreachable }
+        var daily_minutes = json_get_int(&parsed, "daily_minutes")
+        var session_length = json_get_str(&parsed, "session_length")
+        var selected_course = json_get_str(&parsed, "selected_course")
         if(daily_minutes <= 0) { daily_minutes = 20 }
         if(session_length.size() == 0) { session_length = string("medium") }
 

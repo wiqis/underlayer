@@ -123,12 +123,12 @@ public namespace underlayer_repository {
         var existing = get_prerequisites(db, course_id)
         var j : size_t = 0
         while(j < existing.size()) {
-            var row = existing.get_ptr(j)
+            var row = existing.at_ref(j)
             var req_id = row.required_course_id.copy()
             var found = false
             var k : size_t = 0
             while(k < course.dependencies.size()) {
-                var d = course.dependencies.get_ptr(k)
+                var d = course.dependencies.at_ref(k)
                 if(d.equals(&req_id)) { found = true }
                 k = k + 1
             }
@@ -152,7 +152,7 @@ public namespace underlayer_repository {
         var n = 0
         var i : size_t = 0
         while(i < course.dependencies.size()) {
-            var req = course.dependencies.get_ptr(i).copy()
+            var req = course.dependencies.at_ref(i).copy()
             // A course that depends on ITSELF would make it permanently
             // un-enrollable, because check_prerequisites would be asking
             // whether the learner had completed the course they are trying to

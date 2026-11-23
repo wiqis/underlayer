@@ -18,17 +18,17 @@ public namespace underlayer_repository {
         @make func make() : Certificate { return Certificate { id = string(), learner_id = string(), course_id = string(), learner_name = string(), course_title = string(), completion_date = string(), certificate_url = string(), created_at = 0 } }
     }
 
-    private func row_to_cert(row : *QueryRow) : Certificate {
+    private func row_to_cert(row : &QueryRow) : Certificate {
         var cert = Certificate::make()
         if(row.vals.size() >= 8) {
-            cert.id = row.vals.get_ptr(0).copy()
-            cert.learner_id = row.vals.get_ptr(1).copy()
-            cert.course_id = row.vals.get_ptr(2).copy()
-            cert.learner_name = row.vals.get_ptr(3).copy()
-            cert.course_title = row.vals.get_ptr(4).copy()
-            cert.completion_date = row.vals.get_ptr(5).copy()
-            cert.certificate_url = row.vals.get_ptr(6).copy()
-            cert.created_at = parse_i64(row.vals.get_ptr(7).to_view())
+            cert.id = row.vals.at_ref(0).copy()
+            cert.learner_id = row.vals.at_ref(1).copy()
+            cert.course_id = row.vals.at_ref(2).copy()
+            cert.learner_name = row.vals.at_ref(3).copy()
+            cert.course_title = row.vals.at_ref(4).copy()
+            cert.completion_date = row.vals.at_ref(5).copy()
+            cert.certificate_url = row.vals.at_ref(6).copy()
+            cert.created_at = parse_i64(row.vals.at_ref(7).to_view())
         }
         return cert
     }
@@ -94,7 +94,7 @@ public namespace underlayer_repository {
         sql.append_view("'")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             cert = row_to_cert(row)
         }
         return cert
@@ -108,7 +108,7 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             var cert = row_to_cert(row)
             certs.push(cert)
             ri = ri + 1

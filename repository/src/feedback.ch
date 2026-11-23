@@ -56,19 +56,10 @@ public namespace underlayer_repository {
     // the same 16 bytes of CSPRNG output and there is no reason for two
     // id schemes to exist in one table family.
     public func generate_feedback_id() : string {
-        var buf : [16]u8
-        osrand::random_fill(&raw mut buf[0], 16)
-        var hex_out : [33]char
-        var i0 : size_t = 0
-        while(i0 < 33) { hex_out[i0] = 0; i0 = i0 + 1 }
-        encoding::hex_encode(&raw buf[0], 16, &raw mut hex_out[0], 33)
-        var result = string()
-        var i : size_t = 0
-        while(i < 32 && hex_out[i] != 0) { result.append(hex_out[i]); i = i + 1 }
-        return result
+        return random_hex_id()
     }
 
-    public func submit_feedback(db : *DbClient, feedback : *ContentFeedback) : string {
+    public func submit_feedback(db : *DbClient, feedback : &ContentFeedback) : string {
         var fb_id = generate_feedback_id()
         var now = underlayer_core::current_timestamp()
         var now_str = underlayer_core::int_to_string(now)
@@ -127,20 +118,20 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 11) {
                 var fb = ContentFeedback::make()
-                fb.id = row.vals.get_ptr(0).copy()
-                fb.learner_id = row.vals.get_ptr(1).copy()
-                fb.concept_id = row.vals.get_ptr(2).copy()
-                fb.course_id = row.vals.get_ptr(3).copy()
-                fb.feedback_type = row.vals.get_ptr(4).copy()
-                fb.message = row.vals.get_ptr(5).copy()
-                fb.page_url = row.vals.get_ptr(6).copy()
-                fb.status = row.vals.get_ptr(7).copy()
-                fb.admin_notes = row.vals.get_ptr(8).copy()
-                fb.created_at = parse_i64(row.vals.get_ptr(9).to_view())
-                fb.updated_at = parse_i64(row.vals.get_ptr(10).to_view())
+                fb.id = row.vals.at_ref(0).copy()
+                fb.learner_id = row.vals.at_ref(1).copy()
+                fb.concept_id = row.vals.at_ref(2).copy()
+                fb.course_id = row.vals.at_ref(3).copy()
+                fb.feedback_type = row.vals.at_ref(4).copy()
+                fb.message = row.vals.at_ref(5).copy()
+                fb.page_url = row.vals.at_ref(6).copy()
+                fb.status = row.vals.at_ref(7).copy()
+                fb.admin_notes = row.vals.at_ref(8).copy()
+                fb.created_at = parse_i64(row.vals.at_ref(9).to_view())
+                fb.updated_at = parse_i64(row.vals.at_ref(10).to_view())
                 feedbacks.push(fb)
             }
             ri = ri + 1
@@ -152,30 +143,30 @@ public namespace underlayer_repository {
     // see the file header and web/src/handlers_feedback_admin.ch.
     public func get_all_pending_feedback(db : *DbClient) : vector<ContentFeedback> {
         var sql = string("SELECT id, learner_id, concept_id, course_id, feedback_type, message, page_url, status, admin_notes, created_at, updated_at FROM content_feedback WHERE status = 'pending' ORDER BY created_at DESC")
-        return read_feedback_rows(db, &raw sql)
+        return read_feedback_rows(db, &sql)
     }
 
     // public for the same reason as read_report_rows in exercise_reports.ch:
     // one row-mapping loop, two WHERE clauses.
-    public func read_feedback_rows(db : *DbClient, sql : *string) : vector<ContentFeedback> {
+    public func read_feedback_rows(db : *DbClient, sql : &string) : vector<ContentFeedback> {
         var feedbacks = vector<ContentFeedback>()
-        var result = underlayer_db::query_sql(db, sql)
+        var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 11) {
                 var fb = ContentFeedback::make()
-                fb.id = row.vals.get_ptr(0).copy()
-                fb.learner_id = row.vals.get_ptr(1).copy()
-                fb.concept_id = row.vals.get_ptr(2).copy()
-                fb.course_id = row.vals.get_ptr(3).copy()
-                fb.feedback_type = row.vals.get_ptr(4).copy()
-                fb.message = row.vals.get_ptr(5).copy()
-                fb.page_url = row.vals.get_ptr(6).copy()
-                fb.status = row.vals.get_ptr(7).copy()
-                fb.admin_notes = row.vals.get_ptr(8).copy()
-                fb.created_at = parse_i64(row.vals.get_ptr(9).to_view())
-                fb.updated_at = parse_i64(row.vals.get_ptr(10).to_view())
+                fb.id = row.vals.at_ref(0).copy()
+                fb.learner_id = row.vals.at_ref(1).copy()
+                fb.concept_id = row.vals.at_ref(2).copy()
+                fb.course_id = row.vals.at_ref(3).copy()
+                fb.feedback_type = row.vals.at_ref(4).copy()
+                fb.message = row.vals.at_ref(5).copy()
+                fb.page_url = row.vals.at_ref(6).copy()
+                fb.status = row.vals.at_ref(7).copy()
+                fb.admin_notes = row.vals.at_ref(8).copy()
+                fb.created_at = parse_i64(row.vals.at_ref(9).to_view())
+                fb.updated_at = parse_i64(row.vals.at_ref(10).to_view())
                 feedbacks.push(fb)
             }
             ri = ri + 1
@@ -188,7 +179,7 @@ public namespace underlayer_repository {
     // answers 403 (see web/src/handlers_feedback_admin.ch).  It is kept because
     // it is the write half of what a reviewer role needs, and deleting it would
     // mean rewriting the SQL when the role arrives.
-    public func update_feedback_status(db : *DbClient, feedback_id : &string, status : &string, admin_notes : *string) {
+    public func update_feedback_status(db : *DbClient, feedback_id : &string, status : &string, admin_notes : &string) {
         var now = underlayer_core::current_timestamp()
         var now_str = underlayer_core::int_to_string(now)
         var fid = sql_escape(feedback_id)
@@ -212,12 +203,12 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 3) {
                 var s = FeedbackStats::make()
-                s.feedback_type = row.vals.get_ptr(0).copy()
-                s.count = parse_i64(row.vals.get_ptr(1).to_view()) as int
-                s.pending = parse_i64(row.vals.get_ptr(2).to_view()) as int
+                s.feedback_type = row.vals.at_ref(0).copy()
+                s.count = parse_i64(row.vals.at_ref(1).to_view()) as int
+                s.pending = parse_i64(row.vals.at_ref(2).to_view()) as int
                 stats.push(s)
             }
             ri = ri + 1

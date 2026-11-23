@@ -53,12 +53,12 @@ public namespace underlayer_web {
             send_error(res, 400u, &err)
             return
         }
-        var Ok(parsed) = parse_result else unreachable
-        var concept_id = json_get_str(&raw parsed, "concept_id")
-        var course_id = json_get_str(&raw parsed, "course_id")
-        var feedback_type = json_get_str(&raw parsed, "feedback_type")
-        var message = json_get_str(&raw parsed, "message")
-        var page_url = json_get_str(&raw parsed, "page_url")
+        var Ok(parsed) = parse_result else unsafe { unreachable }
+        var concept_id = json_get_str(&parsed, "concept_id")
+        var course_id = json_get_str(&parsed, "course_id")
+        var feedback_type = json_get_str(&parsed, "feedback_type")
+        var message = json_get_str(&parsed, "message")
+        var page_url = json_get_str(&parsed, "page_url")
         if(concept_id.size() == 0) {
             var err = string("concept_id is required")
             send_error(res, 400u, &err)
@@ -156,11 +156,11 @@ public namespace underlayer_web {
             send_error(res, 400u, &err)
             return
         }
-        var Ok(parsed) = parse_result else unreachable
-        var exercise_id = json_get_str(&raw parsed, "exercise_id")
-        var concept_id = json_get_str(&raw parsed, "concept_id")
-        var report_type = json_get_str(&raw parsed, "report_type")
-        var message = json_get_str(&raw parsed, "message")
+        var Ok(parsed) = parse_result else unsafe { unreachable }
+        var exercise_id = json_get_str(&parsed, "exercise_id")
+        var concept_id = json_get_str(&parsed, "concept_id")
+        var report_type = json_get_str(&parsed, "report_type")
+        var message = json_get_str(&parsed, "message")
         if(exercise_id.size() == 0) {
             var err = string("exercise_id is required")
             send_error(res, 400u, &err)

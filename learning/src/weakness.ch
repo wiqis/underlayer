@@ -39,11 +39,11 @@ public namespace underlayer_learning {
         return sev
     }
 
-    public func detect_weaknesses(states : *vector<ConceptState>) : vector<WeaknessReport> {
+    public func detect_weaknesses(states : &vector<ConceptState>) : vector<WeaknessReport> {
         var reports = vector<WeaknessReport>()
         var i : size_t = 0
         while(i < states.size()) {
-            var state = states.get_ptr(i)
+            var state = states.at_ref(i)
             if(state.attempts > 0) {
                 var accuracy = (state.correct as f64) / (state.attempts as f64)
                 var report = WeaknessReport::make()
@@ -115,7 +115,7 @@ public namespace underlayer_learning {
         }
     }
 
-    public func compute_weakness_trend(state : *ConceptState) : WeaknessTrend {
+    public func compute_weakness_trend(state : &ConceptState) : WeaknessTrend {
         var trend = WeaknessTrend::make()
         trend.concept_id = state.concept_id.copy()
         trend.overall_accuracy = (state.correct as f64) / (state.attempts as f64)
@@ -154,17 +154,17 @@ public namespace underlayer_learning {
 
     // 1.4.10: Show weakness chain: A depends on B depends on C (C is weak)
     public func detect_weakness_chains(
-        weak_concepts : *vector<string>,
-        prereq_map : *vector<WeaknessChain>
+        weak_concepts : &vector<string>,
+        prereq_map : &vector<WeaknessChain>
     ) : vector<WeaknessChain> {
         var chains = vector<WeaknessChain>()
         var i : size_t = 0
         while(i < prereq_map.size()) {
-            var chain = prereq_map.get_ptr(i)
+            var chain = prereq_map.at_ref(i)
             // Check if the weak prereq is itself weak
             var j : size_t = 0
             while(j < weak_concepts.size()) {
-                var weak = weak_concepts.get_ptr(j)
+                var weak = weak_concepts.at_ref(j)
                 var weak_copy = weak.copy()
                 if(chain.weak_prereq.equals(&weak_copy)) {
                     var extended = WeaknessChain::make()
@@ -198,49 +198,61 @@ public namespace underlayer_learning {
         }
     }
 
-    public func cluster_weaknesses(weaknesses : *vector<WeaknessReport>) : vector<WeaknessCluster> {
+    // One cluster, updated in place.  The write is a separate function so that
+    // the mutable borrow of `clusters` it takes cannot overlap the read borrow
+    // the caller used to decide which cluster to touch.
+    private func add_report_to_cluster(clusters : &mut vector<WeaknessCluster>, index : size_t, concept_id : &string, severity : f64) {
+        var target = clusters.at_mut(index)
+        target.weak_concepts.push(concept_id.copy())
+        var n = target.count + 1
+        target.count = n
+        target.avg_severity = (target.avg_severity * ((n - 1) as f64) + severity) / (n as f64)
+    }
+
+    public func cluster_weaknesses(weaknesses : &vector<WeaknessReport>) : vector<WeaknessCluster> {
         var clusters = vector<WeaknessCluster>()
         var i : size_t = 0
         while(i < weaknesses.size()) {
-            var w = weaknesses.get_ptr(i)
+            var w = weaknesses.at_ref(i)
             // Extract module prefix (before first dot)
             var prefix = string()
             var j : size_t = 0
             while(j < w.concept_id.size()) {
-                var c = w.concept_id.get(j)
+                var c = w.concept_id.at(j)
                 if(c == '.') { break }
                 prefix.append(c)
                 j = j + 1
             }
-            // Find existing cluster for this prefix
-            var found = false
+            // Which existing cluster (if any) is this report's?
+            var match_index = clusters.size()
             var ci : size_t = 0
             while(ci < clusters.size()) {
-                var cluster = clusters.get_ptr(ci)
                 var prefix_copy = prefix.copy()
+                var cluster = clusters.at_ref(ci)
                 if(cluster.module_prefix.equals(&prefix_copy)) {
-                    cluster.weak_concepts.push(w.concept_id.copy())
-                    cluster.count = cluster.count + 1
-                    cluster.avg_severity = (cluster.avg_severity * ((cluster.count - 1) as f64) + (w.severity as f64)) / (cluster.count as f64)
-                    found = true
+                    match_index = ci
+                    break
                 }
                 ci = ci + 1
             }
-            if(!found) {
+            var cid = w.concept_id.copy()
+            var sev = w.severity as f64
+            var have_cluster = match_index < clusters.size()
+            if(have_cluster) {
+                add_report_to_cluster(&mut clusters, match_index, &cid, sev)
+            } else {
                 var new_cluster = WeaknessCluster::make()
                 new_cluster.module_prefix = prefix.copy()
-                new_cluster.weak_concepts.push(w.concept_id.copy())
+                new_cluster.weak_concepts.push(cid.copy())
                 new_cluster.count = 1
-                new_cluster.avg_severity = w.severity as f64
+                new_cluster.avg_severity = sev
                 clusters.push(new_cluster)
             }
             i = i + 1
         }
         return clusters
     }
-
-    // 1.4.16: Predict weakness before failure (accuracy trending down)
-    public func predict_weakness(state : *ConceptState) : f64 {
+    public func predict_weakness(state : &ConceptState) : f64 {
         // Simple prediction: if streak is 0 and accuracy is borderline (65-80%), predict likely to become weak
         if(state.attempts < 3) { return 0.0 }
         var accuracy = (state.correct as f64) / (state.attempts as f64)
@@ -305,7 +317,7 @@ public namespace underlayer_learning {
     public func track_weakness_resolution(
         prev_severity : int,
         new_severity : int,
-        concept_id : *string,
+        concept_id : &string,
         now : i64
     ) : vector<WeaknessHistoryEntry> {
         var entries = vector<WeaknessHistoryEntry>()

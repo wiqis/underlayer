@@ -39,16 +39,7 @@ public namespace underlayer_repository {
     }
 
     private func generate_review_id() : string {
-        var buf : [16]u8
-        osrand::random_fill(&raw mut buf[0], 16)
-        var hex_out : [33]char
-        var i0 : size_t = 0
-        while(i0 < 33) { hex_out[i0] = 0; i0 = i0 + 1 }
-        encoding::hex_encode(&raw buf[0], 16, &raw mut hex_out[0], 33)
-        var result = string()
-        var i : size_t = 0
-        while(i < 32 && hex_out[i] != 0) { result.append(hex_out[i]); i = i + 1 }
-        return result
+        return random_hex_id()
     }
 
     public func submit_review(db : *DbClient, learner_id : &string, course_id : &string, rating : int, title : &string, review_text : &string) : string {
@@ -87,18 +78,18 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 9) {
                 var rv = CourseReview::make()
-                rv.id = row.vals.get_ptr(0).copy()
-                rv.learner_id = row.vals.get_ptr(1).copy()
-                rv.course_id = row.vals.get_ptr(2).copy()
-                rv.rating = parse_int(row.vals.get_ptr(3).to_view())
-                rv.title = row.vals.get_ptr(4).copy()
-                rv.review_text = row.vals.get_ptr(5).copy()
-                rv.helpful_count = parse_int(row.vals.get_ptr(6).to_view())
-                rv.created_at = parse_i64(row.vals.get_ptr(7).to_view())
-                rv.updated_at = parse_i64(row.vals.get_ptr(8).to_view())
+                rv.id = row.vals.at_ref(0).copy()
+                rv.learner_id = row.vals.at_ref(1).copy()
+                rv.course_id = row.vals.at_ref(2).copy()
+                rv.rating = parse_int(row.vals.at_ref(3).to_view())
+                rv.title = row.vals.at_ref(4).copy()
+                rv.review_text = row.vals.at_ref(5).copy()
+                rv.helpful_count = parse_int(row.vals.at_ref(6).to_view())
+                rv.created_at = parse_i64(row.vals.at_ref(7).to_view())
+                rv.updated_at = parse_i64(row.vals.at_ref(8).to_view())
                 reviews.push(rv)
             }
             ri = ri + 1
@@ -115,17 +106,17 @@ public namespace underlayer_repository {
         sql.append_view("' LIMIT 1")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() >= 9) {
-                review.id = row.vals.get_ptr(0).copy()
-                review.learner_id = row.vals.get_ptr(1).copy()
-                review.course_id = row.vals.get_ptr(2).copy()
-                review.rating = parse_int(row.vals.get_ptr(3).to_view())
-                review.title = row.vals.get_ptr(4).copy()
-                review.review_text = row.vals.get_ptr(5).copy()
-                review.helpful_count = parse_int(row.vals.get_ptr(6).to_view())
-                review.created_at = parse_i64(row.vals.get_ptr(7).to_view())
-                review.updated_at = parse_i64(row.vals.get_ptr(8).to_view())
+                review.id = row.vals.at_ref(0).copy()
+                review.learner_id = row.vals.at_ref(1).copy()
+                review.course_id = row.vals.at_ref(2).copy()
+                review.rating = parse_int(row.vals.at_ref(3).to_view())
+                review.title = row.vals.at_ref(4).copy()
+                review.review_text = row.vals.at_ref(5).copy()
+                review.helpful_count = parse_int(row.vals.at_ref(6).to_view())
+                review.created_at = parse_i64(row.vals.at_ref(7).to_view())
+                review.updated_at = parse_i64(row.vals.at_ref(8).to_view())
             }
         }
         return review
@@ -173,15 +164,15 @@ public namespace underlayer_repository {
         sql.append_view("'")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() >= 7) {
-                summary.total_reviews = parse_int(row.vals.get_ptr(0).to_view())
-                summary.avg_rating = parse_f64(row.vals.get_ptr(1).to_view())
-                summary.rating_5 = parse_int(row.vals.get_ptr(2).to_view())
-                summary.rating_4 = parse_int(row.vals.get_ptr(3).to_view())
-                summary.rating_3 = parse_int(row.vals.get_ptr(4).to_view())
-                summary.rating_2 = parse_int(row.vals.get_ptr(5).to_view())
-                summary.rating_1 = parse_int(row.vals.get_ptr(6).to_view())
+                summary.total_reviews = parse_int(row.vals.at_ref(0).to_view())
+                summary.avg_rating = parse_f64(row.vals.at_ref(1).to_view())
+                summary.rating_5 = parse_int(row.vals.at_ref(2).to_view())
+                summary.rating_4 = parse_int(row.vals.at_ref(3).to_view())
+                summary.rating_3 = parse_int(row.vals.at_ref(4).to_view())
+                summary.rating_2 = parse_int(row.vals.at_ref(5).to_view())
+                summary.rating_1 = parse_int(row.vals.at_ref(6).to_view())
             }
         }
         return summary

@@ -96,21 +96,21 @@ public namespace underlayer_web {
             send_error(res, 400u, &err)
             return
         }
-        var Ok(parsed) = parse_result else unreachable
-        var theme = json_get_str(&raw parsed, "theme")
+        var Ok(parsed) = parse_result else unsafe { unreachable }
+        var theme = json_get_str(&parsed, "theme")
         if(theme.size() > 0) { settings.theme = theme }
-        var fs = json_get_str(&raw parsed, "font_size")
+        var fs = json_get_str(&parsed, "font_size")
         if(fs.size() > 0) { settings.font_size = fs }
-        var lang = json_get_str(&raw parsed, "language")
+        var lang = json_get_str(&parsed, "language")
         if(lang.size() > 0) { settings.language = lang }
-        var tz = json_get_str(&raw parsed, "timezone")
+        var tz = json_get_str(&parsed, "timezone")
         if(tz.size() > 0) { settings.timezone = tz }
-        var df = json_get_str(&raw parsed, "date_format")
+        var df = json_get_str(&parsed, "date_format")
         if(df.size() > 0) { settings.date_format = df }
-        settings.email_notifications = json_get_bool(&raw parsed, "email_notifications")
-        settings.push_notifications = json_get_bool(&raw parsed, "push_notifications")
-        settings.in_app_notifications = json_get_bool(&raw parsed, "in_app_notifications")
-        settings.compact_mode = json_get_bool(&raw parsed, "compact_mode")
+        settings.email_notifications = json_get_bool(&parsed, "email_notifications")
+        settings.push_notifications = json_get_bool(&parsed, "push_notifications")
+        settings.in_app_notifications = json_get_bool(&parsed, "in_app_notifications")
+        settings.compact_mode = json_get_bool(&parsed, "compact_mode")
         underlayer_repository::upsert_settings(db, &raw settings)
         var body = std::string("{\"ok\":true}")
         send_json_str(res, &raw body)
@@ -181,28 +181,28 @@ public namespace underlayer_web {
             send_error(res, 400u, &err)
             return
         }
-        var Ok(parsed) = parse_result else unreachable
-        var dgm = json_get_int(&raw parsed, "daily_goal_minutes")
+        var Ok(parsed) = parse_result else unsafe { unreachable }
+        var dgm = json_get_int(&parsed, "daily_goal_minutes")
         if(dgm > 0) { prefs.daily_goal_minutes = dgm }
-        var dri = json_get_int(&raw parsed, "daily_review_items")
+        var dri = json_get_int(&parsed, "daily_review_items")
         if(dri > 0) { prefs.daily_review_items = dri }
-        var slm = json_get_int(&raw parsed, "session_length_minutes")
+        var slm = json_get_int(&parsed, "session_length_minutes")
         if(slm > 0) { prefs.session_length_minutes = slm }
-        var brm = json_get_int(&raw parsed, "break_reminder_minutes")
+        var brm = json_get_int(&parsed, "break_reminder_minutes")
         if(brm > 0) { prefs.break_reminder_minutes = brm }
-        var pst = json_get_str(&raw parsed, "preferred_session_time")
+        var pst = json_get_str(&parsed, "preferred_session_time")
         if(pst.size() > 0) { prefs.preferred_session_time = pst }
-        prefs.energy_checkin = json_get_bool(&raw parsed, "energy_checkin")
-        var dp = json_get_str(&raw parsed, "difficulty_preference")
+        prefs.energy_checkin = json_get_bool(&parsed, "energy_checkin")
+        var dp = json_get_str(&parsed, "difficulty_preference")
         if(dp.size() > 0) { prefs.difficulty_preference = dp }
-        var ip = json_get_str(&raw parsed, "interleaving_preference")
+        var ip = json_get_str(&parsed, "interleaving_preference")
         if(ip.size() > 0) { prefs.interleaving_preference = ip }
-        var rs = json_get_str(&raw parsed, "review_scheduling")
+        var rs = json_get_str(&parsed, "review_scheduling")
         if(rs.size() > 0) { prefs.review_scheduling = rs }
-        prefs.show_streaks = json_get_bool(&raw parsed, "show_streaks")
-        prefs.show_leaderboards = json_get_bool(&raw parsed, "show_leaderboards")
-        prefs.show_achievements = json_get_bool(&raw parsed, "show_achievements")
-        prefs.auto_play_audio = json_get_bool(&raw parsed, "auto_play_audio")
+        prefs.show_streaks = json_get_bool(&parsed, "show_streaks")
+        prefs.show_leaderboards = json_get_bool(&parsed, "show_leaderboards")
+        prefs.show_achievements = json_get_bool(&parsed, "show_achievements")
+        prefs.auto_play_audio = json_get_bool(&parsed, "auto_play_audio")
         underlayer_repository::upsert_learning_preferences(db, &raw prefs)
         var body = std::string("{\"ok\":true}")
         send_json_str(res, &raw body)

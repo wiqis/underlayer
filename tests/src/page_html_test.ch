@@ -20,10 +20,10 @@ public func test_home_page_has_title(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19965/")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     var has_title = body.find(string_view("<title>")) != std::NPOS
     var has_underlayer = body.find(string_view("Underlayer")) != std::NPOS
     if(!has_title && !has_underlayer) { env.error("home page missing title or 'Underlayer'") }
@@ -48,10 +48,10 @@ public func test_home_page_has_doctype(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19966/")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("<!DOCTYPE")) == std::NPOS) { env.error("home page missing <!DOCTYPE") }
 
     srv.shutdown()
@@ -74,10 +74,10 @@ public func test_home_page_has_nav(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19967/")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("course")) == std::NPOS && body.find(string_view("Course")) == std::NPOS) { env.error("home page missing course content") }
 
     srv.shutdown()
@@ -100,10 +100,10 @@ public func test_home_page_has_links(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19968/")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("href")) == std::NPOS) { env.error("home page missing 'href' links") }
 
     srv.shutdown()
@@ -126,10 +126,10 @@ public func test_dashboard_page_has_html(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19969/dashboard")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     var has_doctype = body.find(string_view("<!DOCTYPE")) != std::NPOS
     var has_html = body.find(string_view("<html")) != std::NPOS
     if(!has_doctype && !has_html) { env.error("dashboard page missing HTML structure") }
@@ -155,10 +155,10 @@ public func test_review_page_has_html(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19971/review")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     var has_doctype = body.find(string_view("<!DOCTYPE")) != std::NPOS
     var has_html = body.find(string_view("<html")) != std::NPOS
     if(!has_doctype && !has_html) { env.error("review page missing HTML structure") }
@@ -184,10 +184,10 @@ public func test_progress_page_has_html(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19973/progress")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     var has_doctype = body.find(string_view("<!DOCTYPE")) != std::NPOS
     var has_html = body.find(string_view("<html")) != std::NPOS
     if(!has_doctype && !has_html) { env.error("progress page missing HTML structure") }
@@ -212,10 +212,10 @@ public func test_home_page_has_theme_toggle(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19975/")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("theme-toggle")) == std::NPOS) { env.error("home page missing theme-toggle") }
     if(body.find(string_view("toggleTheme")) == std::NPOS) { env.error("home page missing toggleTheme JS") }
 
@@ -257,10 +257,10 @@ public func test_nav_menu_is_a_real_control(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19976/")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
 
     // 1. The whole control, as one literal.  Asserting on the assembled element is
     // what distinguishes "there is a button" from "there is a rule mentioning a
@@ -321,10 +321,10 @@ public func test_lesson_page_nav_menu_works(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19987/courses/elf/lessons/bytes")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
 
     // The button is here -- this is the shared markup, unchanged.
     var btn = string("<button type=\"button\" class=\"nav-toggle\" id=\"ul-nav-toggle\" aria-expanded=\"false\" aria-controls=\"ul-nav-links\">")
@@ -384,10 +384,10 @@ public func test_nav_marks_the_current_page_at_runtime(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19986/courses/elf/lessons/bytes")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
 
     // No link may claim to be the current page in the served HTML.
     var hardcoded = string("nav-link active")
@@ -423,10 +423,10 @@ public func test_home_page_has_skip_link(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19977/")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("skip-link")) == std::NPOS) { env.error("home page missing skip-link") }
     if(body.find(string_view("Skip to content")) == std::NPOS) { env.error("home page missing 'Skip to content' text") }
     if(body.find(string_view("focus-visible")) == std::NPOS) { env.error("home page missing focus-visible CSS") }
@@ -450,10 +450,10 @@ public func test_home_page_has_search_modal(env : &mut TestEnv) {
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19978/")
     if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Ok(resp) = res else unreachable
+    var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.read_to_string()
     if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
-    var Some(body) = body_opt else unreachable
+    var Some(body) = body_opt else unsafe { unreachable }
     if(body.find(string_view("search-modal")) == std::NPOS) { env.error("home page missing search-modal") }
     if(body.find(string_view("openSearch")) == std::NPOS) { env.error("home page missing openSearch JS") }
 

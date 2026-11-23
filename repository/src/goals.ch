@@ -30,10 +30,10 @@ public namespace underlayer_repository {
         sql.append_view("' ORDER BY created_at DESC LIMIT 1")
         var db_result = underlayer_db::query_sql(db, &raw sql)
         if(db_result.rows.size() > 0) {
-            var row = db_result.rows.get_ptr(0)
+            var row = db_result.rows.at_ref(0)
             if(row.vals.size() >= 2) {
-                result.id = row.vals.get_ptr(0).copy()
-                result.target_date = parse_i64(row.vals.get_ptr(1).to_view())
+                result.id = row.vals.at_ref(0).copy()
+                result.target_date = parse_i64(row.vals.at_ref(1).to_view())
                 result.found = true
             }
         }
@@ -90,16 +90,7 @@ public namespace underlayer_repository {
     // which is what the ordering and the display use; it was never the right
     // thing to be the key.
     private func generate_goal_id() : string {
-        var buf : [16]u8
-        osrand::random_fill(&raw mut buf[0], 16)
-        var hex_out : [33]char
-        var i0 : size_t = 0
-        while(i0 < 33) { hex_out[i0] = 0; i0 = i0 + 1 }
-        encoding::hex_encode(&raw buf[0], 16, &raw mut hex_out[0], 33)
-        var result = string()
-        var i : size_t = 0
-        while(i < 32 && hex_out[i] != 0) { result.append(hex_out[i]); i = i + 1 }
-        return result
+        return random_hex_id()
     }
 
     // A stored goal, for the read side.  6.1.5 shipped POST and DELETE with no
@@ -134,13 +125,13 @@ public namespace underlayer_repository {
         var db_result = underlayer_db::query_sql(db, &raw sql)
         var i : size_t = 0
         while(i < db_result.rows.size()) {
-            var row = db_result.rows.get_ptr(i)
+            var row = db_result.rows.at_ref(i)
             if(row.vals.size() >= 4) {
                 var goal = LearningGoal::make()
-                goal.id = row.vals.get_ptr(0).copy()
-                goal.course_id = row.vals.get_ptr(1).copy()
-                goal.target_date = parse_i64(row.vals.get_ptr(2).to_view())
-                goal.created_at = parse_i64(row.vals.get_ptr(3).to_view())
+                goal.id = row.vals.at_ref(0).copy()
+                goal.course_id = row.vals.at_ref(1).copy()
+                goal.target_date = parse_i64(row.vals.at_ref(2).to_view())
+                goal.created_at = parse_i64(row.vals.at_ref(3).to_view())
                 goals.push_back(goal)
             }
             i = i + 1

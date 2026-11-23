@@ -96,7 +96,7 @@ public namespace test_helpers {
     public func authed_get(client : &http::Client, url_str : &string, token : &string) : std::Result<http::Response, std::string> {
         var u_opt = http::URL::parse(url_str.to_view())
         if(u_opt is std::Option.None) { return std::Result.Err<http::Response, std::string>(string("invalid URL")) }
-        var Some(u) = u_opt else unreachable
+        var Some(u) = u_opt else unsafe { unreachable }
         var rb = http::RequestBuilder("GET", std::replace(&mut u, http::URL()))
         rb.timeout(client.default_timeout_secs)
         var auth_value = string("Bearer ")
@@ -109,7 +109,7 @@ public namespace test_helpers {
     public func authed_post(client : &http::Client, url_str : &string, token : &string, body : &string_view, content_type : *char = "text/plain") : std::Result<http::Response, std::string> {
         var u_opt = http::URL::parse(url_str.to_view())
         if(u_opt is std::Option.None) { return std::Result.Err<http::Response, std::string>(string("invalid URL")) }
-        var Some(u) = u_opt else unreachable
+        var Some(u) = u_opt else unsafe { unreachable }
         var rb = http::RequestBuilder("POST", std::replace(&mut u, http::URL()))
         rb.set_body(body, content_type)
         rb.timeout(client.default_timeout_secs)

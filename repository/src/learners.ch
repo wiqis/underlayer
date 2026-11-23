@@ -77,12 +77,12 @@ public namespace underlayer_repository {
         sql.append_view("'")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() >= 4) {
-                learner.id = row.vals.get_ptr(0).copy()
-                learner.name = row.vals.get_ptr(1).copy()
-                learner.email = row.vals.get_ptr(2).copy()
-                learner.created_at = parse_i64(row.vals.get_ptr(3).to_view())
+                learner.id = row.vals.at_ref(0).copy()
+                learner.name = row.vals.at_ref(1).copy()
+                learner.email = row.vals.at_ref(2).copy()
+                learner.created_at = parse_i64(row.vals.at_ref(3).to_view())
             }
         }
         return learner

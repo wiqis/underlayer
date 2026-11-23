@@ -52,14 +52,14 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 4) {
                 var item = SessionItem::make()
                 item.session_id = session_id.copy()
-                item.concept_id = row.vals.get_ptr(0).copy()
-                item.rating = parse_i64(row.vals.get_ptr(1).to_view()) as int
-                item.time_spent_ms = parse_i64(row.vals.get_ptr(2).to_view())
-                item.reviewed_at = parse_i64(row.vals.get_ptr(3).to_view())
+                item.concept_id = row.vals.at_ref(0).copy()
+                item.rating = parse_i64(row.vals.at_ref(1).to_view()) as int
+                item.time_spent_ms = parse_i64(row.vals.at_ref(2).to_view())
+                item.reviewed_at = parse_i64(row.vals.at_ref(3).to_view())
                 items.push(item)
             }
             ri = ri + 1
@@ -74,11 +74,11 @@ public namespace underlayer_repository {
         sql.append_view("'")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() >= 3) {
-                stats.total_items = parse_i64(row.vals.get_ptr(0).to_view()) as int
-                stats.correct_items = parse_i64(row.vals.get_ptr(1).to_view()) as int
-                stats.total_time_ms = parse_i64(row.vals.get_ptr(2).to_view())
+                stats.total_items = parse_i64(row.vals.at_ref(0).to_view()) as int
+                stats.correct_items = parse_i64(row.vals.at_ref(1).to_view()) as int
+                stats.total_time_ms = parse_i64(row.vals.at_ref(2).to_view())
             }
         }
         return stats
@@ -109,16 +109,16 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 6) {
                 var s = underlayer_models::Session::make()
-                s.id = row.vals.get_ptr(0).copy()
+                s.id = row.vals.at_ref(0).copy()
                 s.learner_id = learner_id.copy()
-                s.start_time = parse_i64(row.vals.get_ptr(1).to_view())
-                s.end_time = parse_i64(row.vals.get_ptr(2).to_view())
-                s.session_type = row.vals.get_ptr(3).copy()
-                s.exercises_attempted = parse_i64(row.vals.get_ptr(4).to_view()) as int
-                s.exercises_correct = parse_i64(row.vals.get_ptr(5).to_view()) as int
+                s.start_time = parse_i64(row.vals.at_ref(1).to_view())
+                s.end_time = parse_i64(row.vals.at_ref(2).to_view())
+                s.session_type = row.vals.at_ref(3).copy()
+                s.exercises_attempted = parse_i64(row.vals.at_ref(4).to_view()) as int
+                s.exercises_correct = parse_i64(row.vals.at_ref(5).to_view()) as int
                 sessions.push(s)
             }
             ri = ri + 1
@@ -135,13 +135,13 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 4) {
                 var item = SessionItem::make()
-                item.concept_id = row.vals.get_ptr(0).copy()
-                item.rating = parse_i64(row.vals.get_ptr(1).to_view()) as int
-                item.time_spent_ms = parse_i64(row.vals.get_ptr(2).to_view())
-                item.reviewed_at = parse_i64(row.vals.get_ptr(3).to_view())
+                item.concept_id = row.vals.at_ref(0).copy()
+                item.rating = parse_i64(row.vals.at_ref(1).to_view()) as int
+                item.time_spent_ms = parse_i64(row.vals.at_ref(2).to_view())
+                item.reviewed_at = parse_i64(row.vals.at_ref(3).to_view())
                 items.push(item)
             }
             ri = ri + 1

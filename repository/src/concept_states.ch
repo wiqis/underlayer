@@ -18,23 +18,23 @@ public namespace underlayer_repository {
         sql.append_view("'")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() >= 7) {
                 state.learner_id = learner_id.copy()
                 state.concept_id = concept_id.copy()
                 state.course_id = course_id.copy()
-                state.status = row.vals.get_ptr(0).copy()
-                state.attempts = parse_i64(row.vals.get_ptr(1).to_view()) as int
-                state.correct = parse_i64(row.vals.get_ptr(2).to_view()) as int
-                state.streak = parse_i64(row.vals.get_ptr(3).to_view()) as int
-                state.last_studied = parse_i64(row.vals.get_ptr(4).to_view())
-                state.next_review = parse_i64(row.vals.get_ptr(5).to_view())
+                state.status = row.vals.at_ref(0).copy()
+                state.attempts = parse_i64(row.vals.at_ref(1).to_view()) as int
+                state.correct = parse_i64(row.vals.at_ref(2).to_view()) as int
+                state.streak = parse_i64(row.vals.at_ref(3).to_view()) as int
+                state.last_studied = parse_i64(row.vals.at_ref(4).to_view())
+                state.next_review = parse_i64(row.vals.at_ref(5).to_view())
             }
         }
         return state
     }
 
-    public func upsert_concept_state(db : *DbClient, state : *ConceptState) {
+    public func upsert_concept_state(db : *DbClient, state : &ConceptState) {
         var sql = string("INSERT OR REPLACE INTO concept_states (learner_id, concept_id, course_id, status, attempts, correct, streak, last_studied, next_review, difficulty_rating) VALUES ('")
         var lid = state.learner_id.copy()
         sql.append_string(&lid)
@@ -79,18 +79,18 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 8) {
                 var state = ConceptState::make()
                 state.learner_id = learner_id.copy()
-                state.concept_id = row.vals.get_ptr(0).copy()
+                state.concept_id = row.vals.at_ref(0).copy()
                 state.course_id = course_id.copy()
-                state.status = row.vals.get_ptr(1).copy()
-                state.attempts = parse_i64(row.vals.get_ptr(2).to_view()) as int
-                state.correct = parse_i64(row.vals.get_ptr(3).to_view()) as int
-                state.streak = parse_i64(row.vals.get_ptr(4).to_view()) as int
-                state.last_studied = parse_i64(row.vals.get_ptr(5).to_view())
-                state.next_review = parse_i64(row.vals.get_ptr(6).to_view())
+                state.status = row.vals.at_ref(1).copy()
+                state.attempts = parse_i64(row.vals.at_ref(2).to_view()) as int
+                state.correct = parse_i64(row.vals.at_ref(3).to_view()) as int
+                state.streak = parse_i64(row.vals.at_ref(4).to_view()) as int
+                state.last_studied = parse_i64(row.vals.at_ref(5).to_view())
+                state.next_review = parse_i64(row.vals.at_ref(6).to_view())
                 states.push(state)
             }
             ri = ri + 1
@@ -108,11 +108,11 @@ public namespace underlayer_repository {
         sql.append_view("'")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() >= 3) {
-                stats.total_attempts = parse_i64(row.vals.get_ptr(0).to_view()) as i64
-                stats.total_correct = parse_i64(row.vals.get_ptr(1).to_view()) as i64
-                stats.learner_count = parse_i64(row.vals.get_ptr(2).to_view()) as i64
+                stats.total_attempts = parse_i64(row.vals.at_ref(0).to_view()) as i64
+                stats.total_correct = parse_i64(row.vals.at_ref(1).to_view()) as i64
+                stats.learner_count = parse_i64(row.vals.at_ref(2).to_view()) as i64
                 if(stats.total_attempts > 0) {
                     stats.accuracy = (stats.total_correct as f64) / (stats.total_attempts as f64)
                 }
@@ -131,9 +131,9 @@ public namespace underlayer_repository {
         sql.append_view("' AND status = 'mastered'")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() > 0) {
-                return parse_i64(row.vals.get_ptr(0).to_view()) as int
+                return parse_i64(row.vals.at_ref(0).to_view()) as int
             }
         }
         return 0
@@ -146,9 +146,9 @@ public namespace underlayer_repository {
         sql.append_view("'")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() > 0) {
-                return parse_i64(row.vals.get_ptr(0).to_view()) as int
+                return parse_i64(row.vals.at_ref(0).to_view()) as int
             }
         }
         return 0

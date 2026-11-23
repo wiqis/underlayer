@@ -24,9 +24,9 @@ public namespace underlayer_web {
             send_error(res, 400u, &err_msg2)
             return
         }
-        var Ok(json_val) = parsed else unreachable
+        var Ok(json_val) = parsed else unsafe { unreachable }
 
-        var exercises_field = json_get(&raw json_val, "exercises")
+        var exercises_field = json_get(&json_val, "exercises")
         if(exercises_field == null) {
             var err_msg3 = string("missing 'exercises' array")
             send_error(res, 400u, &err_msg3)
@@ -38,7 +38,7 @@ public namespace underlayer_web {
             send_error(res, 400u, &err_msg4)
             return
         }
-        var Array(arr) = *exercises_field else unreachable
+        var Array(arr) = exercises_field else unsafe { unreachable }
 
         var inserted_count = 0
         var error_count = 0

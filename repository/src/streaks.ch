@@ -144,12 +144,12 @@ public namespace underlayer_repository {
         sql.append_view("'")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() >= 4) {
-                streak.current_streak = parse_int(row.vals.get_ptr(0).to_view())
-                streak.longest_streak = parse_int(row.vals.get_ptr(1).to_view())
-                streak.total_active_days = parse_int(row.vals.get_ptr(2).to_view())
-                streak.last_active_date = row.vals.get_ptr(3).copy()
+                streak.current_streak = parse_int(row.vals.at_ref(0).to_view())
+                streak.longest_streak = parse_int(row.vals.at_ref(1).to_view())
+                streak.total_active_days = parse_int(row.vals.at_ref(2).to_view())
+                streak.last_active_date = row.vals.at_ref(3).copy()
             }
         }
         // Check if streak is broken (last active was not yesterday or today)
@@ -181,9 +181,9 @@ public namespace underlayer_repository {
             sql.append_view("'")
             var db_result = underlayer_db::query_sql(db, &raw sql)
             if(db_result.rows.size() > 0) {
-                var row = db_result.rows.get_ptr(0)
+                var row = db_result.rows.at_ref(0)
                 if(row.vals.size() >= 1) {
-                    activity.sessions = parse_int(row.vals.get_ptr(0).to_view())
+                    activity.sessions = parse_int(row.vals.at_ref(0).to_view())
                     activity.active = activity.sessions > 0
                 }
             }

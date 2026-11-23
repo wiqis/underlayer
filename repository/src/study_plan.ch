@@ -33,16 +33,7 @@ public namespace underlayer_repository {
     }
 
     private func generate_plan_id() : string {
-        var buf : [16]u8
-        osrand::random_fill(&raw mut buf[0], 16)
-        var hex_out : [33]char
-        var i0 : size_t = 0
-        while(i0 < 33) { hex_out[i0] = 0; i0 = i0 + 1 }
-        encoding::hex_encode(&raw buf[0], 16, &raw mut hex_out[0], 33)
-        var result = string()
-        var i : size_t = 0
-        while(i < 32 && hex_out[i] != 0) { result.append(hex_out[i]); i = i + 1 }
-        return result
+        return random_hex_id()
     }
 
     public func create_plan(db : *DbClient, learner_id : &string, course_id : &string, plan_date : &string, start_hour : int, duration_minutes : int, focus_concepts : &string) : string {
@@ -80,18 +71,18 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 9) {
                 var p = StudyPlan::make()
-                p.id = row.vals.get_ptr(0).copy()
-                p.learner_id = row.vals.get_ptr(1).copy()
-                p.course_id = row.vals.get_ptr(2).copy()
-                p.plan_date = row.vals.get_ptr(3).copy()
-                p.start_hour = parse_int(row.vals.get_ptr(4).to_view())
-                p.duration_minutes = parse_int(row.vals.get_ptr(5).to_view())
-                p.focus_concepts = row.vals.get_ptr(6).copy()
-                p.status = row.vals.get_ptr(7).copy()
-                p.created_at = parse_i64(row.vals.get_ptr(8).to_view())
+                p.id = row.vals.at_ref(0).copy()
+                p.learner_id = row.vals.at_ref(1).copy()
+                p.course_id = row.vals.at_ref(2).copy()
+                p.plan_date = row.vals.at_ref(3).copy()
+                p.start_hour = parse_int(row.vals.at_ref(4).to_view())
+                p.duration_minutes = parse_int(row.vals.at_ref(5).to_view())
+                p.focus_concepts = row.vals.at_ref(6).copy()
+                p.status = row.vals.at_ref(7).copy()
+                p.created_at = parse_i64(row.vals.at_ref(8).to_view())
                 plans.push(p)
             }
             ri = ri + 1
@@ -109,18 +100,18 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 9) {
                 var p = StudyPlan::make()
-                p.id = row.vals.get_ptr(0).copy()
-                p.learner_id = row.vals.get_ptr(1).copy()
-                p.course_id = row.vals.get_ptr(2).copy()
-                p.plan_date = row.vals.get_ptr(3).copy()
-                p.start_hour = parse_int(row.vals.get_ptr(4).to_view())
-                p.duration_minutes = parse_int(row.vals.get_ptr(5).to_view())
-                p.focus_concepts = row.vals.get_ptr(6).copy()
-                p.status = row.vals.get_ptr(7).copy()
-                p.created_at = parse_i64(row.vals.get_ptr(8).to_view())
+                p.id = row.vals.at_ref(0).copy()
+                p.learner_id = row.vals.at_ref(1).copy()
+                p.course_id = row.vals.at_ref(2).copy()
+                p.plan_date = row.vals.at_ref(3).copy()
+                p.start_hour = parse_int(row.vals.at_ref(4).to_view())
+                p.duration_minutes = parse_int(row.vals.at_ref(5).to_view())
+                p.focus_concepts = row.vals.at_ref(6).copy()
+                p.status = row.vals.at_ref(7).copy()
+                p.created_at = parse_i64(row.vals.at_ref(8).to_view())
                 plans.push(p)
             }
             ri = ri + 1
@@ -134,18 +125,18 @@ public namespace underlayer_repository {
         sql.append_view("' LIMIT 1")
         var result = underlayer_db::query_sql(db, &raw sql)
         if(result.rows.size() > 0) {
-            var row = result.rows.get_ptr(0)
+            var row = result.rows.at_ref(0)
             if(row.vals.size() >= 9) {
                 var p = StudyPlan::make()
-                p.id = row.vals.get_ptr(0).copy()
-                p.learner_id = row.vals.get_ptr(1).copy()
-                p.course_id = row.vals.get_ptr(2).copy()
-                p.plan_date = row.vals.get_ptr(3).copy()
-                p.start_hour = parse_int(row.vals.get_ptr(4).to_view())
-                p.duration_minutes = parse_int(row.vals.get_ptr(5).to_view())
-                p.focus_concepts = row.vals.get_ptr(6).copy()
-                p.status = row.vals.get_ptr(7).copy()
-                p.created_at = parse_i64(row.vals.get_ptr(8).to_view())
+                p.id = row.vals.at_ref(0).copy()
+                p.learner_id = row.vals.at_ref(1).copy()
+                p.course_id = row.vals.at_ref(2).copy()
+                p.plan_date = row.vals.at_ref(3).copy()
+                p.start_hour = parse_int(row.vals.at_ref(4).to_view())
+                p.duration_minutes = parse_int(row.vals.at_ref(5).to_view())
+                p.focus_concepts = row.vals.at_ref(6).copy()
+                p.status = row.vals.at_ref(7).copy()
+                p.created_at = parse_i64(row.vals.at_ref(8).to_view())
                 return p
             }
         }
@@ -226,18 +217,18 @@ public namespace underlayer_repository {
         var result = underlayer_db::query_sql(db, &raw sql)
         var ri : size_t = 0
         while(ri < result.rows.size()) {
-            var row = result.rows.get_ptr(ri)
+            var row = result.rows.at_ref(ri)
             if(row.vals.size() >= 9) {
                 var p = StudyPlan::make()
-                p.id = row.vals.get_ptr(0).copy()
-                p.learner_id = row.vals.get_ptr(1).copy()
-                p.course_id = row.vals.get_ptr(2).copy()
-                p.plan_date = row.vals.get_ptr(3).copy()
-                p.start_hour = parse_int(row.vals.get_ptr(4).to_view())
-                p.duration_minutes = parse_int(row.vals.get_ptr(5).to_view())
-                p.focus_concepts = row.vals.get_ptr(6).copy()
-                p.status = row.vals.get_ptr(7).copy()
-                p.created_at = parse_i64(row.vals.get_ptr(8).to_view())
+                p.id = row.vals.at_ref(0).copy()
+                p.learner_id = row.vals.at_ref(1).copy()
+                p.course_id = row.vals.at_ref(2).copy()
+                p.plan_date = row.vals.at_ref(3).copy()
+                p.start_hour = parse_int(row.vals.at_ref(4).to_view())
+                p.duration_minutes = parse_int(row.vals.at_ref(5).to_view())
+                p.focus_concepts = row.vals.at_ref(6).copy()
+                p.status = row.vals.at_ref(7).copy()
+                p.created_at = parse_i64(row.vals.at_ref(8).to_view())
                 plans.push(p)
             }
             ri = ri + 1
