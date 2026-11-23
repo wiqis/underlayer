@@ -22,8 +22,17 @@ test_url() {
     local label="$1" path="$2"
     local status
     status=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 --max-time 5 "$URL$path" 2>/dev/null || echo "000")
+    # 200 is the answer for a page anyone may read.  303 is the answer for a page
+    # that requires a session: /dashboard, /review and /progress redirect to
+    # /login?next=<page> from the server, before any query runs, and a browser
+    # cannot send the bearer token those routes resolve the session from.  Accept
+    # the redirect as the pass condition for the gated routes (label prefix
+    # "gated:") so the check keeps testing what it can test.
     if [ "$status" = "200" ]; then
         echo "  [OK]   $label  $path"
+        pass=$((pass + 1))
+    elif [ "$status" = "303" ] && [ "${label#gated:}" != "$label" ]; then
+        echo "  [OK]   $label  $path  (303 to /login)"
         pass=$((pass + 1))
     else
         echo "  [FAIL] $label  $path  ($status)"
@@ -64,9 +73,9 @@ sleep 4
 echo "[3/3] Testing endpoints..."
 test_url "health"         "/api/health"
 test_url "home"           "/"
-test_url "dashboard"      "/dashboard"
-test_url "review page"    "/review"
-test_url "progress page"  "/progress"
+test_url "gated:dashboard"      "/dashboard"
+test_url "gated:review page"    "/review"
+test_url "gated:progress page"  "/progress"
 test_url "courses api"    "/api/courses"
 test_url "elf course"     "/courses/elf"
 test_url "elf lesson"     "/courses/elf/lessons/bytes"

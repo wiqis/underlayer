@@ -393,6 +393,40 @@ public func render_page() : std::string {
 
 ## Build / Run / Verify
 
+### The HTTP layer after the 2026-11 safe-API port
+
+Read this before adding a route or a handler; it is the contract the whole web
+layer now follows.
+
+- **Handlers return `http::Response`.** A handler is
+  `func handle_x(db : *DbClient, req : &http::Request) : http::Response`. There is
+  no `ResponseWriter` anywhere in the tree. Every response is built by one of the
+  four helpers in `web/src/responses.ch`: `send_page`, `send_html`,
+  `send_json_str`, `send_error` (plus `send_status_text`, `send_json_status`,
+  `redirect_to_login`). They apply the security headers, so a new route does not.
+- **Every route returns through `deliver`.** Route bodies in `app/main.ch` are
+  `return underlayer_web::deliver(&req, underlayer_web::handle_…(…))`. `deliver`
+  is the one place that sets `ETag`, `Cache-Control` (`no-cache` for pages,
+  `no-store` for `/api/*`), answers `If-None-Match` with `304`, and gzips bodies
+  ≥ 1 KiB when the client offers it. A route that bypasses `deliver` silently
+  loses all of that.
+- **Guards return `Option<http::Response>`.** `None` means "allowed"; `Some(r)` is
+  the refusal to send. This is how `rate_limit_*`, `require_own_session` and
+  `require_course_complete` work, and it is why a limited request can never fall
+  through into the handler.
+- **Route closures capture nothing.** `srv.router.add("GET", "/x", ||(req) => { … })`
+  — the router stores handlers as `Send + Sync + 'static`, so a capture is a
+  compile error (SAFE-SEND-002). Reach the database and the courses directory
+  through the two accessors in `app/main.ch`:
+  `var db = request_db()` (a `*DbClient`) and `var courses_dir = request_courses_dir()`
+  (a copy of the string). Those accessors are the only process-wide state, and
+  the only `unsafe` outside the SQLite FFI boundary.
+- **The courses directory is a char buffer, not a `string` global.** A
+  `@never_destructed var g : string` read back EMPTY at request time (measured:
+  every manifest path came out as `/<course>/manifest.json`); a zero-initialised
+  global is not a constructed value. The buffer is `g_courses_buf`/`g_courses_len`
+  and is capped at `COURSES_DIR_MAX`.
+
 ### Platform (Web Server)
 
 ```bash
@@ -589,4 +623,6 @@ Load the relevant skill before working on a particular area:
 - **Retrieval is not optional.** Every session must include review of previously learned material.
 - **No SQLite in std libs.** Use the existing `lang/compiled/sqlite3/` package or the dual-backend pattern from `lang/compiled/cars/database/`.
 - **Course pages are pre-rendered.** The compiler generates static HTML/CSS/JS files. The server serves these files — it does not render pages on every request.
+- **Sessions are bearer-token only, so the gated pages are unreachable from a browser.** `auth_get_learner_id` reads `Authorization: Bearer …`, and the sign-in page stores the token in `localStorage`. No cookie is ever set, so `has_session` — the server-side gate on `/dashboard`, `/review`, `/progress`, `/bookmarks`, `/notes`, `/study-plans`, `/achievements`, `/streaks`, `/notifications`, `/certificates` — always answers "signed out" for a page load and redirects to `/login?next=…`. The client *looks* signed in (the nav shows the learner's name) and the gated pages bounce. This is a product gap, not a test artefact: fixing it means either setting an HttpOnly session cookie from `/api/auth/login` or moving those pages behind a client-side gate. Do not "fix" it by weakening `has_session`.
+- **`scripts/underlayer-build-test.sh` hangs in Git-Bash on this machine** after the build (the endpoint matrix passes when driven by hand with `curl`). Run the endpoints with `curl` instead of relying on that script in this shell; the `PORT=` and `test_url` logic is fine.
 - **Always verify ELF content.** Every hex dump, byte offset, and struct layout must be verified against `readelf` output or the gABI spec. No invented byte sequences.

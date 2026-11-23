@@ -1561,6 +1561,12 @@ public func main() : int {
             return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
         }
     })
+    // ---- 404 ----
+    // The catch-all is LAST: every earlier route gets first refusal, and anything
+    // unmatched lands on a real page instead of the router's bare "Not found".
+    srv.router.add("GET", "/:path*", ||(req) => {
+        return underlayer_web::deliver(&req, underlayer_web::not_found_page(&req))
+    })
     // ---- Start server ----
     var listen_msg = std::string("[underlayer] Server running at http://localhost:")
     listen_msg.append_string(&underlayer_core::u32_to_string(port))

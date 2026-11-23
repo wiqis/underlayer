@@ -261,4 +261,32 @@ public namespace underlayer_web {
         return true
     }
 
+    // A 404 page, for the catch-all route at the end of the table.
+    //
+    // Before this the router's own default answered unmatched paths with a bare
+    // "Not found" (10 bytes) and no navigation, so a mistyped lesson URL left the
+    // reader on a blank page with no way back.
+    public func not_found_page(req : &http::Request) : http::Response {
+        var page = HtmlPage()
+        page.defaultPrepare()
+        var wanted = req.path.to_view()
+        #html {
+            <main class="container" id="main-content">
+                <h1>That page is not here</h1>
+                <p>The address <code>{wanted}</code> does not match a course, a lesson or a page on this platform.</p>
+                <p><a href="/courses">Browse the courses</a> &middot; <a href="/">Home</a> &middot; <a href="/search">Search</a></p>
+            </main>
+        }
+        #css {
+            body { margin: 0; font-family: system-ui, sans-serif; line-height: 1.6; color: #111827; background: #ffffff; }
+            .container { max-width: 40rem; margin: 0 auto; padding: 4rem 1.5rem; }
+            h1 { font-size: 1.5rem; margin: 0 0 0.75rem; }
+            code { background: #f3f4f6; padding: 0.1rem 0.3rem; border-radius: 3px; }
+            a { color: #2563eb; }
+        }
+        var res = send_page(&page)
+        res.status = 404u
+        return res
+    }
+
 }
