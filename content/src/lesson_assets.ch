@@ -77,6 +77,13 @@ public namespace underlayer_content {
             }
         }
         render_exercise_css(page)
+        // THE GUIDED JOURNEY.  Emitted here, in the shared lesson assets, so
+        // every lesson that uses this helper gets the shell in BOTH modes:
+        // pre-rendered static pages built from content/src and the pages served
+        // by handle_lesson.  Lessons with their own inline assets are patched by
+        // web/src/journey_apply.ch instead.  Both paths call the same functions.
+        render_journey_markup(page)
+        render_journey_css(page)
     }
 
     public func render_lesson_js(page : &mut HtmlPage) {
@@ -200,6 +207,7 @@ public namespace underlayer_content {
         }
         render_exercise_js(page)
         render_exercise_build_js(page)
+        render_journey_js(page)
     }
 
 }

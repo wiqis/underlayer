@@ -94,6 +94,18 @@ for cid in "${COURSES[@]}"; do
     [ "$QUIET" = true ] || printf '  %-12s %3d page(s)\n' "$cid" "$n"
 done
 
+# THE GUIDED JOURNEY.  Lessons that emit the shared lesson assets already carry
+# the shell.  The older renderers do not, so a single injector -- built from the
+# same #html/#css/#js macros as the server path -- brings every generated page
+# up to the same contract.  It is idempotent: a page with a shell is untouched.
+INJECTOR_DIR="$PROJECT_ROOT/scripts/journey_inject"
+mkdir -p "$INJECTOR_DIR/build"
+if (cd "$INJECTOR_DIR" && "$UL_COMPILER" chemical.mod -o "build/journey-inject.exe" -bm-modules --no-cache >"$INJECTOR_DIR/build/inject-build.log" 2>&1); then
+    (cd "$PROJECT_ROOT" && "$INJECTOR_DIR/build/journey-inject.exe") || true
+else
+    echo "build_static: journey injector failed to compile -- $INJECTOR_DIR/build/inject-build.log"
+fi
+
 echo
 echo "build_static: $OK course(s) rendered, $PAGES page(s) total"
 if [ ${#FAILED[@]} -gt 0 ]; then

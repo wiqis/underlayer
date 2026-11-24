@@ -45,27 +45,34 @@ public namespace underlayer_web {
         // the lesson exists at all.
         var headed = apply_lesson_header(&paged, &course, &pid)
 
+        // THE GUIDED JOURNEY.  Most lesson renderers already emit the shell via
+        // the shared lesson assets and this is a byte-for-byte no-op; the older
+        // renderers (bytes and its neighbours) get the shell here.  The manifest
+        // facts are attached in the same pass, so the arrival strip can state
+        // the time, level and previous lesson without an API call.
+        var journeyed = apply_lesson_journey(&headed, &course, &cidsv, &pid)
+
         // The header's own styles, emitted as a <style> block rather than a
         // <link>, for the two reasons in web/src/lesson_header_css.ch: one
         // request per lesson page, and a file:// lesson with no stylesheet.
         // Only emitted when the header was actually injected, so a lesson that
         // could not be patched does not carry rules for nothing.
         var css = lesson_header_css()
-        if(headed.size() != paged.size()) {
+        if(journeyed.size() != paged.size()) {
             var tag = std::string("<style>")
             tag.append_string(&css)
             tag.append_view("</style>")
             var full = std::string("<!DOCTYPE html><html><head>")
             full.append_string(&tag)
-            var rest = headed.to_view()
+            var rest = journeyed.to_view()
             var do_idx = rest.find_or_npos(string_view("<head>"))
             if(do_idx != std::NPOS) {
                 var after = do_idx + 6
-                full.append_view(headed.to_view().subview(after, headed.size()))
+                full.append_view(journeyed.to_view().subview(after, journeyed.size()))
                 return send_html(&full)
             }
         }
-        return send_html(&headed)
+        return send_html(&journeyed)
     }
 
     public func handle_course_landing(db : *DbClient, courses_dir : &string, course_id : &string_view, req : &http::Request) : http::Response {
@@ -87,6 +94,20 @@ public namespace underlayer_web {
             return send_error(404u, &err)
         }
         var html = underlayer_content::render_course_landing(&course)
+        // ONE CLEAR STARTING PATH.  Every course still lists every lesson below;
+        // the reader no longer has to choose among them before beginning.
+        if(course.concepts.size() > 0) {
+            var first = course.concepts.at_ref(0)
+            var first_url = string("/courses/")
+            first_url.append_view(cidsv.to_view())
+            first_url.append_view("/lessons/")
+            first_url.append_view(first.id.to_view())
+            var safe_url = underlayer_core::html_escape(&first_url)
+            var safe_title = underlayer_core::html_escape(&first.title)
+            var count = underlayer_core::int_to_string(course.concepts.size() as i64)
+            var paneled = underlayer_content::apply_start_panel(&html, &safe_url, &safe_title, &count)
+            html = paneled
+        }
         // THE ENROL CONTROL.  (P1 7.1.23)
         //
         // The checklist item said "enrollments API has no UI consumer" and that
