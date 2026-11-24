@@ -35,6 +35,9 @@
 //   handlers_study_plan.ch   — handle_create_study_plan, handle_get_study_plans, handle_update_study_plan, handle_delete_study_plan
 //   pages_help.ch            — render_help_page, render_shortcuts_page, render_faq_page, render_about_page
 //   static.ch                — content_type_for_ext, file_extension, handle_static_file
+//   mobile_units.ch          — handle_lesson_units (S-1: JSON step index from the rendered lesson)
+//   handlers_mobile.ch       — handle_progress_sync_push / _pull (S-2)
+//   mobile_sync_json.ch      — change parsing, changes/FSRS JSON builders for S-2
 //
 // Collection-level pages (the course index, the learning path, concept search):
 //   routes_data.ch           — RouteStep, PathRoute, mk_step, build_routes, route_orphans

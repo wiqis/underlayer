@@ -211,6 +211,25 @@ public func main() : int {
             return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
         }
     })
+    // S-1: structured unit index for the Android stepper, derived from the
+    // exact HTML render_concept produces.  Registered BEFORE the lesson route
+    // so the literal "units" tail is never swallowed by :conceptId.
+    srv.router.add("GET", "/api/courses/:courseId/lessons/:conceptId/units", ||(req) => {
+        var courses_dir = underlayer_web::request_courses_dir()
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 6) {
+            var course_id = segments.at_ref(2)
+            var concept_id = segments.at_ref(4)
+            var tail = segments.at_ref(5)
+            var units_tail = std::string_view("units")
+            if(tail.equals(&units_tail)) {
+                return underlayer_web::deliver(&req, underlayer_web::handle_lesson_units(&courses_dir, course_id, concept_id, &req))
+            }
+        }
+        var body = std::string("{\"error\":\"missing course or concept id\"}")
+        return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+    })
     // Lesson viewer via API
     srv.router.add("GET", "/api/courses/:courseId/lessons/:conceptId", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
@@ -397,6 +416,16 @@ public func main() : int {
     srv.router.add("GET", "/api/analytics/devices", ||(req) => {
         var db = request_db()
         return underlayer_web::deliver(&req, underlayer_web::handle_device_analytics(db, &req))
+    })
+    // ---- Mobile progress sync (S-2).  Registered BEFORE
+    // /api/progress/:courseId: otherwise "sync" is read as a course id. ----
+    srv.router.add("GET", "/api/progress/sync", ||(req) => {
+        var db = request_db()
+        return underlayer_web::deliver(&req, underlayer_web::handle_progress_sync_pull(db, &req))
+    })
+    srv.router.add("POST", "/api/progress/sync", ||(req) => {
+        var db = request_db()
+        return underlayer_web::deliver(&req, underlayer_web::handle_progress_sync_push(db, &mut req))
     })
     // ---- Course Progress API ----
     srv.router.add("GET", "/api/progress/:courseId", ||(req) => {

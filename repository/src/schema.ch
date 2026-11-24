@@ -210,6 +210,13 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw idx_xa_learner)
         var idx_xa_exercise = string("CREATE INDEX IF NOT EXISTS idx_xa_att_exercise ON exercise_attempts(learner_id, exercise_id)")
         underlayer_db::exec_sql(db, &raw idx_xa_exercise)
+        // Mobile progress sync (S-2).  One row per unit the learner has touched.
+        // Separate from concept_states on purpose: that table owns the FSRS
+        // columns, and a client sync write must not be able to reach them.
+        var sql_sync = string("CREATE TABLE IF NOT EXISTS concept_unit_progress (learner_id TEXT NOT NULL, course_id TEXT NOT NULL, concept_id TEXT NOT NULL, unit_id TEXT NOT NULL, status TEXT NOT NULL, step_index INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL, PRIMARY KEY (learner_id, course_id, concept_id, unit_id))")
+        underlayer_db::exec_sql(db, &raw sql_sync)
+        var idx_sync = string("CREATE INDEX IF NOT EXISTS idx_cup_learner_updated ON concept_unit_progress(learner_id, updated_at)")
+        underlayer_db::exec_sql(db, &raw idx_sync)
         // Every migration runs here, at the END, not next to its CREATE TABLE.
         // The old unconditional ALTERs sat above, and the reason that was wrong
         // is not timing -- it is that they were unconditional at all.  Running
