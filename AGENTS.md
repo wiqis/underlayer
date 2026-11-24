@@ -427,6 +427,40 @@ layer now follows.
   global is not a constructed value. The buffer is `g_courses_buf`/`g_courses_len`
   and is capped at `COURSES_DIR_MAX`.
 
+### Delivery: `web::App` owns the frozen pages and the assets
+
+`main()` builds one `web::App` (`build/site`, assets under `/assets`) with
+`set_minify(true)` + `set_gzip(true)`, registers the six guide pages as
+**pre-rendered** routes, and installs it behind a `/:path*` catch-all so the
+explicit routes keep first refusal:
+
+```chemical
+app.page("/help", underlayer_web::page_help)     // … /shortcuts /faq /about /terms /privacy
+app.not_found(underlayer_web::page_not_found)
+if(!app.build()) { … }  if(!app.finish()) { … }   // build() compiles, finish() writes
+unsafe { web::install(&raw mut app) }
+srv.router.add("GET", "/:path*", ||(req) => web::serve_request(req))
+```
+
+What that gives, measured: `build/site/assets/app.<hash>.css` (4,022 B, 1,453 B
+gzip, `public, max-age=31536000, immutable`), `assets/chunk.<hash>.js` (236 B,
+208 B gzip) for the one page that has extra JS, and `help/index.html` + `.gz`
+served with `no-cache` + ETag + **304** on revalidation. **No hydration runtime
+is emitted at all** — no page in the app uses a `#universal` component, so the
+framework gives component-free pages no bundle `<script>`.
+
+**Why the per-user pages are NOT `app.live` (measured).** A live render attaches
+the page to the site's *frozen* asset sink, so the page's `#css` and the component
+theme are written to a sink that is already closed and are dropped. The served
+home page came back with no `<style>` and no `<link>` — an unstyled page. Those
+pages carry their own large stylesheets, so they stay **endpoints** returning a
+full response through `deliver` (which gives `no-cache` + ETag + 304 and gzip).
+Only a page whose CSS is fully in the frozen bundle can be `app.live`.
+
+Every page still ships one small inline script: the **pre-paint theme
+initialiser** (it must run before first paint or the reader sees the wrong theme
+flash). That is deliberate, not duplicated runtime.
+
 ### Platform (Web Server)
 
 ```bash
