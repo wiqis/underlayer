@@ -1,4 +1,4 @@
-// How a CPU Executes Instructions — build entry point.
+// How a CPU Executes Instructions â€” build entry point.
 // Renders all 6 concept pages plus the landing page to output/.
 //
 // Concept order: the instrument first, because every other number in this
@@ -8,40 +8,40 @@
 // could be measured at all.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering How a CPU Executes Instructions pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering How a CPU Executes Instructions pages...`)
 
     var html = underlayer_content::render_exe_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: The Instrument
     html = underlayer_content::render_exe_instrument()
-    fs::write_text_file("output/exe-instrument.html", html.data() as *u8, html.size())
-    printf("  -> exe-instrument.html\n")
+    course_writer::write_page("output/exe-instrument.html", &html)
+    println(`  -> exe-instrument.html`)
 
     html = underlayer_content::render_exe_latency()
-    fs::write_text_file("output/exe-latency.html", html.data() as *u8, html.size())
-    printf("  -> exe-latency.html\n")
+    course_writer::write_page("output/exe-latency.html", &html)
+    println(`  -> exe-latency.html`)
 
     // Module 2: Dependencies and the Front End
     html = underlayer_content::render_exe_deps()
-    fs::write_text_file("output/exe-deps.html", html.data() as *u8, html.size())
-    printf("  -> exe-deps.html\n")
+    course_writer::write_page("output/exe-deps.html", &html)
+    println(`  -> exe-deps.html`)
 
     html = underlayer_content::render_exe_frontend()
-    fs::write_text_file("output/exe-frontend.html", html.data() as *u8, html.size())
-    printf("  -> exe-frontend.html\n")
+    course_writer::write_page("output/exe-frontend.html", &html)
+    println(`  -> exe-frontend.html`)
 
     // Module 3: Speculation and Its Limits
     html = underlayer_content::render_exe_speculate()
-    fs::write_text_file("output/exe-speculate.html", html.data() as *u8, html.size())
-    printf("  -> exe-speculate.html\n")
+    course_writer::write_page("output/exe-speculate.html", &html)
+    println(`  -> exe-speculate.html`)
 
     html = underlayer_content::render_exe_verify()
-    fs::write_text_file("output/exe-verify.html", html.data() as *u8, html.size())
-    printf("  -> exe-verify.html\n")
+    course_writer::write_page("output/exe-verify.html", &html)
+    println(`  -> exe-verify.html`)
 
-    printf("Done: 6 concepts + landing page\n")
+    println(`Done: 6 concepts + landing page`)
     return 0
 }

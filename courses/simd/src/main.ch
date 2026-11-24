@@ -14,45 +14,45 @@
 // part of the course.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering SIMD and Vector Processing pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering SIMD and Vector Processing pages...`)
 
     var html = underlayer_content::render_simd_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: The Lane
     html = underlayer_content::render_simd_width()
-    fs::write_text_file("output/simd-width.html", html.data() as *u8, html.size())
-    printf("  -> simd-width.html\n")
+    course_writer::write_page("output/simd-width.html", &html)
+    println(`  -> simd-width.html`)
 
     html = underlayer_content::render_simd_compiler()
-    fs::write_text_file("output/simd-compiler.html", html.data() as *u8, html.size())
-    printf("  -> simd-compiler.html\n")
+    course_writer::write_page("output/simd-compiler.html", &html)
+    println(`  -> simd-compiler.html`)
 
     // Module 2: What the Instructions Do
     html = underlayer_content::render_simd_shapes()
-    fs::write_text_file("output/simd-shapes.html", html.data() as *u8, html.size())
-    printf("  -> simd-shapes.html\n")
+    course_writer::write_page("output/simd-shapes.html", &html)
+    println(`  -> simd-shapes.html`)
 
     html = underlayer_content::render_simd_reduce()
-    fs::write_text_file("output/simd-reduce.html", html.data() as *u8, html.size())
-    printf("  -> simd-reduce.html\n")
+    course_writer::write_page("output/simd-reduce.html", &html)
+    println(`  -> simd-reduce.html`)
 
     // Module 3: Where It Costs
     html = underlayer_content::render_simd_boundaries()
-    fs::write_text_file("output/simd-boundaries.html", html.data() as *u8, html.size())
-    printf("  -> simd-boundaries.html\n")
+    course_writer::write_page("output/simd-boundaries.html", &html)
+    println(`  -> simd-boundaries.html`)
 
     html = underlayer_content::render_simd_three()
-    fs::write_text_file("output/simd-three.html", html.data() as *u8, html.size())
-    printf("  -> simd-three.html\n")
+    course_writer::write_page("output/simd-three.html", &html)
+    println(`  -> simd-three.html`)
 
     // Module 4: The Artifact
     html = underlayer_content::render_simd_harness()
-    fs::write_text_file("output/simd-harness.html", html.data() as *u8, html.size())
-    printf("  -> simd-harness.html\n")
+    course_writer::write_page("output/simd-harness.html", &html)
+    println(`  -> simd-harness.html`)
 
-    printf("Done: 7 concepts + landing page\n")
+    println(`Done: 7 concepts + landing page`)
     return 0
 }

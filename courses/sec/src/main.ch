@@ -1,4 +1,4 @@
-// Executable Security and Hardening — build entry point.
+// Executable Security and Hardening â€” build entry point.
 // Renders all 7 concept pages plus the landing page to output/.
 //
 // Concept order: the defaults first, because the compiler disagreement is the
@@ -6,45 +6,45 @@
 // file's geometry; then the two that are about permissions; then the reader.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering Executable Security pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering Executable Security pages...`)
 
     var html = underlayer_content::render_sec_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: The Defaults
     html = underlayer_content::render_sec_defaults()
-    fs::write_text_file("output/sec-defaults.html", html.data() as *u8, html.size())
-    printf("  -> sec-defaults.html\n")
+    course_writer::write_page("output/sec-defaults.html", &html)
+    println(`  -> sec-defaults.html`)
 
     html = underlayer_content::render_sec_canary()
-    fs::write_text_file("output/sec-canary.html", html.data() as *u8, html.size())
-    printf("  -> sec-canary.html\n")
+    course_writer::write_page("output/sec-canary.html", &html)
+    println(`  -> sec-canary.html`)
 
     // Module 2: The GOT
     html = underlayer_content::render_sec_relro()
-    fs::write_text_file("output/sec-relro.html", html.data() as *u8, html.size())
-    printf("  -> sec-relro.html\n")
+    course_writer::write_page("output/sec-relro.html", &html)
+    println(`  -> sec-relro.html`)
 
     html = underlayer_content::render_sec_fortify()
-    fs::write_text_file("output/sec-fortify.html", html.data() as *u8, html.size())
-    printf("  -> sec-fortify.html\n")
+    course_writer::write_page("output/sec-fortify.html", &html)
+    println(`  -> sec-fortify.html`)
 
     // Module 3: Permissions
     html = underlayer_content::render_sec_wx()
-    fs::write_text_file("output/sec-wx.html", html.data() as *u8, html.size())
-    printf("  -> sec-wx.html\n")
+    course_writer::write_page("output/sec-wx.html", &html)
+    println(`  -> sec-wx.html`)
 
     html = underlayer_content::render_sec_cet()
-    fs::write_text_file("output/sec-cet.html", html.data() as *u8, html.size())
-    printf("  -> sec-cet.html\n")
+    course_writer::write_page("output/sec-cet.html", &html)
+    println(`  -> sec-cet.html`)
 
     // Module 4: Read It Yourself
     html = underlayer_content::render_sec_posture()
-    fs::write_text_file("output/sec-posture.html", html.data() as *u8, html.size())
-    printf("  -> sec-posture.html\n")
+    course_writer::write_page("output/sec-posture.html", &html)
+    println(`  -> sec-posture.html`)
 
-    printf("Done: 7 concepts + landing page\n")
+    println(`Done: 7 concepts + landing page`)
     return 0
 }

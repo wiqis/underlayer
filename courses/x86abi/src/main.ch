@@ -16,39 +16,39 @@
 // to believe.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering The x86-64 ABI pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering The x86-64 ABI pages...`)
 
     var html = underlayer_content::render_x86abi_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: The Frame -- what a call owes whom
     html = underlayer_content::render_x86_calling()
-    fs::write_text_file("output/x86-calling.html", html.data() as *u8, html.size())
-    printf("  -> x86-calling.html\n")
+    course_writer::write_page("output/x86-calling.html", &html)
+    println(`  -> x86-calling.html`)
 
     html = underlayer_content::render_x86_frame()
-    fs::write_text_file("output/x86-frame.html", html.data() as *u8, html.size())
-    printf("  -> x86-frame.html\n")
+    course_writer::write_page("output/x86-frame.html", &html)
+    println(`  -> x86-frame.html`)
 
     html = underlayer_content::render_x86_saved()
-    fs::write_text_file("output/x86-saved.html", html.data() as *u8, html.size())
-    printf("  -> x86-saved.html\n")
+    course_writer::write_page("output/x86-saved.html", &html)
+    println(`  -> x86-saved.html`)
 
     html = underlayer_content::render_x86_varargs()
-    fs::write_text_file("output/x86-varargs.html", html.data() as *u8, html.size())
-    printf("  -> x86-varargs.html\n")
+    course_writer::write_page("output/x86-varargs.html", &html)
+    println(`  -> x86-varargs.html`)
 
     // Module 2: The Second Description -- unwinding and the audit
     html = underlayer_content::render_x86_unwind()
-    fs::write_text_file("output/x86-unwind.html", html.data() as *u8, html.size())
-    printf("  -> x86-unwind.html\n")
+    course_writer::write_page("output/x86-unwind.html", &html)
+    println(`  -> x86-unwind.html`)
 
     html = underlayer_content::render_x86_verify()
-    fs::write_text_file("output/x86-verify.html", html.data() as *u8, html.size())
-    printf("  -> x86-verify.html\n")
+    course_writer::write_page("output/x86-verify.html", &html)
+    println(`  -> x86-verify.html`)
 
-    printf("Done: 6 concepts + landing page\n")
+    println(`Done: 6 concepts + landing page`)
     return 0
 }

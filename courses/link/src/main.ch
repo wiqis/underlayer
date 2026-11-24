@@ -1,4 +1,4 @@
-// Static Linking and Linker Scripts — build entry point.
+// Static Linking and Linker Scripts â€” build entry point.
 // Renders all 10 concept pages plus the landing page to output/.
 //
 // Concept order is the dependency chain: first read the script you are already
@@ -6,57 +6,57 @@
 // finally build one.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering Static Linking pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering Static Linking pages...`)
 
     var html = underlayer_content::render_link_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: The Script You Already Use
     html = underlayer_content::render_link_default_script()
-    fs::write_text_file("output/link-default-script.html", html.data() as *u8, html.size())
-    printf("  -> link-default-script.html\n")
+    course_writer::write_page("output/link-default-script.html", &html)
+    println(`  -> link-default-script.html`)
 
     html = underlayer_content::render_link_script_language()
-    fs::write_text_file("output/link-script-language.html", html.data() as *u8, html.size())
-    printf("  -> link-script-language.html\n")
+    course_writer::write_page("output/link-script-language.html", &html)
+    println(`  -> link-script-language.html`)
 
     html = underlayer_content::render_link_order()
-    fs::write_text_file("output/link-order.html", html.data() as *u8, html.size())
-    printf("  -> link-order.html\n")
+    course_writer::write_page("output/link-order.html", &html)
+    println(`  -> link-order.html`)
 
     // Module 2: Placing Things
     html = underlayer_content::render_link_location_counter()
-    fs::write_text_file("output/link-location-counter.html", html.data() as *u8, html.size())
-    printf("  -> link-location-counter.html\n")
+    course_writer::write_page("output/link-location-counter.html", &html)
+    println(`  -> link-location-counter.html`)
 
     html = underlayer_content::render_link_memory_regions()
-    fs::write_text_file("output/link-memory-regions.html", html.data() as *u8, html.size())
-    printf("  -> link-memory-regions.html\n")
+    course_writer::write_page("output/link-memory-regions.html", &html)
+    println(`  -> link-memory-regions.html`)
 
     html = underlayer_content::render_link_phdrs()
-    fs::write_text_file("output/link-phdrs.html", html.data() as *u8, html.size())
-    printf("  -> link-phdrs.html\n")
+    course_writer::write_page("output/link-phdrs.html", &html)
+    println(`  -> link-phdrs.html`)
 
     // Module 3: Roots and Selection
     html = underlayer_content::render_link_keep_gc()
-    fs::write_text_file("output/link-keep-gc.html", html.data() as *u8, html.size())
-    printf("  -> link-keep-gc.html\n")
+    course_writer::write_page("output/link-keep-gc.html", &html)
+    println(`  -> link-keep-gc.html`)
 
     html = underlayer_content::render_link_orphans()
-    fs::write_text_file("output/link-orphans.html", html.data() as *u8, html.size())
-    printf("  -> link-orphans.html\n")
+    course_writer::write_page("output/link-orphans.html", &html)
+    println(`  -> link-orphans.html`)
 
     // Module 4: Static, and Build One
     html = underlayer_content::render_link_static_real()
-    fs::write_text_file("output/link-static-real.html", html.data() as *u8, html.size())
-    printf("  -> link-static-real.html\n")
+    course_writer::write_page("output/link-static-real.html", &html)
+    println(`  -> link-static-real.html`)
 
     html = underlayer_content::render_link_write_script()
-    fs::write_text_file("output/link-write-script.html", html.data() as *u8, html.size())
-    printf("  -> link-write-script.html\n")
+    course_writer::write_page("output/link-write-script.html", &html)
+    println(`  -> link-write-script.html`)
 
-    printf("Done: 10 concepts + landing page\n")
+    println(`Done: 10 concepts + landing page`)
     return 0
 }

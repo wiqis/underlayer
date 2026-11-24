@@ -13,39 +13,39 @@
 // the only kind of check that has ever caught an encoder bug in this
 // collection, including the two it had to be fixed for itself.
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering The x86-64 Data Path pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering The x86-64 Data Path pages...`)
 
     var html = underlayer_content::render_x86simd_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: the vector registers and what the encoding changed
     html = underlayer_content::render_x86_sse()
-    fs::write_text_file("output/x86-sse.html", html.data() as *u8, html.size())
-    printf("  -> x86-sse.html\n")
+    course_writer::write_page("output/x86-sse.html", &html)
+    println(`  -> x86-sse.html`)
 
     html = underlayer_content::render_x86_avx()
-    fs::write_text_file("output/x86-avx.html", html.data() as *u8, html.size())
-    printf("  -> x86-avx.html\n")
+    course_writer::write_page("output/x86-avx.html", &html)
+    println(`  -> x86-avx.html`)
 
     html = underlayer_content::render_x86_avx512()
-    fs::write_text_file("output/x86-avx512.html", html.data() as *u8, html.size())
-    printf("  -> x86-avx512.html\n")
+    course_writer::write_page("output/x86-avx512.html", &html)
+    println(`  -> x86-avx512.html`)
 
     // Module 2: atomics and ordering, and the instructions that imply LOCK
     html = underlayer_content::render_x86_atomics()
-    fs::write_text_file("output/x86-atomics.html", html.data() as *u8, html.size())
-    printf("  -> x86-atomics.html\n")
+    course_writer::write_page("output/x86-atomics.html", &html)
+    println(`  -> x86-atomics.html`)
 
     html = underlayer_content::render_x86_order()
-    fs::write_text_file("output/x86-order.html", html.data() as *u8, html.size())
-    printf("  -> x86-order.html\n")
+    course_writer::write_page("output/x86-order.html", &html)
+    println(`  -> x86-order.html`)
 
     html = underlayer_content::render_x86_bytes()
-    fs::write_text_file("output/x86-bytes.html", html.data() as *u8, html.size())
-    printf("  -> x86-bytes.html\n")
+    course_writer::write_page("output/x86-bytes.html", &html)
+    println(`  -> x86-bytes.html`)
 
-    printf("Done: 6 concepts + landing page\n")
+    println(`Done: 6 concepts + landing page`)
     return 0
 }

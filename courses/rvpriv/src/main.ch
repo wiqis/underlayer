@@ -33,35 +33,35 @@
 //                course and two courses cannot both serve a page from one id.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering The RISC-V Privileged Architecture pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering The RISC-V Privileged Architecture pages...`)
 
     var html = underlayer_content::render_rvpriv_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: the convention -- who may touch what
     html = underlayer_content::render_rv_modes()
-    fs::write_text_file("output/rv-modes.html", html.data() as *u8, html.size())
-    printf("  -> rv-modes.html\n")
+    course_writer::write_page("output/rv-modes.html", &html)
+    println(`  -> rv-modes.html`)
 
     // Module 2: the translation -- what the bits mean
     html = underlayer_content::render_rv_paging()
-    fs::write_text_file("output/rv-paging.html", html.data() as *u8, html.size())
-    printf("  -> rv-paging.html\n")
+    course_writer::write_page("output/rv-paging.html", &html)
+    println(`  -> rv-paging.html`)
 
     html = underlayer_content::render_rv_traps()
-    fs::write_text_file("output/rv-traps.html", html.data() as *u8, html.size())
-    printf("  -> rv-traps.html\n")
+    course_writer::write_page("output/rv-traps.html", &html)
+    println(`  -> rv-traps.html`)
 
     html = underlayer_content::render_rv_boundary()
-    fs::write_text_file("output/rv-boundary.html", html.data() as *u8, html.size())
-    printf("  -> rv-boundary.html\n")
+    course_writer::write_page("output/rv-boundary.html", &html)
+    println(`  -> rv-boundary.html`)
 
-    printf("Done: 4 concepts + landing page\n")
-    printf("NOT ONE INSTRUCTION IN THIS COURSE HAS BEEN RUN.  No exception is\n")
-    printf("taken, no page is walked, no TLB is consulted, no ecall is observed\n")
-    printf("trapping.  Every number is a bit pattern, a count of bit patterns,\n")
-    printf("an arithmetic identity, or a refusal from a real assembler.\n")
+    println(`Done: 4 concepts + landing page`)
+    println(`NOT ONE INSTRUCTION IN THIS COURSE HAS BEEN RUN.  No exception is`)
+    println(`taken, no page is walked, no TLB is consulted, no ecall is observed`)
+    println(`trapping.  Every number is a bit pattern, a count of bit patterns,`)
+    println(`an arithmetic identity, or a refusal from a real assembler.`)
     return 0
 }

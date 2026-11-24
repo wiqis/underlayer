@@ -13,52 +13,52 @@
 // performance counters this process cannot open, and the whole of what a user
 // program can and cannot learn.
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering The x86-64 Machine: Privilege, Memory and Time pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering The x86-64 Machine: Privilege, Memory and Time pages...`)
 
     var html = underlayer_content::render_x86sys_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: the machine's privileged side, as an inventory
     html = underlayer_content::render_x86_syscall()
-    fs::write_text_file("output/x86-syscall.html", html.data() as *u8, html.size())
-    printf("  -> x86-syscall.html\n")
+    course_writer::write_page("output/x86-syscall.html", &html)
+    println(`  -> x86-syscall.html`)
 
     html = underlayer_content::render_x86_exceptions()
-    fs::write_text_file("output/x86-exceptions.html", html.data() as *u8, html.size())
-    printf("  -> x86-exceptions.html\n")
+    course_writer::write_page("output/x86-exceptions.html", &html)
+    println(`  -> x86-exceptions.html`)
 
     html = underlayer_content::render_x86_rings()
-    fs::write_text_file("output/x86-rings.html", html.data() as *u8, html.size())
-    printf("  -> x86-rings.html\n")
+    course_writer::write_page("output/x86-rings.html", &html)
+    println(`  -> x86-rings.html`)
 
     html = underlayer_content::render_x86_cr()
-    fs::write_text_file("output/x86-cr.html", html.data() as *u8, html.size())
-    printf("  -> x86-cr.html\n")
+    course_writer::write_page("output/x86-cr.html", &html)
+    println(`  -> x86-cr.html`)
 
     html = underlayer_content::render_x86_debug()
-    fs::write_text_file("output/x86-debug.html", html.data() as *u8, html.size())
-    printf("  -> x86-debug.html\n")
+    course_writer::write_page("output/x86-debug.html", &html)
+    println(`  -> x86-debug.html`)
 
     // Module 2: the address space, and which bytes of it exist
     html = underlayer_content::render_x86_virtual()
-    fs::write_text_file("output/x86-virtual.html", html.data() as *u8, html.size())
-    printf("  -> x86-virtual.html\n")
+    course_writer::write_page("output/x86-virtual.html", &html)
+    println(`  -> x86-virtual.html`)
 
     html = underlayer_content::render_x86_paging()
-    fs::write_text_file("output/x86-paging.html", html.data() as *u8, html.size())
-    printf("  -> x86-paging.html\n")
+    course_writer::write_page("output/x86-paging.html", &html)
+    println(`  -> x86-paging.html`)
 
     // Module 3: time, and the limit of what a user process can count
     html = underlayer_content::render_x86_pmu()
-    fs::write_text_file("output/x86-pmu.html", html.data() as *u8, html.size())
-    printf("  -> x86-pmu.html\n")
+    course_writer::write_page("output/x86-pmu.html", &html)
+    println(`  -> x86-pmu.html`)
 
     html = underlayer_content::render_x86_boundary()
-    fs::write_text_file("output/x86-boundary.html", html.data() as *u8, html.size())
-    printf("  -> x86-boundary.html\n")
+    course_writer::write_page("output/x86-boundary.html", &html)
+    println(`  -> x86-boundary.html`)
 
-    printf("Done: 9 concepts + landing page\n")
+    println(`Done: 9 concepts + landing page`)
     return 0
 }

@@ -7,45 +7,45 @@
 // decoder.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering Instruction Set Architecture pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering Instruction Set Architecture pages...`)
 
     var html = underlayer_content::render_isa_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: What the Bytes Are
     html = underlayer_content::render_isa_modes()
-    fs::write_text_file("output/isa-modes.html", html.data() as *u8, html.size())
-    printf("  -> isa-modes.html\n")
+    course_writer::write_page("output/isa-modes.html", &html)
+    println(`  -> isa-modes.html`)
 
     html = underlayer_content::render_isa_opcodes()
-    fs::write_text_file("output/isa-opcodes.html", html.data() as *u8, html.size())
-    printf("  -> isa-opcodes.html\n")
+    course_writer::write_page("output/isa-opcodes.html", &html)
+    println(`  -> isa-opcodes.html`)
 
     // Module 2: The Prefix Layers
     html = underlayer_content::render_isa_rex()
-    fs::write_text_file("output/isa-rex.html", html.data() as *u8, html.size())
-    printf("  -> isa-rex.html\n")
+    course_writer::write_page("output/isa-rex.html", &html)
+    println(`  -> isa-rex.html`)
 
     html = underlayer_content::render_isa_modrm()
-    fs::write_text_file("output/isa-modrm.html", html.data() as *u8, html.size())
-    printf("  -> isa-modrm.html\n")
+    course_writer::write_page("output/isa-modrm.html", &html)
+    println(`  -> isa-modrm.html`)
 
     // Module 3: Addressing
     html = underlayer_content::render_isa_sib()
-    fs::write_text_file("output/isa-sib.html", html.data() as *u8, html.size())
-    printf("  -> isa-sib.html\n")
+    course_writer::write_page("output/isa-sib.html", &html)
+    println(`  -> isa-sib.html`)
 
     html = underlayer_content::render_isa_length()
-    fs::write_text_file("output/isa-length.html", html.data() as *u8, html.size())
-    printf("  -> isa-length.html\n")
+    course_writer::write_page("output/isa-length.html", &html)
+    println(`  -> isa-length.html`)
 
     // Module 4: Decode It Yourself
     html = underlayer_content::render_isa_decode()
-    fs::write_text_file("output/isa-decode.html", html.data() as *u8, html.size())
-    printf("  -> isa-decode.html\n")
+    course_writer::write_page("output/isa-decode.html", &html)
+    println(`  -> isa-decode.html`)
 
-    printf("Done: 7 concepts + landing page\n")
+    println(`Done: 7 concepts + landing page`)
     return 0
 }

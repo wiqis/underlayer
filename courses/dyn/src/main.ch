@@ -1,4 +1,4 @@
-// Dynamic Linking and Shared Libraries — build entry point.
+// Dynamic Linking and Shared Libraries â€” build entry point.
 // Renders all 10 concept pages plus the landing page to output/.
 //
 // Concept order: the scope first (it is the central mechanism and nothing
@@ -6,57 +6,57 @@
 // run time, then rebuilding the scope by hand.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering Dynamic Linking pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering Dynamic Linking pages...`)
 
     var html = underlayer_content::render_dyn_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: The Scope
     html = underlayer_content::render_dyn_scope()
-    fs::write_text_file("output/dyn-scope.html", html.data() as *u8, html.size())
-    printf("  -> dyn-scope.html\n")
+    course_writer::write_page("output/dyn-scope.html", &html)
+    println(`  -> dyn-scope.html`)
 
     html = underlayer_content::render_dyn_interpose()
-    fs::write_text_file("output/dyn-interpose.html", html.data() as *u8, html.size())
-    printf("  -> dyn-interpose.html\n")
+    course_writer::write_page("output/dyn-interpose.html", &html)
+    println(`  -> dyn-interpose.html`)
 
     html = underlayer_content::render_dyn_order_runtime()
-    fs::write_text_file("output/dyn-order-runtime.html", html.data() as *u8, html.size())
-    printf("  -> dyn-order-runtime.html\n")
+    course_writer::write_page("output/dyn-order-runtime.html", &html)
+    println(`  -> dyn-order-runtime.html`)
 
     // Module 2: Building a Library
     html = underlayer_content::render_dyn_build_so()
-    fs::write_text_file("output/dyn-build-so.html", html.data() as *u8, html.size())
-    printf("  -> dyn-build-so.html\n")
+    course_writer::write_page("output/dyn-build-so.html", &html)
+    println(`  -> dyn-build-so.html`)
 
     html = underlayer_content::render_dyn_export()
-    fs::write_text_file("output/dyn-export.html", html.data() as *u8, html.size())
-    printf("  -> dyn-export.html\n")
+    course_writer::write_page("output/dyn-export.html", &html)
+    println(`  -> dyn-export.html`)
 
     html = underlayer_content::render_dyn_symbolic()
-    fs::write_text_file("output/dyn-symbolic.html", html.data() as *u8, html.size())
-    printf("  -> dyn-symbolic.html\n")
+    course_writer::write_page("output/dyn-symbolic.html", &html)
+    println(`  -> dyn-symbolic.html`)
 
     // Module 3: Loading at Run Time
     html = underlayer_content::render_dyn_dlopen()
-    fs::write_text_file("output/dyn-dlopen.html", html.data() as *u8, html.size())
-    printf("  -> dyn-dlopen.html\n")
+    course_writer::write_page("output/dyn-dlopen.html", &html)
+    println(`  -> dyn-dlopen.html`)
 
     html = underlayer_content::render_dyn_bind_time()
-    fs::write_text_file("output/dyn-bind-time.html", html.data() as *u8, html.size())
-    printf("  -> dyn-bind-time.html\n")
+    course_writer::write_page("output/dyn-bind-time.html", &html)
+    println(`  -> dyn-bind-time.html`)
 
     html = underlayer_content::render_dyn_tls_block()
-    fs::write_text_file("output/dyn-tls-block.html", html.data() as *u8, html.size())
-    printf("  -> dyn-tls-block.html\n")
+    course_writer::write_page("output/dyn-tls-block.html", &html)
+    println(`  -> dyn-tls-block.html`)
 
     // Module 4: Rebuild It
     html = underlayer_content::render_dyn_resolve()
-    fs::write_text_file("output/dyn-resolve.html", html.data() as *u8, html.size())
-    printf("  -> dyn-resolve.html\n")
+    course_writer::write_page("output/dyn-resolve.html", &html)
+    println(`  -> dyn-resolve.html`)
 
-    printf("Done: 10 concepts + landing page\n")
+    println(`Done: 10 concepts + landing page`)
     return 0
 }

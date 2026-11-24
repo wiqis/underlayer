@@ -14,49 +14,49 @@
 // the harness, because the claim this course refuses to make is part of it.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering Exceptions, Privilege and Mode Changes pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering Exceptions, Privilege and Mode Changes pages...`)
 
     var html = underlayer_content::render_priv_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: The Table and the Numbers
     html = underlayer_content::render_priv_table()
-    fs::write_text_file("output/priv-table.html", html.data() as *u8, html.size())
-    printf("  -> priv-table.html\n")
+    course_writer::write_page("output/priv-table.html", &html)
+    println(`  -> priv-table.html`)
 
     html = underlayer_content::render_priv_vectors()
-    fs::write_text_file("output/priv-vectors.html", html.data() as *u8, html.size())
-    printf("  -> priv-vectors.html\n")
+    course_writer::write_page("output/priv-vectors.html", &html)
+    println(`  -> priv-vectors.html`)
 
     // Module 2: Three Doors
     html = underlayer_content::render_priv_doors()
-    fs::write_text_file("output/priv-doors.html", html.data() as *u8, html.size())
-    printf("  -> priv-doors.html\n")
+    course_writer::write_page("output/priv-doors.html", &html)
+    println(`  -> priv-doors.html`)
 
     html = underlayer_content::render_priv_convention()
-    fs::write_text_file("output/priv-convention.html", html.data() as *u8, html.size())
-    printf("  -> priv-convention.html\n")
+    course_writer::write_page("output/priv-convention.html", &html)
+    println(`  -> priv-convention.html`)
 
     // Module 3: What Mode 3 Is Made Of
     html = underlayer_content::render_priv_canonical()
-    fs::write_text_file("output/priv-canonical.html", html.data() as *u8, html.size())
-    printf("  -> priv-canonical.html\n")
+    course_writer::write_page("output/priv-canonical.html", &html)
+    println(`  -> priv-canonical.html`)
 
     html = underlayer_content::render_priv_errorcode()
-    fs::write_text_file("output/priv-errorcode.html", html.data() as *u8, html.size())
-    printf("  -> priv-errorcode.html\n")
+    course_writer::write_page("output/priv-errorcode.html", &html)
+    println(`  -> priv-errorcode.html`)
 
     html = underlayer_content::render_priv_three()
-    fs::write_text_file("output/priv-three.html", html.data() as *u8, html.size())
-    printf("  -> priv-three.html\n")
+    course_writer::write_page("output/priv-three.html", &html)
+    println(`  -> priv-three.html`)
 
     // Module 4: The Artifact
     html = underlayer_content::render_priv_harness()
-    fs::write_text_file("output/priv-harness.html", html.data() as *u8, html.size())
-    printf("  -> priv-harness.html\n")
+    course_writer::write_page("output/priv-harness.html", &html)
+    println(`  -> priv-harness.html`)
 
-    printf("Done: 8 concepts + landing page\n")
+    println(`Done: 8 concepts + landing page`)
     return 0
 }

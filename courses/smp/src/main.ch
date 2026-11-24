@@ -15,45 +15,45 @@
 // part of the course.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering Multiprocessor Architecture pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering Multiprocessor Architecture pages...`)
 
     var html = underlayer_content::render_smp_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: The Machine You Are Measuring
     html = underlayer_content::render_smp_topology()
-    fs::write_text_file("output/smp-topology.html", html.data() as *u8, html.size())
-    printf("  -> smp-topology.html\n")
+    course_writer::write_page("output/smp-topology.html", &html)
+    println(`  -> smp-topology.html`)
 
     html = underlayer_content::render_smp_sharing()
-    fs::write_text_file("output/smp-sharing.html", html.data() as *u8, html.size())
-    printf("  -> smp-sharing.html\n")
+    course_writer::write_page("output/smp-sharing.html", &html)
+    println(`  -> smp-sharing.html`)
 
     // Module 2: The Instruction That Costs
     html = underlayer_content::render_smp_atomic()
-    fs::write_text_file("output/smp-atomic.html", html.data() as *u8, html.size())
-    printf("  -> smp-atomic.html\n")
+    course_writer::write_page("output/smp-atomic.html", &html)
+    println(`  -> smp-atomic.html`)
 
     html = underlayer_content::render_smp_ordering()
-    fs::write_text_file("output/smp-ordering.html", html.data() as *u8, html.size())
-    printf("  -> smp-ordering.html\n")
+    course_writer::write_page("output/smp-ordering.html", &html)
+    println(`  -> smp-ordering.html`)
 
     // Module 3: Scale, and the Other Architectures
     html = underlayer_content::render_smp_numa()
-    fs::write_text_file("output/smp-numa.html", html.data() as *u8, html.size())
-    printf("  -> smp-numa.html\n")
+    course_writer::write_page("output/smp-numa.html", &html)
+    println(`  -> smp-numa.html`)
 
     html = underlayer_content::render_smp_three()
-    fs::write_text_file("output/smp-three.html", html.data() as *u8, html.size())
-    printf("  -> smp-three.html\n")
+    course_writer::write_page("output/smp-three.html", &html)
+    println(`  -> smp-three.html`)
 
     // Module 4: The Artifact
     html = underlayer_content::render_smp_harness()
-    fs::write_text_file("output/smp-harness.html", html.data() as *u8, html.size())
-    printf("  -> smp-harness.html\n")
+    course_writer::write_page("output/smp-harness.html", &html)
+    println(`  -> smp-harness.html`)
 
-    printf("Done: 8 concepts + landing page\n")
+    println(`Done: 8 concepts + landing page`)
     return 0
 }

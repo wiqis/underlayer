@@ -18,35 +18,35 @@
 // before its 100% means anything.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering AArch64: Encoding From The Ground Up pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering AArch64: Encoding From The Ground Up pages...`)
 
     var html = underlayer_content::render_a64asm_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: The Surface -- what the instructions are
     html = underlayer_content::render_a64_asm()
-    fs::write_text_file("output/a64-asm.html", html.data() as *u8, html.size())
-    printf("  -> a64-asm.html\n")
+    course_writer::write_page("output/a64-asm.html", &html)
+    println(`  -> a64-asm.html`)
 
     html = underlayer_content::render_a64_cond()
-    fs::write_text_file("output/a64-cond.html", html.data() as *u8, html.size())
-    printf("  -> a64-cond.html\n")
+    course_writer::write_page("output/a64-cond.html", &html)
+    println(`  -> a64-cond.html`)
 
     // Module 2: The Encoding -- what the bytes are
     html = underlayer_content::render_a64_encoding()
-    fs::write_text_file("output/a64-encoding.html", html.data() as *u8, html.size())
-    printf("  -> a64-encoding.html\n")
+    course_writer::write_page("output/a64-encoding.html", &html)
+    println(`  -> a64-encoding.html`)
 
     html = underlayer_content::render_a64_immediate()
-    fs::write_text_file("output/a64-immediate.html", html.data() as *u8, html.size())
-    printf("  -> a64-immediate.html\n")
+    course_writer::write_page("output/a64-immediate.html", &html)
+    println(`  -> a64-immediate.html`)
 
     html = underlayer_content::render_a64_verify()
-    fs::write_text_file("output/a64-verify.html", html.data() as *u8, html.size())
-    printf("  -> a64-verify.html\n")
+    course_writer::write_page("output/a64-verify.html", &html)
+    println(`  -> a64-verify.html`)
 
-    printf("Done: 5 concepts + landing page\n")
+    println(`Done: 5 concepts + landing page`)
     return 0
 }

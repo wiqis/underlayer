@@ -1,4 +1,4 @@
-// Relocations, PIC and PIE — build entry point.
+// Relocations, PIC and PIE â€” build entry point.
 // Renders all 9 concept pages plus the landing page to output/.
 //
 // Concept order is the dependency chain: why the vocabulary exists at all,
@@ -6,53 +6,53 @@
 // fails, then building the thing that consumes a relocation.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering Relocations/PIC/PIE pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering Relocations/PIC/PIE pages...`)
 
     var html = underlayer_content::render_reloc_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: The Vocabulary
     html = underlayer_content::render_reloc_arch_contrast()
-    fs::write_text_file("output/reloc-arch-contrast.html", html.data() as *u8, html.size())
-    printf("  -> reloc-arch-contrast.html\n")
+    course_writer::write_page("output/reloc-arch-contrast.html", &html)
+    println(`  -> reloc-arch-contrast.html`)
 
     html = underlayer_content::render_reloc_why_so_many()
-    fs::write_text_file("output/reloc-why-so-many.html", html.data() as *u8, html.size())
-    printf("  -> reloc-why-so-many.html\n")
+    course_writer::write_page("output/reloc-why-so-many.html", &html)
+    println(`  -> reloc-why-so-many.html`)
 
     html = underlayer_content::render_reloc_encoding_limits()
-    fs::write_text_file("output/reloc-encoding-limits.html", html.data() as *u8, html.size())
-    printf("  -> reloc-encoding-limits.html\n")
+    course_writer::write_page("output/reloc-encoding-limits.html", &html)
+    println(`  -> reloc-encoding-limits.html`)
 
     // Module 2: Position Independent Executables
     html = underlayer_content::render_pie_flags()
-    fs::write_text_file("output/pie-flags.html", html.data() as *u8, html.size())
-    printf("  -> pie-flags.html\n")
+    course_writer::write_page("output/pie-flags.html", &html)
+    println(`  -> pie-flags.html`)
 
     html = underlayer_content::render_pie_randomize()
-    fs::write_text_file("output/pie-randomize.html", html.data() as *u8, html.size())
-    printf("  -> pie-randomize.html\n")
+    course_writer::write_page("output/pie-randomize.html", &html)
+    println(`  -> pie-randomize.html`)
 
     html = underlayer_content::render_pie_cost()
-    fs::write_text_file("output/pie-cost.html", html.data() as *u8, html.size())
-    printf("  -> pie-cost.html\n")
+    course_writer::write_page("output/pie-cost.html", &html)
+    println(`  -> pie-cost.html`)
 
     // Module 3: How It Fails
     html = underlayer_content::render_pic_violation()
-    fs::write_text_file("output/pic-violation.html", html.data() as *u8, html.size())
-    printf("  -> pic-violation.html\n")
+    course_writer::write_page("output/pic-violation.html", &html)
+    println(`  -> pic-violation.html`)
 
     html = underlayer_content::render_tls_model()
-    fs::write_text_file("output/tls-model.html", html.data() as *u8, html.size())
-    printf("  -> tls-model.html\n")
+    course_writer::write_page("output/tls-model.html", &html)
+    println(`  -> tls-model.html`)
 
     // Module 4: Applying One
     html = underlayer_content::render_reloc_apply()
-    fs::write_text_file("output/reloc-apply.html", html.data() as *u8, html.size())
-    printf("  -> reloc-apply.html\n")
+    course_writer::write_page("output/reloc-apply.html", &html)
+    println(`  -> reloc-apply.html`)
 
-    printf("Done: 9 concepts + landing page\n")
+    println(`Done: 9 concepts + landing page`)
     return 0
 }

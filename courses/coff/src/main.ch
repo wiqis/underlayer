@@ -2,93 +2,93 @@
 // Renders all concept pages to output/ directory.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering COFF course pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering COFF course pages...`)
 
     // Module 1: The Relocatable Object
     var html = underlayer_content::render_coff_intro()
-    fs::write_text_file("output/coff-intro.html", html.data() as *u8, html.size())
-    printf("  -> coff-intro.html\n")
+    course_writer::write_page("output/coff-intro.html", &html)
+    println(`  -> coff-intro.html`)
 
     html = underlayer_content::render_coff_file_header()
-    fs::write_text_file("output/coff-file-header.html", html.data() as *u8, html.size())
-    printf("  -> coff-file-header.html\n")
+    course_writer::write_page("output/coff-file-header.html", &html)
+    println(`  -> coff-file-header.html`)
 
     html = underlayer_content::render_coff_section_table()
-    fs::write_text_file("output/coff-section-table.html", html.data() as *u8, html.size())
-    printf("  -> coff-section-table.html\n")
+    course_writer::write_page("output/coff-section-table.html", &html)
+    println(`  -> coff-section-table.html`)
 
     html = underlayer_content::render_coff_characteristics()
-    fs::write_text_file("output/coff-characteristics.html", html.data() as *u8, html.size())
-    printf("  -> coff-characteristics.html\n")
+    course_writer::write_page("output/coff-characteristics.html", &html)
+    println(`  -> coff-characteristics.html`)
 
     // Module 2: Symbols and Relocations
     html = underlayer_content::render_coff_string_table()
-    fs::write_text_file("output/coff-string-table.html", html.data() as *u8, html.size())
-    printf("  -> coff-string-table.html\n")
+    course_writer::write_page("output/coff-string-table.html", &html)
+    println(`  -> coff-string-table.html`)
 
     html = underlayer_content::render_coff_symbol_table()
-    fs::write_text_file("output/coff-symbol-table.html", html.data() as *u8, html.size())
-    printf("  -> coff-symbol-table.html\n")
+    course_writer::write_page("output/coff-symbol-table.html", &html)
+    println(`  -> coff-symbol-table.html`)
 
     html = underlayer_content::render_coff_relocations()
-    fs::write_text_file("output/coff-relocations.html", html.data() as *u8, html.size())
-    printf("  -> coff-relocations.html\n")
+    course_writer::write_page("output/coff-relocations.html", &html)
+    println(`  -> coff-relocations.html`)
 
     html = underlayer_content::render_coff_comdat()
-    fs::write_text_file("output/coff-comdat.html", html.data() as *u8, html.size())
-    printf("  -> coff-comdat.html\n")
+    course_writer::write_page("output/coff-comdat.html", &html)
+    println(`  -> coff-comdat.html`)
 
     // Module 3: Containers and Variants
     html = underlayer_content::render_coff_bigobj()
-    fs::write_text_file("output/coff-bigobj.html", html.data() as *u8, html.size())
-    printf("  -> coff-bigobj.html\n")
+    course_writer::write_page("output/coff-bigobj.html", &html)
+    println(`  -> coff-bigobj.html`)
 
     html = underlayer_content::render_coff_archives()
-    fs::write_text_file("output/coff-archives.html", html.data() as *u8, html.size())
-    printf("  -> coff-archives.html\n")
+    course_writer::write_page("output/coff-archives.html", &html)
+    println(`  -> coff-archives.html`)
 
     html = underlayer_content::render_coff_line_numbers()
-    fs::write_text_file("output/coff-line-numbers.html", html.data() as *u8, html.size())
-    printf("  -> coff-line-numbers.html\n")
+    course_writer::write_page("output/coff-line-numbers.html", &html)
+    println(`  -> coff-line-numbers.html`)
 
 
     // Module 4: The Link
     html = underlayer_content::render_coff_linking()
-    fs::write_text_file("output/coff-linking.html", html.data() as *u8, html.size())
-    printf("  -> coff-linking.html\n")
+    course_writer::write_page("output/coff-linking.html", &html)
+    println(`  -> coff-linking.html`)
 
     html = underlayer_content::render_coff_map_files()
-    fs::write_text_file("output/coff-map-files.html", html.data() as *u8, html.size())
-    printf("  -> coff-map-files.html\n")
+    course_writer::write_page("output/coff-map-files.html", &html)
+    println(`  -> coff-map-files.html`)
 
     html = underlayer_content::render_coff_comdat_linking()
-    fs::write_text_file("output/coff-comdat-linking.html", html.data() as *u8, html.size())
-    printf("  -> coff-comdat-linking.html\n")
+    course_writer::write_page("output/coff-comdat-linking.html", &html)
+    println(`  -> coff-comdat-linking.html`)
 
 
     // Module 5: Other Targets and Other Sections
     html = underlayer_content::render_coff_arm64()
-    fs::write_text_file("output/coff-arm64.html", html.data() as *u8, html.size())
-    printf("  -> coff-arm64.html\n")
+    course_writer::write_page("output/coff-arm64.html", &html)
+    println(`  -> coff-arm64.html`)
 
     html = underlayer_content::render_coff_tls()
-    fs::write_text_file("output/coff-tls.html", html.data() as *u8, html.size())
-    printf("  -> coff-tls.html\n")
+    course_writer::write_page("output/coff-tls.html", &html)
+    println(`  -> coff-tls.html`)
 
     html = underlayer_content::render_coff_weak_externals()
-    fs::write_text_file("output/coff-weak-externals.html", html.data() as *u8, html.size())
-    printf("  -> coff-weak-externals.html\n")
+    course_writer::write_page("output/coff-weak-externals.html", &html)
+    println(`  -> coff-weak-externals.html`)
 
     html = underlayer_content::render_coff_drectve()
-    fs::write_text_file("output/coff-drectve.html", html.data() as *u8, html.size())
-    printf("  -> coff-drectve.html\n")
+    course_writer::write_page("output/coff-drectve.html", &html)
+    println(`  -> coff-drectve.html`)
 
     // Landing page
     html = underlayer_content::render_coff_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
-    printf("COFF course: 18 concepts + landing page generated in output/\n")
+    println(`COFF course: 18 concepts + landing page generated in output/`)
     return 0
 }

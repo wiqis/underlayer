@@ -14,35 +14,35 @@
 // part that says which of the other four you are allowed to believe.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering x86-64 Assembly and Encoding pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering x86-64 Assembly and Encoding pages...`)
 
     var html = underlayer_content::render_x86asm_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: The Surface -- what the instructions are
     html = underlayer_content::render_x86_asm()
-    fs::write_text_file("output/x86-asm.html", html.data() as *u8, html.size())
-    printf("  -> x86-asm.html\n")
+    course_writer::write_page("output/x86-asm.html", &html)
+    println(`  -> x86-asm.html`)
 
     html = underlayer_content::render_x86_integers()
-    fs::write_text_file("output/x86-integers.html", html.data() as *u8, html.size())
-    printf("  -> x86-integers.html\n")
+    course_writer::write_page("output/x86-integers.html", &html)
+    println(`  -> x86-integers.html`)
 
     html = underlayer_content::render_x86_flags()
-    fs::write_text_file("output/x86-flags.html", html.data() as *u8, html.size())
-    printf("  -> x86-flags.html\n")
+    course_writer::write_page("output/x86-flags.html", &html)
+    println(`  -> x86-flags.html`)
 
     // Module 2: The Encoding -- what the bytes are
     html = underlayer_content::render_x86_vex()
-    fs::write_text_file("output/x86-vex.html", html.data() as *u8, html.size())
-    printf("  -> x86-vex.html\n")
+    course_writer::write_page("output/x86-vex.html", &html)
+    println(`  -> x86-vex.html`)
 
     html = underlayer_content::render_x86_map()
-    fs::write_text_file("output/x86-map.html", html.data() as *u8, html.size())
-    printf("  -> x86-map.html\n")
+    course_writer::write_page("output/x86-map.html", &html)
+    println(`  -> x86-map.html`)
 
-    printf("Done: 5 concepts + landing page\n")
+    println(`Done: 5 concepts + landing page`)
     return 0
 }

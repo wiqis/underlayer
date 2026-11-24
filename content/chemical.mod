@@ -4,6 +4,8 @@ source "src"
 
 import std
 import cstd
+import fs
+import path
 import page
 import html_cbi
 import css_cbi

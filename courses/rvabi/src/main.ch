@@ -30,35 +30,34 @@
 //                      explicitly not a speedup.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering RISC-V: The ABI, and the Register That Isn't There pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering RISC-V: The ABI, and the Register That Isn't There pages...`)
 
     var html = underlayer_content::render_rvabi_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: the contract -- what the two compilers agreed on
     html = underlayer_content::render_rv_calling()
-    fs::write_text_file("output/rv-calling.html", html.data() as *u8, html.size())
-    printf("  -> rv-calling.html\n")
+    course_writer::write_page("output/rv-calling.html", &html)
+    println(`  -> rv-calling.html`)
 
     // Module 2: the absence -- what is missing, and what that buys
     html = underlayer_content::render_rv_noflags()
-    fs::write_text_file("output/rv-noflags.html", html.data() as *u8, html.size())
-    printf("  -> rv-noflags.html\n")
+    course_writer::write_page("output/rv-noflags.html", &html)
+    println(`  -> rv-noflags.html`)
 
     html = underlayer_content::render_rv_registers()
-    fs::write_text_file("output/rv-registers.html", html.data() as *u8, html.size())
-    printf("  -> rv-registers.html\n")
+    course_writer::write_page("output/rv-registers.html", &html)
+    println(`  -> rv-registers.html`)
 
     html = underlayer_content::render_rv_compressed_cost()
-    fs::write_text_file("output/rv-compressed-cost.html", html.data() as *u8,
-                        html.size())
-    printf("  -> rv-compressed-cost.html\n")
+    course_writer::write_page("output/rv-compressed-cost.html", &html)
+    println(`  -> rv-compressed-cost.html`)
 
-    printf("Done: 4 concepts + landing page\n")
-    printf("NOTHING IN THIS COURSE WAS EXECUTED.  Every number is a bit\n")
-    printf("pattern, a count of bit patterns, an arithmetic identity, or a\n")
-    printf("refusal from a real assembler.\n")
+    println(`Done: 4 concepts + landing page`)
+    println(`NOTHING IN THIS COURSE WAS EXECUTED.  Every number is a bit`)
+    println(`pattern, a count of bit patterns, an arithmetic identity, or a`)
+    println(`refusal from a real assembler.`)
     return 0
 }

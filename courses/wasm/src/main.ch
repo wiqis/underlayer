@@ -2,71 +2,71 @@
 // Renders all concept pages to output/ directory.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering WebAssembly course pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering WebAssembly course pages...`)
 
     // Module 1: The Container
     var html = underlayer_content::render_wasm_intro()
-    fs::write_text_file("output/wasm-intro.html", html.data() as *u8, html.size())
-    printf("  -> wasm-intro.html\n")
+    course_writer::write_page("output/wasm-intro.html", &html)
+    println(`  -> wasm-intro.html`)
 
     html = underlayer_content::render_wasm_header()
-    fs::write_text_file("output/wasm-header.html", html.data() as *u8, html.size())
-    printf("  -> wasm-header.html\n")
+    course_writer::write_page("output/wasm-header.html", &html)
+    println(`  -> wasm-header.html`)
 
     html = underlayer_content::render_wasm_sections()
-    fs::write_text_file("output/wasm-sections.html", html.data() as *u8, html.size())
-    printf("  -> wasm-sections.html\n")
+    course_writer::write_page("output/wasm-sections.html", &html)
+    println(`  -> wasm-sections.html`)
 
     html = underlayer_content::render_wasm_leb128()
-    fs::write_text_file("output/wasm-leb128.html", html.data() as *u8, html.size())
-    printf("  -> wasm-leb128.html\n")
+    course_writer::write_page("output/wasm-leb128.html", &html)
+    println(`  -> wasm-leb128.html`)
 
     // Module 2: Declarations
     html = underlayer_content::render_wasm_types()
-    fs::write_text_file("output/wasm-types.html", html.data() as *u8, html.size())
-    printf("  -> wasm-types.html\n")
+    course_writer::write_page("output/wasm-types.html", &html)
+    println(`  -> wasm-types.html`)
 
     html = underlayer_content::render_wasm_imports()
-    fs::write_text_file("output/wasm-imports.html", html.data() as *u8, html.size())
-    printf("  -> wasm-imports.html\n")
+    course_writer::write_page("output/wasm-imports.html", &html)
+    println(`  -> wasm-imports.html`)
 
     html = underlayer_content::render_wasm_tables_memories()
-    fs::write_text_file("output/wasm-tables-memories.html", html.data() as *u8, html.size())
-    printf("  -> wasm-tables-memories.html\n")
+    course_writer::write_page("output/wasm-tables-memories.html", &html)
+    println(`  -> wasm-tables-memories.html`)
 
     html = underlayer_content::render_wasm_globals()
-    fs::write_text_file("output/wasm-globals.html", html.data() as *u8, html.size())
-    printf("  -> wasm-globals.html\n")
+    course_writer::write_page("output/wasm-globals.html", &html)
+    println(`  -> wasm-globals.html`)
 
     // Module 3: The Body
     html = underlayer_content::render_wasm_code()
-    fs::write_text_file("output/wasm-code.html", html.data() as *u8, html.size())
-    printf("  -> wasm-code.html\n")
+    course_writer::write_page("output/wasm-code.html", &html)
+    println(`  -> wasm-code.html`)
 
     html = underlayer_content::render_wasm_instructions()
-    fs::write_text_file("output/wasm-instructions.html", html.data() as *u8, html.size())
-    printf("  -> wasm-instructions.html\n")
+    course_writer::write_page("output/wasm-instructions.html", &html)
+    println(`  -> wasm-instructions.html`)
 
     // Module 4: Data Placement
     html = underlayer_content::render_wasm_elements()
-    fs::write_text_file("output/wasm-elements.html", html.data() as *u8, html.size())
-    printf("  -> wasm-elements.html\n")
+    course_writer::write_page("output/wasm-elements.html", &html)
+    println(`  -> wasm-elements.html`)
 
     html = underlayer_content::render_wasm_data()
-    fs::write_text_file("output/wasm-data.html", html.data() as *u8, html.size())
-    printf("  -> wasm-data.html\n")
+    course_writer::write_page("output/wasm-data.html", &html)
+    println(`  -> wasm-data.html`)
 
     // Module 5: Objects and Tooling
     html = underlayer_content::render_wasm_objects()
-    fs::write_text_file("output/wasm-objects.html", html.data() as *u8, html.size())
-    printf("  -> wasm-objects.html\n")
+    course_writer::write_page("output/wasm-objects.html", &html)
+    println(`  -> wasm-objects.html`)
 
     // Landing page
     html = underlayer_content::render_wasm_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
-    printf("WebAssembly course: 13 concepts + landing page generated in output/\n")
+    println(`WebAssembly course: 13 concepts + landing page generated in output/`)
     return 0
 }

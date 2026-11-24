@@ -1,4 +1,4 @@
-// Executable Images and OS Loading — build entry point.
+// Executable Images and OS Loading â€” build entry point.
 // Renders all 6 concept pages plus the landing page to output/.
 //
 // Concept order: the handoff first (the auxv is the mechanism and nothing
@@ -6,41 +6,41 @@
 // then the address layout the kernel chose, then rebuild the reader.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering Executable Images pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering Executable Images pages...`)
 
     var html = underlayer_content::render_img_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: The Handoff
     html = underlayer_content::render_img_auxv()
-    fs::write_text_file("output/img-auxv.html", html.data() as *u8, html.size())
-    printf("  -> img-auxv.html\n")
+    course_writer::write_page("output/img-auxv.html", &html)
+    println(`  -> img-auxv.html`)
 
     html = underlayer_content::render_img_stack()
-    fs::write_text_file("output/img-stack.html", html.data() as *u8, html.size())
-    printf("  -> img-stack.html\n")
+    course_writer::write_page("output/img-stack.html", &html)
+    println(`  -> img-stack.html`)
 
     // Module 2: Reading the Values
     html = underlayer_content::render_img_entries()
-    fs::write_text_file("output/img-entries.html", html.data() as *u8, html.size())
-    printf("  -> img-entries.html\n")
+    course_writer::write_page("output/img-entries.html", &html)
+    println(`  -> img-entries.html`)
 
     html = underlayer_content::render_img_vdso()
-    fs::write_text_file("output/img-vdso.html", html.data() as *u8, html.size())
-    printf("  -> img-vdso.html\n")
+    course_writer::write_page("output/img-vdso.html", &html)
+    println(`  -> img-vdso.html`)
 
     // Module 3: The Layout
     html = underlayer_content::render_img_place()
-    fs::write_text_file("output/img-place.html", html.data() as *u8, html.size())
-    printf("  -> img-place.html\n")
+    course_writer::write_page("output/img-place.html", &html)
+    println(`  -> img-place.html`)
 
     // Module 4: Rebuild It
     html = underlayer_content::render_img_walk()
-    fs::write_text_file("output/img-walk.html", html.data() as *u8, html.size())
-    printf("  -> img-walk.html\n")
+    course_writer::write_page("output/img-walk.html", &html)
+    println(`  -> img-walk.html`)
 
-    printf("Done: 6 concepts + landing page\n")
+    println(`Done: 6 concepts + landing page`)
     return 0
 }

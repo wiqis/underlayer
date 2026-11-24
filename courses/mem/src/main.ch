@@ -1,4 +1,4 @@
-// The Memory Hierarchy — build entry point.
+// The Memory Hierarchy â€” build entry point.
 // Renders all 8 concept pages plus the landing page to output/.
 //
 // Concept order: the instrument first, because every number in this course is
@@ -12,49 +12,49 @@
 // make is part of the course.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering The Memory Hierarchy pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering The Memory Hierarchy pages...`)
 
     var html = underlayer_content::render_mem_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: The Instrument
     html = underlayer_content::render_mem_instrument()
-    fs::write_text_file("output/mem-instrument.html", html.data() as *u8, html.size())
-    printf("  -> mem-instrument.html\n")
+    course_writer::write_page("output/mem-instrument.html", &html)
+    println(`  -> mem-instrument.html`)
 
     html = underlayer_content::render_mem_latency()
-    fs::write_text_file("output/mem-latency.html", html.data() as *u8, html.size())
-    printf("  -> mem-latency.html\n")
+    course_writer::write_page("output/mem-latency.html", &html)
+    println(`  -> mem-latency.html`)
 
     // Module 2: The Hierarchy
     html = underlayer_content::render_mem_hierarchy()
-    fs::write_text_file("output/mem-hierarchy.html", html.data() as *u8, html.size())
-    printf("  -> mem-hierarchy.html\n")
+    course_writer::write_page("output/mem-hierarchy.html", &html)
+    println(`  -> mem-hierarchy.html`)
 
     html = underlayer_content::render_mem_associativity()
-    fs::write_text_file("output/mem-associativity.html", html.data() as *u8, html.size())
-    printf("  -> mem-associativity.html\n")
+    course_writer::write_page("output/mem-associativity.html", &html)
+    println(`  -> mem-associativity.html`)
 
     // Module 3: What a Page and a Store Cost
     html = underlayer_content::render_mem_translation()
-    fs::write_text_file("output/mem-translation.html", html.data() as *u8, html.size())
-    printf("  -> mem-translation.html\n")
+    course_writer::write_page("output/mem-translation.html", &html)
+    println(`  -> mem-translation.html`)
 
     html = underlayer_content::render_mem_writes()
-    fs::write_text_file("output/mem-writes.html", html.data() as *u8, html.size())
-    printf("  -> mem-writes.html\n")
+    course_writer::write_page("output/mem-writes.html", &html)
+    println(`  -> mem-writes.html`)
 
     // Module 4: Sharing, and Verification
     html = underlayer_content::render_mem_sharing()
-    fs::write_text_file("output/mem-sharing.html", html.data() as *u8, html.size())
-    printf("  -> mem-sharing.html\n")
+    course_writer::write_page("output/mem-sharing.html", &html)
+    println(`  -> mem-sharing.html`)
 
     html = underlayer_content::render_mem_verify()
-    fs::write_text_file("output/mem-verify.html", html.data() as *u8, html.size())
-    printf("  -> mem-verify.html\n")
+    course_writer::write_page("output/mem-verify.html", &html)
+    println(`  -> mem-verify.html`)
 
-    printf("Done: 8 concepts + landing page\n")
+    println(`Done: 8 concepts + landing page`)
     return 0
 }

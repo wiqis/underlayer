@@ -2,113 +2,113 @@
 // Renders all concept pages to output/ directory.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering DWARF course pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering DWARF course pages...`)
 
     // Module 1: Why Debug Info Exists
     var html = underlayer_content::render_dwarf_intro()
-    fs::write_text_file("output/dwarf-intro.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-intro.html\n")
+    course_writer::write_page("output/dwarf-intro.html", &html)
+    println(`  -> dwarf-intro.html`)
 
     html = underlayer_content::render_dwarf_sections()
-    fs::write_text_file("output/dwarf-sections.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-sections.html\n")
+    course_writer::write_page("output/dwarf-sections.html", &html)
+    println(`  -> dwarf-sections.html`)
 
     html = underlayer_content::render_dwarf_versions()
-    fs::write_text_file("output/dwarf-versions.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-versions.html\n")
+    course_writer::write_page("output/dwarf-versions.html", &html)
+    println(`  -> dwarf-versions.html`)
 
     // Module 2: The Line Number Program
     html = underlayer_content::render_dwarf_line_header()
-    fs::write_text_file("output/dwarf-line-header.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-line-header.html\n")
+    course_writer::write_page("output/dwarf-line-header.html", &html)
+    println(`  -> dwarf-line-header.html`)
 
     html = underlayer_content::render_dwarf_file_tables()
-    fs::write_text_file("output/dwarf-file-tables.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-file-tables.html\n")
+    course_writer::write_page("output/dwarf-file-tables.html", &html)
+    println(`  -> dwarf-file-tables.html`)
 
     html = underlayer_content::render_dwarf_standard_opcodes()
-    fs::write_text_file("output/dwarf-standard-opcodes.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-standard-opcodes.html\n")
+    course_writer::write_page("output/dwarf-standard-opcodes.html", &html)
+    println(`  -> dwarf-standard-opcodes.html`)
 
     html = underlayer_content::render_dwarf_special_opcodes()
-    fs::write_text_file("output/dwarf-special-opcodes.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-special-opcodes.html\n")
+    course_writer::write_page("output/dwarf-special-opcodes.html", &html)
+    println(`  -> dwarf-special-opcodes.html`)
 
     html = underlayer_content::render_dwarf_address_to_line()
-    fs::write_text_file("output/dwarf-address-to-line.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-address-to-line.html\n")
+    course_writer::write_page("output/dwarf-address-to-line.html", &html)
+    println(`  -> dwarf-address-to-line.html`)
 
     // Module 3: DIEs, Types, Scopes, Locations and Frames
     html = underlayer_content::render_dwarf_dies()
-    fs::write_text_file("output/dwarf-dies.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-dies.html\n")
+    course_writer::write_page("output/dwarf-dies.html", &html)
+    println(`  -> dwarf-dies.html`)
 
     html = underlayer_content::render_dwarf_types()
-    fs::write_text_file("output/dwarf-types.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-types.html\n")
+    course_writer::write_page("output/dwarf-types.html", &html)
+    println(`  -> dwarf-types.html`)
 
     html = underlayer_content::render_dwarf_scopes()
-    fs::write_text_file("output/dwarf-scopes.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-scopes.html\n")
+    course_writer::write_page("output/dwarf-scopes.html", &html)
+    println(`  -> dwarf-scopes.html`)
 
     html = underlayer_content::render_dwarf_locations()
-    fs::write_text_file("output/dwarf-locations.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-locations.html\n")
+    course_writer::write_page("output/dwarf-locations.html", &html)
+    println(`  -> dwarf-locations.html`)
 
     html = underlayer_content::render_dwarf_frames()
-    fs::write_text_file("output/dwarf-frames.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-frames.html\n")
+    course_writer::write_page("output/dwarf-frames.html", &html)
+    println(`  -> dwarf-frames.html`)
 
     html = underlayer_content::render_dwarf_split()
-    fs::write_text_file("output/dwarf-split.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-split.html\n")
+    course_writer::write_page("output/dwarf-split.html", &html)
+    println(`  -> dwarf-split.html`)
 
     html = underlayer_content::render_dwarf_lookup()
-    fs::write_text_file("output/dwarf-lookup.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-lookup.html\n")
+    course_writer::write_page("output/dwarf-lookup.html", &html)
+    println(`  -> dwarf-lookup.html`)
 
 
     // Module 4: Location Lists, Portability and Packages
     html = underlayer_content::render_dwarf_loclists()
-    fs::write_text_file("output/dwarf-loclists.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-loclists.html\n")
+    course_writer::write_page("output/dwarf-loclists.html", &html)
+    println(`  -> dwarf-loclists.html`)
 
     html = underlayer_content::render_dwarf_rnglists()
-    fs::write_text_file("output/dwarf-rnglists.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-rnglists.html\n")
+    course_writer::write_page("output/dwarf-rnglists.html", &html)
+    println(`  -> dwarf-rnglists.html`)
 
     html = underlayer_content::render_dwarf_portability()
-    fs::write_text_file("output/dwarf-portability.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-portability.html\n")
+    course_writer::write_page("output/dwarf-portability.html", &html)
+    println(`  -> dwarf-portability.html`)
 
     html = underlayer_content::render_dwarf_packages()
-    fs::write_text_file("output/dwarf-packages.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-packages.html\n")
+    course_writer::write_page("output/dwarf-packages.html", &html)
+    println(`  -> dwarf-packages.html`)
 
 
     // Module 5: The Format on Other Inputs
     html = underlayer_content::render_dwarf_v4()
-    fs::write_text_file("output/dwarf-v4.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-v4.html\n")
+    course_writer::write_page("output/dwarf-v4.html", &html)
+    println(`  -> dwarf-v4.html`)
 
     html = underlayer_content::render_dwarf_type_units()
-    fs::write_text_file("output/dwarf-type-units.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-type-units.html\n")
+    course_writer::write_page("output/dwarf-type-units.html", &html)
+    println(`  -> dwarf-type-units.html`)
 
     html = underlayer_content::render_dwarf_call_sites()
-    fs::write_text_file("output/dwarf-call-sites.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-call-sites.html\n")
+    course_writer::write_page("output/dwarf-call-sites.html", &html)
+    println(`  -> dwarf-call-sites.html`)
 
     html = underlayer_content::render_dwarf_frame()
-    fs::write_text_file("output/dwarf-frame.html", html.data() as *u8, html.size())
-    printf("  -> dwarf-frame.html\n")
+    course_writer::write_page("output/dwarf-frame.html", &html)
+    println(`  -> dwarf-frame.html`)
 
     // Landing page
     html = underlayer_content::render_dwarf_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
-    printf("DWARF course: 23 concepts + landing page generated in output/\n")
+    println(`DWARF course: 23 concepts + landing page generated in output/`)
     return 0
 }

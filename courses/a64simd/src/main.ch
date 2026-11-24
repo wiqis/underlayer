@@ -40,36 +40,36 @@
 //    anything.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering The AArch64 Data Path: NEON, Atomics and Ordering pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering The AArch64 Data Path: NEON, Atomics and Ordering pages...`)
 
     var html = underlayer_content::render_a64simd_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: neon -- the vector register file and the space it shares
     html = underlayer_content::render_a64_neon()
-    fs::write_text_file("output/a64-neon.html", html.data() as *u8, html.size())
-    printf("  -> a64-neon.html\n")
+    course_writer::write_page("output/a64-neon.html", &html)
+    println(`  -> a64-neon.html`)
 
     html = underlayer_content::render_a64_neonspace()
-    fs::write_text_file("output/a64-neonspace.html", html.data() as *u8, html.size())
-    printf("  -> a64-neonspace.html\n")
+    course_writer::write_page("output/a64-neonspace.html", &html)
+    println(`  -> a64-neonspace.html`)
 
     // Module 2: atomic -- the atomics, the ordering, and the cross-check
     html = underlayer_content::render_a64_atomic()
-    fs::write_text_file("output/a64-atomic.html", html.data() as *u8, html.size())
-    printf("  -> a64-atomic.html\n")
+    course_writer::write_page("output/a64-atomic.html", &html)
+    println(`  -> a64-atomic.html`)
 
     html = underlayer_content::render_a64_order()
-    fs::write_text_file("output/a64-order.html", html.data() as *u8, html.size())
-    printf("  -> a64-order.html\n")
+    course_writer::write_page("output/a64-order.html", &html)
+    println(`  -> a64-order.html`)
 
     // The artifact, and the concept that makes the other four trustworthy.
     html = underlayer_content::render_a64_dataflow()
-    fs::write_text_file("output/a64-dataflow.html", html.data() as *u8, html.size())
-    printf("  -> a64-dataflow.html\n")
+    course_writer::write_page("output/a64-dataflow.html", &html)
+    println(`  -> a64-dataflow.html`)
 
-    printf("Done: 5 concepts + landing page\n")
+    println(`Done: 5 concepts + landing page`)
     return 0
 }

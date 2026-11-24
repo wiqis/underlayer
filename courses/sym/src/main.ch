@@ -1,4 +1,4 @@
-// Symbol Resolution and Symbol Tables — build entry point.
+// Symbol Resolution and Symbol Tables â€” build entry point.
 // Renders all 12 concept pages plus the landing page to output/.
 //
 // Concept order is the dependency chain: what a symbol is, then how a linker
@@ -6,65 +6,65 @@
 // the two special cases (versions, and symbols the linker invents).
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering Symbol Resolution pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering Symbol Resolution pages...`)
 
     var html = underlayer_content::render_sym_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: What a Symbol Is
     html = underlayer_content::render_sym_intro()
-    fs::write_text_file("output/sym-intro.html", html.data() as *u8, html.size())
-    printf("  -> sym-intro.html\n")
+    course_writer::write_page("output/sym-intro.html", &html)
+    println(`  -> sym-intro.html`)
 
     html = underlayer_content::render_sym_binding()
-    fs::write_text_file("output/sym-binding.html", html.data() as *u8, html.size())
-    printf("  -> sym-binding.html\n")
+    course_writer::write_page("output/sym-binding.html", &html)
+    println(`  -> sym-binding.html`)
 
     html = underlayer_content::render_sym_visibility()
-    fs::write_text_file("output/sym-visibility.html", html.data() as *u8, html.size())
-    printf("  -> sym-visibility.html\n")
+    course_writer::write_page("output/sym-visibility.html", &html)
+    println(`  -> sym-visibility.html`)
 
     // Module 2: The Resolution Algorithm
     html = underlayer_content::render_sym_algorithm()
-    fs::write_text_file("output/sym-algorithm.html", html.data() as *u8, html.size())
-    printf("  -> sym-algorithm.html\n")
+    course_writer::write_page("output/sym-algorithm.html", &html)
+    println(`  -> sym-algorithm.html`)
 
     html = underlayer_content::render_sym_order()
-    fs::write_text_file("output/sym-order.html", html.data() as *u8, html.size())
-    printf("  -> sym-order.html\n")
+    course_writer::write_page("output/sym-order.html", &html)
+    println(`  -> sym-order.html`)
 
     html = underlayer_content::render_sym_duplicate()
-    fs::write_text_file("output/sym-duplicate.html", html.data() as *u8, html.size())
-    printf("  -> sym-duplicate.html\n")
+    course_writer::write_page("output/sym-duplicate.html", &html)
+    println(`  -> sym-duplicate.html`)
 
     // Module 3: Resolution at Runtime
     html = underlayer_content::render_sym_hash()
-    fs::write_text_file("output/sym-hash.html", html.data() as *u8, html.size())
-    printf("  -> sym-hash.html\n")
+    course_writer::write_page("output/sym-hash.html", &html)
+    println(`  -> sym-hash.html`)
 
     html = underlayer_content::render_sym_plt()
-    fs::write_text_file("output/sym-plt.html", html.data() as *u8, html.size())
-    printf("  -> sym-plt.html\n")
+    course_writer::write_page("output/sym-plt.html", &html)
+    println(`  -> sym-plt.html`)
 
     html = underlayer_content::render_sym_binding_time()
-    fs::write_text_file("output/sym-binding-time.html", html.data() as *u8, html.size())
-    printf("  -> sym-binding-time.html\n")
+    course_writer::write_page("output/sym-binding-time.html", &html)
+    println(`  -> sym-binding-time.html`)
 
     html = underlayer_content::render_sym_copy_reloc()
-    fs::write_text_file("output/sym-copy-reloc.html", html.data() as *u8, html.size())
-    printf("  -> sym-copy-reloc.html\n")
+    course_writer::write_page("output/sym-copy-reloc.html", &html)
+    println(`  -> sym-copy-reloc.html`)
 
     // Module 4: Versions and Invented Symbols
     html = underlayer_content::render_sym_version()
-    fs::write_text_file("output/sym-version.html", html.data() as *u8, html.size())
-    printf("  -> sym-version.html\n")
+    course_writer::write_page("output/sym-version.html", &html)
+    println(`  -> sym-version.html`)
 
     html = underlayer_content::render_sym_linker_defined()
-    fs::write_text_file("output/sym-linker-defined.html", html.data() as *u8, html.size())
-    printf("  -> sym-linker-defined.html\n")
+    course_writer::write_page("output/sym-linker-defined.html", &html)
+    println(`  -> sym-linker-defined.html`)
 
-    printf("Done: 12 concepts + landing page\n")
+    println(`Done: 12 concepts + landing page`)
     return 0
 }

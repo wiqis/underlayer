@@ -40,37 +40,37 @@
 //                measured/quoted boundary with eighteen retractions.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering RISC-V Atomics and the Vector Extension pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering RISC-V Atomics and the Vector Extension pages...`)
 
     var html = underlayer_content::render_rvat_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: atomic -- the zero, the encoding, and the fence
     html = underlayer_content::render_rv_amo()
-    fs::write_text_file("output/rv-amo.html", html.data() as *u8, html.size())
-    printf("  -> rv-amo.html\n")
+    course_writer::write_page("output/rv-amo.html", &html)
+    println(`  -> rv-amo.html`)
 
     html = underlayer_content::render_rv_fence()
-    fs::write_text_file("output/rv-fence.html", html.data() as *u8, html.size())
-    printf("  -> rv-fence.html\n")
+    course_writer::write_page("output/rv-fence.html", &html)
+    println(`  -> rv-fence.html`)
 
     // Module 2: vector -- the configuration instruction and the data path
     html = underlayer_content::render_rv_vector()
-    fs::write_text_file("output/rv-vector.html", html.data() as *u8, html.size())
-    printf("  -> rv-vector.html\n")
+    course_writer::write_page("output/rv-vector.html", &html)
+    println(`  -> rv-vector.html`)
 
     html = underlayer_content::render_rv_dataflow()
-    fs::write_text_file("output/rv-dataflow.html", html.data() as *u8, html.size())
-    printf("  -> rv-dataflow.html\n")
+    course_writer::write_page("output/rv-dataflow.html", &html)
+    println(`  -> rv-dataflow.html`)
 
-    printf("Done: 4 concepts + landing page\n")
-    printf("NOTHING IN THIS COURSE IS EVER EXECUTED.  No reservation is ever\n")
-    printf("HELD, no AMO is ever observed to be atomic, no fence is ever\n")
-    printf("observed to order anything, and no vector instruction is ever run.\n")
-    printf("There are NO TIMINGS and NO SPEEDUPS: every figure is a bit\n")
-    printf("pattern, a count of bit patterns, an arithmetic identity, or a\n")
-    printf("refusal from a real assembler.\n")
+    println(`Done: 4 concepts + landing page`)
+    println(`NOTHING IN THIS COURSE IS EVER EXECUTED.  No reservation is ever`)
+    println(`HELD, no AMO is ever observed to be atomic, no fence is ever`)
+    println(`observed to order anything, and no vector instruction is ever run.`)
+    println(`There are NO TIMINGS and NO SPEEDUPS: every figure is a bit`)
+    println(`pattern, a count of bit patterns, an arithmetic identity, or a`)
+    println(`refusal from a real assembler.`)
     return 0
 }

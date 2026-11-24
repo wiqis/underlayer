@@ -31,35 +31,35 @@
 //    table before its 100% means anything.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering The AArch64 Procedure Call Standard pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering The AArch64 Procedure Call Standard pages...`)
 
     var html = underlayer_content::render_a64abi_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: The Call -- who passes what, and in which register
     html = underlayer_content::render_a64_aapcs()
-    fs::write_text_file("output/a64-aapcs.html", html.data() as *u8, html.size())
-    printf("  -> a64-aapcs.html\n")
+    course_writer::write_page("output/a64-aapcs.html", &html)
+    println(`  -> a64-aapcs.html`)
 
     html = underlayer_content::render_a64_registers()
-    fs::write_text_file("output/a64-registers.html", html.data() as *u8, html.size())
-    printf("  -> a64-registers.html\n")
+    course_writer::write_page("output/a64-registers.html", &html)
+    println(`  -> a64-registers.html`)
 
     // Module 2: The Frame -- what the callee must ask for, and describe
     html = underlayer_content::render_a64_frame()
-    fs::write_text_file("output/a64-frame.html", html.data() as *u8, html.size())
-    printf("  -> a64-frame.html\n")
+    course_writer::write_page("output/a64-frame.html", &html)
+    println(`  -> a64-frame.html`)
 
     html = underlayer_content::render_a64_save()
-    fs::write_text_file("output/a64-save.html", html.data() as *u8, html.size())
-    printf("  -> a64-save.html\n")
+    course_writer::write_page("output/a64-save.html", &html)
+    println(`  -> a64-save.html`)
 
     html = underlayer_content::render_a64_unwind()
-    fs::write_text_file("output/a64-unwind.html", html.data() as *u8, html.size())
-    printf("  -> a64-unwind.html\n")
+    course_writer::write_page("output/a64-unwind.html", &html)
+    println(`  -> a64-unwind.html`)
 
-    printf("Done: 5 concepts + landing page\n")
+    println(`Done: 5 concepts + landing page`)
     return 0
 }

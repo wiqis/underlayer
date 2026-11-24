@@ -59,44 +59,44 @@
 // was grepped out of that file BEFORE a page was written.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering Compiler Backend: From IR to Machine Code pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering Compiler Backend: From IR to Machine Code pages...`)
 
     var html = underlayer_content::render_compback_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: the representation
     html = underlayer_content::render_cb_ir()
-    fs::write_text_file("output/cb-ir.html", html.data() as *u8, html.size())
-    printf("  -> cb-ir.html\n")
+    course_writer::write_page("output/cb-ir.html", &html)
+    println(`  -> cb-ir.html`)
 
     // Module 2: the three questions about a sequence of operations
     html = underlayer_content::render_cb_isel()
-    fs::write_text_file("output/cb-isel.html", html.data() as *u8, html.size())
-    printf("  -> cb-isel.html\n")
+    course_writer::write_page("output/cb-isel.html", &html)
+    println(`  -> cb-isel.html`)
 
     html = underlayer_content::render_cb_regalloc()
-    fs::write_text_file("output/cb-regalloc.html", html.data() as *u8, html.size())
-    printf("  -> cb-regalloc.html\n")
+    course_writer::write_page("output/cb-regalloc.html", &html)
+    println(`  -> cb-regalloc.html`)
 
     html = underlayer_content::render_cb_sched()
-    fs::write_text_file("output/cb-sched.html", html.data() as *u8, html.size())
-    printf("  -> cb-sched.html\n")
+    course_writer::write_page("output/cb-sched.html", &html)
+    println(`  -> cb-sched.html`)
 
     // Module 3: the contract, and reading the decisions back out
     html = underlayer_content::render_cb_abi()
-    fs::write_text_file("output/cb-abi.html", html.data() as *u8, html.size())
-    printf("  -> cb-abi.html\n")
+    course_writer::write_page("output/cb-abi.html", &html)
+    println(`  -> cb-abi.html`)
 
     html = underlayer_content::render_cb_verify()
-    fs::write_text_file("output/cb-verify.html", html.data() as *u8, html.size())
-    printf("  -> cb-verify.html\n")
+    course_writer::write_page("output/cb-verify.html", &html)
+    println(`  -> cb-verify.html`)
 
-    printf("Done: 6 concepts + landing page\n")
-    printf("X86-64 RAN.  AArch64 AND RISC-V DID NOT: no cross-linker for either\n")
-    printf("and no emulator, so nothing emitted for those two targets was ever\n")
-    printf("executed and no relocation they emit was ever resolved.  Every claim\n")
-    printf("is MEASURED, MEASURED-ON-BYTES or QUOTED, and the label is the claim.\n")
+    println(`Done: 6 concepts + landing page`)
+    println(`X86-64 RAN.  AArch64 AND RISC-V DID NOT: no cross-linker for either`)
+    println(`and no emulator, so nothing emitted for those two targets was ever`)
+    println(`executed and no relocation they emit was ever resolved.  Every claim`)
+    println(`is MEASURED, MEASURED-ON-BYTES or QUOTED, and the label is the claim.`)
     return 0
 }

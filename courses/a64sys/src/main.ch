@@ -32,40 +32,40 @@
 //    100% means anything.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering The AArch64 Machine: Modes, Memory and Faults pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering The AArch64 Machine: Modes, Memory and Faults pages...`)
 
     var html = underlayer_content::render_a64sys_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: The Modes -- getting in, getting out, being interrupted
     html = underlayer_content::render_a64_syscall()
-    fs::write_text_file("output/a64-syscall.html", html.data() as *u8, html.size())
-    printf("  -> a64-syscall.html\n")
+    course_writer::write_page("output/a64-syscall.html", &html)
+    println(`  -> a64-syscall.html`)
 
     html = underlayer_content::render_a64_exceptions()
-    fs::write_text_file("output/a64-exceptions.html", html.data() as *u8, html.size())
-    printf("  -> a64-exceptions.html\n")
+    course_writer::write_page("output/a64-exceptions.html", &html)
+    println(`  -> a64-exceptions.html`)
 
     html = underlayer_content::render_a64_interrupts()
-    fs::write_text_file("output/a64-interrupts.html", html.data() as *u8, html.size())
-    printf("  -> a64-interrupts.html\n")
+    course_writer::write_page("output/a64-interrupts.html", &html)
+    println(`  -> a64-interrupts.html`)
 
     // Module 2: The Memory -- two regimes, four levels, and the linker
     html = underlayer_content::render_a64_virtual()
-    fs::write_text_file("output/a64-virtual.html", html.data() as *u8, html.size())
-    printf("  -> a64-virtual.html\n")
+    course_writer::write_page("output/a64-virtual.html", &html)
+    println(`  -> a64-virtual.html`)
 
     html = underlayer_content::render_a64_pagetables()
-    fs::write_text_file("output/a64-pagetables.html", html.data() as *u8, html.size())
-    printf("  -> a64-pagetables.html\n")
+    course_writer::write_page("output/a64-pagetables.html", &html)
+    println(`  -> a64-pagetables.html`)
 
     // The artifact, and the concept that makes the other five trustworthy.
     html = underlayer_content::render_a64_evidence()
-    fs::write_text_file("output/a64-evidence.html", html.data() as *u8, html.size())
-    printf("  -> a64-evidence.html\n")
+    course_writer::write_page("output/a64-evidence.html", &html)
+    println(`  -> a64-evidence.html`)
 
-    printf("Done: 6 concepts + landing page\n")
+    println(`Done: 6 concepts + landing page`)
     return 0
 }

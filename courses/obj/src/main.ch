@@ -7,91 +7,91 @@
 // learner walks.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering Object Files pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering Object Files pages...`)
 
     // Module 1: Why Object Files Exist
     var html = underlayer_content::render_obj_intro()
-    fs::write_text_file("output/obj-intro.html", html.data() as *u8, html.size())
-    printf("  -> obj-intro.html\n")
+    course_writer::write_page("output/obj-intro.html", &html)
+    println(`  -> obj-intro.html`)
 
     html = underlayer_content::render_obj_the_hole()
-    fs::write_text_file("output/obj-the-hole.html", html.data() as *u8, html.size())
-    printf("  -> obj-the-hole.html\n")
+    course_writer::write_page("output/obj-the-hole.html", &html)
+    println(`  -> obj-the-hole.html`)
 
     html = underlayer_content::render_obj_triangulate()
-    fs::write_text_file("output/obj-triangulate.html", html.data() as *u8, html.size())
-    printf("  -> obj-triangulate.html\n")
+    course_writer::write_page("output/obj-triangulate.html", &html)
+    println(`  -> obj-triangulate.html`)
 
     html = underlayer_content::render_obj_no_segments()
-    fs::write_text_file("output/obj-no-segments.html", html.data() as *u8, html.size())
-    printf("  -> obj-no-segments.html\n")
+    course_writer::write_page("output/obj-no-segments.html", &html)
+    println(`  -> obj-no-segments.html`)
 
     // Module 2: Anatomy, Compared
     html = underlayer_content::render_obj_sections()
-    fs::write_text_file("output/obj-sections.html", html.data() as *u8, html.size())
-    printf("  -> obj-sections.html\n")
+    course_writer::write_page("output/obj-sections.html", &html)
+    println(`  -> obj-sections.html`)
 
     html = underlayer_content::render_obj_symbols()
-    fs::write_text_file("output/obj-symbols.html", html.data() as *u8, html.size())
-    printf("  -> obj-symbols.html\n")
+    course_writer::write_page("output/obj-symbols.html", &html)
+    println(`  -> obj-symbols.html`)
 
     html = underlayer_content::render_obj_strings()
-    fs::write_text_file("output/obj-strings.html", html.data() as *u8, html.size())
-    printf("  -> obj-strings.html\n")
+    course_writer::write_page("output/obj-strings.html", &html)
+    println(`  -> obj-strings.html`)
 
     html = underlayer_content::render_obj_bss_common()
-    fs::write_text_file("output/obj-bss-common.html", html.data() as *u8, html.size())
-    printf("  -> obj-bss-common.html\n")
+    course_writer::write_page("output/obj-bss-common.html", &html)
+    println(`  -> obj-bss-common.html`)
 
     // Module 3: The Fixup
     html = underlayer_content::render_obj_relocations()
-    fs::write_text_file("output/obj-relocations.html", html.data() as *u8, html.size())
-    printf("  -> obj-relocations.html\n")
+    course_writer::write_page("output/obj-relocations.html", &html)
+    println(`  -> obj-relocations.html`)
 
     html = underlayer_content::render_obj_addends()
-    fs::write_text_file("output/obj-addends.html", html.data() as *u8, html.size())
-    printf("  -> obj-addends.html\n")
+    course_writer::write_page("output/obj-addends.html", &html)
+    println(`  -> obj-addends.html`)
 
     html = underlayer_content::render_obj_reloc_tables()
-    fs::write_text_file("output/obj-reloc-tables.html", html.data() as *u8, html.size())
-    printf("  -> obj-reloc-tables.html\n")
+    course_writer::write_page("output/obj-reloc-tables.html", &html)
+    println(`  -> obj-reloc-tables.html`)
 
     html = underlayer_content::render_obj_pic()
-    fs::write_text_file("output/obj-pic.html", html.data() as *u8, html.size())
-    printf("  -> obj-pic.html\n")
+    course_writer::write_page("output/obj-pic.html", &html)
+    println(`  -> obj-pic.html`)
 
     // Module 4: Merging and Selection
     html = underlayer_content::render_obj_comdat_group()
-    fs::write_text_file("output/obj-comdat-group.html", html.data() as *u8, html.size())
-    printf("  -> obj-comdat-group.html\n")
+    course_writer::write_page("output/obj-comdat-group.html", &html)
+    println(`  -> obj-comdat-group.html`)
 
     html = underlayer_content::render_obj_archives()
-    fs::write_text_file("output/obj-archives.html", html.data() as *u8, html.size())
-    printf("  -> obj-archives.html\n")
+    course_writer::write_page("output/obj-archives.html", &html)
+    println(`  -> obj-archives.html`)
 
     html = underlayer_content::render_obj_weak_undef()
-    fs::write_text_file("output/obj-weak-undef.html", html.data() as *u8, html.size())
-    printf("  -> obj-weak-undef.html\n")
+    course_writer::write_page("output/obj-weak-undef.html", &html)
+    println(`  -> obj-weak-undef.html`)
 
     // Module 5: Emitting One
     html = underlayer_content::render_obj_emit()
-    fs::write_text_file("output/obj-emit.html", html.data() as *u8, html.size())
-    printf("  -> obj-emit.html\n")
+    course_writer::write_page("output/obj-emit.html", &html)
+    println(`  -> obj-emit.html`)
 
     html = underlayer_content::render_obj_arch_table()
-    fs::write_text_file("output/obj-arch-table.html", html.data() as *u8, html.size())
-    printf("  -> obj-arch-table.html\n")
+    course_writer::write_page("output/obj-arch-table.html", &html)
+    println(`  -> obj-arch-table.html`)
 
     html = underlayer_content::render_obj_verify()
-    fs::write_text_file("output/obj-verify.html", html.data() as *u8, html.size())
-    printf("  -> obj-verify.html\n")
+    course_writer::write_page("output/obj-verify.html", &html)
+    println(`  -> obj-verify.html`)
 
     // Landing page
     html = underlayer_content::render_obj_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
-    printf("Object Files: 18 concepts + landing page generated in output/\n")
+    println(`Object Files: 18 concepts + landing page generated in output/`)
     return 0
 }

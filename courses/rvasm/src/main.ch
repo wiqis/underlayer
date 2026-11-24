@@ -18,35 +18,35 @@
 // to poison its own normaliser before its 100% means anything.
 
 public func main() : int {
-    fs::mkdir("output")
-    printf("Rendering RISC-V: The Encoding Spectrum pages...\n")
+    course_writer::ensure_output()
+    println(`Rendering RISC-V: The Encoding Spectrum pages...`)
 
     var html = underlayer_content::render_rvasm_landing()
-    fs::write_text_file("output/index.html", html.data() as *u8, html.size())
-    printf("  -> index.html\n")
+    course_writer::write_page("output/index.html", &html)
+    println(`  -> index.html`)
 
     // Module 1: The Documents -- what the instructions are
     html = underlayer_content::render_rv_isa()
-    fs::write_text_file("output/rv-isa.html", html.data() as *u8, html.size())
-    printf("  -> rv-isa.html\n")
+    course_writer::write_page("output/rv-isa.html", &html)
+    println(`  -> rv-isa.html`)
 
     // Module 2: The Encoding -- what the bytes are
     html = underlayer_content::render_rv_encoding()
-    fs::write_text_file("output/rv-encoding.html", html.data() as *u8, html.size())
-    printf("  -> rv-encoding.html\n")
+    course_writer::write_page("output/rv-encoding.html", &html)
+    println(`  -> rv-encoding.html`)
 
     html = underlayer_content::render_rv_compressed()
-    fs::write_text_file("output/rv-compressed.html", html.data() as *u8, html.size())
-    printf("  -> rv-compressed.html\n")
+    course_writer::write_page("output/rv-compressed.html", &html)
+    println(`  -> rv-compressed.html`)
 
     html = underlayer_content::render_rv_immediate()
-    fs::write_text_file("output/rv-immediate.html", html.data() as *u8, html.size())
-    printf("  -> rv-immediate.html\n")
+    course_writer::write_page("output/rv-immediate.html", &html)
+    println(`  -> rv-immediate.html`)
 
     html = underlayer_content::render_rv_verify()
-    fs::write_text_file("output/rv-verify.html", html.data() as *u8, html.size())
-    printf("  -> rv-verify.html\n")
+    course_writer::write_page("output/rv-verify.html", &html)
+    println(`  -> rv-verify.html`)
 
-    printf("Done: 5 concepts + landing page\n")
+    println(`Done: 5 concepts + landing page`)
     return 0
 }
