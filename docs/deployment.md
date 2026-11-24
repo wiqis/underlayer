@@ -234,10 +234,6 @@ PORT=9000 ./build/underlayer.exe
 # Run the test suite (114 tests)
 $CHEMICAL/cmake-build-debug/TCCCompiler chemical.mod -o build/tests.exe \
     -frecompile-plugins --test --no-cache && ./build/tests.exe
-
-# Build the HAT course's pre-rendered static pages (writes courses/hat/output/)
-cd courses/hat && $CHEMICAL/cmake-build-debug/TCCCompiler chemical.mod \
-    -bm-modules --no-cache -o build/hat-course.exe && ./build/hat-course.exe
 ```
 
 Use `--no-cache`: an incremental build can miss edits to a module that already

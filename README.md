@@ -9,7 +9,6 @@ Underlayer takes things that normally require enormous amounts of scattered rese
 Courses:
 
 - **ELF — Executable and Linkable Format** — the technical deep dive the platform started with.
-- **HAT — Higher Education Aptitude Test** — preparation for the HEC Higher Education Aptitude Test, written for HAT-1 candidates in engineering, computing and the physical sciences (5 modules, 21 concepts).
 
 ## Philosophy
 

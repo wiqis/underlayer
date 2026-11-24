@@ -79,9 +79,9 @@ underlayer/
 │           pages_help, pages_learning_path, pages_legal, pages_notes, pages_notifications,
 │           pages_streaks, pages_study_plans
 │
-├── content/                  (module underlayer_content — 155 source files)
-│   └── src/                  ELF (24) + HAT + PE + Mach-O concept renderers, course_landing(+assets),
-│                             elf/hat/pe/macho_landing, lesson/hat assets, 4 layout templates
+├── content/                  (module underlayer_content — source files)
+│   └── src/                  ELF (24) + PE + Mach-O concept renderers, course_landing(+assets),
+│                             per-course landing pages, lesson assets, 4 layout templates
 │
 ├── courses/elf/              (chemical.mod, manifest.json; src/main.ch = build entry that calls
 │                              underlayer_content::render_*() and writes output/*.html —

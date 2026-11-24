@@ -43,8 +43,8 @@ check_file() {
     local f=0 w=0
 
     # Skip test files and shared helper/asset files (non-concept pages).
-    # `*_bank.ch` / `*_runner.ch` are shared data + behaviour support files for a
-    # concept (e.g. the HAT baseline diagnostic), not lesson pages themselves.
+    # `*_bank.ch` / `*_runner.ch` are shared data + behaviour support files for
+    # a concept, not lesson pages themselves.
     case "$basename" in *_test.ch|*_assets.ch|*helpers.ch|*_bank.ch|*_runner.ch|exercise_ui_*.ch) return ;; esac
 
     local inside_html inside_js
@@ -110,15 +110,12 @@ check_file() {
     esac
 
     # R3: at least one interactive exercise (skip landing pages)
-    #     Two patterns count as an exercise surface:
-    #       - quiz-option: the inline multiple-choice pattern
-    #       - hat-drill-root: the client-side timed drill runner, which renders
-    #         its own option buttons from a generated question bank
+    #     quiz-option is the exercise surface: inline multiple-choice buttons.
     case "$basename" in
         *_landing.ch) : ;;
         *)
-            if ! grep -q 'quiz-option' "$file" && ! grep -q 'hat-drill-root' "$file"; then
-                echo "  FAIL R3 [$label] no exercises found (quiz-option or hat-drill-root)"
+            if ! grep -q 'quiz-option' "$file"; then
+                echo "  FAIL R3 [$label] no exercises found (quiz-option)"
                 f=$((f+1))
             fi
             ;;

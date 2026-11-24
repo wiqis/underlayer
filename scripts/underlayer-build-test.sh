@@ -79,10 +79,6 @@ test_url "gated:progress page"  "/progress"
 test_url "courses api"    "/api/courses"
 test_url "elf course"     "/courses/elf"
 test_url "elf lesson"     "/courses/elf/lessons/bytes"
-test_url "hat course"     "/courses/hat"
-test_url "hat lesson"     "/courses/hat/lessons/hat-exam-overview"
-test_url "hat lesson 2"   "/courses/hat/lessons/hat-digital-logic"
-test_url "hat course api" "/api/courses/hat"
 
 # 6. Kill server
 kill "$SERVER_PID" 2>/dev/null || true

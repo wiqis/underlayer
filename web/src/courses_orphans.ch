@@ -1,14 +1,14 @@
 // underlayer_web — The courses no route claims, rendered with the reason.
 //
-// Printed rather than omitted.  An index that quietly drops a 69-concept
-// course reads as a bug, and here it genuinely is one: `hat` is the only
-// beginner course in the collection, has no dependencies and nothing depends
-// on it, and belongs to none of the three technical routes.  Saying that is
-// honest; pretending it was not in the collection is not.
+// Printed rather than omitted.  An index that quietly drops a course reads as
+// a bug, so an unclaimed course is named with the reason it sits outside the
+// three technical routes rather than silently omitted.  Every current course
+// is claimed, so the note renders nothing today; the guard remains so a future
+// unclaimed course cannot disappear without a word.
 //
 // A COMPACT ROW, NOT A SECOND CARD.  The first version of this note rendered
-// the orphan with the same card component as the catalogue, which put `hat` on
-// the page twice -- once in the catalogue where it already was, and once here.
+// the orphan with the same card component as the catalogue, which put a course
+// on the page twice -- once in the catalogue where it already was, and once here.
 // A course appearing twice in its own index is the kind of small wrongness a
 // reader notices and cannot un-notice.  The catalogue is the one place a
 // course appears; this note says where it sits in the collection and links to
@@ -59,6 +59,7 @@ public namespace underlayer_web {
     public func render_orphan_note(courses : &vector<Course>, claimed : &vector<string>, course_count : int, page : &mut HtmlPage) {
         var orphans = build_orphan_cards(courses, claimed)
         var n = orphans.size() as int
+        if(n == 0) { return }
         var note = string()
         var ns = underlayer_core::int_to_string(n as i64)
         note.append_string(&ns)

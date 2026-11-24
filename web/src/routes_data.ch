@@ -19,10 +19,8 @@
 //      "this order respects the declared prerequisites" is therefore a count,
 //      not a claim.
 //
-// `hat` is deliberately in none of the three routes and is rendered as its own
-// section: it is the only beginner course in the collection, it has no
-// dependencies and nothing depends on it, and folding a 69-concept exam
-// preparation course into "the linking chain" would be a lie about both.
+// Every course on disk is claimed by one of the three routes; none is rendered
+// as a separate orphan section.
 using std::string
 using std::vector
 

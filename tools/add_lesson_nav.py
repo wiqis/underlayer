@@ -18,8 +18,8 @@ content files already make, immediately before their own `#html` block: the nav
 has to be emitted before that block so it is the first thing in `<body>`, and
 the stylesheet call is the last thing before the markup.
 
-It only reaches 330 of the 438 page builders.  108 more never call it -- the
-HAT course and the hand-written ELF pages each carry their own CSS -- and they
+It only reaches 330 of the 438 page builders.  108 more never call it -- some
+courses carry their own CSS -- and they
 are reached by the second anchor instead, `page.defaultPrepare()`, which every
 page builder in this directory has exactly once.  Neither anchor is allowed to
 fire after the file's first `#html` block: if it did, the nav would be emitted
@@ -28,8 +28,8 @@ nobody can use.  That condition is CHECKED, not assumed, and a file that
 violates it is reported and left alone rather than silently mangled.
 
 The remaining 12 files in content/src/ are not page builders at all -- they are
-the shared asset and drill-bank modules (`lesson_assets.ch`,
-`course_landing_assets.ch`, `hat_verbal_drill_bank.ch` and friends).  They have
+the shared asset and support modules (`lesson_assets.ch`,
+`course_landing_assets.ch`, `lesson_engagement.ch` and friends).  They have
 no `HtmlPage` and therefore no page to put a nav on.  They are named in the
 report so that "12 files not touched" is a fact with a reason, not a gap.
 

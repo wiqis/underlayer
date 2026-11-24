@@ -219,13 +219,6 @@ DESCRIPTIONS = {
         "register allocation, scheduling and encoding, and see every one of "
         "those decisions in the emitted bytes."
     ),
-
-    # ---- HAT --------------------------------------------------------
-    'hat': (
-        "Prepare for the HEC Higher Education Aptitude Test: the paper and how "
-        "it is weighted, quantitative and verbal practice, analytical "
-        "reasoning, timed drills and full mocks."
-    ),
 }
 
 # The order the courses are listed in the storefront, for the report.
@@ -236,7 +229,7 @@ ORDER = [
     'x86asm', 'x86abi', 'x86sys', 'x86simd',
     'a64asm', 'a64abi', 'a64sys', 'a64simd',
     'rvasm', 'rvabi', 'rvpriv', 'rvat',
-    'compback', 'hat',
+    'compback',
 ]
 
 if __name__ == '__main__':

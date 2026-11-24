@@ -208,7 +208,6 @@ PAGES = [
     '/', '/courses', '/courses/elf', '/courses/elf/lessons/bytes',
     '/learning-path', '/search', '/notes', '/progress', '/dashboard',
     '/login', '/help', '/terms', '/streaks', '/bookmarks',
-    '/courses/hat/lessons/hat-algebra',
     '/courses/wasm/lessons/wasm-leb128',
     '/courses/coff/lessons/coff-intro',
 ]

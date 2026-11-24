@@ -12,8 +12,8 @@ public namespace underlayer_web {
     // WHY THIS ENDPOINT EXISTS AT ALL, when nothing on the platform called it
     // for nine of every ten lesson pages.  31 of the 438 page builders in
     // content/src carried their own hand-written copy of the fetch below, in
-    // the page's own #js block.  The other 407 -- every HAT page, every
-    // a64/jvm/mem/smp page, every landing page that draws its own navbar --
+    // the page's own #js block.  The other 407 -- every a64/jvm/mem/smp page,
+    // every landing page that draws its own navbar --
     // reported nothing, so the read side, FSRS scheduling, streaks,
     // achievements and analytics all depended on an event that most of the
     // collection never produced.  The fix is not 407 copies of this fetch; it

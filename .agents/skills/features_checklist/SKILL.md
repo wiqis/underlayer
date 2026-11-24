@@ -95,7 +95,7 @@ Note: the server renders concept pages via `content/src/*.ch` render functions (
 |---|---------|-------|------------------------|
 | 1 | Learning Engine | FSRS, sessions, interleaving, weakness, health, pacing, patterns | P0/P1/P2 done — incl. mistake patterns (`learning/src/mistakes.ch`); energy check-in remains P3 |
 | 2 | Course Authoring | Structure, concepts, assets, review items, testing | 2.1.25 done (home grid dynamic); only P2 2.4.22 + P3 remain — `scripts/lint-concepts.sh` validates concepts |
-| 3 | Course Content & Visualizations | Hex viewer, diagrams, code examples, exercises, rich content | `content/src/` now has 155 files: ELF + HAT + PE + Mach-O renderers, 5 landings, 4 layout templates |
+| 3 | Course Content & Visualizations | Hex viewer, diagrams, code examples, exercises, rich content | `content/src/` has ELF + PE + Mach-O renderers, 4 landings, 4 layout templates |
 | 4 | Exercise System | Types, feedback, generation, analytics | 8 exercise types + bulk import/seed/stats; **P1 4.1.29 (lesson-page exercise UI) is the next feature** |
 | 5 | Review & Spaced Repetition | Session types, item types, scheduling, analytics | 10 review modes; **P1 5.1.16–5.1.19 remain (review page frontend broken/missing)** |
 | 6 | Progress & Analytics | Learner progress, analytics, retention, engagement | Export/import, sharing, 12+ analytics endpoints; P2 6.2.16/6.2.17 remain |

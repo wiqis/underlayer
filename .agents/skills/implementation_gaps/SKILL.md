@@ -905,14 +905,12 @@ constructs. Details in `docs/implementation-gaps.md`; the rules:
 - **Non-ASCII is escaped** to `\u{...}` by the converter. **Fix:** keep JS string
   literals ASCII (use `|`/`-`, not `·`/`—`).
 - **A bare `%` is a lexer token.** `20%` inside a `#js` string aborts the parse.
-  **Fix:** spell it out — `"20 percent"`. This is why
-  `hat_diagnostic_bank.ch` contains 28 occurrences of "percent".
+  **Fix:** spell it out — `"20 percent"`.
 - **A backslash-escaped double quote is not supported.** `\"` inside a payload
   aborts the parse. **Fix:** rewrite an embedded `"` as `'`, or normalise
   unicode quotes to `'` before emitting.
 - **A trailing comma on the last array element is rejected.** `[{...},]` fails
-  where `[{...}]` compiles. **Fix:** emit commas *between* elements only. The
-  working `hat_diagnostic_bank.ch` has the same no-trailing-comma shape.
+  where `[{...}]` compiles. **Fix:** emit commas *between* elements only.
 - **`<sup>` / `<sub>` in HTML text are dropped, not rendered.** A question
   written `2<sup>35</sup>` becomes the literal text `235`, which silently
   changes the question. **Fix:** when converting lesson HTML into a `#js` data
@@ -943,7 +941,7 @@ compiled on its own to establish whether it is actually a problem
   in ordinary prose aborts the parse — including a bare `}` on its own line, and
   one inline in `<code>}</code>`. `<pre>` is now exempt (see below), but
   `<code>` in prose is not. **Fix:** use the `&#123;` / `&#125;` entities, which
-  is the established convention in `macho_*.ch` and `hat_*.ch`, or drop the
+  is the established convention in `macho_*.ch` and `coff_*.ch`, or drop the
   braces from the declaration.
 - **A raw `"` inside an HTML attribute value aborts the parse.** The attribute
   ends at the first inner quote and the parser reads the rest as markup.

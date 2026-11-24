@@ -58,9 +58,8 @@ AIs would be able to complete the courses faster."*
 
 ### The size target, and the arithmetic behind it
 
-The 33 built course directories run **4 to 24 concepts** (`elf`, `pe` and
-`macho` at 24; `coff`, `obj` and `jvm` at 18; `rvpriv` at 4), excluding `hat`,
-which is a 69-concept test-prep course and not part of this comparison. The
+The 32 built course directories run **4 to 24 concepts** (`elf`, `pe` and
+`macho` at 24; `coff`, `obj` and `jvm` at 18; `rvpriv` at 4). The
 target set here was
 **roughly 48 roadmap items per course: mean 48.4, range 29–67.**
 

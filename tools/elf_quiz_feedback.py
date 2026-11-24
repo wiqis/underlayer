@@ -12,7 +12,7 @@ file, and that version hardcodes its feedback text:
 
 So every option in the course gives the learner the same two sentences no
 matter which one they picked, and the learner is never told *why* the other
-options are wrong. PE, Mach-O, HAT and DWARF already do this properly: each
+options are wrong. PE, Mach-O and DWARF already do this properly: each
 option carries `data-explain` and the shared checker prints it.
 
 This script rewrites the ELF `checkQuiz` body so that, when a button carries

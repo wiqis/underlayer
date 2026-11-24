@@ -140,9 +140,9 @@ Authoritative statement: `docs/course-mission.md`.
 
 ## Project Stats
 
-- **Status:** Working platform — server builds, runs, and serves all six courses; 421/1952 checklist items done (all P0; 12 P1 still open); linter PASS
+- **Status:** Working platform — server builds, runs, and serves all five courses; 421/1952 checklist items done (all P0; 12 P1 still open); linter PASS
 - **Language:** Chemical
-- **Courses:** ELF (24), HAT (69), DWARF (15), COFF (11), PE (24), Mach-O (24) — home grid lists all six from `GET /api/courses`. DWARF and COFF are each 3 modules, complete as far as this machine's tooling allows
+- **Courses:** ELF (24), DWARF (15), COFF (11), PE (24), Mach-O (24) — home grid lists all five from `GET /api/courses`. DWARF and COFF are each 3 modules, complete as far as this machine's tooling allows
 - **Target platforms:** Web + Android (offline)
 - **Database:** Dual-backend SQLite (local) + Turso HTTP (remote); ~35 tables
 - **Course format:** Chemical source files with #html/#css/#js macros → pre-rendered HTML/CSS/JS

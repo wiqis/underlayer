@@ -788,8 +788,8 @@ For exercises that simulate running commands:
 
 Use this when a lesson needs a **long, multi-question, scored assessment** — a
 baseline diagnostic, a mock exam, a placement test — rather than one inline
-quiz. The reference implementation is the HAT course's baseline diagnostic
-(`content/src/hat_diagnostic_*.ch`), a 100-question / 120-minute mock.
+quiz. The pattern is a three-file split: lesson shell, question bank, timed
+runner; the bank and the runner are kept apart so each can be tested on its own.
 
 **Why it must be a client-side runner.** `#html` blocks cannot contain loops
 (`@{}` is broken — see `docs/implementation-gaps.md`), so you cannot server-loop
@@ -808,28 +808,28 @@ in both static and backend modes (golden rule: backend-optional).
 **Shell in the lesson file:**
 
 ```chemical
-render_hat_lesson_css(&mut page)
-render_hat_diagnostic_css(&mut page)
+render_<concept>_lesson_css(&mut page)
+render_<concept>_assessment_css(&mut page)
 
 #html {
     <div class="unit unit-diagnostic">
         <h2>Take Your Baseline Diagnostic</h2>
         <p>...instructions...</p>
-        <div id="hat-diag-root" class="hat-diag"><p>Loading the diagnostic&hellip;</p></div>
+        <div id="assessment-root" class="assessment"><p>Loading the diagnostic&hellip;</p></div>
         <noscript><p>The diagnostic needs JavaScript.</p></noscript>
     </div>
 }
 
-render_hat_lesson_js(&mut page)
-render_hat_diagnostic_bank(&mut page)   // defines HAT_DIAG_QUANT / VERBAL / ANALYTICAL
-render_hat_diagnostic_js(&mut page)     // the runner
+render_<concept>_lesson_js(&mut page)
+render_<concept>_assessment_bank(&mut page)  // defines the question arrays
+render_<concept>_assessment_js(&mut page)    // the runner
 ```
 
 **Question data shape** (one line per question; `p` is an optional passage):
 
 ```chemical
 #js {
-    var HAT_DIAG_QUANT = [
+    var ASSESSMENT_QUANT = [
         { q: "What is 15 percent of 240?", o: ["24", "36", "45", "16"], a: 1, e: "10 percent is 24 and 5 percent is 12." },
         { q: "Solve for x: 3x + 7 = 22.", o: ["3", "5", "15", "9.67"], a: 1, e: "3x = 15, so x = 5." }
     ];
@@ -869,7 +869,7 @@ key; offer a retake that clears the key.
 - Drive the runner with a stub DOM in Node: answer every question with the key
   and assert `total === max`; answer none and assert 0; check resume and retake.
 - Add a `@test` that fetches the lesson and asserts the bank + runner markers are
-  present (see `tests/src/hat_test.ch`).
+  present.
 - The concept linter skips `*_bank.ch` / `*_runner.ch` as support files.
 
 ---
@@ -1048,9 +1048,8 @@ questions reviewable one-per-line, and works offline via `localStorage`.
 anyway; separating data from behaviour makes both testable. See
 "Embedded Interactive Assessment (client-side runner)" above.
 
-**Example (HAT baseline diagnostic):** `content/src/hat_diagnostic_test.ch` (shell)
-+ `hat_diagnostic_bank.ch` (100 questions) + `hat_diagnostic_runner.ch` (timed
-runner + scoring + report).
+**Example layout:** `content/src/<concept>.ch` (shell) + `<concept>_bank.ch`
+(questions) + `<concept>_runner.ch` (timed runner + scoring + report).
 
 ---
 

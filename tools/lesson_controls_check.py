@@ -64,7 +64,6 @@ PAGES = [
     '/courses/x86asm/lessons/x86-verify',
     '/courses/x86sys/lessons/x86-syscall',
     '/courses/elf/lessons/bytes',
-    '/courses/hat/lessons/hat-algebra',
     '/courses/coff/lessons/coff-intro',
 ]
 

@@ -9,8 +9,8 @@
 // WHY 31 FILES ALREADY LOOKED LIKE THEY DID.  31 of the 438 page builders in
 // content/src carried their own hand-written copy of the POST below, inside
 // their own #js block -- a copy per page, in the page, invisible to review as
-// a single decision.  The other 407 produced no event at all: every HAT page,
-// every a64/jvm/mem/smp page, every page whose nav it draws itself.  So the
+// a single decision.  The other 407 produced no event at all: every
+// a64/jvm/mem/smp page, every page whose nav it draws itself.  So the
 // collection had the behaviour on the pages a person happened to open first
 // and not on the rest, which is why the collection looked instrumented.
 //

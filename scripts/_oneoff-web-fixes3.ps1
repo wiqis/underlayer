@@ -7,7 +7,7 @@ $root = 'D:\Programming\Wiqis\Web\underlayer\web\src'
 $p = Join-Path $root 'helpers.ch'
 $t = [System.IO.File]::ReadAllText($p).Replace("`r`n", "`n")
 $start = $t.IndexOf('    public func read_body(')
-$end = $t.IndexOf('    // HAT course concept ids.')
+$end = $t.IndexOf('    // PE course concept ids.')
 if ($start -lt 0 -or $end -lt 0) { throw 'read_body markers not found' }
 $block = @'
     // The request body as text.

@@ -355,8 +355,7 @@ This is a real tension and it is stated rather than hidden.
 
 The 32 built course directories run **4 to 24 concepts** — `elf`, `pe` and
 `macho` at 24, `dwarf` at 23, `coff`, `obj` and `jvm` at 18, `rvabi`, `rvat`
-and `rvpriv` at 4 — excluding `hat`, which is a 69-concept test-prep course
-and not part of the comparison. Counted from the `manifest.json` of each
+and `rvpriv` at 4. Counted from the `manifest.json` of each
 built course, not estimated.
 
 These 8 courses average **38.6 items** (range 22–47). That is slightly

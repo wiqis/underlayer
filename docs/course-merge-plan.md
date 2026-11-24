@@ -5,6 +5,9 @@ put more topics into courses... teach less courses, but teach everything
 still, NOT miss anything, this way AIs would be able to complete the courses
 faster."*
 
+> 2026-11-24: the HAT course was retired and deleted. Every count in this
+> historical plan still includes it.
+
 **Invariant: the 392 concepts and their 8,007 minutes do not change. Only the
 number of courses they are grouped into.** A merge is a change of *packaging*.
 If any merge reduces the concept count or the minute count, that merge is wrong
@@ -33,7 +36,7 @@ architecture courses hold **259 concepts**:
 | `priv + sec + simd` | 3 | 1 | 22 | 557 |
 | **non-architecture total** | **20** | **8** | **259** | **5245** |
 
-Plus the 12 architecture courses and `hat`, untouched: **33 → 21**.
+Plus the 12 architecture courses, untouched: **33 → 21**.
 
 **14 is not reachable while the architecture courses stay as they are.** To
 reach it, either the architecture courses merge too, or all 259 non-

@@ -1,6 +1,6 @@
 // Shared lesson CSS + JS for 8-unit concept pages.
 //
-// Every concept page (HAT, PE, ...) emits its own 8-unit markup and then calls
+// Every concept page (ELF, PE, ...) emits its own 8-unit markup and then calls
 // render_lesson_css / render_lesson_js so courses look and behave consistently.
 // Same pattern as course_landing_assets.ch (markup lives in #html/#css/#js
 // macros only — no string-built HTML).
