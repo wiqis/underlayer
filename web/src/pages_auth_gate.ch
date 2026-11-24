@@ -71,6 +71,11 @@ using underlayer_db::DbClient
 public namespace underlayer_web {
 
     // True when `req` carries a session token that resolves to a real learner.
+    // The token arrives either as `Authorization: Bearer ...` (API clients) or
+    // as the browser's HttpOnly `ul_session` cookie; `auth_get_learner_id`
+    // resolves both and applies the SAME database check.  Adding the cookie is
+    // what makes this gate reachable from a real page load, which carries no
+    // Authorization header -- it does not change what "authorised" means.
     // A token that is absent, malformed, expired or revoked all read as signed
     // out, which is the point: a stale token must not leave the reader on a page
     // that will 401 every request it makes.

@@ -123,6 +123,10 @@ public namespace underlayer_web {
     //   * Gzip when the client offers it and the body is worth it.  The 143 KB
     //     home page and the 76 KB lesson page both compress to a fraction of
     //     that; below 1 KiB the framing costs more than it saves.
+    //   * Handler headers are PRESERVED.  `out` is a copy of `res`, never a
+    //     fresh Response, so a `Set-Cookie` added by an auth handler reaches
+    //     the wire; a response that sets one is also excluded from the 304
+    //     path, because a conditional response cannot carry a new credential.
     public func deliver(req : &http::Request, res : http::Response) : http::Response {
         var body : string
         var is_text = false
@@ -151,10 +155,24 @@ public namespace underlayer_web {
             out.set_header_view(std::string_view("Cache-Control"), &revalidate)
         }
 
+        // A response that sets a cookie is an EVENT, not a cacheable
+        // representation.  Collapsing it to 304 used to drop the Set-Cookie
+        // header entirely (the old branch built a fresh Response), so a login
+        // answered from a validator would leave the browser with no session.
+        // Never revalidate one, and keep every handler-set header on the 304
+        // that is still legitimate for ordinary pages.
+        var sets_cookie = out.headers.contains("Set-Cookie")
+
         // Revalidate: a matching If-None-Match means "you already have it".
-        if(if_none_match_hits(req, &etag)) {
-            var not_modified = http::Response()
+        if(!sets_cookie && if_none_match_hits(req, &etag)) {
+            // Copy the delivered response rather than constructing a new one:
+            // any header a handler set must survive delivery.  Only the status
+            // and the body change on a 304.  `res` itself was moved into `out`
+            // above, so `out` is the value to move from here; nothing below
+            // this branch uses it.
+            var not_modified = out
             not_modified.status = 304u
+            not_modified.set_body(http::ResponseBody.Empty())
             not_modified.set_header_view(std::string_view("ETag"), &etag_view)
             if(path_starts_with(req, "/api/")) {
                 not_modified.set_header_view(std::string_view("Cache-Control"), &no_store)

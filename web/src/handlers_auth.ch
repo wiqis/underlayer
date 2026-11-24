@@ -79,8 +79,22 @@ public namespace underlayer_web {
         return token
     }
 
+    // One resolution path for every authenticated read.  Bearer WINS: a mobile
+    // API client that explicitly sends a token must never have that token
+    // overruled by a cookie left over from a browser session on the same host.
+    // An Authorization header that is present but malformed is therefore NOT a
+    // reason to fall back to the cookie — it reads as signed out, which is the
+    // conservative answer.  Only when there is no Authorization header at all
+    // do we use the browser's HttpOnly cookie.
+    private func resolve_session_token(req : &http::Request) : string {
+        var bearer = extract_bearer_token(req)
+        if(bearer.size() > 0) { return bearer }
+        if(req.headers.contains("Authorization")) { return string() }
+        return underlayer_web::extract_cookie_token(req)
+    }
+
     public func auth_get_learner_id(db : *DbClient, req : &http::Request) : string {
-        var token = extract_bearer_token(req)
+        var token = resolve_session_token(req)
         if(token.size() == 0) { return string() }
         var token_hash = hash_token(&token)
         var sql = string("SELECT learner_id FROM auth_sessions WHERE token_hash = '")
@@ -231,7 +245,13 @@ public namespace underlayer_web {
         resp.append_view("\",\"session_token\":\"")
         resp.append_string(&token)
         resp.append_view("\"}")
-        return send_json_str(&resp)
+        // The JSON token stays: mobile clients have no cookie jar.  The cookie
+        // is what makes the NEXT browser navigation (/dashboard, /review, ...)
+        // pass the server-side gate.  Both carry the same token, so the two
+        // credentials cannot disagree about who the learner is.
+        var out = send_json_str(&resp)
+        set_session_cookie(&mut out, req, &token)
+        return out
     }
 
     // ---- 16.2.1: POST /api/auth/login ----
@@ -326,16 +346,22 @@ public namespace underlayer_web {
         resp.append_view("\",\"session_token\":\"")
         resp.append_string(&token)
         resp.append_view("\"}")
-        return send_json_str(&resp)
+        var out = send_json_str(&resp)
+        set_session_cookie(&mut out, req, &token)
+        return out
     }
 
     // ---- 16.2.17: POST /api/auth/logout ----
 
     public func handle_logout(db : *DbClient, req : &http::Request) : http::Response {
-        var token = extract_bearer_token(req)
+        var token = resolve_session_token(req)
         if(token.size() == 0) {
             var err = string("missing token")
-            return send_error(401u, &err)
+            var out = send_error(401u, &err)
+            // Even a stale cookie must be cleared, or the reader's next
+            // navigation would keep presenting a dead credential.
+            clear_session_cookie(&mut out, req)
+            return out
         }
         var token_hash = hash_token(&token)
         var sql = string("DELETE FROM auth_sessions WHERE token_hash = '")
@@ -343,7 +369,11 @@ public namespace underlayer_web {
         sql.append_view("'")
         underlayer_db::exec_sql(db, &raw sql)
         var resp = string("{\"ok\":true}")
-        return send_json_str(&resp)
+        var out = send_json_str(&resp)
+        // Deleting the row is what actually ends the session; clearing the
+        // cookie is what makes the browser land signed out on the next page.
+        clear_session_cookie(&mut out, req)
+        return out
     }
 
     // ---- 16.2.14: GET /api/auth/me ----

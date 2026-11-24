@@ -98,7 +98,9 @@ public namespace underlayer_web {
     // in web/src/pages_auth_gate.ch rather than reusing it, because that one
     // takes the same arguments and returning either would work -- and a reader
     // of either file would have no way to tell which gate a given call site is
-    // behind.  Two names, two jobs, both short.
+    // behind.  Two names, two jobs, both short.  Both now accept the browser's
+    // `ul_session` cookie through `auth_get_learner_id`, so this control is
+    // rendered for a signed-in reader on an ordinary page load too.
     public func has_session_for(db : *DbClient, req : &http::Request) : bool {
         var learner_id = auth_get_learner_id(db, req)
         return learner_id.size() > 0
@@ -207,7 +209,7 @@ public namespace underlayer_web {
         js.append_view("function hdr(){var h={'Content-Type':'application/json'};var t=tok();if(t){h['Authorization']='Bearer '+t;}return h;}")
         // ASK WHY FIRST, so an unmet prerequisite is explained BEFORE the reader
         // presses a button that would fail.
-        js.append_view("fetch('/api/courses/'+encodeURIComponent(course)+'/can-enroll',{headers:hdr()})")
+        js.append_view("fetch('/api/courses/'+encodeURIComponent(course)+'/can-enroll',{credentials:'same-origin',headers:hdr()})")
         js.append_view(".then(function(r){return r.ok?r.json():null;})")
         js.append_view(".then(function(d){if(!d||d.can_enroll){return;}")
         js.append_view("var m=d.missing||[];if(!m.length){return;}")
@@ -218,7 +220,7 @@ public namespace underlayer_web {
         js.append_view(".catch(function(){});")
         js.append_view("btn.addEventListener('click',function(){")
         js.append_view("btn.disabled=true;btn.textContent='Enrolling...';")
-        js.append_view("fetch('/api/courses/'+encodeURIComponent(course)+'/enroll',{method:'POST',headers:hdr()})")
+        js.append_view("fetch('/api/courses/'+encodeURIComponent(course)+'/enroll',{method:'POST',credentials:'same-origin',headers:hdr()})")
         js.append_view(".then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})")
         js.append_view(".then(function(out){")
         js.append_view("if(out.ok&&out.j&&out.j.ok){")

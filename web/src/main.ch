@@ -68,6 +68,9 @@
 //                              fetch, which meant a statically pre-rendered
 //                              lesson page had no links at all and its swipe
 //                              gesture reloaded the page it was already on.
+//   session_cookie.ch        — the browser session cookie contract: ul_session,
+//                              HttpOnly/SameSite=Lax/Path=/, 30-day Max-Age,
+//                              Secure only on HTTPS, cookie-token extraction.
 //   session_js.ch            — render_session_js: THE shared client session
 //                              helper (__ulToken / __ulHeaders / __ulFetch /
 //                              __ulCourseId / __ulGate).  Seventeen pages each

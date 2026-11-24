@@ -48,6 +48,17 @@
 //      fallback is the LAST enrolled course, not a hardcoded id, and it is
 //      resolved from the server rather than guessed in the browser.
 //
+// THE COOKIE CONTRACT (2026-11-24).  The raw token used to be the ONLY thing a
+// browser had, so a page load carried no credential the server-side gate could
+// read.  `/api/auth/login` and `/api/auth/register` now also set an HttpOnly
+// `ul_session` cookie; the page gate reads that on navigation, and a same-origin
+// fetch sends it automatically.  localStorage keeps a legacy mirror of the
+// token for API callers and for offline pages that cannot reach a server, but
+// it is no longer the page gate's credential.  Consequently every fetch here
+// states `credentials: 'same-origin'` explicitly, and the signed-in signal used
+// by the onboarding gate is a non-sensitive marker rather than the token.  See
+// docs/browser-session.md for the full contract.
+//
 // WHY IT IS EMITTED PER PAGE AND NOT SERVED AS A .JS FILE.  The 398 lesson
 // pages are pre-rendered to static HTML for GitHub Pages, and a page that
 // reaches a server for its scripts is a page that does not work offline --
@@ -147,10 +158,15 @@ public namespace underlayer_web {
 
             // THE WHOLE DECISION, IN ONE PLACE, CALLED BY BOTH AUTH FORMS.
             window.__ulAfterAuth = function() {
+                // The login/register response has just set the HttpOnly cookie.
+                // Record only a non-sensitive marker for client-side display;
+                // the cookie, not this marker, is what the next page load uses
+                // to pass the server-side gate.
+                window.__ulSetSignedIn(true);
                 var next = window.__ulNextPath();
                 if (next) { window.location.href = next; return; }
                 // No `next`, so ask whether this account still needs onboarding.
-                fetch('/api/onboarding/check', { headers: window.__ulHeaders({}) })
+                fetch('/api/onboarding/check', { credentials: 'same-origin', headers: window.__ulHeaders({}) })
                     .then(function(r) { return r.json(); })
                     .then(function(d) {
                         if (d && d.authenticated && d.completed === false) {
@@ -171,15 +187,46 @@ public namespace underlayer_web {
             // a platform page carries both.  Whichever block evaluates first
             // defines them; the `||` makes the second a no-op.
             window.__ulToken = window.__ulToken || function() {
+                // LEGACY MIRROR, not the browser's credential.  The HttpOnly
+                // `ul_session` cookie is what the server-side page gate reads;
+                // JavaScript cannot see it, by design.  This mirror stays for
+                // API callers and static/offline pages whose scripts cannot
+                // reach the server.  It is cleared on 401 and on sign-out so it
+                // cannot contradict the cookie with a dead bearer token.
                 var t = '';
                 try { t = localStorage.getItem('session_token') || ''; } catch (e) { t = ''; }
                 return t;
             };
 
+            // NON-SENSITIVE DISPLAY STATE.  "A cookie session was established
+            // in this browser" -- no token, nothing usable as a credential.
+            // Used only to decide whether to ask the server about onboarding;
+            // the server remains the authority on whether the session is real.
+            window.__ulSetSignedIn = function(on) {
+                try {
+                    if (on) { localStorage.setItem('ul_signed_in', '1'); }
+                    else { localStorage.removeItem('ul_signed_in'); }
+                } catch (e) { }
+            };
+            window.__ulIsSignedIn = function() {
+                var v = '';
+                try { v = localStorage.getItem('ul_signed_in') || ''; } catch (e) { v = ''; }
+                return v === '1' || window.__ulToken().length > 0;
+            };
+
             window.__ulHeaders = window.__ulHeaders || function(extra) {
                 var h = { 'Content-Type': 'application/json' };
                 var t = window.__ulToken();
-                if (t) { h['Authorization'] = 'Bearer ' + t; }
+                // Bearer WINS on the server.  Once a browser login has set the
+                // HttpOnly cookie, sending a legacy localStorage token as a
+                // bearer would outrank that cookie and could sign the reader
+                // out with a stale value.  So a cookie session uses the cookie
+                // alone; the bearer is kept only for legacy/API callers that
+                // have no marker, and for mobile clients, which set the header
+                // themselves and never run this script.
+                var cookie_session = false;
+                try { cookie_session = localStorage.getItem('ul_signed_in') === '1'; } catch (e) { cookie_session = false; }
+                if (t && !cookie_session) { h['Authorization'] = 'Bearer ' + t; }
                 if (extra) {
                     for (var k in extra) { h[k] = extra[k]; }
                 }
@@ -223,7 +270,11 @@ public namespace underlayer_web {
             // only decide whether we ALSO navigate.
             window.__ulFetch = function(url, opts) {
                 opts = opts || {};
-                var init = { method: opts.method || 'GET', headers: opts.headers || {} };
+                // State it explicitly: the HttpOnly cookie is the browser
+                // credential, and a `credentials: 'omit'` default (or a future
+                // change to one) would silently send every page's API calls
+                // as a signed-out visitor even though the page gate passed.
+                var init = { method: opts.method || 'GET', credentials: 'same-origin', headers: opts.headers || {} };
                 if (opts.json !== undefined) {
                     init.headers = window.__ulHeaders(opts.headers);
                     init.body = JSON.stringify(opts.json);
@@ -236,6 +287,7 @@ public namespace underlayer_web {
                         // later page load re-sends it and gets another 401, and
                         // the reader's only way out is clearing site data.
                         try { localStorage.removeItem('session_token'); } catch (e) { }
+                        window.__ulSetSignedIn(false);
                         window.__ulPaintIdentitySafe();
                         // silent401 means "a 401 is an answer here, not a
                         // reason to navigate" -- see the header note.
@@ -309,8 +361,12 @@ public namespace underlayer_web {
             // the failure mode is a page that cannot load at all.  So this
             // answers, and the caller acts.
             window.__ulGate = function(nextPath) {
-                if (window.__ulToken().length === 0) { return Promise.resolve(false); }
-                return fetch('/api/onboarding/check', { headers: window.__ulHeaders({}) })
+                // The cookie session may be the only credential (the legacy
+                // localStorage mirror is optional), so ask whenever either
+                // signal says signed in.  The server decides; a 401 below
+                // still resolves to false.
+                if (!window.__ulIsSignedIn()) { return Promise.resolve(false); }
+                return fetch('/api/onboarding/check', { credentials: 'same-origin', headers: window.__ulHeaders({}) })
                     .then(function(r) {
                         if (r.status === 401) { return false; }
                         return r.json();
