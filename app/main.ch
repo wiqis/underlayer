@@ -1,4 +1,4 @@
-// Underlayer — Server entrypoint
+// Underlayer â€” Server entrypoint
 // Phase 1: Minimal working platform serving static courses.
 using std::string
 using std::string_view
@@ -6,45 +6,26 @@ using std::string_view
 // ---- Process-wide state ------------------------------------------------
 //
 // The router stores handlers as `Send + Sync + 'static`, so a handler cannot
-// capture the `DbClient` or the courses directory by reference -- and a
-// `DbClient` holds the live SQLite handle, which is not `Send`.  There is one of
-// each per process, so they live here and are reached through the two accessors
-// below.  Those two `unsafe` blocks are the whole of the process-wide state
-// handling in the application; every route stays safe and captures nothing.
+// capture the `DbClient` â€” and a `DbClient` holds the live SQLite handle, which
+// is not `Send`. There is one per process, so it lives here and is reached
+// through the accessor below. That single `unsafe` read is the whole of the
+// process-wide database state; every route stays safe and captures nothing.
 //
-// The value is a POINTER, not a copy: copying a `DbClient` would copy the
+// It is a POINTER, not a copy: copying a `DbClient` would copy the
 // `http::Client`'s mutex and hand out a second view of one connection, which is
 // exactly the by-value-capture bug recorded at the /api/exercises/submit route.
-// A pointer to the `DbClient` main() owns, and a copy of the courses directory.
-// Storing the address is deliberate: copying a `DbClient` would copy the
-// `http::Client`'s mutex and hand out a second view of one connection.
+//
+// The courses directory is process state too, but the web layer is who reads it,
+// so it lives there: `underlayer_web::set_courses_dir` / `request_courses_dir`.
 @never_destructed
 var g_db : *underlayer_db::DbClient
-// The courses directory, as a fixed buffer rather than a `string` global: a
-// zero-initialised `@never_destructed` global is not a constructed value, and a
-// `string` global assigned at startup read back EMPTY at request time (measured:
-// every manifest path came out as "/<course>/manifest.json", i.e. with an empty
-// prefix).  A char array has no constructor to be missing.
-comptime const COURSES_DIR_MAX : size_t = 512
-@never_destructed
-var g_courses_buf : [COURSES_DIR_MAX]char
-@never_destructed
-var g_courses_len : size_t
 
-// Fill the two values once, before the server starts accepting.
+// Fill the value once, before the server starts accepting.
 func set_process_state(dbv : *underlayer_db::DbClient, courses : &string) {
     unsafe {
         g_db = dbv
-        var n = courses.size()
-        if(n >= COURSES_DIR_MAX) { n = COURSES_DIR_MAX - 1 }
-        var i : size_t = 0
-        while(i < n) {
-            g_courses_buf[i] = courses.at(i)
-            i = i + 1
-        }
-        g_courses_buf[n] = 0
-        g_courses_len = n
     }
+    underlayer_web::set_courses_dir(courses)
 }
 
 // The process's database handle.  Valid for the life of the process.
@@ -52,18 +33,6 @@ public func request_db() : *underlayer_db::DbClient {
     return unsafe(g_db)
 }
 
-// The courses directory, as a value: handlers take `&string` and must not hold a
-// view into the global.
-public func request_courses_dir() : string {
-    var out = std::string()
-    var n = unsafe(g_courses_len)
-    var i : size_t = 0
-    while(i < n) {
-        out.append(unsafe(g_courses_buf[i]))
-        i = i + 1
-    }
-    return out
-}
 public func main() : int {
     // ---- Config & DB ----
     var cfg = underlayer_core::load_config()
@@ -196,42 +165,42 @@ public func main() : int {
 
     // Review page (HTML UI)
     srv.router.add("GET", "/review", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         return underlayer_web::deliver(&req, underlayer_web::handle_review_page(db, &courses_dir, &req))
     })
     // Progress page (HTML UI)
     srv.router.add("GET", "/progress", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         return underlayer_web::deliver(&req, underlayer_web::handle_progress_page(db, &courses_dir, &req))
     })
     // Dashboard page (7.2.4, 7.2.5, 1.5.20)
     srv.router.add("GET", "/dashboard", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         return underlayer_web::deliver(&req, underlayer_web::handle_dashboard(db, &courses_dir, &req))
     })
     // Knowledge Health page. Server-rendered from the learner's own rows, so it
     // works with JS off; gated because unsigned it would be four zeroes.
     srv.router.add("GET", "/health", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         return underlayer_web::deliver(&req, underlayer_web::handle_knowledge_health_page(db, &courses_dir, &req))
     })
     // Course listing
     srv.router.add("GET", "/api/courses", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         return underlayer_web::deliver(&req, underlayer_web::handle_list_courses(&courses_dir, &req))
     })
     // Filter Courses (7.1.7)
     srv.router.add("GET", "/api/courses/all", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         return underlayer_web::deliver(&req, underlayer_web::handle_filter_courses(&courses_dir, &req))
     })
     // Course detail
     srv.router.add("GET", "/api/courses/:courseId", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
@@ -244,7 +213,7 @@ public func main() : int {
     })
     // Lesson viewer via API
     srv.router.add("GET", "/api/courses/:courseId/lessons/:conceptId", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         // Segment indices are absolute positions in the path, and this path
@@ -266,7 +235,7 @@ public func main() : int {
     })
     // ---- Review API ----
     srv.router.add("GET", "/api/review/start", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         return underlayer_web::deliver(&req, underlayer_web::handle_review_start(db, &courses_dir, &req))
     })
@@ -280,7 +249,7 @@ public func main() : int {
     })
     // ---- Due Items ----
     srv.router.add("GET", "/api/review/due", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         return underlayer_web::deliver(&req, underlayer_web::handle_review_due(db, &courses_dir, &req))
     })
@@ -296,14 +265,14 @@ public func main() : int {
     })
     // ---- Search (7.1.6) ----
     srv.router.add("GET", "/api/search", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         return underlayer_web::deliver(&req, underlayer_web::handle_search(&courses_dir, &req))
     })
     // Concept search: titles, descriptions, module names and course titles
     // across all courses. Additive — /api/search's response shape is a
     // shipped contract and is left alone.
     srv.router.add("GET", "/api/search/concepts", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         return underlayer_web::deliver(&req, underlayer_web::handle_search_concepts(&courses_dir, &req))
     })
     // NOTE: "GET /api/courses/all" (Filter Courses, 7.1.7) is already
@@ -320,7 +289,7 @@ public func main() : int {
     })
     // ---- Progress API ----
     srv.router.add("GET", "/api/progress", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         return underlayer_web::deliver(&req, underlayer_web::handle_progress(db, &courses_dir, &req))
     })
@@ -330,7 +299,7 @@ public func main() : int {
     // Deliberately NOT /api/progress/overview: that path is already claimed by
     // the /api/progress/:courseId route above and would be swallowed by it.
     srv.router.add("GET", "/api/me/overview", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         return underlayer_web::deliver(&req, underlayer_web::handle_my_overview(db, &courses_dir, &req))
     })
@@ -431,7 +400,7 @@ public func main() : int {
     })
     // ---- Course Progress API ----
     srv.router.add("GET", "/api/progress/:courseId", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         return underlayer_web::deliver(&req, underlayer_web::handle_course_progress(db, &courses_dir, &req))
     })
@@ -485,7 +454,7 @@ public func main() : int {
     // still uses the two-parameter form. Both routes share ONE handler, so there
     // is no second copy of the tree to drift.
     srv.router.add("GET", "/api/navigation/:courseId", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
@@ -500,7 +469,7 @@ public func main() : int {
         }
     })
     srv.router.add("GET", "/api/navigation/:courseId/:conceptId", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
@@ -516,7 +485,7 @@ public func main() : int {
     // Takes ?course_id= because the bar it feeds is drawn by the per-course
     // landing nav; it used to report elf's numbers on every course page.
     srv.router.add("GET", "/api/nav-status", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         return underlayer_web::deliver(&req, underlayer_web::handle_nav_status(db, &courses_dir, &req))
     })
@@ -652,24 +621,27 @@ public func main() : int {
     // lesson's "All courses" back-link points at, 42 times across 32 files,
     // and it did not exist until now; tools/link_check.py is what stops that
     // from being true again.
+    // /courses â€” the collection index.
     srv.router.add("GET", "/courses", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         return underlayer_web::deliver(&req, underlayer_web::handle_courses_page(&courses_dir, &req))
     })
     // Learning path — the three routes through the collection. Distinct from
     // /courses/:courseId/path, which is the per-course dependency graph.
+    // /learning-path â€” the three routes in full.
     srv.router.add("GET", "/learning-path", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         return underlayer_web::deliver(&req, underlayer_web::handle_learning_path_index(&courses_dir, &req))
     })
     // Search — concept search, server-rendered from ?q=
+    // /search â€” server-rendered from ?q=.
     srv.router.add("GET", "/search", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         return underlayer_web::deliver(&req, underlayer_web::handle_search_page(&courses_dir, &req))
     })
     // Course landing page
     srv.router.add("GET", "/courses/:courseId", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
@@ -677,12 +649,13 @@ public func main() : int {
             var course_id = segments.at_ref(1)
             return underlayer_web::deliver(&req, underlayer_web::handle_course_landing(db, &courses_dir, course_id, &req))
         } else {
-            return underlayer_web::deliver(&req, underlayer_web::handle_home(&req))
+            var home = std::string("/")
+            return underlayer_web::redirect_to(&home)
         }
     })
     // Lesson viewer via URL path
     srv.router.add("GET", "/courses/:courseId/lessons/:conceptId", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
@@ -696,7 +669,7 @@ public func main() : int {
     })
     // Static file serving for course output (HTML, CSS, JS, images)
     srv.router.add("GET", "/courses/*", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         var path = req.path.to_view()
         // Only serve files, not directory paths (must have an extension)
@@ -715,11 +688,12 @@ public func main() : int {
                 var course_id = segments.at_ref(1)
                 return underlayer_web::deliver(&req, underlayer_web::handle_course_landing(db, &courses_dir, course_id, &req))
             } else {
-                return underlayer_web::deliver(&req, underlayer_web::handle_home(&req))
+                var home = std::string("/")
+            return underlayer_web::redirect_to(&home)
             }
         }
     })
-    // Home page
+    // Home page â€” a per-request response (see the note on handle_home).
     srv.router.add("GET", "/", ||(req) => {
         return underlayer_web::deliver(&req, underlayer_web::handle_home(&req))
     })
@@ -919,7 +893,7 @@ public func main() : int {
         return underlayer_web::deliver(&req, underlayer_web::handle_knowledge_health(db, &req))
     })
     srv.router.add("GET", "/api/health/knowledge/per-module", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         return underlayer_web::deliver(&req, underlayer_web::handle_knowledge_health_per_module(db, &courses_dir, &req))
     })
@@ -1250,7 +1224,7 @@ public func main() : int {
     })
     // ---- Certificates API ----
     srv.router.add("POST", "/api/certificates", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         return underlayer_web::deliver(&req, underlayer_web::handle_issue_certificate(db, &courses_dir, &req))
     })
@@ -1305,7 +1279,7 @@ public func main() : int {
     })
     // ---- Learning Path Visualization ----
     srv.router.add("GET", "/api/courses/:courseId/path", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
@@ -1318,7 +1292,7 @@ public func main() : int {
         }
     })
     srv.router.add("GET", "/courses/:courseId/path", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
@@ -1330,25 +1304,7 @@ public func main() : int {
             return underlayer_web::deliver(&req, underlayer_web::send_status_text(400u, &body))
         }
     })
-    // ---- Help & Guide Pages ----
-    srv.router.add("GET", "/help", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_help_page(&req))
-    })
-    srv.router.add("GET", "/shortcuts", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_shortcuts_page(&req))
-    })
-    srv.router.add("GET", "/faq", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_faq_page(&req))
-    })
-    srv.router.add("GET", "/about", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_about_page(&req))
-    })
-    srv.router.add("GET", "/terms", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_terms_page(&req))
-    })
-    srv.router.add("GET", "/privacy", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_privacy_page(&req))
-    })
+    // ---- Help & Guide Pages: served by the web::App as pre-rendered routes (see the App below) ----
     // ---- Feature Pages (bookmarks, notes, planner, achievements, streaks, notifications, certificates) ----
     //
     // ALL SEVEN ARE GATED, and the gate is here rather than inside each page's
@@ -1449,7 +1405,7 @@ public func main() : int {
     // SQLITE_MISUSE. The type error that this line now reports is the compiler
     // catching it at build time rather than at request time.
     srv.router.add("POST", "/api/learning/view", ||(req) => {
-        var courses_dir = request_courses_dir()
+        var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         return underlayer_web::deliver(&req, underlayer_web::handle_learning_view(db, &courses_dir, &req))
     })
@@ -1561,11 +1517,59 @@ public func main() : int {
             return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
         }
     })
-    // ---- 404 ----
-    // The catch-all is LAST: every earlier route gets first refusal, and anything
-    // unmatched lands on a real page instead of the router's bare "Not found".
+    // ---- Delivery: one web::App owns the page layer ----
+    //
+    // WHY AN APP AND NOT ONE ROUTE PER PAGE.  The six guide pages are the same for
+    // every reader, so they are PRE-RENDERED (`app.page`): `build()` renders each
+    // one once, minifies its inline CSS, moves its page JS into a content-hashed
+    // per-route chunk (`assets/chunk.<hash>.js`), writes a `.gz` sibling, and the
+    // framework serves the frozen bytes with `no-cache` + ETag + 304.  A request
+    // for /help runs no handler at all.
+    //
+    // Everything else stays per-request, and keeps the response it already built.
+    // The App is mounted behind one catch-all, so the 183 routes registered above
+    // keep their exact URLs and their dispatch order; the App only ever sees what
+    // they did not claim (/help-style pages, /assets/*, and the 404).
+    //
+    // `set_minify` shrinks the emitted chunks, `set_gzip` precompresses the frozen
+    // artifacts (the honest `Accept-Encoding` negotiation lives in the site), and
+    // `finish()` is what actually writes them â€” `build()` only compiles.
+    var app = web::App.make("build/site", "app", "assets")
+    app.set_minify(true)
+    app.set_gzip(true)
+    app.page("/help", underlayer_web::page_help)
+    app.page("/shortcuts", underlayer_web::page_shortcuts)
+    app.page("/faq", underlayer_web::page_faq)
+    app.page("/about", underlayer_web::page_about)
+    app.page("/terms", underlayer_web::page_terms)
+    app.page("/privacy", underlayer_web::page_privacy)
+    app.not_found(underlayer_web::page_not_found)
+    // Per-request pages. `no-store` is the honest policy: these renders carry the
+    // reader's own state (nav, enrol button, onboarding banner), so a shared cache
+    // must not keep them. `set_dynamic_gzip` compresses them on the way out.
+
+    app.set_dynamic_gzip(true)
+    if(!app.build()) {
+        var build_err = std::string("[underlayer] web::App build failed: ")
+        var err_view = app.error_message()
+        build_err.append_view(&err_view)
+        underlayer_core::log_line(&build_err)
+        return 1
+    }
+    if(!app.finish()) {
+        var finish_err = std::string("[underlayer] web::App could not write build/site")
+        underlayer_core::log_line(&finish_err)
+        return 1
+    }
+    unsafe { web::install(&raw mut app) }
+    // The catch-all: one registration per method, last in the table, so every
+    // explicit route above keeps first refusal. `web::serve_request` answers from
+    // the frozen site (pages, assets with their immutable cache headers, 404).
     srv.router.add("GET", "/:path*", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::not_found_page(&req))
+        return web::serve_request(req)
+    })
+    srv.router.add("HEAD", "/:path*", ||(req) => {
+        return web::serve_request(req)
     })
     // ---- Start server ----
     var listen_msg = std::string("[underlayer] Server running at http://localhost:")

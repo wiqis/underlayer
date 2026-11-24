@@ -9,9 +9,10 @@ public namespace underlayer_web {
         return send_json_str(&body)
     }
 
+    // GET / â€” a per-request page. It stays an endpoint rather than an
+    // `app.live` route: see the note in handlers_collection_pages.ch.
     public func handle_home(req : &http::Request) : http::Response {
         var page = HtmlPage()
-        page.defaultUniversalSetup()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
         var title = std::string_view("Underlayer - Learn Things Deeply")
@@ -111,8 +112,9 @@ public namespace underlayer_web {
         render_home_css(&mut page)
         render_home_js(&mut page)
         render_home_search_js(&mut page)
-
         return send_page(&page)
+
+
     }
 
 }

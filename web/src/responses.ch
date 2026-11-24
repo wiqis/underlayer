@@ -261,15 +261,58 @@ public namespace underlayer_web {
         return true
     }
 
-    // A 404 page, for the catch-all route at the end of the table.
+    // ---- Process-wide: the course content directory ----
     //
-    // Before this the router's own default answered unmatched paths with a bare
-    // "Not found" (10 bytes) and no navigation, so a mistyped lesson URL left the
-    // reader on a blank page with no way back.
-    public func not_found_page(req : &http::Request) : http::Response {
-        var page = HtmlPage()
+    // Every page route needs to know where `courses/` is, and a route handler
+    // cannot capture it (the router stores handlers as `Send + Sync + 'static`).
+    // It is one value for the process, set once from `main` and read by the page
+    // handlers, so it lives here.
+    //
+    // It is a fixed char buffer and not a `string`: a zero-initialised
+    // `@never_destructed` global is not a constructed value, and a `string` global
+    // assigned at boot read back EMPTY at request time (measured: every manifest
+    // path came out as "/<course>/manifest.json").
+    comptime const COURSES_DIR_MAX : size_t = 512
+    @never_destructed
+    var g_courses_buf : [COURSES_DIR_MAX]char
+    @never_destructed
+    var g_courses_len : size_t
+
+    public func set_courses_dir(courses : &string) {
+        unsafe {
+            var n = courses.size()
+            if(n >= COURSES_DIR_MAX) { n = COURSES_DIR_MAX - 1 }
+            var i : size_t = 0
+            while(i < n) {
+                g_courses_buf[i] = courses.at(i)
+                i = i + 1
+            }
+            g_courses_buf[n] = 0
+            g_courses_len = n
+        }
+    }
+
+    // The courses directory, as a value: callers take `&string` and must not hold
+    // a view into the global.
+    public func request_courses_dir() : string {
+        var out = std::string()
+        var n = unsafe(g_courses_len)
+        var i : size_t = 0
+        while(i < n) {
+            out.append(unsafe(g_courses_buf[i]))
+            i = i + 1
+        }
+        return out
+    }
+
+    // The 404 page, as the App's `not_found` slot.
+    //
+    // It is a live route: the address a reader mistyped is the one thing that
+    // varies, so the page is rendered per request and carries `no-store`, like
+    // every other per-request render.
+    public func page_not_found(ctx : &mut web::RequestContext, page : &mut HtmlPage) {
         page.defaultPrepare()
-        var wanted = req.path.to_view()
+        var wanted = ctx.path()
         #html {
             <main class="container" id="main-content">
                 <h1>That page is not here</h1>
@@ -284,9 +327,6 @@ public namespace underlayer_web {
             code { background: #f3f4f6; padding: 0.1rem 0.3rem; border-radius: 3px; }
             a { color: #2563eb; }
         }
-        var res = send_page(&page)
-        res.status = 404u
-        return res
     }
 
 }

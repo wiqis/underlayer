@@ -20,10 +20,8 @@ using underlayer_models::Course
 
 public namespace underlayer_web {
 
-    public func render_search_page(courses_dir : &string, query : &string) : string {
+    public func render_search_page(page : &mut HtmlPage, courses_dir : &string, query : &string) {
         var courses = underlayer_repository::list_courses(courses_dir)
-        var page = HtmlPage()
-        page.defaultUniversalSetup()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
         page.appendTitle(std::string_view("Search — Underlayer"))
@@ -38,7 +36,7 @@ public namespace underlayer_web {
         var q_esc = underlayer_core::html_escape(&q)
 
         #html {
-            {render_nav_bar(&mut page)}
+            {render_nav_bar(page)}
         }
 
         #html {
@@ -53,15 +51,13 @@ public namespace underlayer_web {
                     <button type="submit" class="btn btn-primary">Search</button>
                 </form>
                 <section class="results" aria-live="polite">
-                    {render_search_results(&courses, &q, has_query, &mut page)}
+                    {render_search_results(&courses, &q, has_query, page)}
                 </section>
             </main>
         }
 
-        render_search_css(&mut page)
-        render_index_js(&mut page)
-
-        return page.toString()
+        render_search_css(page)
+        render_index_js(page)
     }
 
     public func render_search_results(courses : &vector<Course>, query : &string, has_query : bool, page : &mut HtmlPage) {

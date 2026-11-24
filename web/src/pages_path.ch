@@ -17,21 +17,18 @@ using underlayer_models::Course
 
 public namespace underlayer_web {
 
-    public func render_learning_path_page_index(courses_dir : &string) : string {
+    public func render_learning_path_page_index(page : &mut HtmlPage, courses_dir : &string) {
         var courses = underlayer_repository::list_courses(courses_dir)
         var routes = build_routes()
         var chk = verify_route_order(&courses, &routes)
         var claimed = route_orphans(&routes)
         var course_count = courses.size() as int
-
-        var page = HtmlPage()
-        page.defaultUniversalSetup()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
         page.appendTitle(std::string_view("Learning Path — Underlayer"))
 
         #html {
-            {render_nav_bar(&mut page)}
+            {render_nav_bar(page)}
         }
 
         #html {
@@ -44,10 +41,10 @@ public namespace underlayer_web {
 
                 <section class="routes">
                     <div class="route-grid">
-                        {render_all_routes(&routes, &courses, &mut page)}
+                        {render_all_routes(&routes, &courses, page)}
                     </div>
-                    {render_route_check(&chk, &mut page)}
-                    {render_orphan_note(&courses, &claimed, course_count, &mut page)}
+                    {render_route_check(&chk, page)}
+                    {render_orphan_note(&courses, &claimed, course_count, page)}
                 </section>
 
                 <section class="catalogue">
@@ -61,10 +58,8 @@ public namespace underlayer_web {
             </main>
         }
 
-        render_index_css(&mut page)
-        render_index_js(&mut page)
-
-        return page.toString()
+        render_index_css(page)
+        render_index_js(page)
     }
 
 }

@@ -4,9 +4,7 @@ using std::string_view
 
 public namespace underlayer_web {
 
-    public func render_terms_page() : string {
-        var page = HtmlPage()
-        page.defaultUniversalSetup()
+    public func render_terms_page(page : &mut HtmlPage) {
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
         // THE PRE-PAINT THEME, on a page that draws no navbar.
@@ -19,8 +17,8 @@ public namespace underlayer_web {
         // class, so with the class set they respect the reader's OS preference
         // and their toggle.  Without it they render light unconditionally, which
         // is a reader with a dark OS reading a bright page.
-        underlayer_content::render_theme_boot_js(&mut page, false)
-        underlayer_content::render_color_scheme_meta(&mut page)
+        underlayer_content::render_theme_boot_js(page, false)
+        underlayer_content::render_color_scheme_meta(page)
         var title = std::string_view("Terms of Service — Underlayer")
         page.appendTitle(&title)
 
@@ -95,13 +93,9 @@ public namespace underlayer_web {
             }
             document.documentElement.classList.toggle('dark', getTheme() === 'dark');
         }
-
-        return page.toString()
     }
 
-    public func render_privacy_page() : string {
-        var page = HtmlPage()
-        page.defaultUniversalSetup()
+    public func render_privacy_page(page : &mut HtmlPage) {
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
         // THE PRE-PAINT THEME, on a page that draws no navbar.
@@ -114,8 +108,8 @@ public namespace underlayer_web {
         // class, so with the class set they respect the reader's OS preference
         // and their toggle.  Without it they render light unconditionally, which
         // is a reader with a dark OS reading a bright page.
-        underlayer_content::render_theme_boot_js(&mut page, false)
-        underlayer_content::render_color_scheme_meta(&mut page)
+        underlayer_content::render_theme_boot_js(page, false)
+        underlayer_content::render_color_scheme_meta(page)
         var title = std::string_view("Privacy Policy — Underlayer")
         page.appendTitle(&title)
 
@@ -193,18 +187,16 @@ public namespace underlayer_web {
             }
             document.documentElement.classList.toggle('dark', getTheme() === 'dark');
         }
-
-        return page.toString()
     }
 
-    public func handle_terms_page(req : &http::Request) : http::Response {
-        var html = render_terms_page()
-        return send_html(&html)
+    // Pre-rendered routes (see pages_help.ch): the framework renders once at
+    // build time and serves the frozen artifact.
+    public func page_terms(ctx : &mut web::RequestContext, page : &mut HtmlPage) {
+        render_terms_page(page)
     }
 
-    public func handle_privacy_page(req : &http::Request) : http::Response {
-        var html = render_privacy_page()
-        return send_html(&html)
+    public func page_privacy(ctx : &mut web::RequestContext, page : &mut HtmlPage) {
+        render_privacy_page(page)
     }
 
 }

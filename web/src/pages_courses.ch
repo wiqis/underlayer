@@ -41,16 +41,13 @@ public namespace underlayer_web {
         return total
     }
 
-    public func render_courses_page(courses_dir : &string) : string {
+    public func render_courses_page(page : &mut HtmlPage, courses_dir : &string) {
         var courses = underlayer_repository::list_courses(courses_dir)
         var routes = build_routes()
         var chk = verify_route_order(&courses, &routes)
         var catalog = build_catalog(&courses, &routes)
         var claimed = route_orphans(&routes)
         var course_count = courses.size() as int
-
-        var page = HtmlPage()
-        page.defaultUniversalSetup()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
         page.appendTitle(std::string_view("All Courses — Underlayer"))
@@ -68,7 +65,7 @@ public namespace underlayer_web {
         var tally_esc = underlayer_core::html_escape(&tally)
 
         #html {
-            {render_nav_bar(&mut page)}
+            {render_nav_bar(page)}
         }
 
         #html {
@@ -83,10 +80,10 @@ public namespace underlayer_web {
                     <h2 id="routes-head">Three ways through the collection</h2>
                     <p class="section-note">These are not difficulty tiers. Each one is an order, and each step says why it sits where it does. The three are meant to be walked in sequence: the second assumes the first, the third assumes both.</p>
                     <div class="route-grid">
-                        {render_all_routes(&routes, &courses, &mut page)}
+                        {render_all_routes(&routes, &courses, page)}
                     </div>
-                    {render_route_check(&chk, &mut page)}
-                    {render_orphan_note(&courses, &claimed, course_count, &mut page)}
+                    {render_route_check(&chk, page)}
+                    {render_orphan_note(&courses, &claimed, course_count, page)}
                 </section>
 
                 <section class="catalogue" aria-labelledby="catalogue-head">
@@ -96,16 +93,14 @@ public namespace underlayer_web {
                     </div>
                     <p class="section-note">Every count on a card &mdash; modules, concepts, minutes, difficulty, importance &mdash; is read from that course's own manifest, not written down here. Expand a card for a direct link to each lesson in it.</p>
                     <div class="course-grid">
-                        {render_all_cards(&catalog, &mut page)}
+                        {render_all_cards(&catalog, page)}
                     </div>
                 </section>
             </main>
         }
 
-        render_index_css(&mut page)
-        render_index_js(&mut page)
-
-        return page.toString()
+        render_index_css(page)
+        render_index_js(page)
     }
 
 }

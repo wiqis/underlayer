@@ -8,27 +8,35 @@ using std::string
 
 public namespace underlayer_web {
 
-    // GET /courses — the index.  Every lesson's back-link points here, so it
-    // is the most-requested page in the collection and was returning 404.
+    // Three per-request pages, kept as endpoints rather than `app.live` routes.
+    //
+    // MEASURED: an `app.live` render attaches the page to the site's FROZEN asset
+    // sink, so the page's `#css` blocks and the component theme are written to a
+    // sink that is already closed â€” the served home page came back with no
+    // <style> and no <link>, i.e. unstyled. These pages carry their own large
+    // stylesheets, so the correct shape for them is a full response, cached
+    // `no-cache` with an ETag and gzipped by `deliver`.
     public func handle_courses_page(courses_dir : &string, req : &http::Request) : http::Response {
-        var html = render_courses_page(courses_dir)
+        var page = HtmlPage()
+        render_courses_page(&mut page, courses_dir)
+        var html = page.toString()
         return send_html(&html)
     }
 
-    // GET /learning-path — the three routes in full.
     public func handle_learning_path_index(courses_dir : &string, req : &http::Request) : http::Response {
-        var html = render_learning_path_page_index(courses_dir)
+        var page = HtmlPage()
+        render_learning_path_page_index(&mut page, courses_dir)
+        var html = page.toString()
         return send_html(&html)
     }
 
-    // GET /search — concept search.  Results are server-rendered from the
-    // `q` query parameter, so the page works with JavaScript disabled and the
-    // URL is shareable.
     public func handle_search_page(courses_dir : &string, req : &http::Request) : http::Response {
         var q_key = string("q")
         var q_v = sv_or_empty(req.query.get(std::str.make_view(q_key.to_view())))
         var query = sv_to_string(&q_v)
-        var html = render_search_page(courses_dir, &query)
+        var page = HtmlPage()
+        render_search_page(&mut page, courses_dir, &query)
+        var html = page.toString()
         return send_html(&html)
     }
 

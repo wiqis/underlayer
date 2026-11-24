@@ -6,9 +6,7 @@ public namespace underlayer_web {
 
     // ---- GET /help — Main help page ----
 
-    public func render_help_page() : string {
-        var page = HtmlPage()
-        page.defaultUniversalSetup()
+    public func render_help_page(page : &mut HtmlPage) {
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
         // THE PRE-PAINT THEME, on a page that draws no navbar.
@@ -21,8 +19,8 @@ public namespace underlayer_web {
         // class, so with the class set they respect the reader's OS preference
         // and their toggle.  Without it they render light unconditionally, which
         // is a reader with a dark OS reading a bright page.
-        underlayer_content::render_theme_boot_js(&mut page, false)
-        underlayer_content::render_color_scheme_meta(&mut page)
+        underlayer_content::render_theme_boot_js(page, false)
+        underlayer_content::render_color_scheme_meta(page)
         var title = std::string_view("Help & Guide — Underlayer")
         page.appendTitle(&title)
 
@@ -190,15 +188,11 @@ public namespace underlayer_web {
                 .shortcut-preview { flex-direction: column; gap: 1rem; }
             }
         }
-
-        return page.toString()
     }
 
     // ---- GET /shortcuts — Keyboard shortcuts reference ----
 
-    public func render_shortcuts_page() : string {
-        var page = HtmlPage()
-        page.defaultUniversalSetup()
+    public func render_shortcuts_page(page : &mut HtmlPage) {
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
         // THE PRE-PAINT THEME, on a page that draws no navbar.
@@ -211,8 +205,8 @@ public namespace underlayer_web {
         // class, so with the class set they respect the reader's OS preference
         // and their toggle.  Without it they render light unconditionally, which
         // is a reader with a dark OS reading a bright page.
-        underlayer_content::render_theme_boot_js(&mut page, false)
-        underlayer_content::render_color_scheme_meta(&mut page)
+        underlayer_content::render_theme_boot_js(page, false)
+        underlayer_content::render_color_scheme_meta(page)
         var title = std::string_view("Keyboard Shortcuts — Underlayer")
         page.appendTitle(&title)
 
@@ -325,15 +319,11 @@ public namespace underlayer_web {
                 .shortcuts-grid { grid-template-columns: 1fr; }
             }
         }
-
-        return page.toString()
     }
 
     // ---- GET /faq — FAQ page ----
 
-    public func render_faq_page() : string {
-        var page = HtmlPage()
-        page.defaultUniversalSetup()
+    public func render_faq_page(page : &mut HtmlPage) {
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
         // THE PRE-PAINT THEME, on a page that draws no navbar.
@@ -346,8 +336,8 @@ public namespace underlayer_web {
         // class, so with the class set they respect the reader's OS preference
         // and their toggle.  Without it they render light unconditionally, which
         // is a reader with a dark OS reading a bright page.
-        underlayer_content::render_theme_boot_js(&mut page, false)
-        underlayer_content::render_color_scheme_meta(&mut page)
+        underlayer_content::render_theme_boot_js(page, false)
+        underlayer_content::render_color_scheme_meta(page)
         var title = std::string_view("Frequently Asked Questions — Underlayer")
         page.appendTitle(&title)
 
@@ -451,15 +441,11 @@ public namespace underlayer_web {
                 .help-nav { padding: 0.75rem 1rem; flex-direction: column; gap: 0.75rem; }
             }
         }
-
-        return page.toString()
     }
 
     // ---- GET /about — About page ----
 
-    public func render_about_page() : string {
-        var page = HtmlPage()
-        page.defaultUniversalSetup()
+    public func render_about_page(page : &mut HtmlPage) {
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
         // THE PRE-PAINT THEME, on a page that draws no navbar.
@@ -472,8 +458,8 @@ public namespace underlayer_web {
         // class, so with the class set they respect the reader's OS preference
         // and their toggle.  Without it they render light unconditionally, which
         // is a reader with a dark OS reading a bright page.
-        underlayer_content::render_theme_boot_js(&mut page, false)
-        underlayer_content::render_color_scheme_meta(&mut page)
+        underlayer_content::render_theme_boot_js(page, false)
+        underlayer_content::render_color_scheme_meta(page)
         var title = std::string_view("About Underlayer")
         page.appendTitle(&title)
 
@@ -625,30 +611,29 @@ public namespace underlayer_web {
                 .tech-grid { grid-template-columns: 1fr; }
             }
         }
-
-        return page.toString()
     }
 
-    // ---- Handler functions ----
-
-    public func handle_help_page(req : &http::Request) : http::Response {
-        var html = render_help_page()
-        return underlayer_web::send_html(&html)
+    // ---- Page handlers ----
+    //
+    // These four are PRE-RENDERED routes: `web::App.page` calls each one once, in
+    // `build()`, and the result is frozen with a content-hashed style/script
+    // chunk, a gzip sibling and an ETag. A request for /help never runs this
+    // code again. That is why they take the site's page and return nothing: the
+    // framework owns the document, the asset URLs and the cache headers.
+    public func page_help(ctx : &mut web::RequestContext, page : &mut HtmlPage) {
+        render_help_page(page)
     }
 
-    public func handle_shortcuts_page(req : &http::Request) : http::Response {
-        var html = render_shortcuts_page()
-        return underlayer_web::send_html(&html)
+    public func page_shortcuts(ctx : &mut web::RequestContext, page : &mut HtmlPage) {
+        render_shortcuts_page(page)
     }
 
-    public func handle_faq_page(req : &http::Request) : http::Response {
-        var html = render_faq_page()
-        return underlayer_web::send_html(&html)
+    public func page_faq(ctx : &mut web::RequestContext, page : &mut HtmlPage) {
+        render_faq_page(page)
     }
 
-    public func handle_about_page(req : &http::Request) : http::Response {
-        var html = render_about_page()
-        return underlayer_web::send_html(&html)
+    public func page_about(ctx : &mut web::RequestContext, page : &mut HtmlPage) {
+        render_about_page(page)
     }
 
 }
