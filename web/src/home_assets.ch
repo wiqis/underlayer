@@ -15,6 +15,10 @@ public namespace underlayer_web {
             .hero-inner { max-width: 800px; margin: 0 auto; text-align: center; }
             .hero h1 { font-size: 2.5rem; margin-bottom: 1rem; font-weight: 700; }
             .hero p { font-size: 1.1rem; opacity: 0.9; line-height: 1.7; max-width: 600px; margin: 0 auto; }
+            .hero .hero-start { margin: 1.5rem 0 0.35rem; }
+            .hero .hero-start-note { font-size: 0.85rem; }
+            .journey-rec { border-color: hsl(217 91% 60%); border-left-width: 4px; }
+            .home-browse { grid-column: 1 / -1; justify-self: start; }
             .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
             .section { margin-bottom: 3rem; }
             .section h2 { font-size: 1.5rem; margin-bottom: 1.5rem; color: hsl(var(--foreground)); }
@@ -121,6 +125,20 @@ public namespace underlayer_web {
                     }
                     var html = '';
                     var ci = 0;
+                    var elf = null;
+                    while(ci < courses.length) {
+                        if(courses[ci].id === 'elf') { elf = courses[ci]; }
+                        ci = ci + 1;
+                    }
+                    if(elf) {
+                        html += '<div class="course-card journey-rec">';
+                        html += '<div class="course-badge">Start here</div>';
+                        html += '<h3>' + escapeHtml(elf.title || 'elf') + '</h3>';
+                        html += '<p>Follow one guided journey, one idea at a time. Every other course is one click away.</p>';
+                        html += '<a href="/courses/elf/lessons/bytes" class="btn btn-primary">Start the guided journey</a>';
+                        html += '</div>';
+                    }
+                    ci = 0;
                     while(ci < courses.length) {
                         var c = courses[ci];
                         var modules = c.modules || 0;
@@ -140,6 +158,27 @@ public namespace underlayer_web {
                         ci = ci + 1;
                     }
                     grid.innerHTML = html;
+                    var cards = grid.querySelectorAll('.course-card');
+                    if(cards.length > 2) {
+                        var j = 1;
+                        while(j < cards.length) { cards[j].style.display = 'none'; j = j + 1; }
+                        var btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'btn btn-primary home-browse';
+                        btn.textContent = 'Browse all courses';
+                        btn.setAttribute('aria-expanded', 'false');
+                        btn.addEventListener('click', function() {
+                            var shown = cards[1].style.display !== 'none';
+                            var k = 1;
+                            while(k < cards.length) {
+                                cards[k].style.display = shown ? 'none' : '';
+                                k = k + 1;
+                            }
+                            btn.textContent = shown ? 'Browse all courses' : 'Hide other courses';
+                            btn.setAttribute('aria-expanded', shown ? 'false' : 'true');
+                        });
+                        grid.appendChild(btn);
+                    }
                 }).catch(function() {
                     grid.innerHTML = '<div class="course-loading">Could not load courses. Refresh to retry.</div>';
                 });

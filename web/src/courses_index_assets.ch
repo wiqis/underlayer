@@ -83,6 +83,11 @@ public namespace underlayer_web {
             .btn { display: inline-block; padding: 0.6rem 1.25rem; border-radius: 8px; font-weight: 500; font-size: 0.9rem; cursor: pointer; border: none; text-decoration: none; }
             .btn-primary { background: hsl(217 91% 60%); color: white; }
             .btn-primary:hover { background: hsl(217 91% 50%); text-decoration: none; }
+            .journey-start-panel { max-width: 760px; margin: 1.5rem 0 2rem; padding: 1.5rem; border: 1px solid hsl(var(--border)); border-left: 4px solid hsl(217 91% 60%); border-radius: 12px; background: hsl(var(--card)); }
+            .journey-start-eyebrow { margin: 0 0 0.35rem; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: hsl(217 91% 60%); font-weight: 700; }
+            .journey-start-line { margin: 0 0 1rem; font-size: 1.05rem; max-width: 60ch; }
+            .catalogue.is-collapsed .course-grid { display: none; }
+            .catalogue-toggle { margin-left: auto; }
             @media (max-width: 900px) { .course-grid { grid-template-columns: 1fr; } .container { padding: 1rem; } }
         }
     }
@@ -106,6 +111,61 @@ public namespace underlayer_web {
                 var btn = document.querySelector('.expand-all');
                 if (btn) { btn.textContent = anyClosed ? 'Collapse all concepts' : 'Expand all concepts'; }
             }
+
+            // ONE STARTING PATH.  The catalogue below is untouched and every
+            // course stays one click away; the first lesson is simply offered
+            // before the wall, and the wall is collapsed until asked for.
+            function ciEl(tag, cls, text) {
+                var e = document.createElement(tag);
+                if (cls) { e.className = cls; }
+                if (text) { e.textContent = text; }
+                return e;
+            }
+
+            function ciStartPath() {
+                if (document.getElementById('ul-start-panel')) { return; }
+                var head = document.querySelector('.page-head');
+                if (!head || !head.parentNode) { return; }
+                var links = document.querySelectorAll('.concept-item a');
+                var link = null;
+                var i = 0;
+                while (i < links.length) {
+                    var href = links[i].getAttribute('href') || '';
+                    if (href.indexOf('/courses/elf/lessons/') >= 0) { link = links[i]; break; }
+                    if (!link) { link = links[i]; }
+                    i = i + 1;
+                }
+                if (!link) { link = document.querySelector('.route-step a.step-course'); }
+                if (!link) { return; }
+                var panel = ciEl('div', 'journey-start-panel');
+                panel.id = 'ul-start-panel';
+                panel.appendChild(ciEl('p', 'journey-start-eyebrow', 'Start here'));
+                panel.appendChild(ciEl('p', 'journey-start-line', 'One guided path: open the first lesson and follow the steps, one idea at a time. Every course stays reachable below.'));
+                var a = ciEl('a', 'btn btn-primary', 'Begin with ' + (link.textContent || 'the first lesson'));
+                a.href = link.getAttribute('href');
+                panel.appendChild(a);
+                head.parentNode.insertBefore(panel, head.nextSibling);
+                var cat = document.querySelector('.catalogue');
+                if (cat && cat.querySelectorAll('.course-card').length > 8) {
+                    cat.classList.add('is-collapsed');
+                    var ch = cat.querySelector('.catalogue-head');
+                    var btn = ciEl('button', 'expand-all catalogue-toggle', 'Browse all courses');
+                    btn.type = 'button';
+                    btn.setAttribute('aria-expanded', 'false');
+                    btn.setAttribute('aria-controls', 'course-grid');
+                    btn.addEventListener('click', function() {
+                        var open = cat.classList.contains('is-collapsed');
+                        if (open) { cat.classList.remove('is-collapsed'); }
+                        else { cat.classList.add('is-collapsed'); }
+                        btn.textContent = open ? 'Hide all courses' : 'Browse all courses';
+                        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    });
+                    if (ch) { ch.appendChild(btn); }
+                }
+            }
+
+            if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', ciStartPath); }
+            else { ciStartPath(); }
         }
     }
 

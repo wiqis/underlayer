@@ -37,6 +37,8 @@ public namespace underlayer_web {
                 <div class="hero-inner">
                     <h1>Learn Things Deeply.</h1>
                     <p>Master complex technical subjects through structured learning, spaced repetition, and active recall. Every concept is taught from first principles, verified against authoritative sources, and tested until it sticks.</p>
+                    <p class="hero-start"><a href="/courses/elf/lessons/bytes" class="btn btn-primary">Start the guided journey</a></p>
+                    <p class="hero-start-note">One idea at a time. All courses remain available below.</p>
                 </div>
             </div>
 
