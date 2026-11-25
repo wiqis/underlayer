@@ -60,7 +60,6 @@ public namespace underlayer_content {
                     <button type="button" class="ul-tool" id="ul-notes-toggle" aria-expanded="false" aria-controls="ul-notes-panel">Note</button>
                     <button type="button" class="ul-tool" id="ul-feedback-toggle" aria-expanded="false" aria-controls="ul-feedback-panel">Report a problem</button>
                 </div>
-                <p class="ul-tools-offline" id="ul-tools-signedout" hidden>Sign in to bookmark this lesson, keep notes on it, and send corrections.</p>
                 <div class="ul-panel" id="ul-notes-panel" hidden>
                     <label class="ul-panel-label" for="ul-note-text">Your note on this lesson</label>
                     <textarea class="ul-field" id="ul-note-text" rows="3" maxlength="2000" placeholder="What confused you, what you concluded, what to check."></textarea>

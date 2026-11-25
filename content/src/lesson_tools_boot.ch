@@ -47,8 +47,11 @@ public namespace underlayer_content {
                 row.hidden = false;
                 var t = window.__ulToken();
                 if (t.length === 0) {
-                    var so = document.getElementById('ul-tools-signedout');
-                    if (so) { so.hidden = false; }
+                    // The one sign-in advisory lives in signin_advisory.ch and
+                    // is painted by the nav's identity loader. No second copy.
+                    if (typeof window.__ulPaintSigninAdvisory === 'function') {
+                        window.__ulPaintSigninAdvisory(false);
+                    }
                     return;
                 }
                 var acts = document.getElementById('ul-tools-actions');

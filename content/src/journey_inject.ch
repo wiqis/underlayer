@@ -103,6 +103,10 @@ public namespace underlayer_content {
         var style = string("<style>")
         style.append_string(&css)
         style.append_view("</style>")
+        // The mode flag must be set before first paint. The same one-line
+        // script is emitted from render_journey_boot_head on the static path;
+        // this is the backend path for lessons with their own inline assets.
+        var boot = string("<script>document.documentElement.classList.add('journey-active');</script>")
         var script = string("<script>")
         script.append_string(&js)
         script.append_view("</script>")
@@ -114,6 +118,7 @@ public namespace underlayer_content {
         } else {
             with_css.append_view(src.to_view().subview(0, head_at))
             with_css.append_string(&style)
+            with_css.append_string(&boot)
             with_css.append_view(src.to_view().subview(head_at, src.size()))
         }
 

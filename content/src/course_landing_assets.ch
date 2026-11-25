@@ -22,10 +22,11 @@ public namespace underlayer_content {
             .hamburger-line { display: block; width: 24px; height: 2px; background: hsl(var(--foreground)); margin: 4px 0; transition: all 0.3s; }
             .theme-toggle { background: none; border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 0.5rem; cursor: pointer; font-size: 1.1rem; line-height: 1; }
             .theme-toggle:hover { background: hsl(var(--accent)); }
+            .nav-progress-wrap { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem; }
             .nav-progress { display: flex; align-items: center; gap: 0.75rem; }
             .nav-progress[hidden] { display: none; }
             .nav-progress-track { width: 120px; height: 6px; background: hsl(var(--secondary)); border-radius: 9999px; overflow: hidden; }
-            .nav-progress-fill { height: 100%; width: 0%; background: hsl(217 91% 60%); border-radius: 9999px; transition: width 0.3s; }
+            .nav-progress-fill { height: 100%; width: 0%; background: hsl(var(--primary)); border-radius: 9999px; transition: width 0.3s; }
             .nav-progress-note { font-size: 0.78rem; color: hsl(var(--muted-foreground)); white-space: nowrap; }
             .nav-due-badge { font-size: 0.75rem; font-weight: 600; color: hsl(0 0% 100%); background: hsl(0 84% 60%); border-radius: 9999px; padding: 0.15rem 0.6rem; text-decoration: none; white-space: nowrap; }
             .nav-due-badge[hidden] { display: none; }
@@ -85,20 +86,10 @@ public namespace underlayer_content {
                 try { t = localStorage.getItem('session_token') || ''; } catch (e) { t = ''; }
                 return t;
             }
-            function getTheme() {
-                var saved = localStorage.getItem('theme');
-                if (saved) return saved;
-                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            }
-            function setTheme(theme) {
-                document.documentElement.classList.toggle('dark', theme === 'dark');
-                localStorage.setItem('theme', theme);
-            }
-            function toggleTheme() {
-                var current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-                setTheme(current === 'dark' ? 'light' : 'dark');
-            }
-            setTheme(getTheme());
+            // Theme belongs to the one nav component (render_site_nav emits
+            // the pre-paint boot and the single control in "More"). This page
+            // used to install a second getTheme/setTheme pair on the `theme`
+            // key, which fought the fleet's `wiqis-theme` key.
             // Nav progress bar + due review badge (P2 7.1.13/7.1.15).
             // Stays hidden in static mode (no backend) — fetch failure is a no-op.
             //

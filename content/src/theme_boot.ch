@@ -33,36 +33,42 @@
 // between the correct colour appearing first and appearing second. It also keeps
 // the statically pre-rendered lesson pages working from file:// with no server.
 //
-// WHY THE LOGIC IS DUPLICATED FROM lesson_nav.ch'S getTheme().  It has to be:
-// the head script must run before `getTheme` is DEFINED, so it cannot call it.
-// The duplication is kept honest by tools/theme_check.py, which asserts that
-// this script and the nav's agree on the two questions that can disagree --
-// where the choice comes from, and what class name is applied. If either moves,
-// that checker fails.
+// WHY IT DELEGATES TO WiqisTheme WHEN THAT IS PRESENT.  The head script must
+// run before the nav's own helpers are DEFINED, so it cannot call them; but
+// brandlib's pre-paint script runs earlier still and installs the globals. On
+// those pages this script only re-applies the same stored choice; on a lesson
+// page (no brandlib) it resolves `wiqis-theme` itself with the same three
+// values. One key, one class, one answer.
 //
-// ONE BEHAVIOURAL DIFFERENCE, DELIBERATE: this one tolerates a THROWING
-// localStorage, and the nav's did not until the same day. Both now do, because
-// localStorage access throws when site data is blocked, and a throw in the head
-// script would abort before the class was set -- leaving the page in the light
-// theme with no way to fix it from the UI.
+// LOCALSTORAGE IS GUARDED.  Reading it throws when site data is blocked, and a
+// throw in a head script aborts before the class is set -- leaving the page in
+// the wrong theme with no UI path to correct it.
 //
-// WHAT THIS DOES NOT DO.  It does not add a `color-scheme` CSS property, so the
-// browser's own form controls and scrollbars are still light. That is a
-// separate improvement and it belongs in the theme's own CSS, not here.
+// WHAT IT ALSO DOES: set `data-theme` and `color-scheme`, so the browser's own
+// form controls and scrollbars follow the same choice as the document.
 using std::string
 
 public namespace underlayer_content {
 
-    // Emit the pre-paint theme script into <head>.
+    // Emit the pre-paint theme script into <head> -- ON EVERY PAGE, lessons
+    // included.
     //
-    // `lesson` is true on a content/src lesson page.  Lesson pages draw no theme
-    // toggle (see lesson_nav.ch for why) and use their own hardcoded light
-    // palette, so applying a `.dark` class to them would half-darken a page that
-    // was never designed for it.  They are therefore skipped -- and that is a
-    // correctness decision rather than an omission, so it is stated here rather
-    // than left to be discovered.
+    // This used to return early on a lesson page: lessons had a hardcoded light
+    // palette and no token set, so adding `.dark` half-darkened them (a dark
+    // <body> with white unit cards on top).  That was the symptom of a missing
+    // token set, not a reason to skip the theme: after the palette was moved to
+    // brand tokens (lesson_nav_css.ch / journey_shell.ch) a lesson has a real
+    // `.dark` appearance, and skipping the boot left it in Times New Roman on a
+    // white card while the rest of the fleet followed the reader's choice.
+    // There is now ONE theme contract and it applies to every surface.
+    //
+    // The key is `wiqis-theme`, the company-wide key used by brandlib's
+    // WiqisTheme (`system` | `light` | `dark`).  When WiqisTheme has already
+    // installed its globals, this script delegates to them; on a lesson page,
+    // where there is no WiqisTheme, it resolves the same key itself.  Using a
+    // second `theme` key here was how a page could hold two contradictory
+    // preferences at once.
     public func render_theme_boot_js(page : &mut HtmlPage, lesson : bool) {
-        if(lesson) { return }
         // A RAW <script> into <head>, NOT a `#js` block.
         //
         // This is the detail that makes the fix work, and it cost one wrong
@@ -77,7 +83,7 @@ public namespace underlayer_content {
         // The script is also deliberately SELF-CONTAINED and IIFE-wrapped: it
         // must not depend on any other function being defined, because nothing
         // else has been parsed yet at this point in the document.
-        var boot = string("<script>(function(){var c='';try{c=localStorage.getItem('theme')||'';}catch(e){c='';}var d=c;if(d!=='light'&&d!=='dark'){d='light';try{if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){d='dark';}}catch(e){d='light';}}document.documentElement.classList.toggle('dark',d==='dark');})();</script>")
+        var boot = string("<script>(function(){var g=window.$wiqisThemeGet;if(typeof g==='function'){window.$wiqisThemeSet(g());return;}var p='system';try{p=localStorage.getItem('wiqis-theme')||'system';}catch(e){p='system';}var d=p==='dark';if(p==='system'){d=false;try{d=!!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);}catch(e){d=false;}}var el=document.documentElement;el.classList.toggle('dark',d);el.setAttribute('data-theme',p);el.style.colorScheme=d?'dark':'light';})();</script>")
         var bv = boot.to_view()
         page.append_head_view(&bv)
     }

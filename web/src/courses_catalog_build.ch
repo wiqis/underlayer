@@ -73,9 +73,12 @@ public namespace underlayer_web {
         card.concepts = course.concepts.size() as int
         card.minutes = minutes_of(course)
         card.place = placement_of(routes, &cid)
+        // The #html interpolation in courses_index_render.ch / courses_path_render.ch
+        // escapes its {string} value. Escaping here as well produced the literal
+        // text "linker&amp;#39;s" on /courses. The reason is authored prose, so
+        // it is passed through raw and the macro escapes it exactly once.
         var reason = card.place.reason.copy()
-        var reason_esc = underlayer_core::html_escape(&reason)
-        card.place.reason = reason_esc
+        card.place.reason = reason
         card.concept_links = concept_links_for(course)
         return card
     }

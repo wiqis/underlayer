@@ -254,35 +254,22 @@ public namespace underlayer_content {
         return fallback.copy()
     }
 
+    // ONE source sentence, whole. The old arrival line stitched three strings
+    // together ("In this step ... explore X - fragment. Starting here: ...")
+    // and then ran jpWords(..., 30) over the result, which cut it off at an
+    // arbitrary word mid-sentence. A reader cannot act on half a sentence.
+    // Prefer the course's own description sentence; fall back to the unit's own
+    // first sentence; if neither is a short, complete sentence, use one short
+    // plain sentence rather than inventing a fact or truncating either source.
     private func jpAim(title : &string, description : &string, slice : &string, first : bool) : string {
+        var desc_raw = jpDecode(description)
+        var desc = jpFirstSentence(&desc_raw)
+        if(desc.size() > 0 && desc.size() <= 400) { return desc.copy() }
         var purpose_raw = jpInner(slice, string_view("<p"), string_view("</p>"))
         var purpose_clean = jpClean(&purpose_raw)
         var purpose = jpFirstSentence(&purpose_clean)
-        if(purpose.size() == 0) { purpose = jpTitle(slice) }
-        var aim = string()
-        if(first && title.size() > 0) {
-            aim.append_view(string_view("In this step you will be able to explore "))
-            aim.append_view(title.to_view())
-            var desc_decoded = jpDecode(description)
-            var desc = jpFirstSentence(&desc_decoded)
-            if(desc.size() > 0) {
-                aim.append_view(string_view(" - "))
-                var short_desc = jpWords(&desc, 18)
-                aim.append_view(short_desc.to_view())
-            }
-            if(purpose.size() > 0) {
-                if(desc.size() > 0 && aim.at(aim.size() - 1) == '.') { aim.append_view(string_view(" Starting here: ")) }
-                else { aim.append_view(string_view(". Starting here: ")) }
-                aim.append_view(purpose.to_view())
-            }
-        } else {
-            aim.append_view(string_view("In this step you will be able to follow "))
-            var t = jpTitle(slice)
-            if(t.size() > 0) { aim.append_view(t.to_view()) }
-            else { aim.append_view(string_view("this idea")) }
-            if(purpose.size() > 0) { aim.append_view(string_view(": ")); aim.append_view(purpose.to_view()) }
-        }
-        return jpWords(&aim, 30)
+        if(purpose.size() > 0 && purpose.size() <= 400) { return purpose.copy() }
+        return string("In this step you will work through one idea at a time.")
     }
 
     private func jpCanDo(slice : &string) : string {

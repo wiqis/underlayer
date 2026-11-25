@@ -67,6 +67,7 @@ public namespace underlayer_content {
                 var i = 0;
                 while(i < all.length) {
                     all[i].setAttribute('hidden', '');
+                    all[i].removeAttribute('data-jq-current');
                     i = i + 1;
                 }
                 jqHideIntro(true);
@@ -83,6 +84,7 @@ public namespace underlayer_content {
                 var u = s.units[i];
                 jqPrepareUnit(u);
                 u.removeAttribute('hidden');
+                u.setAttribute('data-jq-current', '1');
                 var count = jqEl('ul-journey-count');
                 if(count) { count.textContent = 'Step ' + (i + 1) + ' of ' + s.units.length; }
                 var purpose = jqEl('ul-journey-purpose');
@@ -124,6 +126,16 @@ public namespace underlayer_content {
                 jqState.units = units;
                 var first = units[0];
                 if(first && first.parentNode) { first.parentNode.insertBefore(root, first); }
+                // ONE mode class, added on boot (the head script already added
+                // it before first paint). The shared CSS keyed on this class is
+                // what keeps the arrival screen to one card and one action.
+                document.documentElement.classList.add('journey-active');
+                // The seven buttons and four dropdowns move into the one
+                // labelled disclosure BEFORE the intro bits are hidden, so
+                // they are not accidentally marked as hidden intro content.
+                if(typeof window.__ulJourneyDisplay === 'function') {
+                    window.__ulJourneyDisplay(false);
+                }
                 var meta = jqEl('ul-journey-meta');
                 var bits = [];
                 var minutes = root.getAttribute('data-minutes');

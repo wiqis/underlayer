@@ -96,12 +96,22 @@ public namespace underlayer_content {
             window.__ulPaintIdentity = function(me) {
                 var slot = document.getElementById('ul-identity');
                 if (!slot) { return; }
+                // Hide the static opener UNCONDITIONALLY once this slot is
+                // painted. The old test hid it only for a named account, so a
+                // failed /api/auth/me (or an account with no display name) left
+                // the static opener AND the slot's copy on screen at once.
+                // This slot is now the single sign-in control on every page.
                 var staticOpener = document.querySelector('.ul-nav-signin');
-                if (staticOpener) { staticOpener.hidden = !!(me && (me.display_name || me.username || me.name)); }
+                if (staticOpener) { staticOpener.hidden = true; }
                 slot.textContent = '';
                 var who = '';
                 if (me) {
                     if (me.display_name) { who = me.display_name; } else { if (me.username) { who = me.username; } else { if (me.name) { who = me.name; } } }
+                }
+                // One identity answer drives the one lesson advisory too: a
+                // signed-in reader never sees it, not even for a paint frame.
+                if (typeof window.__ulPaintSigninAdvisory === 'function') {
+                    window.__ulPaintSigninAdvisory(who.length > 0);
                 }
                 var link = document.createElement('a');
                 if (who.length === 0) {
@@ -175,8 +185,8 @@ public namespace underlayer_content {
                         window.__ulPaintIdentity(null);
                         var acts = document.getElementById('ul-tools-actions');
                         if (acts) { acts.hidden = true; }
-                        var so = document.getElementById('ul-tools-signedout');
-                        if (so) { so.hidden = false; }
+                        // The single sign-in advisory is in signin_advisory.ch;
+                        // the second copy in the tools row is gone.
                         window.__ulPaintBookmarkSafe();
                         var pill = document.getElementById('ul-progress-state');
                         if (pill) { pill.textContent = 'Signed out'; pill.className = 'ul-progress-state'; }
@@ -203,12 +213,12 @@ public namespace underlayer_content {
 
     public func render_identity_css(page : &mut HtmlPage) {
         #css {
-            .ul-signin { font-size: 0.85rem; font-weight: 600; color: hsl(217 91% 60%); text-decoration: none; white-space: nowrap; }
-            .ul-signin:hover { text-decoration: underline; }
-            .ul-signed-in { color: hsl(220 9% 46%); }
-            .ul-signed-in:hover { color: hsl(217 91% 60%); }
-            .ul-signout { font: inherit; font-size: 0.78rem; font-weight: 600; padding: 0.2rem 0.5rem; border: 1px solid hsl(220 11% 89%); border-radius: 6px; background: hsl(0 0% 100%); color: hsl(220 9% 46%); cursor: pointer; white-space: nowrap; }
-            .ul-signout:hover { background: hsl(220 14% 96%); color: hsl(221 39% 11%); }
+            .ul-signin { font-size: 0.9rem; font-weight: 600; color: hsl(var(--primary)); text-decoration: none; white-space: nowrap; min-height: 2.75rem; display: inline-flex; align-items: center; padding: 0.5rem 0.7rem; border-radius: 6px; }
+            .ul-signin:hover { text-decoration: underline; background: hsl(var(--accent)); }
+            .ul-signed-in { color: hsl(var(--muted-foreground)); }
+            .ul-signed-in:hover { color: hsl(var(--primary)); }
+            .ul-signout { font: inherit; font-size: 0.8rem; font-weight: 600; padding: 0.5rem 0.65rem; min-height: 2.75rem; border: 1px solid hsl(var(--border)); border-radius: 6px; background: hsl(var(--card)); color: hsl(var(--muted-foreground)); cursor: pointer; white-space: nowrap; }
+            .ul-signout:hover { background: hsl(var(--accent)); color: hsl(var(--foreground)); }
             .nav-identity { display: inline-flex; align-items: center; gap: 0.4rem; }
             .ul-nav-signin[hidden] { display: none; }
         }

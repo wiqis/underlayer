@@ -34,29 +34,21 @@ public namespace underlayer_web {
     // called once per lesson request.
     public func lesson_header_css() : string {
         var css = std::string()
-        css.append_view(".lesson-head{display:flex;align-items:center;flex-wrap:wrap;gap:.4rem .9rem;margin:.6rem 0 1.1rem;font-size:.86rem;line-height:1.5;color:hsl(215 16% 42%)}")
+        // Brand tokens, not a light-only palette. The old rules used hardcoded
+        // light greys and a dark-mode MEDIA query; when a reader toggled dark
+        // mode with the class, the media query did not fire and this strip
+        // stayed dark text on a dark card. Tokens flip with the class.
+        css.append_view(".lesson-head{display:flex;align-items:center;flex-wrap:wrap;gap:.4rem .9rem;margin:.6rem 0 1.1rem;font-size:.9rem;line-height:1.6;color:hsl(var(--muted-foreground))}")
         css.append_view(".lesson-head-item{display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap}")
         css.append_view(".lesson-head-ico{font-size:.85em;opacity:.7}")
-        css.append_view(".lesson-head-diff{border:1px solid #d1d5db;border-radius:999px;padding:.05rem .5rem}")
-        css.append_view(".lesson-head-mod{border-left:2px solid #d1d5db;padding-left:.6rem}")
+        css.append_view(".lesson-head-diff{border:1px solid hsl(var(--border));border-radius:999px;padding:.05rem .5rem}")
+        css.append_view(".lesson-head-mod{border-left:2px solid hsl(var(--border));padding-left:.6rem}")
         // The prerequisite link WRAPS rather than truncating: a reader who
         // cannot see which lesson came before cannot act on it, and a truncated
         // "Continues from Binary Representat..." is worse than a wrapped line.
-        css.append_view(".lesson-head-prereq{flex:1 1 100%;color:#6b7280;overflow-wrap:anywhere}")
-        css.append_view(".lesson-head-prereq a{color:#2563eb;text-decoration:none;border-bottom:1px solid #93c5fd}")
-        css.append_view(".lesson-head-prereq a:hover{text-decoration:none;border-bottom-color:#2563eb}")
-        // The lesson pages carry a hardcoded LIGHT palette and deliberately do
-        // not get the theme class (see content/src/theme_boot.ch), so the dark
-        // rules here are scoped to the OS preference rather than to a class that
-        // is never set.  Without this the header would be the one unreadable
-        // strip on a dark-mode page.
-        css.append_view("@media (prefers-color-scheme:dark){")
-        css.append_view(".lesson-head{color:hsl(215 20% 78%)}")
-        css.append_view(".lesson-head-diff{border-color:#4b5563}")
-        css.append_view(".lesson-head-mod{border-left-color:#4b5563}")
-        css.append_view(".lesson-head-prereq{color:hsl(215 16% 68%)}")
-        css.append_view(".lesson-head-prereq a{color:#93c5fd;border-bottom-color:#1d4ed8}")
-        css.append_view("}")
+        css.append_view(".lesson-head-prereq{flex:1 1 100%;color:hsl(var(--muted-foreground));overflow-wrap:anywhere}")
+        css.append_view(".lesson-head-prereq a{color:hsl(var(--primary));text-decoration:none;border-bottom:1px solid hsl(var(--primary))}")
+        css.append_view(".lesson-head-prereq a:hover{text-decoration:none;border-bottom-color:hsl(var(--primary))}")
         css.append_view("@media (max-width:640px){.lesson-head{font-size:.82rem;gap:.3rem .6rem}}")
         return css
     }

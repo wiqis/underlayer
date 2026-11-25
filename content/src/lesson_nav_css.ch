@@ -74,11 +74,19 @@ public namespace underlayer_content {
     // the same reason lesson_nav.ch writes its two conditionals as early returns
     // instead of `@if`/`@else` inside the markup, and it cost one failed build to
     // find the second time.
+    // THE BRAND TOKENS LIVE HERE because the nav is the one component on every
+    // surface, lesson pages included. `html:root` specificity lets them win over
+    // the components theme's defaults; the lesson pages have no theme at all,
+    // so this is the only definition they get. No Inter font file exists in this
+    // repo, so the family stays the existing system stack -- the SAME stack on
+    // every page rather than one stack on lessons and another on /courses.
     public func render_site_nav_css(page : &mut HtmlPage) {
         #css {
-            :root { --nav-card: 0 0% 100%; --nav-border: 220 11% 89%; --nav-fg: 221 39% 11%; --nav-muted: 220 9% 46%; --nav-accent: 220 14% 96%; --nav-accent-strong: 220 13% 91%; --nav-ring: 217 91% 60%; }
-            body { margin: 0; }
-            .dark { --nav-card: 240 10% 3.9%; --nav-border: 240 3.7% 15.9%; --nav-fg: 0 0% 98%; --nav-muted: 240 5% 64.9%; --nav-accent: 240 3.7% 15.9%; --nav-accent-strong: 240 3.7% 20%; --nav-ring: 217 91% 70%; }
+            :root { --nav-card: 0 0% 100%; --nav-border: 240 5.9% 90%; --nav-fg: 240 10% 3.9%; --nav-muted: 240 3.8% 46.1%; --nav-accent: 11 100% 96%; --nav-accent-strong: 11 100% 90%; --nav-ring: 11 100% 60%; }
+            html:root { --background: 36 33% 98%; --foreground: 240 10% 3.9%; --card: 0 0% 100%; --card-foreground: 240 10% 3.9%; --primary: 11 100% 60%; --primary-foreground: 0 0% 100%; --accent: 11 100% 96%; --accent-foreground: 11 70% 34%; --muted: 240 4.8% 95.9%; --muted-foreground: 240 3.8% 46.1%; --border: 240 5.9% 90%; --ring: 11 100% 60%; --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+            html.dark { --primary: 11 100% 60%; --primary-foreground: 0 0% 100%; --ring: 11 100% 60%; --background: 240 10% 3.9%; --foreground: 0 0% 98%; --card: 240 10% 3.9%; --card-foreground: 0 0% 98%; --accent: 11 40% 18%; --accent-foreground: 11 100% 84%; --muted: 240 3.7% 15.9%; --muted-foreground: 240 5% 64.9%; --border: 240 3.7% 15.9%; }
+            .dark { --nav-card: 240 10% 3.9%; --nav-border: 240 3.7% 15.9%; --nav-fg: 0 0% 98%; --nav-muted: 240 5% 64.9%; --nav-accent: 11 40% 18%; --nav-accent-strong: 11 40% 24%; --nav-ring: 11 100% 60%; }
+            html body { margin: 0; font-family: var(--font-sans); font-size: 1rem; line-height: 1.6; }
             .skip-link { position: absolute; top: -100%; left: 0; background: hsl(var(--nav-ring)); color: white; padding: 0.75rem 1.5rem; z-index: 200; font-weight: 600; text-decoration: none; border-radius: 0 0 8px 0; }
             .skip-link:focus { top: 0; }
 
@@ -100,8 +108,10 @@ public namespace underlayer_content {
             .nav-menu[open] .nav-menu-summary::after { content: " ▴"; }
             .nav-menu[data-active="true"] > .nav-menu-summary { color: hsl(var(--nav-ring)); background: hsl(var(--nav-ring) / 12%); font-weight: 600; }
             .nav-menu-panel { position: absolute; top: calc(100% + 0.35rem); right: 0; z-index: 120; min-width: 13rem; padding: 0.35rem; background: hsl(var(--nav-card)); border: 1px solid hsl(var(--nav-border)); border-radius: 10px; box-shadow: 0 10px 24px -6px rgb(0 0 0 / 0.18); display: flex; flex-direction: column; }
+            .nav-menu:not([open]) .nav-menu-panel { display: none !important; }
             .nav-menu-panel .nav-link { width: 100%; text-align: left; }
             .nav-menu-rule { height: 1px; background: hsl(var(--nav-border)); margin: 0.35rem 0.4rem; }
+            .nav-theme { border: 0; background: transparent; font: inherit; cursor: pointer; text-align: left; }
 
             .nav-right { display: flex; align-items: center; gap: 0.75rem; flex: 0 0 auto; }
             .theme-toggle { background: none; border: 1px solid hsl(var(--nav-border)); border-radius: 8px; padding: 0.5rem; cursor: pointer; font-size: 1.1rem; line-height: 1; color: inherit; }

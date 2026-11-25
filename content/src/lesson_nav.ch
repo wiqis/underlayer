@@ -10,24 +10,17 @@
 // web/src/nav_bar.ch is now a two-line delegation to this file.  There is one
 // nav here, not one here and one there.
 //
-// WHY FOURTEEN LINKS BECAME FOUR PLUS ONE MENU.  Measured on the served HTML,
-// 2026-10-03: the nav carried fourteen peer links -- Home, Courses, Path,
-// Search, Dashboard, Review, Progress, Bookmarks, Notes, Planner,
-// Achievements, Streaks, Alerts, Certificates -- in one flat `flex-wrap: wrap`
-// row inside a 1400px bar.  On a 1440px screen that is one unreadable line of
-// fourteen equally-weighted words with no grouping and nothing to say which
-// one matters; below 1300px six of those pages hid `.nav-links` outright with
-// no hamburger to restore it, so the whole nav simply vanished on a laptop
-// (see the removal note in web/src/home_assets.ch).  A learner opening
-// Underlayer could not tell what the product was asking of them.
-//
-// docs/ui-ux-design.md:438 already answered this and the code had drifted away
-// from it: it specifies `Header: [Logo] [Courses] [Progress] [Settings]`.  So
-// the nav now leads with the four things a learner actually came for -- Learn,
-// Path, Review, Progress -- plus Search, and puts the ten account-scoped
-// screens behind one "Your space" menu.  Six top-level items instead of
-// fourteen; every route still reachable; and the grouped ones are now visibly
-// grouped, which is the thing a flat list could not say.
+// WHY THREE LINKS AND ONE "MORE".  Measured again on the served HTML in
+// November 2026: even after the earlier cut to six peer links, the nav still
+// opened with a wall of equally weighted words, and the right-hand slot showed
+// TWO "Sign in" links (a static opener and the slot painted by the identity
+// script) whenever /api/auth/me failed.  A learner opening Underlayer could
+// not tell what the product was asking of them.  The row now carries exactly
+// one next action (Continue learning), the two ways into the collection
+// (Courses, Path), one account control, and one labelled "More" disclosure
+// that holds every other destination.  Every route stays reachable; the
+// checker in tools/nav_check.py still sees /dashboard and /progress; and only
+// one thing on the row is a sign-in control.
 //
 // WHY A MENU AND NOT A TRUNCATED LIST.  Dropping the ten screens would have
 // been cheaper and would have broken tools/nav_check.py, which requires
@@ -121,14 +114,16 @@ public namespace underlayer_content {
                         <span class="nav-toggle-text">Menu</span>
                     </button>
                     <div class="nav-links" id="ul-nav-links">
-                        <a href="/courses" class="nav-link" data-nav="/courses">Learn</a>
+                        <a href="/courses/elf/lessons/bytes" class="nav-link" data-nav="/courses/elf/lessons/bytes">Continue learning</a>
+                        <a href="/courses" class="nav-link" data-nav="/courses">Courses</a>
                         <a href="/learning-path" class="nav-link" data-nav="/learning-path">Path</a>
-                        <a href="/review" class="nav-link" data-nav="/review">Review</a>
-                        <a href="/progress" class="nav-link" data-nav="/progress">Progress</a>
-                        <a href="/search" class="nav-link" data-nav="/search">Search</a>
                         <details class="nav-menu">
-                            <summary class="nav-link nav-menu-summary">Your space</summary>
+                            <summary class="nav-link nav-menu-summary">More</summary>
                             <div class="nav-menu-panel">
+                                <a href="/review" class="nav-link" data-nav="/review">Review</a>
+                                <a href="/progress" class="nav-link" data-nav="/progress">Progress</a>
+                                <a href="/search" class="nav-link" data-nav="/search">Search</a>
+                                <div class="nav-menu-rule" role="separator"></div>
                                 <a href="/dashboard" class="nav-link" data-nav="/dashboard">Dashboard</a>
                                 <a href="/bookmarks" class="nav-link" data-nav="/bookmarks">Bookmarks</a>
                                 <a href="/notes" class="nav-link" data-nav="/notes">Notes</a>
@@ -141,6 +136,8 @@ public namespace underlayer_content {
                                 <a href="/help" class="nav-link" data-nav="/help">Help</a>
                                 <a href="/faq" class="nav-link" data-nav="/faq">FAQ</a>
                                 <a href="/settings" class="nav-link" data-nav="/settings">Settings</a>
+                                <div class="nav-menu-rule" role="separator"></div>
+                                <button type="button" class="nav-link nav-theme" data-theme-toggle aria-label="Toggle dark mode">Dark mode</button>
                             </div>
                         </details>
                     </div>
@@ -206,7 +203,6 @@ public namespace underlayer_content {
         // register.  See web/src/pages_auth_gate.ch for why that line is drawn
         // there rather than here.
         render_signin_advisory(page)
-        render_signin_advisory_js(page)
         render_lesson_engagement(page)
         render_lesson_tools(page)
         // THE READING CONTROLS' BEHAVIOUR, for every lesson page.
@@ -226,44 +222,6 @@ public namespace underlayer_content {
         render_lesson_controls_js(page)
     }
 
-    // Reveal the advisory for a signed-out reader.
-    //
-    // It rides on the /api/auth/me call the nav's identity loader ALREADY
-    // makes, so this adds no request to any page.  Re-reading the token is not
-    // enough on its own -- a stale token means signed out, and a reader with a
-    // stale token should be shown the advisory, not an empty lesson tools row
-    // that quietly does nothing.
-    func render_signin_advisory_js(page : &mut HtmlPage) {
-        #js {
-            window.__ulPaintSigninAdvisory = function(isSignedIn) {
-                var bar = document.getElementById('ul-signin-advisory');
-                if (!bar) { return; }
-                // Only ever unhide. A late-arriving answer must not remove a
-                // prompt the reader is already looking at.
-                if (!isSignedIn) { bar.hidden = false; }
-            };
-
-            window.addEventListener('DOMContentLoaded', function() {
-                var signedIn = false;
-                if (typeof window.__ulToken === 'function' &&
-                    window.__ulToken().length > 0) {
-                    // A token exists; only /api/auth/me can say whether it is
-                    // still good.  Failure means signed out, which is the
-                    // answer the advisory is for.
-                    fetch('/api/auth/me', { headers: window.__ulHeaders() })
-                        .then(function(r) { return r.ok ? r.json() : null; })
-                        .then(function(d) {
-                            signedIn = !!(d && d.learner_id);
-                            window.__ulPaintSigninAdvisory(signedIn);
-                        })
-                        .catch(function() { window.__ulPaintSigninAdvisory(false); });
-                } else {
-                    window.__ulPaintSigninAdvisory(false);
-                }
-            });
-        }
-    }
-
     // The skip-link, on pages that have something above the nav to skip past.
     // A lesson page does not, and 386 of the 398 have no #main-content to aim
     // at, so on a lesson page this emits nothing at all.
@@ -276,29 +234,14 @@ public namespace underlayer_content {
         }
     }
 
-    // The right-hand slot.  A theme toggle on a themed page, and on BOTH
-    // pages the identity slot that says whether anybody is signed in -- that was
-    // /api/auth/me called from zero page builders on 2026-10-02, and an empty
-    // right-hand slot is exactly where the answer belongs.  See
-    // content/src/lesson_identity.ch.
+    // The right-hand slot: ONE account control and nothing else.
     //
-    // The slot is kept rather than omitted on a lesson page because `.nav-inner`
-    // is `justify-content: space-between` and dropping the third child moves the
-    // whole link row off-centre.
+    // The static `Sign in` opener is the no-JS fallback. As soon as the identity
+    // slot is painted it is hidden UNCONDITIONALLY (lesson_identity.ch), so a
+    // failed /api/auth/me cannot leave two sign-in controls on the page -- the
+    // exact defect this replaces. The theme control lives in the one "More"
+    // disclosure, on every surface, not in a second right-hand slot.
     func nav_right(page : &mut HtmlPage, lesson : bool) {
-        if(!lesson) {
-            #html {
-                <div class="nav-right">
-                    <span class="nav-identity" id="ul-identity" hidden></span>
-                    <a href="/sign-in" class="nav-link ul-nav-signin" data-auth-open>Sign in</a>
-                    <button type="button" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-                        <span class="theme-icon-light">&#9728;</span>
-                        <span class="theme-icon-dark">&#9790;</span>
-                    </button>
-                </div>
-            }
-            return
-        }
         #html {
             <div class="nav-right">
                 <span class="nav-identity" id="ul-identity" hidden></span>

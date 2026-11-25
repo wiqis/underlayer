@@ -45,52 +45,23 @@ using underlayer_models::Course
         // The module list container is filled by JS (fetch /api/courses/:id).
         // Concept links follow /courses/<id>/lessons/<concept>.
         render_landing_css(&mut page)
-        // This page draws its OWN navbar rather than calling render_site_nav, so
-        // the sign-in slot has to be emitted here or the landing pages are the
-        // one place on the site where a reader cannot tell whether they are
-        // signed in.  Same component, same script, same styles as every other
-        // page -- see content/src/lesson_identity.ch.
-        render_identity_css(&mut page)
-        render_identity_js(&mut page)
-        // ...and the same for the PRE-PAINT THEME, which render_site_nav emits
-        // for every other page.  These six landing pages are the only pages that
-        // hand-roll their navbar, and they draw a theme toggle, so without this
-        // they are the only pages that paint light first and repaint: measured
-        // before the fix, 432 static pages carried the pre-paint script and
-        // THESE SIX did not, because they bypass the one function that emits it.
-        //
-        // That is the cost of a hand-rolled navbar, stated as a fact rather
-        // than left to be rediscovered.  The better fix is to call
-        // render_site_nav here like every other page; that is a layout change to
-        // six pages and is worth doing separately.  Until then the two lines
-        // below are what keeps them from flashing.
+        // THE ONE NAV, on a course landing page too. This page used to draw a
+        // second, hand-rolled navbar with seven peer links, its own identity
+        // slot and its own theme script -- the place where "one shell" broke.
+        // render_site_nav emits the identical markup, styles, identity script
+        // and pre-paint theme as every lesson and every collection page.
+        // The course-specific progress strip stays below the nav; it is not a
+        // second navigation bar.
+        render_site_nav(&mut page)
 
         #html {
-            <a href="#main-content" class="skip-link">Skip to content</a>
-            <div class="navbar">
-                <div class="nav-inner">
-                    <a href="/" class="nav-brand">Underlayer</a>
-                    <div class="nav-links">
-                        <a href="/" class="nav-link">Home</a>
-                        <a href="/courses" class="nav-link active">Courses</a>
-                        <a href="/learning-path" class="nav-link">Path</a>
-                        <a href="/search" class="nav-link">Search</a>
-                        <a href="/dashboard" class="nav-link">Dashboard</a>
-                        <a href="/review" class="nav-link">Review</a>
-                        <a href="/progress" class="nav-link">Progress</a>
+            <div class="nav-progress-wrap">
+                <div class="nav-progress" id="nav-progress" hidden>
+                    <div class="nav-progress-track" id="nav-progress-bar" role="progressbar" aria-label="Course progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                        <div class="nav-progress-fill" id="nav-progress-fill"></div>
                     </div>
-                    <div class="nav-progress" id="nav-progress" hidden>
-                        <div class="nav-progress-track" id="nav-progress-bar" role="progressbar" aria-label="Course progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                            <div class="nav-progress-fill" id="nav-progress-fill"></div>
-                        </div>
-                        <span class="nav-progress-note" id="nav-progress-note"></span>
-                        <a href="/review" class="nav-due-badge" id="nav-due-badge" hidden></a>
-                    </div>
-                    <span class="nav-identity" id="ul-identity" hidden></span>
-                    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-                        <span class="theme-icon-light">☀️</span>
-                        <span class="theme-icon-dark">🌙</span>
-                    </button>
+                    <span class="nav-progress-note" id="nav-progress-note"></span>
+                    <a href="/review" class="nav-due-badge" id="nav-due-badge" hidden></a>
                 </div>
             </div>
 

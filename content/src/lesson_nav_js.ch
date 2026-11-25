@@ -95,6 +95,19 @@ public namespace underlayer_content {
     // early-return and the theme's does not.
     public func render_nav_toggle_js(page : &mut HtmlPage) {
         #js {
+            // The one theme control, on EVERY surface. It is defined here
+            // rather than in render_site_nav_js because that block is skipped
+            // on lesson pages, which now have a real theme (theme_boot.ch).
+            window.__ulThemeToggle = function() {
+                var current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                var next = current === 'dark' ? 'light' : 'dark';
+                document.documentElement.classList.toggle('dark', next === 'dark');
+                document.documentElement.setAttribute('data-theme', next);
+                document.documentElement.style.colorScheme = next;
+                try { localStorage.setItem('wiqis-theme', next); } catch (e) { }
+                if (typeof window.$wiqisThemeSet === 'function') { window.$wiqisThemeSet(next); }
+            };
+
             window.__ulNavToggle = function(open) {
                 var btn = document.getElementById('ul-nav-toggle');
                 var panel = document.getElementById('ul-nav-links');
@@ -111,6 +124,12 @@ public namespace underlayer_content {
                 var panel = document.getElementById('ul-nav-links');
                 if (!btn || !panel) { return; }
                 btn.addEventListener('click', function() { window.__ulNavToggle(); });
+                var themeBtns = document.querySelectorAll('[data-theme-toggle]');
+                var ti = 0;
+                while (ti < themeBtns.length) {
+                    themeBtns[ti].addEventListener('click', function() { window.__ulThemeToggle(); });
+                    ti = ti + 1;
+                }
                 // Dismiss in place. A click on a link navigates anyway, so this
                 // only covers "opened it, changed my mind".
                 document.addEventListener('click', function(e) {
@@ -161,8 +180,9 @@ public namespace underlayer_content {
                 // of asymmetry that a shared helper (web/src/session_js.ch)
                 // exists to remove.
                 var saved = '';
-                try { saved = localStorage.getItem('theme'); } catch (e) { saved = ''; }
-                if (saved) return saved;
+                try { saved = localStorage.getItem('wiqis-theme'); } catch (e) { saved = ''; }
+                if (saved === 'light' || saved === 'dark') { return saved; }
+                saved = '';
                 var prefersDark = false;
                 try { prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches; }
                 catch (e) { prefersDark = false; }
@@ -170,11 +190,14 @@ public namespace underlayer_content {
             }
             function setTheme(theme) {
                 document.documentElement.classList.toggle('dark', theme === 'dark');
-                // A failed WRITE must not take the toggle down either: the
-                // class has already been applied above, so the visible change
-                // has happened.  Letting the write throw here would undo that
-                // for the reader -- the button would appear not to work.
-                try { localStorage.setItem('theme', theme); } catch (e) { }
+                document.documentElement.setAttribute('data-theme', theme);
+                document.documentElement.style.colorScheme = theme;
+                // ONE key across the fleet. A failed WRITE must not take the
+                // toggle down: the class has already been applied.
+                try { localStorage.setItem('wiqis-theme', theme); } catch (e) { }
+                if (typeof window.$wiqisThemeSet === 'function') {
+                    window.$wiqisThemeSet(theme);
+                }
             }
             function toggleTheme() {
                 var current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';

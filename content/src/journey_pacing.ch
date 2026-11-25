@@ -17,6 +17,7 @@ public namespace underlayer_content {
                 var i = 0;
                 while(i < all.length) {
                     all[i].setAttribute('hidden', '');
+                    all[i].removeAttribute('data-jq-current');
                     i = i + 1;
                 }
                 jqHide(jqEl('ul-journey-arrival'), true);
@@ -42,6 +43,13 @@ public namespace underlayer_content {
                 jqSet(jqKey('deep'), '1');
                 var root = jqRoot();
                 if(root) { root.classList.add('journey-deep'); }
+                // Deep dive restores the original document: the mode class
+                // goes away, so the shared hiding rule stops applying, and the
+                // display controls go back to their original positions.
+                document.documentElement.classList.remove('journey-active');
+                if(typeof window.__ulJourneyDisplay === 'function') {
+                    window.__ulJourneyDisplay(true);
+                }
                 var all = jqAllUnits();
                 var i = 0;
                 while(i < all.length) {
@@ -68,6 +76,10 @@ public namespace underlayer_content {
                 jqSet(jqKey('deep'), '0');
                 var root = jqRoot();
                 if(root) { root.classList.remove('journey-deep'); }
+                document.documentElement.classList.add('journey-active');
+                if(typeof window.__ulJourneyDisplay === 'function') {
+                    window.__ulJourneyDisplay(false);
+                }
                 jqHide(jqEl('ul-journey-return'), true);
                 // Coming back from the finish screen must restore the recap,
                 // not restart a step the learner already completed.
@@ -85,6 +97,7 @@ public namespace underlayer_content {
                 var i = 0;
                 while(i < all.length) {
                     all[i].setAttribute('hidden', '');
+                    all[i].removeAttribute('data-jq-current');
                     i = i + 1;
                 }
                 var h = document.querySelector('.lesson h1');
