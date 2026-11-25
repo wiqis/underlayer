@@ -221,11 +221,14 @@ public namespace underlayer_web {
     // 64-bit FNV-1a, hex.  Cheap, deterministic, and good enough to tell two
     // renders apart — this is a cache validator, not a signature.
     func etag_of(text : &string) : string {
-        var hash : u64 = 0xcbf29ce484222325
+        // Suffix BOTH constants: on Linux an unsuffixed 64-bit hex literal is
+        // inferred as `long`, which the release type checker refuses for u64
+        // (Windows' `long` is 32-bit, so a local debug build does not catch it).
+        var hash : u64 = 0xcbf29ce484222325u64
         var i : size_t = 0
         while(i < text.size()) {
             hash = hash ^ (text.at(i) as u64)
-            hash = hash * 0x100000001b3
+            hash = hash * 0x100000001b3u64
             i = i + 1
         }
         var buf = std::vector<u8>()
