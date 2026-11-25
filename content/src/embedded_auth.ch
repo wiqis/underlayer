@@ -96,11 +96,39 @@ public namespace underlayer_content {
 
                 // The account frame posts this once the credential is accepted.
                 // ?next=close stopped the frame navigating itself; this listener
-                // is the only thing that moves.
+                // is the only thing that moves.  It MUST exchange the shared
+                // account cookie for a local session before reloading: the
+                // cookie is identity on account.wiqis.com, but the page gate on
+                // /dashboard, /review, /progress and /health reads ul_session.
+                // Without this call the visitor looks signed in in the dialog
+                // and is bounced straight back to /sign-in on the next page.
+                window.__ulCompleteSignIn = window.__ulCompleteSignIn || function (done) {
+                    fetch('/api/auth/from-account', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: '{}'
+                    }).then(function (response) {
+                        if (!response.ok) { throw new Error('account exchange failed'); }
+                        done();
+                    }).catch(function () {
+                        var box = document.getElementById('ul-auth-error');
+                        if (!box) {
+                            box = document.createElement('div');
+                            box.id = 'ul-auth-error';
+                            box.setAttribute('role', 'alert');
+                            box.style.cssText = 'position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);z-index:9999;max-width:90vw;padding:0.75rem 1rem;border-radius:0.75rem;background:hsl(var(--destructive));color:white;font-size:0.9rem;';
+                            document.body.appendChild(box);
+                        }
+                        box.textContent = 'We could not finish signing you in. Please try again.';
+                    });
+                };
                 window.addEventListener('message', function (event) {
+                    // Only the account service may claim a successful sign-in.
+                    if (event.origin !== account) { return; }
                     if (event.data && event.data.type === 'login_success') {
                         if (dialog.open) { dialog.close(); }
-                        window.location.reload();
+                        window.__ulCompleteSignIn(function () { window.location.reload(); });
                     }
                 });
             };
@@ -142,12 +170,42 @@ public namespace underlayer_content {
     }
 
     // Direct visit to /sign-in or /sign-up: the frame signs the reader in, but
-    // nobody here closes a dialog, so send the TOP-LEVEL document home.
+    // nobody here closes a dialog, so send the TOP-LEVEL document home.  The
+    // local exchange is still mandatory here — the fallback surface is the path
+    // a visitor with no JavaScript takes, and it must leave the same ul_session
+    // cookie behind as the dialog path.
     public func render_auth_redirect_js(page : &mut HtmlPage) {
         #js {
+            window.__ulCompleteSignIn = window.__ulCompleteSignIn || function (done) {
+                fetch('/api/auth/from-account', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: '{}'
+                }).then(function (response) {
+                    if (!response.ok) { throw new Error('account exchange failed'); }
+                    done();
+                }).catch(function () {
+                    var box = document.getElementById('ul-auth-error');
+                    if (!box) {
+                        box = document.createElement('div');
+                        box.id = 'ul-auth-error';
+                        box.setAttribute('role', 'alert');
+                        box.style.cssText = 'position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);z-index:9999;max-width:90vw;padding:0.75rem 1rem;border-radius:0.75rem;background:hsl(var(--destructive));color:white;font-size:0.9rem;';
+                        document.body.appendChild(box);
+                    }
+                    box.textContent = 'We could not finish signing you in. Please try again.';
+                });
+            };
             window.addEventListener('message', function (event) {
+                // The fallback surface has no dialog config when scripting is
+                // off, but this script only runs with scripting on; read the
+                // same account origin the iframe was built from.
+                var cfg = document.getElementById('ul-auth-config');
+                var account = cfg ? cfg.getAttribute('data-account-url') : '';
+                if (!account || event.origin !== account) { return; }
                 if (event.data && event.data.type === 'login_success') {
-                    window.location.href = '/';
+                    window.__ulCompleteSignIn(function () { window.location.href = '/'; });
                 }
             });
         }
