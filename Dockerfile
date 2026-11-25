@@ -1,10 +1,13 @@
 # ================================================================
 # Dockerfile — Build Underlayer using the Chemical toolchain
 #
-# Context: underlayer repo root (chemical.mod, app/, core/, ..., courses/)
-# Dependencies: cloned from GitHub by the modules' imports. Only
-# database/chemical.mod pulls a remote dep (chemicallang/sqlite3), and it is
-# compiled from C source — there are no shared libraries to ship.
+# Context: underlayer repo root (chemical.cloud.mod, app/, core/, ..., courses/)
+# Dependencies: cloned from GitHub by the modules' imports. The brand layer is
+# private: the two .cloud.mod manifests import github.com/wiqis/brandlib instead
+# of the local ../../WebLibs/brandlib path, and are copied over their local
+# twins below (same pattern as Web/timeline and Web/123mind). GITHUB_TOKEN must
+# have read access to the wiqis org. database/chemical.mod also pulls
+# chemicallang/sqlite3, compiled from C source — no shared libraries to ship.
 # ================================================================
 
 FROM chemicallang/chemical:v0.6.2-tcc-ubuntu AS builder
@@ -21,7 +24,8 @@ WORKDIR /workspace
 
 # Build inputs: the root module file plus every source tree it compiles.
 # content/ is compiled in (lesson HTML is generated code, not read at runtime).
-COPY chemical.mod ./
+# Cloud manifests replace the local ones: brandlib comes from GitHub here.
+COPY chemical.cloud.mod ./chemical.mod
 COPY app/ ./app/
 COPY core/ ./core/
 COPY database/ ./database/
@@ -29,6 +33,8 @@ COPY learning/ ./learning/
 COPY models/ ./models/
 COPY repository/ ./repository/
 COPY web/ ./web/
+# web/ has its own brandlib import — overwrite it with the GitHub-URL manifest.
+COPY web/chemical.cloud.mod ./web/chemical.mod
 COPY content/ ./content/
 
 # Surfaces the compiler version in the build log — this project is sensitive to it.
