@@ -1,4 +1,4 @@
-// underlayer_content â€” unit walking helpers for the guided journey.
+// underlayer_content - unit walking helpers for the guided journey.
 //
 // Reads the semantic .unit blocks already present in every lesson. No technical
 // text is authored here: labels, key points and disclosure decisions all come
@@ -23,10 +23,29 @@ public namespace underlayer_content {
                 return t.substring(a, b);
             }
 
-            function jqUnits() {
-                var lesson = document.querySelector('.lesson');
+            function jqLesson() { return document.querySelector('.lesson'); }
+
+            // ALL .unit blocks, including unit-exercises. The chrome hides every
+            // one of these; only the active member of jqState.units is shown.
+            function jqAllUnits() {
+                var lesson = jqLesson();
                 if(!lesson) { return []; }
-                var all = lesson.querySelectorAll('.unit');
+                var nodes = lesson.querySelectorAll('.unit');
+                var out = [];
+                var i = 0;
+                while(i < nodes.length) { out.push(nodes[i]); i = i + 1; }
+                return out;
+            }
+
+            // POLICY: unit-exercises is NOT a walk step. It is populated by the
+            // exercises API, carries inline display:none, and is empty on a
+            // static page -- making it a step would put an empty box in the
+            // final position offline. It stays in the document and Deep dive
+            // restores it with all the other detail.
+            function jqUnits() {
+                var lesson = jqLesson();
+                if(!lesson) { return []; }
+                var all = jqAllUnits();
                 var out = [];
                 var i = 0;
                 while(i < all.length) {
@@ -37,6 +56,40 @@ public namespace underlayer_content {
                     i = i + 1;
                 }
                 return out;
+            }
+
+            // Non-unit content directly inside .lesson (a11y controls, reading
+            // controls, toc, swipe hint, the h1) must not compete with the one
+            // visible step. Ancestors of units are left alone.
+            function jqIntroBits() {
+                var lesson = jqLesson();
+                if(!lesson) { return []; }
+                var out = [];
+                var ch = lesson.children;
+                var i = 0;
+                while(i < ch.length) {
+                    var el = ch[i];
+                    if(el.id === 'ul-journey') { i = i + 1; continue; }
+                    if(el.classList && el.classList.contains('unit')) { i = i + 1; continue; }
+                    if(el.querySelector && el.querySelector('.unit')) { i = i + 1; continue; }
+                    out.push(el);
+                    i = i + 1;
+                }
+                return out;
+            }
+
+            function jqHideIntro(yes) {
+                var bits = jqIntroBits();
+                var i = 0;
+                while(i < bits.length) {
+                    var el = bits[i];
+                    if(yes) { el.setAttribute('hidden', ''); el.setAttribute('data-jq-intro', '1'); }
+                    else if(el.getAttribute('data-jq-intro') === '1') {
+                        el.removeAttribute('hidden');
+                        el.removeAttribute('data-jq-intro');
+                    }
+                    i = i + 1;
+                }
             }
 
             function jqPurpose(u) {
@@ -60,6 +113,8 @@ public namespace underlayer_content {
             }
 
             function jqKeyPoint(u) {
+                var derived = u.getAttribute('data-remember');
+                if(derived && jqTrim(derived).length > 0) { return jqTrim(derived); }
                 var title = jqTitle(u);
                 var ps = u.querySelectorAll('p');
                 var first = '';

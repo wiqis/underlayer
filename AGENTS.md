@@ -463,32 +463,44 @@ flash). That is deliberate, not duplicated runtime.
 
 ### Platform (Web Server)
 
+The project builds from its own checkout (see `scripts/_common.sh` for compiler
+discovery). On this machine the compiler is
+`D:\Programming\Chemical\chemical\cmake-build-debug\TCCCompiler.exe`; from Git
+Bash in the repo root the same invocation is:
+
 ```bash
-# Build
-cmake-build-debug/TCCCompiler lang/compiled/underlayer/chemical.mod \
-    -o lang/compiled/underlayer/build/underlayer.exe --mode debug_quick --no-cache -bm-modules
+"/d/Programming/Chemical/chemical/cmake-build-debug/TCCCompiler.exe" \
+    chemical.mod -o build/underlayer.exe -bm-modules --no-cache
 
-# Run (blocks terminal — use Start-Process or separate terminal)
-./lang/compiled/underlayer/build/underlayer.exe
-
-# Run in background (PowerShell)
-Start-Process -FilePath "./lang/compiled/underlayer/build/underlayer.exe" -NoNewWindow
+# Run (blocks terminal — use a separate terminal). CWD must be the repo root:
+PORT=9002 DATABASE_URL=./underlayer.db ./build/underlayer.exe
 
 # Verify (smoke test)
-curl localhost:9000/api/health
-curl localhost:9000/courses/elf/lessons/bytes
+curl localhost:9002/api/health
+curl localhost:9002/courses/elf/lessons/bytes
+curl localhost:9002/api/courses/elf/lessons/bytes/units
 ```
+
+Windows equivalents: `pwsh scripts/serve.ps1` (build + run) and
+`pwsh scripts/underlayer-build-test.ps1` (build + endpoint matrix). Both discover
+the compiler the way `scripts/_common.sh` does; neither climbs to
+`lang/compiled/underlayer` any more.
 
 ### Course Pages (Pre-rendered)
 
 ```bash
-# Build course pages
-cmake-build-debug/TCCCompiler lang/compiled/underlayer/courses/elf/chemical.mod \
-    -o lang/compiled/underlayer/courses/elf/build/elf-pages.exe --mode debug_quick --no-cache -bm-modules
+# From the repo root: compile every course, run each generator, then run the
+# journey injector (which fills the shell's data-* attributes and derives the
+# per-step pedagogy attributes from the lesson text and the manifest).
+bash scripts/build_static.sh elf
 
-# Generate HTML output
-./lang/compiled/underlayer/courses/elf/build/elf-pages.exe
+# Or build a single course by hand (from inside the course directory):
+cd courses/elf
+"/d/Programming/Chemical/chemical/cmake-build-debug/TCCCompiler.exe" \
+    chemical.mod -o build/elf-course.exe -bm-modules --no-cache
+./build/elf-course.exe
 # → writes courses/elf/output/*.html + *.css + *.js
+# `courses/*/output` is gitignored: generated pages are not tracked.
 ```
 
 ### Environment Variables

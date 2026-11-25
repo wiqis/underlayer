@@ -1,4 +1,4 @@
-// underlayer_content â€” journey runtime: walk the existing .unit blocks.
+// underlayer_content - journey runtime: walk the existing .unit blocks.
 //
 // The runtime never authors technical text.  Every label, key point, question
 // and answer is read from the lesson that is already on the page.  Nothing is
@@ -63,11 +63,14 @@ public namespace underlayer_content {
                 jqHide(jqEl('ul-journey-controls'), false);
                 jqHide(jqEl('ul-journey-finish'), true);
                 jqHide(jqEl('ul-journey-paused'), true);
+                var all = jqAllUnits();
                 var i = 0;
-                while(i < jqState.units.length) {
-                    jqState.units[i].setAttribute('hidden', '');
+                while(i < all.length) {
+                    all[i].setAttribute('hidden', '');
                     i = i + 1;
                 }
+                jqHideIntro(true);
+                jqActionFeedback('');
             }
 
             function jqStep(i) {
@@ -83,7 +86,11 @@ public namespace underlayer_content {
                 var count = jqEl('ul-journey-count');
                 if(count) { count.textContent = 'Step ' + (i + 1) + ' of ' + s.units.length; }
                 var purpose = jqEl('ul-journey-purpose');
-                if(purpose) { purpose.textContent = jqPurpose(u) + ' - ' + jqTitle(u); }
+                if(purpose) {
+                    var aim = jqTrim(u.getAttribute('data-aim') || '');
+                    if(aim.length > 0) { purpose.textContent = aim; }
+                    else { purpose.textContent = jqPurpose(u) + ' - ' + jqTitle(u); }
+                }
                 var next = jqEl('ul-journey-next');
                 if(next) {
                     if(i + 1 < s.units.length) { next.textContent = 'Next: ' + jqTitle(s.units[i + 1]); }
@@ -91,7 +98,9 @@ public namespace underlayer_content {
                 }
                 var key = jqEl('ul-journey-keypoint');
                 if(key) {
-                    if(jqNoFact(u)) { key.textContent = 'No new fact to memorise - this step is about seeing the link.'; }
+                    var derived = jqTrim(u.getAttribute('data-remember') || '');
+                    if(derived.length > 0) { key.textContent = derived; }
+                    else if(jqNoFact(u)) { key.textContent = 'No new fact to memorise - this step is about seeing the link'; }
                     else { key.textContent = jqKeyPoint(u); }
                 }
                 var back = jqEl('ul-journey-back');
@@ -124,6 +133,12 @@ public namespace underlayer_content {
                 if(diff) { bits.push(diff); }
                 if(prereq) { bits.push('Continues from ' + prereq); }
                 if(meta && bits.length > 0) { meta.textContent = bits.join(' | '); meta.hidden = false; }
+                var arrival = jqEl('ul-journey-aim');
+                if(arrival && first) {
+                    var aim0 = jqTrim(first.getAttribute('data-aim') || '');
+                    if(aim0.length > 0) { arrival.textContent = aim0; }
+                }
+                jqHideIntro(true);
                 root.hidden = false;
                 var savedStep = parseInt(jqGet(jqKey('step')), 10);
                 if(isNaN(savedStep)) { savedStep = 0; }

@@ -1,51 +1,95 @@
 #!/usr/bin/env pwsh
-# Build, start server, test all endpoints, stop server.
-# Usage: pwsh lang/compiled/underlayer/scripts/underlayer-build-test.ps1
-# This script ALWAYS exits cleanly — never blocks.
+# Build, start server, test endpoints, stop server.
+# Usage: pwsh scripts/underlayer-build-test.ps1 [-Port 9000]
+# This script ALWAYS exits cleanly - never blocks.
+
+param([int]$Port = 9000)
 
 $ErrorActionPreference = "SilentlyContinue"
-$root = Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
-$buildDir = Join-Path $root "lang\compiled\underlayer\build"
-$url = "http://localhost:9000"
+$root = Split-Path $PSScriptRoot -Parent
+$buildDir = Join-Path $root "build"
+$url = "http://localhost:$Port"
+
+function Find-Compiler {
+    $candidates = @()
+    foreach($envVar in @("CHEMICAL_ROOT", "CHEMICAL")) {
+        $value = [Environment]::GetEnvironmentVariable($envVar)
+        if($value) { $candidates += $value }
+    }
+    $override = Join-Path $root "scripts\.chemical-path"
+    if(Test-Path $override) {
+        $line = (Get-Content $override -TotalCount 1).Trim()
+        if($line) { $candidates += $line }
+    }
+    $workspaceParent = Split-Path (Split-Path (Split-Path $root -Parent) -Parent) -Parent
+    if(Test-Path $workspaceParent) {
+        Get-ChildItem -Path $workspaceParent -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+            $sibling = Join-Path $_.FullName "chemical"
+            if(Test-Path $sibling) { $candidates += $sibling }
+        }
+    }
+    $candidates += @(
+        "D:\Programming\Chemical\chemical",
+        "C:\Programming\Chemical\chemical",
+        (Join-Path $HOME "Programming\Chemical\chemical"),
+        (Join-Path $HOME "Chemical\chemical")
+    )
+    foreach($base in $candidates) {
+        foreach($dir in @("cmake-build-debug", "build", ".")) {
+            foreach($name in @("TCCCompiler.exe", "TCCCompiler")) {
+                $exe = Join-Path (Join-Path $base $dir) $name
+                if(Test-Path $exe) { return (Resolve-Path $exe).Path }
+            }
+        }
+    }
+    $onPath = Get-Command TCCCompiler.exe -ErrorAction SilentlyContinue
+    if(-not $onPath) { $onPath = Get-Command TCCCompiler -ErrorAction SilentlyContinue }
+    if($onPath) { return $onPath.Source }
+    return $null
+}
 
 Write-Host "=== Underlayer Build + Test ==="
 
-# 1. Build
 Write-Host "[1/3] Building..."
-$buildLog = Join-Path $buildDir "build_test.txt"
-& cmake-build-debug/TCCCompiler "lang/compiled/underlayer/chemical.mod" -v -bm-modules --no-cache 2>&1 > $buildLog
-if ($LASTEXITCODE -ne 0) {
+$compiler = Find-Compiler
+if(-not $compiler) {
+    Write-Host "[ERROR] Could not find TCCCompiler. Set CHEMICAL_ROOT or write scripts/.chemical-path."
+    exit 1
+}
+$buildLog = Join-Path $buildDir "build_test.log"
+if(-not (Test-Path $buildDir)) { New-Item -ItemType Directory -Path $buildDir -Force | Out-Null }
+$flags = @("chemical.mod", "-o", (Join-Path $buildDir "underlayer.exe"), "-bm-modules", "--no-cache")
+Push-Location $root
+try { & $compiler @flags 2>&1 > $buildLog }
+finally { Pop-Location }
+if($LASTEXITCODE -ne 0) {
     Write-Host "[BUILD FAILED] See $buildLog"
     Get-Content $buildLog | Select-String "error" | Select-Object -First 10
     exit 1
 }
 Write-Host "  Build OK"
 
-# 2. Find exe — TCCCompiler outputs a.exe in CWD
-$exe = Join-Path $root "a.exe"
-if (-not (Test-Path $exe)) {
-    $exe = Join-Path $buildDir "main.exe"
-}
-if (-not (Test-Path $exe)) {
-    Write-Host "[ERROR] Cannot find underlayer executable"
+$exe = Join-Path $buildDir "underlayer.exe"
+if(-not (Test-Path $exe)) {
+    Write-Host "[ERROR] Cannot find underlayer executable at $exe"
     exit 1
 }
 Write-Host "  Using exe: $exe"
 
-# 3. Kill old server
-$existing = Get-NetTCPConnection -LocalPort 9000 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique
-if ($existing) {
-    foreach ($pid in $existing) { Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue }
+$existing = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique
+if($existing) {
+    foreach($processId in $existing) { Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue }
     Start-Sleep -Seconds 2
-    Write-Host "  Killed old server"
+    Write-Host "  Killed old server on port $Port"
 }
 
-# 4. Start server
-$proc = Start-Process -FilePath $exe -PassThru -NoNewWindow
+$env:PORT = "$Port"
+if(-not $env:DATABASE_URL) { $env:DATABASE_URL = "./underlayer.db" }
+if(-not $env:COURSES_DIR) { $env:COURSES_DIR = "./courses" }
+$proc = Start-Process -FilePath $exe -WorkingDirectory $root -PassThru -NoNewWindow
 Write-Host "[2/3] Server started (PID $($proc.Id)), waiting 4s..."
 Start-Sleep -Seconds 4
 
-# 5. Test endpoints
 Write-Host "[3/3] Testing endpoints..."
 $passed = 0
 $failed = 0
@@ -67,16 +111,13 @@ function Test-Url($label, $path) {
     }
 }
 
-Test-Url "health"         "/api/health"
-Test-Url "home"           "/"
-Test-Url "dashboard"      "/dashboard"
-Test-Url "review page"    "/review"
-Test-Url "progress page"  "/progress"
-Test-Url "courses api"    "/api/courses"
-Test-Url "elf course"     "/courses/elf"
-Test-Url "elf lesson"     "/courses/elf/lessons/bytes"
+Test-Url "health"          "/api/health"
+Test-Url "home"            "/"
+Test-Url "courses api"     "/api/courses"
+Test-Url "elf course"      "/courses/elf"
+Test-Url "elf lesson"      "/courses/elf/lessons/bytes"
+Test-Url "lesson units"    "/api/courses/elf/lessons/bytes/units"
 
-# 6. Kill server
 Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
 
 Write-Host ""

@@ -140,7 +140,7 @@ Authoritative statement: `docs/course-mission.md`.
 
 ## Project Stats
 
-- **Status:** Working platform — server builds, runs, and serves all five courses; 421/1952 checklist items done (all P0; 12 P1 still open); linter PASS
+- **Status:** Working platform — server builds, runs and serves the courses; the guided lesson journey shell, the shared Wiqis account bridge, CSP security headers and the brand layer all ship at HEAD. The test suite is its own application and is currently blocked by compiler/harness drift (see `AGENTS.md`), so verify with the endpoint matrix and the served HTML.
 - **Language:** Chemical
 - **Courses:** ELF (24), DWARF (15), COFF (11), PE (24), Mach-O (24) — home grid lists all five from `GET /api/courses`. DWARF and COFF are each 3 modules, complete as far as this machine's tooling allows
 - **Target platforms:** Web + Android (offline)
@@ -165,16 +165,19 @@ Every number in these two courses can be re-checked from inside the repo:
 |-----|-------|---------------------|
 | ELF per-option quiz feedback | 126 of 144 options still show the bare 'Correct!' / 'Not quite.' verdict | checklist 2.2.37 |
 | PE pacing is flat | every PE page declares 15 min, so all 24 concepts price identically in study plans | `docs/courses-todo.md` |
-| Transient build breakage from a WIP edit in the shared Chemical checkout | mid-session, `courses/*/chemical.mod` and `scripts/test.sh` builds failed in `page.ch:414` ("unresolved child 'size' in parent 'base'") because `append_router_table_base` called a `get_route_base` that did not exist yet. It reproduced on a pristine tree (`git stash`) and cleared on its own minutes later. **Do not 'fix' this by editing `page.ch`** — it is someone's uncommitted work in progress. Confirm with `git -C /work/Chemical/chemical status` and wait | resolves itself; do not touch page.ch |
-| `courses/*/output/` is generated but untracked | 20 files for DWARF (19 concepts + index) and 15 for COFF, none tracked by git, so the static/GitHub-Pages artefacts are not committed. Regenerate with `cd courses/<name> && $TCCCompiler chemical.mod -o build/<name>-pages.exe --mode debug_quick --no-cache && ./build/<name>-pages.exe` — **must run from inside the course directory** | decide whether static output should be committed |
+| Transient build breakage from a WIP edit in the shared Chemical checkout | mid-session, `courses/*/chemical.mod` and `scripts/test.sh` builds failed in `page.ch:414` ("unresolved child 'size' in parent 'base'") because `append_router_table_base` called a `get_route_base` that did not exist yet. It reproduced on a pristine tree (`git stash`) and cleared on its own minutes later. **Do not 'fix' this by editing `page.ch`** — it is someone's uncommitted work in progress. Confirm with `git -C "D:\Programming\Chemical\chemical" status` from PowerShell and wait | resolves itself; do not touch page.ch |
+| `courses/*/output/` is generated but untracked | Generated HTML/CSS/JS is intentionally gitignored (generated files do not belong in git). A clean clone has no static pages until `bash scripts/build_static.sh elf ...` is run; it compiles each course, renders its pages, then runs the journey injector from the repo root | regenerate on deploy; do not change the ignore rule without a decision |
+| Test suite cannot complete | `tests/chemical.mod` stalls in the compiler at its last module even without `--test`; known blocker as of 2026-11-24 | use the endpoint matrix plus served-HTML checks; do not patch library test sources |
 | COFF linker: GNU ld in PE mode silently ignores COMDAT checksums | `ld --oformat pei-i386 -m i386pe` links COFF objects (so map files and the link step are testable — the old "no COFF linker" claim was wrong), but it deduplicates by **symbol name only**. Two objects whose `inline` function bodies differ by one character, with different checksums, link without a diagnostic and the wrong body wins. Reproduced; taught in `coff-comdat-linking` | do not trust GNU ld PE output for COMDAT correctness |
 | GNU ld PE mode: further limits | will not read `ar` archives (a link against `demo.lib` gives unresolved externals); `--dll` and `-shared` reset the output emulation to plain i386, so no DLL and therefore no base relocations. Import libraries and short-import stay untested | needs `lld-link` or a dlltool |
 | `readelf` gaps on DWARF 5 list sections | `--debug-dump=loc` decodes a version-5 `DW_LLE` stream with a version-4 view-pair grammar (reports "location view pair" inside `.debug_loclists`); `--debug-dump=rnglists` prints nothing for `inline_O2.o`. `llvm-dwarfdump --debug-loclists/--debug-rnglists` reads both correctly. Always adjudicate list-section disagreements on byte offsets, not on which tool is newer | use `llvm-dwarfdump` for loclists/rnglists |
 | Pre-existing test failures | 2 of 146 fail identically on a pristine checkout (`git stash` verified) — unrelated to course work | investigate 5.1.x |
 
-The 12 open P1 items are mostly auth/UX plumbing (navbar on lesson pages,
-URL-derived course context, the analytics page's unsubstituted route, the
-enroll button). `2.2.37` is content volume, not a bug.
+Several formerly open P1 items now ship: the lesson-page navbar and URL-derived
+course context, the embedded account bridge sign-in/sign-out pages, CSP security
+headers, and the brand layer. The guided lesson journey is live across all
+lessons (one step at a time, derived remember/recall attributes, Deep dive), so
+do not re-file those as open work. `2.2.37` is content volume, not a bug.
 
 
 ## Keeping Skills Accurate

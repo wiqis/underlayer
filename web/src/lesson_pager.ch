@@ -122,6 +122,16 @@ public namespace underlayer_web {
         if(idx == -999) { return html.copy() }
 
         var src0 = html.copy()
+        var empty = string()
+        // The first and last concepts have no neighbour.  Removing the empty
+        // rel element is better than leaving href="" behind: that URL resolves
+        // to the current page, so a crawler walks in a circle and a swipe
+        // gesture reloads the lesson the reader is already on.
+        if(idx == 0) {
+            var without_prev = patch_once(&src0, string_view("<link rel=\"prev\" href=\"\"/>"), &empty)
+            var without_prev2 = patch_once(&without_prev, string_view("<link rel=\"prev\" href=\"\">"), &empty)
+            src0 = without_prev2
+        }
         var c_esc = underlayer_core::html_escape(course_id)
 
         // --- 1. the position line -------------------------------------------
@@ -179,8 +189,8 @@ public namespace underlayer_web {
 
             var prev_link = string("<link rel=\"prev\" href=\"")
             prev_link.append_view(prev_url.to_view())
-            prev_link.append_view("\">")
-            var with_prev_link = patch_once(&with_prev_anchor, string_view("<link rel=\"prev\" href=\"\">"), &prev_link)
+            prev_link.append_view("\"")
+            var with_prev_link = patch_once(&with_prev_anchor, string_view("<link rel=\"prev\" href=\"\""), &prev_link)
             carried = with_prev_link
         }
 
@@ -205,11 +215,16 @@ public namespace underlayer_web {
 
             var next_link = string("<link rel=\"next\" href=\"")
             next_link.append_view(next_url.to_view())
-            next_link.append_view("\">")
-            var final_out = patch_once(&with_next_anchor, string_view("<link rel=\"next\" href=\"\">"), &next_link)
+            next_link.append_view("\"")
+            var final_out = patch_once(&with_next_anchor, string_view("<link rel=\"next\" href=\"\""), &next_link)
             return final_out
         }
 
+        if((idx as size_t) + 1 >= course.concepts.size()) {
+            var without_next = patch_once(&carried, string_view("<link rel=\"next\" href=\"\"/>"), &empty)
+            var without_next2 = patch_once(&without_next, string_view("<link rel=\"next\" href=\"\">"), &empty)
+            return without_next2
+        }
         return carried
     }
 

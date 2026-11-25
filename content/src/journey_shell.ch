@@ -51,6 +51,7 @@ public namespace underlayer_content {
                     <button type="button" class="journey-btn journey-reveal" id="ul-journey-reveal" aria-label="Reveal the answer to this recall question">I'm stuck - show me</button>
                     <p class="journey-retrieve-answer" id="ul-journey-answer" hidden></p>
                 </div>
+                <p class="journey-action-feedback" id="ul-journey-feedback" hidden aria-live="polite"></p>
                 <div class="journey-controls" id="ul-journey-controls" hidden>
                     <button type="button" class="journey-btn journey-back" id="ul-journey-back" aria-label="Go back one step">Back</button>
                     <button type="button" class="journey-btn journey-continue" id="ul-journey-continue" aria-label="Continue to the next step" disabled>Continue</button>
@@ -94,6 +95,8 @@ public namespace underlayer_content {
             .journey-retrieve { margin-top: 1rem; padding: 1rem 1.25rem; border: 1px solid #e2e8f0; border-radius: 10px; }
             .journey-retrieve-ask { margin: 0 0 0.75rem; font-size: 0.95rem; }
             .journey-retrieve-answer { margin: 0.75rem 0 0; font-size: 0.92rem; color: #334155; }
+            .journey-action-feedback { margin: 1rem 0 0; padding: 0.75rem 1rem; border-left: 3px solid #64748b; background: #f8fafc; color: #334155; font-size: 0.92rem; }
+            .journey-deep .journey-action-feedback { display: none !important; }
             .journey-controls { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #e2e8f0; }
             .journey-btn { padding: 0.55rem 1rem; border: 1px solid #94a3b8; border-radius: 8px; background: #ffffff; color: #1e293b; font: inherit; font-size: 0.9rem; cursor: pointer; text-decoration: none; }
             .journey-btn:hover:not(:disabled) { border-color: #2563eb; background: #eff6ff; text-decoration: none; }

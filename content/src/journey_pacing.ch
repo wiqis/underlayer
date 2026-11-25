@@ -13,9 +13,10 @@ public namespace underlayer_content {
                 jqState.paused = true;
                 jqSet(jqKey('paused'), '1');
                 jqSet(jqKey('step'), String(jqState.idx));
+                var all = jqAllUnits();
                 var i = 0;
-                while(i < jqState.units.length) {
-                    jqState.units[i].setAttribute('hidden', '');
+                while(i < all.length) {
+                    all[i].setAttribute('hidden', '');
                     i = i + 1;
                 }
                 jqHide(jqEl('ul-journey-arrival'), true);
@@ -41,13 +42,17 @@ public namespace underlayer_content {
                 jqSet(jqKey('deep'), '1');
                 var root = jqRoot();
                 if(root) { root.classList.add('journey-deep'); }
+                var all = jqAllUnits();
                 var i = 0;
-                while(i < jqState.units.length) {
-                    var u = jqState.units[i];
+                while(i < all.length) {
+                    var u = all[i];
                     jqRestoreUnit(u);
                     u.removeAttribute('hidden');
+                    if(u.classList.contains('unit-exercises') && u.style) { u.style.display = ''; }
                     i = i + 1;
                 }
+                jqHideIntro(false);
+                jqActionFeedback('');
                 jqHide(jqEl('ul-journey-paused'), true);
                 jqHide(jqEl('ul-journey-finish'), true);
                 jqHide(jqEl('ul-journey-return'), false);
@@ -68,15 +73,21 @@ public namespace underlayer_content {
                 jqHide(jqEl('ul-journey-remember'), true);
                 jqHide(jqEl('ul-journey-retrieve'), true);
                 jqHide(jqEl('ul-journey-controls'), true);
+                var all = jqAllUnits();
                 var i = 0;
-                while(i < jqState.units.length) {
-                    jqState.units[i].setAttribute('hidden', '');
+                while(i < all.length) {
+                    all[i].setAttribute('hidden', '');
                     i = i + 1;
                 }
                 var h = document.querySelector('.lesson h1');
                 var title = jqTrim(jqText(h)) || 'this lesson';
                 var line = jqEl('ul-journey-can');
-                if(line) { line.textContent = 'You can now explain the ideas in ' + title + ' and carry them into the next lesson.'; }
+                if(line) {
+                    var last = jqState.units.length > 0 ? jqState.units[jqState.units.length - 1] : null;
+                    var can = last ? jqTrim(last.getAttribute('data-can-do') || '') : '';
+                    if(can.length > 0) { line.textContent = can; }
+                    else { line.textContent = 'You can now explain the ideas in ' + title + ' and carry them into the next lesson.'; }
+                }
                 var link = jqEl('ul-journey-nextlesson');
                 var next = jqEl('ul-next');
                 if(link && next && next.getAttribute('href')) {
@@ -93,6 +104,11 @@ public namespace underlayer_content {
                 while(el && el !== document) {
                     var c = el.className || '';
                     if(typeof c === 'string' && (c.indexOf('quiz-option') >= 0 || c.indexOf('hex-byte') >= 0 || c.indexOf('exercise-option') >= 0 || c.indexOf('tf-option') >= 0 || c.indexOf('recognize-option') >= 0)) {
+                        var explain = jqTrim(el.getAttribute('data-explain') || '');
+                        var correct = el.getAttribute('data-correct') === 'true';
+                        if(c.indexOf('quiz-option') >= 0 && explain.length > 0 && !correct) {
+                            jqActionFeedback('Good try. Here is why: ' + explain);
+                        } else { jqActionFeedback(''); }
                         jqMarkAction();
                         return;
                     }
@@ -120,7 +136,14 @@ public namespace underlayer_content {
                 document.addEventListener('click', jqClickedAction, true);
                 document.addEventListener('change', function(ev) {
                     var el = ev.target;
-                    if(el && el.classList && el.classList.contains('fill-blank')) { jqMarkAction(); }
+                    if(el && el.classList && el.classList.contains('fill-blank')) {
+                        var answer = el.getAttribute('data-answer') || '';
+                        var typed = jqTrim(el.value);
+                        if(answer.length > 0 && typed.length > 0 && typed !== answer) {
+                            jqActionFeedback('Have another look - this step says the value is ' + answer + '.');
+                        } else { jqActionFeedback(''); }
+                        jqMarkAction();
+                    }
                 }, true);
                 document.addEventListener('keydown', function(ev) {
                     var tag = ev.target ? ev.target.tagName : '';

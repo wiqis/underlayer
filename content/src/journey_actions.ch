@@ -1,4 +1,4 @@
-// underlayer_content â€” journey actions: takeaway, gate, recall, pacing, finish.
+// underlayer_content - journey actions: takeaway, gate, recall, pacing, finish.
 //
 // Every decision here is reversible and local.  There is no score, no streak and
 // no verdict: "I'm stuck - show me" always reveals an answer and always lets the
@@ -11,16 +11,18 @@ public namespace underlayer_content {
 
     public func render_journey_actions_js(page : &mut HtmlPage) {
         #js {
+            function jqIsSpace(ch) {
+                return ch === ' ' || ch === String.fromCharCode(9) || ch === String.fromCharCode(10) || ch === String.fromCharCode(13);
+            }
+
             function jqWordCount(s) {
                 var t = jqTrim(s);
-                if(t.length === 0) { return 0; }
-                var n = 1;
-                var prev = false;
+                var n = 0;
+                var inWord = false;
                 var i = 0;
                 while(i < t.length) {
-                    var space = t.charAt(i) === ' ';
-                    if(space && !prev) { n = n + 1; }
-                    prev = space;
+                    if(jqIsSpace(t.charAt(i))) { inWord = false; }
+                    else if(!inWord) { n = n + 1; inWord = true; }
                     i = i + 1;
                 }
                 return n;
@@ -33,7 +35,7 @@ public namespace underlayer_content {
                 var i = 0;
                 while(i < t.length) {
                     var ch = t.charAt(i);
-                    if(ch === ' ') {
+                    if(jqIsSpace(ch)) {
                         if(cur.length > 0) { words.push(cur); cur = ''; }
                     } else { cur = cur + ch; }
                     i = i + 1;
@@ -91,6 +93,13 @@ public namespace underlayer_content {
                 if(reveal) { reveal.textContent = "I'm stuck - show me"; }
             }
 
+            function jqActionFeedback(text) {
+                var box = jqEl('ul-journey-feedback');
+                if(!box) { return; }
+                if(text && jqTrim(text).length > 0) { box.textContent = text; jqHide(box, false); }
+                else { jqHide(box, true); }
+            }
+
             function jqMarkAction() {
                 var i = jqState.idx;
                 jqState.gate[i] = true;
@@ -104,8 +113,9 @@ public namespace underlayer_content {
                 var i = jqState.idx;
                 var u = jqState.units[i];
                 var ok = jqState.gate[i] === true;
-                if(!u || !jqHasAction(u)) { ok = jqWordCount(jqNote()) > 0 || ok; }
-                else { ok = ok || jqWordCount(jqNote()) > 0; }
+                // An action unit is unlocked by its action only. The written
+                // note is the fallback action for steps that have no widget.
+                if(!u || !jqHasAction(u)) { ok = ok || jqWordCount(jqNote()) > 0; }
                 btn.disabled = !ok;
             }
 
@@ -121,6 +131,13 @@ public namespace underlayer_content {
 
             function jqRetrieveQA(i) {
                 var u = jqRetrieveUnit(i);
+                var source = u;
+                if(!source) { source = jqState.units[i - 1]; }
+                if(source) {
+                    var dq = jqTrim(source.getAttribute('data-recall-q') || '');
+                    var da = jqTrim(source.getAttribute('data-recall-a') || '');
+                    if(dq.length > 0 && da.length > 0) { return { q: dq, a: da }; }
+                }
                 if(!u) {
                     var earlier = jqState.units[i - 1];
                     var point = earlier ? jqKeyPoint(earlier) : '';
