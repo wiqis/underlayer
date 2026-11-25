@@ -55,6 +55,11 @@ public namespace underlayer_content {
                 jqActionFeedback('');
                 jqHide(jqEl('ul-journey-paused'), true);
                 jqHide(jqEl('ul-journey-finish'), true);
+                // jqFinish() hides the whole control bar.  A learner who opens
+                // the deep dive from the finish screen still needs a visible
+                // way back, so restore the bar here; .journey-deep CSS hides
+                // every control except the return button.
+                jqHide(jqEl('ul-journey-controls'), false);
                 jqHide(jqEl('ul-journey-return'), false);
             }
 
@@ -64,7 +69,10 @@ public namespace underlayer_content {
                 var root = jqRoot();
                 if(root) { root.classList.remove('journey-deep'); }
                 jqHide(jqEl('ul-journey-return'), true);
-                jqStep(jqState.idx);
+                // Coming back from the finish screen must restore the recap,
+                // not restart a step the learner already completed.
+                if(jqGet(jqKey('finished')) === '1') { jqFinish(); }
+                else { jqStep(jqState.idx); }
             }
 
             function jqFinish() {
