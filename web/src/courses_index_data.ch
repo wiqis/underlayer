@@ -16,6 +16,14 @@ using underlayer_models::Course
 
 public namespace underlayer_web {
 
+    // The one START HERE target used by home, /courses and /learning-path: the
+    // first lesson of the first course in the ordered collection.  It is a
+    // function, not a literal at three call sites, so the three pages cannot
+    // disagree about where a new learner begins.
+    public func start_here_href() : string {
+        return string("/courses/elf/lessons/bytes")
+    }
+
     // One concept as a link the index can render.  `module_title` is the
     // module the concept sits in, which is the only context a bare concept
     // title has when you are looking at 398 of them.
@@ -67,6 +75,7 @@ public namespace underlayer_web {
         var minutes : int
         var place : Placement
         var concept_links : vector<ConceptLink>
+        var search_text : string
 
         @make
         func make() : CatalogCard {
@@ -80,7 +89,8 @@ public namespace underlayer_web {
                 concepts = 0,
                 minutes = 0,
                 place = Placement::make(),
-                concept_links = vector<ConceptLink>()
+                concept_links = vector<ConceptLink>(),
+                search_text = string()
             }
         }
     }

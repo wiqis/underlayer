@@ -1,17 +1,11 @@
-// underlayer_web — GET /courses: the course index.
+// underlayer_web — GET /courses: a compact, searchable course index.
 //
-// This page is the fix for the collection's worst dead link.  `/courses` was
-// linked 42 times across 32 files -- every lesson's back-link and the course
-// landing nav -- and it did not exist.  34 courses and 398 concepts with no
-// index is not a fixed 404, though, so the page carries the three named
-// routes from routes_*.ch above the full catalogue, and prints the count that
-// says the ordering respects the manifests' declared prerequisites.
-//
-// Everything on the page is server-rendered.  Not because client-side
-// rendering is wrong -- it is the pattern most of this codebase uses for
-// dynamic lists -- but because the page you arrive at when you cannot find
-// anything must not be blank without JavaScript.  See courses_index_render.ch
-// for why the rows come from component functions rather than an `@{}` loop.
+// This page answers one question: "which course do I want?"  The ordered
+// "where do I start?" question belongs to /learning-path, so the three route
+// essays that used to sit above this grid were removed rather than repeated.
+// Everything here is server-rendered -- a page you reach because you are lost
+// must not be blank without JavaScript -- and the local search only hides rows
+// that are already in the served HTML.
 using std::string
 using std::string_view
 using std::vector
@@ -44,25 +38,21 @@ public namespace underlayer_web {
     public func render_courses_page(page : &mut HtmlPage, courses_dir : &string) {
         var courses = underlayer_repository::list_courses(courses_dir)
         var routes = build_routes()
-        var chk = verify_route_order(&courses, &routes)
         var catalog = build_catalog(&courses, &routes)
-        var claimed = route_orphans(&routes)
-        var course_count = courses.size() as int
-        page.defaultPrepare()
-        page.injectDefaultComponentsTheme()
-        page.appendTitle(std::string_view("All Courses — Underlayer"))
-
         var tally = string("The collection is ")
         var cc = underlayer_core::int_to_string(courses.size() as i64)
         tally.append_string(&cc)
         tally.append_view(string_view(" courses, "))
         var nc = underlayer_core::int_to_string(total_concepts(&catalog) as i64)
         tally.append_string(&nc)
-        tally.append_view(string_view(" concepts, "))
+        tally.append_view(string_view(" lessons, "))
         var tm = underlayer_core::int_to_string(total_minutes(&catalog) as i64)
         tally.append_string(&tm)
-        tally.append_view(string_view(" minutes of material, every concept reachable from this page."))
-        var tally_esc = underlayer_core::html_escape(&tally)
+        tally.append_view(string_view(" minutes of material. Every course is one click from here."))
+        var start = start_here_href()
+        page.defaultPrepare()
+        page.injectDefaultComponentsTheme()
+        page.appendTitle(std::string_view("All Courses — Underlayer"))
 
         #html {
             {render_nav_bar(page)}
@@ -72,27 +62,25 @@ public namespace underlayer_web {
             <main class="container" id="main-content">
                 <header class="page-head">
                     <h1>All courses</h1>
-                    <p class="lede">Binary formats, linkers, instruction sets and compilers, taught from the bytes up. Read the routes below if you do not know where to start; the catalogue under them is every course, with its concepts one click away.</p>
-                    <p class="tally">{tally_esc}</p>
+                    <p class="lede">Find the course you need, or follow one ordered route from the first lesson. Every count on this page comes from the manifests.</p>
+                    <p class="tally">{tally}</p>
+                    <p class="courses-actions"><a class="btn btn-primary" href={start}>Start at step 1</a> <a class="text-link" href="/learning-path">See the ordered path</a></p>
                 </header>
 
-                <section class="routes" aria-labelledby="routes-head">
-                    <h2 id="routes-head">Three ways through the collection</h2>
-                    <p class="section-note">These are not difficulty tiers. Each one is an order, and each step says why it sits where it does. The three are meant to be walked in sequence: the second assumes the first, the third assumes both.</p>
-                    <div class="route-grid">
-                        {render_all_routes(&routes, &courses, page)}
-                    </div>
-                    {render_route_check(&chk, page)}
-                    {render_orphan_note(&courses, &claimed, course_count, page)}
-                </section>
-
                 <section class="catalogue" aria-labelledby="catalogue-head">
-                    <div class="catalogue-head">
-                        <h2 id="catalogue-head">Every course</h2>
-                        <button class="expand-all" type="button" onclick="toggleAllConcepts()">Expand all concepts</button>
+                    <h2 id="catalogue-head" class="visually-hidden">Course catalogue</h2>
+                    <div class="catalogue-tools">
+                        <label class="course-search-label" for="course-search">Find a course</label>
+                        <input id="course-search" class="course-search" type="search" placeholder="Search by name or topic" autocomplete="off" />
+                        <div class="course-filters" role="group" aria-label="Filter by level">
+                            <button type="button" class="filter-chip is-active" data-filter="all" aria-pressed="true">All</button>
+                            <button type="button" class="filter-chip" data-filter="beginner" aria-pressed="false">Beginner</button>
+                            <button type="button" class="filter-chip" data-filter="intermediate" aria-pressed="false">Intermediate</button>
+                            <button type="button" class="filter-chip" data-filter="advanced" aria-pressed="false">Advanced</button>
+                        </div>
+                        <p class="course-count" id="course-count" aria-live="polite"></p>
                     </div>
-                    <p class="section-note">Every count on a card &mdash; modules, concepts, minutes, difficulty, importance &mdash; is read from that course's own manifest, not written down here. Expand a card for a direct link to each lesson in it.</p>
-                    <div class="course-grid">
+                    <div class="course-grid" id="course-grid">
                         {render_all_cards(&catalog, page)}
                     </div>
                 </section>

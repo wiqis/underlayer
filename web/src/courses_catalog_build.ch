@@ -24,15 +24,12 @@ public namespace underlayer_web {
             href.append_view(string_view("/lessons/"))
             var concept_id = cref.id.copy()
             href.append_string(&concept_id)
-            var href_esc = underlayer_core::html_escape(&href)
-            link.href = href_esc
+            // Raw here: #html escapes once when these reach the page.
+            link.href = href
             var title = cref.title.copy()
             if(title.size() == 0) { title = concept_id.copy() }
-            var title_esc = underlayer_core::html_escape(&title)
-            link.title = title_esc
-            var module_title = module_title_for(course, &concept_id)
-            var module_esc = underlayer_core::html_escape(&module_title)
-            link.module_title = module_esc
+            link.title = title
+            link.module_title = module_title_for(course, &concept_id)
             out.push(link)
             ci = ci + 1
         }
@@ -55,31 +52,27 @@ public namespace underlayer_web {
         var href = string("/courses/")
         var cid = course.id.copy()
         href.append_string(&cid)
-        var href_esc = underlayer_core::html_escape(&href)
-        card.href = href_esc
-        var title = course.title.copy()
-        var title_esc = underlayer_core::html_escape(&title)
-        card.title = title_esc
-        var desc = course.description.copy()
-        var desc_esc = underlayer_core::html_escape(&desc)
-        card.description = desc_esc
-        var diff = course.difficulty.copy()
-        var diff_esc = underlayer_core::html_escape(&diff)
-        card.difficulty = diff_esc
-        var imp = course.importance.copy()
-        var imp_esc = underlayer_core::html_escape(&imp)
-        card.importance = imp_esc
+        // Values are stored RAW.  The #html macro escapes every {value} once,
+        // so escaping here as well produced literal "&#39;" on /courses and
+        // /learning-path.  One escape, at the point of use, and nowhere else.
+        card.href = href
+        card.title = course.title.copy()
+        card.description = course.description.copy()
+        card.difficulty = course.difficulty.copy()
+        card.importance = course.importance.copy()
         card.modules = course.modules.size() as int
         card.concepts = course.concepts.size() as int
         card.minutes = minutes_of(course)
         card.place = placement_of(routes, &cid)
-        // The #html interpolation in courses_index_render.ch / courses_path_render.ch
-        // escapes its {string} value. Escaping here as well produced the literal
-        // text "linker&amp;#39;s" on /courses. The reason is authored prose, so
-        // it is passed through raw and the macro escapes it exactly once.
-        var reason = card.place.reason.copy()
-        card.place.reason = reason
         card.concept_links = concept_links_for(course)
+        // The search box on /courses matches this one field; it carries no
+        // markup and is lowercased by the browser, not by the page.
+        var hay = course.title.copy()
+        hay.append_view(string_view(" "))
+        hay.append_string(&course.description)
+        hay.append_view(string_view(" "))
+        hay.append_string(&course.difficulty)
+        card.search_text = ascii_lower(&hay.to_view())
         return card
     }
 
@@ -125,14 +118,11 @@ public namespace underlayer_web {
         rc.card.place.step = step_no
         var href = string("/courses/")
         href.append_string(&cid)
-        var href_esc = underlayer_core::html_escape(&href)
-        rc.card.href = href_esc
+        rc.card.href = href
         var viz = href.copy()
         viz.append_view(string_view("/path"))
-        var viz_esc = underlayer_core::html_escape(&viz)
-        rc.viz_href = viz_esc
-        var id_esc = underlayer_core::html_escape(&cid)
-        rc.card.title = id_esc
+        rc.viz_href = viz
+        rc.card.title = cid.copy()
         var idx = course_index(courses, &cid)
         if(idx < 0) { return rc }
         var c = courses.at_ref(idx as size_t)

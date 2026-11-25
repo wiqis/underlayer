@@ -120,18 +120,18 @@ public namespace underlayer_content {
                         <details class="nav-menu">
                             <summary class="nav-link nav-menu-summary">More</summary>
                             <div class="nav-menu-panel">
-                                <a href="/review" class="nav-link" data-nav="/review">Review</a>
-                                <a href="/progress" class="nav-link" data-nav="/progress">Progress</a>
+                                <a href="/review" class="nav-link" data-nav="/review" data-gated="1">Review</a>
+                                <a href="/progress" class="nav-link" data-nav="/progress" data-gated="1">Progress</a>
                                 <a href="/search" class="nav-link" data-nav="/search">Search</a>
                                 <div class="nav-menu-rule" role="separator"></div>
-                                <a href="/dashboard" class="nav-link" data-nav="/dashboard">Dashboard</a>
-                                <a href="/bookmarks" class="nav-link" data-nav="/bookmarks">Bookmarks</a>
-                                <a href="/notes" class="nav-link" data-nav="/notes">Notes</a>
-                                <a href="/study-plans" class="nav-link" data-nav="/study-plans">Study planner</a>
-                                <a href="/achievements" class="nav-link" data-nav="/achievements">Achievements</a>
-                                <a href="/streaks" class="nav-link" data-nav="/streaks">Streaks</a>
-                                <a href="/notifications" class="nav-link" data-nav="/notifications">Alerts</a>
-                                <a href="/certificates" class="nav-link" data-nav="/certificates">Certificates</a>
+                                <a href="/dashboard" class="nav-link" data-nav="/dashboard" data-gated="1">Dashboard</a>
+                                <a href="/bookmarks" class="nav-link" data-nav="/bookmarks" data-gated="1">Bookmarks</a>
+                                <a href="/notes" class="nav-link" data-nav="/notes" data-gated="1">Notes</a>
+                                <a href="/study-plans" class="nav-link" data-nav="/study-plans" data-gated="1">Study planner</a>
+                                <a href="/achievements" class="nav-link" data-nav="/achievements" data-gated="1">Achievements</a>
+                                <a href="/streaks" class="nav-link" data-nav="/streaks" data-gated="1">Streaks</a>
+                                <a href="/notifications" class="nav-link" data-nav="/notifications" data-gated="1">Alerts</a>
+                                <a href="/certificates" class="nav-link" data-nav="/certificates" data-gated="1">Certificates</a>
                                 <div class="nav-menu-rule" role="separator"></div>
                                 <a href="/help" class="nav-link" data-nav="/help">Help</a>
                                 <a href="/faq" class="nav-link" data-nav="/faq">FAQ</a>
@@ -148,6 +148,7 @@ public namespace underlayer_content {
         render_site_nav_css(page)
         render_identity_css(page)
         render_identity_js(page)
+        render_gated_nav_js(page)
         render_nav_active_js(page)
         // The narrow-screen menu script goes on EVERY page, lesson included.
         //
@@ -220,6 +221,46 @@ public namespace underlayer_content {
         // the whole point; putting it in the less-reached helper would leave them
         // broken.
         render_lesson_controls_js(page)
+    }
+
+    // GATED PAGES ARE NOT OFFERED TO VISITORS WHO CANNOT REACH THEM.
+    //
+    // /dashboard, /review, /progress, /bookmarks, /notes, /study-plans,
+    // /achievements, /streaks, /notifications and /certificates are all behind
+    // `has_session` on the server, and that gate reads a bearer header that a
+    // browser page load never sends.  An anonymous visitor therefore sees a
+    // link, clicks it, and is bounced to sign-in -- a dead end presented as a
+    // choice.  This hides those links when the browser has no local Underlayer
+    // token.  It does NOT weaken `has_session`: the server gate stays exactly
+    // as it is, and the links remain in the served markup so a no-JS reader
+    // and the nav checker can still see them.
+    func render_gated_nav_js(page : &mut HtmlPage) {
+        #js {
+            window.__ulPaintGatedNav = function () {
+                var signedIn = false;
+                try { signedIn = !!(window.__ulToken && window.__ulToken()); } catch (e) { signedIn = false; }
+                var gated = document.querySelectorAll('.nav-links a[data-gated]');
+                var i = 0;
+                while(i < gated.length) {
+                    gated[i].hidden = !signedIn;
+                    i = i + 1;
+                }
+            };
+            // The identity paint already runs on load and on sign-out; hooking
+            // it means the links re-hide the moment a session ends, with no
+            // reload and no second source of truth about who is signed in.
+            var paint = window.__ulPaintIdentity;
+            if (typeof paint === 'function') {
+                window.__ulPaintIdentity = function (me) {
+                    paint(me);
+                    window.__ulPaintGatedNav();
+                };
+            }
+            document.addEventListener('DOMContentLoaded', function () { window.__ulPaintGatedNav(); });
+        }
+        #css {
+            .nav-links a[data-gated][hidden] { display: none !important; }
+        }
     }
 
     // The skip-link, on pages that have something above the nav to skip past.

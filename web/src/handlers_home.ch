@@ -9,8 +9,14 @@ public namespace underlayer_web {
         return send_json_str(&body)
     }
 
-    // GET / â€” a per-request page. It stays an endpoint rather than an
+    // GET / -- a per-request page. It stays an endpoint rather than an
     // `app.live` route: see the note in handlers_collection_pages.ch.
+    //
+    // The home page answers exactly one question: what do I do next?  One
+    // headline, one sentence, ONE primary action, one secondary text link,
+    // and the card for the course that action opens.  The old 12-choice
+    // dashboard (How It Works + six Quick Actions) competed with /courses and
+    // /learning-path and is gone; the ordered view lives on /learning-path.
     public func handle_home(req : &http::Request) : http::Response {
         var page = HtmlPage()
         page.defaultPrepare()
@@ -19,104 +25,48 @@ public namespace underlayer_web {
         page.appendTitle(&title)
         // The shared session helper and the onboarding gate -- see pages_gate.ch.
         render_session_js(&mut page)
+        var start = start_here_href()
 
         #html {
             {render_nav_bar(&mut page)}
             {render_onboarding_gate(&mut page)}
+            <div id="ul-home-config" data-start-here={start} hidden></div>
 
             <div class="search-modal" id="search-modal">
                 <div class="search-backdrop" onclick="closeSearch()"></div>
                 <div class="search-dialog">
-                    <input type="text" id="search-input" class="search-input" placeholder="Search all 398 concepts..." oninput="doSearch(this.value)" />
+                    <input type="text" id="search-input" class="search-input" placeholder="Search courses and lessons..." oninput="doSearch(this.value)" />
                     <div class="search-results" id="search-results"></div>
                     <div class="search-hint">Esc to close &middot; <a href="/search">full results page</a></div>
                 </div>
             </div>
 
-            <div class="hero">
-                <div class="hero-inner">
-                    <h1>Learn Things Deeply.</h1>
-                    <p>Master complex technical subjects through structured learning, spaced repetition, and active recall. Every concept is taught from first principles, verified against authoritative sources, and tested until it sticks.</p>
-                    <p class="hero-start"><a href="/courses/elf/lessons/bytes" class="btn btn-primary">Start the guided journey</a></p>
-                    <p class="hero-start-note">One idea at a time. All courses remain available below.</p>
+            <section class="home-hero" aria-labelledby="home-heading">
+                <div class="home-hero-inner">
+                    <p class="home-eyebrow">Underlayer</p>
+                    <h1 id="home-heading">Learn one hard thing at a time.</h1>
+                    <p class="home-lede">Start at the first lesson and follow a clear path through the collection — one idea, one action, and a reason for every step.</p>
+                    <p class="home-actions"><a id="home-primary-cta" class="btn btn-primary" href={start}>Start the first lesson</a></p>
+                    <p class="home-secondary"><a href="/courses">Browse all courses</a></p>
                 </div>
-            </div>
+            </section>
 
-            <div class="container" id="main-content">
-                <div class="section">
-                    <h2>Available Courses</h2>
-                    <div class="course-grid" id="course-grid" aria-live="polite">
-                        <div class="course-loading">Loading courses…</div>
-                    </div>
-                    <noscript>
-                        <p class="course-loading">Enable JavaScript to list courses, or open <a href="/api/courses">/api/courses</a>.</p>
-                    </noscript>
-                </div>
-
-                <div class="section">
-                    <h2>How It Works</h2>
-                    <div class="feature-grid">
-                        <div class="feature-card">
-                            <div class="feature-icon">1</div>
-                            <h3>Learn</h3>
-                            <p>Read structured lessons that build from simple models to real-world detail. Every concept has a Why, Model, Detail, Example, and Connect section.</p>
-                        </div>
-                        <div class="feature-card">
-                            <div class="feature-icon">2</div>
-                            <h3>Practice</h3>
-                            <p>Test your understanding with targeted exercises. Multiple choice, recall, fill-in-the-blank, and apply questions with progressive hints.</p>
-                        </div>
-                        <div class="feature-card">
-                            <div class="feature-icon">3</div>
-                            <h3>Review</h3>
-                            <p>Spaced repetition (FSRS v4) schedules reviews when you're about to forget. Never lose knowledge again. 10 review modes from quick to deep.</p>
-                        </div>
-                        <div class="feature-card">
-                            <div class="feature-icon">4</div>
-                            <h3>Track</h3>
-                            <p>Monitor your progress, knowledge health, and weaknesses. See what you've mastered, what needs work, and where to focus next.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="section">
-                    <h2>Quick Actions</h2>
-                    <div class="action-grid">
-                        <a href="/review" class="action-card">
-                            <h3>Start Review</h3>
-                            <p>Review concepts you're about to forget. Spaced repetition keeps knowledge fresh.</p>
-                        </a>
-                        <a href="/courses" class="action-card">
-                            <h3>Browse Courses</h3>
-                            <p>All 34 courses and every concept in them, with three orders if you do not know where to start.</p>
-                        </a>
-                        <a href="/learning-path" class="action-card">
-                            <h3>Follow a Path</h3>
-                            <p>Three orders through the collection, each step carrying the reason it sits there.</p>
-                        </a>
-                        <a href="/dashboard" class="action-card">
-                            <h3>View Dashboard</h3>
-                            <p>See your learning stats, health score, and due items at a glance.</p>
-                        </a>
-                        <a href="/progress" class="action-card">
-                            <h3>Track Progress</h3>
-                            <p>See how far you've come and what's left to master.</p>
-                        </a>
-                        <a href="/health" class="action-card">
-                            <h3>Knowledge Health</h3>
-                            <p>What you've covered, how well you know it, and what you'll have forgotten by day 30.</p>
-                        </a>
-                    </div>
-                </div>
-            </div>
+            <main class="container home-main" id="main-content">
+                <section class="home-next" aria-labelledby="home-next-heading">
+                    <h2 id="home-next-heading">Your next lesson</h2>
+                    <article class="home-course-card">
+                        <h3 id="home-course-title">Loading the first course…</h3>
+                        <p class="home-course-meta" id="home-course-meta"></p>
+                        <a id="home-course-cta" class="home-course-link" href={start}>Open the first lesson</a>
+                    </article>
+                </section>
+            </main>
         }
 
         render_home_css(&mut page)
         render_home_js(&mut page)
         render_home_search_js(&mut page)
         return send_page(&page)
-
-
     }
 
 }

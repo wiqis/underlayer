@@ -27,9 +27,19 @@ public namespace underlayer_web {
         page.appendTitle(std::string_view("Search — Underlayer"))
 
         // Trimmed FIRST, then tested.  The order was the other way round, so
-        // /search?q=%20%20%20 reported "Nothing in 398 concepts matches " with
-        // an empty bold query in it -- a page telling a reader their blank
-        // search failed, which is both true and useless.
+        // /search?q=%20%20%20 reported a count of matches for an empty bold
+        // query -- a page telling a reader their blank search failed, which is
+        // both true and useless.
+        var concept_total = 0
+        var ci : size_t = 0
+        while(ci < courses.size()) {
+            concept_total = concept_total + courses.at_ref(ci).concepts.size() as int
+            ci = ci + 1
+        }
+        var total_text = underlayer_core::int_to_string(concept_total as i64)
+        var lede = string("Searches every concept title, description and module name in the collection. ")
+        lede.append_string(&total_text)
+        lede.append_view(string_view(" concepts is too many to browse and not too many to search."))
         var q = trim_start(query)
         q = trim_end(&q)
         var has_query = q.size() > 0
@@ -43,7 +53,7 @@ public namespace underlayer_web {
             <main class="container" id="main-content">
                 <header class="page-head">
                     <h1>Search</h1>
-                    <p class="lede">Searches every concept title, description and module name in the collection. 398 concepts is too many to browse and not too many to search.</p>
+                    <p class="lede">{lede}</p>
                 </header>
                 <form class="search-form" method="get" action="/search" role="search">
                     <label class="visually-hidden" for="q">Search concepts</label>

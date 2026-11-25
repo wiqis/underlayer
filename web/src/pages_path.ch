@@ -1,15 +1,13 @@
-// underlayer_web — GET /learning-path: the three routes, in full.
+// underlayer_web — GET /learning-path: the ONE ordered view of the collection.
 //
-// WHY THIS PAGE IS NOT THE PER-COURSE VISUALISATION.  There already is one:
-// `/courses/:courseId/path`, wired to `handle_learning_path_page` in
-// handlers_learning_path_viz.ch, showing one course's concepts against a
-// learner's own progress.  That handler takes a course id, so it cannot serve
-// a collection-level page, and the audit's "/learning-path is defined but
-// never routed" was really that per-course handler being easy to mistake for a
-// collection page.  This file is the collection page it was taken to be: the
-// three orders, every step, every declared prerequisite, and the count that
-// says the order is walkable.  The per-course pages are still reachable from
-// each step as "dependency graph".
+// /learning-path is not a second directory and it does not repeat the route
+// essays that used to sit on /courses.  It is a single ordered list: three
+// collapsible routes, each step reduced to position, title, one sentence of
+// "why here" and time, with the full argument and prerequisites on demand.
+//
+// Every count is read from the manifests on this render -- the same source
+// /api/courses, /courses and the home card use -- so no page can quote a stale
+// "398 concepts" after the catalogue changes.
 using std::string
 using std::string_view
 using std::vector
@@ -21,8 +19,20 @@ public namespace underlayer_web {
         var courses = underlayer_repository::list_courses(courses_dir)
         var routes = build_routes()
         var chk = verify_route_order(&courses, &routes)
-        var claimed = route_orphans(&routes)
-        var course_count = courses.size() as int
+        var lesson_total = 0
+        var ci : size_t = 0
+        while(ci < courses.size()) {
+            lesson_total = lesson_total + courses.at_ref(ci).concepts.size() as int
+            ci = ci + 1
+        }
+        var tally = string()
+        var course_count_text = underlayer_core::int_to_string(courses.size() as i64)
+        tally.append_view(course_count_text.to_view())
+        tally.append_view(string_view(" courses  |  "))
+        var lesson_count_text = underlayer_core::int_to_string(lesson_total as i64)
+        tally.append_view(lesson_count_text.to_view())
+        tally.append_view(string_view(" lessons  |  one ordered route"))
+        var start = start_here_href()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
         page.appendTitle(std::string_view("Learning Path — Underlayer"))
@@ -34,26 +44,17 @@ public namespace underlayer_web {
         #html {
             <main class="container" id="main-content">
                 <header class="page-head">
-                    <h1>Learning path</h1>
-                    <p class="lede">The collection in three orders. Each route is a sequence, not a tier: every step says why it sits where it does and which courses declare it a prerequisite. Walk them in order &mdash; the second assumes the first, the third assumes both.</p>
-                    <p class="section-note">The orders come from two places, not from taste. The chain itself is the one <code>docs/course-mission.md</code> states the collection exists to serve. The order inside it is the order the <code>dependencies</code> field of each course's <code>manifest.json</code> admits &mdash; checked against the real manifests on every render, and the count is printed at the bottom of this page.</p>
+                    <h1>Your learning path</h1>
+                    <p class="lede">Follow the route in order. Each step says why it sits where it does; open “Why is this here?” when you want the full reasoning.</p>
+                    <p class="tally">{tally}</p>
+                    <p class="path-start"><a class="btn btn-primary" href={start}>Start at step 1</a></p>
                 </header>
 
-                <section class="routes">
+                <section class="routes" aria-label="The three ordered routes">
                     <div class="route-grid">
                         {render_all_routes(&routes, &courses, page)}
                     </div>
                     {render_route_check(&chk, page)}
-                    {render_orphan_note(&courses, &claimed, course_count, page)}
-                </section>
-
-                <section class="catalogue">
-                    <div class="catalogue-head">
-                        <h2>Not sure where to start?</h2>
-                        <a class="btn btn-primary" href="/courses">Browse all courses</a>
-                    </div>
-                    <p class="section-note">If you know which lesson you want rather than which course, search for it directly &mdash; 398 concepts is too many to browse but not to search.</p>
-                    <p><a href="/search">Search all concepts &rarr;</a></p>
                 </section>
             </main>
         }

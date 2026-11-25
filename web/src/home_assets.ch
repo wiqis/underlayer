@@ -1,50 +1,33 @@
 // Home page CSS + JS, extracted from handlers_home.ch (250-line rule).
-// Includes the dynamic Available Courses loader: #html cannot loop, so cards
-// render client-side from GET /api/courses (same pattern as onboarding).
+// The single course card is filled from GET /api/courses -- the same source
+// /courses and /learning-path read -- so the lesson count and the first-lesson
+// link cannot drift from the rest of the site.
 public namespace underlayer_web {
 
     func render_home_css(page : &mut HtmlPage) {
         #css {
             body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 0; background: hsl(var(--background)); color: hsl(var(--foreground)); }
-
-            :focus-visible { outline: 2px solid hsl(217 91% 60%); outline-offset: 2px; }
-            a { color: hsl(217 91% 60%); text-decoration: none; }
+            a { color: hsl(var(--primary)); text-decoration: none; }
             a:hover { text-decoration: underline; }
+            :focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
 
-            .hero { background: linear-gradient(135deg, hsl(213 60% 24%) 0%, hsl(217 91% 60%) 100%); color: white; padding: 4rem 2rem; }
-            .hero-inner { max-width: 800px; margin: 0 auto; text-align: center; }
-            .hero h1 { font-size: 2.5rem; margin-bottom: 1rem; font-weight: 700; }
-            .hero p { font-size: 1.1rem; opacity: 0.9; line-height: 1.7; max-width: 600px; margin: 0 auto; }
-            .hero .hero-start { margin: 1.5rem 0 0.35rem; }
-            .hero .hero-start-note { font-size: 0.85rem; }
-            .journey-rec { border-color: hsl(217 91% 60%); border-left-width: 4px; }
-            .home-browse { grid-column: 1 / -1; justify-self: start; }
-            .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
-            .section { margin-bottom: 3rem; }
-            .section h2 { font-size: 1.5rem; margin-bottom: 1.5rem; color: hsl(var(--foreground)); }
-            .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; }
-            .course-loading { grid-column: 1 / -1; color: hsl(var(--muted-foreground)); font-size: 0.95rem; padding: 0.5rem 0; }
-            .course-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 1.5rem; transition: box-shadow 0.2s; }
-            .course-card:hover { box-shadow: 0 4px 12px hsl(var(--shadow)); }
-            .course-badge { display: inline-block; padding: 0.25rem 0.75rem; background: hsl(217 91% 60% / 10%); color: hsl(217 91% 60%); border-radius: 9999px; font-size: 0.8rem; font-weight: 500; margin-bottom: 1rem; }
-            .course-card h3 { font-size: 1.25rem; margin-bottom: 0.5rem; color: hsl(var(--foreground)); }
-            .course-card p { color: hsl(var(--muted-foreground)); margin-bottom: 1rem; font-size: 0.95rem; }
-            .course-stats { display: flex; gap: 1rem; margin-bottom: 1rem; font-size: 0.85rem; color: hsl(var(--muted-foreground)); }
-            .btn { display: inline-block; padding: 0.6rem 1.25rem; border-radius: 8px; font-weight: 500; font-size: 0.9rem; cursor: pointer; border: none; text-decoration: none; }
-            .btn-primary { background: hsl(217 91% 60%); color: white; }
-            .btn-primary:hover { background: hsl(217 91% 50%); text-decoration: none; }
-            .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; }
-            .feature-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 1.5rem; }
-            .feature-icon { width: 40px; height: 40px; background: hsl(217 91% 60% / 10%); color: hsl(217 91% 60%); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; margin-bottom: 1rem; }
-            .feature-card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: hsl(var(--foreground)); }
-            .feature-card p { color: hsl(var(--muted-foreground)); font-size: 0.9rem; }
-            .action-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
-            .action-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 1.5rem; text-decoration: none; transition: all 0.15s; }
-            .action-card:hover { border-color: hsl(217 91% 60%); box-shadow: 0 2px 8px hsl(217 91% 60% / 20%); text-decoration: none; }
-            .action-card h3 { font-size: 1rem; margin-bottom: 0.5rem; color: hsl(var(--foreground)); }
-            .action-card p { color: hsl(var(--muted-foreground)); font-size: 0.85rem; margin: 0; }
-            .search-trigger { background: none; border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 0.5rem; cursor: pointer; color: hsl(var(--muted-foreground)); display: flex; align-items: center; justify-content: center; }
-            .search-trigger:hover { background: hsl(var(--accent)); color: hsl(var(--foreground)); }
+            .home-hero { border-bottom: 1px solid hsl(var(--border)); background: hsl(var(--accent)); padding: 4rem 1.5rem; }
+            .home-hero-inner { max-width: 720px; margin: 0 auto; text-align: center; }
+            .home-eyebrow { margin: 0 0 0.75rem; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: hsl(var(--primary)); }
+            .home-hero h1 { font-size: 2.6rem; line-height: 1.15; margin: 0 0 1rem; letter-spacing: -0.03em; }
+            .home-lede { font-size: 1.1rem; color: hsl(var(--muted-foreground)); max-width: 60ch; margin: 0 auto; }
+            .home-actions { margin: 2rem 0 0.5rem; }
+            .btn { display: inline-block; padding: 0.75rem 1.4rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; border: none; text-decoration: none; }
+            .btn-primary { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+            .btn-primary:hover { filter: brightness(1.06); text-decoration: none; }
+            .home-secondary { margin: 0; font-size: 0.9rem; }
+            .container { max-width: 900px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+            .home-next h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; color: hsl(var(--muted-foreground)); margin: 0 0 0.85rem; }
+            .home-course-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-left: 4px solid hsl(var(--primary)); border-radius: 12px; padding: 1.5rem; }
+            .home-course-card h3 { font-size: 1.35rem; margin: 0 0 0.4rem; }
+            .home-course-meta { color: hsl(var(--muted-foreground)); font-size: 0.9rem; margin: 0 0 0.9rem; }
+            .home-course-link { font-weight: 600; font-size: 0.95rem; }
+
             .search-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000; }
             .search-modal.open { display: flex; align-items: flex-start; justify-content: center; padding-top: 20vh; }
             .search-backdrop { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); }
@@ -57,132 +40,93 @@ public namespace underlayer_web {
             .search-hint { padding: 0.5rem 1.25rem; font-size: 0.8rem; color: hsl(var(--muted-foreground)); border-top: 1px solid hsl(var(--border)); }
             .search-result-title { font-weight: 600; }
             .search-result-course { font-size: 0.8rem; color: hsl(var(--muted-foreground)); }
-            .search-result-more { color: hsl(217 91% 60%); font-weight: 600; }
+            .search-result-more { color: hsl(var(--primary)); font-weight: 600; }
 
-            @media (max-width: 768px) {
-                .hero { padding: 2rem 1rem; }
-                .hero h1 { font-size: 1.75rem; }
-                .hero p { font-size: 1rem; }
-                .container { padding: 1rem; }
-                .course-grid { grid-template-columns: 1fr; }
-                .feature-grid { grid-template-columns: 1fr; }
-                .action-grid { grid-template-columns: 1fr; }
-            }
-            @media (min-width: 769px) and (max-width: 1024px) {
-                .course-grid { grid-template-columns: repeat(2, 1fr); }
-                .feature-grid { grid-template-columns: repeat(2, 1fr); }
-                .action-grid { grid-template-columns: repeat(2, 1fr); }
+            @media (max-width: 700px) {
+                .home-hero { padding: 2.5rem 1rem; }
+                .home-hero h1 { font-size: 1.9rem; }
+                .home-lede { font-size: 1rem; }
+                .container { padding: 1.5rem 1rem; }
             }
         }
     }
 
     func render_home_js(page : &mut HtmlPage) {
         #js {
-            function getTheme() {
-                var saved = localStorage.getItem('theme');
-                if (saved) return saved;
-                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            function homeStart() {
+                var cfg = document.getElementById('ul-home-config');
+                if(cfg) { return cfg.getAttribute('data-start-here') || '/courses/elf/lessons/bytes'; }
+                return '/courses/elf/lessons/bytes';
             }
-            function setTheme(theme) {
-                document.documentElement.classList.toggle('dark', theme === 'dark');
-                localStorage.setItem('theme', theme);
+
+            // A learner has progress when the journey runtime has stored a step.
+            // This is local-first: no account and no API call needed.
+            function homeSavedLesson() {
+                var found = null;
+                try {
+                    var i = 0;
+                    while(i < localStorage.length) {
+                        var k = localStorage.key(i);
+                        if(k && k.indexOf('ul-journey:') === 0) {
+                            var parts = k.split(':');
+                            if(parts.length >= 3 && parts[1].length > 0 && parts[2].length > 0) {
+                                found = { course: parts[1], concept: parts[2] };
+                                break;
+                            }
+                        }
+                        i = i + 1;
+                    }
+                } catch(e) { found = null; }
+                return found;
             }
-            function toggleTheme() {
-                var current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-                setTheme(current === 'dark' ? 'light' : 'dark');
+
+            function homePaintCta() {
+                var start = homeStart();
+                var saved = homeSavedLesson();
+                var label = 'Start the first lesson';
+                var href = start;
+                if(saved) {
+                    label = 'Continue where you left off';
+                    href = '/courses/' + encodeURIComponent(saved.course) + '/lessons/' + encodeURIComponent(saved.concept);
+                }
+                var cta = document.getElementById('home-primary-cta');
+                if(cta) { cta.textContent = label; cta.href = href; }
+                var card = document.getElementById('home-course-cta');
+                if(card) {
+                    card.textContent = saved ? 'Continue this course' : 'Open the first lesson';
+                    card.href = href;
+                }
             }
-            setTheme(getTheme());
+
+            function loadHomeCourses() {
+                homePaintCta();
+                fetch('/api/courses').then(function(r) { return r.json(); }).then(function(courses) {
+                    if(!courses || courses.length === 0) { return; }
+                    var featured = courses[0];
+                    var i = 0;
+                    while(i < courses.length) {
+                        if(courses[i].id === 'elf') { featured = courses[i]; break; }
+                        i = i + 1;
+                    }
+                    var title = document.getElementById('home-course-title');
+                    if(title) { title.textContent = featured.title || featured.id; }
+                    var meta = document.getElementById('home-course-meta');
+                    if(meta) {
+                        var minutes = featured.first_minutes || 0;
+                        var level = featured.first_difficulty || featured.difficulty || '';
+                        meta.textContent = (featured.concepts || 0) + ' lessons  |  ' + minutes + ' min first lesson  |  ' + level;
+                    }
+                }).catch(function() {
+                    var meta = document.getElementById('home-course-meta');
+                    if(meta) { meta.textContent = 'The guided path is ready when you are.'; }
+                });
+            }
 
             document.addEventListener("keydown", function(e) {
                 if((e.ctrlKey || e.metaKey) && e.key === "k") { e.preventDefault(); openSearch(); }
                 if(e.key === "Escape") { closeSearch(); }
             });
 
-            function escapeHtml(s) {
-                var str = String(s);
-                var out = '';
-                var i = 0;
-                while(i < str.length) {
-                    var ch = str.charAt(i);
-                    if(ch === '&') { out += '&amp;'; }
-                    else if(ch === '<') { out += '&lt;'; }
-                    else if(ch === '>') { out += '&gt;'; }
-                    else if(ch === '"') { out += '&quot;'; }
-                    else if(ch === "'") { out += '&#39;'; }
-                    else { out += ch; }
-                    i = i + 1;
-                }
-                return out;
-            }
-
-            function loadHomeCourses() {
-                var grid = document.getElementById('course-grid');
-                if(!grid) { return; }
-                fetch('/api/courses').then(function(r) { return r.json(); }).then(function(courses) {
-                    if(!courses || courses.length === 0) {
-                        grid.innerHTML = '<div class="course-loading">No courses available yet.</div>';
-                        return;
-                    }
-                    var html = '';
-                    var ci = 0;
-                    var elf = null;
-                    while(ci < courses.length) {
-                        if(courses[ci].id === 'elf') { elf = courses[ci]; }
-                        ci = ci + 1;
-                    }
-                    if(elf) {
-                        html += '<div class="course-card journey-rec">';
-                        html += '<div class="course-badge">Start here</div>';
-                        html += '<h3>' + escapeHtml(elf.title || 'elf') + '</h3>';
-                        html += '<p>Follow one guided journey, one idea at a time. Every other course is one click away.</p>';
-                        html += '<a href="/courses/elf/lessons/bytes" class="btn btn-primary">Start the guided journey</a>';
-                        html += '</div>';
-                    }
-                    ci = 0;
-                    while(ci < courses.length) {
-                        var c = courses[ci];
-                        var modules = c.modules || 0;
-                        var lessons = c.concepts || 0;
-                        var diff = '';
-                        if(c.difficulty) { diff = c.difficulty.charAt(0).toUpperCase() + c.difficulty.substring(1); }
-                        var cid = encodeURIComponent(c.id);
-                        var ctitle = escapeHtml(c.title || c.id);
-                        var cdesc = escapeHtml(c.description || '');
-                        html += '<div class="course-card">';
-                        html += '<div class="course-badge">' + modules + ' Modules</div>';
-                        html += '<h3>' + ctitle + '</h3>';
-                        html += '<p>' + cdesc + '</p>';
-                        html += '<div class="course-stats"><span>' + lessons + ' Lessons</span><span>' + diff + '</span></div>';
-                        html += '<a href="/courses/' + cid + '" class="btn btn-primary">Start Learning</a>';
-                        html += '</div>';
-                        ci = ci + 1;
-                    }
-                    grid.innerHTML = html;
-                    var cards = grid.querySelectorAll('.course-card');
-                    if(cards.length > 2) {
-                        var j = 1;
-                        while(j < cards.length) { cards[j].style.display = 'none'; j = j + 1; }
-                        var btn = document.createElement('button');
-                        btn.type = 'button';
-                        btn.className = 'btn btn-primary home-browse';
-                        btn.textContent = 'Browse all courses';
-                        btn.setAttribute('aria-expanded', 'false');
-                        btn.addEventListener('click', function() {
-                            var shown = cards[1].style.display !== 'none';
-                            var k = 1;
-                            while(k < cards.length) {
-                                cards[k].style.display = shown ? 'none' : '';
-                                k = k + 1;
-                            }
-                            btn.textContent = shown ? 'Browse all courses' : 'Hide other courses';
-                            btn.setAttribute('aria-expanded', shown ? 'false' : 'true');
-                        });
-                        grid.appendChild(btn);
-                    }
-                }).catch(function() {
-                    grid.innerHTML = '<div class="course-loading">Could not load courses. Refresh to retry.</div>';
-                });
-            }
             loadHomeCourses();
         }
     }

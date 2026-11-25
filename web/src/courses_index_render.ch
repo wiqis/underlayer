@@ -17,17 +17,16 @@
 // neither of which is obvious: inside a `#html` block a component takes `page`
 // bare, because the macro has already made the reference (`&mut page` there is
 // `&mut &mut HtmlPage` and is rejected); outside a block, in plain Chemical,
-// it takes `&mut page`.  A `*CatalogCard` arrives from `vector::get_ptr`, so
-// the component's parameter is a pointer, not a reference.
+// it takes `&mut page`.
 using std::string
 using std::string_view
 using std::vector
 
 public namespace underlayer_web {
 
-    // The concept list inside a card's <details>.  Every concept links
-    // straight to its lesson, so the index is a way into a lesson rather than
-    // a second place to click through.
+    // Kept as the one renderer for direct lesson links; a course page uses it
+    // when it needs a flat list of lessons.  Values are RAW here -- the #html
+    // macro escapes once, and pre-escaping produced literal &#39; on the page.
     public func render_concept_links(links : &vector<ConceptLink>, page : &mut HtmlPage) {
         var n : size_t = links.size()
         var i : size_t = 0
@@ -39,48 +38,35 @@ public namespace underlayer_web {
                 tag.append_view(string_view(": "))
             }
             tag.append_string(&link.title)
-            var tag_esc = underlayer_core::html_escape(&tag)
             #html {
-                <li class="concept-item"><a href={link.href}>{tag_esc}</a></li>
+                <li class="concept-item"><a href={link.href}>{tag}</a></li>
             }
             i = i + 1
         }
     }
 
-    // One course card.  Balanced and self-contained so a plain Chemical while
-    // loop can emit one per course.
+    // ONE card: title, the count a learner needs, and a single link into the
+    // course.  The route essays and the expandable concept wall were removed:
+    // on /courses they are a second information architecture competing with
+    // the ordered /learning-path page.  The data attributes drive the local
+    // search and difficulty filter; no request is made to filter the grid.
     public func render_catalog_card(card : &CatalogCard, page : &mut HtmlPage) {
         #html {
-            <article class="course-card">
-                <div class="course-badge">{card.modules} modules</div>
+            <article class="course-card" data-search={card.search_text} data-difficulty={card.difficulty}>
                 <h3><a href={card.href}>{card.title}</a></h3>
                 <p class="course-desc">{card.description}</p>
-                <div class="course-stats">
-                    <span>{card.concepts} concepts</span>
+                <p class="course-stats">
+                    <span>{card.concepts} lessons</span>
                     <span>{card.minutes} min</span>
                     <span class="stat-diff">{card.difficulty}</span>
-                    <span class="stat-imp">{card.importance}</span>
-                </div>
-                @if(card.place.step > 0) {
-                    <p class="route-line"><span class="route-name">{card.place.route_name}</span> &middot; step {card.place.step}</p>
-                    <p class="route-why">{card.place.reason}</p>
-                } @else {
-                    <p class="route-line route-none">Outside the three routes &mdash; see the note below the routes.</p>
-                }
-                <details class="concepts">
-                    <summary>{card.concepts} concepts</summary>
-                    <ul class="concept-list">
-                        {render_concept_links(&card.concept_links, page)}
-                    </ul>
-                </details>
+                </p>
             </article>
         }
     }
 
     // Every card, in one call.  This is the loop-inside-a-block the language
-    // cannot write directly: the `#html` block above emits a grid, this
-    // function emits the balanced cards inside it, and the grid is a grid
-    // because its items are children of it in the served HTML.
+    // cannot write directly: the `#html` block above emits one balanced card,
+    // this function emits the cards inside the grid.
     public func render_all_cards(cards : &vector<CatalogCard>, page : &mut HtmlPage) {
         var i : size_t = 0
         var n : size_t = cards.size()

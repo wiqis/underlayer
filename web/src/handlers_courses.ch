@@ -37,6 +37,32 @@ public namespace underlayer_web {
             var desc_sv2 = course.description.to_view()
             var desc_str2 = underlayer_core::json_escape(&desc_sv2)
             body.append_view(desc_str2.to_view())
+            // ONE canonical starting point per course, from the manifest itself.
+            // Home, /courses and /learning-path all read these fields, so the
+            // first-lesson link and the lesson count cannot drift apart.
+            body.append_view("\",\"first_lesson\":\"")
+            var first_lesson = string()
+            var first_minutes = 0
+            if(course.concepts.size() > 0) {
+                var first = course.concepts.at_ref(0)
+                first_lesson = first.id.copy()
+                first_minutes = first.estimated_minutes
+            }
+            var fl_sv = first_lesson.to_view()
+            var fl_str = underlayer_core::json_escape(&fl_sv)
+            body.append_view(fl_str.to_view())
+            body.append_view("\",\"first_minutes\":")
+            var fm = underlayer_core::int_to_string(first_minutes as i64)
+            body.append_view(fm.to_view())
+            body.append_view(",\"first_difficulty\":\"")
+            var first_diff = string()
+            if(course.concepts.size() > 0) {
+                var first2 = course.concepts.at_ref(0)
+                first_diff = first2.difficulty.copy()
+            }
+            var fd_sv = first_diff.to_view()
+            var fd_str = underlayer_core::json_escape(&fd_sv)
+            body.append_view(fd_str.to_view())
             body.append_view("\"}")
             ci = ci + 1
         }

@@ -34,6 +34,10 @@ public namespace underlayer_content {
         var account_view = account.to_view()
         #html {
             <div id="ul-auth-config" data-account-url={account_view} hidden></div>
+            <div id="ul-auth-fallback-template" hidden>
+                <p class="ul-auth-fallback-text">Sign-in is temporarily unavailable — you can keep learning; progress is saved on this device.</p>
+                <button type="button" class="ul-auth-retry">Retry</button>
+            </div>
         }
         #js {
             window.__ulInstallAuthDialog = function () {
@@ -61,8 +65,29 @@ public namespace underlayer_content {
                 frame.setAttribute('title', 'Wiqis account');
                 frame.setAttribute('allow', 'publickey-credentials-get');
 
+                // The frame gets a src ONLY after the account origin answers.
+                // A refused connection then shows this calm panel instead of
+                // the browser's raw "refused to connect" document in a frame.
+                var frameHost = document.createElement('div');
+                frameHost.className = 'ul-auth-frame-host';
+                frameHost.appendChild(frame);
+                var status = document.createElement('p');
+                status.className = 'ul-auth-status';
+                status.hidden = true;
+                var template = document.getElementById('ul-auth-fallback-template');
+                var fallback = template ? template.cloneNode(true) : null;
+                if (fallback) {
+                    fallback.id = 'ul-auth-fallback';
+                    fallback.className = 'ul-auth-fallback';
+                    fallback.removeAttribute('hidden');
+                    var retry = fallback.querySelector('.ul-auth-retry');
+                    if (retry) { retry.addEventListener('click', function () { loadFrame(); }); }
+                }
+
                 dialog.appendChild(close);
-                dialog.appendChild(frame);
+                dialog.appendChild(status);
+                dialog.appendChild(frameHost);
+                if (fallback) { dialog.appendChild(fallback); }
                 document.body.appendChild(dialog);
 
                 // A native <dialog> reports a backdrop click as a click on itself.
@@ -70,14 +95,48 @@ public namespace underlayer_content {
                     if (event.target === dialog) { dialog.close(); }
                 });
 
-                var loaded = false;
-                var open = function () {
-                    if (!loaded) {
-                        frame.setAttribute('src', account + '/login?next=close');
-                        loaded = true;
+                // Shared by the dialog and the static /sign-in surface.  A
+                // no-cors fetch cannot read the response, but it DOES reject
+                // when nothing is listening, which is the failure we need to
+                // catch.  Six seconds is the ceiling, not the normal wait.
+                window.__ulAuthProbe = window.__ulAuthProbe || function (origin, done) {
+                    var opts = { mode: 'no-cors', cache: 'no-store' };
+                    var timer = null;
+                    if (typeof AbortController === 'function') {
+                        var ctrl = new AbortController();
+                        opts.signal = ctrl.signal;
+                        timer = setTimeout(function () { ctrl.abort(); }, 6000);
                     }
+                    fetch(origin + '/login?next=close', opts).then(function () {
+                        if (timer) { clearTimeout(timer); }
+                        done(true);
+                    }).catch(function () {
+                        if (timer) { clearTimeout(timer); }
+                        done(false);
+                    });
+                };
+
+                var loaded = false;
+                function loadFrame() {
+                    if (fallback) { fallback.hidden = true; }
+                    frameHost.hidden = true;
+                    status.hidden = false;
+                    status.textContent = 'Checking sign-in availability...';
+                    window.__ulAuthProbe(account, function (ok) {
+                        status.hidden = true;
+                        if (ok) {
+                            if (!loaded) { frame.setAttribute('src', account + '/login?next=close'); loaded = true; }
+                            frameHost.hidden = false;
+                        } else {
+                            frameHost.hidden = true;
+                            if (fallback) { fallback.hidden = false; }
+                        }
+                    });
+                }
+                var open = function () {
                     if (dialog.showModal) { dialog.showModal(); }
                     else { dialog.setAttribute('open', 'open'); }
+                    loadFrame();
                 };
                 window.__ulOpenAuth = open;
 
@@ -138,6 +197,12 @@ public namespace underlayer_content {
             .ul-auth-dialog { width: 28rem; max-width: calc(100vw - 2rem); max-height: 90vh; padding: 1.25rem; border: 1px solid hsl(var(--border)); border-radius: var(--radius); background: hsl(var(--card)); color: hsl(var(--card-foreground)); box-shadow: var(--shadow); }
             .ul-auth-dialog-close { position: absolute; top: 0.5rem; right: 0.75rem; border: 0; background: transparent; color: hsl(var(--muted-foreground)); font-size: 1.5rem; line-height: 1; cursor: pointer; }
             .ul-auth-dialog .wq-embed { height: 620px; max-height: 76vh; }
+            .ul-auth-status { color: hsl(var(--muted-foreground)); font-size: 0.9rem; margin: 0.5rem 0; }
+            .ul-auth-fallback { padding: 1.5rem 1rem; border: 1px solid hsl(var(--border)); border-radius: var(--radius); background: hsl(var(--card)); text-align: center; }
+            .ul-auth-fallback-text { margin: 0 0 1rem; color: hsl(var(--foreground)); font-size: 0.95rem; line-height: 1.6; }
+            .ul-auth-retry { min-height: 2.75rem; padding: 0.6rem 1.1rem; border: 1px solid hsl(var(--primary)); border-radius: var(--radius); background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); font: inherit; font-weight: 600; cursor: pointer; }
+            .ul-auth-retry:hover { filter: brightness(1.06); }
+            .ul-auth-frame-host[hidden], .ul-auth-fallback[hidden], .ul-auth-status[hidden] { display: none; }
         }
     }
 
@@ -163,6 +228,10 @@ public namespace underlayer_content {
                         src={src_value}
                         allow="publickey-credentials-get"
                     ></iframe>
+                    <div id="ul-auth-fallback-template" hidden>
+                        <p class="ul-auth-fallback-text">Sign-in is temporarily unavailable — you can keep learning; progress is saved on this device.</p>
+                        <button type="button" class="ul-auth-retry">Retry</button>
+                    </div>
                     <div class="wq-foot">One Wiqis account signs you in to every app. <a href="/">Back to Underlayer</a></div>
                 </div>
             </div>
@@ -176,6 +245,25 @@ public namespace underlayer_content {
     // cookie behind as the dialog path.
     public func render_auth_redirect_js(page : &mut HtmlPage) {
         #js {
+            // The static surface has no dialog runtime, so it carries its own
+            // guarded copy of the reachability probe with the same signature.
+            window.__ulAuthProbe = window.__ulAuthProbe || function (origin, done) {
+                var opts = { mode: 'no-cors', cache: 'no-store' };
+                var timer = null;
+                if (typeof AbortController === 'function') {
+                    var ctrl = new AbortController();
+                    opts.signal = ctrl.signal;
+                    timer = setTimeout(function () { ctrl.abort(); }, 6000);
+                }
+                fetch(origin + '/login?next=close', opts).then(function () {
+                    if (timer) { clearTimeout(timer); }
+                    done(true);
+                }).catch(function () {
+                    if (timer) { clearTimeout(timer); }
+                    done(false);
+                });
+            };
+
             window.__ulCompleteSignIn = window.__ulCompleteSignIn || function (done) {
                 fetch('/api/auth/from-account', {
                     method: 'POST',
@@ -197,17 +285,58 @@ public namespace underlayer_content {
                     box.textContent = 'We could not finish signing you in. Please try again.';
                 });
             };
+            // The static page has no dialog config; the account origin comes
+            // from the iframe's own absolute src, captured before probing.
+            var ulStageAccount = '';
+
             window.addEventListener('message', function (event) {
-                // The fallback surface has no dialog config when scripting is
-                // off, but this script only runs with scripting on; read the
-                // same account origin the iframe was built from.
-                var cfg = document.getElementById('ul-auth-config');
-                var account = cfg ? cfg.getAttribute('data-account-url') : '';
-                if (!account || event.origin !== account) { return; }
+                if (!ulStageAccount || event.origin !== ulStageAccount) { return; }
                 if (event.data && event.data.type === 'login_success') {
                     window.__ulCompleteSignIn(function () { window.location.href = '/'; });
                 }
             });
+
+            document.addEventListener('DOMContentLoaded', function () {
+                var frame = document.querySelector('.ul-auth-stage iframe.wq-embed');
+                var template = document.getElementById('ul-auth-fallback-template');
+                if (!frame || !template) { return; }
+                var original = frame.getAttribute('src') || '';
+                try { ulStageAccount = new URL(original, window.location.href).origin; } catch (e) { ulStageAccount = ''; }
+                if (!ulStageAccount) { return; }
+                // Stop the frame before it can paint a connection-error page.
+                frame.setAttribute('src', 'about:blank');
+                var panel = null;
+                function showFallback() {
+                    frame.hidden = true;
+                    if (panel) { panel.hidden = false; return; }
+                    panel = template.cloneNode(true);
+                    panel.id = 'ul-auth-fallback';
+                    panel.className = 'ul-auth-fallback';
+                    panel.removeAttribute('hidden');
+                    var retry = panel.querySelector('.ul-auth-retry');
+                    if (retry) {
+                        retry.addEventListener('click', function () {
+                            panel.hidden = true;
+                            window.__ulAuthProbe(ulStageAccount, function (ok) {
+                                if (ok) { frame.hidden = false; frame.setAttribute('src', original); }
+                                else { panel.hidden = false; }
+                            });
+                        });
+                    }
+                    frame.parentNode.appendChild(panel);
+                }
+                window.__ulAuthProbe(ulStageAccount, function (ok) {
+                    if (ok) { frame.setAttribute('src', original); }
+                    else { showFallback(); }
+                });
+            });
+        }
+        #css {
+            .ul-auth-fallback { padding: 1.5rem 1rem; border: 1px solid hsl(var(--border)); border-radius: var(--radius); background: hsl(var(--card)); text-align: center; }
+            .ul-auth-fallback-text { margin: 0 0 1rem; color: hsl(var(--foreground)); font-size: 0.95rem; line-height: 1.6; }
+            .ul-auth-retry { min-height: 2.75rem; padding: 0.6rem 1.1rem; border: 1px solid hsl(var(--primary)); border-radius: var(--radius); background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); font: inherit; font-weight: 600; cursor: pointer; }
+            .ul-auth-frame-host[hidden], .ul-auth-fallback[hidden] { display: none; }
+            .ul-auth-stage iframe[hidden] { display: none; }
         }
     }
 

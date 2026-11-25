@@ -1,19 +1,8 @@
-// underlayer_web — CSS and JS for /courses and /learning-path.
+// underlayer_web — CSS and JS for the two collection pages.
 //
-// THE NAV IS NOT HERE ANY MORE.  `.skip-link`, `.navbar`, `.nav-inner`,
-// `.nav-brand`, `.nav-links`, `.nav-link`, `.nav-right`, `.theme-toggle` and
-// the three `.theme-icon-*` rules used to sit in this file, and in
-// search_assets.ch beside it -- two copies of one nav in two sheets, with the
-// 398 lesson pages having neither.  They belong to the nav component
-// (content/src/lesson_nav.ch), which renders the markup, so it renders the
-// styles too: a page that draws the nav can no longer draw it unstyled, and
-// there is one stylesheet for it rather than three.
-//
-// The card treatment is copied from the home page's course grid in
-// home_assets.ch (.course-card, .course-badge, .course-stats, .btn-primary)
-// rather than reinvented: this page is the same collection rendered one level
-// down, and two card styles would make the home page and the index look like
-// two products.
+// Calm, one-primary-action layout.  Brand colour comes from --primary (the
+// Wiqis orange token), not from a blue literal in this file.  The nav is not
+// here: it is owned by content/src/lesson_nav.ch and renders its own styles.
 using std::string
 
 public namespace underlayer_web {
@@ -21,151 +10,135 @@ public namespace underlayer_web {
     public func render_index_css(page : &mut HtmlPage) {
         #css {
             body { font-family: system-ui, sans-serif; line-height: 1.6; margin: 0; background: hsl(var(--background)); color: hsl(var(--foreground)); }
-            a { color: hsl(217 91% 60%); text-decoration: none; }
+            a { color: hsl(var(--primary)); text-decoration: none; }
             a:hover { text-decoration: underline; }
-            :focus-visible { outline: 2px solid hsl(217 91% 60%); outline-offset: 2px; }
-            .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
-            .page-head h1 { font-size: 2rem; margin-bottom: 0.5rem; }
-            .lede { color: hsl(var(--muted-foreground)); font-size: 1.05rem; max-width: 70ch; }
-            .tally { color: hsl(var(--muted-foreground)); font-size: 0.9rem; border-left: 3px solid hsl(217 91% 60%); padding-left: 0.75rem; }
-            h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
-            .section-note { color: hsl(var(--muted-foreground)); font-size: 0.95rem; max-width: 75ch; margin-bottom: 1.5rem; }
-            .route-grid { display: grid; gap: 1.5rem; margin-bottom: 1.5rem; }
-            .route-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 1.5rem; }
-            .route-card:target { border-color: hsl(217 91% 60%); box-shadow: 0 0 0 3px hsl(217 91% 60% / 15%); }
-            .route-title { font-size: 1.2rem; margin: 0 0 0.25rem; }
-            .route-tagline { color: hsl(217 91% 60%); font-size: 0.9rem; font-weight: 600; margin: 0 0 0.5rem; }
-            .route-blurb { color: hsl(var(--muted-foreground)); font-size: 0.95rem; margin: 0 0 1.25rem; max-width: 80ch; }
-            .route-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
-            .route-step { border-left: 3px solid hsl(var(--border)); padding: 0.25rem 0 0.25rem 1rem; }
-            .step-head { display: flex; align-items: baseline; gap: 0.6rem; }
-            .step-num { background: hsl(217 91% 60% / 12%); color: hsl(217 91% 60%); border-radius: 9999px; min-width: 1.8rem; height: 1.8rem; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; }
-            .step-course { font-weight: 600; font-size: 1rem; }
-            .step-course.step-missing { color: hsl(0 70% 55%); }
-            .step-why { margin: 0.35rem 0 0.4rem; color: hsl(var(--foreground)); font-size: 0.92rem; max-width: 85ch; }
-            .step-meta { display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.8rem; color: hsl(var(--muted-foreground)); }
+            :focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
+            .container { max-width: 1100px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+            .page-head { max-width: 70ch; margin-bottom: 2.5rem; }
+            .page-head h1 { font-size: 2.1rem; line-height: 1.2; margin: 0 0 0.75rem; letter-spacing: -0.02em; }
+            .lede { color: hsl(var(--muted-foreground)); font-size: 1.05rem; margin: 0 0 1rem; }
+            .tally { color: hsl(var(--muted-foreground)); font-size: 0.9rem; margin: 0 0 1.5rem; }
+            .btn { display: inline-block; padding: 0.7rem 1.3rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; border: none; text-decoration: none; }
+            .btn-primary { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+            .btn-primary:hover { filter: brightness(1.06); text-decoration: none; }
+            .text-link { margin-left: 0.75rem; font-size: 0.95rem; }
+            .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+            /* /courses: one search, one filter row, a compact grid. */
+            .catalogue-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 1.75rem; }
+            .course-search-label { font-weight: 600; font-size: 0.9rem; }
+            .course-search { flex: 1 1 16rem; min-height: 2.75rem; padding: 0.6rem 0.85rem; border: 1px solid hsl(var(--border)); border-radius: 8px; background: hsl(var(--card)); color: hsl(var(--foreground)); font-size: 0.95rem; }
+            .course-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+            .filter-chip { min-height: 2.4rem; padding: 0.35rem 0.8rem; border: 1px solid hsl(var(--border)); border-radius: 9999px; background: hsl(var(--card)); color: hsl(var(--muted-foreground)); font-size: 0.85rem; cursor: pointer; }
+            .filter-chip:hover { border-color: hsl(var(--primary)); color: hsl(var(--foreground)); }
+            .filter-chip.is-active { border-color: hsl(var(--primary)); background: hsl(var(--accent)); color: hsl(var(--foreground)); font-weight: 600; }
+            .course-count { flex-basis: 100%; margin: 0; color: hsl(var(--muted-foreground)); font-size: 0.85rem; }
+            .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+            .course-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 1.25rem; }
+            .course-card[hidden] { display: none; }
+            .course-card:hover { border-color: hsl(var(--primary)); }
+            .course-card h3 { font-size: 1.1rem; margin: 0 0 0.4rem; line-height: 1.35; }
+            .course-desc { color: hsl(var(--muted-foreground)); font-size: 0.9rem; margin: 0 0 0.9rem; }
+            .course-stats { display: flex; flex-wrap: wrap; gap: 0.9rem; margin: 0; font-size: 0.8rem; color: hsl(var(--muted-foreground)); }
             .stat-diff { text-transform: capitalize; }
-            .stat-imp { text-transform: capitalize; }
-            .stat-missing { color: hsl(0 70% 55%); }
-            .step-prereqs { margin-top: 0.4rem; font-size: 0.78rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
-            .prereq-label { color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.7rem; }
-            .prereq { background: hsl(var(--accent)); color: hsl(var(--foreground)); border-radius: 6px; padding: 0.1rem 0.4rem; }
-            .prereq-none { color: hsl(var(--muted-foreground)); }
-            .route-check { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-left: 3px solid hsl(217 91% 60%); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-size: 0.9rem; }
+
+            /* /learning-path: three collapsible routes, one ordered view. */
+            .route-grid { display: grid; gap: 1rem; }
+            .route-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 0.4rem 1.25rem; }
+            .route-card[open] { border-left: 4px solid hsl(var(--primary)); }
+            .route-card:target { border-color: hsl(var(--primary)); }
+            .route-summary { cursor: pointer; list-style: none; padding: 0.9rem 0; }
+            .route-summary::-webkit-details-marker { display: none; }
+            .route-summary::before { content: "+"; display: inline-block; width: 1.4rem; color: hsl(var(--primary)); font-weight: 700; }
+            .route-card[open] .route-summary::before { content: "-"; }
+            .route-title { font-size: 1.1rem; font-weight: 700; }
+            .route-tagline { display: block; margin-left: 1.4rem; color: hsl(var(--muted-foreground)); font-size: 0.9rem; }
+            .route-steps { list-style: none; margin: 0 0 0.6rem; padding: 0; display: grid; gap: 0.55rem; }
+            .route-step { border-top: 1px solid hsl(var(--border)); padding: 0.85rem 0 0.35rem; }
+            .step-head { display: flex; align-items: baseline; gap: 0.7rem; }
+            .step-num { background: hsl(var(--accent)); color: hsl(var(--primary)); border-radius: 9999px; min-width: 1.9rem; height: 1.9rem; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; }
+            .step-course { font-weight: 600; font-size: 1rem; }
+            .step-course.step-missing { color: hsl(var(--muted-foreground)); font-style: italic; }
+            .step-why { margin: 0.35rem 0 0.2rem; color: hsl(var(--foreground)); font-size: 0.92rem; max-width: 80ch; }
+            .step-time { margin: 0 0 0.4rem; color: hsl(var(--muted-foreground)); font-size: 0.82rem; }
+            .step-why-detail { margin: 0.35rem 0 0; }
+            .step-why-detail summary { cursor: pointer; color: hsl(var(--primary)); font-size: 0.85rem; font-weight: 600; }
+            .step-why-full { color: hsl(var(--muted-foreground)); font-size: 0.9rem; max-width: 80ch; margin: 0.5rem 0; }
+            .step-prereqs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-top: 0.5rem; }
+            .prereq-label { color: hsl(var(--muted-foreground)); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
+            .prereq { background: hsl(var(--accent)); color: hsl(var(--foreground)); border-radius: 6px; padding: 0.15rem 0.5rem; font-size: 0.8rem; }
+            .prereq-none { color: hsl(var(--muted-foreground)); font-size: 0.82rem; }
+            .route-check { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-left: 3px solid hsl(var(--primary)); border-radius: 8px; padding: 0.9rem 1.1rem; margin-top: 1.5rem; font-size: 0.85rem; color: hsl(var(--muted-foreground)); }
             .route-check p { margin: 0.2rem 0; }
-            .check-ok { color: hsl(152 60% 36%); }
-            .check-bad { color: hsl(0 70% 55%); font-weight: 600; }
-            .check-list { margin: 0.25rem 0 0 1.25rem; color: hsl(0 70% 55%); }
-            .orphan-note { border: 1px dashed hsl(var(--border)); border-radius: 12px; padding: 1.5rem; }
-            .orphan-note h3 { margin-top: 0; font-size: 1.05rem; }
-            .orphan-note p { color: hsl(var(--muted-foreground)); font-size: 0.9rem; max-width: 80ch; }
-            .orphan-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.75rem; padding: 0.5rem 0; border-top: 1px solid hsl(var(--border)); font-size: 0.85rem; color: hsl(var(--muted-foreground)); }
-            .orphan-row a { font-weight: 600; font-size: 0.95rem; }
-            .catalogue { margin-top: 3rem; }
-            .catalogue-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
-            .expand-all { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); color: hsl(var(--foreground)); border-radius: 8px; padding: 0.45rem 0.9rem; font-size: 0.85rem; cursor: pointer; }
-            .expand-all:hover { border-color: hsl(217 91% 60%); color: hsl(217 91% 60%); }
-            .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.25rem; }
-            .course-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; }
-            .course-card:hover { box-shadow: 0 4px 12px hsl(var(--shadow)); }
-            .course-badge { align-self: flex-start; padding: 0.2rem 0.7rem; background: hsl(217 91% 60% / 10%); color: hsl(217 91% 60%); border-radius: 9999px; font-size: 0.78rem; font-weight: 500; margin-bottom: 0.75rem; }
-            .course-card h3 { font-size: 1.1rem; margin: 0 0 0.4rem; }
-            .course-desc { color: hsl(var(--muted-foreground)); font-size: 0.9rem; margin: 0 0 0.75rem; flex: 1; }
-            .course-stats { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.75rem; font-size: 0.8rem; color: hsl(var(--muted-foreground)); }
-            .route-line { font-size: 0.82rem; margin: 0 0 0.2rem; color: hsl(var(--muted-foreground)); }
-            .route-line .route-name { color: hsl(217 91% 60%); font-weight: 600; }
-            .route-none { font-style: italic; }
-            .route-why { font-size: 0.85rem; margin: 0 0 0.75rem; max-width: 60ch; }
-            .concepts { border-top: 1px solid hsl(var(--border)); padding-top: 0.6rem; }
-            .concepts summary { cursor: pointer; font-size: 0.85rem; font-weight: 600; color: hsl(217 91% 60%); }
-            .concept-list { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; gap: 0.3rem; max-height: 22rem; overflow-y: auto; }
-            .concept-item { font-size: 0.85rem; }
-            .btn { display: inline-block; padding: 0.6rem 1.25rem; border-radius: 8px; font-weight: 500; font-size: 0.9rem; cursor: pointer; border: none; text-decoration: none; }
-            .btn-primary { background: hsl(217 91% 60%); color: white; }
-            .btn-primary:hover { background: hsl(217 91% 50%); text-decoration: none; }
-            .journey-start-panel { max-width: 760px; margin: 1.5rem 0 2rem; padding: 1.5rem; border: 1px solid hsl(var(--border)); border-left: 4px solid hsl(217 91% 60%); border-radius: 12px; background: hsl(var(--card)); }
-            .journey-start-eyebrow { margin: 0 0 0.35rem; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: hsl(217 91% 60%); font-weight: 700; }
-            .journey-start-line { margin: 0 0 1rem; font-size: 1.05rem; max-width: 60ch; }
-            .catalogue.is-collapsed .course-grid { display: none; }
-            .catalogue-toggle { margin-left: auto; }
-            @media (max-width: 900px) { .course-grid { grid-template-columns: 1fr; } .container { padding: 1rem; } }
+            .check-ok { color: hsl(var(--primary)); }
+            .check-bad { font-weight: 600; }
+            .check-list { margin: 0.25rem 0 0 1.25rem; }
+
+            @media (max-width: 700px) {
+                .container { padding: 1.25rem 1rem; }
+                .course-grid { grid-template-columns: 1fr; }
+            }
         }
     }
 
     public func render_index_js(page : &mut HtmlPage) {
-        // The theme script is NOT called here any more: render_nav_bar emits
-        // it, because the theme toggle belongs to the nav rather than to this
-        // page, and calling it in both places shipped it twice.
+        // The theme boot script belongs to the nav, not to this page.
         #js {
-            // Expand-all is a toggle over every <details>, so a learner who
-            // wants the whole catalogue open gets it in one click and can put
-            // it back.  The button label follows the state rather than
-            // assuming it, which is the difference between a control and a
-            // decoration.
-            function toggleAllConcepts() {
-                var boxes = document.querySelectorAll('.concepts');
-                if (boxes.length === 0) return;
-                var anyClosed = false;
-                boxes.forEach(function(b) { if (!b.open) { anyClosed = true; } });
-                boxes.forEach(function(b) { b.open = anyClosed; });
-                var btn = document.querySelector('.expand-all');
-                if (btn) { btn.textContent = anyClosed ? 'Collapse all concepts' : 'Expand all concepts'; }
+            function ciCourseCards() {
+                var grid = document.getElementById('course-grid');
+                return grid ? grid.querySelectorAll('.course-card') : [];
             }
 
-            // ONE STARTING PATH.  The catalogue below is untouched and every
-            // course stays one click away; the first lesson is simply offered
-            // before the wall, and the wall is collapsed until asked for.
-            function ciEl(tag, cls, text) {
-                var e = document.createElement(tag);
-                if (cls) { e.className = cls; }
-                if (text) { e.textContent = text; }
-                return e;
-            }
-
-            function ciStartPath() {
-                if (document.getElementById('ul-start-panel')) { return; }
-                var head = document.querySelector('.page-head');
-                if (!head || !head.parentNode) { return; }
-                var links = document.querySelectorAll('.concept-item a');
-                var link = null;
+            function ciApplyFilters() {
+                var input = document.getElementById('course-search');
+                var chips = document.querySelectorAll('.filter-chip');
+                var count = document.getElementById('course-count');
+                var query = '';
+                var level = 'all';
                 var i = 0;
-                while (i < links.length) {
-                    var href = links[i].getAttribute('href') || '';
-                    if (href.indexOf('/courses/elf/lessons/') >= 0) { link = links[i]; break; }
-                    if (!link) { link = links[i]; }
+                while(i < chips.length) {
+                    if(chips[i].getAttribute('aria-pressed') === 'true') { level = chips[i].getAttribute('data-filter') || 'all'; }
                     i = i + 1;
                 }
-                if (!link) { link = document.querySelector('.route-step a.step-course'); }
-                if (!link) { return; }
-                var panel = ciEl('div', 'journey-start-panel');
-                panel.id = 'ul-start-panel';
-                panel.appendChild(ciEl('p', 'journey-start-eyebrow', 'Start here'));
-                panel.appendChild(ciEl('p', 'journey-start-line', 'One guided path: open the first lesson and follow the steps, one idea at a time. Every course stays reachable below.'));
-                var a = ciEl('a', 'btn btn-primary', 'Begin with ' + (link.textContent || 'the first lesson'));
-                a.href = link.getAttribute('href');
-                panel.appendChild(a);
-                head.parentNode.insertBefore(panel, head.nextSibling);
-                var cat = document.querySelector('.catalogue');
-                if (cat && cat.querySelectorAll('.course-card').length > 8) {
-                    cat.classList.add('is-collapsed');
-                    var ch = cat.querySelector('.catalogue-head');
-                    var btn = ciEl('button', 'expand-all catalogue-toggle', 'Browse all courses');
-                    btn.type = 'button';
-                    btn.setAttribute('aria-expanded', 'false');
-                    btn.setAttribute('aria-controls', 'course-grid');
-                    btn.addEventListener('click', function() {
-                        var open = cat.classList.contains('is-collapsed');
-                        if (open) { cat.classList.remove('is-collapsed'); }
-                        else { cat.classList.add('is-collapsed'); }
-                        btn.textContent = open ? 'Hide all courses' : 'Browse all courses';
-                        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-                    });
-                    if (ch) { ch.appendChild(btn); }
+                if(input) { query = (input.value || '').toLowerCase().trim(); }
+                var cards = ciCourseCards();
+                var shown = 0;
+                i = 0;
+                while(i < cards.length) {
+                    var card = cards[i];
+                    var hay = (card.getAttribute('data-search') || '').toLowerCase();
+                    var diff = (card.getAttribute('data-difficulty') || '').toLowerCase();
+                    var fits = (query.length === 0 || hay.indexOf(query) >= 0) && (level === 'all' || diff === level);
+                    if(fits) { shown = shown + 1; }
+                    card.hidden = !fits;
+                    i = i + 1;
                 }
+                if(count) { count.textContent = shown + ' of ' + cards.length + ' courses'; }
             }
 
-            if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', ciStartPath); }
-            else { ciStartPath(); }
+            function ciInitCollection() {
+                if(document.getElementById('course-search')) { ciApplyFilters(); }
+                var input = document.getElementById('course-search');
+                if(input) { input.addEventListener('input', ciApplyFilters); }
+                var chips = document.querySelectorAll('.filter-chip');
+                var i = 0;
+                while(i < chips.length) {
+                    chips[i].addEventListener('click', function() {
+                        var all = document.querySelectorAll('.filter-chip');
+                        var j = 0;
+                        while(j < all.length) { all[j].setAttribute('aria-pressed', 'false'); all[j].classList.remove('is-active'); j = j + 1; }
+                        this.setAttribute('aria-pressed', 'true');
+                        this.classList.add('is-active');
+                        ciApplyFilters();
+                    });
+                    i = i + 1;
+                }
+                var firstRoute = document.querySelector('.route-card');
+                if(firstRoute && !firstRoute.open) { firstRoute.open = true; }
+            }
+
+            if(document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', ciInitCollection); }
+            else { ciInitCollection(); }
         }
     }
 

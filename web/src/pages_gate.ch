@@ -53,12 +53,12 @@ public namespace underlayer_web {
 
     public func render_onboarding_gate_css(page : &mut HtmlPage) {
         #css {
-            .ul-onboarding-gate { background: hsl(217 91% 60% / 10%); border: 1px solid hsl(217 91% 60% / 35%); border-radius: 10px; margin: 1rem 0 1.5rem; }
+            .ul-onboarding-gate { background: hsl(var(--accent)); border: 1px solid hsl(var(--primary)); border-radius: 10px; margin: 1rem 0 1.5rem; }
             .ul-gate-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.9rem; padding: 0.85rem 1.1rem; }
-            .ul-gate-text { color: hsl(220 9% 46%); font-size: 0.9rem; }
-            .ul-gate-cta { background: hsl(217 91% 60%); color: white; text-decoration: none; font-size: 0.85rem; font-weight: 600; padding: 0.4rem 0.9rem; border-radius: 6px; }
-            .ul-gate-cta:hover { text-decoration: none; background: hsl(217 91% 50%); }
-            .ul-gate-skip { color: hsl(220 9% 46%); font-size: 0.85rem; text-decoration: underline; }
+            .ul-gate-text { color: hsl(var(--muted-foreground)); font-size: 0.9rem; }
+            .ul-gate-cta { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); text-decoration: none; font-size: 0.85rem; font-weight: 600; padding: 0.4rem 0.9rem; border-radius: 6px; }
+            .ul-gate-cta:hover { text-decoration: none; filter: brightness(1.06); }
+            .ul-gate-skip { color: hsl(var(--muted-foreground)); font-size: 0.85rem; text-decoration: underline; }
         }
     }
 
