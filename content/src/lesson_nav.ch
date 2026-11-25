@@ -106,6 +106,11 @@ public namespace underlayer_content {
         // the eleven duplicate navs happened in the first place.
         render_theme_boot_js(page, lesson)
         render_color_scheme_meta(page)
+        // THE SIGN-IN DIALOG, installed once on every page that draws this nav.
+        // The local `/sign-in` href in nav_right is the no-JS fallback; this is
+        // the runtime that turns a `[data-auth-open]` click into an in-place
+        // account iframe. See content/src/embedded_auth.ch for both halves.
+        render_embedded_auth_runtime(page)
         nav_skip_link(page, lesson)
         #html {
             <div class="navbar">
@@ -285,6 +290,7 @@ public namespace underlayer_content {
             #html {
                 <div class="nav-right">
                     <span class="nav-identity" id="ul-identity" hidden></span>
+                    <a href="/sign-in" class="nav-link ul-nav-signin" data-auth-open>Sign in</a>
                     <button type="button" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
                         <span class="theme-icon-light">&#9728;</span>
                         <span class="theme-icon-dark">&#9790;</span>
@@ -296,6 +302,7 @@ public namespace underlayer_content {
         #html {
             <div class="nav-right">
                 <span class="nav-identity" id="ul-identity" hidden></span>
+                <a href="/sign-in" class="nav-link ul-nav-signin" data-auth-open>Sign in</a>
             </div>
         }
     }

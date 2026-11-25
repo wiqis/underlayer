@@ -96,6 +96,8 @@ public namespace underlayer_content {
             window.__ulPaintIdentity = function(me) {
                 var slot = document.getElementById('ul-identity');
                 if (!slot) { return; }
+                var staticOpener = document.querySelector('.ul-nav-signin');
+                if (staticOpener) { staticOpener.hidden = !!(me && (me.display_name || me.username || me.name)); }
                 slot.textContent = '';
                 var who = '';
                 if (me) {
@@ -104,7 +106,11 @@ public namespace underlayer_content {
                 var link = document.createElement('a');
                 if (who.length === 0) {
                     link.className = 'ul-signin';
-                    link.href = '/login';
+                    // LOCAL href, never the account host.  It is the no-JS
+                    // fallback; `data-auth-open` is what the shared dialog
+                    // installer intercepts for a visitor with JavaScript.
+                    link.href = '/sign-in';
+                    link.setAttribute('data-auth-open', 'true');
                     link.textContent = 'Sign in';
                 } else {
                     link.className = 'ul-signin ul-signed-in';
@@ -204,6 +210,7 @@ public namespace underlayer_content {
             .ul-signout { font: inherit; font-size: 0.78rem; font-weight: 600; padding: 0.2rem 0.5rem; border: 1px solid hsl(220 11% 89%); border-radius: 6px; background: hsl(0 0% 100%); color: hsl(220 9% 46%); cursor: pointer; white-space: nowrap; }
             .ul-signout:hover { background: hsl(220 14% 96%); color: hsl(221 39% 11%); }
             .nav-identity { display: inline-flex; align-items: center; gap: 0.4rem; }
+            .ul-nav-signin[hidden] { display: none; }
         }
     }
 

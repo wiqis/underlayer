@@ -23,8 +23,13 @@ using std::string
 
 public namespace underlayer_web {
 
-    // A collection page: skip-link plus navbar, theme toggle included.
+    // A collection page: the Wiqis brand layer (app shell, so the stored theme
+    // preference is honoured) plus the one shared nav.  The nav itself also
+    // installs the embedded sign-in dialog; its local `/sign-in` opener is the
+    // same one a lesson page gets.  See content/src/lesson_nav.ch and
+    // content/src/embedded_auth.ch — there is deliberately only one nav here.
     public func render_nav_bar(page : &mut HtmlPage) {
+        WiqisTheme(page, true)
         underlayer_content::render_site_nav(page)
     }
 

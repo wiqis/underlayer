@@ -88,6 +88,11 @@ public namespace underlayer_repository {
         var t_learners = string_view("learners")
         var c_ph = string_view("password_hash")
         add_column_if_missing(db, &t_learners, &c_ph, string_view("TEXT"))
+        // learners.account_user_id -- the shadow-learner bridge to the shared
+        // Wiqis account.  Additive and nullable: an existing local learner is
+        // untouched, and a new account learner gets exactly one local row.
+        var c_auid = string_view("account_user_id")
+        add_column_if_missing(db, &t_learners, &c_auid, string_view("TEXT"))
         // review_items.ease_factor -- FSRS.  REAL because it is a factor, and
         // the DEFAULT is what every existing row reads back as.
         var t_review = string_view("review_items")

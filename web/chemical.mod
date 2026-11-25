@@ -19,6 +19,7 @@ import css_cbi
 import js_cbi
 import universal_cbi
 import components
+import "../../../WebLibs/brandlib"
 import "../core"
 import "../database"
 import "../models"

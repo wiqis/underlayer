@@ -214,6 +214,15 @@ public namespace underlayer_web {
         return rate_limit_ok_with(db, req, &g, rate_limit_max())
     }
 
+    // POST /api/auth/from-account exchanges an account credential for a local
+    // session.  It does no password check itself, but it DOES make an outbound
+    // call to the account service and write a row in `learners`, so it gets the
+    // same 8/5min auth ceiling as login and register.
+    public func rate_limit_from_account(db : *DbClient, req : &http::Request) : std::Option<http::Response> {
+        var g = string("from_account")
+        return rate_limit_ok_with(db, req, &g, rate_limit_max())
+    }
+
     // ---- the learning-write surface ------------------------------------
     //
     // /api/exercises/submit accepted ten submissions in ten consecutive

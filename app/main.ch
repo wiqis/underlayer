@@ -735,6 +735,18 @@ public func main() : int {
     srv.router.add("GET", "/register", ||(req) => {
         return underlayer_web::deliver(&req, underlayer_web::handle_register_page(&req))
     })
+    // The no-JavaScript fallbacks.  Their hrefs are LOCAL — a sign-in control
+    // that navigated to the account host would lose the reader's page and is
+    // the exact anti-pattern the embedded-sign-in contract forbids.
+    srv.router.add("GET", "/sign-in", ||(req) => {
+        return underlayer_web::deliver(&req, underlayer_web::handle_signin_page(&req))
+    })
+    srv.router.add("GET", "/sign-up", ||(req) => {
+        return underlayer_web::deliver(&req, underlayer_web::handle_signup_page(&req))
+    })
+    srv.router.add("GET", "/sign-out", ||(req) => {
+        return underlayer_web::deliver(&req, underlayer_web::handle_signout_page(&req))
+    })
     srv.router.add("GET", "/forgot-password", ||(req) => {
         return underlayer_web::deliver(&req, underlayer_web::handle_forgot_password_page(&req))
     })
@@ -798,6 +810,19 @@ public func main() : int {
     srv.router.add("GET", "/api/auth/me", ||(req) => {
         var db = request_db()
         return underlayer_web::deliver(&req, underlayer_web::handle_get_me(db, &req))
+    })
+    // POST /api/auth/from-account — exchange a SHARED account credential for a
+    // local session.  Acceptance is checked against account.wiqis.com; only a
+    // stable user id crosses back, and all learning data stays in this DB.
+    // RATE LIMITED at the auth ceiling, like login and register.
+    srv.router.add("POST", "/api/auth/from-account", ||(req) => {
+        var db = request_db()
+        var gate = underlayer_web::rate_limit_from_account(db, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return refusal
+        }
+        return underlayer_web::deliver(&req, underlayer_web::handle_from_account(db, &req))
     })
     srv.router.add("POST", "/api/auth/forgot-password", ||(req) => {
         var db = request_db()

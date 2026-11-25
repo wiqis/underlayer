@@ -113,7 +113,11 @@ public namespace underlayer_web {
         return string()
     }
 
-    private func create_session(db : *DbClient, learner_id : &string) : string {
+    // public because the shared-account bridge (handlers_account_bridge.ch)
+    // mints a session for its local shadow learner with exactly this function.
+    // There is deliberately ONE session system: same table, same 30-day token,
+    // same cookie.  A second one would split the browser's identity in two.
+    public func create_session(db : *DbClient, learner_id : &string) : string {
         var token = generate_random_hex(64)
         var token_hash = hash_token(&token)
         var session_id = generate_random_hex(32)

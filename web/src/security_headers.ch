@@ -35,21 +35,42 @@
 //     with includeSubDomains omitted, because includeSubDomains on a host with
 //     other subdomains is a way to break someone else's site.
 //
-// WHY THERE IS NO CONTENT-SECURITY-POLICY, stated plainly rather than left as a
-// gap someone assumes is filled.  A real CSP needs every inline <script>, every
-// inline style and every data: URI this codebase emits enumerated -- and both
-// the universal-components runtime and the 398 lesson pages emit inline scripts
-// and inline styles by the thousand, most of them built by the #js and #css
-// macros.  A policy that forbids inline script would blank the product; one that
-// allows it ('unsafe-inline') buys almost nothing over having no policy, because
-// an attacker who can inject markup can use the allowed inline script too.
+// WHY THE CONTENT-SECURITY-POLICY LOOKS LIKE THIS.  The earlier version of this
+// file argued that no CSP was better than one with 'unsafe-inline', because the
+// lesson pages and the components runtime emit inline <script>/<style> by the
+// thousand and a policy that forbade them would blank the product.  That is
+// still true about forbidding them, but it is no longer a reason to ship no
+// policy at all: the honest policy allows the inline blocks this codebase
+// actually emits and still constrains everything else.  It is a real control on
+// framing, destinations, forms and object/plugin loads, not a pretend one.
 //
-// So the honest sequence is: ship nosniff / DENY / referrer-policy / HSTS now,
-// because each is independently correct and independently harmless, and add a CSP
-// as a separate piece of work whose first step is getting the inline scripts
-// into external files.  Shipping a CSP that breaks the site would be worse than
-// shipping none, and a CSP with unsafe-inline is a comment pretending to be a
-// control.
+//   default-src 'self'               anything not named below stays on this host
+//   script-src 'self' 'unsafe-inline'
+//   style-src  'self' 'unsafe-inline'    the #js/#css macros emit inline blocks
+//   img-src 'self' data: https://storage.googleapis.com
+//                                    data: for lesson diagrams, GCS for avatars
+//   connect-src 'self' <ACCOUNT_URL>  the browser calls account.wiqis.com
+//   frame-src <ACCOUNT_URL> https://accounts.google.com
+//                                    see the trap below -- Google belongs HERE
+//   form-action 'self'; base-uri 'self'; object-src 'none'
+//                                    no off-site form posts, no <base> hijack,
+//                                    no plugins
+//
+// THE GOOGLE ENTRY IS THE SUBTLE PART, and getting it wrong is silent.  Google's
+// consent screen cannot render in a third-party iframe, so the account page
+// opens a top-level POPUP from inside the sign-in iframe.  A navigation started
+// in a subframe is enforced against the TOP-LEVEL document's frame-src — what
+// w3c/webappsec-csp#400 reports and all current browsers implement, contrary to
+// the literal spec text.  Adding accounts.google.com to the ACCOUNT service's
+// policy fixes nothing: the violation names OUR directive.  Scope it to
+// frame-src only; Google must never appear in default-src, script-src or
+// connect-src, because the credential page deliberately runs no third-party JS.
+//
+// NO frame-ancestors HERE, on purpose.  Underlayer is the parent that embeds the
+// account service's sign-in frame; the account service sends the matching
+// frame-ancestors wildcard.  Sending frame-ancestors from Underlayer would only
+// say who may frame US, which is a different question and would risk breaking
+// the reader's own use of the site for no benefit.
 //
 // WHY NOT X-XSS-Protection.  It is deprecated, every current browser has removed
 // it, and the auditing it performed was itself exploitable.  Its presence in

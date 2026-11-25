@@ -26,6 +26,27 @@ public namespace underlayer_web {
 
         var hsts = string_view("max-age=31536000")
         res.set_header_view(string_view("Strict-Transport-Security"), &hsts)
+
+        // ONE CSP FOR EVERY RESPONSE.  Built here rather than memoised in a
+        // module global: a `string` global assigned at boot is a bitwise copy
+        // that aliases a freed buffer, and an unconstructed global reads back
+        // empty (both traps are documented in wiqis-chemical-language).  A
+        // dozen append_views per response are nothing next to a request.
+        //
+        // `frame-src` names BOTH hosts on purpose.  The Google consent popup is
+        // opened from inside the account iframe, but a navigation started in a
+        // subframe is checked against the TOP-LEVEL document's frame-src — so
+        // the entry has to be on OUR policy, not on the account service's.
+        // There is deliberately no `frame-ancestors`: Underlayer is the parent
+        // that frames the account service, not the page being framed.
+        var account = underlayer_core::account_url()
+        var policy = string("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://storage.googleapis.com; connect-src 'self' ")
+        policy.append_view(account.to_view())
+        policy.append_view("; frame-src ")
+        policy.append_view(account.to_view())
+        policy.append_view(" https://accounts.google.com; form-action 'self'; base-uri 'self'; object-src 'none'")
+        var policy_view = policy.to_view()
+        res.set_header_view(string_view("Content-Security-Policy"), &policy_view)
     }
 
     // A rendered page, as `text/html`.

@@ -1,361 +1,22 @@
-// underlayer_web — Auth page handlers (login, register, forgot/reset password).
+// underlayer_web — Password-recovery pages.
+//
+// /login and /register used to collect credentials here.  They now live in
+// pages_auth_embedded.ch and embed the shared Wiqis account service instead;
+// the local POST /api/auth/login|register handlers remain intact for the
+// Android client.  The two pages below are recovery flows on Underlayer's own
+// database and are deliberately unchanged.
 using std::string
 using std::string_view
 
 public namespace underlayer_web {
-
-    public func handle_login_page(req : &http::Request) : http::Response {
-        var page = HtmlPage()
-        page.defaultUniversalSetup()
-        page.defaultPrepare()
-        page.injectDefaultComponentsTheme()
-        // THE PRE-PAINT THEME, on a page that draws no navbar.
-        //
-        // These pages are the ones the nav audit listed as having no navbar at
-        // all (/login, /register, /settings, /help, /faq, /about, ...).  Adding a
-        // navbar to an auth page or a legal page is a design decision that was
-        // deliberately deferred -- but the THEME is not the same decision.  They
-        // already inject the components theme, whose .dark rules key on the <html>
-        // class, so with the class set they respect the reader's OS preference
-        // and their toggle.  Without it they render light unconditionally, which
-        // is a reader with a dark OS reading a bright page.
-        underlayer_content::render_theme_boot_js(&mut page, false)
-        underlayer_content::render_color_scheme_meta(&mut page)
-        var title = std::string_view("Login — Underlayer")
-        page.appendTitle(&title)
-        // Both auth helpers: __ulToken/__ulHeaders for the onboarding check,
-        // and __ulNextPath/__ulAfterAuth for where this learner goes once the
-        // token is stored.  The second is why a `next` link survives the round
-        // trip through this page.
-        render_session_js(&mut page)
-        render_auth_destination_js(&mut page)
-
-        #html {
-            <div class="auth-page">
-                <div class="auth-card">
-                    <div class="auth-header">
-                        <a href="/" class="auth-brand">Underlayer</a>
-                        <h1>Welcome Back</h1>
-                        <p class="auth-subtitle">Sign in to continue your learning journey</p>
-                    </div>
-                    <form id="loginForm" class="auth-form">
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" name="email" required autocomplete="email" placeholder="you@example.com" />
-                        </div>
-                        <div class="form-group">
-                            <label for="password">Password</label>
-                            <div class="password-field">
-                                <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Enter your password" />
-                                <button type="button" class="password-toggle" onclick="togglePassword('password', this)" aria-label="Show password">Show</button>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="remember" name="remember" />
-                                <span>Remember me</span>
-                            </label>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-full">Sign In</button>
-                    </form>
-                    <div class="auth-footer">
-                        <a href="/forgot-password">Forgot your password?</a>
-                        <p>Don't have an account? <a href="/register">Create one</a></p>
-                    </div>
-                </div>
-            </div>
-        }
-
-        // `body { margin: 0 }` is HERE because these four pages are the only
-        // pages in the product that do NOT render the shared nav -- and the nav
-        // is where the body reset now lives (content/src/lesson_nav_css.ch). The
-        // sign-in page therefore inherited the browser's DEFAULT 8px body margin,
-        // and because `.auth-page` is `min-height: 100vh` that produced a visible
-        // gutter down both sides AND a page 16px taller than the viewport, so the
-        // sign-in card scrolled vertically for no reason. Reported by a reader as
-        // the sign-in page having "margin from the whole page".
-        //
-        // If these pages ever adopt the shared nav, delete this rule and let the
-        // nav's own reset do it.
-        #css {
-            body { margin: 0; }
-            .auth-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: hsl(var(--background)); font-family: system-ui, sans-serif; }
-            .auth-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 2.5rem; width: 100%; max-width: 420px; margin: 1rem; box-shadow: 0 4px 20px hsl(var(--shadow)); }
-            .auth-header { text-align: center; margin-bottom: 2rem; }
-            .auth-brand { font-size: 1.25rem; font-weight: 700; color: hsl(217 91% 60%); text-decoration: none; display: inline-block; margin-bottom: 1rem; }
-            .auth-brand:hover { text-decoration: none; }
-            .auth-header h1 { font-size: 1.5rem; margin-bottom: 0.5rem; color: hsl(var(--foreground)); }
-            .auth-subtitle { color: hsl(var(--muted-foreground)); font-size: 0.9rem; }
-            .auth-form { margin-bottom: 1.5rem; }
-            .form-group { margin-bottom: 1.25rem; }
-            .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; color: hsl(var(--foreground)); }
-            .form-group input[type="email"],
-            .form-group input[type="password"],
-            .form-group input[type="text"] { width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 8px; font-size: 0.95rem; background: hsl(var(--background)); color: hsl(var(--foreground)); box-sizing: border-box; }
-            .form-group input:focus { outline: none; border-color: hsl(217 91% 60%); box-shadow: 0 0 0 3px hsl(217 91% 60% / 15%); }
-            .password-field { position: relative; }
-            .password-toggle { position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: hsl(217 91% 60%); cursor: pointer; font-size: 0.85rem; font-weight: 500; padding: 0.25rem; }
-            .password-toggle:hover { text-decoration: underline; }
-            .form-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-            .checkbox-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; color: hsl(var(--muted-foreground)); }
-            .checkbox-label input { width: 1rem; height: 1rem; accent-color: hsl(217 91% 60%); }
-            .btn { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; border: none; transition: all 0.15s; text-align: center; text-decoration: none; }
-            .btn-primary { background: hsl(217 91% 60%); color: white; }
-            .btn-primary:hover { background: hsl(217 91% 50%); }
-            .btn-full { width: 100%; }
-            .auth-footer { text-align: center; }
-            .auth-footer a { color: hsl(217 91% 60%); text-decoration: none; font-size: 0.9rem; }
-            .auth-footer a:hover { text-decoration: underline; }
-            .auth-footer p { margin-top: 0.75rem; color: hsl(var(--muted-foreground)); font-size: 0.9rem; }
-            .auth-error { background: hsl(0 84% 95%); border: 1px solid hsl(0 84% 80%); color: hsl(0 84% 40%); padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; display: none; }
-            .auth-success { background: hsl(142 76% 95%); border: 1px solid hsl(142 76% 80%); color: hsl(142 76% 30%); padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; display: none; }
-            @media (max-width: 480px) { .auth-card { padding: 1.5rem; margin: 0.75rem; } }
-        }
-
-        #js {
-            function togglePassword(fieldId, btn) {
-                var input = document.getElementById(fieldId);
-                if(input.type === 'password') { input.type = 'text'; btn.textContent = 'Hide'; }
-                else { input.type = 'password'; btn.textContent = 'Show'; }
-            }
-
-            document.getElementById('loginForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                var email = document.getElementById('email').value;
-                var password = document.getElementById('password').value;
-                var remember = document.getElementById('remember').checked;
-                fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email, password: password, remember: remember })
-                }).then(function(r) { return r.json(); })
-                  .then(function(data) {
-                    if(data.error) { alert(data.error); }
-                    else {
-                        localStorage.setItem('session_token', data.session_token);
-                        if(data.refresh_token) { localStorage.setItem('refresh_token', data.refresh_token); }
-                        // NOT '/' ANY MORE.  See render_auth_destination_js:
-                        // honours ?next=, else routes a new or incomplete
-                        // account into onboarding, else home.
-                        window.__ulAfterAuth();
-                    }
-                  }).catch(function() { alert('Network error. Please try again.'); });
-            });
-        }
-
-        var html_out = page.toString()
-        var bv = html_out.to_view()
-        return underlayer_web::send_html(&html_out)
-    }
-
-    public func handle_register_page(req : &http::Request) : http::Response {
-        var page = HtmlPage()
-        page.defaultUniversalSetup()
-        page.defaultPrepare()
-        page.injectDefaultComponentsTheme()
-        // THE PRE-PAINT THEME, on a page that draws no navbar.
-        //
-        // These pages are the ones the nav audit listed as having no navbar at
-        // all (/login, /register, /settings, /help, /faq, /about, ...).  Adding a
-        // navbar to an auth page or a legal page is a design decision that was
-        // deliberately deferred -- but the THEME is not the same decision.  They
-        // already inject the components theme, whose .dark rules key on the <html>
-        // class, so with the class set they respect the reader's OS preference
-        // and their toggle.  Without it they render light unconditionally, which
-        // is a reader with a dark OS reading a bright page.
-        underlayer_content::render_theme_boot_js(&mut page, false)
-        underlayer_content::render_color_scheme_meta(&mut page)
-        var title = std::string_view("Register — Underlayer")
-        page.appendTitle(&title)
-        // Same two helpers as /login.  A brand-new account is the case the
-        // onboarding gate exists for: `next` first, then onboarding, then home.
-        render_session_js(&mut page)
-        render_auth_destination_js(&mut page)
-
-        #html {
-            <div class="auth-page">
-                <div class="auth-card">
-                    <div class="auth-header">
-                        <a href="/" class="auth-brand">Underlayer</a>
-                        <h1>Create Account</h1>
-                        <p class="auth-subtitle">Start learning deeply today</p>
-                    </div>
-                    <form id="registerForm" class="auth-form">
-                        <div class="form-group">
-                            <label for="name">Full Name</label>
-                            <input type="text" id="name" name="name" required autocomplete="name" placeholder="Your name" />
-                        </div>
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" name="email" required autocomplete="email" placeholder="you@example.com" />
-                        </div>
-                        <div class="form-group">
-                            <label for="password">Password</label>
-                            <div class="password-field">
-                                <input type="password" id="password" name="password" required autocomplete="new-password" placeholder="At least 8 characters" minlength="8" oninput="checkStrength()" />
-                                <button type="button" class="password-toggle" onclick="togglePassword('password', this)" aria-label="Show password">Show</button>
-                            </div>
-                            <div class="strength-bar" id="strength-bar">
-                                <div class="strength-fill" id="strength-fill"></div>
-                            </div>
-                            <span class="strength-text" id="strength-text"></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="confirmPassword">Confirm Password</label>
-                            <div class="password-field">
-                                <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password" placeholder="Re-enter password" />
-                                <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)" aria-label="Show password">Show</button>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="terms" name="terms" required />
-                                <span>I agree to the <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a></span>
-                            </label>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-full">Create Account</button>
-                    </form>
-                    <div class="auth-footer">
-                        <p>Already have an account? <a href="/login">Sign in</a></p>
-                    </div>
-                </div>
-            </div>
-        }
-
-        // `body { margin: 0 }` is HERE because these four pages are the only
-        // pages in the product that do NOT render the shared nav -- and the nav
-        // is where the body reset now lives (content/src/lesson_nav_css.ch). The
-        // sign-in page therefore inherited the browser's DEFAULT 8px body margin,
-        // and because `.auth-page` is `min-height: 100vh` that produced a visible
-        // gutter down both sides AND a page 16px taller than the viewport, so the
-        // sign-in card scrolled vertically for no reason. Reported by a reader as
-        // the sign-in page having "margin from the whole page".
-        //
-        // If these pages ever adopt the shared nav, delete this rule and let the
-        // nav's own reset do it.
-        #css {
-            body { margin: 0; }
-            .auth-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: hsl(var(--background)); font-family: system-ui, sans-serif; }
-            .auth-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 2.5rem; width: 100%; max-width: 420px; margin: 1rem; box-shadow: 0 4px 20px hsl(var(--shadow)); }
-            .auth-header { text-align: center; margin-bottom: 2rem; }
-            .auth-brand { font-size: 1.25rem; font-weight: 700; color: hsl(217 91% 60%); text-decoration: none; display: inline-block; margin-bottom: 1rem; }
-            .auth-brand:hover { text-decoration: none; }
-            .auth-header h1 { font-size: 1.5rem; margin-bottom: 0.5rem; color: hsl(var(--foreground)); }
-            .auth-subtitle { color: hsl(var(--muted-foreground)); font-size: 0.9rem; }
-            .auth-form { margin-bottom: 1.5rem; }
-            .form-group { margin-bottom: 1.25rem; }
-            .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; color: hsl(var(--foreground)); }
-            .form-group input[type="email"],
-            .form-group input[type="password"],
-            .form-group input[type="text"] { width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 8px; font-size: 0.95rem; background: hsl(var(--background)); color: hsl(var(--foreground)); box-sizing: border-box; }
-            .form-group input:focus { outline: none; border-color: hsl(217 91% 60%); box-shadow: 0 0 0 3px hsl(217 91% 60% / 15%); }
-            .password-field { position: relative; }
-            .password-toggle { position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: hsl(217 91% 60%); cursor: pointer; font-size: 0.85rem; font-weight: 500; padding: 0.25rem; }
-            .password-toggle:hover { text-decoration: underline; }
-            .strength-bar { height: 4px; background: hsl(var(--border)); border-radius: 2px; margin-top: 0.5rem; overflow: hidden; }
-            .strength-fill { height: 100%; width: 0; border-radius: 2px; transition: width 0.3s, background 0.3s; }
-            .strength-text { font-size: 0.8rem; margin-top: 0.25rem; display: block; color: hsl(var(--muted-foreground)); }
-            .form-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; }
-            .checkbox-label { display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; color: hsl(var(--muted-foreground)); line-height: 1.4; }
-            .checkbox-label input { width: 1rem; height: 1rem; accent-color: hsl(217 91% 60%); margin-top: 0.1rem; flex-shrink: 0; }
-            .checkbox-label a { color: hsl(217 91% 60%); text-decoration: none; }
-            .checkbox-label a:hover { text-decoration: underline; }
-            .btn { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; border: none; transition: all 0.15s; text-align: center; text-decoration: none; }
-            .btn-primary { background: hsl(217 91% 60%); color: white; }
-            .btn-primary:hover { background: hsl(217 91% 50%); }
-            .btn-full { width: 100%; }
-            .auth-footer { text-align: center; }
-            .auth-footer a { color: hsl(217 91% 60%); text-decoration: none; font-size: 0.9rem; }
-            .auth-footer a:hover { text-decoration: underline; }
-            .auth-footer p { margin-top: 0.75rem; color: hsl(var(--muted-foreground)); font-size: 0.9rem; }
-            @media (max-width: 480px) { .auth-card { padding: 1.5rem; margin: 0.75rem; } }
-        }
-
-        #js {
-            function togglePassword(fieldId, btn) {
-                var input = document.getElementById(fieldId);
-                if(input.type === 'password') { input.type = 'text'; btn.textContent = 'Hide'; }
-                else { input.type = 'password'; btn.textContent = 'Show'; }
-            }
-
-            function checkStrength() {
-                var pw = document.getElementById('password').value;
-                var fill = document.getElementById('strength-fill');
-                var text = document.getElementById('strength-text');
-                var score = 0;
-                if(pw.length >= 8) { score++; }
-                if(pw.length >= 12) { score++; }
-                var hasLower = false;
-                var hasUpper = false;
-                var hasDigit = false;
-                var hasSpecial = false;
-                for(var ci = 0; ci < pw.length; ci++) {
-                    var ch = pw.charCodeAt(ci);
-                    if(ch >= 97 && ch <= 122) { hasLower = true; }
-                    if(ch >= 65 && ch <= 90) { hasUpper = true; }
-                    if(ch >= 48 && ch <= 57) { hasDigit = true; }
-                    if((ch < 48 || ch > 57) && (ch < 65 || ch > 90) && (ch < 97 || ch > 122)) { hasSpecial = true; }
-                }
-                if(hasLower && hasUpper) { score++; }
-                if(hasDigit) { score++; }
-                if(hasSpecial) { score++; }
-                var pct = (score / 5) * 100;
-                fill.style.width = pct + '%';
-                if(score <= 1) { fill.style.background = '#ef4444'; text.textContent = 'Weak'; text.style.color = '#ef4444'; }
-                else if(score <= 2) { fill.style.background = '#f59e0b'; text.textContent = 'Fair'; text.style.color = '#f59e0b'; }
-                else if(score <= 3) { fill.style.background = '#3b82f6'; text.textContent = 'Good'; text.style.color = '#3b82f6'; }
-                else { fill.style.background = '#22c55e'; text.textContent = 'Strong'; text.style.color = '#22c55e'; }
-                if(pw.length === 0) { fill.style.width = '0'; text.textContent = ''; }
-            }
-
-            document.getElementById('registerForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                var name = document.getElementById('name').value;
-                var email = document.getElementById('email').value;
-                var password = document.getElementById('password').value;
-                var confirmPassword = document.getElementById('confirmPassword').value;
-                var terms = document.getElementById('terms').checked;
-                if(password !== confirmPassword) { alert('Passwords do not match.'); return; }
-                if(!terms) { alert('You must accept the Terms of Service.'); return; }
-                fetch('/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: name, email: email, password: password })
-                }).then(function(r) { return r.json(); })
-                  .then(function(data) {
-                    if(data.error) { alert(data.error); }
-                    else {
-                        localStorage.setItem('session_token', data.session_token);
-                        if(data.refresh_token) { localStorage.setItem('refresh_token', data.refresh_token); }
-                        // NOT '/' ANY MORE.  See render_auth_destination_js:
-                        // honours ?next=, else routes a new or incomplete
-                        // account into onboarding, else home.
-                        window.__ulAfterAuth();
-                    }
-                  }).catch(function() { alert('Network error. Please try again.'); });
-            });
-        }
-
-        var html_out = page.toString()
-        var bv = html_out.to_view()
-        return underlayer_web::send_html(&html_out)
-    }
 
     public func handle_forgot_password_page(req : &http::Request) : http::Response {
         var page = HtmlPage()
         page.defaultUniversalSetup()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
+        WiqisTheme(&mut page, false)
         // THE PRE-PAINT THEME, on a page that draws no navbar.
-        //
-        // These pages are the ones the nav audit listed as having no navbar at
-        // all (/login, /register, /settings, /help, /faq, /about, ...).  Adding a
-        // navbar to an auth page or a legal page is a design decision that was
-        // deliberately deferred -- but the THEME is not the same decision.  They
-        // already inject the components theme, whose .dark rules key on the <html>
-        // class, so with the class set they respect the reader's OS preference
-        // and their toggle.  Without it they render light unconditionally, which
-        // is a reader with a dark OS reading a bright page.
         underlayer_content::render_theme_boot_js(&mut page, false)
         underlayer_content::render_color_scheme_meta(&mut page)
         var title = std::string_view("Forgot Password — Underlayer")
@@ -386,23 +47,12 @@ public namespace underlayer_web {
             </div>
         }
 
-        // `body { margin: 0 }` is HERE because these four pages are the only
-        // pages in the product that do NOT render the shared nav -- and the nav
-        // is where the body reset now lives (content/src/lesson_nav_css.ch). The
-        // sign-in page therefore inherited the browser's DEFAULT 8px body margin,
-        // and because `.auth-page` is `min-height: 100vh` that produced a visible
-        // gutter down both sides AND a page 16px taller than the viewport, so the
-        // sign-in card scrolled vertically for no reason. Reported by a reader as
-        // the sign-in page having "margin from the whole page".
-        //
-        // If these pages ever adopt the shared nav, delete this rule and let the
-        // nav's own reset do it.
         #css {
             body { margin: 0; }
             .auth-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: hsl(var(--background)); font-family: system-ui, sans-serif; }
             .auth-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 2.5rem; width: 100%; max-width: 420px; margin: 1rem; box-shadow: 0 4px 20px hsl(var(--shadow)); }
             .auth-header { text-align: center; margin-bottom: 2rem; }
-            .auth-brand { font-size: 1.25rem; font-weight: 700; color: hsl(217 91% 60%); text-decoration: none; display: inline-block; margin-bottom: 1rem; }
+            .auth-brand { font-size: 1.25rem; font-weight: 700; color: hsl(var(--primary)); text-decoration: none; display: inline-block; margin-bottom: 1rem; }
             .auth-brand:hover { text-decoration: none; }
             .auth-header h1 { font-size: 1.5rem; margin-bottom: 0.5rem; color: hsl(var(--foreground)); }
             .auth-subtitle { color: hsl(var(--muted-foreground)); font-size: 0.9rem; }
@@ -410,13 +60,13 @@ public namespace underlayer_web {
             .form-group { margin-bottom: 1.25rem; }
             .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; color: hsl(var(--foreground)); }
             .form-group input[type="email"] { width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 8px; font-size: 0.95rem; background: hsl(var(--background)); color: hsl(var(--foreground)); box-sizing: border-box; }
-            .form-group input:focus { outline: none; border-color: hsl(217 91% 60%); box-shadow: 0 0 0 3px hsl(217 91% 60% / 15%); }
+            .form-group input:focus { outline: none; border-color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--primary) / 15%); }
             .btn { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; border: none; transition: all 0.15s; text-align: center; text-decoration: none; }
-            .btn-primary { background: hsl(217 91% 60%); color: white; }
-            .btn-primary:hover { background: hsl(217 91% 50%); }
+            .btn-primary { background: hsl(var(--primary)); color: white; }
+            .btn-primary:hover { background: hsl(var(--primary)); filter: brightness(0.9); }
             .btn-full { width: 100%; }
             .auth-footer { text-align: center; }
-            .auth-footer a { color: hsl(217 91% 60%); text-decoration: none; font-size: 0.9rem; }
+            .auth-footer a { color: hsl(var(--primary)); text-decoration: none; font-size: 0.9rem; }
             .auth-footer a:hover { text-decoration: underline; }
             .auth-footer p { margin-top: 0.75rem; color: hsl(var(--muted-foreground)); font-size: 0.9rem; }
             .auth-success { background: hsl(142 76% 95%); border: 1px solid hsl(142 76% 80%); color: hsl(142 76% 30%); padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; text-align: center; }
@@ -440,8 +90,7 @@ public namespace underlayer_web {
         }
 
         var html_out = page.toString()
-        var bv = html_out.to_view()
-        return underlayer_web::send_html(&html_out)
+        return send_html(&html_out)
     }
 
     public func handle_reset_password_page(req : &http::Request) : http::Response {
@@ -449,16 +98,7 @@ public namespace underlayer_web {
         page.defaultUniversalSetup()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
-        // THE PRE-PAINT THEME, on a page that draws no navbar.
-        //
-        // These pages are the ones the nav audit listed as having no navbar at
-        // all (/login, /register, /settings, /help, /faq, /about, ...).  Adding a
-        // navbar to an auth page or a legal page is a design decision that was
-        // deliberately deferred -- but the THEME is not the same decision.  They
-        // already inject the components theme, whose .dark rules key on the <html>
-        // class, so with the class set they respect the reader's OS preference
-        // and their toggle.  Without it they render light unconditionally, which
-        // is a reader with a dark OS reading a bright page.
+        WiqisTheme(&mut page, false)
         underlayer_content::render_theme_boot_js(&mut page, false)
         underlayer_content::render_color_scheme_meta(&mut page)
         var title = std::string_view("Reset Password — Underlayer")
@@ -499,23 +139,12 @@ public namespace underlayer_web {
             </div>
         }
 
-        // `body { margin: 0 }` is HERE because these four pages are the only
-        // pages in the product that do NOT render the shared nav -- and the nav
-        // is where the body reset now lives (content/src/lesson_nav_css.ch). The
-        // sign-in page therefore inherited the browser's DEFAULT 8px body margin,
-        // and because `.auth-page` is `min-height: 100vh` that produced a visible
-        // gutter down both sides AND a page 16px taller than the viewport, so the
-        // sign-in card scrolled vertically for no reason. Reported by a reader as
-        // the sign-in page having "margin from the whole page".
-        //
-        // If these pages ever adopt the shared nav, delete this rule and let the
-        // nav's own reset do it.
         #css {
             body { margin: 0; }
             .auth-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: hsl(var(--background)); font-family: system-ui, sans-serif; }
             .auth-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 2.5rem; width: 100%; max-width: 420px; margin: 1rem; box-shadow: 0 4px 20px hsl(var(--shadow)); }
             .auth-header { text-align: center; margin-bottom: 2rem; }
-            .auth-brand { font-size: 1.25rem; font-weight: 700; color: hsl(217 91% 60%); text-decoration: none; display: inline-block; margin-bottom: 1rem; }
+            .auth-brand { font-size: 1.25rem; font-weight: 700; color: hsl(var(--primary)); text-decoration: none; display: inline-block; margin-bottom: 1rem; }
             .auth-brand:hover { text-decoration: none; }
             .auth-header h1 { font-size: 1.5rem; margin-bottom: 0.5rem; color: hsl(var(--foreground)); }
             .auth-subtitle { color: hsl(var(--muted-foreground)); font-size: 0.9rem; }
@@ -523,16 +152,15 @@ public namespace underlayer_web {
             .form-group { margin-bottom: 1.25rem; }
             .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; color: hsl(var(--foreground)); }
             .form-group input[type="password"] { width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 8px; font-size: 0.95rem; background: hsl(var(--background)); color: hsl(var(--foreground)); box-sizing: border-box; }
-            .form-group input:focus { outline: none; border-color: hsl(217 91% 60%); box-shadow: 0 0 0 3px hsl(217 91% 60% / 15%); }
+            .form-group input:focus { outline: none; border-color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--primary) / 15%); }
             .password-field { position: relative; }
-            .password-toggle { position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: hsl(217 91% 60%); cursor: pointer; font-size: 0.85rem; font-weight: 500; padding: 0.25rem; }
-            .password-toggle:hover { text-decoration: underline; }
+            .password-toggle { position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: hsl(var(--primary)); cursor: pointer; font-size: 0.85rem; font-weight: 500; padding: 0.25rem; }
             .btn { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; border: none; transition: all 0.15s; text-align: center; text-decoration: none; }
-            .btn-primary { background: hsl(217 91% 60%); color: white; }
-            .btn-primary:hover { background: hsl(217 91% 50%); }
+            .btn-primary { background: hsl(var(--primary)); color: white; }
+            .btn-primary:hover { background: hsl(var(--primary)); filter: brightness(0.9); }
             .btn-full { width: 100%; }
             .auth-footer { text-align: center; }
-            .auth-footer a { color: hsl(217 91% 60%); text-decoration: none; font-size: 0.9rem; }
+            .auth-footer a { color: hsl(var(--primary)); text-decoration: none; font-size: 0.9rem; }
             .auth-footer a:hover { text-decoration: underline; }
             .auth-footer p { margin-top: 0.75rem; color: hsl(var(--muted-foreground)); font-size: 0.9rem; }
             .auth-success { background: hsl(142 76% 95%); border: 1px solid hsl(142 76% 80%); color: hsl(142 76% 30%); padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; text-align: center; }
@@ -575,8 +203,7 @@ public namespace underlayer_web {
         }
 
         var html_out = page.toString()
-        var bv = html_out.to_view()
-        return underlayer_web::send_html(&html_out)
+        return send_html(&html_out)
     }
 
 }

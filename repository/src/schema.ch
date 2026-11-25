@@ -5,7 +5,12 @@ using underlayer_db::DbClient
 public namespace underlayer_repository {
 
     public func init_schema(db : *DbClient) {
-        var sql = string("CREATE TABLE IF NOT EXISTS learners (id TEXT PRIMARY KEY, name TEXT, email TEXT UNIQUE, password_hash TEXT, created_at INTEGER)")
+        // `account_user_id` is the STABLE id from the shared Wiqis account.
+        // It is the only link to that service: every grade, FSRS row, note and
+        // session stays in Underlayer's own tables.  Nullable on purpose —
+        // learners created by the legacy local API have no account id.  Never
+        // use email as the key: an email can be changed on the account service.
+        var sql = string("CREATE TABLE IF NOT EXISTS learners (id TEXT PRIMARY KEY, name TEXT, email TEXT UNIQUE, password_hash TEXT, created_at INTEGER, account_user_id TEXT)")
         underlayer_db::exec_sql(db, &raw sql)
         var sql2 = string("CREATE TABLE IF NOT EXISTS concept_states (learner_id TEXT, concept_id TEXT, course_id TEXT, status TEXT DEFAULT 'not_started', attempts INTEGER DEFAULT 0, correct INTEGER DEFAULT 0, streak INTEGER DEFAULT 0, last_studied INTEGER, next_review INTEGER, difficulty_rating REAL DEFAULT 0, PRIMARY KEY (learner_id, concept_id, course_id))")
         underlayer_db::exec_sql(db, &raw sql2)
@@ -224,6 +229,11 @@ public namespace underlayer_repository {
         // start, and the ones that need adding are added once, silently, on
         // the second start.  See schema_migrations.ch for the full argument.
         run_conditional_migrations(db)
+        // One local learner per shared account.  NULLs are excluded by SQLite,
+        // so legacy rows without an account id can coexist.  Created AFTER the
+        // migration so the column always exists when this runs.
+        var idx_account_user = string("CREATE UNIQUE INDEX IF NOT EXISTS idx_learners_account_user ON learners(account_user_id)")
+        underlayer_db::exec_sql(db, &raw idx_account_user)
         // Tables, not columns -- see run_support_tables.  rate_limits backs the
         // login limiter, and it has to exist before the first request rather
         // than on first use.
