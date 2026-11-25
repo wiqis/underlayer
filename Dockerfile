@@ -7,7 +7,7 @@
 # compiled from C source — there are no shared libraries to ship.
 # ================================================================
 
-FROM chemicallang/chemical:latest-tcc-ubuntu AS builder
+FROM chemicallang/chemical:v0.6.2-tcc-ubuntu AS builder
 
 RUN apt-get update && apt-get install -y git ca-certificates && rm -rf /var/lib/apt/lists/*
 
