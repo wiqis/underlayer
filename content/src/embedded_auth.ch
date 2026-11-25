@@ -296,7 +296,7 @@ public namespace underlayer_content {
                 }
             });
 
-            document.addEventListener('DOMContentLoaded', function () {
+            function ulInstallStageFallback() {
                 var frame = document.querySelector('.ul-auth-stage iframe.wq-embed');
                 var template = document.getElementById('ul-auth-fallback-template');
                 if (!frame || !template) { return; }
@@ -329,7 +329,15 @@ public namespace underlayer_content {
                     if (ok) { frame.setAttribute('src', original); }
                     else { showFallback(); }
                 });
-            });
+            }
+            // On the embedded auth page this script can be emitted after
+            // DOMContentLoaded has already fired. A bare listener then never
+            // runs, leaving the iframe on about:blank with no fallback panel.
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', ulInstallStageFallback);
+            } else {
+                ulInstallStageFallback();
+            }
         }
         #css {
             .ul-auth-fallback { padding: 1.5rem 1rem; border: 1px solid hsl(var(--border)); border-radius: var(--radius); background: hsl(var(--card)); text-align: center; }
