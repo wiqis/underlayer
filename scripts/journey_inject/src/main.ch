@@ -52,6 +52,14 @@ public func main() : int {
                         fs::write(&f.path().as_path(), final_html.as_bytes())
                         patched = patched + 1
                     }
+                    // The SAME composer the HTTP endpoint uses, fed the SAME
+                    // journeyed HTML, so the bundled pack and the live API
+                    // cannot drift.  No lesson source is edited.
+                    var native = underlayer_content::native_lesson_json(&final_html, &facts, &course_id, &concept_id)
+                    var native_name = concept_id.copy()
+                    native_name.append_view(".native.json")
+                    var native_path = out_dir.join(&path::Path.new(std::str.make_view(native_name.to_view())))
+                    fs::write(&native_path.as_path(), native.as_bytes())
                 }
             }
             fi = fi + 1

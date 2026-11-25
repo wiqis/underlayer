@@ -230,6 +230,27 @@ public func main() : int {
         var body = std::string("{\"error\":\"missing course or concept id\"}")
         return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
     })
+    // Native lesson JSON for the Android client.  Same frozen contract as the
+    // static .native.json companion.  Registered BEFORE the generic lesson
+    // route so the literal "native" tail is not swallowed by :conceptId.
+    // Segment indices are absolute positions in the /api-prefixed path:
+    // course = 2, concept = 4, tail = 5 (do not use the page-route indices).
+    srv.router.add("GET", "/api/courses/:courseId/lessons/:conceptId/native", ||(req) => {
+        var courses_dir = underlayer_web::request_courses_dir()
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 6) {
+            var course_id = segments.at_ref(2)
+            var concept_id = segments.at_ref(4)
+            var tail = segments.at_ref(5)
+            var native_tail = std::string_view("native")
+            if(tail.equals(&native_tail)) {
+                return underlayer_web::deliver(&req, underlayer_web::handle_lesson_native(&courses_dir, course_id, concept_id, &req))
+            }
+        }
+        var body = std::string("{\"error\":\"missing course or concept id\"}")
+        return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+    })
     // Lesson viewer via API
     srv.router.add("GET", "/api/courses/:courseId/lessons/:conceptId", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()

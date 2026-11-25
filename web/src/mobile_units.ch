@@ -34,25 +34,10 @@ public namespace underlayer_web {
     ) : http::Response {
         var cid = sv_to_string(course_id)
         var pid = sv_to_string(concept_id)
-        // render_concept dispatches GLOBALLY by concept id.  Validate both
-        // halves of the pair here, or /api/courses/elf/lessons/bytes would
-        // happily serve a concept that belongs to another course.
-        var course = underlayer_repository::load_course(courses_dir, &cid)
-        if(course.id.size() == 0) {
-            var err = string("course not found")
-            return send_error(404u, &err)
-        }
-        var belongs = false
-        var ci : size_t = 0
-        while(ci < course.concepts.size()) {
-            var cref = course.concepts.at_ref(ci)
-            if(cref.id.equals(&pid)) { belongs = true }
-            ci = ci + 1
-        }
-        if(!belongs) {
-            var err2 = string("concept not found in course")
-            return send_error(404u, &err2)
-        }
+        // Shared with /native: render_concept dispatches GLOBALLY by concept
+        // id, so a mismatched pair must be refused in one place only.
+        var check = validate_lesson_pair(courses_dir, course_id, concept_id)
+        if(!check.ok) { return send_error(check.error_status, &check.error_message) }
         var html = render_concept(&pid)
         if(html.size() == 0) {
             var err3 = string("lesson not found")

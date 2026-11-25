@@ -218,11 +218,26 @@ public namespace underlayer_core {
         var i : size_t = 0
         while(i < s.size()) {
             var c = s.at(i)
+            // `char` is signed: a UTF-8 byte such as 0xE2 is negative and must
+            // NOT be treated as a control character.  Compare numerically.
+            var code = c as i64
             if(c == '"') { out.append_view(std::string_view("\\\"")) }
             else if(c == '\\') { out.append_view(std::string_view("\\\\")) }
             else if(c == '\n') { out.append_view(std::string_view("\\n")) }
             else if(c == '\r') { out.append_view(std::string_view("\\r")) }
             else if(c == '\t') { out.append_view(std::string_view("\\t")) }
+            else if(code >= 0 && code < 32) {
+                // JSON forbids every raw C0 control, not just the four above.
+                // A byte from a hex dump can be 0x01 and used to make the whole
+                // emitted lesson invalid JSON.  Escape the rest as \u00XX.
+                out.append('\\')
+                out.append('u')
+                out.append('0')
+                out.append('0')
+                var digits = std::string("0123456789abcdef")
+                out.append(digits.at((code / 16) as size_t))
+                out.append(digits.at((code % 16) as size_t))
+            }
             else { out.append(c) }
             i = i + 1
         }

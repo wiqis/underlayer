@@ -36,6 +36,8 @@
 //   pages_help.ch            — render_help_page, render_shortcuts_page, render_faq_page, render_about_page
 //   static.ch                — content_type_for_ext, file_extension, handle_static_file
 //   mobile_units.ch          — handle_lesson_units (S-1: JSON step index from the rendered lesson)
+//   lesson_pair.ch           — LessonPairValidation / validate_lesson_pair, shared by /units and /native
+//   mobile_native.ch         — handle_lesson_native (structured lesson JSON, no WebView)
 //   handlers_mobile.ch       — handle_progress_sync_push / _pull (S-2)
 //   mobile_sync_json.ch      — change parsing, changes/FSRS JSON builders for S-2
 //
