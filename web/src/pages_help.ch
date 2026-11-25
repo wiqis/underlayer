@@ -8,7 +8,7 @@ public namespace underlayer_web {
 
     public func render_help_page(page : &mut HtmlPage) {
         page.defaultPrepare()
-        page.injectDefaultComponentsTheme()
+        WiqisTheme(page, true)
         // THE PRE-PAINT THEME, on a page that draws no navbar.
         //
         // These pages are the ones the nav audit listed as having no navbar at
@@ -194,7 +194,7 @@ public namespace underlayer_web {
 
     public func render_shortcuts_page(page : &mut HtmlPage) {
         page.defaultPrepare()
-        page.injectDefaultComponentsTheme()
+        WiqisTheme(page, true)
         // THE PRE-PAINT THEME, on a page that draws no navbar.
         //
         // These pages are the ones the nav audit listed as having no navbar at
@@ -325,7 +325,7 @@ public namespace underlayer_web {
 
     public func render_faq_page(page : &mut HtmlPage) {
         page.defaultPrepare()
-        page.injectDefaultComponentsTheme()
+        WiqisTheme(page, true)
         // THE PRE-PAINT THEME, on a page that draws no navbar.
         //
         // These pages are the ones the nav audit listed as having no navbar at
@@ -447,7 +447,7 @@ public namespace underlayer_web {
 
     public func render_about_page(page : &mut HtmlPage) {
         page.defaultPrepare()
-        page.injectDefaultComponentsTheme()
+        WiqisTheme(page, true)
         // THE PRE-PAINT THEME, on a page that draws no navbar.
         //
         // These pages are the ones the nav audit listed as having no navbar at

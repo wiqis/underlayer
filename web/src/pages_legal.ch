@@ -6,7 +6,7 @@ public namespace underlayer_web {
 
     public func render_terms_page(page : &mut HtmlPage) {
         page.defaultPrepare()
-        page.injectDefaultComponentsTheme()
+        WiqisTheme(page, true)
         // THE PRE-PAINT THEME, on a page that draws no navbar.
         //
         // These pages are the ones the nav audit listed as having no navbar at
@@ -97,7 +97,12 @@ public namespace underlayer_web {
 
     public func render_privacy_page(page : &mut HtmlPage) {
         page.defaultPrepare()
-        page.injectDefaultComponentsTheme()
+        WiqisTheme(page, true)
+        // The CSS block below must differ from /terms' block: the static site
+        // drops a page-local stylesheet that is byte-identical to one already
+        // emitted, which is why /privacy shipped with NO <style> at all and
+        // rendered in Times New Roman. The data attribute makes the two blocks
+        // distinct and gives the extra rule a hook.
         // THE PRE-PAINT THEME, on a page that draws no navbar.
         //
         // These pages are the ones the nav audit listed as having no navbar at
@@ -114,7 +119,7 @@ public namespace underlayer_web {
         page.appendTitle(&title)
 
         #html {
-            <div class="legal-page">
+            <div class="legal-page" data-page="privacy">
                 <div class="help-nav">
                     <a href="/" class="nav-brand">Underlayer</a>
                     <div class="help-nav-links">
@@ -176,6 +181,7 @@ public namespace underlayer_web {
             .legal-container h2 { font-size: 1.15rem; margin-top: 2rem; margin-bottom: 0.5rem; }
             .legal-container p { color: hsl(var(--muted-foreground)); margin: 0 0 0.75rem 0; }
             .legal-container a { color: hsl(217 91% 60%); }
+            .legal-page[data-page="privacy"] { color: hsl(var(--foreground)); }
             @media (max-width: 640px) { .help-nav { padding: 0.75rem 1rem; } .legal-container { padding: 1.5rem 1rem 3rem 1rem; } }
         }
 

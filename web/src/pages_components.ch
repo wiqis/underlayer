@@ -9,7 +9,7 @@ public namespace underlayer_web {
         var page = HtmlPage()
         page.defaultUniversalSetup()
         page.defaultPrepare()
-        page.injectDefaultComponentsTheme()
+        WiqisTheme(&mut page, true)
         // THE PRE-PAINT THEME, on a page that draws no navbar.
         //
         // These pages are the ones the nav audit listed as having no navbar at

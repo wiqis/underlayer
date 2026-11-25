@@ -10,22 +10,13 @@ public namespace underlayer_web {
         page.defaultUniversalSetup()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
-        // THE PRE-PAINT THEME, on a page that draws no navbar.
-        //
-        // These pages are the ones the nav audit listed as having no navbar at
-        // all (/login, /register, /settings, /help, /faq, /about, ...).  Adding a
-        // navbar to an auth page or a legal page is a design decision that was
-        // deliberately deferred -- but the THEME is not the same decision.  They
-        // already inject the components theme, whose .dark rules key on the <html>
-        // class, so with the class set they respect the reader's OS preference
-        // and their toggle.  Without it they render light unconditionally, which
-        // is a reader with a dark OS reading a bright page.
-        underlayer_content::render_theme_boot_js(&mut page, false)
-        underlayer_content::render_color_scheme_meta(&mut page)
         var title = std::string_view("Settings — Underlayer")
         page.appendTitle(&title)
+        render_session_js(&mut page)
 
         #html {
+            {render_nav_bar(&mut page)}
+            <main class="container settings-main" id="main-content">
             <div class="settings-page">
                 <nav class="settings-nav">
                     <a href="#profile" class="tab active" data-tab="profile">Profile</a>
@@ -218,26 +209,30 @@ public namespace underlayer_web {
                     </section>
                 </div>
             </div>
+            </main>
         }
         #css {
-            .settings-page { max-width: 800px; margin: 2rem auto; padding: 0 1rem; font-family: system-ui, sans-serif; }
-            .settings-nav { display: flex; gap: 1rem; border-bottom: 1px solid hsl(var(--border)); margin-bottom: 2rem; }
-            .settings-nav .tab { padding: 0.75rem 1.5rem; text-decoration: none; color: hsl(var(--muted-foreground)); border-bottom: 2px solid transparent; font-weight: 500; transition: color 0.15s; }
-            .settings-nav .tab.active { color: hsl(217 91% 60%); border-bottom-color: hsl(217 91% 60%); }
+            body { font-family: var(--font-sans); font-size: 1rem; line-height: 1.6; margin: 0; background: hsl(var(--background)); color: hsl(var(--foreground)); }
+            :focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
+            .settings-main { max-width: 68ch; margin: 0 auto; padding: 2rem 1rem 3rem; }
+            .settings-page { width: 100%; min-width: 0; }
+            .settings-nav { display: flex; gap: 0.25rem; border-bottom: 1px solid hsl(var(--border)); margin-bottom: 1.5rem; overflow-x: auto; }
+            .settings-nav .tab { padding: 0.75rem 1.25rem; text-decoration: none; color: hsl(var(--muted-foreground)); border-bottom: 2px solid transparent; font-weight: 500; transition: color 0.15s; white-space: nowrap; }
+            .settings-nav .tab.active { color: hsl(var(--primary)); border-bottom-color: hsl(var(--primary)); }
             .settings-nav .tab:hover { color: hsl(var(--foreground)); }
-            .tab-content { display: none; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 2rem; }
+            .tab-content { display: none; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 0.75rem; padding: 2rem; }
             .tab-content.active { display: block; }
-            .tab-content h2 { margin-bottom: 1.5rem; font-size: 1.25rem; color: hsl(var(--foreground)); }
+            .tab-content h2 { margin: 0 0 1.5rem; font-size: 1.25rem; line-height: 1.6; color: hsl(var(--foreground)); }
             .form-group { margin-bottom: 1.25rem; }
-            .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; color: hsl(var(--foreground)); }
-            .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 8px; font-size: 0.95rem; background: hsl(var(--background)); color: hsl(var(--foreground)); box-sizing: border-box; }
-            .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: hsl(217 91% 60%); box-shadow: 0 0 0 3px hsl(217 91% 60% / 15%); }
-            .form-group small { display: block; margin-top: 0.25rem; color: hsl(var(--muted-foreground)); font-size: 0.8rem; }
+            .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; line-height: 1.6; color: hsl(var(--foreground)); }
+            .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.75rem; border: 1px solid hsl(var(--border)); border-radius: 0.5rem; font-size: 1rem; font-family: inherit; line-height: 1.6; background: hsl(var(--background)); color: hsl(var(--foreground)); box-sizing: border-box; }
+            .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15); }
+            .form-group small { display: block; margin-top: 0.25rem; color: hsl(var(--muted-foreground)); font-size: 0.8rem; line-height: 1.6; }
             .form-group textarea { resize: vertical; min-height: 80px; }
-            .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.15s; }
-            .btn-primary { background: hsl(217 91% 60%); color: white; }
-            .btn-primary:hover { background: hsl(217 91% 50%); }
-            @media (max-width: 600px) { .settings-page { padding: 0 0.5rem; } .settings-nav { gap: 0.5rem; } .settings-nav .tab { padding: 0.5rem 1rem; font-size: 0.9rem; } .tab-content { padding: 1.5rem; } }
+            .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; font-size: 1rem; font-family: inherit; line-height: 1.6; transition: filter 0.15s; }
+            .btn-primary { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+            .btn-primary:hover { filter: brightness(1.06); }
+            @media (max-width: 600px) { .settings-main { padding: 1rem 0.75rem 2rem; } .settings-nav { gap: 0.25rem; } .settings-nav .tab { padding: 0.5rem 0.75rem; font-size: 0.9rem; } .tab-content { padding: 1.25rem; } }
         }
         #js {
             document.querySelectorAll('.settings-nav .tab').forEach(function(tab) {
@@ -350,22 +345,13 @@ public namespace underlayer_web {
         page.defaultUniversalSetup()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
-        // THE PRE-PAINT THEME, on a page that draws no navbar.
-        //
-        // These pages are the ones the nav audit listed as having no navbar at
-        // all (/login, /register, /settings, /help, /faq, /about, ...).  Adding a
-        // navbar to an auth page or a legal page is a design decision that was
-        // deliberately deferred -- but the THEME is not the same decision.  They
-        // already inject the components theme, whose .dark rules key on the <html>
-        // class, so with the class set they respect the reader's OS preference
-        // and their toggle.  Without it they render light unconditionally, which
-        // is a reader with a dark OS reading a bright page.
-        underlayer_content::render_theme_boot_js(&mut page, false)
-        underlayer_content::render_color_scheme_meta(&mut page)
         var title = std::string_view("Profile — Underlayer")
         page.appendTitle(&title)
+        render_session_js(&mut page)
 
         #html {
+            {render_nav_bar(&mut page)}
+            <main class="container profile-main" id="main-content">
             <div class="profile-page">
                 <div class="profile-card">
                     <div class="profile-avatar" id="avatar"></div>
@@ -382,42 +368,46 @@ public namespace underlayer_web {
                     <div class="course-list" id="courseList"></div>
                 </div>
             </div>
+            </main>
         }
         #css {
-            .profile-page { max-width: 700px; margin: 2rem auto; padding: 0 1rem; font-family: system-ui, sans-serif; }
-            .profile-card { text-align: center; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px hsl(var(--shadow)); margin-bottom: 1.5rem; }
-            .profile-avatar { width: 100px; height: 100px; border-radius: 50%; background: hsl(var(--muted)); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 700; color: hsl(var(--primary)); overflow: hidden; }
+            body { font-family: var(--font-sans); font-size: 1rem; line-height: 1.6; margin: 0; background: hsl(var(--background)); color: hsl(var(--foreground)); }
+            :focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
+            .profile-main { max-width: 68ch; margin: 0 auto; padding: 2rem 1rem 3rem; }
+            .profile-page { width: 100%; min-width: 0; }
+            .profile-card { text-align: center; background: hsl(var(--card)); border: 1px solid hsl(var(--border)); padding: 2rem; border-radius: 0.75rem; box-shadow: var(--shadow-sm); margin-bottom: 1.5rem; }
+            .profile-avatar { width: 100px; height: 100px; border-radius: 50%; background: hsl(var(--muted)); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 700; line-height: 1.6; color: hsl(var(--primary)); overflow: hidden; }
             .profile-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-            .profile-bio { color: hsl(var(--muted-foreground)); margin: 0.75rem 0; line-height: 1.5; }
-            .profile-location, .profile-website, .profile-social { font-size: 0.85rem; color: hsl(var(--muted-foreground)); margin: 0.25rem 0; }
-            .profile-location a, .profile-website a { color: hsl(217 91% 60%); text-decoration: none; }
+            .profile-bio { color: hsl(var(--muted-foreground)); margin: 0.75rem 0; line-height: 1.6; }
+            .profile-location, .profile-website, .profile-social { font-size: 0.85rem; line-height: 1.6; color: hsl(var(--muted-foreground)); margin: 0.25rem 0; }
+            .profile-location a, .profile-website a { color: hsl(var(--primary)); text-decoration: none; }
             .profile-location a:hover, .profile-website a:hover { text-decoration: underline; }
-            .profile-social a { color: hsl(217 91% 60%); text-decoration: none; margin: 0 0.5rem; }
+            .profile-social a { color: hsl(var(--primary)); text-decoration: none; margin: 0 0.5rem; }
             .profile-social a:hover { text-decoration: underline; }
-            .profile-stats { display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid hsl(var(--border)); }
+            .profile-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 2rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid hsl(var(--border)); }
             .stat-item { text-align: center; }
-            .stat-value { font-size: 1.5rem; font-weight: 700; color: hsl(217 91% 60%); }
-            .stat-label { font-size: 0.75rem; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; }
-            .learning-section { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 2rem; box-shadow: 0 4px 20px hsl(var(--shadow)); }
-            .learning-section h2 { font-size: 1.1rem; font-weight: 600; color: hsl(var(--foreground)); margin-bottom: 1.25rem; }
+            .stat-value { font-size: 1.5rem; line-height: 1.6; font-weight: 700; color: hsl(var(--primary)); }
+            .stat-label { font-size: 0.75rem; line-height: 1.6; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; }
+            .learning-section { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 0.75rem; padding: 2rem; box-shadow: var(--shadow-sm); }
+            .learning-section h2 { font-size: 1.1rem; line-height: 1.6; font-weight: 600; color: hsl(var(--foreground)); margin: 0 0 1.25rem; }
             .learning-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-            .summary-card { background: hsl(var(--background)); border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 1rem; text-align: center; }
-            .summary-card .value { font-size: 1.25rem; font-weight: 700; color: hsl(217 91% 60%); }
-            .summary-card .label { font-size: 0.75rem; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; }
+            .summary-card { background: hsl(var(--background)); border: 1px solid hsl(var(--border)); border-radius: 0.5rem; padding: 1rem; text-align: center; }
+            .summary-card .value { font-size: 1.25rem; line-height: 1.6; font-weight: 700; color: hsl(var(--primary)); }
+            .summary-card .label { font-size: 0.75rem; line-height: 1.6; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; }
             .course-list { display: flex; flex-direction: column; gap: 0.75rem; }
-            .course-item { background: hsl(var(--background)); border: 1px solid hsl(var(--border)); border-radius: 8px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; }
+            .course-item { background: hsl(var(--background)); border: 1px solid hsl(var(--border)); border-radius: 0.5rem; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; }
             .course-info { flex: 1; min-width: 0; }
-            .course-name { font-weight: 600; color: hsl(var(--foreground)); font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .course-meta { font-size: 0.8rem; color: hsl(var(--muted-foreground)); margin-top: 0.2rem; }
-            .course-progress { width: 120px; flex-shrink: 0; }
+            .course-name { font-weight: 600; color: hsl(var(--foreground)); font-size: 0.95rem; line-height: 1.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .course-meta { font-size: 0.8rem; line-height: 1.6; color: hsl(var(--muted-foreground)); margin-top: 0.2rem; }
+            .course-progress { width: 120px; max-width: 100%; flex-shrink: 0; }
             .progress-bar { height: 6px; background: hsl(var(--muted)); border-radius: 3px; overflow: hidden; }
-            .progress-fill { height: 100%; background: hsl(217 91% 60%); border-radius: 3px; transition: width 0.3s ease; }
-            .progress-text { font-size: 0.75rem; color: hsl(var(--muted-foreground)); text-align: right; margin-top: 0.25rem; }
-            .course-status { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.2rem 0.5rem; border-radius: 4px; flex-shrink: 0; }
-            .status-active { background: hsl(217 91% 60% / 10%); color: hsl(217 91% 60%); }
-            .status-completed { background: hsl(142 71% 45% / 10%); color: hsl(142 71% 45%); }
-            .no-courses { text-align: center; color: hsl(var(--muted-foreground)); padding: 2rem; font-size: 0.9rem; }
-            @media (max-width: 600px) { .profile-page { padding: 0 0.5rem; } .profile-card { padding: 1.5rem; } .profile-stats { gap: 1rem; } .course-item { flex-wrap: wrap; } .course-progress { width: 100%; } }
+            .progress-fill { height: 100%; background: hsl(var(--primary)); border-radius: 3px; transition: width 0.3s ease; }
+            .progress-text { font-size: 0.75rem; line-height: 1.6; color: hsl(var(--muted-foreground)); text-align: right; margin-top: 0.25rem; }
+            .course-status { font-size: 0.7rem; line-height: 1.6; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.2rem 0.5rem; border-radius: 0.25rem; flex-shrink: 0; }
+            .status-active { background: hsl(var(--primary) / 0.12); color: hsl(var(--primary)); }
+            .status-completed { background: hsl(var(--muted)); color: hsl(var(--foreground)); }
+            .no-courses { text-align: center; color: hsl(var(--muted-foreground)); padding: 2rem; font-size: 0.9rem; line-height: 1.6; }
+            @media (max-width: 600px) { .profile-main { padding: 1rem 0.75rem 2rem; } .profile-card { padding: 1.5rem; } .profile-stats { gap: 1rem; } .course-item { flex-wrap: wrap; } .course-progress { width: 100%; } }
         }
         #js {
             var pathParts = window.location.pathname.split('/u/');

@@ -352,22 +352,75 @@ public namespace underlayer_web {
     // It is a live route: the address a reader mistyped is the one thing that
     // varies, so the page is rendered per request and carries `no-store`, like
     // every other per-request render.
+    // The 404's own styles.  Kept in a `#css` block like every other stylesheet
+    // in this codebase; the caller renders it on a scratch page (see below).
+    func render_not_found_css(page : &mut HtmlPage) {
+        #css {
+            .not-found { max-width: 40rem; margin: 0 auto; padding: 4rem 1.5rem; }
+            .not-found h1 { font-size: 1.75rem; margin: 0 0 0.75rem; color: hsl(var(--foreground)); }
+            .not-found p { color: hsl(var(--muted-foreground)); margin: 0 0 1rem; line-height: 1.6; }
+            .not-found code { font-family: ui-monospace, 'SFMono-Regular', 'Consolas', monospace; background: hsl(var(--muted)); color: hsl(var(--foreground)); padding: 0.1rem 0.35rem; border-radius: 4px; }
+            .not-found-links { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; }
+            .not-found a { color: hsl(var(--primary)); font-weight: 600; text-decoration: none; }
+            .not-found a:hover { text-decoration: underline; text-underline-offset: 3px; }
+            .not-found .btn-primary { display: inline-block; background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); padding: 0.6rem 1rem; border-radius: 8px; font-weight: 600; }
+            .not-found .btn-primary:hover { filter: brightness(0.92); text-decoration: none; }
+            @media (max-width: 560px) {
+                .not-found { padding: 2.5rem 1rem; }
+                .not-found-links { gap: 0.75rem; }
+            }
+        }
+    }
+
+    // THE LIVE-ROUTE CSS PROBLEM, AND WHY A SCRATCH PAGE IS USED.
+    //
+    // `app.not_found` is a live route. Its page is attached to the site's
+    // already-frozen asset sink, and css_cbi wraps every declaration in
+    // `if (page.require_css_hash(hash))`. The build-time warm pass records those
+    // hashes in the shared sink, so the SAME declarations are skipped on every
+    // real request — the page comes back with no `<style>` at all (measured:
+    // Times New Roman, blue underlined links, zero nav styling).
+    //
+    // So the CSS is generated through the normal `#css` macros on a scratch
+    // HtmlPage that has NO shared sink and a fresh hash set, and the resulting
+    // bytes are placed in <head> as one inline `<style>`. This is the same raw
+    // head escape hatch `render_theme_boot_js` uses for its pre-paint script;
+    // only the `<style>` wrapper is a string, every declaration is macro output.
+    // Calling WiqisTheme here instead would append `#globalcss` to the frozen
+    // sink and make the bundle stale (503 on every 404).
+    func attach_not_found_css(page : &mut HtmlPage) {
+        var scratch = HtmlPage()
+        underlayer_content::render_site_nav_css(&mut scratch)
+        render_not_found_css(&mut scratch)
+        var css = scratch.local_css()
+        var style = string("<style>")
+        style.append_view(&css.to_view())
+        style.append_view("</style>")
+        page.append_head_view(&style.to_view())
+    }
+
     public func page_not_found(ctx : &mut web::RequestContext, page : &mut HtmlPage) {
         page.defaultPrepare()
         var wanted = ctx.path()
+        var title = std::string_view("Page not found — Underlayer")
+        page.appendTitle(&title)
+
+        // One shared nav: same markup, scripts and theme bootstrap as a lesson
+        // page. `render_nav_bar` would also call WiqisTheme, which cannot be used
+        // on a live route (see attach_not_found_css above).
+        underlayer_content::render_site_nav(page)
+        attach_not_found_css(page)
+
         #html {
-            <main class="container" id="main-content">
+            <main class="container not-found" id="main-content">
                 <h1>That page is not here</h1>
                 <p>The address <code>{wanted}</code> does not match a course, a lesson or a page on this platform.</p>
-                <p><a href="/courses">Browse the courses</a> &middot; <a href="/">Home</a> &middot; <a href="/search">Search</a></p>
+                <p class="not-found-links">
+                    <a class="btn btn-primary" href="/courses">Browse the courses</a>
+                    <a href="/">Home</a>
+                    <a href="/search">Search</a>
+                </p>
             </main>
-        }
-        #css {
-            body { margin: 0; font-family: system-ui, sans-serif; line-height: 1.6; color: #111827; background: #ffffff; }
-            .container { max-width: 40rem; margin: 0 auto; padding: 4rem 1.5rem; }
-            h1 { font-size: 1.5rem; margin: 0 0 0.75rem; }
-            code { background: #f3f4f6; padding: 0.1rem 0.3rem; border-radius: 3px; }
-            a { color: #2563eb; }
         }
     }
 
