@@ -156,6 +156,36 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw sql)
     }
 
+    // DEDUPED HELPFUL VOTE.  Returns true ONLY for the first vote this learner
+    // casts on this review; a repeat returns false without touching the count.
+    //
+    // The unique (review_id, learner_id) key does the gating, and rows_affected
+    // says which side of it we landed on: INSERT OR IGNORE affects one row for a
+    // new vote and zero for a duplicate.  No read-then-write race, no module
+    // state, and course_reviews.helpful_count stays the display value it always
+    // was -- this table is the record of who voted, the count is what a visitor
+    // reads when deciding whether to open the review.
+    public func mark_helpful_once(db : *DbClient, review_id : &string, learner_id : &string) : bool {
+        var now = underlayer_core::current_timestamp()
+        var now_s = underlayer_core::int_to_string(now)
+        var rid = sql_escape(review_id)
+        var lid = sql_escape(learner_id)
+        var insert = string("INSERT OR IGNORE INTO review_helpful_votes (review_id, learner_id, created_at) VALUES ('")
+        insert.append_string(&rid)
+        insert.append_view("', '")
+        insert.append_string(&lid)
+        insert.append_view("', ")
+        insert.append_view(now_s.to_view())
+        insert.append_view(")")
+        var written = underlayer_db::exec_sql(db, &raw insert)
+        if(!written.ok || written.rows_affected < 1) { return false }
+        var upd = string("UPDATE course_reviews SET helpful_count = helpful_count + 1 WHERE id = '")
+        upd.append_string(&rid)
+        upd.append_view("'")
+        underlayer_db::exec_sql(db, &raw upd)
+        return true
+    }
+
     public func get_course_rating_summary(db : *DbClient, course_id : &string) : CourseRatingSummary {
         var summary = CourseRatingSummary::make()
         summary.course_id = course_id.copy()

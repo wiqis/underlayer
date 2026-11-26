@@ -121,10 +121,24 @@ public namespace underlayer_web {
         return send_json_str(&resp)
     }
 
-    // POST /api/reviews/:id/helpful — Mark a review as helpful
+    // POST /api/reviews/:id/helpful — Mark a review as helpful, ONCE per learner.
+    // The route in app/main.ch already refuses anonymous callers with 401; read
+    // the learner id again here because the dedupe key IS that identity.  The
+    // response distinguishes a first vote from a repeat so a client can show
+    // "already marked" rather than silently inflating the count.
     public func handle_mark_review_helpful(db : *DbClient, review_id : &string, req : &http::Request) : http::Response {
-        underlayer_repository::mark_helpful(db, review_id)
-        var resp = string("{\"ok\":true}")
+        var learner_id = auth_get_learner_id(db, req)
+        if(learner_id.size() == 0) {
+            var err = string("unauthorized")
+            return send_error(401u, &err)
+        }
+        var voted = underlayer_repository::mark_helpful_once(db, review_id, &learner_id)
+        var resp = string("{\"ok\":true,\"duplicate\":")
+        if(voted) {
+            resp.append_view("false,\"helpful\":true}")
+        } else {
+            resp.append_view("true,\"helpful\":false,\"message\":\"already marked helpful\"}")
+        }
         return send_json_str(&resp)
     }
 

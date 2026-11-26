@@ -192,6 +192,12 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw idx_cr_course)
         var idx_cr_learner = string("CREATE INDEX IF NOT EXISTS idx_cr_learner ON course_reviews(learner_id, course_id)")
         underlayer_db::exec_sql(db, &raw idx_cr_learner)
+        // One helpful vote per (review, learner).  The UNIQUE key is the gate:
+        // INSERT OR IGNORE reports rows_affected=0 for a repeat vote, so the
+        // display-only helpful_count on course_reviews moves exactly once per
+        // learner.  The count is derived state; this table is the source of truth.
+        var sql_hv = string("CREATE TABLE IF NOT EXISTS review_helpful_votes (review_id TEXT NOT NULL, learner_id TEXT NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (review_id, learner_id))")
+        underlayer_db::exec_sql(db, &raw sql_hv)
         // Streaks table
         var sql_streak = string("CREATE TABLE IF NOT EXISTS learning_streaks (learner_id TEXT PRIMARY KEY, current_streak INTEGER DEFAULT 0, longest_streak INTEGER DEFAULT 0, total_active_days INTEGER DEFAULT 0, last_active_date TEXT DEFAULT '')")
         underlayer_db::exec_sql(db, &raw sql_streak)
