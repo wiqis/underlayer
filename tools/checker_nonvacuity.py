@@ -35,7 +35,7 @@ WHAT IS PROVEN, AND HOW.
   session_js_check  the 401 contract is restored to the old
                    "silent401 RETURNS the 401" shape and the checker must fail.
   theme_check       render_theme_boot_js is made a no-op, so no page reads the
-                   theme inside <head> and the dark-mode flash returns
+                   lesson pre-paint boot and the dark-mode flash returns
   lesson_pager_check  a LENGTH is passed to string_view.subview() where it
                    takes an END INDEX -- the actual defect that shipped, which
                    truncated every lesson page while every other gate stayed
@@ -469,11 +469,11 @@ def check_theme(quick):
     """Prove theme_check.py can fail, by putting the theme read back where the
     flash said it was.
 
-    The plant is the real defect: `render_theme_boot_js` made a no-op, so the
-    script never reaches <head> and the pages go back to painting light and
-    repainting.  This is the only plant in this file that reproduces a bug a
-    person actually noticed and reported, which is the point -- if the checker
-    cannot see it, the checker is not looking at what it claims to look at.
+    The plant is the real defect class: `render_theme_boot_js` made a no-op, so
+    its script never reaches <head>. Brand-shell pages still carry WiqisTheme's
+    own pre-paint script, but a lesson page loses its only boot and goes back to
+    painting light then repainting. The old plant used a lesson guard that no
+    longer exists in theme_boot.ch and silently did nothing.
     """
     rc, out = run([PY, 'tools/theme_check.py',
                    os.environ.get('UL_BASE_URL', 'http://localhost:9000')],
@@ -495,11 +495,11 @@ def check_theme(quick):
             '.git', 'build', 'output', 'node_modules', '__pycache__'))
         victim = os.path.join(tree, 'content', 'src', 'theme_boot.ch')
         src = open(victim).read()
-        planted = src.replace('        if(lesson) { return }',
-                              '        if(true) { return }', 1)
+        planted = src.replace('        page.append_head_view(&bv)',
+                              '        // planted: boot suppressed', 1)
         if planted == src:
             record('theme_check', True, False,
-                   'the plant did not apply -- the lesson guard is not in the '
+                   'the plant did not apply -- the head append is not in the '
                    'shape this check expects')
             return
         open(victim, 'w').write(planted)
@@ -524,7 +524,7 @@ def check_theme(quick):
                        'the planted server never came up')
                 return
             rc3, out3 = run([PY, 'tools/theme_check.py', base], timeout=900)
-            caught = rc3 != 0 and 'inside <head>' in out3
+            caught = rc3 != 0 and 'pre-paint boot' in out3
         finally:
             srv.terminate()
             try:
@@ -532,8 +532,8 @@ def check_theme(quick):
             except Exception:
                 srv.kill()
     record('theme_check', True, caught,
-           'made render_theme_boot_js a no-op -> no page reads the theme in '
-           '<head> -> the dark-mode flash returns -> exit %d, named=%s'
+           'made render_theme_boot_js a no-op -> a lesson loses its pre-paint '
+           'boot -> the dark-mode flash returns -> exit %d, named=%s'
            % (rc3, caught))
 
 
