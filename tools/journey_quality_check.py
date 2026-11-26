@@ -10,6 +10,16 @@ Examples:
     python tools/journey_quality_check.py
     python tools/journey_quality_check.py http://localhost:9001 --all
     python tools/journey_quality_check.py --lessons elf:bytes,coff:coff-intro
+
+NEGATIVE CASE (how to prove this checker can fail):
+    * A served lesson with a journey runtime marker removed (e.g. delete
+      `function jqBoot` from the generated page in a disposable build) is
+      reported as `FAIL <course>/<concept>` with the missing marker named, and
+      the process exits 1.
+    * A course landing page with two <main> landmarks fails the per-page
+      landmark check.
+    * `--lessons elf:no-such-concept` fails with a fetch error, proving an empty
+      or unreachable lesson set is not silently reported as a pass.
 """
 
 import argparse

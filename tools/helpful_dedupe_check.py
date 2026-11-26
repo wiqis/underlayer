@@ -16,6 +16,16 @@ Assertions:
 Usage:
     python tools/helpful_dedupe_check.py [base-url]
 Exit 0 all assertions hold, 1 otherwise.
+
+NEGATIVE CASE (how to prove this checker can fail):
+    * Point it at a server without the helpful route: every vote answers 404,
+      so `first vote is not a duplicate` and `anonymous vote is refused` fail.
+    * Point it at a closed port: `server answers /api/health` fails and the
+      checker exits 1 instead of reporting an empty pass.
+    * Remove the per-learner dedupe in a disposable build: the second and third
+      votes from the same learner stop answering duplicate:true and the count
+      moves by 3 instead of 1. Never run that plant against production: this
+      checker registers learners and casts votes.
 """
 import json
 import sys

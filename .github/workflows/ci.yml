@@ -1,23 +1,48 @@
-# Verification-only CI. It builds the server and the ELF static pages, starts
-# the server on a free port, and runs the served-artifact checkers. It does NOT
-# deploy, publish, push, or use any secret. The founder deploys manually.
+# Verification-only CI. It provisions TCCCompiler, builds the server AND the
+# separate @test application, boots the server on a free port with a disposable
+# database, runs the endpoint matrix, the Chemical suite and the served-artifact
+# checkers. It does NOT deploy, publish, push, or use any secret. The founder
+# deploys manually.
+#
+# COMPILER PROVISIONING (two supported paths, no secrets either way)
+#   1. Self-hosted / pre-provisioned runner: set the CHEMICAL_ROOT repository
+#      variable (or pass `compiler_root` to workflow_dispatch) to a directory
+#      whose cmake-build-debug/ holds TCCCompiler.exe. The source-build steps
+#      are skipped in that case.
+#   2. Stock windows-latest (default): checkout the PUBLIC compiler source at
+#      the pinned CHEMICAL_REF, restore a cached build if one exists, otherwise
+#      run its own scripts/setup.sh (libtcc + submodules), configure with CMake
+#      + Ninja and build the TCCCompiler target. The compiler binary is cached
+#      by pinned ref, so this full build happens once per ref.
+#   No token or secret is passed to any checkout: the Chemical repo is public
+#   and `persist-credentials: false` is set. `contents: read` only.
 #
 # HONEST LIMITS
-#   * TCCCompiler is a native binary that this repository does not build. The
-#     job is single-platform (windows-latest) because that is the only platform
-#     where the compiler is verified on the development machine. Point
-#     `compiler_root` (workflow_dispatch) or the CHEMICAL_ROOT repository
-#     variable at a checkout whose cmake-build-debug/ holds TCCCompiler.exe.
-#     If neither is set the job fails with an actionable message; it never
-#     guesses a path from someone else's laptop.
-#   * The live-browser theme check is not run here (no browser is provisioned);
-#     theme_check.py still runs its full static contract in CI. Pass --browser
-#     locally to add the Playwright proof.
+#   * Single platform: windows-latest, where the compiler is verified here.
+#   * No browser in CI: theme_check.py runs its full static contract. The
+#     Playwright proof runs locally with `python tools/theme_check.py BASE
+#     --browser`.
 #   * helpful_dedupe_check.py WRITES to the disposable ci-underlayer.db. It
 #     registers two throwaway learners; never point it at production.
-#   * The Chemical @test suite is a separate application and is currently
-#     blocked in the compiler (see AGENTS.md). These checks cover the served
-#     artifact instead; they are not a substitute for that suite.
+#   * bridge_probe.py sends three SAFE POSTs (bad-token bridge, no-token
+#     bridge, unknown route). No registration, no votes, no progress writes.
+#     The live-site probe is opt-in locally (`--deployed`) and is not in CI.
+#
+# NEGATIVE CASE for each CI checker (how we know it can fail):
+#   journey_quality_check  remove a journey runtime marker from a served page
+#                          -> that lesson FAILs; `--lessons elf:no-such` also
+#                          fails with a fetch error.
+#   theme_check            tools/checker_nonvacuity.py::check_theme makes
+#                          render_theme_boot_js a no-op in a disposable COPY,
+#                          rebuilds and confirms this checker fails.
+#   lesson_pager_check     checker_nonvacuity.py::check_lesson_pager reintroduces
+#                          the subview() length-vs-end-index bug in a copy.
+#   helpful_dedupe_check   point it at a server without the helpful route, or
+#                          remove the per-learner dedupe and the second vote
+#                          stops answering duplicate:true.
+#   bridge_probe           remove /api/auth/from-account -> both bridge checks
+#                          FAIL with 404 (see the tool's docstring).
+# A check that cannot fail is decoration. Prove it before trusting a green run.
 
 name: ci
 
@@ -27,7 +52,7 @@ on:
   workflow_dispatch:
     inputs:
       compiler_root:
-        description: 'Directory containing cmake-build-debug/TCCCompiler.exe'
+        description: 'Directory containing cmake-build-debug/TCCCompiler.exe (self-hosted path)'
         required: false
         type: string
 
@@ -38,9 +63,12 @@ jobs:
   verify:
     runs-on: windows-latest
     env:
-      # Set the CHEMICAL_ROOT repository variable once; workflow_dispatch can
-      # override it per run. scripts/_common.sh also honours this variable.
+      # Set CHEMICAL_ROOT once for a self-hosted runner; workflow_dispatch can
+      # override it per run. scripts/_common.sh honours the same variable.
       CHEMICAL_ROOT: ${{ inputs.compiler_root || vars.CHEMICAL_ROOT || '' }}
+      # Pinned compiler source commit (origin/main at the time of pinning).
+      # Override with a repository variable to test a different compiler.
+      CHEMICAL_REF: ${{ vars.CHEMICAL_REF || '7a2da4173d49678bdf6c32e4a1ff7ddaba32d240' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -48,25 +76,72 @@ jobs:
         with:
           python-version: '3.11'
 
+      # MSVC toolchain is only needed for the source-build path.
+      - name: Set up MSVC (source build only)
+        if: env.CHEMICAL_ROOT == ''
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Checkout pinned Chemical compiler source
+        if: env.CHEMICAL_ROOT == ''
+        uses: actions/checkout@v4
+        with:
+          repository: chemicallang/chemical
+          ref: ${{ env.CHEMICAL_REF }}
+          path: chemical-src
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Restore cached TCCCompiler
+        if: env.CHEMICAL_ROOT == ''
+        id: tcc-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            chemical-src/cmake-build-debug/TCCCompiler.exe
+            chemical-src/cmake-build-debug/TCCCompiler.pdb
+            chemical-src/lib/tcc
+          key: tcc-${{ runner.os }}-${{ env.CHEMICAL_REF }}
+
+      - name: Build TCCCompiler from pinned source
+        if: env.CHEMICAL_ROOT == '' && steps.tcc-cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd chemical-src
+          # Downloads libtcc and initialises submodules (public, no secrets).
+          bash scripts/setup.sh --arch x64
+          cmake -S . -B cmake-build-debug -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug -DCMAKE_NINJA_FORCE_RESPONSE_FILE=ON
+          cmake --build cmake-build-debug --config Debug --target TCCCompiler -j 4
+
       - name: Locate TCCCompiler
         shell: bash
         run: |
           set -euo pipefail
-          if [ -z "${CHEMICAL_ROOT:-}" ]; then
-            echo "::error::CHEMICAL_ROOT is unset. Set it as a repository variable or pass compiler_root to workflow_dispatch."
-            exit 1
-          fi
+          mkdir -p build
           compiler=""
-          for dir in cmake-build-debug build .; do
-            for name in TCCCompiler.exe TCCCompiler; do
-              if [ -f "$CHEMICAL_ROOT/$dir/$name" ]; then compiler="$CHEMICAL_ROOT/$dir/$name"; break 2; fi
+          if [ -n "${CHEMICAL_ROOT:-}" ]; then
+            for dir in cmake-build-debug build .; do
+              for name in TCCCompiler.exe TCCCompiler; do
+                if [ -f "$CHEMICAL_ROOT/$dir/$name" ]; then compiler="$CHEMICAL_ROOT/$dir/$name"; break 2; fi
+              done
             done
-          done
+            if [ -z "$compiler" ]; then
+              echo "::error::No TCCCompiler under CHEMICAL_ROOT=$CHEMICAL_ROOT (checked cmake-build-debug/, build/, .)."
+              exit 1
+            fi
+          elif [ -f chemical-src/cmake-build-debug/TCCCompiler.exe ]; then
+            compiler="$PWD/chemical-src/cmake-build-debug/TCCCompiler.exe"
+          fi
           if [ -z "$compiler" ]; then
-            echo "::error::No TCCCompiler under $CHEMICAL_ROOT (checked cmake-build-debug/, build/, .)."
+            echo "::error::TCCCompiler was neither provisioned from CHEMICAL_REF=$CHEMICAL_REF nor found under CHEMICAL_ROOT."
             exit 1
           fi
           echo "Using compiler: $compiler"
+          echo "Compiler source pin: $CHEMICAL_REF (or CHEMICAL_ROOT override)"
+          sha256sum "$compiler" | tee build/compiler.sha256 || true
           echo "UL_COMPILER=$compiler" >> "$GITHUB_ENV"
 
       - name: Build server (-bm-modules --no-cache)
@@ -80,6 +155,15 @@ jobs:
         shell: bash
         run: bash scripts/build_static.sh elf --quiet
 
+      - name: Build test application (@test suite, no --test)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Separate application (tests/chemical.mod). `--test` is global and
+          # reaches dependency modules, so it must NOT be used here.
+          "$UL_COMPILER" tests/chemical.mod -o build/tests-verify.exe --no-cache
+          test -s build/tests-verify.exe
+
       - name: Start server on a free port
         shell: bash
         run: |
@@ -88,7 +172,7 @@ jobs:
           export BASE="http://localhost:$PORT"
           echo "PORT=$PORT" >> "$GITHUB_ENV"
           echo "BASE=$BASE" >> "$GITHUB_ENV"
-          rm -f ci-underlayer.db
+          rm -f ci-underlayer.db ci-underlayer.db-shm ci-underlayer.db-wal
           PORT="$PORT" DATABASE_URL=./ci-underlayer.db COURSES_DIR=./courses \
             ./build/underlayer-verify.exe > build/ci-server.log 2>&1 &
           echo $! > build/ci-server.pid
@@ -119,14 +203,40 @@ jobs:
             [ "$code" = "200" ] || { echo "::error::$path answered $code"; exit 1; }
           done
 
+      - name: Chemical @test suite (summary gate)
+        shell: bash
+        run: |
+          set -uo pipefail
+          # The runner returns 0 even when tests fail. The exit code is NOT a
+          # pass/fail signal: capture the run and parse its Summary line, the
+          # same way Web/123Mind/scripts/test.sh does.
+          ./build/tests-verify.exe 2>&1 | tee build/chemical-tests.log || true
+          sed -e 's/\x1b\[[0-9;]*m//g' build/chemical-tests.log > build/chemical-tests.stripped.log
+          failed="$(grep -oE '[0-9]+ failed' build/chemical-tests.stripped.log | tail -1 | grep -oE '^[0-9]+' || true)"
+          total="$(grep -oE '[0-9]+ tests' build/chemical-tests.stripped.log | tail -1 | grep -oE '^[0-9]+' || true)"
+          if [ -z "$failed" ] || [ -z "$total" ]; then
+            echo "::error::no test summary line in build/chemical-tests.stripped.log; the run did not complete."
+            exit 1
+          fi
+          echo "Chemical suite summary: $total tests, $failed failed"
+          if [ "$total" -eq 0 ]; then
+            echo "::error::the suite reported 0 tests; a vacuous run is not a pass."
+            exit 1
+          fi
+          if [ "$failed" -ne 0 ]; then
+            echo "::error::$failed chemical test(s) failed; see build/chemical-tests.stripped.log"
+            exit 1
+          fi
+
       - name: Served-artifact checkers
         shell: bash
         run: |
           set -euo pipefail
-          python tools/journey_quality_check.py "$BASE" --workers 8
+          python tools/journey_quality_check.py "$BASE" --all --workers 8
           python tools/theme_check.py "$BASE"
           python tools/lesson_pager_check.py "$BASE"
           python tools/helpful_dedupe_check.py "$BASE"
+          python tools/bridge_probe.py "$BASE"
 
       - name: Stop server
         if: always()
