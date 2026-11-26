@@ -119,70 +119,55 @@ public namespace underlayer_content {
                 btn.disabled = !ok;
             }
 
-            function jqRetrieveUnit(i) {
-                var s = jqState;
-                var j = i - 1;
-                while(j >= 0) {
-                    if(s.units[j].classList.contains('unit-retrieve')) { return s.units[j]; }
-                    j = j - 1;
+            // Retrieval is a gate, not a test of the last quiz the learner
+            // happened to meet. Searching backwards for the nearest
+            // unit-retrieve asked the SAME old question for every step after
+            // it. Ask about the step just finished, and from step three on add
+            // one question from an earlier step. Both reveals are escape
+            // hatches: either one marks the step done.
+            function jqRecallQA(point, u) {
+                if(point.length === 0 && u) { point = jqKeyPoint(u); }
+                var ask = 'You saw: ' + point + '. In your own words, what did it mean?';
+                if(point.length > 0 && point.charAt(point.length - 1) === '.') {
+                    ask = 'You saw: ' + point + ' In your own words, what did it mean?';
                 }
-                return null;
-            }
-
-            function jqRetrieveQA(i) {
-                var u = jqRetrieveUnit(i);
-                var source = u;
-                if(!source) { source = jqState.units[i - 1]; }
-                if(source) {
-                    var dq = jqTrim(source.getAttribute('data-recall-q') || '');
-                    var da = jqTrim(source.getAttribute('data-recall-a') || '');
-                    if(dq.length > 0 && da.length > 0) { return { q: dq, a: da }; }
-                }
-                if(!u) {
-                    var earlier = jqState.units[i - 1];
-                    var point = earlier ? jqKeyPoint(earlier) : '';
-                    if(point.length > 0 && point.charAt(point.length - 1) === '.') { point = point.substring(0, point.length - 1); }
-                    return { q: 'Earlier you saw: ' + point + '. In your own words, what did it mean?', a: point };
-                }
-                var ps = u.querySelectorAll('p');
-                var q = '';
-                var k = 0;
-                while(k < ps.length) {
-                    q = jqTrim(jqText(ps[k]));
-                    if(q.length > 0) { break; }
-                    k = k + 1;
-                }
-                var answer = '';
-                var opts = u.querySelectorAll('.quiz-option');
-                k = 0;
-                while(k < opts.length) {
-                    if(opts[k].getAttribute('data-correct') === 'true') { answer = jqTrim(jqText(opts[k])); break; }
-                    k = k + 1;
-                }
-                if(answer.length === 0) {
-                    var blanks = u.querySelectorAll('.fill-blank');
-                    k = 0;
-                    while(k < blanks.length) {
-                        var a = blanks[k].getAttribute('data-answer') || '';
-                        if(answer.length > 0) { answer = answer + ', '; }
-                        answer = answer + a;
-                        k = k + 1;
-                    }
-                }
-                if(answer.length === 0) { answer = jqKeyPoint(u); }
-                if(q.length === 0) { q = 'Recall the idea from ' + jqTitle(u) + '.'; }
-                return { q: q, a: answer };
+                return { q: ask, a: point };
             }
 
             function jqPrepareRetrieval(i) {
                 var box = jqEl('ul-journey-retrieve');
+                var ask2 = jqEl('ul-journey-ask-earlier');
+                var reveal2 = jqEl('ul-journey-reveal-earlier');
+                var answer2 = jqEl('ul-journey-answer-earlier');
                 if(!box) { return; }
-                if(i === 0) { jqHide(box, true); return; }
-                var qa = jqRetrieveQA(i);
+                if(i === 0) {
+                    jqHide(box, true);
+                    jqHide(ask2, true);
+                    jqHide(reveal2, true);
+                    jqHide(answer2, true);
+                    return;
+                }
+                var prev = jqState.units[i - 1];
+                var point = jqTrim(prev.getAttribute('data-remember') || '');
+                var qa = jqRecallQA(point, prev);
                 var ask = jqEl('ul-journey-ask');
                 var answer = jqEl('ul-journey-answer');
+                var reveal = jqEl('ul-journey-reveal');
                 if(ask) { ask.textContent = qa.q; }
                 if(answer) { answer.textContent = qa.a; jqHide(answer, true); }
+                if(reveal) { reveal.textContent = "I'm stuck - show me"; }
+                if(i >= 2) {
+                    var earlier = jqState.units[i - 2];
+                    var earlierPoint = jqTrim(earlier.getAttribute('data-remember') || '');
+                    var qa2 = jqRecallQA(earlierPoint, earlier);
+                    if(ask2) { ask2.textContent = 'From earlier: ' + qa2.q; jqHide(ask2, false); }
+                    if(answer2) { answer2.textContent = qa2.a; jqHide(answer2, true); }
+                    if(reveal2) { reveal2.textContent = "I'm stuck - show me"; jqHide(reveal2, false); }
+                } else {
+                    jqHide(ask2, true);
+                    jqHide(reveal2, true);
+                    jqHide(answer2, true);
+                }
                 jqHide(box, false);
             }
 
@@ -190,6 +175,14 @@ public namespace underlayer_content {
                 var answer = jqEl('ul-journey-answer');
                 if(answer) { jqHide(answer, false); }
                 var reveal = jqEl('ul-journey-reveal');
+                if(reveal) { reveal.textContent = 'Answer shown - continue when ready'; }
+                jqMarkAction();
+            }
+
+            function jqRevealEarlier() {
+                var answer = jqEl('ul-journey-answer-earlier');
+                if(answer) { jqHide(answer, false); }
+                var reveal = jqEl('ul-journey-reveal-earlier');
                 if(reveal) { reveal.textContent = 'Answer shown - continue when ready'; }
                 jqMarkAction();
             }

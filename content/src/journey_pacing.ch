@@ -39,6 +39,10 @@ public namespace underlayer_content {
             }
 
             function jqDeep() {
+                // Put the active unit back in the lesson's authored order so
+                // the full reference reads top to bottom, not with one unit
+                // stranded inside the journey shell.
+                jqUnstage();
                 jqState.deep = true;
                 jqSet(jqKey('deep'), '1');
                 var root = jqRoot();
@@ -152,6 +156,7 @@ public namespace underlayer_content {
                 jqBindClick('ul-journey-deep-finish', jqDeep);
                 jqBindClick('ul-journey-return', jqReturn);
                 jqBindClick('ul-journey-reveal', jqReveal);
+                jqBindClick('ul-journey-reveal-earlier', jqRevealEarlier);
                 var note = jqEl('ul-journey-note');
                 if(note) { note.addEventListener('input', jqOnNote); }
                 document.addEventListener('click', jqClickedAction, true);

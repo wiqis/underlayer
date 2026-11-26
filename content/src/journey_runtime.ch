@@ -14,7 +14,7 @@ public namespace underlayer_content {
     public func render_journey_runtime_js(page : &mut HtmlPage) {
         #js {
             var jqSeq = 0;
-            var jqState = { units: [], idx: 0, course: '', concept: '', gate: {}, started: false, deep: false, paused: false };
+            var jqState = { units: [], idx: 0, course: '', concept: '', gate: {}, started: false, deep: false, paused: false, staged: null };
 
             function jqRoot() { return document.getElementById('ul-journey'); }
             function jqEl(id) { return document.getElementById(id); }
@@ -55,6 +55,33 @@ public namespace underlayer_content {
                 else { el.removeAttribute('hidden'); }
             }
 
+            // The shell is inserted before the first unit, so leaving the
+            // active unit where the lesson authored it puts all the chrome
+            // ABOVE the teaching text. Move exactly one unit into the stage:
+            // ribbon -> step -> Remember this -> recall -> controls. The unit
+            // keeps its listeners and its wording; only its DOM position
+            // changes. Its original home is saved so Deep dive can restore
+            // the lesson to its authored document order.
+            function jqUnstage() {
+                var u = jqState.staged;
+                if(!u) { return; }
+                var home = u.__ulJqHomeParent;
+                if(home) {
+                    var next = u.__ulJqHomeNext;
+                    if(next && next.parentNode !== home) { next = null; }
+                    home.insertBefore(u, next);
+                }
+                jqState.staged = null;
+            }
+
+            function jqStage(u) {
+                var stage = jqEl('ul-journey-stage');
+                if(!u || !stage) { return; }
+                jqUnstage();
+                stage.appendChild(u);
+                jqState.staged = u;
+            }
+
             function jqChrome() {
                 jqHide(jqEl('ul-journey-arrival'), true);
                 jqHide(jqEl('ul-journey-ribbon'), false);
@@ -83,6 +110,7 @@ public namespace underlayer_content {
                 jqChrome();
                 var u = s.units[i];
                 jqPrepareUnit(u);
+                jqStage(u);
                 u.removeAttribute('hidden');
                 u.setAttribute('data-jq-current', '1');
                 var count = jqEl('ul-journey-count');
@@ -124,6 +152,12 @@ public namespace underlayer_content {
                 jqState.course = ctx.course;
                 jqState.concept = ctx.concept;
                 jqState.units = units;
+                var u0 = 0;
+                while(u0 < units.length) {
+                    units[u0].__ulJqHomeParent = units[u0].parentNode;
+                    units[u0].__ulJqHomeNext = units[u0].nextSibling;
+                    u0 = u0 + 1;
+                }
                 var first = units[0];
                 if(first && first.parentNode) { first.parentNode.insertBefore(root, first); }
                 // ONE mode class, added on boot (the head script already added

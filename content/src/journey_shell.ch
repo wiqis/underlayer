@@ -62,6 +62,9 @@ public namespace underlayer_content {
                     <p class="journey-retrieve-ask" id="ul-journey-ask"></p>
                     <button type="button" class="journey-btn journey-reveal" id="ul-journey-reveal" aria-label="Reveal the answer to this recall question">I'm stuck - show me</button>
                     <p class="journey-retrieve-answer" id="ul-journey-answer" hidden></p>
+                    <p class="journey-retrieve-ask journey-ask-earlier" id="ul-journey-ask-earlier" hidden></p>
+                    <button type="button" class="journey-btn journey-reveal" id="ul-journey-reveal-earlier" aria-label="Reveal the answer to the earlier recall question" hidden>I'm stuck - show me</button>
+                    <p class="journey-retrieve-answer" id="ul-journey-answer-earlier" hidden></p>
                 </div>
                 <p class="journey-action-feedback" id="ul-journey-feedback" hidden aria-live="polite"></p>
                 <div class="journey-controls" id="ul-journey-controls" hidden>
@@ -119,6 +122,7 @@ public namespace underlayer_content {
             .journey-words { display: block; margin-top: 0.35rem; font-size: 0.85rem; color: hsl(var(--muted-foreground)); }
             .journey-retrieve { margin-top: 1rem; padding: 1rem 1.25rem; border: 1px solid hsl(var(--border)); border-radius: 10px; background: hsl(var(--card)); color: hsl(var(--foreground)); }
             .journey-retrieve-ask { margin: 0 0 0.75rem; font-size: 1rem; }
+            .journey-ask-earlier { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid hsl(var(--border)); }
             .journey-retrieve-answer { margin: 0.75rem 0 0; font-size: 1rem; color: hsl(var(--muted-foreground)); }
             .journey-action-feedback { margin: 1rem 0 0; padding: 0.75rem 1rem; border-left: 3px solid hsl(var(--primary)); background: hsl(var(--accent)); color: hsl(var(--foreground)); font-size: 1rem; }
             .journey-deep .journey-action-feedback { display: none !important; }

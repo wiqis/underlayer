@@ -92,41 +92,57 @@ public namespace underlayer_content {
     }
 
     public func apply_journey_to_document(src : &string) : string {
-        // A lesson that already emits the shell from shared lesson assets is left
-        // untouched.  This is what stops double IDs when both paths are active.
-        if(src.find_or_npos(string_view("journey-shell")) != std::NPOS) { return src.copy() }
+        var has_shell = src.find_or_npos(string_view("journey-shell")) != std::NPOS
+        var has_runtime = src.find_or_npos(string_view("function jqBoot")) != std::NPOS
+        if(has_shell && has_runtime) { return src.copy() }
         var css = journey_css_fragment()
         var js = journey_js_fragment()
         var markup = journey_markup_fragment()
-        if(css.size() == 0 || js.size() == 0 || markup.size() == 0) { return src.copy() }
+        if(js.size() == 0) { return src.copy() }
+        // Pre-rendered pages built before the runtime shipped carry the shell,
+        // the hiding CSS and the pre-paint flag but no runtime: jqBoot never
+        // marks a unit current, so every unit stays hidden and Start does
+        // nothing. Add the missing runtime without duplicating the shell (which
+        // would duplicate every id on the page).
+        if(!has_shell && (css.size() == 0 || markup.size() == 0)) { return src.copy() }
 
-        var style = string("<style>")
-        style.append_string(&css)
-        style.append_view("</style>")
-        // The mode flag must be set before first paint. The same one-line
-        // script is emitted from render_journey_boot_head on the static path;
-        // this is the backend path for lessons with their own inline assets.
-        var boot = string("<script>document.documentElement.classList.add('journey-active');</script>")
         var script = string("<script>")
         script.append_string(&js)
         script.append_view("</script>")
 
         var with_css = std::string()
-        var head_at = src.find_or_npos(string_view("</head>"))
-        if(head_at == std::NPOS) {
+        if(has_shell) {
             with_css = src.copy()
         } else {
-            with_css.append_view(src.to_view().subview(0, head_at))
-            with_css.append_string(&style)
-            with_css.append_string(&boot)
-            with_css.append_view(src.to_view().subview(head_at, src.size()))
+            var style = string("<style>")
+            style.append_string(&css)
+            style.append_view("</style>")
+            // The mode flag must be set before first paint. The same one-line
+            // script is emitted from render_journey_boot_head on the static
+            // path; this is the backend path for lessons with inline assets.
+            var boot = string("<script>document.documentElement.classList.add('journey-active');</script>")
+            var head_at = src.find_or_npos(string_view("</head>"))
+            if(head_at == std::NPOS) {
+                with_css = src.copy()
+            } else {
+                with_css.append_view(src.to_view().subview(0, head_at))
+                with_css.append_string(&style)
+                with_css.append_string(&boot)
+                with_css.append_view(src.to_view().subview(head_at, src.size()))
+            }
         }
 
         var body_at = with_css.find_or_npos(string_view("</body>"))
-        if(body_at == std::NPOS) { return with_css }
+        if(body_at == std::NPOS) {
+            var tail = std::string()
+            tail.append_string(&with_css)
+            if(!has_shell) { tail.append_string(&markup) }
+            tail.append_string(&script)
+            return tail
+        }
         var final = std::string()
         final.append_view(with_css.to_view().subview(0, body_at))
-        final.append_string(&markup)
+        if(!has_shell) { final.append_string(&markup) }
         final.append_string(&script)
         final.append_view(with_css.to_view().subview(body_at, with_css.size()))
         return final

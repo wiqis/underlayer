@@ -161,18 +161,146 @@ public namespace underlayer_content {
         return jpWords(&clean, 12)
     }
 
+    // A takeaway must be a fact the learner can carry into the next step.
+    // The corpus uses <strong> for emphasis of a term as often as for the key
+    // idea, so an emphasised word ("not", "calling convention", "file format")
+    // is not a takeaway. Prefer a complete sentence from the step's own prose;
+    // every word still comes from that lesson, nothing is invented here.
+    private func jpTrimmed(s : &string) : string {
+        var a : size_t = 0
+        var b : size_t = s.size()
+        while(a < b && jpIsSpace(s.at(a))) { a = a + 1 }
+        while(b > a && jpIsSpace(s.at(b - 1))) { b = b - 1 }
+        return s.substring(a, b)
+    }
+
+    private func jpCountWords(s : &string) : size_t {
+        var count : size_t = 0
+        var i : size_t = 0
+        while(i < s.size()) {
+            while(i < s.size() && jpIsSpace(s.at(i))) { i = i + 1 }
+            if(i >= s.size()) { break }
+            count = count + 1
+            while(i < s.size() && !jpIsSpace(s.at(i))) { i = i + 1 }
+        }
+        return count
+    }
+
+    private func jpSentenceGood(s : &string) : bool {
+        var t = jpTrimmed(s)
+        var n = jpCountWords(&t)
+        if(n < 5 || n > 25) { return false }
+        if(t.size() == 0) { return false }
+        var last = t.at(t.size() - 1)
+        if(last != '.' && last != '?' && last != '!') { return false }
+        var lead = string_view("Here is ")
+        if(jpFindFrom(&t, &lead, 0) == 0) { return false }
+        lead = string_view("Here are ")
+        if(jpFindFrom(&t, &lead, 0) == 0) { return false }
+        lead = string_view("Now ")
+        if(jpFindFrom(&t, &lead, 0) == 0) { return false }
+        lead = string_view("So ")
+        if(jpFindFrom(&t, &lead, 0) == 0) { return false }
+        lead = string_view("Look ")
+        if(jpFindFrom(&t, &lead, 0) == 0) { return false }
+        lead = string_view("Try ")
+        if(jpFindFrom(&t, &lead, 0) == 0) { return false }
+        lead = string_view("Think ")
+        if(jpFindFrom(&t, &lead, 0) == 0) { return false }
+        lead = string_view("You saw ")
+        if(jpFindFrom(&t, &lead, 0) == 0) { return false }
+        lead = string_view("The payoff")
+        if(jpFindFrom(&t, &lead, 0) == 0) { return false }
+        // A hex-dump row is evidence, not a takeaway. It starts with eight
+        // hex digits and a colon; leave it in the lesson and pick another
+        // sentence instead of calling the dump the key idea.
+        if(t.size() > 9) {
+            var hexrun = true
+            var h : size_t = 0
+            while(h < 8) {
+                var c = t.at(h)
+                if(!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) { hexrun = false }
+                h = h + 1
+            }
+            if(hexrun && t.at(8) == ':') { return false }
+        }
+        return true
+    }
+
+    private func jpLooseSentence(s : &string) : bool {
+        var t = jpTrimmed(s)
+        if(t.size() == 0) { return false }
+        if(jpCountWords(&t) < 5) { return false }
+        var last = t.at(t.size() - 1)
+        return last == '.' || last == '?' || last == '!'
+    }
+
+    // Return the first sentence and leave the remainder in `rest`.
+    private func jpNextSentence(s : &string, rest : &mut string) : string {
+        var i : size_t = 0
+        while(i < s.size()) {
+            var c = s.at(i)
+            if(c == '.' || c == '?' || c == '!') {
+                if(i + 1 >= s.size() || jpIsSpace(s.at(i + 1))) {
+                    var first = s.substring(0, i + 1)
+                    *rest = s.substring(i + 1, s.size())
+                    return jpTrimmed(&first)
+                }
+            }
+            i = i + 1
+        }
+        *rest = s.substring(s.size(), s.size())
+        return jpTrimmed(s)
+    }
+
+    private func jpKeySentence(slice : &string) : string {
+        var cursor : size_t = 0
+        var loose = string()
+        var paras : size_t = 0
+        while(paras < 12) {
+            var next = jpFindFrom(slice, string_view("<p"), cursor)
+            if(next == std::NPOS) { break }
+            var gt = jpFindFrom(slice, string_view(">"), next)
+            if(gt == std::NPOS) { break }
+            var close = jpFindFrom(slice, string_view("</p>"), gt + 1)
+            if(close == std::NPOS) { break }
+            var para_raw = slice.substring(gt + 1, close)
+            var filled = jpFillAnswers(&para_raw)
+            var clean = jpClean(&filled)
+            var rest = string()
+            var sentence = jpNextSentence(&clean, &mut rest)
+            var n = 0
+            while(sentence.size() > 0 && n < 8) {
+                if(jpSentenceGood(&sentence)) { return jpWords(&sentence, 25) }
+                if(loose.size() == 0 && jpLooseSentence(&sentence)) { loose = jpWords(&sentence, 25) }
+                var next_rest = string()
+                var next_sentence = jpNextSentence(&rest, &mut next_rest)
+                sentence = next_sentence
+                rest = next_rest
+                n = n + 1
+            }
+            cursor = close + 4
+            paras = paras + 1
+        }
+        return loose
+    }
+
     private func jpRemember(slice : &string) : string {
+        var key = jpKeySentence(slice)
+        if(key.size() > 0) { return key }
         var strong_raw = jpInner(slice, string_view("<strong"), string_view("</strong>"))
         var strong = jpClean(&strong_raw)
-        if(strong.size() > 0) { return jpWords(&strong, 25) }
+        if(jpSentenceGood(&strong)) { return jpWords(&strong, 25) }
         var bold_raw = jpInner(slice, string_view("<b>"), string_view("</b>"))
         var bold = jpClean(&bold_raw)
-        if(bold.size() > 0) { return jpWords(&bold, 25) }
+        if(jpSentenceGood(&bold)) { return jpWords(&bold, 25) }
         var para_raw = jpInner(slice, string_view("<p"), string_view("</p>"))
         var para_filled = jpFillAnswers(&para_raw)
         var para_clean = jpClean(&para_filled)
         var para = jpFirstSentence(&para_clean)
-        if(para.size() > 0) { return jpWords(&para, 25) }
+        // An instruction ending in ":" is not a fact to carry forward. Say so
+        // plainly rather than turning a label into a fake takeaway.
+        if(jpLooseSentence(&para)) { return jpWords(&para, 25) }
         return jpNoFact()
     }
 
