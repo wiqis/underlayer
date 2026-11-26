@@ -40,20 +40,32 @@ live site. Do not describe the CI workflow below as a deployment pipeline.
 ## 2. CI — verification only
 
 `.github/workflows/ci.yml` runs on `push`, `pull_request` and
-`workflow_dispatch`. It:
+`workflow_dispatch`. As of **2026-11-26** (commits `e627de0` for the suite and
+`63b33eb` for the workflow) it:
 
-1. checks out the repository with read-only permissions;
-2. locates `TCCCompiler` from the `compiler_root` dispatch input or the
-   `CHEMICAL_ROOT` repository variable (it never guesses a path from a
-   developer's laptop, and fails with an actionable message if neither is set);
+1. checks out the repository with read-only permissions (`contents: read`);
+2. **provisions the compiler** — either a pre-provisioned `CHEMICAL_ROOT`/
+   `compiler_root` directory, or a checkout of the public Chemical source at the
+   pinned `CHEMICAL_REF` (`7a2da417…`), cached by ref and built from
+   `scripts/setup.sh` + CMake/Ninja if no cached binary exists. It records the
+   compiler SHA-256 in `build/compiler.sha256` and fails with an actionable
+   message if neither path yields `TCCCompiler`;
 3. builds the server with `-bm-modules --no-cache`;
 4. builds the ELF static pages with `bash scripts/build_static.sh elf --quiet`;
-5. starts the server on a free OS-assigned port with a **disposable**
+5. **builds the `@test` application** with
+   `"$UL_COMPILER" tests/chemical.mod -o build/tests-verify.exe --no-cache`
+   (deliberately **without** `--test`, which would propagate into dependencies);
+6. starts the server on a free OS-assigned port with a **disposable**
    `ci-underlayer.db`;
-6. runs the endpoint matrix, then
+7. runs the endpoint matrix, then the Chemical suite (parsing the `Summary: N
+   tests – P passed, F failed` line, because the runner exits 0 even when tests
+   fail, and refusing a zero-test run);
+8. runs **five** served-artifact checkers:
    `tools/journey_quality_check.py`, `tools/theme_check.py`,
-   `tools/lesson_pager_check.py` and `tools/helpful_dedupe_check.py`;
-7. stops the server in an `always()` step.
+   `tools/lesson_pager_check.py`, `tools/helpful_dedupe_check.py` and
+   `tools/bridge_probe.py` (three read-only POSTs proving the account-bridge
+   route exists; no registration, votes or progress writes);
+9. stops the server in an `always()` step.
 
 Any non-zero exit fails the job. There is **no deploy step, no publish step, no
 `git push`, and no secret of any kind** in the workflow.
@@ -71,11 +83,16 @@ Any non-zero exit fails the job. There is **no deploy step, no publish step, no
 - **The write probe needs a disposable DB.** `helpful_dedupe_check.py` registers
   two throwaway learners and casts votes. It is safe in CI because the database
   is created fresh for the job. Never point it at production.
-- **The `@test` suite is not in CI (yet).** `tests/chemical.mod` was unblocked on
-  2026-11-26 (A3): it builds with `TCCCompiler tests/chemical.mod -o ../build/tests.exe --no-cache`
-  (no `--test`) and runs 138/138 green. The workflow does not invoke it yet — wiring it
-  into CI belongs to A2/A5, and until then the workflow verifies the served artifact
-  only. That is not the same thing, and this document does not claim it is.
+- **The `@test` suite is in CI now (updated 2026-11-26).** The old statement —
+  that the suite was compiler-blocked and CI verified only the served artifact —
+  was true until A3 (`e627de0`) unblocked it and A2 (`63b33eb`) wired it in. It
+  builds as a separate application without `--test` and runs **138/138 green**
+  (`build/a2verify-tests.stripped.log`, 2026-11-26; `Summary: 138 tests - 138
+  passed, 0 failed`). The suite and the five served-artifact checkers are
+  complementary, not substitutes: the checkers probe a running server, the
+  suite exercises the modules directly. A GitHub-hosted runner execution of
+  this workflow has **not** been observed on this machine; the steps above were
+  verified locally against the same command sequence (A2 logs in `build/`).
 
 ## 3. Build and run
 
@@ -195,10 +212,14 @@ fresh row kept; nine wrong logins from one IP answered `401 ×8` then `429` with
 
 ## 6. Still open (do not mistake these for done)
 
-1. **No Content-Security-Policy.** Deliberate: the macros emit inline scripts
-   and styles by the thousand, so a policy forbidding inline breaks the product
-   and one with `unsafe-inline` buys almost nothing. First step is externalising
-   the inline scripts.
+1. **CSP externalisation is still open — the "no CSP" claim is historical
+   (corrected 2026-11-26).** At the time this list was written the site sent no
+   CSP; a live probe on 2026-11-26 returns
+   `Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://storage.googleapis.com; connect-src 'self' https://account.wiqis.com; frame-src https://account.wiqis.com https://accounts.google.com; form-action 'self'; base-uri 'self'; object-src 'none'`
+   (plus HSTS `max-age=31536000`) on `/courses/elf/lessons/bytes`. It still
+   allows `'unsafe-inline'` because the macros emit inline scripts and styles
+   by the thousand; tightening it via externalisation remains the open work,
+   which is why this item is not deleted.
 2. **SQLite concurrency.** One handle behind a 12-thread pool. 40 concurrent
    writes stored 40/40 with no loss in the test performed, but a single handle
    cannot be *documented* safe without `SQLITE_OPEN_FULLMUTEX` or a connection
@@ -207,15 +228,26 @@ fresh row kept; nine wrong logins from one IP answered `401 ×8` then `429` with
    exist.
 4. **No deployment automation, rollback automation or post-deploy monitoring**
    (checklist 15.4.3–15.4.7). The founder deploys by hand.
-5. **CI limits** — see §2: one platform, no browser, no `@test` suite, and a
-   write probe that needs a disposable database.
-6. **`tools/checker_nonvacuity.py`'s `theme_check` plant is stale.** It plants
-   `if(lesson) { return }` in `content/src/theme_boot.ch`, but that guard was
-   removed when the theme boot began covering lessons too, and it looks for the
-   old phrase "inside <head>" in the checker output. The checker itself was
-   proven non-vacuous directly (missing script, script moved to body, stale key
-   and missing `apply(get())` all fail), but the non-vacuity harness needs a new
-   plant before it can certify this checker again.
+5. **CI limits — updated 2026-11-26; see §2.** One platform (`windows-latest`),
+   no browser in CI, and the `helpful_dedupe_check.py` write probe needs a
+   disposable database. These remain true. The old "no `@test` suite" limit is
+   **fixed**: the suite runs in CI (138/138) alongside five served-artifact
+   checkers (`e627de0`, `63b33eb`), and the compiler is provisioned in the job.
+   What is still unverified here is a *GitHub-hosted runner* execution, not the
+   command sequence.
+6. **Non-vacuity plants — theme repaired, pager still open (2026-11-26).** The
+   old `theme_check` plant (`if(lesson) { return }` in
+   `content/src/theme_boot.ch`, grep for "inside <head>") was genuinely stale;
+   it was repaired in commit `cb47c27` to no-op `render_theme_boot_js`, and
+   verified on a seeded copy: `build/a4-plant-verify.log` shows the control
+   `theme_check: ALL 56 CHECKS PASSED` and the planted build failing 7/56 with
+   the named pre-paint boot checks. Do **not** re-repair it. The CI agent also
+   reported a remaining `check_lesson_pager` plant-marker issue: the planted
+   run in `build/a5-pager-plant.log` exited 1 but did not emit the expected
+   `'truncated'` marker (`named_truncated=False caught=False`), and
+   `build/a5-pager-plant3.log` ends in a connection-reset traceback instead of a
+   named failure. That negative case is therefore **not certified**; it is left
+   open rather than silently marked green.
 7. **Two owners for the rate-limit purge** (§5). Consolidating them belongs to
    the schema layer; until then the wider sweep is harmless dead weight at
    startup.

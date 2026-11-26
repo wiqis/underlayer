@@ -25,7 +25,9 @@
 
 ### Exercism.org
 
-**What they do:** 8660 exercises across 83 programming languages. Human mentoring. Web editor + CLI.
+**What they do:** **8,970 exercises across 85 programming languages** (Exercism's
+own homepage, fetched 2026-11-26; the earlier figure of 8,660 / 83 was true
+when this document was written). Human mentoring. Web editor + CLI.
 
 **Strengths:**
 - 100% free (non-profit)
@@ -40,7 +42,10 @@
 - No progression tracking or retention metrics
 - No mobile experience
 
-**What we take:** Free/open model, mentorship concept, exercise-based learning.
+**What we take:** Free model, mentorship concept, exercise-based learning, and
+openly licensed **course content** (founder ruling §6.7, 2026-11-26: license
+course content under an explicit licence; do not call the whole product open
+source).
 
 **What we improve:** Spaced repetition, structured curriculum, mobile/offline, retention tracking.
 
@@ -147,7 +152,7 @@
 
 | Feature | Brilliant | Exercism | CodeCrafters | roadmap | nand2tetris | OST2 | Coursera | **Underlayer** |
 |---|---|---|---|---|---|---|---|---|
-| Spaced repetition (FSRS) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | **✅** |
+| Spaced repetition (FSRS) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | **✅** (not unique — Anki ships FSRS natively; see note below) |
 | Interleaved practice | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | **✅** |
 | Retrieval-first design | Partial | Partial | ❌ | ❌ | ❌ | ❌ | ❌ | **✅** |
 | Anxiety-friendly pacing | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | **✅** |
@@ -157,18 +162,34 @@
 | Retention tracking | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | **✅** |
 | Weakness detection | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | **✅** |
 | Course portability | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ❌ | **✅** |
-| Free + open source | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | **✅** |
+| Free + open source | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ | ❌ | **Free; course content under an explicit licence only** (§6.7 ruling, 2026-11-26) |
 | Misconception modeling | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | **✅** |
 | Difficulty reframing | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | **✅** |
 | Source traceability | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | **✅** |
 
+**Two corrections, 2026-11-26 (A1).** The FSRS row used to imply only Underlayer
+had spaced repetition. That is false: **Anki ships FSRS natively** — global
+enable, parameter optimizer, desired retention (default 90%), workload
+simulator, per-preset parameters and cross-client sync on Anki desktop,
+AnkiWeb, AnkiMobile and AnkiDroid (`docs.ankiweb.net/deck-options.html`,
+fetched 2026-11-26). Anki is deliberately not given a column here because the
+other rows were not re-measured against it. The "free + open source" cell was a
+product-wide claim; the founder ruled on 2026-11-26 (`Docs/decisions.md`, §6.7)
+to publish **course content under an explicit licence** and not claim the whole
+product is open source (private product repos, frozen Play id).
+
 ## Underlayer's Unique Position
 
+Corrected 2026-11-26: FSRS by itself is **not** unique (Anki has it); the claim
+is about *embedding* scheduling inside a verified, guided curriculum.
+
 No existing platform combines:
-1. **Spaced repetition** (FSRS) with
+1. **Spaced repetition embedded in a guided curriculum** (Anki ships FSRS too —
+   the differentiator is the curriculum around it, not the algorithm) with
 2. **Deep technical content** (ELF, PE, TLS, linkers) with
 3. **Anxiety-friendly design** (pacing, energy management, struggle normalization) with
 4. **Course portability** (download, offline, own your data) with
 5. **AI-constrained generation** (verified against specs, no hallucination)
 
-This is the gap Underlayer fills.
+This is the gap Underlayer fills. Do not restate it as "we are the only ones
+with FSRS" in public copy.

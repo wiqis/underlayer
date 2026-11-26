@@ -142,11 +142,33 @@ pull; store the last `server_now` for an incremental pull.
 **400** `{"error":"since must be a unix timestamp"}` when `since` is absent,
 empty or contains anything but decimal digits.
 
-## Blocked, not implemented: S-3 (Wiqis account token bridge)
+## S-3 account-bridge route: deployed, but not proven end to end
 
-`auth_get_learner_id` resolves **only** Underlayer's own 64-hex session token
-against `auth_sessions`; it does not accept an `account.wiqis.com` access
-token. A bridge (`POST /api/auth/exchange`) needs a shared secret / token
-introspection endpoint, which is not available, so it is explicitly deferred.
-Until then the Android client uses Underlayer's own register/login (Phase B of
-the client plan), not `account-management`.
+**Corrected 2026-11-26 (A1).** The text that used to live here said that
+`POST /api/auth/exchange` needed a shared secret / token introspection endpoint
+and was "explicitly deferred", and that `auth_get_learner_id` resolved only
+Underlayer's own 64-hex session token. That was true of the earlier design; it
+is **not** the deployed reality. The deployed route is
+`POST /api/auth/from-account` (`web/src/handlers_account_bridge.ch:98-169`):
+a browser forwards the account `refresh_token` cookie and is validated with
+`GET /api/me`; an Android client sends `Authorization: Bearer <account access
+token>` and is validated with `POST /v1/token/check` plus
+`POST /v1/account/info`. Identity only — no learning data is written to the
+account service. `auth_get_learner_id` now resolves a bearer **or** an HttpOnly
+cookie (`web/src/handlers_auth.ch:82-98`).
+
+Measured 2026-11-26 against `https://underlayer.wiqis.com` (read-only POSTs;
+`tools/bridge_probe.py --deployed`):
+
+| Request | Status | Meaning |
+|---|---|---|
+| `POST /api/auth/from-account` with no bearer and no cookie | **401** `{"error":"account credentials required"}` | route exists and guards credentials |
+| `POST /api/auth/from-account` with `Authorization: Bearer <garbage>` | **502** `{"error":"invalid account token check response"}` on the deployed service today | route exists; the account backend was unreachable so the token check returned no usable body. When the account backend is reachable and rejects the token it answers **401** (`handlers_account_bridge.ch:111-125`) — the local case. Both are non-404, which is the route-existence proof. |
+| `POST /api/no-such-endpoint` (and `/api/no-such-route-bridge-probe`) | **404** | unknown POST routes still 404 |
+
+**Limit, not a claim of success:** no real `account.wiqis.com` token was
+exchanged, no `/api/auth/me` was resolved with a bridged session, and no
+progress batch was pushed in this measurement. End-to-end identity/progress
+remains the D1 work package in `production-ready-plan.md` (EC9); the Android
+client still treats sign-in as plumbing only. A garbage-token POST never
+registers a learner or creates a session.

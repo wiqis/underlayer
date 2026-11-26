@@ -102,6 +102,15 @@ claim, the Tigris/Fly.io stack and the aspirational CI YAML are gone; manual
 deployment, local SQLite, the verification-only workflow and the backup/restore
 procedure are now described as they are.
 
+**Updated 2026-11-26 (A1).** This section is the state *at the hardening pass*:
+the workflow then had no compiler-provisioning step and no `@test` suite. Both
+have since been added (`e627de0` unblocked the suite; `63b33eb` wired the
+workflow: pinned compiler source/checkout/cache, separate test build, a summary
+gate that runs **138/138** green, and five served-artifact checkers). See
+`docs/deployment.md` §2 for the current contract and its remaining limits. The
+"workflow was not executed on a runner" statement above remains true on this
+machine; the new steps were verified locally, not on GitHub-hosted infrastructure.
+
 ## 3. Backup tooling
 
 **Before.** No script copied or verified the database (audit §7.5).
@@ -208,8 +217,13 @@ py -3 tools/backup_db.py <copy> <temp-dir>
 
 ## 7. Remaining open
 
-1. **CSP** — still deliberately absent; inline scripts/styles from the macros
-   make a meaningful policy a separate externalisation project.
+1. **CSP — resolved after this pass; the statement below is historical
+   (updated 2026-11-26, A1).** It was true at the time of the hardening pass
+   that no CSP was sent. A live probe later on 2026-11-26 returns
+   `Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://storage.googleapis.com; connect-src 'self' https://account.wiqis.com; frame-src https://account.wiqis.com https://accounts.google.com; form-action 'self'; base-uri 'self'; object-src 'none'`
+   on `/courses/elf/lessons/bytes`. It still contains `'unsafe-inline'`, so
+   **externalisation remains open**; only the "no CSP at all" part is fixed.
+   Nothing in §1–§6 above was rewritten.
 2. **SQLite concurrency** — one handle behind a 12-thread pool; 40/40 concurrent
    writes survived, but it cannot be *documented* safe without FULLMUTEX or a
    connection per thread, and it caps the platform at one process.
@@ -218,12 +232,24 @@ py -3 tools/backup_db.py <copy> <temp-dir>
 4. **CI limits** — one Windows platform (compiler only verified there), no
    browser for the live theme proof, no `@test` suite (compiler-blocked), and a
    write probe that needs a disposable DB. The workflow itself was not run on a
-   GitHub runner here.
-5. **Stale non-vacuity plant** — `tools/checker_nonvacuity.py::check_theme`
-   plants `if(lesson) { return }` in `content/src/theme_boot.ch` and greps for
-   "inside <head>". Both were true of the old code; neither is true now. The
-   checker was proven non-vacuous by direct helper probes in §1, but that harness
-   needs a new plant before it certifies `theme_check.py` again.
+   GitHub runner here. **(Updated 2026-11-26: the "no `@test` suite" part is
+   fixed — the suite now runs in CI at 138/138 with the compiler provisioned;
+   see the dated note in §2 and `docs/deployment.md` §2. The other limits in this
+   item are unchanged.)**
+5. **Stale non-vacuity plant — theme repaired and verified; pager still open
+   (updated 2026-11-26, A1).** The stale plant described below was real at the
+   time: it planted `if(lesson) { return }` in `content/src/theme_boot.ch` and
+   grepped for "inside <head>". Commit `cb47c27` repaired it to no-op
+   `render_theme_boot_js`, and the seeded-copy run in `build/a4-plant-verify.log`
+   proves it now fails `theme_check.py` (control 56/56; planted 7 of 56 checks
+   failed, including "a lesson page still carries the small pre-paint boot").
+   Direct helper probes in §1 remain valid. Do **not** re-repair the theme
+   plant. A separate issue remains open: the CI agent reported that
+   `checker_nonvacuity.py::check_lesson_pager` does not see its expected
+   `'truncated'` marker in the planted run (`build/a5-pager-plant.log`: exit 1
+   but `named_truncated=False caught=False`; `build/a5-pager-plant3.log` ends
+   in a connection-reset traceback), so that checker's negative case is not
+   certified. It was not changed by this documentation sweep.
 6. **Two purge owners** — schema_migrations (2 windows) and rate_limit.ch (24h).
    Harmless today; consolidate into the schema layer when touching startup.
 7. **`helpful_dedupe_check.py` is rate-limit-sensitive** — two registers per run

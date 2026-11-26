@@ -2,13 +2,26 @@
 
 ## Status
 
-Current phase: **Phase 2 — Learning Engine ✅**
+**Updated 2026-11-26 (A1).** The original status below was accurate for the
+early build and is kept as a dated historical record; it is no longer the
+current state.
+
+Current phase: **Phase 3 shipped; Phase 4 selectively shipped; production
+hardening in progress.** Live measurement on 2026-11-26: `GET /api/courses`
+returns **33 courses / 329 concepts**, and the guided journey is shipped across
+the lessons (web and Android). Account, FSRS/review, progress and the guided
+journey are live; the remaining Phase 4 items and the production-readiness gaps
+are tracked in `production-ready-plan.md` and `docs/deployment.md` §6.
 
 - Phase 0: Planning ✅
 - Phase 1: Foundation ✅
 - Phase 2: Learning Engine ✅ (FSRS, weakness detection, interleaved review queue)
-- Phase 3: Course Content (partial — 12 concepts done)
-- Phase 4: Platform Polish (not started)
+- Phase 3: Course Content ✅ (33 courses / 329 concepts; formerly "partial — 12 concepts done")
+- Phase 4: Platform Polish — partial (formerly "not started": account, progress,
+  reviews and guided journey shipped; admin/auto-deploy/CSP externalisation remain open)
+
+The phase checklists and design decisions below this section are the original
+design record and have **not** been rewritten to match the shipped build.
 
 ## Dual-Mode Architecture (Static + Backend)
 
