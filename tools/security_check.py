@@ -97,8 +97,14 @@ import time
 import urllib.error
 import urllib.request
 
-DB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                  'underlayer.db')
+DEFAULT_DB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           'underlayer.db')
+# H4: the checker MUST inspect the same database the server was started
+# with. Before this fix it always opened the default `underlayer.db`,
+# so against a disposable `DATABASE_URL` every registration looked like
+# "the row was not written" and every counter clear hit the wrong file.
+DB = os.environ.get('DATABASE_URL') or DEFAULT_DB
+ACTIVE_DB = DB
 
 PW = 'security-check-password-1'
 TAG = 'secchk'
@@ -143,6 +149,56 @@ def clear_rate_limits():
         return False
 
 
+# The fixed window in web/src/rate_limit.ch is 300 integer unix seconds, and the
+# server's window start is `now - now % 300`.  The checker must use the SAME
+# formula when it seeds a bucket, or the server treats the seeded row as stale
+# and resets it to 1.
+WINDOW_SECONDS = 300
+
+
+def current_window():
+    now = int(time.time())
+    return now - (now % WINDOW_SECONDS)
+
+
+def wait_for_window_room(seconds_needed=20):
+    """Keep a whole gate probe inside one window.
+
+    Each probe is at most 10 requests.  Firing `ceiling + 4` requests used to
+    take longer than 300 seconds on this machine, so the window rolled over
+    mid-flood, the server reset the count, and a working gate reported no 429
+    at all.  Waiting for a fresh window when the current one is nearly over
+    makes the seeded count deterministic rather than wall-clock-dependent.
+    """
+    remaining = WINDOW_SECONDS - (int(time.time()) % WINDOW_SECONDS)
+    if remaining < seconds_needed:
+        time.sleep(remaining + 0.5)
+
+
+def rate_rows():
+    """Every counter row, so a gate's real bucket name can be READ, not guessed.
+
+    Authenticated gates key on `u:<learner id>`, anonymous gates on `ip:<peer>`;
+    the checker has no business reconstructing either from the outside.
+    """
+    c = db()
+    try:
+        return c.execute('select bucket, window_start, count from rate_limits').fetchall()
+    finally:
+        c.close()
+
+
+def seed_rate_count(bucket, count, window_start):
+    """Move one real bucket just below its ceiling, inside the current window."""
+    c = db()
+    try:
+        c.execute('update rate_limits set count = ?, window_start = ? '
+                  'where bucket = ?', (count, window_start, bucket))
+        c.commit()
+    finally:
+        c.close()
+
+
 def http(method, path, port, token=None, body=None, timeout=30):
     url = 'http://localhost:%d%s' % (port, path)
     data = None
@@ -163,7 +219,18 @@ def http(method, path, port, token=None, body=None, timeout=30):
 
 
 def db():
-    return sqlite3.connect(DB, timeout=20)
+    return sqlite3.connect(ACTIVE_DB, timeout=20)
+
+
+def guard_disposable():
+    """This tool registers, deletes and clears counters; refuse a production DB."""
+    name = os.path.basename(ACTIVE_DB).lower()
+    markers = ('verify-', 'ci-', 'test', 'disposable', 'scratch')
+    if not any(m in name for m in markers):
+        print('REFUSED: %s has no disposable marker; security_check writes to '
+              'the DB and must only run on a throwaway copy.' % ACTIVE_DB)
+        return False
+    return True
 
 
 def stored_hash(email):
@@ -270,11 +337,18 @@ def selftest():
 
 def main():
     ap = argparse.ArgumentParser()
+    global ACTIVE_DB
     ap.add_argument('--port', type=int, default=9000)
+    ap.add_argument('--db', default=None,
+                    help='SQLite path (defaults to DATABASE_URL then %s)' % DEFAULT_DB)
     ap.add_argument('--selftest', action='store_true')
     args = ap.parse_args()
     if args.selftest:
         return selftest()
+    if args.db:
+        ACTIVE_DB = args.db
+    if not guard_disposable():
+        return 2
 
     st, _ = http('GET', '/api/health', args.port)
     if st != 200:
@@ -285,7 +359,7 @@ def main():
         c.execute('select 1 from learners limit 1')
         c.close()
     except Exception as e:  # noqa: BLE001
-        print('FAIL: cannot read %s (%s).  NOT a pass.' % (DB, e))
+        print('FAIL: cannot read %s (%s).  NOT a pass.' % (ACTIVE_DB, e))
         return 2
 
     # Start from a clean limiter so this run measures the security properties and
@@ -561,46 +635,91 @@ def main():
         # Each is given its own counter key so one gate cannot be mistaken for
         # another, and `clear_rate_limits` between them so each refusal is the
         # gate's own doing.
+        #
+        # HOW THE FLOOD IS FIRED NOW.  Firing `ceiling + 4` (124) requests for
+        # the 120-ceiling gates took > 300 seconds here, so the fixed window
+        # rolled over mid-flood, the server reset the count, and no 429 was ever
+        # seen even though the gate was working.  Instead, three real requests
+        # prove the gate WRITES a row (no row = "compiled but never ran", the
+        # defect this check exists for), the real bucket is read back from the
+        # DB and seeded to `ceiling - 2` in the CURRENT window, and four more
+        # requests make the first refusal land deterministically at index 2.
+        # The ceilings are unchanged and 200s are still never a pass.
         if had_limiter:
+            # The last item is the GROUP literal passed to rate_limit_* in
+            # web/src/rate_limit.ch.  The full bucket is "group|u:<learner>" or
+            # "group|ip:<peer>", so it is read back from the DB, never built.
             GATES = [
                 ('/api/auth/login', {'email': 'nobody@t.com',
-                                      'password': 'wrong'}, 8),
+                                      'password': 'wrong'}, 8, 'login'),
                 ('/api/auth/register', {'email': 'gate-probe@t.com',
                                         'password': 'password123',
-                                        'name': 'Probe'}, 8),
+                                        'name': 'Probe'}, 8, 'register'),
                 ('/api/exercises/submit?exercise_id=elf_bytes_0&answer=a',
-                 {'course_id': 'elf'}, 120),
+                 {'course_id': 'elf'}, 120, 'exercise_submit'),
                 ('/api/feedback', {'course_id': 'elf', 'concept_id': 'bytes',
                                    'kind': 'correction',
-                                   'message': 'gate probe'}, 120),
+                                   'message': 'gate probe'}, 120, 'feedback'),
                 ('/api/feedback/report-exercise',
-                 {'exercise_id': 'elf_bytes_0', 'reason': 'gate probe'}, 120),
-                ('/api/learners', {}, 8),
+                 {'exercise_id': 'elf_bytes_0', 'reason': 'gate probe'}, 120,
+                 'report_exercise'),
+                ('/api/learners', {}, 8, 'create_learner'),
             ]
-            for path, body, ceiling in GATES:
-                clear_rate_limits()
-                # Fire ceiling+4 times; a gate that refuses nothing returns 200
-                # (or 401/403) every time and is caught by the last probe.
-                need = ceiling + 4
-                codes = []
-                for _ in range(need):
-                    stg, _b = http('POST', path, args.port, token=tokens.get(
-                        e1) if path.startswith(('/api/exercises',
-                                               '/api/feedback')) else None,
-                        body=json.dumps(body))
-                    codes.append(stg)
-                refused = [c for c in codes if c == 429]
+            for path, body, ceiling, group in GATES:
                 name = path.split('?')[0]
-                check('%s refuses a flood (%d)' % (name, ceiling),
+                tok = tokens.get(e1) if path.startswith(('/api/exercises',
+                                                        '/api/feedback')) else None
+                payload = json.dumps(body)
+                # All 7 requests of this probe must land in ONE window: a
+                # rollover between seeding and the 429 would reset the count
+                # and make a working gate look like a dead one.
+                wait_for_window_room()
+                clear_rate_limits()
+
+                # Three harmless REAL requests prove the gate counts.  No row
+                # means the gate never ran -- exactly the "compiled but never
+                # fired" defect this check exists to catch.  Response codes
+                # alone are not evidence: 401/409/200 all count identically.
+                for _ in range(3):
+                    http('POST', path, args.port, token=tok, body=payload)
+                mine = [r for r in rate_rows() if r[0].startswith(group + '|')]
+                check('%s counts attempts in rate_limits' % name,
+                      len(mine) == 1 and mine[0][2] == 3,
+                      'rows for %s after 3 probes: %s (expected one row with '
+                      'count=3)' % (group, mine))
+                if len(mine) != 1:
+                    # No real bucket to seed.  The failure above is recorded;
+                    # do not invent one and pretend to have tested the gate.
+                    continue
+
+                # Seed the bucket the server itself created, in the CURRENT
+                # window, to two below the unchanged ceiling.
+                bucket = mine[0][0]
+                seed_rate_count(bucket, ceiling - 2, current_window())
+
+                # req1 -> ceiling-1, req2 -> ceiling, req3 -> first 429,
+                # req4 -> 429.  Four requests, a few milliseconds/seconds, no
+                # window rollover, so the index is deterministic.
+                codes = []
+                for _ in range(4):
+                    stg, _b = http('POST', path, args.port, token=tok, body=payload)
+                    codes.append(stg)
+                refused = [i for i, c in enumerate(codes) if c == 429]
+                first = refused[0] if refused else -1
+                check('%s refuses a flood after seeding to %d/%d'
+                      % (name, ceiling - 2, ceiling),
                       len(refused) > 0,
-                      'no 429 in %d requests (ceiling %d); statuses seen: %s'
-                      % (need, ceiling, sorted(set(codes))))
-                if refused:
-                    first = codes.index(429)
-                    check('%s refuses at the ceiling, not before it'
-                          % name, first == ceiling,
-                          'first 429 at request %s, ceiling is %d'
-                          % (first, ceiling))
+                      'seeded %s to %d; 4 requests answered %s'
+                      % (bucket, ceiling - 2, codes))
+                check('%s refuses exactly at the seeded ceiling (index 2)'
+                      % name, first == 2,
+                      'seeded count %d -> first 429 at index %s, expected 2'
+                      % (ceiling - 2, first))
+                check('%s does not refuse before the seeded ceiling'
+                      % name,
+                      all(c != 429 for c in codes[:2]),
+                      'first two requests after seeding: %s (neither may be 429)'
+                      % codes[:2])
             clear_rate_limits()
         else:
             check('every rate-limit gate is present', False,

@@ -141,10 +141,18 @@ public func main() : int {
         // 8 per 5 min -- the AUTH ceiling, not the learning one, because this inserts into `learners`, which is the ACCOUNTS table.
         // Measured before this: it answered 200 to an unauthenticated caller, forever, and every call attempted an INSERT with a hardcoded email and no password.
         // It reads no request body at all and exists for tests/src/additional_api_test.ch
-        // See web/src/rate_limit.ch.
-        // See web/src/rate_limit.ch.
-
-        return underlayer_web::deliver(&req, underlayer_web::handle_create_learner(db, &req))
+        // See web/src/rate_limit.ch. The limiter function existed but had no
+        // CALL SITE until H4's live gate caught it: the route answered 200
+        // forever and wrote no bucket row. A local copy gives the by-value
+        // closure a real *DbClient (the &raw db capture shape compiles but
+        // silently never runs -- checklist 2.2.63).
+        var dbp = db
+        var gate = underlayer_web::rate_limit_create_learner(dbp, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return underlayer_web::deliver_with_learner(request_db(), &req, refusal)
+        }
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_create_learner(db, &req))
     })
     srv.router.add("GET", "/api/learners/:learnerId", ||(req) => {
         var db = request_db()
@@ -152,51 +160,51 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var learner_id = segments.at_ref(2)
-            return underlayer_web::deliver(&req, underlayer_web::handle_get_learner(db, learner_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_learner(db, learner_id, &req))
         } else {
             var body = std::string("{\"error\": \"missing learner id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     // ---- Health check ----
     srv.router.add("GET", "/api/health", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_health(&req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_health(&req))
     })
 
     // Review page (HTML UI)
     srv.router.add("GET", "/review", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_review_page(db, &courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_review_page(db, &courses_dir, &req))
     })
     // Progress page (HTML UI)
     srv.router.add("GET", "/progress", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_progress_page(db, &courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_progress_page(db, &courses_dir, &req))
     })
     // Dashboard page (7.2.4, 7.2.5, 1.5.20)
     srv.router.add("GET", "/dashboard", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_dashboard(db, &courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_dashboard(db, &courses_dir, &req))
     })
     // Knowledge Health page. Server-rendered from the learner's own rows, so it
     // works with JS off; gated because unsigned it would be four zeroes.
     srv.router.add("GET", "/health", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_knowledge_health_page(db, &courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_knowledge_health_page(db, &courses_dir, &req))
     })
     // Course listing
     srv.router.add("GET", "/api/courses", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
-        return underlayer_web::deliver(&req, underlayer_web::handle_list_courses(&courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_list_courses(&courses_dir, &req))
     })
     // Filter Courses (7.1.7)
     srv.router.add("GET", "/api/courses/all", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
-        return underlayer_web::deliver(&req, underlayer_web::handle_filter_courses(&courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_filter_courses(&courses_dir, &req))
     })
     // Course detail
     srv.router.add("GET", "/api/courses/:courseId", ||(req) => {
@@ -205,10 +213,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var course_id = segments.at_ref(2)
-            return underlayer_web::deliver(&req, underlayer_web::handle_get_course(&courses_dir, course_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_course(&courses_dir, course_id, &req))
         } else {
             var body = std::string("{\"error\": \"missing course id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     // S-1: structured unit index for the Android stepper, derived from the
@@ -224,11 +232,11 @@ public func main() : int {
             var tail = segments.at_ref(5)
             var units_tail = std::string_view("units")
             if(tail.equals(&units_tail)) {
-                return underlayer_web::deliver(&req, underlayer_web::handle_lesson_units(&courses_dir, course_id, concept_id, &req))
+                return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_lesson_units(&courses_dir, course_id, concept_id, &req))
             }
         }
         var body = std::string("{\"error\":\"missing course or concept id\"}")
-        return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
     })
     // Native lesson JSON for the Android client.  Same frozen contract as the
     // static .native.json companion.  Registered BEFORE the generic lesson
@@ -245,11 +253,11 @@ public func main() : int {
             var tail = segments.at_ref(5)
             var native_tail = std::string_view("native")
             if(tail.equals(&native_tail)) {
-                return underlayer_web::deliver(&req, underlayer_web::handle_lesson_native(&courses_dir, course_id, concept_id, &req))
+                return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_lesson_native(&courses_dir, course_id, concept_id, &req))
             }
         }
         var body = std::string("{\"error\":\"missing course or concept id\"}")
-        return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
     })
     // Lesson viewer via API
     srv.router.add("GET", "/api/courses/:courseId/lessons/:conceptId", ||(req) => {
@@ -267,53 +275,53 @@ public func main() : int {
         if(segments.size() >= 5) {
             var course_id = segments.at_ref(2)
             var concept_id = segments.at_ref(4)
-            return underlayer_web::deliver(&req, underlayer_web::handle_lesson(&courses_dir, course_id, concept_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_lesson(&courses_dir, course_id, concept_id, &req))
         } else {
             var body = std::string("{\"error\": \"missing course or concept id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     // ---- Review API ----
     srv.router.add("GET", "/api/review/start", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_review_start(db, &courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_review_start(db, &courses_dir, &req))
     })
     srv.router.add("POST", "/api/review/submit", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_review_submit(db, &mut req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_review_submit(db, &mut req))
     })
     srv.router.add("POST", "/api/review/end", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_review_end(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_review_end(db, &req))
     })
     // ---- Due Items ----
     srv.router.add("GET", "/api/review/due", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_review_due(db, &courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_review_due(db, &courses_dir, &req))
     })
     // ---- Session Recommendations (1.2.25) ----
     srv.router.add("GET", "/api/review/recommendations", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_session_recommendations(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_session_recommendations(db, &req))
     })
     // ---- Time-of-Day Recommendation (1.2.27) ----
     srv.router.add("GET", "/api/review/time-recommendation", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_session_time_recommendation(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_session_time_recommendation(db, &req))
     })
     // ---- Search (7.1.6) ----
     srv.router.add("GET", "/api/search", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
-        return underlayer_web::deliver(&req, underlayer_web::handle_search(&courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_search(&courses_dir, &req))
     })
     // Concept search: titles, descriptions, module names and course titles
     // across all courses. Additive — /api/search's response shape is a
     // shipped contract and is left alone.
     srv.router.add("GET", "/api/search/concepts", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
-        return underlayer_web::deliver(&req, underlayer_web::handle_search_concepts(&courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_search_concepts(&courses_dir, &req))
     })
     // NOTE: "GET /api/courses/all" (Filter Courses, 7.1.7) is already
     // registered near the top of this file, directly after GET /api/courses.
@@ -325,13 +333,13 @@ public func main() : int {
     // ---- Recent History (7.1.9) ----
     srv.router.add("GET", "/api/recent", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_recent_history(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_recent_history(db, &req))
     })
     // ---- Progress API ----
     srv.router.add("GET", "/api/progress", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_progress(db, &courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_progress(db, &courses_dir, &req))
     })
     // ---- What am I doing: courses in progress, coverage, and the exercises
     // this learner got wrong (4.4.3).  One payload because /dashboard draws
@@ -341,22 +349,22 @@ public func main() : int {
     srv.router.add("GET", "/api/me/overview", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_my_overview(db, &courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_my_overview(db, &courses_dir, &req))
     })
     // ---- Which quiz did I fail.  The same list without the course summary. ----
     srv.router.add("GET", "/api/exercises/failures", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_exercise_failures(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_exercise_failures(db, &req))
     })
     // ---- Progress Export (6.1.7) ----
     srv.router.add("GET", "/api/progress/export", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_progress_export(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_progress_export(db, &req))
     })
     // ---- Session Analytics (6.2.1) ----
     srv.router.add("GET", "/api/analytics/sessions", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_session_analytics(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_session_analytics(db, &req))
     })
     // ---- Concept Analytics (6.2.2) ----
     srv.router.add("GET", "/api/analytics/concept/:conceptId", ||(req) => {
@@ -366,10 +374,10 @@ public func main() : int {
         if(segments.size() >= 4) {
             var concept_id = segments.at_ref(3)
             var course_id = string("elf")
-            return underlayer_web::deliver(&req, underlayer_web::handle_concept_analytics(db, concept_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_concept_analytics(db, concept_id, &req))
         } else {
             var body = std::string("{\"error\": \"missing concept id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     // ---- Course Analytics (6.2.3) ----
@@ -379,114 +387,114 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
             var course_id = segments.at_ref(3)
-            return underlayer_web::deliver(&req, underlayer_web::handle_course_analytics(db, course_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_course_analytics(db, course_id, &req))
         } else {
             var body = std::string("{\"error\": \"missing course id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     // ---- Difficulty Analytics (6.2.8) ----
     srv.router.add("GET", "/api/analytics/difficulty", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_difficulty_analytics(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_difficulty_analytics(db, &req))
     })
     // ---- Error Analytics (6.2.9) ----
     srv.router.add("GET", "/api/analytics/errors", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_error_analytics(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_error_analytics(db, &req))
     })
     // ---- Engagement Analytics (6.2.13) ----
     srv.router.add("GET", "/api/analytics/engagement", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_engagement_analytics(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_engagement_analytics(db, &req))
     })
     // ---- Velocity Analytics (6.2.14) ----
     srv.router.add("GET", "/api/analytics/velocity", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_velocity_analytics(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_velocity_analytics(db, &req))
     })
     // ---- Learning Analytics (P2 6.2.4-6.2.7, 6.2.10-6.2.12, 6.2.15) ----
     srv.router.add("GET", "/api/analytics/temporal", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_temporal_analytics(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_temporal_analytics(db, &req))
     })
     srv.router.add("GET", "/api/analytics/retention", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_retention_analytics(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_retention_analytics(db, &req))
     })
     srv.router.add("GET", "/api/analytics/dropoff", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_dropoff_analytics(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_dropoff_analytics(db, &req))
     })
     srv.router.add("GET", "/api/analytics/funnel", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_funnel_analytics(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_funnel_analytics(db, &req))
     })
     srv.router.add("GET", "/api/analytics/comparative", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_comparative_analytics(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_comparative_analytics(db, &req))
     })
     srv.router.add("GET", "/api/analytics/platform", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_platform_analytics(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_platform_analytics(db, &req))
     })
     srv.router.add("GET", "/api/analytics/cohorts", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_cohort_analytics(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_cohort_analytics(db, &req))
     })
     srv.router.add("GET", "/api/analytics/devices", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_device_analytics(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_device_analytics(db, &req))
     })
     // ---- Mobile progress sync (S-2).  Registered BEFORE
     // /api/progress/:courseId: otherwise "sync" is read as a course id. ----
     srv.router.add("GET", "/api/progress/sync", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_progress_sync_pull(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_progress_sync_pull(db, &req))
     })
     srv.router.add("POST", "/api/progress/sync", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_progress_sync_push(db, &mut req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_progress_sync_push(db, &mut req))
     })
     // ---- Course Progress API ----
     srv.router.add("GET", "/api/progress/:courseId", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_course_progress(db, &courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_course_progress(db, &courses_dir, &req))
     })
     // ---- Learning Goals (6.1.5) ----
     // GET was missing: the feature could write a goal and never read one back.
     srv.router.add("GET", "/api/goals", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_get_goals(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_goals(db, &req))
     })
     srv.router.add("POST", "/api/goals", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_set_goal(db, &mut req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_set_goal(db, &mut req))
     })
     srv.router.add("DELETE", "/api/goals", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_delete_goal(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_delete_goal(db, &req))
     })
     // ---- Weakness Dashboard (1.4.21) ----
     srv.router.add("GET", "/api/weaknesses", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_weakness_dashboard(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_weakness_dashboard(db, &req))
     })
     // ---- Weakness Export (1.4.23) ----
     srv.router.add("GET", "/api/weaknesses/export", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_weakness_export(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_weakness_export(db, &req))
     })
     // ---- Weakness Compare (1.4.22) ----
     srv.router.add("GET", "/api/weaknesses/compare", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_weakness_compare(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_weakness_compare(db, &req))
     })
     // ---- Weakness Alerts (1.4.24) ----
     srv.router.add("GET", "/api/weaknesses/alerts", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_weakness_alerts(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_weakness_alerts(db, &req))
     })
     // ---- Navigation API (7.1.2, 7.1.3, 7.1.5) ----
     // THE SAME TREE, WITHOUT A CONCEPT, and this route exists because
@@ -512,10 +520,10 @@ public func main() : int {
             // An empty concept id makes the handler omit the breadcrumbs and the
             // prev/next block, which is exactly the difference wanted here.
             var no_concept = std::string_view("")
-            return underlayer_web::deliver(&req, underlayer_web::handle_navigation(&courses_dir, course_id, &no_concept, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_navigation(&courses_dir, course_id, &no_concept, &req))
         } else {
             var body = std::string("{\"error\": \"missing course id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("GET", "/api/navigation/:courseId/:conceptId", ||(req) => {
@@ -525,10 +533,10 @@ public func main() : int {
         if(segments.size() >= 4) {
             var course_id = segments.at_ref(2)
             var concept_id = segments.at_ref(3)
-            return underlayer_web::deliver(&req, underlayer_web::handle_navigation(&courses_dir, course_id, concept_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_navigation(&courses_dir, course_id, concept_id, &req))
         } else {
             var body = std::string("{\"error\": \"missing course or concept id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     // ---- Nav Status (P2 7.1.13 progress indicator, P2 7.1.15 due indicator) ----
@@ -537,77 +545,77 @@ public func main() : int {
     srv.router.add("GET", "/api/nav-status", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_nav_status(db, &courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_nav_status(db, &courses_dir, &req))
     })
     // ---- Nav Search / Quick Jump (P2 7.1.10 command palette) ----
     srv.router.add("GET", "/api/nav-search", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_nav_search(&req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_nav_search(&req))
     })
 
     // ---- FSRS Settings (1.1.24-1.1.28) ----
     srv.router.add("POST", "/api/fsrs/optimize", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_fsrs_optimize(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_fsrs_optimize(db, &req))
     })
     srv.router.add("POST", "/api/fsrs/reset", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_fsrs_reset(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_fsrs_reset(db, &req))
     })
     srv.router.add("GET", "/api/fsrs/export", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_fsrs_export(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_fsrs_export(db, &req))
     })
     srv.router.add("POST", "/api/fsrs/import", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_fsrs_import(db, &mut req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_fsrs_import(db, &mut req))
     })
     // ---- Session History (1.2.21, 1.2.22) ----
     srv.router.add("GET", "/api/sessions", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_session_history(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_session_history(db, &req))
     })
     // ---- Session Detail (1.2.22) ----
     srv.router.add("GET", "/api/sessions/:sessionId", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_session_detail(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_session_detail(db, &req))
     })
     srv.router.add("GET", "/api/session/detail", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_session_detail(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_session_detail(db, &req))
     })
     // ---- Session Management (1.2.9-1.2.13) ----
     srv.router.add("POST", "/api/session/pause", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_session_pause(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_session_pause(db, &req))
     })
     srv.router.add("POST", "/api/session/resume", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_session_resume(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_session_resume(db, &req))
     })
     srv.router.add("POST", "/api/session/abort", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_session_abort(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_session_abort(db, &req))
     })
     srv.router.add("POST", "/api/session/undo", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_session_undo(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_session_undo(db, &req))
     })
     srv.router.add("POST", "/api/session/skip", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_session_skip(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_session_skip(db, &req))
     })
     // ---- Bulk Exercise Import API ----
     srv.router.add("POST", "/api/exercises/import", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::refuse_exercise_import(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::refuse_exercise_import(db, &req))
     })
     srv.router.add("POST", "/api/exercises/seed", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::refuse_exercise_seed(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::refuse_exercise_seed(db, &req))
     })
     srv.router.add("GET", "/api/exercises/stats", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_exercise_stats(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_exercise_stats(db, &req))
     })
     // ---- Exercise API (4.1.1-4.1.5, 4.2.1-4.2.5) ----
     srv.router.add("GET", "/api/exercises/:conceptId", ||(req) => {
@@ -616,10 +624,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var concept_id = segments.at_ref(2)
-            return underlayer_web::deliver(&req, underlayer_web::handle_get_exercises(db, concept_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_exercises(db, concept_id, &req))
         } else {
             var body = std::string("{\"error\": \"missing concept id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     // THE RATE-LIMIT GATE ON THIS ROUTE, and the reason this closure captures
@@ -658,13 +666,13 @@ public func main() : int {
         var gate = underlayer_web::rate_limit_exercise_submit(dbp, &req)
         if(gate is std::Option.Some) {
             var Some(refusal) = gate else unsafe { unreachable }
-            return refusal
+            return underlayer_web::deliver_with_learner(request_db(), &req, refusal)
         }
-        return underlayer_web::deliver(&req, underlayer_web::handle_exercise_submit(db, &mut req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_exercise_submit(db, &mut req))
     })
     srv.router.add("GET", "/api/exercises/hint", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_exercise_hint(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_exercise_hint(db, &req))
     })
     // Course index — /courses. Registered BEFORE /courses/:courseId so the
     // exact path wins over the parameterised one. This is the page every
@@ -674,20 +682,20 @@ public func main() : int {
     // /courses â€” the collection index.
     srv.router.add("GET", "/courses", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
-        return underlayer_web::deliver(&req, underlayer_web::handle_courses_page(&courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_courses_page(&courses_dir, &req))
     })
     // Learning path — the three routes through the collection. Distinct from
     // /courses/:courseId/path, which is the per-course dependency graph.
     // /learning-path â€” the three routes in full.
     srv.router.add("GET", "/learning-path", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
-        return underlayer_web::deliver(&req, underlayer_web::handle_learning_path_index(&courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_learning_path_index(&courses_dir, &req))
     })
     // Search — concept search, server-rendered from ?q=
     // /search â€” server-rendered from ?q=.
     srv.router.add("GET", "/search", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
-        return underlayer_web::deliver(&req, underlayer_web::handle_search_page(&courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_search_page(&courses_dir, &req))
     })
     // Course landing page
     srv.router.add("GET", "/courses/:courseId", ||(req) => {
@@ -697,10 +705,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 2) {
             var course_id = segments.at_ref(1)
-            return underlayer_web::deliver(&req, underlayer_web::handle_course_landing(db, &courses_dir, course_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_course_landing(db, &courses_dir, course_id, &req))
         } else {
             var home = std::string("/")
-            return underlayer_web::redirect_to(&home)
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::redirect_to(&home))
         }
     })
     // Lesson viewer via URL path
@@ -711,10 +719,10 @@ public func main() : int {
         if(segments.size() >= 4) {
             var course_id = segments.at_ref(1)
             var concept_id = segments.at_ref(3)
-            return underlayer_web::deliver(&req, underlayer_web::handle_lesson(&courses_dir, course_id, concept_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_lesson(&courses_dir, course_id, concept_id, &req))
         } else {
             var body = std::string("Not found")
-            return underlayer_web::deliver(&req, underlayer_web::send_status_text(404u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_status_text(404u, &body))
         }
     })
     // Static file serving for course output (HTML, CSS, JS, images)
@@ -730,65 +738,65 @@ public func main() : int {
             i = i + 1
         }
         if(has_ext) {
-            return underlayer_web::deliver(&req, underlayer_web::handle_static_file(&courses_dir, &path))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_static_file(&courses_dir, &path))
         } else {
             // Try course landing page
             var segments = underlayer_core::path_segments(&path)
             if(segments.size() >= 2) {
                 var course_id = segments.at_ref(1)
-                return underlayer_web::deliver(&req, underlayer_web::handle_course_landing(db, &courses_dir, course_id, &req))
+                return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_course_landing(db, &courses_dir, course_id, &req))
             } else {
                 var home = std::string("/")
-            return underlayer_web::redirect_to(&home)
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::redirect_to(&home))
             }
         }
     })
     // Home page â€” a per-request response (see the note on handle_home).
     srv.router.add("GET", "/", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_home(&req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_home(&req))
     })
 
     // ---- Account management routes (Section 16) ----
     // Auth pages
     srv.router.add("GET", "/login", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_login_page(&req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_login_page(&req))
     })
     srv.router.add("GET", "/register", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_register_page(&req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_register_page(&req))
     })
     // The no-JavaScript fallbacks.  Their hrefs are LOCAL — a sign-in control
     // that navigated to the account host would lose the reader's page and is
     // the exact anti-pattern the embedded-sign-in contract forbids.
     srv.router.add("GET", "/sign-in", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_signin_page(&req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_signin_page(&req))
     })
     srv.router.add("GET", "/sign-up", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_signup_page(&req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_signup_page(&req))
     })
     srv.router.add("GET", "/sign-out", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_signout_page(&req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_signout_page(&req))
     })
     srv.router.add("GET", "/forgot-password", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_forgot_password_page(&req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_forgot_password_page(&req))
     })
     srv.router.add("GET", "/reset-password", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_reset_password_page(&req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_reset_password_page(&req))
     })
     // Settings page
     srv.router.add("GET", "/settings", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_settings_page(&req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_settings_page(&req))
     })
     srv.router.add("GET", "/components", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_components_demo_page(&req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_components_demo_page(&req))
     })
     srv.router.add("GET", "/u/:username", ||(req) => {
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 2) {
-            return underlayer_web::deliver(&req, underlayer_web::handle_profile_page(&req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_profile_page(&req))
         } else {
             var body = std::string("Not found")
-            return underlayer_web::deliver(&req, underlayer_web::send_status_text(404u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_status_text(404u, &body))
         }
     })
     // Rate-limit bucket names.  Declared here rather than inline as literals
@@ -806,9 +814,9 @@ public func main() : int {
         var gate = underlayer_web::rate_limit_register(db, &req)
         if(gate is std::Option.Some) {
             var Some(refusal) = gate else unsafe { unreachable }
-            return refusal
+            return underlayer_web::deliver_with_learner(request_db(), &req, refusal)
         }
-        return underlayer_web::deliver(&req, underlayer_web::handle_register(db, &mut req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_register(db, &mut req))
     })
     srv.router.add("POST", "/api/auth/login", ||(req) => {
         var db = request_db()
@@ -820,17 +828,17 @@ public func main() : int {
         var gate = underlayer_web::rate_limit_login(db, &req)
         if(gate is std::Option.Some) {
             var Some(refusal) = gate else unsafe { unreachable }
-            return refusal
+            return underlayer_web::deliver_with_learner(request_db(), &req, refusal)
         }
-        return underlayer_web::deliver(&req, underlayer_web::handle_login(db, &mut req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_login(db, &mut req))
     })
     srv.router.add("POST", "/api/auth/logout", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_logout(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_logout(db, &req))
     })
     srv.router.add("GET", "/api/auth/me", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_get_me(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_me(db, &req))
     })
     // POST /api/auth/from-account — exchange a SHARED account credential for a
     // local session.  Acceptance is checked against account.wiqis.com; only a
@@ -841,9 +849,9 @@ public func main() : int {
         var gate = underlayer_web::rate_limit_from_account(db, &req)
         if(gate is std::Option.Some) {
             var Some(refusal) = gate else unsafe { unreachable }
-            return refusal
+            return underlayer_web::deliver_with_learner(request_db(), &req, refusal)
         }
-        return underlayer_web::deliver(&req, underlayer_web::handle_from_account(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_from_account(db, &req))
     })
     srv.router.add("POST", "/api/auth/forgot-password", ||(req) => {
         var db = request_db()
@@ -855,9 +863,9 @@ public func main() : int {
         var gate = underlayer_web::rate_limit_forgot(db, &req)
         if(gate is std::Option.Some) {
             var Some(refusal) = gate else unsafe { unreachable }
-            return refusal
+            return underlayer_web::deliver_with_learner(request_db(), &req, refusal)
         }
-        return underlayer_web::deliver(&req, underlayer_web::handle_forgot_password(db, &mut req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_forgot_password(db, &mut req))
     })
     srv.router.add("POST", "/api/auth/reset-password", ||(req) => {
         var db = request_db()
@@ -869,48 +877,48 @@ public func main() : int {
         var gate = underlayer_web::rate_limit_reset(db, &req)
         if(gate is std::Option.Some) {
             var Some(refusal) = gate else unsafe { unreachable }
-            return refusal
+            return underlayer_web::deliver_with_learner(request_db(), &req, refusal)
         }
-        return underlayer_web::deliver(&req, underlayer_web::handle_reset_password(db, &mut req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_reset_password(db, &mut req))
     })
     srv.router.add("POST", "/api/auth/verify-email", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_verify_email(db, &mut req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_verify_email(db, &mut req))
     })
     srv.router.add("GET", "/api/user/login-history", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_login_history(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_login_history(db, &req))
     })
     // Profile API (from handlers_profiles.ch)
     srv.router.add("GET", "/api/user/profile", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_get_profile(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_profile(db, &req))
     })
     srv.router.add("PUT", "/api/user/profile", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_update_profile(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_update_profile(db, &req))
     })
     // Settings API (from handlers_settings.ch)
     srv.router.add("GET", "/api/user/settings", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_get_settings(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_settings(db, &req))
     })
     srv.router.add("PUT", "/api/user/settings", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_update_settings(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_update_settings(db, &req))
     })
     srv.router.add("GET", "/api/user/learning-preferences", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_get_learning_preferences(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_learning_preferences(db, &req))
     })
     srv.router.add("PUT", "/api/user/learning-preferences", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_update_learning_preferences(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_update_learning_preferences(db, &req))
     })
     // Data management API (from handlers_data.ch)
     srv.router.add("GET", "/api/user/export", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_export_data(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_export_data(db, &req))
     })
     srv.router.add("DELETE", "/api/user/data/:type", ||(req) => {
         var db = request_db()
@@ -919,28 +927,28 @@ public func main() : int {
         if(segments.size() >= 4) {
             var type_sv = segments.at_ref(3)
             var data_type = type_sv.to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_delete_data(db, &data_type, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_delete_data(db, &data_type, &req))
         } else {
             var body = std::string("{\"error\":\"missing type parameter\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("DELETE", "/api/user/account", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_delete_account(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_delete_account(db, &req))
     })
     srv.router.add("POST", "/api/user/deactivate", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_deactivate_account(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_deactivate_account(db, &req))
     })
     srv.router.add("POST", "/api/user/reactivate", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_reactivate_account(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_reactivate_account(db, &req))
     })
     // Progress sharing (from handlers_data.ch)
     srv.router.add("POST", "/api/progress/share", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_share_progress(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_share_progress(db, &req))
     })
     srv.router.add("GET", "/api/progress/shared/:token", ||(req) => {
         var db = request_db()
@@ -948,54 +956,54 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
             var token_sv = segments.at_ref(3)
-            return underlayer_web::deliver(&req, underlayer_web::handle_get_shared_progress(db, token_sv))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_shared_progress(db, token_sv))
         } else {
             var body = std::string("{\"error\":\"missing token\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("POST", "/api/progress/import", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_import_progress(db, &mut req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_import_progress(db, &mut req))
     })
     srv.router.add("GET", "/api/user/:username", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_get_public_profile(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_public_profile(db, &req))
     })
     // ---- Knowledge Health API (1.5.20) ----
     srv.router.add("GET", "/api/health/knowledge", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_knowledge_health(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_knowledge_health(db, &req))
     })
     srv.router.add("GET", "/api/health/knowledge/per-module", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_knowledge_health_per_module(db, &courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_knowledge_health_per_module(db, &courses_dir, &req))
     })
     srv.router.add("GET", "/api/health/knowledge/projection", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_knowledge_projection(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_knowledge_projection(db, &req))
     })
     // ---- Course Enrollment API ----
     srv.router.add("POST", "/api/courses/:courseId/enroll", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_enroll_course(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_enroll_course(db, &req))
     })
     srv.router.add("GET", "/api/enrollments", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_get_enrollments(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_enrollments(db, &req))
     })
     // ---- Onboarding (Agent 1) ----
     srv.router.add("GET", "/onboarding", ||(req) => {
-        return underlayer_web::deliver(&req, underlayer_web::handle_onboarding_page(&req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_onboarding_page(&req))
     })
     srv.router.add("POST", "/api/onboarding/complete", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_onboarding_complete(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_onboarding_complete(db, &req))
     })
     srv.router.add("GET", "/api/onboarding/check", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_check_onboarding(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_check_onboarding(db, &req))
     })
     // ---- Profile stats & courses (Agent 5) ----
     srv.router.add("GET", "/api/user/:username/stats", ||(req) => {
@@ -1004,10 +1012,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var username = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_profile_stats(db, &username, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_profile_stats(db, &username, &req))
         } else {
             var body = std::string("{\"error\":\"missing username\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("GET", "/api/user/:username/courses", ||(req) => {
@@ -1016,10 +1024,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var username = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_profile_courses(db, &username, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_profile_courses(db, &username, &req))
         } else {
             var body = std::string("{\"error\":\"missing username\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     // ---- Content Feedback API ----
@@ -1032,21 +1040,21 @@ public func main() : int {
         var gate = underlayer_web::rate_limit_feedback(db, &req)
         if(gate is std::Option.Some) {
             var Some(refusal) = gate else unsafe { unreachable }
-            return refusal
+            return underlayer_web::deliver_with_learner(request_db(), &req, refusal)
         }
-        return underlayer_web::deliver(&req, underlayer_web::handle_submit_feedback(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_submit_feedback(db, &req))
     })
     srv.router.add("GET", "/api/feedback/stats", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_feedback_stats(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_feedback_stats(db, &req))
     })
     srv.router.add("GET", "/api/feedback/admin", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_get_admin_feedback(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_admin_feedback(db, &req))
     })
     srv.router.add("GET", "/api/feedback/admin/reports", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_get_admin_reports(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_admin_reports(db, &req))
     })
     srv.router.add("POST", "/api/feedback/report-exercise", ||(req) => {
         var db = request_db()
@@ -1054,9 +1062,9 @@ public func main() : int {
         var gate = underlayer_web::rate_limit_report_exercise(db, &req)
         if(gate is std::Option.Some) {
             var Some(refusal) = gate else unsafe { unreachable }
-            return refusal
+            return underlayer_web::deliver_with_learner(request_db(), &req, refusal)
         }
-        return underlayer_web::deliver(&req, underlayer_web::handle_report_exercise(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_report_exercise(db, &req))
     })
     srv.router.add("GET", "/api/feedback/concept/:conceptId", ||(req) => {
         var db = request_db()
@@ -1064,10 +1072,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
             var concept_id = segments.at_ref(3).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_get_concept_feedback(db, &concept_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_concept_feedback(db, &concept_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing concept id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("PUT", "/api/feedback/:id/status", ||(req) => {
@@ -1076,32 +1084,32 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
             var feedback_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_update_feedback_status(db, &feedback_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_update_feedback_status(db, &feedback_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing feedback id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     // ---- Notifications API ----
     srv.router.add("GET", "/api/notifications", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_get_notifications(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_notifications(db, &req))
     })
     srv.router.add("GET", "/api/notifications/unread-count", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_unread_count(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_unread_count(db, &req))
     })
     srv.router.add("POST", "/api/notifications/read-all", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_mark_all_read(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_mark_all_read(db, &req))
     })
     srv.router.add("POST", "/api/notifications/:id/read", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_mark_read(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_mark_read(db, &req))
     })
     srv.router.add("DELETE", "/api/notifications/:id", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_delete_notification(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_delete_notification(db, &req))
     })
     // ---- Course Prerequisites API ----
     srv.router.add("GET", "/api/courses/:courseId/prerequisites", ||(req) => {
@@ -1110,10 +1118,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var course_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_get_prerequisites(db, &course_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_prerequisites(db, &course_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing course id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("POST", "/api/courses/:courseId/prerequisites", ||(req) => {
@@ -1122,10 +1130,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var course_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_add_prerequisite(db, &course_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_add_prerequisite(db, &course_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing course id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("DELETE", "/api/courses/:courseId/prerequisites/:requiredId", ||(req) => {
@@ -1135,10 +1143,10 @@ public func main() : int {
         if(segments.size() >= 4) {
             var course_id = segments.at_ref(2).to_string()
             var required_id = segments.at_ref(3).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_remove_prerequisite(db, &course_id, &required_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_remove_prerequisite(db, &course_id, &required_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing course or required id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("GET", "/api/courses/:courseId/can-enroll", ||(req) => {
@@ -1147,10 +1155,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var course_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_can_enroll(db, &course_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_can_enroll(db, &course_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing course id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("POST", "/api/courses/:courseId/assess", ||(req) => {
@@ -1159,10 +1167,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var course_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_skill_assessment(db, &course_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_skill_assessment(db, &course_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing course id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("GET", "/api/courses/:courseId/assessment", ||(req) => {
@@ -1171,10 +1179,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var course_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_get_assessment(db, &course_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_assessment(db, &course_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing course id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     // ---- Course Reviews API ----
@@ -1184,10 +1192,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var course_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_submit_review(db, &course_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_submit_review(db, &course_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing course id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("GET", "/api/courses/:courseId/reviews", ||(req) => {
@@ -1196,10 +1204,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var course_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_get_course_reviews(db, &course_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_course_reviews(db, &course_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing course id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("GET", "/api/courses/:courseId/rating", ||(req) => {
@@ -1208,10 +1216,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var course_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_course_rating_summary(db, &course_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_course_rating_summary(db, &course_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing course id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("PUT", "/api/reviews/:id", ||(req) => {
@@ -1220,10 +1228,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var review_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_update_review(db, &review_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_update_review(db, &review_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing review id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("DELETE", "/api/reviews/:id", ||(req) => {
@@ -1232,10 +1240,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var review_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_delete_review(db, &review_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_delete_review(db, &review_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing review id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     // A SESSION IS REQUIRED, and it is a smaller change than it looks: this was
@@ -1251,23 +1259,23 @@ public func main() : int {
         var db = request_db()
         if(!underlayer_web::has_session(db, &req)) {
             var anon = string("unauthorized")
-            return underlayer_web::deliver(&req, underlayer_web::send_error(401u, &anon))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_error(401u, &anon))
 
         }
         var path = req.path.to_view()
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var review_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_mark_review_helpful(db, &review_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_mark_review_helpful(db, &review_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing review id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     // ---- Bookmarks API ----
     srv.router.add("POST", "/api/bookmarks", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_add_bookmark(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_add_bookmark(db, &req))
     })
     srv.router.add("DELETE", "/api/bookmarks/:conceptId", ||(req) => {
         var db = request_db()
@@ -1275,15 +1283,15 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var concept_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_remove_bookmark(db, &concept_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_remove_bookmark(db, &concept_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing concept id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("GET", "/api/bookmarks", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_get_bookmarks(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_bookmarks(db, &req))
     })
     srv.router.add("GET", "/api/bookmarks/check/:conceptId", ||(req) => {
         var db = request_db()
@@ -1291,21 +1299,21 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
             var concept_id = segments.at_ref(3).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_check_bookmark(db, &concept_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_check_bookmark(db, &concept_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing concept id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     // ---- Certificates API ----
     srv.router.add("POST", "/api/certificates", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_issue_certificate(db, &courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_issue_certificate(db, &courses_dir, &req))
     })
     srv.router.add("GET", "/api/certificates", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_get_certificates(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_certificates(db, &req))
     })
     srv.router.add("GET", "/api/certificates/:id", ||(req) => {
         var db = request_db()
@@ -1313,10 +1321,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var cert_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_get_certificate(db, &cert_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_certificate(db, &cert_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing certificate id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("GET", "/certificates/:id", ||(req) => {
@@ -1325,20 +1333,20 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 2) {
             var cert_id = segments.at_ref(1).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_certificate_page(db, &cert_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_certificate_page(db, &cert_id, &req))
         } else {
             var body = std::string("missing certificate id")
-            return underlayer_web::deliver(&req, underlayer_web::send_status_text(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_status_text(400u, &body))
         }
     })
     // ---- Analytics Dashboard ----
     srv.router.add("GET", "/analytics", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_analytics_page(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_analytics_page(db, &req))
     })
     srv.router.add("GET", "/api/analytics/overview", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_analytics_overview_api(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_analytics_overview_api(db, &req))
     })
     srv.router.add("GET", "/analytics/:courseId", ||(req) => {
         var db = request_db()
@@ -1346,10 +1354,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 2) {
             var course_id = segments.at_ref(1).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_course_analytics_page(db, &course_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_course_analytics_page(db, &course_id, &req))
         } else {
             var body = std::string("missing course id")
-            return underlayer_web::deliver(&req, underlayer_web::send_status_text(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_status_text(400u, &body))
         }
     })
     // ---- Learning Path Visualization ----
@@ -1360,10 +1368,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var course_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_learning_path_api(db, &courses_dir, &course_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_learning_path_api(db, &courses_dir, &course_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing course id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("GET", "/courses/:courseId/path", ||(req) => {
@@ -1373,10 +1381,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var course_id = segments.at_ref(1).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_learning_path_page(db, &courses_dir, &course_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_learning_path_page(db, &courses_dir, &course_id, &req))
         } else {
             var body = std::string("missing course id")
-            return underlayer_web::deliver(&req, underlayer_web::send_status_text(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_status_text(400u, &body))
         }
     })
     // ---- Help & Guide Pages: served by the web::App as pre-rendered routes (see the App below) ----
@@ -1403,71 +1411,71 @@ public func main() : int {
         var db = request_db()
         if(!underlayer_web::has_session(db, &req)) {
             var gate_path = string("/bookmarks")
-            return underlayer_web::redirect_to_login(&gate_path)
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::redirect_to_login(&gate_path))
 
         }
         var html = underlayer_web::render_bookmarks_page()
-        return underlayer_web::deliver(&req, underlayer_web::send_html(&html))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_html(&html))
     })
     srv.router.add("GET", "/notes", ||(req) => {
         var db = request_db()
         if(!underlayer_web::has_session(db, &req)) {
             var gate_path = string("/notes")
-            return underlayer_web::redirect_to_login(&gate_path)
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::redirect_to_login(&gate_path))
 
         }
         var html = underlayer_web::render_notes_page()
-        return underlayer_web::deliver(&req, underlayer_web::send_html(&html))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_html(&html))
     })
     srv.router.add("GET", "/study-plans", ||(req) => {
         var db = request_db()
         if(!underlayer_web::has_session(db, &req)) {
             var gate_path = string("/study-plans")
-            return underlayer_web::redirect_to_login(&gate_path)
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::redirect_to_login(&gate_path))
 
         }
         var html = underlayer_web::render_study_plans_page()
-        return underlayer_web::deliver(&req, underlayer_web::send_html(&html))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_html(&html))
     })
     srv.router.add("GET", "/achievements", ||(req) => {
         var db = request_db()
         if(!underlayer_web::has_session(db, &req)) {
             var gate_path = string("/achievements")
-            return underlayer_web::redirect_to_login(&gate_path)
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::redirect_to_login(&gate_path))
 
         }
         var html = underlayer_web::render_achievements_page()
-        return underlayer_web::deliver(&req, underlayer_web::send_html(&html))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_html(&html))
     })
     srv.router.add("GET", "/streaks", ||(req) => {
         var db = request_db()
         if(!underlayer_web::has_session(db, &req)) {
             var gate_path = string("/streaks")
-            return underlayer_web::redirect_to_login(&gate_path)
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::redirect_to_login(&gate_path))
 
         }
         var html = underlayer_web::render_streaks_page()
-        return underlayer_web::deliver(&req, underlayer_web::send_html(&html))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_html(&html))
     })
     srv.router.add("GET", "/notifications", ||(req) => {
         var db = request_db()
         if(!underlayer_web::has_session(db, &req)) {
             var gate_path = string("/notifications")
-            return underlayer_web::redirect_to_login(&gate_path)
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::redirect_to_login(&gate_path))
 
         }
         var html = underlayer_web::render_notifications_page()
-        return underlayer_web::deliver(&req, underlayer_web::send_html(&html))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_html(&html))
     })
     srv.router.add("GET", "/certificates", ||(req) => {
         var db = request_db()
         if(!underlayer_web::has_session(db, &req)) {
             var gate_path = string("/certificates")
-            return underlayer_web::redirect_to_login(&gate_path)
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::redirect_to_login(&gate_path))
 
         }
         var html = underlayer_web::render_certificates_page()
-        return underlayer_web::deliver(&req, underlayer_web::send_html(&html))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_html(&html))
     })
     // ---- Learning Loop API ----
     // courses_dir is passed so the handler can check the concept id against the
@@ -1482,16 +1490,16 @@ public func main() : int {
     srv.router.add("POST", "/api/learning/view", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_learning_view(db, &courses_dir, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_learning_view(db, &courses_dir, &req))
     })
     // ---- Notes API ----
     srv.router.add("GET", "/api/notes", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_get_notes(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_notes(db, &req))
     })
     srv.router.add("POST", "/api/notes", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_create_note(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_create_note(db, &req))
     })
     srv.router.add("PUT", "/api/notes/:id", ||(req) => {
         var db = request_db()
@@ -1499,10 +1507,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var note_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_update_note(db, &note_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_update_note(db, &note_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing note id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("DELETE", "/api/notes/:id", ||(req) => {
@@ -1511,10 +1519,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var note_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_delete_note(db, &note_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_delete_note(db, &note_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing note id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("GET", "/api/notes/concept/:conceptId", ||(req) => {
@@ -1523,50 +1531,50 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 4) {
             var concept_id = segments.at_ref(3).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_get_concept_notes(db, &concept_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_concept_notes(db, &concept_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing concept id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("GET", "/api/notes/search", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_search_notes(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_search_notes(db, &req))
     })
     // ---- Achievements API ----
     srv.router.add("GET", "/api/achievements", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_get_achievements(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_achievements(db, &req))
     })
     srv.router.add("POST", "/api/achievements/check", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_check_achievements(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_check_achievements(db, &req))
     })
     srv.router.add("GET", "/api/achievements/count", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_achievement_count(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_achievement_count(db, &req))
     })
     // ---- Streaks API ----
     srv.router.add("GET", "/api/streaks", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_get_streak(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_streak(db, &req))
     })
     srv.router.add("POST", "/api/streaks/activity", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_record_activity(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_record_activity(db, &req))
     })
     srv.router.add("GET", "/api/streaks/weekly", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_weekly_activity(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_weekly_activity(db, &req))
     })
     // ---- Study Planner API ----
     srv.router.add("POST", "/api/study-plans", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_create_study_plan(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_create_study_plan(db, &req))
     })
     srv.router.add("GET", "/api/study-plans", ||(req) => {
         var db = request_db()
-        return underlayer_web::deliver(&req, underlayer_web::handle_get_study_plans(db, &req))
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_study_plans(db, &req))
     })
     srv.router.add("PUT", "/api/study-plans/:id", ||(req) => {
         var db = request_db()
@@ -1574,10 +1582,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var plan_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_update_study_plan(db, &plan_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_update_study_plan(db, &plan_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing plan id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     srv.router.add("DELETE", "/api/study-plans/:id", ||(req) => {
@@ -1586,10 +1594,10 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var plan_id = segments.at_ref(2).to_string()
-            return underlayer_web::deliver(&req, underlayer_web::handle_delete_study_plan(db, &plan_id, &req))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_delete_study_plan(db, &plan_id, &req))
         } else {
             var body = std::string("{\"error\":\"missing plan id\"}")
-            return underlayer_web::deliver(&req, underlayer_web::send_json_status(400u, &body))
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
     })
     // ---- Delivery: one web::App owns the page layer ----
@@ -1602,7 +1610,7 @@ public func main() : int {
     // for /help runs no handler at all.
     //
     // Everything else stays per-request, and keeps the response it already built.
-    // The App is mounted behind one catch-all, so the 183 routes registered above
+    // The App is mounted behind one catch-all, so the 187 routes registered above
     // keep their exact URLs and their dispatch order; the App only ever sees what
     // they did not claim (/help-style pages, /assets/*, and the 404).
     //
@@ -1641,10 +1649,10 @@ public func main() : int {
     // explicit route above keeps first refusal. `web::serve_request` answers from
     // the frozen site (pages, assets with their immutable cache headers, 404).
     srv.router.add("GET", "/:path*", ||(req) => {
-        return web::serve_request(req)
+        return underlayer_web::deliver_web_request(request_db(), req)
     })
     srv.router.add("HEAD", "/:path*", ||(req) => {
-        return web::serve_request(req)
+        return underlayer_web::deliver_web_request(request_db(), req)
     })
     // ---- Start server ----
     var listen_msg = std::string("[underlayer] Server running at http://localhost:")

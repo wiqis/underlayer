@@ -9,6 +9,7 @@
 // `apply_security_headers` still runs in exactly one place per response — here.
 using std::string
 using std::string_view
+using underlayer_db::DbClient
 
 public namespace underlayer_web {
 
@@ -40,7 +41,13 @@ public namespace underlayer_web {
         // There is deliberately no `frame-ancestors`: Underlayer is the parent
         // that frames the account service, not the page being framed.
         var account = underlayer_core::account_url()
-        var policy = string("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://storage.googleapis.com; connect-src 'self' ")
+        // H3: the brand layer (WebLibs/brandlib/src/theme.ch) links the Inter
+        // stylesheet from fonts.googleapis.com and fetches the font files from
+        // fonts.gstatic.com. Without these TWO origins a browser reports a
+        // style-src violation for the <link> and a font-src violation for the
+        // woff2 files. They are added EXACTLY where needed: Google remains
+        // absent from default-src, script-src, img-src and connect-src.
+        var policy = string("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://storage.googleapis.com; connect-src 'self' ")
         policy.append_view(account.to_view())
         policy.append_view("; frame-src ")
         policy.append_view(account.to_view())
@@ -148,22 +155,54 @@ public namespace underlayer_web {
     //     fresh Response, so a `Set-Cookie` added by an auth handler reaches
     //     the wire; a response that sets one is also excluded from the 304
     //     path, because a conditional response cannot carry a new credential.
+    // Kept with the ORIGINAL signature so the shipped @test suite (which calls
+    // `deliver(&req, res)` directly) keeps compiling unchanged. Production
+    // routes call `deliver_with_learner(request_db(), ...)` so the access line
+    // can carry the resolved learner id.
     public func deliver(req : &http::Request, res : http::Response) : http::Response {
+        return deliver_with_learner(null, req, res)
+    }
+
+    // The one last mile for every handler response, including guard refusals.
+    public func deliver_with_learner(db : *DbClient, req : &http::Request, res : http::Response) : http::Response {
+        var info = begin_request(req)
+        set_learner(&mut info, db, req)
+        return apply_delivery(&info, req, res)
+    }
+
+    // H3: the `web::App` catch-all serves frozen pages, assets and the 404
+    // without ever calling a send_* helper. Wrap it so those responses get the
+    // same header contract, request id and access line as every handler route.
+    // `apply_security_headers` uses set_header_view (replace), so a helper that
+    // already set them is harmless -- but this path has none.
+    public func deliver_web_request(db : *DbClient, req : http::Request) : http::Response {
+        var info = begin_request(&req)
+        set_learner(&mut info, db, &req)
+        var app_request = req
+        var frozen = web::serve_request(app_request)
+        apply_security_headers(&mut frozen)
+        return apply_delivery(&info, &req, frozen)
+    }
+
+    // Cache policy, ETag/304, gzip, request id and exactly ONE access line.
+    func apply_delivery(info : &RequestInfo, req : &http::Request, res : http::Response) : http::Response {
+        var out = res
+        apply_security_headers(&mut out)
+
         var body : string
         var is_text = false
-        switch(res.body) {
+        switch(out.body) {
             Text(text) => {
                 body = text.copy()
                 is_text = true
             }
             default => {
                 // Bytes / File / Empty: already encoded, or streamed. Leave it.
-                return res
+                finish_request(info, &mut out)
+                return out
             }
         }
-        if(!is_text) { return res }
 
-        var out = res
         var etag = etag_of(&body)
         var etag_view = etag.to_view()
         out.set_header_view(std::string_view("ETag"), &etag_view)
@@ -201,6 +240,7 @@ public namespace underlayer_web {
                 not_modified.set_header_view(std::string_view("Cache-Control"), &revalidate)
             }
             apply_security_headers(&mut not_modified)
+            finish_request(info, &mut not_modified)
             return not_modified
         }
 
@@ -215,6 +255,7 @@ public namespace underlayer_web {
                 out.bytes(gz.as_span())
             }
         }
+        finish_request(info, &mut out)
         return out
     }
 

@@ -56,6 +56,9 @@ import os
 import re
 import subprocess
 import sys
+
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -136,13 +139,21 @@ def node_says(ch):
     """(parses, evaluates_back) for the escape js_cbi would emit."""
     esc = emitted_escape(ord(ch))
     snippet = 'var s = "%s"; if (s !== "%s") { throw new Error("mismatch"); }\n' % (esc, ch)
-    with tempfile.NamedTemporaryFile('w', suffix='.js', delete=False) as fh:
+    # `text=True` makes subprocess decode node's stdout with the locale's
+    # default encoding (cp1252 on Windows here). The snippet contains UTF-8
+    # characters, so node echoes them back as UTF-8 and cp1252 mojibakes them
+    # into "ï¿½" -- which then makes the round-trip comparison fail on a
+    # CORRECT escape. Encode the temporary file explicitly and decode node's
+    # output explicitly as UTF-8 instead.
+    with tempfile.NamedTemporaryFile('w', suffix='.js', delete=False,
+                                     encoding='utf-8') as fh:
         fh.write(snippet)
         name = fh.name
     try:
-        p = subprocess.run(['node', name], capture_output=True, text=True, timeout=30)
+        p = subprocess.run(['node', name], capture_output=True, timeout=30)
+        stderr = p.stderr.decode('utf-8', 'replace').strip()
         if p.returncode != 0:
-            return False, False, p.stderr.strip()[:200]
+            return False, False, stderr[:200]
         return True, True, ''
     except FileNotFoundError:
         return None, None, 'node is not installed'

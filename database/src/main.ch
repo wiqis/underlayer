@@ -306,10 +306,12 @@ public namespace underlayer_db {
             fail_msg.append_integer(rc)
             fail_msg.append_view(": ")
             fail_msg.append_string(&msg)
-            underlayer_core::log_line(&fail_msg)
+            var fail_view = fail_msg.to_view()
+            underlayer_core::log_error(&fail_view)
             var stmt_msg = string("[underlayer_db]   statement: ")
             stmt_msg.append_string(&statement)
-            underlayer_core::log_line(&stmt_msg)
+            var stmt_view = stmt_msg.to_view()
+            underlayer_core::log_error(&stmt_view)
             var failed = ExecResult {
                 last_insert_rowid = 0,
                 rows_affected = 0,
@@ -357,7 +359,8 @@ public namespace underlayer_db {
             prep_msg.append_view(" (")
             prep_msg.append_string(&statement)
             prep_msg.append_view(")")
-            underlayer_core::log_line(&prep_msg)
+            var prep_view = prep_msg.to_view()
+            underlayer_core::log_error(&prep_view)
             result.ok = false
             result.error_message = pm
             return result
@@ -400,7 +403,8 @@ public namespace underlayer_db {
             step_msg.append_view(" (")
             step_msg.append_string(&statement)
             step_msg.append_view(")")
-            underlayer_core::log_line(&step_msg)
+            var step_view = step_msg.to_view()
+            underlayer_core::log_error(&step_view)
             result.ok = false
             result.error_message = sm
         }

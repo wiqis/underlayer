@@ -42,6 +42,15 @@
 #                          stops answering duplicate:true.
 #   bridge_probe           remove /api/auth/from-account -> both bridge checks
 #                          FAIL with 404 (see the tool's docstring).
+#   check_inline_string_temporaries  a planted &string("...") in production
+#                          source -> that file FAILs; tests/ is excluded with a
+#                          named owner (see docs/deployment.md H4 inventory).
+#   security_header_coverage --selftest serves a headerless frozen page (the
+#                          exact H3 defect) and requires a FAIL while a
+#                          complete-contract control must PASS.
+#   lesson_pager_check     checker_nonvacuity.py::check_lesson_pager plants a
+#                          LENGTH passed to subview() (the shipped truncation
+#                          bug); the checker must name `truncated` and fail.
 # A check that cannot fail is decoration. Prove it before trusting a green run.
 
 name: ci
@@ -49,6 +58,9 @@ name: ci
 on:
   push:
   pull_request:
+  schedule:
+    # 03:17 UTC daily. Nightly live gates; the founder deploys manually.
+    - cron: '17 3 * * *'
   workflow_dispatch:
     inputs:
       compiler_root:
@@ -228,6 +240,24 @@ jobs:
             exit 1
           fi
 
+      - name: Static / semantic gates (per push)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # H4: these read source only. No server, no DB, no secrets.
+          python tools/check_inline_string_temporaries.py
+          python tools/sqli_scan.py
+          python tools/bracecheck.py
+          python tools/html_balance.py
+          python tools/check_quotes.py
+          python tools/js_escape_check.py
+          # Negative cases for all six, against disposable copies of the tree.
+          # A dedicated runner: checker_nonvacuity.py also contains four live
+          # plants whose controls are red on a clean local tree, and failing
+          # those on every push would make the gate useless. They are
+          # certified in the nightly job with named exclusions in §5c.
+          python tools/static_gate_negative_cases.py
+
       - name: Served-artifact checkers
         shell: bash
         run: |
@@ -237,6 +267,12 @@ jobs:
           python tools/lesson_pager_check.py "$BASE"
           python tools/helpful_dedupe_check.py "$BASE"
           python tools/bridge_probe.py "$BASE"
+          # H3: header parity across frozen pages, assets and the 404.
+          python tools/security_header_coverage.py "$BASE"
+          # B7: empty-bucket probe on this job's disposable DB. The
+          # deployed two-network half is a founder action, NOT in CI.
+          python tools/rate_limit_deployed_probe.py --local --port "$PORT" \
+            --reset-db ./ci-underlayer.db
 
       - name: Stop server
         if: always()
@@ -244,6 +280,118 @@ jobs:
         run: |
           if [ -f build/ci-server.pid ]; then
             pid="$(cat build/ci-server.pid)"
+            kill "$pid" 2>/dev/null || true
+            taskkill //F //PID "$pid" 2>/dev/null || true
+          fi
+
+  nightly-live-gates:
+    # Wave 1 P0 H4: the live corpus runs nightly on a disposable DB. Each job
+    # gets its own checkout and its own ci-underlayer.db, so a write probe can
+    # never touch a developer's local database. Logs remain on the run page.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    env:
+      CHEMICAL_ROOT: ${{ inputs.compiler_root || vars.CHEMICAL_ROOT || '' }}
+      CHEMICAL_REF: ${{ vars.CHEMICAL_REF || '7a2da4173d49678bdf6c32e4a1ff7ddaba32d240' }}
+      # H4: the live gate tools read the same disposable DB the server writes.
+      # Without this they fall back to underlayer.db and assert against a
+      # different file, which looks like a product failure but is a harness bug.
+      DATABASE_URL: ./ci-underlayer.db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Set up MSVC (source build only)
+        if: env.CHEMICAL_ROOT == ''
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Checkout pinned Chemical compiler source
+        if: env.CHEMICAL_ROOT == ''
+        uses: actions/checkout@v4
+        with:
+          repository: chemicallang/chemical
+          ref: ${{ env.CHEMICAL_REF }}
+          path: chemical-src
+          submodules: recursive
+          persist-credentials: false
+      - name: Restore cached TCCCompiler
+        if: env.CHEMICAL_ROOT == ''
+        id: tcc-cache-nightly
+        uses: actions/cache@v4
+        with:
+          path: |
+            chemical-src/cmake-build-debug/TCCCompiler.exe
+            chemical-src/cmake-build-debug/TCCCompiler.pdb
+            chemical-src/lib/tcc
+          key: tcc-${{ runner.os }}-${{ env.CHEMICAL_REF }}
+      - name: Build TCCCompiler from pinned source
+        if: env.CHEMICAL_ROOT == '' && steps.tcc-cache-nightly.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd chemical-src
+          bash scripts/setup.sh --arch x64
+          cmake -S . -B cmake-build-debug -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug -DCMAKE_NINJA_FORCE_RESPONSE_FILE=ON
+          cmake --build cmake-build-debug --config Debug --target TCCCompiler -j 4
+      - name: Locate TCCCompiler
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          compiler=""
+          if [ -n "${CHEMICAL_ROOT:-}" ]; then
+            for dir in cmake-build-debug build .; do
+              for name in TCCCompiler.exe TCCCompiler; do
+                if [ -f "$CHEMICAL_ROOT/$dir/$name" ]; then compiler="$CHEMICAL_ROOT/$dir/$name"; break 2; fi
+              done
+            done
+          elif [ -f chemical-src/cmake-build-debug/TCCCompiler.exe ]; then
+            compiler="$PWD/chemical-src/cmake-build-debug/TCCCompiler.exe"
+          fi
+          if [ -z "$compiler" ]; then
+            echo "::error::TCCCompiler unavailable"
+            exit 1
+          fi
+          echo "UL_COMPILER=$compiler" >> "$GITHUB_ENV"
+      - name: Build server and start on disposable DB
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$UL_COMPILER" chemical.mod -o build/underlayer-nightly.exe -bm-modules --no-cache
+          PORT="$(python -c "import socket;s=socket.socket();s.bind(('127.0.0.1',0));print(s.getsockname()[1]);s.close()")"
+          echo "PORT=$PORT" >> "$GITHUB_ENV"
+          echo "BASE=http://localhost:$PORT" >> "$GITHUB_ENV"
+          rm -f ci-underlayer.db ci-underlayer.db-shm ci-underlayer.db-wal
+          PORT="$PORT" DATABASE_URL=./ci-underlayer.db COURSES_DIR=./courses \
+            ./build/underlayer-nightly.exe > build/nightly-server.log 2>&1 &
+          echo $! > build/nightly-server.pid
+          for i in $(seq 1 30); do
+            if curl -fsS --connect-timeout 2 --max-time 5 "$BASE/api/health" > /dev/null 2>&1; then exit 0; fi
+            sleep 1
+          done
+          echo "::error::server did not become healthy"
+          tail -40 build/nightly-server.log || true
+          exit 1
+      - name: Live gate corpus (disposable DB)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/security_check.py --port "$PORT"
+          # The route count comes from the CURRENT binary's registrations, not
+          # the stale "180"; route_check.py parses app/main.ch itself and now
+          # finds 187. A mismatch is a finding, linked from docs/deployment.md.
+          python tools/route_check.py --port "$PORT" --quiet
+          python tools/integration_check.py --base "$BASE"
+          python tools/checker_nonvacuity.py
+      - name: Stop server
+        if: always()
+        shell: bash
+        run: |
+          if [ -f build/nightly-server.pid ]; then
+            pid="$(cat build/nightly-server.pid)"
             kill "$pid" 2>/dev/null || true
             taskkill //F //PID "$pid" 2>/dev/null || true
           fi

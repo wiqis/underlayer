@@ -41,11 +41,14 @@ Usage:  python3 tools/check_inline_string_temporaries.py
 
 Exit: 0 clean.  1 at least one `&string(...)` argument.
 """
+import argparse
 import os
 import re
 import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PRODUCTION_DIRS = ('app', 'core', 'database', 'models', 'repository',
+                   'learning', 'content', 'web', 'courses', 'WebLibs')
 
 # `&string("literal")` or `&string(other_expr)` used as a call argument.
 SITE = re.compile(r'&\s*string\s*\(')
@@ -62,9 +65,27 @@ def ch_files():
                 yield os.path.join(root, f)
 
 
+def is_production(path):
+    """Only shipped application sources are a production gate.
+
+    The H4 inventory in docs/deployment.md records the `tests/` exclusion: the
+    @test suite is a separate application built with a different compiler
+    invocation, and its own 138/138 green run is the owner for those files.
+    Gating production on test-only source would make the build fail on a file
+    that never ships -- and a gate people disable is no gate.
+    """
+    rel = os.path.relpath(path, REPO).replace('\\', '/')
+    return any(rel.startswith(d + '/') for d in PRODUCTION_DIRS)
+
+
 def main():
-    verbose = '--verbose' in sys.argv
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--verbose', action='store_true')
+    ap.add_argument('--all-sources', action='store_true',
+                    help='also scan tests/ (diagnostic only; not the CI gate)')
+    args = ap.parse_args()
     hits = []
+    test_hits = 0
     scanned = 0
     for path in ch_files():
         scanned += 1
@@ -72,11 +93,18 @@ def main():
         lines = data.replace('\r\n', '\n').split('\n')
         for i, line in enumerate(lines, 1):
             if SITE.search(line):
-                hits.append((os.path.relpath(path, REPO), i, line.strip()))
+                if is_production(path) or args.all_sources:
+                    hits.append((os.path.relpath(path, REPO), i, line.strip()))
+                else:
+                    test_hits += 1
 
     print('check_inline_string_temporaries: scanned %d .ch files' % scanned)
+    if test_hits:
+        print('  %d test-only site(s) excluded (owner: @test suite, 138/138; '
+              'see H4 inventory)' % test_hits)
     if not hits:
-        print('  clean: no inline `&string(...)` temporary is passed as an argument')
+        print('  clean: no inline `&string(...)` temporary is passed as an argument '
+              'in production source')
         return 0
 
     print('')

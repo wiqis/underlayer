@@ -192,30 +192,224 @@ exit 1; `--force` succeeded; a deliberately corrupted source was rejected with
 6. Confirm any data written between the backup and the stop is re-entered or
    intentionally discarded — a restore is a point-in-time rollback, not a merge.
 
-## 5. Rate-limit storage and retention
+## 5. Rate-limit key, trust boundary and retention (H2/B7, 2026-11-26)
 
 Login, register, forgot/reset, the account bridge and the learning-write
 endpoints are limited by rows in the `rate_limits` table, not by in-memory
-counters: a counter that dies with the process resets on every restart and fails
-open with a second process. The limit is 8/5 minutes for auth and 120/5 minutes
-for learning writes, keyed by the socket peer address (never `X-Forwarded-For`,
-which the caller controls).
+counters: a counter that dies with the process resets on every restart and
+fails open with a second process. The limit is 8/5 minutes for auth and 120/5
+minutes for learning writes. **Both windows are preserved** in one table; the
+two "windows" in the original B7 wording meant the auth and learning
+ceilings, not two schema windows, and neither was removed.
 
-Stale buckets are removed at startup: the authoritative purge is
-`repository/src/schema_migrations.ch::purge_expired_rate_limits` (two windows),
-called from `repository/src/schema.ch`. `web/src/rate_limit.ch` adds a wider,
-idempotent 24-hour sweep from `ensure_rate_limit_table`. Both conditions delete
-only buckets the limiter already treats as expired, so neither can change a
-future decision. Verified on a restart of a copy: a stale row was removed and a
-fresh row kept; nine wrong logins from one IP answered `401 ×8` then `429` with
-`Retry-After: 120`.
+### The key, and what is trusted
+
+`web/src/rate_limit.ch::rate_limit_key` uses:
+
+* an **authenticated learner id** (`u:<32-hex-id>`) when the request resolves
+  to a session -- so two signed-in learners behind the same frontend never
+  share a learning bucket; and
+* the **socket peer** (`ip:<remote>`) otherwise -- login/register have no
+  learner id yet.
+
+`X-Forwarded-For` is **never read**, including its last hop. It is set by the
+caller; trusting it means a caller can sidestep any key by changing a header.
+A peer value from the socket is the only value an attacker cannot choose.
+`app/main.ch` logs `remote=` on every request, so Cloud Logging records what
+the deployed peer actually resolves to without a client-side probe.
+
+**Deployed trust analysis (not yet measured from two networks).** This service
+runs behind Google Frontend. On Cloud Run the socket peer is the frontend's
+address, so all *anonymous* callers may share one 8/5-minute bucket. That is
+fail-closed -- no header deception can bypass it -- but it is a real shared
+allowance: one person's failed logins can lock out strangers for parts of five
+minutes. This is accepted deliberately until the founder chooses one of:
+
+1. an edge limiter (Cloud Armor rate-based rule) keyed on the edge-observed
+   client address; or
+2. a trusted proxy hop that **overwrites** (not appends to) a client-ip header
+   and a server-library change to read only that hop's value.
+
+A client-supplied `X-Forwarded-For` is NOT option 2. There is no committed
+third option that trusts a caller-controlled header.
+
+### Deployed two-network probe -- FOUNDER ACTION, NOT RUN
+
+`tools/rate_limit_deployed_probe.py --deployed ... --founder-approved` is the
+documented probe. It must be run by the founder from **two distinct client
+networks** (office wifi and a mobile hotspot, not two tabs on one machine):
+
+* A: 8 wrong logins -> `401 x8`, 9th -> `429` with numeric `Retry-After`;
+* B: 8 wrong logins -> `401 x8` (NOT 429), then a correct login -> `200`.
+
+If B is throttled after A, the shared-frontend finding is confirmed and an
+edge limiter is required. This machine cannot produce two networks, and an
+agent may not throttle a deployed service, so the deployed probe was **not
+run** for this work package. No deployed pass is claimed. Record the date,
+both network labels, observed statuses, and the `remote=` values from Cloud
+Logging here when the founder runs it.
+
+### Empty-bucket probe (B7) -- local, run and passed
+
+With a disposable DB (`build/verify-9014.db`), the tool cleared `rate_limits`
+and fired nine wrong logins from localhost:
+
+```
+401 x8, then 429 on attempt 9; Retry-After: 160 (within the live 300s window)
+```
+
+The historical deployed observation was `Retry-After: 120`; the value is a
+position in the live window, so the assertion is on numeric presence and
+range, not a fixed number. A local empty-bucket probe also runs on every CI
+push against `ci-underlayer.db`.
+
+### One purge owner
+
+`repository/src/schema_migrations.ch::purge_expired_rate_limits` is the single
+startup purge (cutoff `now - 2*300s`, so every expired bucket is dead by the
+limiter's own reset rule). It is called from `repository/src/schema.ch`. The
+former web-layer 24-hour sweep (`ensure_rate_limit_table` /
+`purge_stale_rate_limits`) has been **removed**, not kept as harmless dead
+weight: two owners of one counter table is how a future change deletes a live
+bucket in one layer while the other still counts it. A restart of a copy
+still removes a stale row and keeps a fresh one.
+
+## 5a. Request logging and request ids (B1, 2026-11-26)
+
+Every request now emits exactly one structured line through
+`web/src/request_log.ch`, reached from the one delivery funnel in
+`web/src/responses.ch`:
+
+```
+[request] method=GET path=/api/health status=200 duration_ms=0 learner_id=- request_id=e939... remote=127.0.0.1
+```
+
+`X-Request-Id` is echoed. A caller-supplied value is used only when it is a
+short plain token (64 chars, no spaces/quotes/CR/LF/separators); otherwise a
+fresh 16-hex id is minted. That stops a forged header from injecting a second
+log line. `learner_id` is resolved from the same bearer/cookie token the auth
+guards use -- no new process-wide mutable state. A 5xx is logged at ERROR;
+database failures (`exec_sql`, `prepare`, `step`) are logged at ERROR in
+`database/src/main.ch`.
+
+`duration_ms` is measured **from delivery entry to wire-ready response**: the
+upstream router has no middleware hook, so the handler's own execution time is
+not included. The server library's `http::AccessEntry` has whole-exchange
+duration but no request id or learner id, so it cannot produce this line.
+Both this limitation and the next are recorded rather than papered over:
+an alert to a named on-call owner and Cloud Logging verification on a deployed
+revision are still founder actions.
+
+## 5b. Uniform security headers and CSP font origins (H3, 2026-11-26)
+
+The header contract (`Content-Security-Policy`, HSTS `max-age=31536000`,
+`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
+`Referrer-Policy: strict-origin-when-cross-origin`, `X-Request-Id`) is now
+applied to **two** paths:
+
+1. `deliver_with_learner` for every handler route, including guard refusals
+   (429) and redirects -- the 17-handler list was never 17 edits; it is one
+   helper plus the existing `deliver` call sites;
+2. `deliver_web_request` around `web::serve_request` for the frozen page/app
+   assets and the 404. These used to have **no** security headers at all.
+
+`apply_security_headers` uses `set_header_view` (replace), so the catch-all
+cannot double-set a helper's header. Verified byte-for-byte on port 9014:
+`/api/health`, `/`, `/courses`, a lesson, `/help`, `/faq`, `/about`,
+`/shortcuts`, `/privacy`, `/terms` and a 404 all carry an identical CSP and
+the same five fixed headers.
+`tools/security_header_coverage.py` asserts this with a negative plant
+(a deliberately headerless response must FAIL).
+
+**Font decision (recorded choice): keep the external font, add exactly two
+origins.** The brand layer (`WebLibs/brandlib/src/theme.ch`) links the Inter
+stylesheet from `https://fonts.googleapis.com` and fetches woff2 from
+`https://fonts.gstatic.com`. The CSP now allows those two origins in
+`style-src` and `font-src` respectively; Google remains absent from
+`default-src`, `script-src`, `img-src` and `connect-src`. The alternative --
+removing the external link and using system fonts -- was rejected because it
+changes the shipped visual design, which H3 explicitly does not do.
+
+**Browser evidence (local port 9014, headless Chrome via Playwright).**
+Drove `/`, `/courses`, a lesson, a quiz step ("Start the journey") and the
+six frozen/legal pages: **zero `securitypolicyviolation` events on every
+page**. On `/help` the Google stylesheet returned HTTP 200 and Inter moved
+from `unloaded` to `loaded` when an element explicitly requesting it was
+rendered (`document.fonts.check("16px Inter")` became true). On the lesson
+page the served HTML has no Google Fonts link at all and uses the system
+font stack, which is why it reports no Inter faces -- that is correct, not a
+missing font. Note that the shipped CSS on the frozen pages still resolves
+`body` to `system-ui`; the Inter faces are loaded on demand, so the visual
+effect of the new origins is to permit those loads rather than to change the
+default body font. Confirming the intended visual font on the deployed host
+remains a founder/CSP-drive follow-up.
+
+## 5c. CI gate corpus and inventory (H4, 2026-11-26)
+
+Per push: the six source checkers and the quick non-vacuity harness. Nightly
+(`schedule` + `workflow_dispatch`): the live gates on a fresh disposable DB,
+with logs on the GitHub run page. No deploy, publish, push or secret is in the
+workflow. **Route count is 187** from the current binary's `srv.router.add`
+calls (the old "180" was a 2026-10 baseline); `tools/route_check.py` parses
+the source itself (UTF-8 explicit) and reports the number it walked.
+
+| Gate | Per push | Nightly | Negative case / owner for exclusion |
+|---|---|---|---|
+| `check_inline_string_temporaries.py` | yes | yes | plant `&string(...)` in production source; `tests/` excluded, owner: `@test` suite 138/138 |
+| `sqli_scan.py` | yes | yes | `--selftest` plants one unescaped interpolation and requires +1 finding |
+| `bracecheck.py` | yes | yes | planted raw `{` inside `#html` fails |
+| `html_balance.py` | yes | yes | planted unclosed `<div>` fails |
+| `check_quotes.py` | yes | yes | planted "412.500 ticks/op" in a quoted `<pre>` fails |
+| `js_escape_check.py` | yes | yes | node round-trip of emitted `\u{...}`; a wrong escape fails |
+| `static_gate_negative_cases.py` | yes | yes | plants all six source gates in disposable copies; certified 6/6 locally; no DB, no rebuild |
+| `security_check.py` | -- | yes | `--selftest` plus live 44-check probes; H4 fixed it to read `DATABASE_URL` (it used to always open the default `underlayer.db`, so a disposable DB produced false "row not written" failures) |
+| `route_check.py` | -- | yes | `--selftest` plants a cross-learner leak; walks 187 routes |
+| `integration_check.py` | -- | yes | `--prove-non-vacuous` removes one rendered call and must fail |
+| `checker_nonvacuity.py` (full) | -- | yes | theme + lesson-pager tree plants must fail with named markers; see exclusion notes below |
+| `security_header_coverage.py` | yes | yes | `--selftest` plants a headerless frozen page; it must FAIL |
+| `rate_limit_deployed_probe.py --local` | yes | yes | empty bucket: 401x8 then 429 with numeric Retry-After |
+| Deployed two-network H2 probe | -- | -- | **Owner: founder.** Cannot run from one machine; needs two networks and approval to throttle |
+| Browser / CDP CSP-drive | -- | -- | **Owner: founder / agent with browser tooling.** See final report for this pass's outcome |
+
+## 5d. Deployed verification status (2026-11-26)
+
+All B1/H2/H3/H4/B7 evidence in this document was gathered **locally** against
+a freshly built binary on port 9014 with a throwaway DB. A live re-probe of
+`underlayer.wiqis.com` on 2026-11-26 still shows the OLD behaviour: `/api/health`
+has no `X-Request-Id`, its CSP has no `fonts.gstatic.com`, and `/help` still has
+no security headers. That is expected -- the founder deploys manually and no
+deploy or push is part of these work packages. The deployed re-probe is a
+**founder action after deploy**: run `tools/security_header_coverage.py
+https://underlayer.wiqis.com`, confirm the six frozen pages/404 now match
+`/api/health`, and link the output here.
+
+
+### H4 exclusions (owner for every gap)
+
+* `checker_nonvacuity.py::check_nesting` and `::check_link` -- their controls
+  already fail on a clean tree in this checkout (red before any plant), so
+  neither can certify anything right now. Owner: the content/link gate owner;
+  re-certify in the nightly job once the controls are green. Documented, not
+  silently marked green.
+* `checker_nonvacuity.py::check_session_js` -- control fails against the local
+  server on 9014; owner: web client gate owner.
+* `checker_nonvacuity.py::check_lesson_pager` and `::check_theme` -- the plant
+  is repaired/reversed as described in §6 item 6, but in this Windows checkout
+  the planted tree did not build (compiler exits 1) so the negative case is
+  **not certified here**. Nightly job must show a named `truncated` /
+  `pre-paint boot` failure before these are claimed certified. Owner: H4
+  nightly gate.
+* The full `checker_nonvacuity.py` run exits non-zero locally because of the
+  exclusions above; that is why per-push uses `static_gate_negative_cases.py`,
+  whose six plants are all certified.
+
 
 ## 6. Still open (do not mistake these for done)
 
 1. **CSP externalisation is still open — the "no CSP" claim is historical
    (corrected 2026-11-26).** At the time this list was written the site sent no
    CSP; a live probe on 2026-11-26 returns
-   `Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://storage.googleapis.com; connect-src 'self' https://account.wiqis.com; frame-src https://account.wiqis.com https://accounts.google.com; form-action 'self'; base-uri 'self'; object-src 'none'`
+   `Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://storage.googleapis.com; connect-src 'self' https://account.wiqis.com; frame-src https://account.wiqis.com https://accounts.google.com; form-action 'self'; base-uri 'self'; object-src 'none'`
    (plus HSTS `max-age=31536000`) on `/courses/elf/lessons/bytes`. It still
    allows `'unsafe-inline'` because the macros emit inline scripts and styles
    by the thousand; tightening it via externalisation remains the open work,
@@ -231,23 +425,19 @@ fresh row kept; nine wrong logins from one IP answered `401 ×8` then `429` with
 5. **CI limits — updated 2026-11-26; see §2.** One platform (`windows-latest`),
    no browser in CI, and the `helpful_dedupe_check.py` write probe needs a
    disposable database. These remain true. The old "no `@test` suite" limit is
-   **fixed**: the suite runs in CI (138/138) alongside five served-artifact
-   checkers (`e627de0`, `63b33eb`), and the compiler is provisioned in the job.
+   **fixed**: the suite runs in CI (138/138) alongside six source gates and
+   the nightly live corpus (see §5c), and the compiler is provisioned in the
+   job. The browser CDP drive is still not in CI.
    What is still unverified here is a *GitHub-hosted runner* execution, not the
    command sequence.
-6. **Non-vacuity plants — theme repaired, pager still open (2026-11-26).** The
-   old `theme_check` plant (`if(lesson) { return }` in
-   `content/src/theme_boot.ch`, grep for "inside <head>") was genuinely stale;
-   it was repaired in commit `cb47c27` to no-op `render_theme_boot_js`, and
-   verified on a seeded copy: `build/a4-plant-verify.log` shows the control
-   `theme_check: ALL 56 CHECKS PASSED` and the planted build failing 7/56 with
-   the named pre-paint boot checks. Do **not** re-repair it. The CI agent also
-   reported a remaining `check_lesson_pager` plant-marker issue: the planted
-   run in `build/a5-pager-plant.log` exited 1 but did not emit the expected
-   `'truncated'` marker (`named_truncated=False caught=False`), and
-   `build/a5-pager-plant3.log` ends in a connection-reset traceback instead of a
-   named failure. That negative case is therefore **not certified**; it is left
-   open rather than silently marked green.
-7. **Two owners for the rate-limit purge** (§5). Consolidating them belongs to
-   the schema layer; until then the wider sweep is harmless dead weight at
-   startup.
+6. **Non-vacuity plants (updated 2026-11-26; H4).** The theme plant was
+   repaired in commit `cb47c27` (it no-ops `render_theme_boot_js`) and
+   re-verified on a seeded copy: control `theme_check: ALL 56 CHECKS PASSED`,
+   planted build failing 7/56 with the named pre-paint boot checks; see
+   `build/a4-plant-verify.log`. The `check_lesson_pager` plant was **stale**:
+   the replacement string was the buggy form, so it was a no-op and the
+   "planted" checker still passed. It is now reversed to plant the real defect
+   (`subview(after, src.size() - after)`, a LENGTH where subview takes an END
+   INDEX), and the negative case must name `truncated` **and** print a
+   `CHECKS FAILED` summary; a connection-reset traceback is not a named
+   failure. Do not re-repair either plant.

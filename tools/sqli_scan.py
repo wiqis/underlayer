@@ -88,7 +88,7 @@ def scan_dir(root):
             if not fn.endswith('.ch'):
                 continue
             path = os.path.join(dirpath, fn)
-            with open(path, newline='') as fh:
+            with open(path, newline='', encoding='utf-8') as fh:
                 src = fh.read().replace('\r\n', '\n').replace('\r', '\n')
             lines = src.split('\n')
             findings.extend(_scan_file(path, lines))
@@ -162,13 +162,13 @@ def self_test():
     repo = os.path.dirname(here)
     base = scan_dir(os.path.join(repo, 'web'))
     target = os.path.join(repo, 'web/src/handlers_search.ch')
-    with open(target, newline='') as fh:
+    with open(target, newline='', encoding='utf-8') as fh:
         original = fh.read()
     with tempfile.TemporaryDirectory() as tmp:
         stage = os.path.join(tmp, 'web')
         shutil.copytree(os.path.join(repo, 'web'), stage)
         p = os.path.join(stage, 'src/handlers_search.ch')
-        with open(p, newline='') as fh:
+        with open(p, newline='', encoding='utf-8') as fh:
             body = fh.read().replace('\r\n', '\n').replace('\r', '\n')
         if not body.endswith('\n'):
             body += '\n'
@@ -182,7 +182,7 @@ def self_test():
             "    underlayer_db::exec_sql(db, &raw selftest_sql)\n"
             "}\n"
         )
-        with open(p, 'w') as fh:
+        with open(p, 'w', encoding='utf-8') as fh:
             fh.write(body)
         after = scan_dir(stage)
     if len(after) != len(base) + 1:

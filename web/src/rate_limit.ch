@@ -45,12 +45,27 @@
 // key.  At this ceiling the trade is not worth it, and pretending otherwise
 // would be worse than the boundary burst.
 //
-// WHY X-FORWARDED-FOR IS NOT TRUSTED.  That header is set by whoever sends the
-// request, so trusting it means the limiter can be sidestepped by sending a
-// different value each time -- which is precisely what an attacker would do.  The
-// peer address the socket gives is the only value an attacker does not control.
-// Behind a reverse proxy this rate-limits by the proxy's address, which is a
-// STRICTER limit, not a weaker one, and the fix belongs in lang/libs/server.
+// WHY X-FORWARDED-FOR IS NOT TRUSTED (H2, 2026-11-26).  That header is set by
+// whoever sends the request, so trusting it means the limiter can be sidestepped
+// by sending a different value each time -- which is precisely what an attacker
+// would do.  This file NEVER reads X-Forwarded-For, including its last hop.
+//
+// KEY CHOICE.  An authenticated request is keyed by its resolved learner id:
+// two learners behind one Google Frontend address must not share a learning
+// bucket.  An anonymous auth request (login/register/forgot/reset/from-account)
+// has no learner id yet, so it stays keyed by `req.remote`, the socket peer.
+// Behind Cloud Run that peer is the FRONTEND's address, so all anonymous
+// callers share ONE bucket: that is fail-closed (a stranger cannot bypass the
+// limiter by changing a header), but it is also a shared 8/5-minute allowance,
+// which is a real operational defect.  The fix is an edge limiter (Cloud Armor)
+// or a trusted proxy hop that overwrites a client-ip header; both are founder
+// actions recorded in docs/deployment.md §5.  Until then the shared bucket is
+// accepted deliberately, and the deployed two-network probe is UNAUTHORISED
+// to run against production by an agent.
+//
+// The peer address is logged on EVERY request by web/src/request_log.ch, so
+// Cloud Logging can answer "what did the deployed peer actually resolve to?"
+// without guessing from a client-side probe.
 using std::string
 using std::string_view
 using underlayer_db::DbClient
@@ -85,59 +100,45 @@ public namespace underlayer_web {
     //                       timestamp on the caller's OWN row.
     private func rate_limit_write_max() : i64 { return 120 }
 
-    // Create the table.  Idempotent, and called from init_schema's migration
-    // path so a fresh database has it.
-    //
-    // NOTE (2026-11-26): the authoritative startup purge is
-    // repository/src/schema_migrations.ch::purge_expired_rate_limits, called
-    // from repository/src/schema.ch after run_support_tables (checklist 2.2.64).
-    // This helper is retained as the web-layer home of the same contract, and
-    // this extra sweep is deliberately GENEROUS (24h, below) so it can never
-    // delete a row the 10-minute startup purge would have kept.  It is a second
-    // net, not a second policy.  Consolidating the two owners is a follow-up.
-    public func ensure_rate_limit_table(db : *DbClient) {
-        var sql = string("CREATE TABLE IF NOT EXISTS rate_limits (bucket TEXT PRIMARY KEY, window_start INTEGER, count INTEGER)")
-        underlayer_db::exec_sql(db, &raw sql)
-        purge_stale_rate_limits(db)
-    }
+    // B7: ONE purge owner.  The table is created in
+    // repository/src/schema_migrations.ch::run_support_tables, and the single
+    // startup purge is that file's purge_expired_rate_limits (two 300s windows,
+    // cutoff 600s), called from repository/src/schema.ch.  The former web-layer
+    // 24-hour sweep has been REMOVED rather than kept as "harmless dead weight":
+    // two owners of one counter table is how a future change deletes a live
+    // bucket in one layer while the other layer still counts it.
 
-    // BOUNDED PURGE.  One row per distinct IP per endpoint group, written by
-    // anonymous requests; without a purge the table grows forever.  A bucket
-    // older than a generous retention window can no longer affect a decision
-    // (rate_limit_ok_with resets a count whose window_start is not the current
-    // window), so deleting it cannot change a single future answer.  That is
-    // what makes this safe to run at startup with no timer and no background
-    // thread.
-    //
-    // 24 hours rather than one 5-minute window: the fast purge in the schema
-    // migration uses two windows (600s).  A wider, idempotent sweep here only
-    // removes rows that are dead by BOTH measures, so the two cannot disagree.
-    // No module-level state: the cutoff is computed locally per call.
-    private func rate_limit_purge_retention() : i64 { return 86400 }
-
-    public func purge_stale_rate_limits(db : *DbClient) {
-        var cutoff = underlayer_core::current_timestamp() - rate_limit_purge_retention()
-        var cutoff_s = underlayer_core::int_to_string(cutoff)
-        var sql = string("DELETE FROM rate_limits WHERE window_start < ")
-        sql.append_view(cutoff_s.to_view())
-        underlayer_db::exec_sql(db, &raw sql)
-    }
-
-    // "group|ip" -- the IP is enough to keep the two concerns apart, and the
-    // group keeps one noisy learner on /api/auth/login from being refused on
-    // /api/auth/register.
-    private func rate_limit_bucket(group : &string, ip : &string) : string {
+    // "group|key" -- the key separates callers, the group keeps one noisy
+    // learner on /api/auth/login from being refused on /api/auth/register.
+    private func rate_limit_bucket(group : &string, key : &string) : string {
         var b = group.copy()
         b.append_view("|")
-        b.append_string(ip)
+        b.append_string(key)
         return b
     }
 
-    // The caller's peer address, which is the one value the caller does not get
-    // to choose.  See the header for why the forwarded header is ignored.
+    // H2: the caller's peer address, which is the one value the caller does not
+    // get to choose. X-Forwarded-For is deliberately never read.
     public func client_ip(req : &http::Request) : string {
         if(req.remote.size() > 0) { return req.remote.copy() }
         return string("unknown")
+    }
+
+    // An authenticated learner gets a per-learner key; an anonymous auth
+    // request falls back to the socket peer. Learner ids are 32-hex database
+    // ids, so a `u:` bucket cannot collide with an `ip:` bucket.
+    private func rate_limit_key(db : *DbClient, req : &http::Request) : string {
+        if(db != null) {
+            var learner = auth_get_learner_id(db, req)
+            if(learner.size() > 0) {
+                var owned = string("u:")
+                owned.append_string(&learner)
+                return owned
+            }
+        }
+        var peer = string("ip:")
+        peer.append_string(&client_ip(req))
+        return peer
     }
 
     // Count one attempt and report whether the caller is still under the limit.
@@ -160,8 +161,8 @@ public namespace underlayer_web {
     // second signature here: two overloads would leave the broken one available
     // and the bug below would come straight back.
     public func rate_limit_ok_with(db : *DbClient, req : &http::Request, group : &string, max : i64) : std::Option<http::Response> {
-        var ip = client_ip(req)
-        var bucket = rate_limit_bucket(group, &ip)
+        var key = rate_limit_key(db, req)
+        var bucket = rate_limit_bucket(group, &key)
         var now = underlayer_core::current_timestamp()
         var window = rate_limit_window()
         var window_start = now - (now % window)

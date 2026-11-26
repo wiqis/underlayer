@@ -39,8 +39,15 @@ WHAT IS PROVEN, AND HOW.
   lesson_pager_check  a LENGTH is passed to string_view.subview() where it
                    takes an END INDEX -- the actual defect that shipped, which
                    truncated every lesson page while every other gate stayed
-                   green.  Both of these rebuild the tree, so --quick skips
-                   them.
+                   green.  The negative case must be named `truncated` in
+                   the checker's own output. Both of these rebuild the
+                   tree, so --quick skips them.
+   security_header_coverage  --selftest plants a headerless frozen page
+                   (the exact H3 defect) and requires a FAIL, with a control
+                   that must PASS. No rebuild, so it runs even with --quick.
+   check_inline_string_temporaries  plant `&string("...")` in a production
+                   .ch copy and require a FAIL; the tests/ exclusion stays
+                   visible as a named note in the control output.
 
 The tree-mutating checkers run against a full COPY of the repo, so this script
 cannot damage the working tree even if it is killed midway.
@@ -98,12 +105,12 @@ def check_bracecheck(quick):
             if os.path.exists(p):
                 victim = p
                 break
-        src = open(victim).read()
+        src = open(victim, encoding='utf-8').read()
         i = src.find('#html {')
         assert i > 0, victim
         j = src.find('\n', i)
         broken = src[:j + 1] + '            <p>oops { not a tag</p>\n' + src[j + 1:]
-        open(victim, 'w').write(broken)
+        open(victim, 'w', encoding='utf-8').write(broken)
         rc2, out = run([PY, 'tools/bracecheck.py'], cwd=tree, timeout=900)
     record('bracecheck', True, rc2 != 0,
            'planted a raw { in %s -> exit %d' % (os.path.basename(victim), rc2))
@@ -168,15 +175,44 @@ def check_html_balance(quick):
         shutil.copytree(REPO, tree, ignore=shutil.ignore_patterns(
             '.git', 'build', 'output', 'node_modules', '__pycache__'))
         victim = os.path.join(tree, 'web/src/pages_search.ch')
-        src = open(victim).read()
+        src = open(victim, encoding='utf-8').read()
         i = src.find('#html {')
         j = src.find('\n', i)
         broken = src[:j + 1] + '            <div class="planted-unclosed">\n' + src[j + 1:]
-        open(victim, 'w').write(broken)
+        open(victim, 'w', encoding='utf-8').write(broken)
         rc2, out2 = run([PY, 'tools/html_balance.py'], cwd=tree, timeout=900)
         caught = 'planted-unclosed' in out2 or 'never closed' in out2
     record('html_balance', True, rc2 != 0 and caught,
            'planted an unclosed <div> -> exit %d, named=%s' % (rc2, caught))
+
+
+def check_inline_string_temporaries(quick):
+    """Plant `&string("...")` in a production .ch copy and require a FAIL."""
+    rc, out = run([PY, 'tools/check_inline_string_temporaries.py'], timeout=900)
+    if rc != 0:
+        record('check_inline_string_temporaries', False, False,
+               'control already fails; skipped')
+        return
+    with tempfile.TemporaryDirectory() as tmp:
+        tree = os.path.join(tmp, 'r')
+        shutil.copytree(REPO, tree, ignore=shutil.ignore_patterns(
+            '.git', 'build', 'output', 'node_modules', '__pycache__'))
+        victim = os.path.join(tree, 'web', 'src', 'helpers.ch')
+        src = open(victim, encoding='utf-8').read()
+        broken = src + ('\n// plant: inline string temporary\n'
+                        'public func zz_bad(db : *DbClient) : void {\n'
+                        '    underlayer_web::send_error(400u, &string("bad"))\n'
+                        '}\n')
+        open(victim, 'w', encoding='utf-8').write(broken)
+        rc2, out2 = run([PY, 'tools/check_inline_string_temporaries.py'],
+                        cwd=tree, timeout=900)
+        named = 'zz_bad' in out2 or 'helpers.ch' in out2
+    if quick:
+        record('check_inline_string_temporaries', True, False, 'QUICK-SKIP: skipped by --quick')
+        return
+    record('check_inline_string_temporaries', True, rc2 != 0 and named,
+           'planted an inline &string(...) in web/src/helpers.ch -> exit %d, named=%s'
+           % (rc2, named))
 
 
 def check_link(quick):
@@ -189,11 +225,11 @@ def check_link(quick):
         shutil.copytree(REPO, tree, ignore=shutil.ignore_patterns(
             '.git', 'build', 'output', 'node_modules', '__pycache__'))
         victim = os.path.join(tree, 'web/src/pages_search.ch')
-        src = open(victim).read()
+        src = open(victim, encoding='utf-8').read()
         i = src.find('#html {')
         j = src.find('\n', i)
         broken = src[:j + 1] + '            <a href="/courses/zz-no-such-page">x</a>\n' + src[j + 1:]
-        open(victim, 'w').write(broken)
+        open(victim, 'w', encoding='utf-8').write(broken)
         rc2, out2 = run([PY, 'tools/link_check.py'], cwd=tree, timeout=900)
     record('link_check', True, rc2 != 0,
            'planted an internal href that 404s -> exit %d' % rc2)
@@ -201,9 +237,14 @@ def check_link(quick):
 
 def check_nav(quick):
     """Two controls: the assertion must be relaxable, and it must fire."""
-    rc_relaxed, _ = run([PY, 'tools/nav_check.py', '--expect-nav', '0'], timeout=900)
-    rc_strict, _ = run([PY, 'tools/nav_check.py'], timeout=900)
-    rc_bad, _ = run([PY, 'tools/nav_check.py', '--url', '/settings'], timeout=300)
+    # nav_check does not read UL_BASE_URL itself; pass the same base the
+    # other live controls use, so CI (a random free port) is covered too.
+    base = os.environ.get('UL_BASE_URL', 'http://localhost:9000')
+    rc_relaxed, _ = run([PY, 'tools/nav_check.py', '--base', base,
+                         '--expect-nav', '0'], timeout=900)
+    rc_strict, _ = run([PY, 'tools/nav_check.py', '--base', base], timeout=900)
+    rc_bad, _ = run([PY, 'tools/nav_check.py', '--base', base,
+                    '--url', '/settings'], timeout=300)
     note = ('--expect-nav 0 exit %d (must be 0) ; strict exit %d (must be 0) ; '
             '/settings exit %d (must be nonzero: it has no navbar)'
             % (rc_relaxed, rc_strict, rc_bad))
@@ -224,7 +265,7 @@ def check_todo(quick):
             shutil.copy(os.path.join(REPO, 'tools', '%s.py' % name),
                         os.path.join(tree, 'tools', '%s.py' % name))
             p = os.path.join(tree, doc)
-            src = open(os.path.join(REPO, doc)).read()
+            src = open(os.path.join(REPO, doc), encoding='utf-8').read()
             # flip the first two unchecked items to checked
             n = 0
             out = []
@@ -233,7 +274,7 @@ def check_todo(quick):
                     line = line.replace('- [ ]', '- [x]', 1)
                     n += 1
                 out.append(line)
-            open(p, 'w').write('\n'.join(out))
+            open(p, 'w', encoding='utf-8').write('\n'.join(out))
             rc2, out2 = run([PY, 'tools/%s.py' % name], cwd=tree, timeout=600)
         record(name, True, rc2 != 0,
                'checked 2 items by hand -> exit %d' % rc2)
@@ -253,7 +294,7 @@ def check_quotes(quick):
     if rc != 0:
         record('check_quotes', False, False, 'control already fails; skipped')
         return
-    src_tool = open(os.path.join(REPO, 'tools/check_quotes.py')).read()
+    src_tool = open(os.path.join(REPO, 'tools/check_quotes.py'), encoding='utf-8').read()
     m = re.search(r'"x86asm":\s*\(([^)]*)\)', src_tool, re.S)
     if not m:
         record('check_quotes', True, False, 'could not read the PAGES table')
@@ -268,7 +309,7 @@ def check_quotes(quick):
             record('check_quotes', True, False,
                    '%s is in the PAGES table but not on disk' % page)
             return
-        src = open(victim).read()
+        src = open(victim, encoding='utf-8').read()
         # It must go INSIDE a quoted-output block: the checker only reads
         # <pre>...</pre> that also contains a shell prompt or a known artifact
         # command, because a page's prose decimals are the author's arithmetic
@@ -289,7 +330,7 @@ def check_quotes(quick):
         plant = ('Measured 412.500 ticks/op on this machine.\n'
                  '$ ')
         broken = (src[:target.start(1)] + plant + src[target.start(1):])
-        open(victim, 'w').write(broken)
+        open(victim, 'w', encoding='utf-8').write(broken)
         rc2, out2 = run([PY, 'tools/check_quotes.py'], cwd=tree, timeout=900)
         named = '412.500' in out2
     record('check_quotes', True, rc2 != 0 and named,
@@ -306,6 +347,17 @@ def check_selftests(quick):
         record(name + ' --selftest', True, ok,
                ('its own negative control ran' if ok
                 else 'the selftest did not pass on a clean tree (exit %d)' % rc))
+
+    # security_header_coverage's selftest PRINTS 'FAIL as required' on
+    # purpose (it is the negative plant), so the generic 'no FAIL text'
+    # heuristic would mark a correct selftest as broken. Judge it by its
+    # exit code and its explicit OK line instead.
+    rc, out = run([PY, 'tools/security_header_coverage.py', '--selftest'],
+                  timeout=900)
+    ok = rc == 0 and '--selftest OK' in out
+    record('security_header_coverage --selftest', True, ok,
+           ('control PASS + planted headerless page FAIL' if ok
+            else 'selftest did not certify (exit %d)' % rc))
 
 
 def check_session_js(quick):
@@ -334,7 +386,7 @@ def check_session_js(quick):
                'control already fails on the real server; skipped')
         return
     if quick:
-        record('session_js_check', True, False, 'skipped by --quick')
+        record('session_js_check', True, False, 'QUICK-SKIP: skipped by --quick')
         return
     compiler = find_compiler()
     if not compiler:
@@ -345,7 +397,7 @@ def check_session_js(quick):
         shutil.copytree(REPO, tree, ignore=shutil.ignore_patterns(
             '.git', 'build', 'output', 'node_modules', '__pycache__'))
         victim = os.path.join(tree, 'web/src/session_js.ch')
-        src = open(victim).read()
+        src = open(victim, encoding='utf-8').read()
         planted = src.replace('if (r.status === 401) {',
                                'if (r.status === 401 && !opts.silent401) {', 1)
         if planted == src:
@@ -353,7 +405,7 @@ def check_session_js(quick):
                    'the plant did not apply -- the 401 guard is not in the '
                    'shape this check expects')
             return
-        open(victim, 'w').write(planted)
+        open(victim, 'w', encoding='utf-8').write(planted)
         port = free_port()
         rc2, _ = run([compiler, 'chemical.mod', '-o',
                       os.path.join(tree, 'build/underlayer.exe'),
@@ -411,7 +463,7 @@ def check_lesson_pager(quick):
                'control already fails on the real server; skipped')
         return
     if quick:
-        record('lesson_pager_check', True, False, 'skipped by --quick')
+        record('lesson_pager_check', True, False, 'QUICK-SKIP: skipped by --quick')
         return
     compiler = find_compiler()
     if not compiler:
@@ -423,7 +475,7 @@ def check_lesson_pager(quick):
         shutil.copytree(REPO, tree, ignore=shutil.ignore_patterns(
             '.git', 'build', 'output', 'node_modules', '__pycache__'))
         victim = os.path.join(tree, victim_rel)
-        src = open(victim).read()
+        src = open(victim, encoding='utf-8').read()
         planted = src.replace('src.to_view().subview(after, src.size())',
                               'src.to_view().subview(after, src.size() - after)', 1)
         if planted == src:
@@ -431,7 +483,7 @@ def check_lesson_pager(quick):
                    'the plant did not apply -- subview() is not called in the '
                    'shape this check expects')
             return
-        open(victim, 'w').write(planted)
+        open(victim, 'w', encoding='utf-8').write(planted)
         rc2, _ = run([compiler, 'chemical.mod', '-o',
                       os.path.join(tree, 'build/underlayer.exe'),
                       '-bm-modules', '--no-cache', '--mode', 'debug_quick'],
@@ -453,7 +505,8 @@ def check_lesson_pager(quick):
                        'the planted server never came up')
                 return
             rc3, out3 = run([PY, 'tools/lesson_pager_check.py', base], timeout=900)
-            caught = rc3 != 0 and 'truncated' in out3
+            caught = (rc3 != 0 and 'truncated' in out3 and
+                      'CHECKS FAILED' in out3)
         finally:
             srv.terminate()
             try:
@@ -483,7 +536,7 @@ def check_theme(quick):
                'control already fails on the real server; skipped')
         return
     if quick:
-        record('theme_check', True, False, 'skipped by --quick')
+        record('theme_check', True, False, 'QUICK-SKIP: skipped by --quick')
         return
     compiler = find_compiler()
     if not compiler:
@@ -494,7 +547,7 @@ def check_theme(quick):
         shutil.copytree(REPO, tree, ignore=shutil.ignore_patterns(
             '.git', 'build', 'output', 'node_modules', '__pycache__'))
         victim = os.path.join(tree, 'content', 'src', 'theme_boot.ch')
-        src = open(victim).read()
+        src = open(victim, encoding='utf-8').read()
         planted = src.replace('        page.append_head_view(&bv)',
                               '        // planted: boot suppressed', 1)
         if planted == src:
@@ -502,7 +555,7 @@ def check_theme(quick):
                    'the plant did not apply -- the head append is not in the '
                    'shape this check expects')
             return
-        open(victim, 'w').write(planted)
+        open(victim, 'w', encoding='utf-8').write(planted)
         rc2, _ = run([compiler, 'chemical.mod', '-o',
                       os.path.join(tree, 'build/underlayer.exe'),
                       '-bm-modules', '--no-cache', '--mode', 'debug_quick'],
@@ -585,6 +638,7 @@ def main():
     check_bracecheck(args.quick)
     check_nesting(args.quick)
     check_html_balance(args.quick)
+    check_inline_string_temporaries(args.quick)
     check_link(args.quick)
     print()
     print('--- checkers with their own negative controls ---')
@@ -598,7 +652,10 @@ def main():
     check_todo(args.quick)
     check_quotes(args.quick)
     print()
-    bad = [r for r in results if not (r[1] and r[2])]
+    # A --quick run deliberately skips the three rebuild-based plants.
+    # A deliberate skip is not a failure; CI runs the full harness nightly.
+    bad = [r for r in results
+           if not (r[1] and r[2]) and 'QUICK-SKIP' not in r[3]]
     for name, c, n, note in results:
         if not c:
             print('  NOTE: %s control did not pass (%s)' % (name, note))

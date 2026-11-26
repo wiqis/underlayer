@@ -63,7 +63,7 @@ def macro_hazards(path):
       * OUTSIDE <pre> a bare `{` or `}` is still the interpolation sigil and
         still aborts the macro, so that case is still reported.
     """
-    src = open(path).read()
+    src = open(path, encoding='utf-8').read()
     out = []
     for _bs, _be, block in blocks_of(src):
         out.extend(hazards_in(block))
@@ -147,7 +147,7 @@ def unclosed(path):
     gracefully -- it drops the rest of the file out of the macro. Cheap to
     check, and it catches the class of mistake a div/pre counter cannot.
     """
-    src = open(path).read()
+    src = open(path, encoding='utf-8').read()
     problems = []
     for _bs, _be, block in blocks_of(src):
         problems.extend(unclosed_in(block))
@@ -274,7 +274,7 @@ def blocks_of(src):
 
 
 def repair(path, write=True):
-    src = open(path).read()
+    src = open(path, encoding='utf-8').read()
     n = len(blocks_of(src))
     if n > 1:
         raise ValueError(
@@ -345,7 +345,7 @@ def repair(path, write=True):
 
 
 def report(path):
-    src = open(path).read()
+    src = open(path, encoding='utf-8').read()
     blocks = blocks_of(src)
     if not blocks:
         print('%-34s no #html block -- nothing to check'

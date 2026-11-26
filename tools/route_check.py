@@ -107,7 +107,7 @@ def http(method, path, port, token=None, body=None, timeout=25):
 
 
 def parse_routes():
-    src = open(os.path.join(REPO, 'app/main.ch'), newline='').read()
+    src = open(os.path.join(REPO, 'app/main.ch'), newline='', encoding='utf-8').read()
     src = src.replace('\r\n', '\n')
     out = []
     for m, p in re.findall(r'srv\.router\.add\(\s*"([A-Z]+)",\s*"([^"]+)"', src):
