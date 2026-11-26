@@ -94,9 +94,9 @@ Section Headers:
                 <h2>Check Your Understanding</h2>
                 <p>What does the sh_addr field represent?</p>
                 <div class="quiz" id="quiz-sht-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-sht-1', this, false)">The file offset</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-sht-1', this, true)">The virtual address in memory</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-sht-1', this, false)">The section size</button>
+                    <button class="quiz-option" data-explain="The field table lists sh_offset as the file offset and sh_addr as the virtual address, 0 when not loaded. Those are two different fields." onclick="checkQuiz('quiz-sht-1', this, false)">The file offset</button>
+                    <button class="quiz-option" data-explain="The field table defines sh_addr as the virtual address in memory, 0 when the section is not loaded." onclick="checkQuiz('quiz-sht-1', this, true)">The virtual address in memory</button>
+                    <button class="quiz-option" data-explain="The table gives sh_size as the section size in bytes. sh_addr is the virtual address, a different field." onclick="checkQuiz('quiz-sht-1', this, false)">The section size</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -105,9 +105,9 @@ Section Headers:
                 <h2>Apply It</h2>
                 <p>A section has sh_offset=0x1000 and sh_size=0x200. How many bytes of the ELF file does it occupy?</p>
                 <div class="quiz" id="quiz-sht-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-sht-2', this, true)">0x200 (512 bytes)</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-sht-2', this, false)">0x1000 (4096 bytes)</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-sht-2', this, false)">0x1200</button>
+                    <button class="quiz-option" data-explain="sh_size is the section size in bytes, so 0x200 is 512 bytes. sh_offset only says where the section starts in the file." onclick="checkQuiz('quiz-sht-2', this, true)">0x200 (512 bytes)</button>
+                    <button class="quiz-option" data-explain="0x1000 is sh_offset, the starting file offset, not the number of bytes. The size field is sh_size = 0x200." onclick="checkQuiz('quiz-sht-2', this, false)">0x1000 (4096 bytes)</button>
+                    <button class="quiz-option" data-explain="0x1200 would be offset plus size, an end position, not the byte count the question asks for. The table gives the byte count as sh_size = 0x200." onclick="checkQuiz('quiz-sht-2', this, false)">0x1200</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

@@ -107,9 +107,9 @@ public func render_program_header_table() : string {
                 <h2>Check Your Understanding</h2>
                 <p>What does a PT_LOAD segment with p_memsz > p_filesz indicate?</p>
                 <div class="quiz" id="quiz-pht-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-pht-1', this, false)" aria-label="Option: The file is corrupted">The file is corrupted</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-pht-1', this, true)" aria-label="Option: Extra memory is zero-initialized (like .bss)">Extra memory is zero-initialized (like .bss)</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-pht-1', this, false)" aria-label="Option: The segment is compressed">The segment is compressed</button>
+                    <button class="quiz-option" data-explain="The field table defines p_filesz as the size in the file and p_memsz as the size in memory, which may be larger for .bss. A larger memory size is an expected case, not corruption." onclick="checkQuiz('quiz-pht-1', this, false)" aria-label="Option: The file is corrupted">The file is corrupted</button>
+                    <button class="quiz-option" data-explain="The field table says p_memsz may be larger than p_filesz for .bss; the extra memory is zero-initialized." onclick="checkQuiz('quiz-pht-1', this, true)" aria-label="Option: Extra memory is zero-initialized (like .bss)">Extra memory is zero-initialized (like .bss)</button>
+                    <button class="quiz-option" data-explain="Compare with the field table: p_filesz and p_memsz describe file size and memory size, with the difference explained by .bss. Compression is not part of either description." onclick="checkQuiz('quiz-pht-1', this, false)" aria-label="Option: The segment is compressed">The segment is compressed</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -118,9 +118,9 @@ public func render_program_header_table() : string {
                 <h2>Apply It</h2>
                 <p>If p_vaddr is 0x4000 and p_offset is 0x0, what's the file offset of the first byte in the segment?</p>
                 <div class="quiz" id="quiz-pht-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-pht-2', this, true)" aria-label="Option: 0x0 — the byte is at offset 0">0x0 — the byte is at offset 0</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-pht-2', this, false)" aria-label="Option: 0x4000 — same as the virtual address">0x4000 — same as the virtual address</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-pht-2', this, false)" aria-label="Option: It depends on the alignment">It depends on the alignment</button>
+                    <button class="quiz-option" data-explain="p_offset is the file offset where the segment starts, so with p_offset 0x0 the first byte is at file offset 0x0. p_vaddr 0x4000 is where it maps in memory." onclick="checkQuiz('quiz-pht-2', this, true)" aria-label="Option: 0x0 — the byte is at offset 0">0x0 — the byte is at offset 0</button>
+                    <button class="quiz-option" data-explain="0x4000 is p_vaddr, the virtual address to map to, not a file offset. The question asks for the file offset, which is p_offset = 0x0." onclick="checkQuiz('quiz-pht-2', this, false)" aria-label="Option: 0x4000 — same as the virtual address">0x4000 — same as the virtual address</button>
+                    <button class="quiz-option" data-explain="The first byte of a segment is at p_offset regardless of alignment; p_align is a separate field described as the alignment requirement. Here p_offset is 0x0." onclick="checkQuiz('quiz-pht-2', this, false)" aria-label="Option: It depends on the alignment">It depends on the alignment</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

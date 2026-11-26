@@ -109,9 +109,9 @@ public func render_segment_types() : string {
                 <h2>Check Your Understanding</h2>
                 <p>Which segment type tells the kernel where the dynamic linker is?</p>
                 <div class="quiz" id="quiz-st-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-st-1', this, false)" aria-label="Option: PT_DYNAMIC">PT_DYNAMIC</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-st-1', this, true)" aria-label="Option: PT_INTERP">PT_INTERP</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-st-1', this, false)" aria-label="Option: PT_LOAD">PT_LOAD</button>
+                    <button class="quiz-option" data-explain="The segment-type table says PT_DYNAMIC carries dynamic linking information, while PT_INTERP is the path to the interpreter, that is, the dynamic linker." onclick="checkQuiz('quiz-st-1', this, false)" aria-label="Option: PT_DYNAMIC">PT_DYNAMIC</button>
+                    <button class="quiz-option" data-explain="The table gives PT_INTERP as the path to the interpreter (dynamic linker), and the model calls it the path to the dynamic linker." onclick="checkQuiz('quiz-st-1', this, true)" aria-label="Option: PT_INTERP">PT_INTERP</button>
+                    <button class="quiz-option" data-explain="The table describes PT_LOAD as a loadable segment mapped into memory. It is PT_INTERP that holds the path to the interpreter." onclick="checkQuiz('quiz-st-1', this, false)" aria-label="Option: PT_LOAD">PT_LOAD</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -120,9 +120,9 @@ public func render_segment_types() : string {
                 <h2>Apply It</h2>
                 <p>If a program has 3 PT_LOAD segments, how many memory regions does the kernel map?</p>
                 <div class="quiz" id="quiz-st-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-st-2', this, false)" aria-label="Option: 1 — they're all mapped together">1 — they're all mapped together</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-st-2', this, true)" aria-label="Option: 3 — each PT_LOAD becomes a separate mmap region">3 — each PT_LOAD becomes a separate mmap region</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-st-2', this, false)" aria-label="Option: It depends on the page size">It depends on the page size</button>
+                    <button class="quiz-option" data-explain="The model labels each PT_LOAD a load this into memory instruction, and the lesson's answer counts 3 for 3 PT_LOAD segments. They are separate mappings, not one." onclick="checkQuiz('quiz-st-2', this, false)" aria-label="Option: 1 — they're all mapped together">1 — they're all mapped together</button>
+                    <button class="quiz-option" data-explain="Each PT_LOAD is its own load instruction, so 3 PT_LOAD segments become 3 separate mapped regions, as the lesson's answer states." onclick="checkQuiz('quiz-st-2', this, true)" aria-label="Option: 3 — each PT_LOAD becomes a separate mmap region">3 — each PT_LOAD becomes a separate mmap region</button>
+                    <button class="quiz-option" data-explain="Compare with the lesson's answer: 3 PT_LOAD segments map as 3 regions. p_align is a separate field and the question only counts PT_LOAD entries." onclick="checkQuiz('quiz-st-2', this, false)" aria-label="Option: It depends on the page size">It depends on the page size</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

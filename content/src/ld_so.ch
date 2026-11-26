@@ -103,9 +103,9 @@ dpkg -S /lib/x86_64-linux-gnu/libc.so.6</pre></div>
                 <h2>Check Your Understanding</h2>
                 <p>What is the purpose of LD_PRELOAD?</p>
                 <div class="quiz" id="quiz-ld-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ld-1', this, false)">To specify library search paths</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ld-1', this, true)">To force-load a library before all others, allowing it to override (interpose) symbols in subsequent libraries</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ld-1', this, false)">To disable lazy binding</button>
+                    <button class="quiz-option" data-explain="The environment table lists LD_LIBRARY_PATH as the variable for additional search paths. LD_PRELOAD is listed separately as force-loading libraries before all others." onclick="checkQuiz('quiz-ld-1', this, false)">To specify library search paths</button>
+                    <button class="quiz-option" data-explain="The table defines LD_PRELOAD as force-loading libraries before all others; the why unit says this is how symbols are overridden or interposed." onclick="checkQuiz('quiz-ld-1', this, true)">To force-load a library before all others, allowing it to override (interpose) symbols in subsequent libraries</button>
+                    <button class="quiz-option" data-explain="The table assigns disabling lazy binding to LD_BIND_NOW, not LD_PRELOAD." onclick="checkQuiz('quiz-ld-1', this, false)">To disable lazy binding</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -114,9 +114,9 @@ dpkg -S /lib/x86_64-linux-gnu/libc.so.6</pre></div>
                 <h2>Apply It</h2>
                 <p>You get "error while loading shared libraries: libfoo.so.3: cannot open shared object file". What are the most likely causes?</p>
                 <div class="quiz" id="quiz-ld-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ld-2', this, false)">The program is corrupted</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ld-2', this, true)">The library is not installed, or it's installed in a path not in the search order (check LD_LIBRARY_PATH and /etc/ld.so.cache)</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ld-2', this, false)">Your CPU doesn't support the instruction set</button>
+                    <button class="quiz-option" data-explain="The lesson's answer points to the library not being installed or not being in the search order; the error text names a shared object file, not a malformed program." onclick="checkQuiz('quiz-ld-2', this, false)">The program is corrupted</button>
+                    <button class="quiz-option" data-explain="The lesson's answer: the library is missing from the system or from the search order, which you inspect with LD_LIBRARY_PATH and /etc/ld.so.cache." onclick="checkQuiz('quiz-ld-2', this, true)">The library is not installed, or it's installed in a path not in the search order (check LD_LIBRARY_PATH and /etc/ld.so.cache)</button>
+                    <button class="quiz-option" data-explain="Compare with the lesson's answer: the failure is a library lookup failure, diagnosed with the search order and LD_DEBUG, not an instruction-set check." onclick="checkQuiz('quiz-ld-2', this, false)">Your CPU doesn't support the instruction set</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

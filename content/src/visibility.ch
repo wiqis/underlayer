@@ -135,9 +135,9 @@ nm --defined-only libvis.so
                 <h2>Check Your Understanding</h2>
                 <p>What does HIDDEN visibility mean for a symbol?</p>
                 <div class="quiz" id="quiz-v-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-v-1', this, false)">The symbol is available everywhere but marked as internal</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-v-1', this, true)">The symbol is not exported — other shared libraries cannot resolve it</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-v-1', this, false)">The symbol is stripped from the binary</button>
+                    <button class="quiz-option" data-explain="The table gives HIDDEN as not exported and unresolvable by the dynamic linker from other modules; INTERNAL is a separate visibility with its own row." onclick="checkQuiz('quiz-v-1', this, false)">The symbol is available everywhere but marked as internal</button>
+                    <button class="quiz-option" data-explain="The table describes STV_HIDDEN as not exported, with the dynamic linker unable to resolve it from other modules." onclick="checkQuiz('quiz-v-1', this, true)">The symbol is not exported — other shared libraries cannot resolve it</button>
+                    <button class="quiz-option" data-explain="The table describes HIDDEN as a value in st_other that makes the symbol not exported. It says nothing about removing the symbol from the binary." onclick="checkQuiz('quiz-v-1', this, false)">The symbol is stripped from the binary</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -146,9 +146,9 @@ nm --defined-only libvis.so
                 <h2>Apply It</h2>
                 <p>Why would you use PROTECTED visibility instead of DEFAULT?</p>
                 <div class="quiz" id="quiz-v-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-v-2', this, false)">Protected symbols are smaller in the binary</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-v-2', this, true)">To prevent interposition — ensure calls within the library always resolve to the local definition, even if LD_PRELOAD defines the same symbol</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-v-2', this, false)">Protected symbols load faster</button>
+                    <button class="quiz-option" data-explain="The table defines PROTECTED as exported but resolved to the local definition, so no interposition. Size is not part of that description." onclick="checkQuiz('quiz-v-2', this, false)">Protected symbols are smaller in the binary</button>
+                    <button class="quiz-option" data-explain="The table says PROTECTED is exported but references within the module resolve to the local definition; the default row names LD_PRELOAD interposition." onclick="checkQuiz('quiz-v-2', this, true)">To prevent interposition — ensure calls within the library always resolve to the local definition, even if LD_PRELOAD defines the same symbol</button>
+                    <button class="quiz-option" data-explain="Compare with the table: the difference between DEFAULT and PROTECTED is interposition, not startup time." onclick="checkQuiz('quiz-v-2', this, false)">Protected symbols load faster</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

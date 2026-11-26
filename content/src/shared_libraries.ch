@@ -127,9 +127,9 @@ ldconfig -p | head -10</pre></div>
                 <h2>Check Your Understanding</h2>
                 <p>Why does ELF use a three-level naming scheme (real name, soname, linker name)?</p>
                 <div class="quiz" id="quiz-sl-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-sl-1', this, false)">To make the file system faster</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-sl-1', this, true)">To support backward-compatible upgrades: new versions can be installed alongside old ones without breaking existing programs</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-sl-1', this, false)">It's just a convention with no practical benefit</button>
+                    <button class="quiz-option" data-explain="The lesson explains the three names as a way to update a library without breaking programs linked against the soname; filesystem speed is not mentioned." onclick="checkQuiz('quiz-sl-1', this, false)">To make the file system faster</button>
+                    <button class="quiz-option" data-explain="The lesson says the three-level naming lets you bump 1.2.3 to 1.2.4 without breaking programs linked against libfoo.so.1." onclick="checkQuiz('quiz-sl-1', this, true)">To support backward-compatible upgrades: new versions can be installed alongside old ones without breaking existing programs</button>
+                    <button class="quiz-option" data-explain="The benefit is stated explicitly: updating the real name leaves programs linked against the soname working." onclick="checkQuiz('quiz-sl-1', this, false)">It's just a convention with no practical benefit</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -138,9 +138,9 @@ ldconfig -p | head -10</pre></div>
                 <h2>Apply It</h2>
                 <p>You upgrade libfoo.so.1.2.3 to libfoo.so.1.2.4. Do you need to recompile programs that use libfoo?</p>
                 <div class="quiz" id="quiz-sl-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-sl-2', this, false)">Yes, always recompile</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-sl-2', this, true)">No — update the libfoo.so.1 symlink to point to 1.2.4, and existing programs will use the new version automatically</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-sl-2', this, false)">Only if the ABI changed</button>
+                    <button class="quiz-option" data-explain="Programs record the soname in their .dynamic section, and the lesson says the symlink can be repointed to the new real name so existing programs use it automatically." onclick="checkQuiz('quiz-sl-2', this, false)">Yes, always recompile</button>
+                    <button class="quiz-option" data-explain="The lesson's own answer: update the libfoo.so.1 symlink to 1.2.4 and existing programs use the new version without recompiling." onclick="checkQuiz('quiz-sl-2', this, true)">No — update the libfoo.so.1 symlink to point to 1.2.4, and existing programs will use the new version automatically</button>
+                    <button class="quiz-option" data-explain="Compare with the worked example: the lesson answers that repointing the libfoo.so.1 symlink is enough for this 1.2.3 to 1.2.4 upgrade; it gives no ABI-change condition there." onclick="checkQuiz('quiz-sl-2', this, false)">Only if the ABI changed</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

@@ -138,9 +138,9 @@ LD_BIND_NOW=1 ./myprog</pre></div>
                 <h2>Check Your Understanding</h2>
                 <p>What is the difference between R_X86_64_GLOB_DAT and R_X86_64_JUMP_SLOT?</p>
                 <div class="quiz" id="quiz-dr-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-dr-1', this, false)">GLOB_DAT is for functions, JUMP_SLOT is for data</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-dr-1', this, true)">GLOB_DAT resolves at load time (for data references), JUMP_SLOT uses lazy binding (for function calls)</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-dr-1', this, false)">They are identical — just different names</button>
+                    <button class="quiz-option" data-explain="The table lists GLOB_DAT as a global variable address in a GOT entry and JUMP_SLOT as a function address in a PLT/GOT entry with lazy binding. The option swaps them." onclick="checkQuiz('quiz-dr-1', this, false)">GLOB_DAT is for functions, JUMP_SLOT is for data</button>
+                    <button class="quiz-option" data-explain="The table and the model put GLOB_DAT with data references at load time and JUMP_SLOT with function calls using lazy binding." onclick="checkQuiz('quiz-dr-1', this, true)">GLOB_DAT resolves at load time (for data references), JUMP_SLOT uses lazy binding (for function calls)</button>
+                    <button class="quiz-option" data-explain="The table gives them different usages, and the model processes .rela.dyn at load time but .rela.plt on first call." onclick="checkQuiz('quiz-dr-1', this, false)">They are identical — just different names</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -149,9 +149,9 @@ LD_BIND_NOW=1 ./myprog</pre></div>
                 <h2>Apply It</h2>
                 <p>What happens if you set LD_BIND_NOW=1?</p>
                 <div class="quiz" id="quiz-dr-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-dr-2', this, false)">The program won't start</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-dr-2', this, true)">All function addresses are resolved at load time instead of on first call — slightly slower startup but slightly faster first call</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-dr-2', this, false)">All symbols become hidden</button>
+                    <button class="quiz-option" data-explain="LD_BIND_NOW changes when addresses are resolved; the lesson's answer says the program still starts, with slightly slower startup and a slightly faster first call." onclick="checkQuiz('quiz-dr-2', this, false)">The program won't start</button>
+                    <button class="quiz-option" data-explain="The lesson's answer: all function addresses resolve at load time instead of on first call, so startup is slightly slower and the first call slightly faster." onclick="checkQuiz('quiz-dr-2', this, true)">All function addresses are resolved at load time instead of on first call — slightly slower startup but slightly faster first call</button>
+                    <button class="quiz-option" data-explain="The lesson describes LD_BIND_NOW only as changing when function addresses are resolved, not as changing symbol visibility." onclick="checkQuiz('quiz-dr-2', this, false)">All symbols become hidden</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

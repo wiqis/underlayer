@@ -120,9 +120,9 @@ readelf -rW reloc_test | head -20</pre></div>
                 <h2>Check Your Understanding</h2>
                 <p>What is the purpose of the r_addend field in Elf64_Rela?</p>
                 <div class="quiz" id="quiz-re-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-re-1', this, false)">It stores the symbol index</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-re-1', this, true)">It's an extra constant added to the computed relocation value</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-re-1', this, false)">It stores the size of the symbol</button>
+                    <button class="quiz-option" data-explain="The lesson says r_info packs the symbol index and type; r_addend is a separate field described as an extra adjustment to the final value." onclick="checkQuiz('quiz-re-1', this, false)">It stores the symbol index</button>
+                    <button class="quiz-option" data-explain="The model calls the addend an extra adjustment added to the final value, which is what r_addend holds in Elf64_Rela." onclick="checkQuiz('quiz-re-1', this, true)">It's an extra constant added to the computed relocation value</button>
+                    <button class="quiz-option" data-explain="Compare with the model: r_addend is the extra adjustment to the final value, not a property of the symbol." onclick="checkQuiz('quiz-re-1', this, false)">It stores the size of the symbol</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -131,9 +131,9 @@ readelf -rW reloc_test | head -20</pre></div>
                 <h2>Apply It</h2>
                 <p>Why are most modern systems using Elf64_Rela instead of Elf64_Rel?</p>
                 <div class="quiz" id="quiz-re-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-re-2', this, false)">Rela is smaller</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-re-2', this, true)">The addend is stored in the relocation entry itself, not pre-patched into the target location — cleaner for position-independent code</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-re-2', this, false)">Rel supports more relocation types</button>
+                    <button class="quiz-option" data-explain="Compare with the lesson's answer: Rela is preferred because the addend lives in the entry, not because the entry is smaller." onclick="checkQuiz('quiz-re-2', this, false)">Rela is smaller</button>
+                    <button class="quiz-option" data-explain="The lesson's answer: the addend is in the relocation entry itself rather than pre-patched into the target, which is cleaner for position-independent code." onclick="checkQuiz('quiz-re-2', this, true)">The addend is stored in the relocation entry itself, not pre-patched into the target location — cleaner for position-independent code</button>
+                    <button class="quiz-option" data-explain="The lesson's two structures differ in where the addend is stored; it gives no difference in supported relocation types." onclick="checkQuiz('quiz-re-2', this, false)">Rel supports more relocation types</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

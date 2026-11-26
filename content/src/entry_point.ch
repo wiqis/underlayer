@@ -88,9 +88,9 @@ $ objdump -d /bin/ls | head -20  # See the disassembly at the entry point</code>
                 <h2>Check Your Understanding</h2>
                 <p>What does the entry point address point to?</p>
                 <div class="quiz" id="quiz-ep-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ep-1', this, false)" aria-label="Option: The main() function">The main() function</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ep-1', this, true)" aria-label="Option: The _start / initialization code">The _start / initialization code</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ep-1', this, false)" aria-label="Option: The first instruction of .text">The first instruction of .text</button>
+                    <button class="quiz-option" data-explain="The model says e_entry points to the C runtime startup code, which eventually calls main(). The lesson also says the linker sets e_entry from the _start symbol." onclick="checkQuiz('quiz-ep-1', this, false)" aria-label="Option: The main() function">The main() function</button>
+                    <button class="quiz-option" data-explain="The entry point is set by the linker from the _start symbol; the lesson's example places 0x6810 in the initialization code that runs before main()." onclick="checkQuiz('quiz-ep-1', this, true)" aria-label="Option: The _start / initialization code">The _start / initialization code</button>
+                    <button class="quiz-option" data-explain="The lesson's example puts the entry point 0x6810 in the .init section, the initialization code that runs before main(), not at the first instruction of .text." onclick="checkQuiz('quiz-ep-1', this, false)" aria-label="Option: The first instruction of .text">The first instruction of .text</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -99,9 +99,9 @@ $ objdump -d /bin/ls | head -20  # See the disassembly at the entry point</code>
                 <h2>Apply It</h2>
                 <p>If you change the entry point to an address inside .text but not at _start, what will happen when the kernel jumps to it?</p>
                 <div class="quiz" id="quiz-ep-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ep-2', this, false)" aria-label="Option: It will crash immediately">It will crash immediately</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ep-2', this, true)" aria-label="Option: It may run but skip initialization (ctors, libc setup)">It may run but skip initialization (ctors, libc setup)</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ep-2', this, false)" aria-label="Option: The kernel will refuse to execute it">The kernel will refuse to execute it</button>
+                    <button class="quiz-option" data-explain="Compare with the lesson's answer: it may run but skip initialization (ctors, libc setup). Jumping into .text still reaches code, so the defect described is missing setup, not an instant crash." onclick="checkQuiz('quiz-ep-2', this, false)" aria-label="Option: It will crash immediately">It will crash immediately</button>
+                    <button class="quiz-option" data-explain="The lesson's answer is that it may run but skip initialization, because _start is the symbol the linker used for the entry point." onclick="checkQuiz('quiz-ep-2', this, true)" aria-label="Option: It may run but skip initialization (ctors, libc setup)">It may run but skip initialization (ctors, libc setup)</button>
+                    <button class="quiz-option" data-explain="The kernel jumps to the address stored in e_entry; the lesson describes no check on where that address lies. The consequence it gives is skipped initialization, not refusal." onclick="checkQuiz('quiz-ep-2', this, false)" aria-label="Option: The kernel will refuse to execute it">The kernel will refuse to execute it</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

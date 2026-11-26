@@ -145,9 +145,9 @@ readelf -sW ./my_program</pre></div>
                 <h2>Check Your Understanding</h2>
                 <p>What is the difference between .symtab and .dynsym?</p>
                 <div class="quiz" id="quiz-st-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-st-1', this, false)">.symtab is for dynamic linking, .dynsym is for static linking</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-st-1', this, true)">.symtab has all symbols, .dynsym has only those needed for dynamic linking</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-st-1', this, false)">They are identical — .dynsym is just a backup</button>
+                    <button class="quiz-option" data-explain="The table assigns .symtab to the static linker and debugger, and .dynsym to ld.so. The option reverses those two users." onclick="checkQuiz('quiz-st-1', this, false)">.symtab is for dynamic linking, .dynsym is for static linking</button>
+                    <button class="quiz-option" data-explain="The table says .symtab is the full symbol table and .dynsym holds only symbols needed for dynamic linking." onclick="checkQuiz('quiz-st-1', this, true)">.symtab has all symbols, .dynsym has only those needed for dynamic linking</button>
+                    <button class="quiz-option" data-explain="The table gives them different purposes and different users: .symtab for the static linker and debugger, .dynsym for ld.so." onclick="checkQuiz('quiz-st-1', this, false)">They are identical — .dynsym is just a backup</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -156,9 +156,9 @@ readelf -sW ./my_program</pre></div>
                 <h2>Apply It</h2>
                 <p>If a symbol has st_shndx = SHN_UNDEF (0), what does that mean?</p>
                 <div class="quiz" id="quiz-st-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-st-2', this, false)">The symbol is corrupted</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-st-2', this, true)">The symbol is defined in another object file or library (it is an import)</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-st-2', this, false)">The symbol is at address 0</button>
+                    <button class="quiz-option" data-explain="The field table says st_shndx 0 means undefined, and the worked nm output reads U as undefined, imported from another library. That is a normal import, not corruption." onclick="checkQuiz('quiz-st-2', this, false)">The symbol is corrupted</button>
+                    <button class="quiz-option" data-explain="st_shndx = 0 is SHN_UNDEF; the field table calls it undefined and the worked output reads U as imported from another library." onclick="checkQuiz('quiz-st-2', this, true)">The symbol is defined in another object file or library (it is an import)</button>
+                    <button class="quiz-option" data-explain="Address or offset is st_value, a separate field; st_shndx is the section index, and 0 means undefined. Compare with the U entry in the worked output." onclick="checkQuiz('quiz-st-2', this, false)">The symbol is at address 0</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

@@ -139,9 +139,9 @@ readelf -d static     # no .dynamic section (or empty)</pre></div>
                 <h2>Check Your Understanding</h2>
                 <p>What is the purpose of DT_NEEDED entries in the .dynamic section?</p>
                 <div class="quiz" id="quiz-ds-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ds-1', this, false)">They list the exported symbols</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ds-1', this, true)">They specify which shared libraries the program depends on</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ds-1', this, false)">They store the program's entry point</button>
+                    <button class="quiz-option" data-explain="The tag table assigns DT_SYMTAB to the dynamic symbol table; DT_NEEDED is described as a shared library dependency, one occurrence per library." onclick="checkQuiz('quiz-ds-1', this, false)">They list the exported symbols</button>
+                    <button class="quiz-option" data-explain="DT_NEEDED is defined in the tag table as a shared library dependency, and the lesson says each occurrence is one dependency." onclick="checkQuiz('quiz-ds-1', this, true)">They specify which shared libraries the program depends on</button>
+                    <button class="quiz-option" data-explain="The tag table lists DT_INIT and DT_FINI for initialization and finalization addresses, but no entry-point tag; DT_NEEDED is the dependency entry." onclick="checkQuiz('quiz-ds-1', this, false)">They store the program's entry point</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -150,9 +150,9 @@ readelf -d static     # no .dynamic section (or empty)</pre></div>
                 <h2>Apply It</h2>
                 <p>If you see a DT_NEEDED entry for "libfoo.so.3" but the library is installed as "libfoo.so.4", what will happen?</p>
                 <div class="quiz" id="quiz-ds-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ds-2', this, false)">ld.so will use libfoo.so.4 automatically</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ds-2', this, true)">ld.so will fail to load the program with "libfoo.so.3: cannot open shared object file"</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ds-2', this, false)">The program will crash at runtime</button>
+                    <button class="quiz-option" data-explain="The DT_NEEDED value names the library to load; the lesson's answer is that ld.so fails with libfoo.so.3: cannot open shared object file when that name is not found." onclick="checkQuiz('quiz-ds-2', this, false)">ld.so will use libfoo.so.4 automatically</button>
+                    <button class="quiz-option" data-explain="The lesson's answer: ld.so fails to load the program with libfoo.so.3: cannot open shared object file." onclick="checkQuiz('quiz-ds-2', this, true)">ld.so will fail to load the program with "libfoo.so.3: cannot open shared object file"</button>
+                    <button class="quiz-option" data-explain="Compare with the lesson's answer: the load fails with a cannot open shared object file error, rather than a crash while the program is running." onclick="checkQuiz('quiz-ds-2', this, false)">The program will crash at runtime</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

@@ -100,9 +100,9 @@ cat /proc/sys/kernel/randomize_va_space
                 <h2>Check Your Understanding</h2>
                 <p>Why are PT_LOAD segments mapped page-aligned, even if the file data doesn't fill the whole page?</p>
                 <div class="quiz" id="quiz-kl-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-kl-1', this, false)">Because the kernel always allocates full pages</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-kl-1', this, true)">The memory management unit (MMU) operates in pages — partial pages would waste memory or require special handling</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-kl-1', this, false)">Because ELF files must be 4KB-aligned</button>
+                    <button class="quiz-option" data-explain="Compare with the lesson's answer: the reason given is that the MMU operates in pages, and partial pages would waste memory or require special handling." onclick="checkQuiz('quiz-kl-1', this, false)">Because the kernel always allocates full pages</button>
+                    <button class="quiz-option" data-explain="The lesson's answer: the MMU operates in pages, so partial pages would waste memory or require special handling." onclick="checkQuiz('quiz-kl-1', this, true)">The memory management unit (MMU) operates in pages — partial pages would waste memory or require special handling</button>
+                    <button class="quiz-option" data-explain="The lesson says LOAD segments are page-aligned (0x1000 = 4KB) and file and memory offsets may differ. The reason given is the MMU, not a rule about the whole file." onclick="checkQuiz('quiz-kl-1', this, false)">Because ELF files must be 4KB-aligned</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -111,9 +111,9 @@ cat /proc/sys/kernel/randomize_va_space
                 <h2>Apply It</h2>
                 <p>If a PT_LOAD segment has p_flags = PF_R | PF_X but your code writes to a global variable in that segment, what happens?</p>
                 <div class="quiz" id="quiz-kl-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-kl-2', this, false)">It works fine because the kernel doesn't check permissions</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-kl-2', this, true)">The program crashes with a segfault — the MMU enforces page permissions and the write triggers a protection fault</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-kl-2', this, false)">The kernel silently ignores the write</button>
+                    <button class="quiz-option" data-explain="The field list gives the code segment p_flags as PF_R | PF_X, read-execute with no write, and the lesson's answer says the MMU enforces the page permissions." onclick="checkQuiz('quiz-kl-2', this, false)">It works fine because the kernel doesn't check permissions</button>
+                    <button class="quiz-option" data-explain="The lesson's answer: the MMU enforces page permissions, so a write into a PF_R | PF_X segment triggers a protection fault and a segfault." onclick="checkQuiz('quiz-kl-2', this, true)">The program crashes with a segfault — the MMU enforces page permissions and the write triggers a protection fault</button>
+                    <button class="quiz-option" data-explain="Compare with the lesson's answer: a protection fault and segfault, not a silently ignored write." onclick="checkQuiz('quiz-kl-2', this, false)">The kernel silently ignores the write</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

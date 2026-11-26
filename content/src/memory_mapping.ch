@@ -80,9 +80,9 @@ Offset  Section               VirtAddr  Section
                 <h2>Check Your Understanding</h2>
                 <p>A segment has p_offset=0x1000, p_vaddr=0x2000. File offset 0x1200 maps to what virtual address?</p>
                 <div class="quiz" id="quiz-mm-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-mm-1', this, false)">0x1200</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-mm-1', this, true)">0x2200</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-mm-1', this, false)">0x3200</button>
+                    <button class="quiz-option" data-explain="0x1200 is the file offset you start from. The lesson's formula subtracts p_offset and adds p_vaddr: 0x1200 - 0x1000 + 0x2000." onclick="checkQuiz('quiz-mm-1', this, false)">0x1200</button>
+                    <button class="quiz-option" data-explain="0x2200 = 0x1200 - 0x1000 + 0x2000, the lesson's own formula applied to p_offset 0x1000 and p_vaddr 0x2000." onclick="checkQuiz('quiz-mm-1', this, true)">0x2200</button>
+                    <button class="quiz-option" data-explain="The formula adds p_vaddr only once. 0x3200 would add 0x2000 twice; the worked substitution gives 0x2200." onclick="checkQuiz('quiz-mm-1', this, false)">0x3200</button>
                     <div class="quiz-feedback"></div>
                 </div>
                 <p><em>0x2200 = 0x1200 - 0x1000 + 0x2000</em></p>
@@ -92,9 +92,9 @@ Offset  Section               VirtAddr  Section
                 <h2>Apply It</h2>
                 <p>Two PT_LOAD segments overlap in virtual address space. What happens?</p>
                 <div class="quiz" id="quiz-mm-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-mm-2', this, false)">The kernel rejects the binary</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-mm-2', this, false)">The second segment overwrites the first</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-mm-2', this, true)">It's allowed — the linker ensures non-overlapping alignments</button>
+                    <button class="quiz-option" data-explain="The lesson's answer is that overlap is allowed and the linker ensures non-overlapping alignments. Rejection is not the behaviour taught here." onclick="checkQuiz('quiz-mm-2', this, false)">The kernel rejects the binary</button>
+                    <button class="quiz-option" data-explain="Compare with the lesson's answer: overlap is allowed and the linker ensures non-overlapping alignments; it does not describe a later mapping overwriting an earlier one." onclick="checkQuiz('quiz-mm-2', this, false)">The second segment overwrites the first</button>
+                    <button class="quiz-option" data-explain="The lesson's answer: this is allowed, because the linker ensures non-overlapping alignments." onclick="checkQuiz('quiz-mm-2', this, true)">It's allowed — the linker ensures non-overlapping alignments</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

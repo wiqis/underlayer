@@ -120,9 +120,9 @@ ulimit -s
                 <h2>Check Your Understanding</h2>
                 <p>Why does the .bss segment save file space compared to .data?</p>
                 <div class="quiz" id="quiz-ml-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ml-1', this, false)">.bss uses a more efficient encoding</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ml-1', this, true)">.bss doesn't store data in the file at all — the kernel allocates zero-filled memory at load time, so p_filesz = 0 but p_memsz is nonzero</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ml-1', this, false)">.bss is compressed in the ELF file</button>
+                    <button class="quiz-option" data-explain="The lesson says .bss has p_filesz = 0 but p_memsz nonzero and the kernel allocates zeroed memory without reading the file. The saving comes from storing no bytes, not an encoding." onclick="checkQuiz('quiz-ml-1', this, false)">.bss uses a more efficient encoding</button>
+                    <button class="quiz-option" data-explain="The lesson's detail: p_filesz = 0 while p_memsz is nonzero; the kernel allocates zero-initialized memory without reading file bytes, saving file space." onclick="checkQuiz('quiz-ml-1', this, true)">.bss doesn't store data in the file at all — the kernel allocates zero-filled memory at load time, so p_filesz = 0 but p_memsz is nonzero</button>
+                    <button class="quiz-option" data-explain="The lesson says the kernel does not read from the file for .bss because it is always zero-initialized. There are no compressed bytes to store." onclick="checkQuiz('quiz-ml-1', this, false)">.bss is compressed in the ELF file</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -131,9 +131,9 @@ ulimit -s
                 <h2>Apply It</h2>
                 <p>You see a crash at address 0x7ffd4a3b2100. Based on the memory layout, where is this likely?</p>
                 <div class="quiz" id="quiz-ml-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ml-2', this, false)">In the .text segment (code)</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ml-2', this, true)">On the stack — addresses in the 0x7ffd... range are in the mmap/stack region, far above the code/data segments</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ml-2', this, false)">In the .bss segment</button>
+                    <button class="quiz-option" data-explain="The why unit says a crash at 0x7ffd... is on the stack while 0x55555... is in code. The address in the question starts 0x7ffd." onclick="checkQuiz('quiz-ml-2', this, false)">In the .text segment (code)</button>
+                    <button class="quiz-option" data-explain="The why unit places 0x7ffd... addresses on the stack, and the lesson's answer calls that range the mmap/stack region, far above the code and data segments." onclick="checkQuiz('quiz-ml-2', this, true)">On the stack — addresses in the 0x7ffd... range are in the mmap/stack region, far above the code/data segments</button>
+                    <button class="quiz-option" data-explain="The table puts .bss in a PT_LOAD data segment; the lesson's worked address 0x7ffd4a3b2100 is assigned to the stack region instead." onclick="checkQuiz('quiz-ml-2', this, false)">In the .bss segment</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

@@ -95,9 +95,9 @@ Sections:
                 <h2>Check Your Understanding</h2>
                 <p>Can a section exist without being in any segment?</p>
                 <div class="quiz" id="quiz-svs-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-1', this, true)">Yes — debugging sections like .symtab are not in any LOAD segment</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-1', this, false)">No — every section must be in a segment</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-1', this, false)">Only .bss can exist without a segment</button>
+                    <button class="quiz-option" data-explain="The lesson's note says sections like .symtab, .strtab and .debug_* are not loaded into memory and have no corresponding segment." onclick="checkQuiz('quiz-svs-1', this, true)">Yes — debugging sections like .symtab are not in any LOAD segment</button>
+                    <button class="quiz-option" data-explain="The table says sections are defined by the section header table and used by tools, while segments are defined by the program header table for the loader. The note gives .symtab as a section with no segment." onclick="checkQuiz('quiz-svs-1', this, false)">No — every section must be in a segment</button>
+                    <button class="quiz-option" data-explain="Compare with the note: it names .symtab, .strtab and .debug_*, not .bss, as sections with no corresponding segment." onclick="checkQuiz('quiz-svs-1', this, false)">Only .bss can exist without a segment</button>
                     <div class="quiz-feedback"></div>
                 </div>
                 <p><em>Sections like .symtab, .strtab, and .debug_* are not loaded into memory — they have no corresponding segment.</em></p>
@@ -107,9 +107,9 @@ Sections:
                 <h2>Apply It</h2>
                 <p>You want to strip debug symbols from a binary. Which tool modifies section headers without touching segments?</p>
                 <div class="quiz" id="quiz-svs-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-2', this, true)">strip — removes .symtab and .strtab sections</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-2', this, false)">ld — relinks the segments</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-svs-2', this, false)">objcopy — copies and modifies segments</button>
+                    <button class="quiz-option" data-explain="strip removes the .symtab and .strtab sections, which the lesson lists as sections rather than segments; that is the section-header change the question asks for." onclick="checkQuiz('quiz-svs-2', this, true)">strip — removes .symtab and .strtab sections</button>
+                    <button class="quiz-option" data-explain="The table says the loader uses segments, so relinking rebuilds segments - the opposite of the section-only change requested. The lesson's answer is strip." onclick="checkQuiz('quiz-svs-2', this, false)">ld — relinks the segments</button>
+                    <button class="quiz-option" data-explain="Compare with the lesson's answer: strip removes .symtab and .strtab sections. The option describes changing segments, which the question explicitly rules out." onclick="checkQuiz('quiz-svs-2', this, false)">objcopy — copies and modifies segments</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

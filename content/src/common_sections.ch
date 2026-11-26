@@ -101,9 +101,9 @@ public func render_common_sections() : string {
                 <h2>Check Your Understanding</h2>
                 <p>Why does .bss have type SHT_NOBITS?</p>
                 <div class="quiz" id="quiz-cs-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-cs-1', this, false)">It contains no data</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-cs-1', this, true)">It takes no space in the file — zeroed at runtime</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-cs-1', this, false)">It's compressed</button>
+                    <button class="quiz-option" data-explain="The lesson's note says .bss takes no space in the file but is zero-filled in memory. It holds uninitialized globals, so saying it contains no data misses the memory side." onclick="checkQuiz('quiz-cs-1', this, false)">It contains no data</button>
+                    <button class="quiz-option" data-explain="The note in the lesson says SHT_NOBITS means it takes no space in the file but is zero-filled in memory." onclick="checkQuiz('quiz-cs-1', this, true)">It takes no space in the file — zeroed at runtime</button>
+                    <button class="quiz-option" data-explain="Compare with the lesson's note: .bss takes no space in the file and is zero-filled in memory. No compression is described." onclick="checkQuiz('quiz-cs-1', this, false)">It's compressed</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -112,9 +112,9 @@ public func render_common_sections() : string {
                 <h2>Apply It</h2>
                 <p>If .rodata and .text are in the same PT_LOAD segment, what permissions does the kernel set for .rodata?</p>
                 <div class="quiz" id="quiz-cs-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-cs-2', this, true)">R (read-only) — same as the segment</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-cs-2', this, false)">RW (read-write) — data sections are writable</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-cs-2', this, false)">RE (read-execute) — it's code</button>
+                    <button class="quiz-option" data-explain="The table gives .rodata the flag SHF_ALLOC only, and the lesson's answer applies the segment's R permission to it: read-only, same as the segment." onclick="checkQuiz('quiz-cs-2', this, true)">R (read-only) — same as the segment</button>
+                    <button class="quiz-option" data-explain="The writable flag belongs to .data (SHF_WRITE), while .rodata has SHF_ALLOC only and is read-only. The lesson's answer keeps the segment's R permission." onclick="checkQuiz('quiz-cs-2', this, false)">RW (read-write) — data sections are writable</button>
+                    <button class="quiz-option" data-explain="The executable flag belongs to .text (SHF_EXECINSTR), not .rodata, whose flags are SHF_ALLOC only. The answer here is read-only, like the segment." onclick="checkQuiz('quiz-cs-2', this, false)">RE (read-execute) — it's code</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

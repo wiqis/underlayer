@@ -125,9 +125,9 @@ gcc -pie -S compare.c -o - | grep call</pre></div>
                 <h2>Check Your Understanding</h2>
                 <p>What does R_X86_64_PLT32 compute?</p>
                 <div class="quiz" id="quiz-rt-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-rt-1', this, false)">S + A (absolute address)</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-rt-1', this, true)">L + A - P (PLT entry address minus current position)</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-rt-1', this, false)">G + GOT + A - P (GOT entry address)</button>
+                    <button class="quiz-option" data-explain="The formula table gives S + A to R_X86_64_64, the absolute data reference. PLT32 is listed separately as L + A - P." onclick="checkQuiz('quiz-rt-1', this, false)">S + A (absolute address)</button>
+                    <button class="quiz-option" data-explain="The table lists R_X86_64_PLT32 with formula L + A - P, where L is the PLT entry address and P is the place being patched." onclick="checkQuiz('quiz-rt-1', this, true)">L + A - P (PLT entry address minus current position)</button>
+                    <button class="quiz-option" data-explain="That is the table's formula for R_X86_64_GOTPCRELX, which targets a GOT entry. PLT32 uses the PLT entry address L instead." onclick="checkQuiz('quiz-rt-1', this, false)">G + GOT + A - P (GOT entry address)</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -136,9 +136,9 @@ gcc -pie -S compare.c -o - | grep call</pre></div>
                 <h2>Apply It</h2>
                 <p>Why does PIE code use R_X86_64_GOTPCRELX instead of R_X86_64_PLT32?</p>
                 <div class="quiz" id="quiz-rt-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-rt-2', this, false)">GOTPCRELX is faster</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-rt-2', this, true)">GOTPCRELX allows the linker to optimize to direct calls when possible (relaxation), and works with both data and code references</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-rt-2', this, false)">PLT32 doesn't support 64-bit addresses</button>
+                    <button class="quiz-option" data-explain="The lesson's answer names relaxation and support for data and code references; it does not claim a raw speed advantage." onclick="checkQuiz('quiz-rt-2', this, false)">GOTPCRELX is faster</button>
+                    <button class="quiz-option" data-explain="The lesson's answer: GOTPCRELX lets the linker relax to direct calls when possible and works with both data and code references." onclick="checkQuiz('quiz-rt-2', this, true)">GOTPCRELX allows the linker to optimize to direct calls when possible (relaxation), and works with both data and code references</button>
+                    <button class="quiz-option" data-explain="The table describes PLT32 as a 32-bit PC-relative call via the PLT; the difference taught here is relaxation and reference kinds, not address width." onclick="checkQuiz('quiz-rt-2', this, false)">PLT32 doesn't support 64-bit addresses</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

@@ -115,9 +115,9 @@ nm test | grep ' x'    # shows uppercase 'D' (b.o's x wins)</pre></div>
                 <h2>Check Your Understanding</h2>
                 <p>What happens if two object files both define a strong (GLOBAL) symbol with the same name?</p>
                 <div class="quiz" id="quiz-b-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-b-1', this, false)">The linker picks the one with the larger value</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-b-1', this, true)">The linker reports a "multiple definition" error</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-b-1', this, false)">The first one wins silently</button>
+                    <button class="quiz-option" data-explain="The resolution rules say multiple strong definitions produce an error, because STB_GLOBAL must be unique across the program. There is no value comparison." onclick="checkQuiz('quiz-b-1', this, false)">The linker picks the one with the larger value</button>
+                    <button class="quiz-option" data-explain="The resolution rules state that multiple strong definitions are an error, the multiple definition error named in the why unit." onclick="checkQuiz('quiz-b-1', this, true)">The linker reports a "multiple definition" error</button>
+                    <button class="quiz-option" data-explain="That is the rule the lesson gives for multiple weak definitions. Strong GLOBAL definitions must be unique, so two of them are an error." onclick="checkQuiz('quiz-b-1', this, false)">The first one wins silently</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -126,9 +126,9 @@ nm test | grep ' x'    # shows uppercase 'D' (b.o's x wins)</pre></div>
                 <h2>Apply It</h2>
                 <p>Why would you use a WEAK symbol instead of a GLOBAL one?</p>
                 <div class="quiz" id="quiz-b-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-b-2', this, false)">Weak symbols are faster at runtime</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-b-2', this, true)">To provide a default implementation that can be overridden by a strong definition</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-b-2', this, false)">Weak symbols use less memory</button>
+                    <button class="quiz-option" data-explain="The model says weak is like global but can be overridden by a strong definition. The lesson does not connect binding to runtime speed." onclick="checkQuiz('quiz-b-2', this, false)">Weak symbols are faster at runtime</button>
+                    <button class="quiz-option" data-explain="The model defines weak as overridable, and the resolution order says strong definitions override weak ones; that is a default implementation." onclick="checkQuiz('quiz-b-2', this, true)">To provide a default implementation that can be overridden by a strong definition</button>
+                    <button class="quiz-option" data-explain="Compare with the model: the weak and strong difference is which definition wins at link time, not memory use." onclick="checkQuiz('quiz-b-2', this, false)">Weak symbols use less memory</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>

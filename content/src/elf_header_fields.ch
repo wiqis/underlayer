@@ -127,9 +127,9 @@ public func render_elf_header_fields() : string {
                 <h2>Check Your Understanding</h2>
                 <p>What field in the ELF header tells the loader where the program header table begins?</p>
                 <div class="quiz" id="quiz-ehf-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-1', this, false)" aria-label="Option: e_shoff">e_shoff</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-1', this, true)" aria-label="Option: e_phoff">e_phoff</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-1', this, false)" aria-label="Option: e_entry">e_entry</button>
+                    <button class="quiz-option" data-explain="The field table lists e_shoff as the section header table offset at byte 40; the loader reads e_phoff at byte 32 instead." onclick="checkQuiz('quiz-ehf-1', this, false)" aria-label="Option: e_shoff">e_shoff</button>
+                    <button class="quiz-option" data-explain="The field table says e_phoff is the program header table offset, at byte 32 in the 64-bit header." onclick="checkQuiz('quiz-ehf-1', this, true)" aria-label="Option: e_phoff">e_phoff</button>
+                    <button class="quiz-option" data-explain="The table gives e_entry at byte 24 as the virtual address of the entry point. It points to code, not to the program header table." onclick="checkQuiz('quiz-ehf-1', this, false)" aria-label="Option: e_entry">e_entry</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -138,9 +138,9 @@ public func render_elf_header_fields() : string {
                 <h2>Apply It</h2>
                 <p>If <code>e_phnum = 9</code> and <code>e_phentsize = 56</code>, how many bytes does the program header table occupy?</p>
                 <div class="quiz" id="quiz-ehf-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-2', this, false)" aria-label="Option: 56 bytes">56 bytes</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-2', this, true)" aria-label="Option: 504 bytes">504 bytes</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ehf-2', this, false)" aria-label="Option: 9 bytes">9 bytes</button>
+                    <button class="quiz-option" data-explain="56 is e_phentsize, the size of one entry, not the whole table. The lesson's own note multiplies 9 entries by 56 bytes." onclick="checkQuiz('quiz-ehf-2', this, false)" aria-label="Option: 56 bytes">56 bytes</button>
+                    <button class="quiz-option" data-explain="9 entries times 56 bytes each is 504 bytes, exactly as the lesson's apply note states." onclick="checkQuiz('quiz-ehf-2', this, true)" aria-label="Option: 504 bytes">504 bytes</button>
+                    <button class="quiz-option" data-explain="9 is e_phnum, the number of entries. Each entry is 56 bytes, so the table spans 9 times 56 = 504 bytes, not 9." onclick="checkQuiz('quiz-ehf-2', this, false)" aria-label="Option: 9 bytes">9 bytes</button>
                     <div class="quiz-feedback"></div>
                 </div>
                 <p><em>9 entries × 56 bytes each = 504 bytes total.</em></p>

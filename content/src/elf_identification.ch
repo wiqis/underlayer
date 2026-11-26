@@ -115,9 +115,9 @@ public func render_elf_identification() : string {
                 <h2>Check Your Understanding</h2>
                 <p>What are the first 4 bytes of every ELF file?</p>
                 <div class="quiz" id="quiz-ei-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ei-1', this, false)" aria-label="Option: 01 02 03 04">01 02 03 04</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ei-1', this, true)" aria-label="Option: 7f 45 4c 46">7f 45 4c 46</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ei-1', this, false)" aria-label="Option: ff fe fd fc">ff fe fd fc</button>
+                    <button class="quiz-option" data-explain="The identification array starts with the magic number 7f 45 4c 46 at bytes 0-3. The byte 01 is the class at byte 4, not a magic byte." onclick="checkQuiz('quiz-ei-1', this, false)" aria-label="Option: 01 02 03 04">01 02 03 04</button>
+                    <button class="quiz-option" data-explain="Bytes 0-3 are the magic number, 7f 45 4c 46, which spells .ELF. The worked example starts with exactly these four bytes." onclick="checkQuiz('quiz-ei-1', this, true)" aria-label="Option: 7f 45 4c 46">7f 45 4c 46</button>
+                    <button class="quiz-option" data-explain="The ID card gives bytes 0-3 as 7f 45 4c 46. The worked dump starts with those bytes; ff fe fd fc is not the magic number shown in this lesson." onclick="checkQuiz('quiz-ei-1', this, false)" aria-label="Option: ff fe fd fc">ff fe fd fc</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -126,9 +126,9 @@ public func render_elf_identification() : string {
                 <h2>Apply It</h2>
                 <p>A file starts with <code>7f 45 4c 46 01 02 01 00</code>. What can you tell about it?</p>
                 <div class="quiz" id="quiz-ei-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ei-2', this, false)" aria-label="Option: 64-bit, little-endian">64-bit, little-endian</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ei-2', this, false)" aria-label="Option: 32-bit, little-endian">32-bit, little-endian</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ei-2', this, true)" aria-label="Option: 32-bit, big-endian">32-bit, big-endian</button>
+                    <button class="quiz-option" data-explain="Byte 4 is 01, and the lesson says 1 means 32-bit, 2 means 64-bit. The 02 here is byte 5, the data encoding, so the class is still 32-bit." onclick="checkQuiz('quiz-ei-2', this, false)" aria-label="Option: 64-bit, little-endian">64-bit, little-endian</button>
+                    <button class="quiz-option" data-explain="Byte 5 is 02, and the lesson says 1 is little-endian and 2 is big-endian. Compare with the worked 02 01 example, which is 64-bit little-endian." onclick="checkQuiz('quiz-ei-2', this, false)" aria-label="Option: 32-bit, little-endian">32-bit, little-endian</button>
+                    <button class="quiz-option" data-explain="The lesson states it directly: byte 4 = 01 means 32-bit and byte 5 = 02 means big-endian." onclick="checkQuiz('quiz-ei-2', this, true)" aria-label="Option: 32-bit, big-endian">32-bit, big-endian</button>
                     <div class="quiz-feedback"></div>
                 </div>
                 <p><em>Byte 4 = 01 means 32-bit. Byte 5 = 02 means big-endian.</em></p>

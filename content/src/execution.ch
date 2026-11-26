@@ -113,9 +113,9 @@ gcc -o test test.c; LD_DEBUG=all ./test | grep -i init</pre></div>
                 <h2>Check Your Understanding</h2>
                 <p>What is the relationship between _start and main()?</p>
                 <div class="quiz" id="quiz-ex-1">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ex-1', this, false)">They're the same function</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ex-1', this, true)">_start is the ELF entry point (assembly stub) that calls __libc_start_main, which then calls main() — main() is a callback, not the entry point</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ex-1', this, false)">main() calls _start</button>
+                    <button class="quiz-option" data-explain="The startup sequence lists _start before __libc_start_main, which then calls main(argc, argv, envp); the lesson also calls main a callback passed to __libc_start_main." onclick="checkQuiz('quiz-ex-1', this, false)">They're the same function</button>
+                    <button class="quiz-option" data-explain="The lesson's answer: _start is the ELF entry point assembly stub, it calls __libc_start_main, which calls main as a callback." onclick="checkQuiz('quiz-ex-1', this, true)">_start is the ELF entry point (assembly stub) that calls __libc_start_main, which then calls main() — main() is a callback, not the entry point</button>
+                    <button class="quiz-option" data-explain="The order is the reverse: ld.so calls _start, which calls __libc_start_main, which calls main. The lesson says _start never returns." onclick="checkQuiz('quiz-ex-1', this, false)">main() calls _start</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
@@ -124,9 +124,9 @@ gcc -o test test.c; LD_DEBUG=all ./test | grep -i init</pre></div>
                 <h2>Apply It</h2>
                 <p>You write a program with a constructor that calls printf("init"), but the output appears before "init" is printed. What's happening?</p>
                 <div class="quiz" id="quiz-ex-2">
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ex-2', this, false)">The constructor isn't running</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ex-2', this, true)">stdout isn't flushed yet — constructors run before main, and stdout is line-buffered; if you don't print a newline, the output stays in the buffer until main runs or the program exits</button>
-                    <button class="quiz-option" onclick="checkQuiz('quiz-ex-2', this, false)">The kernel runs constructors after main</button>
+                    <button class="quiz-option" data-explain="The startup sequence says __libc_start_main calls .init_array constructors before main. The lesson's answer explains the missing output with stdout buffering instead." onclick="checkQuiz('quiz-ex-2', this, false)">The constructor isn't running</button>
+                    <button class="quiz-option" data-explain="The lesson's answer: constructors run before main, and stdout is line-buffered, so printf without a newline stays in the buffer until main runs or the program exits." onclick="checkQuiz('quiz-ex-2', this, true)">stdout isn't flushed yet — constructors run before main, and stdout is line-buffered; if you don't print a newline, the output stays in the buffer until main runs or the program exits</button>
+                    <button class="quiz-option" data-explain="The startup sequence puts .init_array constructors before main and .fini_array destructors in cleanup after main returns; the constructor comes first." onclick="checkQuiz('quiz-ex-2', this, false)">The kernel runs constructors after main</button>
                     <div class="quiz-feedback"></div>
                 </div>
             </div>
