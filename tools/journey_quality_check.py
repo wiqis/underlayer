@@ -191,9 +191,13 @@ def check_lesson(base, course, concept):
         if remember != NO_FACT:
             if len(words(remember)) < 3:
                 failures.append('takeaway is a fragment in %s: %r' % (unit_id, remember))
-            elif not remember.rstrip().endswith(('.', '?', '!')):
-                failures.append('takeaway is not a complete sentence in %s: %r' % (unit_id, remember[:120]))
+            elif remember.rstrip().endswith('?'):
+                failures.append('takeaway is a question, not a fact, in %s: %r' % (unit_id, remember[:120]))
+            elif not remember.rstrip().endswith(('.', '!')):
+                failures.append('takeaway is not a fact sentence in %s: %r' % (unit_id, remember[:120]))
         recall_q = attr(tag, 'data-recall-q')
+        if recall_q and remember and remember.rstrip() == recall_q.rstrip():
+            failures.append('takeaway repeats the recall question in %s: %r' % (unit_id, remember[:120]))
         recall_a = attr(tag, 'data-recall-a')
         if not recall_q or not recall_a:
             failures.append('unit %s has no recall question/answer' % unit_id)

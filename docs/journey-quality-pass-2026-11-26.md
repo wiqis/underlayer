@@ -158,3 +158,24 @@ appeared there too until the server/manifest is regenerated with this build;
 `remember`, not from the nearest earlier `unit-retrieve`, or it inherits the
 stale-question defect. The unit `order` field remains the unique progress key;
 nothing in this pass changes it.
+
+## 2026-11-26 follow-up — a question is not a takeaway
+
+Final browser pass on `elf/elf-identification` found the last pedagogy defect:
+the "Remember this" card on a quiz step showed the quiz *question* ("What are
+the first 4 bytes of every ELF file?"), and the next step's retrieval prompt
+quoted the mandated "No new fact to memorise" line back at the learner.
+
+- `jpSentenceGood` / `jpLooseSentence` now require a fact sentence (`.`/`!`),
+  never `?`; `jpQuizFact` uses the correct option's own lesson-sourced
+  `data-explain` when a quiz step has no prose fact.
+- `jqRecallQA` no longer quotes the no-new-fact line; it asks about the step
+  itself and uses the unit's existing recall answer when one is present.
+- `tools/journey_quality_check.py` now fails on a takeaway that ends in `?` or
+  repeats the unit's recall question. Non-vacuity: `elf:elf-identification`
+  scored **35 passed / 1 failed** on the previous build and **36/36** after the
+  fix; the full first-lesson sweep scored **68/68** on the final build.
+
+Browser evidence after the fix (step 6 of 8): takeaway = "Bytes 0-3 are the
+magic number, 7f 45 4c 46, which spells .ELF."; retrieval ask = "Recall the idea
+from Try It. In your own words, what did it mean?"

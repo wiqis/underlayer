@@ -126,6 +126,17 @@ public namespace underlayer_content {
             // one question from an earlier step. Both reveals are escape
             // hatches: either one marks the step done.
             function jqRecallQA(point, u) {
+                // A step can honestly have no new fact. Quoting the mandated
+                // "No new fact to memorise" line back as a recall prompt tells
+                // the learner nothing to retrieve; ask about the step itself.
+                if((point.length === 0 || point.indexOf('No new fact to memorise') === 0) && u) {
+                    var stored = jqTrim(u.getAttribute('data-recall-a') || '');
+                    var title = jqTitle(u);
+                    var fallback = stored.length > 0 ? stored : title;
+                    if(fallback.length > 0) {
+                        return { q: 'Recall the idea from ' + title + '. In your own words, what did it mean?', a: fallback };
+                    }
+                }
                 if(point.length === 0 && u) { point = jqKeyPoint(u); }
                 var ask = 'You saw: ' + point + '. In your own words, what did it mean?';
                 if(point.length > 0 && point.charAt(point.length - 1) === '.') {

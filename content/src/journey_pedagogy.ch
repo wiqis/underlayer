@@ -192,7 +192,10 @@ public namespace underlayer_content {
         if(n < 5 || n > 25) { return false }
         if(t.size() == 0) { return false }
         var last = t.at(t.size() - 1)
-        if(last != '.' && last != '?' && last != '!') { return false }
+        // A takeaway is a fact to carry forward, never a question. On a quiz
+        // step the first <p> is the question itself; presenting that as
+        // "Remember this" tells the learner nothing to keep in their head.
+        if(last != '.' && last != '!') { return false }
         var lead = string_view("Here is ")
         if(jpFindFrom(&t, &lead, 0) == 0) { return false }
         lead = string_view("Here are ")
@@ -232,7 +235,7 @@ public namespace underlayer_content {
         if(t.size() == 0) { return false }
         if(jpCountWords(&t) < 5) { return false }
         var last = t.at(t.size() - 1)
-        return last == '.' || last == '?' || last == '!'
+        return last == '.' || last == '!'
     }
 
     // Return the first sentence and leave the remainder in `rest`.
@@ -285,9 +288,41 @@ public namespace underlayer_content {
         return loose
     }
 
+    // A quiz step often has no prose fact: its only full sentence is the
+    // question. The correct option's own explanation (now authored from the
+    // lesson text in every ELF concept) is a fact and is safe to carry forward.
+    private func jpQuizFact(slice : &string) : string {
+        var cursor : size_t = 0
+        while(true) {
+            var open = jpFindFrom(slice, string_view("<button"), cursor)
+            if(open == std::NPOS) { break }
+            var gt = jpFindFrom(slice, string_view(">"), open)
+            if(gt == std::NPOS) { break }
+            var tag = slice.substring(open, gt + 1)
+            var marked = tag.find_or_npos(string_view(", true)")) != std::NPOS
+            if(!marked) { marked = tag.find_or_npos(string_view("data-correct=\"true\"")) != std::NPOS }
+            if(marked) {
+                var explain_raw = jpAttr(&tag, string_view("data-explain=\""))
+                var explain = jpDecode(&explain_raw)
+                var first = jpFirstSentence(&explain)
+                if(jpSentenceGood(&first)) { return jpWords(&first, 25) }
+                var lt = jpFindFrom(slice, string_view("<"), gt + 1)
+                if(lt != std::NPOS) {
+                    var text_raw = slice.substring(gt + 1, lt)
+                    var text = jpClean(&text_raw)
+                    if(jpSentenceGood(&text)) { return jpWords(&text, 25) }
+                }
+            }
+            cursor = gt + 1
+        }
+        return string()
+    }
+
     private func jpRemember(slice : &string) : string {
         var key = jpKeySentence(slice)
         if(key.size() > 0) { return key }
+        var quiz = jpQuizFact(slice)
+        if(quiz.size() > 0) { return quiz }
         var strong_raw = jpInner(slice, string_view("<strong"), string_view("</strong>"))
         var strong = jpClean(&strong_raw)
         if(jpSentenceGood(&strong)) { return jpWords(&strong, 25) }
