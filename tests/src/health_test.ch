@@ -46,7 +46,7 @@ public func test_breadth_score_counts_read_lessons_not_only_answered_ones(env : 
 
     // 3 of 10 concepts covered == 30%. Before the fix this returned 10%, because
     // only `answered` had attempts > 0.
-    var breadth = underlayer_learning::compute_breadth_score(&raw states, 10)
+    var breadth = underlayer_learning::compute_breadth_score(&states, 10)
     var breadth_int = breadth as i64
     if(breadth_int != 30) { env.error("breadth: expected 30 for 3 read concepts of 10, got a different number") }
 
@@ -64,13 +64,13 @@ public func test_breadth_score_counts_read_lessons_not_only_answered_ones(env : 
     // cannot be reused afterwards.
     states2.push_back(read_again)
     states2.push_back(unclassified)
-    var breadth2 = underlayer_learning::compute_breadth_score(&raw states2, 10)
+    var breadth2 = underlayer_learning::compute_breadth_score(&states2, 10)
     var breadth2_int = breadth2 as i64
     if(breadth2_int != 10) { env.error("breadth: an unclassified row must not count as covered") }
 
     // No states at all is 0, not a division by zero.
     var empty = vector<ConceptState>()
-    var breadth3 = underlayer_learning::compute_breadth_score(&raw empty, 10)
+    var breadth3 = underlayer_learning::compute_breadth_score(&empty, 10)
     if(breadth3 != 0.0) { env.error("breadth: expected 0 for a learner with no states") }
 }
 
@@ -114,7 +114,7 @@ public func test_retention_projection_reports_how_much_it_measured(env : &mut Te
     states.push_back(also_read)
 
     // Nothing answered, so nothing was measured and all three figures are 0.
-    var empty_proj = underlayer_learning::compute_retention_projection(&raw states)
+    var empty_proj = underlayer_learning::compute_retention_projection(&states)
     if(empty_proj.measured != 0) {
         env.error("projection: measured must be 0 when no concept has an attempt, even though rows exist")
     }
@@ -130,7 +130,7 @@ public func test_retention_projection_reports_how_much_it_measured(env : &mut Te
     ok_state.streak = 1
     answered.push_back(ok_state)
 
-    var real_proj = underlayer_learning::compute_retention_projection(&raw answered)
+    var real_proj = underlayer_learning::compute_retention_projection(&answered)
     if(real_proj.measured != 1) {
         env.error("projection: measured must be 1 for one answered concept")
     }
@@ -152,19 +152,20 @@ public func test_health_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:19876")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/health", (req, res) => {
-        underlayer_web::handle_health(&req, &raw mut res)
+    srv.router.add("GET", "/api/health", (req) => {
+        return underlayer_web::deliver(&req, underlayer_web::handle_health(&req))
     })
-    srv.serve_async(19876u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19876/api/health")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -175,22 +176,23 @@ public func test_health_returns_json_content_type(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:19877")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/health", (req, res) => {
-        underlayer_web::handle_health(&req, &raw mut res)
+    srv.router.add("GET", "/api/health", (req) => {
+        return underlayer_web::deliver(&req, underlayer_web::handle_health(&req))
     })
-    srv.serve_async(19877u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19877/api/health")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     var ct = resp.headers.get("Content-Type")
-    if(ct is Option.None) { env.error("missing Content-Type"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(ct is Option.None) { env.error("missing Content-Type"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Some(ct_val) = ct else unsafe { unreachable }
-    if(ct_val.find(string_view("application/json")) == std::NPOS) { env.error("Content-Type is not application/json") }
+    if(ct_val.find_or_npos(string_view("application/json")) == std::NPOS) { env.error("Content-Type is not application/json") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -201,23 +203,24 @@ public func test_health_body_contains_status(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:19878")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/health", (req, res) => {
-        underlayer_web::handle_health(&req, &raw mut res)
+    srv.router.add("GET", "/api/health", (req) => {
+        return underlayer_web::deliver(&req, underlayer_web::handle_health(&req))
     })
-    srv.serve_async(19878u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19878/api/health")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
-    var body_opt = resp.body.read_to_string()
-    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var body_opt = resp.body.text()
+    if(body_opt is Option.None) { env.error("no body"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Some(body) = body_opt else unsafe { unreachable }
-    var has_ok = body.find(string_view("ok")) != std::NPOS
-    var has_status = body.find(string_view("status")) != std::NPOS
+    var has_ok = body.find_or_npos(string_view("ok")) != std::NPOS
+    var has_status = body.find_or_npos(string_view("status")) != std::NPOS
     if(!has_ok && !has_status) { env.error("health body missing expected content") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }

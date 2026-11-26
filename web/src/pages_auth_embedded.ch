@@ -52,9 +52,14 @@ public namespace underlayer_web {
                 </div>
             </div>
         }
+        // The gated pages redirect here with `?next=<path>`; without this helper
+        // the embedded sign-in dialog can only reload /login and loses where the
+        // reader was going. The helper validates `next` before returning it.
+        render_auth_destination_js(&mut page)
         // Installs the dialog and delegates every [data-auth-open] click.
         underlayer_content::render_embedded_auth_runtime(&mut page)
         #css {
+            body { margin: 0; }
             .ul-auth-card { display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem; border: 1px solid hsl(var(--border)); border-radius: var(--radius); background: hsl(var(--card)); color: hsl(var(--card-foreground)); box-shadow: var(--shadow); }
             .ul-auth-card h1 { margin: 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
             .ul-auth-subtitle { margin: 0; color: hsl(var(--muted-foreground)); font-size: 0.9rem; line-height: 1.5; }

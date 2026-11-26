@@ -18,6 +18,7 @@ import cstd
 import http
 import json
 import page
+import web
 import html_cbi
 import css_cbi
 import js_cbi

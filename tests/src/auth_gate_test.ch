@@ -76,44 +76,56 @@ public namespace underlayer_tests {
             // zeroes that reads as failure at something nobody has started.
             cfg.addr = string("127.0.0.1:19993")
             var srv = server.Server(cfg)
-            srv.router.add("GET", "/health", (|&db, &courses_dir|(req, res) => {
-                underlayer_web::handle_knowledge_health_page(db, courses_dir, &req, &raw mut res)
+            var dbp79_addr : usize = (&raw db) as usize
+            srv.router.add("GET", "/health", (|dbp79_addr, courses_dir|(req) => {
+                var dbp79 : *underlayer_db::DbClient = dbp79_addr as *underlayer_db::DbClient
+                return underlayer_web::deliver(&req, underlayer_web::handle_knowledge_health_page(dbp79, &courses_dir, &req))
             }))
-            srv.serve_async(port)
+            var stop = srv.handle()
+            srv.serve_async()
             std::concurrent.sleep_ms(200u)
-            run_redirect_checks(env, &raw mut srv, &raw db, url, expected)
+            run_redirect_checks(env, stop, &raw db, url, expected)
             return
         }
         if(kind == 1) {
             cfg.addr = string("127.0.0.1:19990")
             var srv = server.Server(cfg)
-            srv.router.add("GET", "/review", (|&db, &courses_dir|(req, res) => {
-                underlayer_web::handle_review_page(db, courses_dir, &req, &raw mut res)
+            var dbp91_addr : usize = (&raw db) as usize
+            srv.router.add("GET", "/review", (|dbp91_addr, courses_dir|(req) => {
+                var dbp91 : *underlayer_db::DbClient = dbp91_addr as *underlayer_db::DbClient
+                return underlayer_web::deliver(&req, underlayer_web::handle_review_page(dbp91, &courses_dir, &req))
             }))
-            srv.serve_async(port)
+            var stop = srv.handle()
+            srv.serve_async()
             std::concurrent.sleep_ms(200u)
-            run_redirect_checks(env, &raw mut srv, &raw db, url, expected)
+            run_redirect_checks(env, stop, &raw db, url, expected)
             return
         }
         if(kind == 2) {
             cfg.addr = string("127.0.0.1:19991")
             var srv = server.Server(cfg)
-            srv.router.add("GET", "/progress", (|&db, &courses_dir|(req, res) => {
-                underlayer_web::handle_progress_page(db, courses_dir, &req, &raw mut res)
+            var dbp103_addr : usize = (&raw db) as usize
+            srv.router.add("GET", "/progress", (|dbp103_addr, courses_dir|(req) => {
+                var dbp103 : *underlayer_db::DbClient = dbp103_addr as *underlayer_db::DbClient
+                return underlayer_web::deliver(&req, underlayer_web::handle_progress_page(dbp103, &courses_dir, &req))
             }))
-            srv.serve_async(port)
+            var stop = srv.handle()
+            srv.serve_async()
             std::concurrent.sleep_ms(200u)
-            run_redirect_checks(env, &raw mut srv, &raw db, url, expected)
+            run_redirect_checks(env, stop, &raw db, url, expected)
             return
         }
         cfg.addr = string("127.0.0.1:19992")
         var srv = server.Server(cfg)
-        srv.router.add("GET", "/dashboard", (|&db, &courses_dir|(req, res) => {
-            underlayer_web::handle_dashboard(db, courses_dir, &req, &raw mut res)
+        var dbp114_addr : usize = (&raw db) as usize
+        srv.router.add("GET", "/dashboard", (|dbp114_addr, courses_dir|(req) => {
+            var dbp114 : *underlayer_db::DbClient = dbp114_addr as *underlayer_db::DbClient
+            return underlayer_web::deliver(&req, underlayer_web::handle_dashboard(dbp114, &courses_dir, &req))
         }))
-        srv.serve_async(port)
+        var stop = srv.handle()
+        srv.serve_async()
         std::concurrent.sleep_ms(200u)
-        run_redirect_checks(env, &raw mut srv, &raw db, url, expected)
+        run_redirect_checks(env, stop, &raw db, url, expected)
     }
 
     // Split out because the three routes build their server in three different
@@ -122,7 +134,7 @@ public namespace underlayer_tests {
     // live server.
     public func run_redirect_checks(
         env : &mut TestEnv,
-        srv : *mut server.Server,
+        stop : server.ShutdownHandle,
         db : *underlayer_db::DbClient,
         url : &string,
         expected : &string) {
@@ -131,7 +143,7 @@ public namespace underlayer_tests {
         var res = client.get(url.to_view())
         if(res is Result.Err) {
             env.error("request failed")
-            srv.shutdown()
+            stop.shutdown()
             underlayer_db::close(db)
             return
         }
@@ -141,7 +153,7 @@ public namespace underlayer_tests {
         //    like the one they asked for, which is the bug this replaced.
         if(resp.status != 303u) {
             env.error("a signed-out gated page must answer 303, not 200")
-            srv.shutdown()
+            stop.shutdown()
             underlayer_db::close(db)
             return
         }
@@ -150,16 +162,16 @@ public namespace underlayer_tests {
         var loc_opt = resp.headers.get("Location")
         if(loc_opt is Option.None) {
             env.error("303 with no Location header is a dead end")
-            srv.shutdown()
+            stop.shutdown()
             underlayer_db::close(db)
             return
         }
         var Some(loc) = loc_opt else unsafe { unreachable }
         var want = string("/login?next=")
         want.append_string(expected)
-        if(!loc.equals(&want)) {
+        if(!loc.equals(&want.to_view())) {
             env.error("wrong Location: expected /login?next= plus the original path")
-            srv.shutdown()
+            stop.shutdown()
             underlayer_db::close(db)
             return
         }
@@ -168,10 +180,10 @@ public namespace underlayer_tests {
         //    place -- a page of zeroes reads as "you are failing at this" -- and
         //    it is the one property that must not be lost by making the gate
         //    smaller.
-        var body_opt = resp.body.read_to_string()
+        var body_opt = resp.body.text()
         if(body_opt is Option.None) {
             env.error("no body")
-            srv.shutdown()
+            stop.shutdown()
             underlayer_db::close(db)
             return
         }
@@ -183,27 +195,27 @@ public namespace underlayer_tests {
         // guarded. Five lines that cannot mis-infer beat a loop that has to be
         // reworked.
         var leaked = false
-        if(body.find(string_view("concepts_total")) != std::NPOS) { leaked = true }
-        if(body.find(string_view("progress_percentage")) != std::NPOS) { leaked = true }
-        if(body.find(string_view("mastery")) != std::NPOS) { leaked = true }
-        if(body.find(string_view("review_due")) != std::NPOS) { leaked = true }
-        if(body.find(string_view("learner_id")) != std::NPOS) { leaked = true }
+        if(body.find_or_npos(string_view("concepts_total")) != std::NPOS) { leaked = true }
+        if(body.find_or_npos(string_view("progress_percentage")) != std::NPOS) { leaked = true }
+        if(body.find_or_npos(string_view("mastery")) != std::NPOS) { leaked = true }
+        if(body.find_or_npos(string_view("review_due")) != std::NPOS) { leaked = true }
+        if(body.find_or_npos(string_view("learner_id")) != std::NPOS) { leaked = true }
         if(leaked) {
             env.error("the redirect body leaks learner data")
-            srv.shutdown()
+            stop.shutdown()
             underlayer_db::close(db)
             return
         }
 
         // 5. A client that does not follow the redirect still has a link.
-        if(body.find(string_view("href=\"/login?next=")) == std::NPOS) {
+        if(body.find_or_npos(string_view("href=\"/login?next=")) == std::NPOS) {
             env.error("the redirect body does not repeat the link")
-            srv.shutdown()
+            stop.shutdown()
             underlayer_db::close(db)
             return
         }
 
-        srv.shutdown()
+        stop.shutdown()
         underlayer_db::close(db)
     }
 
@@ -214,50 +226,51 @@ public namespace underlayer_tests {
         var cfg = server.ServerConfig()
         cfg.addr = string("127.0.0.1:19994")
         var srv = server.Server(cfg)
-        srv.router.add("GET", "/login", (req, res) => {
-            underlayer_web::handle_login_page(&req, &raw mut res)
+        srv.router.add("GET", "/login", (req) => {
+            return underlayer_web::deliver(&req, underlayer_web::handle_login_page(&req))
         })
-        srv.serve_async(19994u)
+        var stop = srv.handle()
+        srv.serve_async()
         std::concurrent.sleep_ms(200u)
 
         var client = http::Client()
         var res = client.get("http://127.0.0.1:19994/login")
         if(res is Result.Err) {
             env.error("request failed")
-            srv.shutdown()
+            stop.shutdown()
             underlayer_db::close(&raw db)
             return
         }
         var Ok(resp) = res else unsafe { unreachable }
         if(resp.status == 303u) {
             env.error("/login redirects too -- every gated page points here, so this is a loop")
-            srv.shutdown()
+            stop.shutdown()
             underlayer_db::close(&raw db)
             return
         }
         if(resp.status != 200u) {
             env.error("/login should be reachable signed out")
-            srv.shutdown()
+            stop.shutdown()
             underlayer_db::close(&raw db)
             return
         }
 
-        var body_opt = resp.body.read_to_string()
+        var body_opt = resp.body.text()
         if(body_opt is Option.None) {
             env.error("no body")
-            srv.shutdown()
+            stop.shutdown()
             underlayer_db::close(&raw db)
             return
         }
         var Some(body) = body_opt else unsafe { unreachable }
-        if(body.find(string_view("__ulNextPath")) == std::NPOS) {
+        if(body.find_or_npos(string_view("__ulNextPath")) == std::NPOS) {
             env.error("/login cannot read ?next=, so sign-in loses the page")
-            srv.shutdown()
+            stop.shutdown()
             underlayer_db::close(&raw db)
             return
         }
 
-        srv.shutdown()
+        stop.shutdown()
         underlayer_db::close(&raw db)
     }
 
@@ -269,41 +282,44 @@ public namespace underlayer_tests {
         if(kind == 1) {
             cfg.addr = string("127.0.0.1:19995")
             var srv = server.Server(cfg)
-            srv.router.add("GET", "/login", (req, res) => {
-                underlayer_web::handle_login_page(&req, &raw mut res)
+            srv.router.add("GET", "/login", (req) => {
+                return underlayer_web::deliver(&req, underlayer_web::handle_login_page(&req))
             })
-            srv.serve_async(19995u)
+            var stop = srv.handle()
+            srv.serve_async()
             std::concurrent.sleep_ms(200u)
             var u_login = string("http://127.0.0.1:19995/login")
-            check_margin(env, &raw mut srv, &raw db, u_login.copy())
+            check_margin(env, stop, &raw db, u_login.copy())
             return
         }
         if(kind == 2) {
             cfg.addr = string("127.0.0.1:19996")
             var srv = server.Server(cfg)
-            srv.router.add("GET", "/register", (req, res) => {
-                underlayer_web::handle_register_page(&req, &raw mut res)
+            srv.router.add("GET", "/register", (req) => {
+                return underlayer_web::deliver(&req, underlayer_web::handle_register_page(&req))
             })
-            srv.serve_async(19996u)
+            var stop = srv.handle()
+            srv.serve_async()
             std::concurrent.sleep_ms(200u)
             var u_register = string("http://127.0.0.1:19996/register")
-            check_margin(env, &raw mut srv, &raw db, u_register.copy())
+            check_margin(env, stop, &raw db, u_register.copy())
             return
         }
         cfg.addr = string("127.0.0.1:19997")
         var srv = server.Server(cfg)
-        srv.router.add("GET", "/forgot-password", (req, res) => {
-            underlayer_web::handle_forgot_password_page(&req, &raw mut res)
+        srv.router.add("GET", "/forgot-password", (req) => {
+            return underlayer_web::deliver(&req, underlayer_web::handle_forgot_password_page(&req))
         })
-        srv.serve_async(19997u)
+        var stop = srv.handle()
+        srv.serve_async()
         std::concurrent.sleep_ms(200u)
         var u_forgot = string("http://127.0.0.1:19997/forgot-password")
-        check_margin(env, &raw mut srv, &raw db, u_forgot.copy())
+        check_margin(env, stop, &raw db, u_forgot.copy())
     }
 
     public func check_margin(
         env : &mut TestEnv,
-        srv : *mut server.Server,
+        stop : server.ShutdownHandle,
         db : *underlayer_db::DbClient,
         url : &string) {
 
@@ -311,15 +327,15 @@ public namespace underlayer_tests {
         var res = client.get(url.to_view())
         if(res is Result.Err) {
             env.error("request failed")
-            srv.shutdown()
+            stop.shutdown()
             underlayer_db::close(db)
             return
         }
         var Ok(resp) = res else unsafe { unreachable }
-        var body_opt = resp.body.read_to_string()
+        var body_opt = resp.body.text()
         if(body_opt is Option.None) {
             env.error("no body")
-            srv.shutdown()
+            stop.shutdown()
             underlayer_db::close(db)
             return
         }
@@ -338,16 +354,16 @@ public namespace underlayer_tests {
         // If css_cbi changes its spacing, these three tests fail with a message
         // about the body margin, which is a false alarm and a cheap one. That is
         // the right trade against silently missing a real regression.
-        var minified = body.find(string_view("body{margin:0}")) != std::NPOS
-        var spaced = body.find(string_view("body { margin:0; }")) != std::NPOS
-        var spaced_src = body.find(string_view("body { margin: 0; }")) != std::NPOS
+        var minified = body.find_or_npos(string_view("body{margin:0}")) != std::NPOS
+        var spaced = body.find_or_npos(string_view("body { margin:0; }")) != std::NPOS
+        var spaced_src = body.find_or_npos(string_view("body { margin: 0; }")) != std::NPOS
         if(!minified && !spaced && !spaced_src) {
             env.error("the sign-in page does not reset the body margin: the default 8px gutter comes back")
-            srv.shutdown()
+            stop.shutdown()
             underlayer_db::close(db)
             return
         }
-        srv.shutdown()
+        stop.shutdown()
         underlayer_db::close(db)
     }
 

@@ -12,21 +12,24 @@ public func test_create_learner_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20000")
     var srv = server.Server(cfg)
-    srv.router.add("POST", "/api/learners", (|&db|(req, res) => {
-        underlayer_web::handle_create_learner(&raw db, &req, &raw mut res)
+    var dbp15_addr : usize = (&raw db) as usize
+    srv.router.add("POST", "/api/learners", (|dbp15_addr|(req) => {
+        var dbp15 : *underlayer_db::DbClient = dbp15_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_create_learner(dbp15, &req))
     }))
-    srv.serve_async(20000u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var empty_body = string("")
     var ebv = empty_body.to_view()
     var res = client.post("http://127.0.0.1:20000/api/learners", &ebv)
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -36,24 +39,27 @@ public func test_create_learner_returns_json_with_id(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20001")
     var srv = server.Server(cfg)
-    srv.router.add("POST", "/api/learners", (|&db|(req, res) => {
-        underlayer_web::handle_create_learner(&raw db, &req, &raw mut res)
+    var dbp40_addr : usize = (&raw db) as usize
+    srv.router.add("POST", "/api/learners", (|dbp40_addr|(req) => {
+        var dbp40 : *underlayer_db::DbClient = dbp40_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_create_learner(dbp40, &req))
     }))
-    srv.serve_async(20001u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var empty_body = string("")
     var ebv = empty_body.to_view()
     var res = client.post("http://127.0.0.1:20001/api/learners", &ebv, "application/json")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
-    var body_opt = resp.body.read_to_string()
-    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var body_opt = resp.body.text()
+    if(body_opt is Option.None) { env.error("no body"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Some(body) = body_opt else unsafe { unreachable }
-    if(body.find(string_view("id")) == std::NPOS) { env.error("body missing 'id'") }
+    if(body.find_or_npos(string_view("id")) == std::NPOS) { env.error("body missing 'id'") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -63,22 +69,25 @@ public func test_get_learner_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20002")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/learners/demo", (|&db|(req, res) => {
+    var dbp68_addr : usize = (&raw db) as usize
+    srv.router.add("GET", "/api/learners/demo", (|dbp68_addr|(req) => {
+        var dbp68 : *underlayer_db::DbClient = dbp68_addr as *underlayer_db::DbClient
         var lid = string("demo")
         var lidv = lid.to_view()
-        underlayer_web::handle_get_learner(&raw db, &raw lidv, &req, &raw mut res)
+        return underlayer_web::deliver(&req, underlayer_web::handle_get_learner(dbp68, &lidv, &req))
     }))
-    srv.serve_async(20002u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20002/api/learners/demo")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     // Handler returns 200 if learner exists, 404 if not — both mean the handler works
     if(resp.status != 200u && resp.status != 404u) { env.error("expected 200 or 404") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -89,20 +98,23 @@ public func test_get_nonexistent_learner_returns_404(env : &mut TestEnv) {
     cfg.addr = string("127.0.0.1:20003")
     var srv = server.Server(cfg)
     var learner_id = string("does-not-exist")
-    srv.router.add("GET", "/api/learners/does-not-exist", (|&db, &learner_id|(req, res) => {
+    var dbp95_addr : usize = (&raw db) as usize
+    srv.router.add("GET", "/api/learners/does-not-exist", (|dbp95_addr, learner_id|(req) => {
+        var dbp95 : *underlayer_db::DbClient = dbp95_addr as *underlayer_db::DbClient
         var cv = learner_id.to_view()
-        underlayer_web::handle_get_learner(&raw db, &raw cv, &req, &raw mut res)
+        return underlayer_web::deliver(&req, underlayer_web::handle_get_learner(dbp95, &cv, &req))
     }))
-    srv.serve_async(20003u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20003/api/learners/does-not-exist")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 404u) { env.error("expected 404") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -114,21 +126,24 @@ public func test_set_goal_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20010")
     var srv = server.Server(cfg)
-    srv.router.add("POST", "/api/goals", (|&db|(req, res) => {
-        underlayer_web::handle_set_goal(db, &raw mut req, &raw mut res)
+    var dbp121_addr : usize = (&raw db) as usize
+    srv.router.add("POST", "/api/goals", (|dbp121_addr|(req) => {
+        var dbp121 : *underlayer_db::DbClient = dbp121_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_set_goal(dbp121, &mut req))
     }))
-    srv.serve_async(20010u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var empty_body = string("")
     var ebv = empty_body.to_view()
     var res = client.post("http://127.0.0.1:20010/api/goals?target_date=1800000000", &ebv, "application/json")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -144,24 +159,27 @@ public func test_get_goals_returns_200_and_lists(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20160")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/goals", (|&db|(req, res) => {
-        underlayer_web::handle_get_goals(db, &req, &raw mut res)
+    var dbp152_addr : usize = (&raw db) as usize
+    srv.router.add("GET", "/api/goals", (|dbp152_addr|(req) => {
+        var dbp152 : *underlayer_db::DbClient = dbp152_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_get_goals(dbp152, &req))
     }))
-    srv.serve_async(20160u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20160/api/goals")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
-    var body_opt = resp.body.read_to_string()
-    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var body_opt = resp.body.text()
+    if(body_opt is Option.None) { env.error("no body"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Some(body) = body_opt else unsafe { unreachable }
-    if(body.find(string_view("\"goals\"")) == std::NPOS) { env.error("get_goals: missing goals array") }
-    if(body.find(string_view("\"count\"")) == std::NPOS) { env.error("get_goals: missing count") }
+    if(body.find_or_npos(string_view("\"goals\"")) == std::NPOS) { env.error("get_goals: missing goals array") }
+    if(body.find_or_npos(string_view("\"count\"")) == std::NPOS) { env.error("get_goals: missing count") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -198,7 +216,7 @@ public func test_two_goals_set_in_the_same_second_both_persist(env : &mut TestEn
     var seen_a64 = false
     var gi : size_t = 0
     while(gi < goals.size()) {
-        var g = goals.get_ptr(gi)
+        var g = goals.at_ref(gi)
         if(g.course_id.equals(&elf)) { seen_elf = true }
         if(g.course_id.equals(&a64)) { seen_a64 = true }
         gi = gi + 1
@@ -215,19 +233,22 @@ public func test_delete_goal_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20011")
     var srv = server.Server(cfg)
-    srv.router.add("DELETE", "/api/goals", (|&db|(req, res) => {
-        underlayer_web::handle_delete_goal(db, &req, &raw mut res)
+    var dbp224_addr : usize = (&raw db) as usize
+    srv.router.add("DELETE", "/api/goals", (|dbp224_addr|(req) => {
+        var dbp224 : *underlayer_db::DbClient = dbp224_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_delete_goal(dbp224, &req))
     }))
-    srv.serve_async(20011u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var res = client.delete("http://127.0.0.1:20011/api/goals?learner_id=demo&course_id=elf")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -239,19 +260,22 @@ public func test_get_sessions_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20020")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/sessions", (|&db|(req, res) => {
-        underlayer_web::handle_session_history(db, &req, &raw mut res)
+    var dbp249_addr : usize = (&raw db) as usize
+    srv.router.add("GET", "/api/sessions", (|dbp249_addr|(req) => {
+        var dbp249 : *underlayer_db::DbClient = dbp249_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_session_history(dbp249, &req))
     }))
-    srv.serve_async(20020u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20020/api/sessions")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -261,22 +285,25 @@ public func test_get_sessions_returns_json(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20021")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/sessions", (|&db|(req, res) => {
-        underlayer_web::handle_session_history(db, &req, &raw mut res)
+    var dbp272_addr : usize = (&raw db) as usize
+    srv.router.add("GET", "/api/sessions", (|dbp272_addr|(req) => {
+        var dbp272 : *underlayer_db::DbClient = dbp272_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_session_history(dbp272, &req))
     }))
-    srv.serve_async(20021u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20021/api/sessions")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     var ct = resp.headers.get("Content-Type")
-    if(ct is Option.None) { env.error("missing Content-Type"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(ct is Option.None) { env.error("missing Content-Type"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Some(ct_val) = ct else unsafe { unreachable }
-    if(ct_val.find(string_view("application/json")) == std::NPOS) { env.error("Content-Type is not application/json") }
+    if(ct_val.find_or_npos(string_view("application/json")) == std::NPOS) { env.error("Content-Type is not application/json") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -288,22 +315,25 @@ public func test_fsrs_optimize_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20030")
     var srv = server.Server(cfg)
-    srv.router.add("POST", "/api/fsrs/optimize", (|&db|(req, res) => {
-        underlayer_web::handle_fsrs_optimize(db, &req, &raw mut res)
+    var dbp300_addr : usize = (&raw db) as usize
+    srv.router.add("POST", "/api/fsrs/optimize", (|dbp300_addr|(req) => {
+        var dbp300 : *underlayer_db::DbClient = dbp300_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_fsrs_optimize(dbp300, &req))
     }))
-    srv.serve_async(20030u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var empty_body = string("")
     var ebv = empty_body.to_view()
     var res = client.post("http://127.0.0.1:20030/api/fsrs/optimize", &ebv, "application/json")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     // 400 expected when no review history (< 10 reviews needed)
     if(resp.status != 400u) { env.error("expected 400 (insufficient history)") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -313,21 +343,24 @@ public func test_fsrs_reset_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20031")
     var srv = server.Server(cfg)
-    srv.router.add("POST", "/api/fsrs/reset", (|&db|(req, res) => {
-        underlayer_web::handle_fsrs_reset(db, &req, &raw mut res)
+    var dbp326_addr : usize = (&raw db) as usize
+    srv.router.add("POST", "/api/fsrs/reset", (|dbp326_addr|(req) => {
+        var dbp326 : *underlayer_db::DbClient = dbp326_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_fsrs_reset(dbp326, &req))
     }))
-    srv.serve_async(20031u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var empty_body = string("")
     var ebv = empty_body.to_view()
     var res = client.post("http://127.0.0.1:20031/api/fsrs/reset", &ebv, "application/json")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -339,20 +372,23 @@ public func test_exercises_hint_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20040")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/exercises/hint", (|&db|(req, res) => {
-        underlayer_web::handle_exercise_hint(db, &req, &raw mut res)
+    var dbp353_addr : usize = (&raw db) as usize
+    srv.router.add("GET", "/api/exercises/hint", (|dbp353_addr|(req) => {
+        var dbp353 : *underlayer_db::DbClient = dbp353_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_exercise_hint(dbp353, &req))
     }))
-    srv.serve_async(20040u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20040/api/exercises/hint?exercise_id=1")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     // 404 expected since test DB has no exercises
     if(resp.status != 404u) { env.error("expected 404 (exercise not found)") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -362,10 +398,13 @@ public func test_exercises_submit_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20041")
     var srv = server.Server(cfg)
-    srv.router.add("POST", "/api/exercises/submit", (|&db|(req, res) => {
-        underlayer_web::handle_exercise_submit(db, &raw mut req, &raw mut res)
+    var dbp377_addr : usize = (&raw db) as usize
+    srv.router.add("POST", "/api/exercises/submit", (|dbp377_addr|(req) => {
+        var dbp377 : *underlayer_db::DbClient = dbp377_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_exercise_submit(dbp377, &mut req))
     }))
-    srv.serve_async(20041u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
@@ -373,12 +412,12 @@ public func test_exercises_submit_returns_200(env : &mut TestEnv) {
     var ebv = empty_body.to_view()
     // Handler reads exercise_id and answer from query params
     var res = client.post("http://127.0.0.1:20041/api/exercises/submit?exercise_id=1&answer=A", &ebv, "application/json")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     // 404 expected since test DB has no exercises
     if(resp.status != 404u) { env.error("expected 404 (exercise not found)") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -390,10 +429,13 @@ public func test_session_pause_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20050")
     var srv = server.Server(cfg)
-    srv.router.add("POST", "/api/session/pause", (|&db|(req, res) => {
-        underlayer_web::handle_session_pause(db, &req, &raw mut res)
+    var dbp406_addr : usize = (&raw db) as usize
+    srv.router.add("POST", "/api/session/pause", (|dbp406_addr|(req) => {
+        var dbp406 : *underlayer_db::DbClient = dbp406_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_session_pause(dbp406, &req))
     }))
-    srv.serve_async(20050u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
@@ -401,7 +443,7 @@ public func test_session_pause_returns_200(env : &mut TestEnv) {
     var ebv = empty_body.to_view()
     // Handler reads session_id from query params
     var res = client.post("http://127.0.0.1:20050/api/session/pause?session_id=999", &ebv, "application/json")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     // 403 IS THE CORRECT ANSWER HERE, and it is what this assertion now says.
     // These endpoints act on a caller-supplied `session_id` and pass through
@@ -418,7 +460,7 @@ public func test_session_pause_returns_200(env : &mut TestEnv) {
     // inverted: the refusal is now the thing asserted.
     if(resp.status != 403u) { env.error("expected 403: an anonymous caller may not act on a session it does not own") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -428,17 +470,20 @@ public func test_session_resume_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20051")
     var srv = server.Server(cfg)
-    srv.router.add("POST", "/api/session/resume", (|&db|(req, res) => {
-        underlayer_web::handle_session_resume(db, &req, &raw mut res)
+    var dbp445_addr : usize = (&raw db) as usize
+    srv.router.add("POST", "/api/session/resume", (|dbp445_addr|(req) => {
+        var dbp445 : *underlayer_db::DbClient = dbp445_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_session_resume(dbp445, &req))
     }))
-    srv.serve_async(20051u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var empty_body = string("")
     var ebv = empty_body.to_view()
     var res = client.post("http://127.0.0.1:20051/api/session/resume?session_id=999", &ebv, "application/json")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     // 403 IS THE CORRECT ANSWER HERE, and it is what this assertion now says.
     // These endpoints act on a caller-supplied `session_id` and pass through
@@ -455,7 +500,7 @@ public func test_session_resume_returns_200(env : &mut TestEnv) {
     // inverted: the refusal is now the thing asserted.
     if(resp.status != 403u) { env.error("expected 403: an anonymous caller may not act on a session it does not own") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -465,17 +510,20 @@ public func test_session_abort_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20052")
     var srv = server.Server(cfg)
-    srv.router.add("POST", "/api/session/abort", (|&db|(req, res) => {
-        underlayer_web::handle_session_abort(db, &req, &raw mut res)
+    var dbp483_addr : usize = (&raw db) as usize
+    srv.router.add("POST", "/api/session/abort", (|dbp483_addr|(req) => {
+        var dbp483 : *underlayer_db::DbClient = dbp483_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_session_abort(dbp483, &req))
     }))
-    srv.serve_async(20052u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var empty_body = string("")
     var ebv = empty_body.to_view()
     var res = client.post("http://127.0.0.1:20052/api/session/abort?session_id=999", &ebv, "application/json")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     // 403 IS THE CORRECT ANSWER HERE, and it is what this assertion now says.
     // These endpoints act on a caller-supplied `session_id` and pass through
@@ -492,7 +540,7 @@ public func test_session_abort_returns_200(env : &mut TestEnv) {
     // inverted: the refusal is now the thing asserted.
     if(resp.status != 403u) { env.error("expected 403: an anonymous caller may not act on a session it does not own") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -502,17 +550,20 @@ public func test_session_undo_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20053")
     var srv = server.Server(cfg)
-    srv.router.add("POST", "/api/session/undo", (|&db|(req, res) => {
-        underlayer_web::handle_session_undo(db, &req, &raw mut res)
+    var dbp521_addr : usize = (&raw db) as usize
+    srv.router.add("POST", "/api/session/undo", (|dbp521_addr|(req) => {
+        var dbp521 : *underlayer_db::DbClient = dbp521_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_session_undo(dbp521, &req))
     }))
-    srv.serve_async(20053u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var empty_body = string("")
     var ebv = empty_body.to_view()
     var res = client.post("http://127.0.0.1:20053/api/session/undo?session_id=999", &ebv, "application/json")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     // 403 IS THE CORRECT ANSWER HERE, and it is what this assertion now says.
     // These endpoints act on a caller-supplied `session_id` and pass through
@@ -529,7 +580,7 @@ public func test_session_undo_returns_200(env : &mut TestEnv) {
     // inverted: the refusal is now the thing asserted.
     if(resp.status != 403u) { env.error("expected 403: an anonymous caller may not act on a session it does not own") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -539,10 +590,13 @@ public func test_session_skip_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20054")
     var srv = server.Server(cfg)
-    srv.router.add("POST", "/api/session/skip", (|&db|(req, res) => {
-        underlayer_web::handle_session_skip(db, &req, &raw mut res)
+    var dbp559_addr : usize = (&raw db) as usize
+    srv.router.add("POST", "/api/session/skip", (|dbp559_addr|(req) => {
+        var dbp559 : *underlayer_db::DbClient = dbp559_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_session_skip(dbp559, &req))
     }))
-    srv.serve_async(20054u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
@@ -550,7 +604,7 @@ public func test_session_skip_returns_200(env : &mut TestEnv) {
     var ebv = empty_body.to_view()
     // Handler requires both session_id and concept_id
     var res = client.post("http://127.0.0.1:20054/api/session/skip?session_id=999&concept_id=bytes", &ebv, "application/json")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     // 403 IS THE CORRECT ANSWER HERE, and it is what this assertion now says.
     // These endpoints act on a caller-supplied `session_id` and pass through
@@ -567,7 +621,7 @@ public func test_session_skip_returns_200(env : &mut TestEnv) {
     // inverted: the refusal is now the thing asserted.
     if(resp.status != 403u) { env.error("expected 403: an anonymous caller may not act on a session it does not own") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -582,21 +636,22 @@ public func test_navigation_elf_bytes_returns_200(env : &mut TestEnv) {
     var srv = server.Server(cfg)
     var course_id = string("elf")
     var concept_id = string("bytes")
-    srv.router.add("GET", "/api/navigation/elf/bytes", (|&courses_dir, &course_id, &concept_id|(req, res) => {
+    srv.router.add("GET", "/api/navigation/elf/bytes", (|courses_dir, course_id, concept_id|(req) => {
         var ccv = course_id.to_view()
         var tcv = concept_id.to_view()
-        underlayer_web::handle_navigation(courses_dir, &raw ccv, &raw tcv, &req, &raw mut res)
+        return underlayer_web::deliver(&req, underlayer_web::handle_navigation(&courses_dir, &ccv, &tcv, &req))
     }))
-    srv.serve_async(20060u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20060/api/navigation/elf/bytes")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -609,26 +664,27 @@ public func test_navigation_returns_breadcrumbs(env : &mut TestEnv) {
     var srv = server.Server(cfg)
     var course_id = string("elf")
     var concept_id = string("bytes")
-    srv.router.add("GET", "/api/navigation/elf/bytes", (|&courses_dir, &course_id, &concept_id|(req, res) => {
+    srv.router.add("GET", "/api/navigation/elf/bytes", (|courses_dir, course_id, concept_id|(req) => {
         var ccv = course_id.to_view()
         var tcv = concept_id.to_view()
-        underlayer_web::handle_navigation(courses_dir, &raw ccv, &raw tcv, &req, &raw mut res)
+        return underlayer_web::deliver(&req, underlayer_web::handle_navigation(&courses_dir, &ccv, &tcv, &req))
     }))
-    srv.serve_async(20061u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20061/api/navigation/elf/bytes")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
-    var body_opt = resp.body.read_to_string()
-    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var body_opt = resp.body.text()
+    if(body_opt is Option.None) { env.error("no body"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Some(body) = body_opt else unsafe { unreachable }
-    if(body.find(string_view("breadcrumbs")) == std::NPOS && body.find(string_view("prev")) == std::NPOS) {
+    if(body.find_or_npos(string_view("breadcrumbs")) == std::NPOS && body.find_or_npos(string_view("prev")) == std::NPOS) {
         env.error("navigation body missing breadcrumbs/prev")
     }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -641,19 +697,20 @@ public func test_courses_all_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20070")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/courses/all", (|&courses_dir|(req, res) => {
-        underlayer_web::handle_filter_courses(courses_dir, &req, &raw mut res)
+    srv.router.add("GET", "/api/courses/all", (|courses_dir|(req) => {
+        return underlayer_web::deliver(&req, underlayer_web::handle_filter_courses(&courses_dir, &req))
     }))
-    srv.serve_async(20070u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20070/api/courses/all")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -664,22 +721,23 @@ public func test_courses_all_returns_json(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20071")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/courses/all", (|&courses_dir|(req, res) => {
-        underlayer_web::handle_filter_courses(courses_dir, &req, &raw mut res)
+    srv.router.add("GET", "/api/courses/all", (|courses_dir|(req) => {
+        return underlayer_web::deliver(&req, underlayer_web::handle_filter_courses(&courses_dir, &req))
     }))
-    srv.serve_async(20071u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20071/api/courses/all")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     var ct = resp.headers.get("Content-Type")
-    if(ct is Option.None) { env.error("missing Content-Type"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(ct is Option.None) { env.error("missing Content-Type"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Some(ct_val) = ct else unsafe { unreachable }
-    if(ct_val.find(string_view("application/json")) == std::NPOS) { env.error("Content-Type is not application/json") }
+    if(ct_val.find_or_npos(string_view("application/json")) == std::NPOS) { env.error("Content-Type is not application/json") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -691,10 +749,13 @@ public func test_fsrs_import_returns_200(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20080")
     var srv = server.Server(cfg)
-    srv.router.add("POST", "/api/fsrs/import", (|&db|(req, res) => {
-        underlayer_web::handle_fsrs_import(db, &raw mut req, &raw mut res)
+    var dbp716_addr : usize = (&raw db) as usize
+    srv.router.add("POST", "/api/fsrs/import", (|dbp716_addr|(req) => {
+        var dbp716 : *underlayer_db::DbClient = dbp716_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_fsrs_import(dbp716, &mut req))
     }))
-    srv.serve_async(20080u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
@@ -702,11 +763,11 @@ public func test_fsrs_import_returns_200(env : &mut TestEnv) {
     var ebv = empty_body.to_view()
     // Handler reads weights from query params as JSON array
     var res = client.post("http://127.0.0.1:20080/api/fsrs/import?weights=[0.4,0.6,0.8,0.9,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.4,2.6,2.8,3.0,3.2,3.4,3.6,3.8,4.0,4.2]", &ebv, "application/json")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -730,26 +791,29 @@ public func test_nav_status_returns_counts(env : &mut TestEnv) {
     // concepts_total from the MANIFEST, so it needs a real course directory
     // and not an empty string.
     var courses_dir = string("./courses")
-    srv.router.add("GET", "/api/nav-status", (|&db, &courses_dir|(req, res) => {
-        underlayer_web::handle_nav_status(db, courses_dir, &req, &raw mut res)
+    var dbp756_addr : usize = (&raw db) as usize
+    srv.router.add("GET", "/api/nav-status", (|dbp756_addr, courses_dir|(req) => {
+        var dbp756 : *underlayer_db::DbClient = dbp756_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_nav_status(dbp756, &courses_dir, &req))
     }))
-    srv.serve_async(20086u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20086/api/nav-status")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
-    var body_opt = resp.body.read_to_string()
-    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var body_opt = resp.body.text()
+    if(body_opt is Option.None) { env.error("no body"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Some(body) = body_opt else unsafe { unreachable }
-    if(body.find(string_view("concepts_started")) == std::NPOS) { env.error("missing concepts_started") }
-    if(body.find(string_view("concepts_total")) == std::NPOS) { env.error("missing concepts_total") }
-    if(body.find(string_view("progress_pct")) == std::NPOS) { env.error("missing progress_pct") }
-    if(body.find(string_view("due_reviews")) == std::NPOS) { env.error("missing due_reviews") }
+    if(body.find_or_npos(string_view("concepts_started")) == std::NPOS) { env.error("missing concepts_started") }
+    if(body.find_or_npos(string_view("concepts_total")) == std::NPOS) { env.error("missing concepts_total") }
+    if(body.find_or_npos(string_view("progress_pct")) == std::NPOS) { env.error("missing progress_pct") }
+    if(body.find_or_npos(string_view("due_reviews")) == std::NPOS) { env.error("missing due_reviews") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -761,24 +825,25 @@ public func test_nav_search_returns_entries(env : &mut TestEnv) {
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20087")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/nav-search", (req, res) => {
-        underlayer_web::handle_nav_search(&req, &raw mut res)
+    srv.router.add("GET", "/api/nav-search", (req) => {
+        return underlayer_web::deliver(&req, underlayer_web::handle_nav_search(&req))
     })
-    srv.serve_async(20087u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var res = client.get("http://127.0.0.1:20087/api/nav-search")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected status 200") }
-    var body_opt = resp.body.read_to_string()
-    if(body_opt is Option.None) { env.error("no body"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    var body_opt = resp.body.text()
+    if(body_opt is Option.None) { env.error("no body"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Some(body) = body_opt else unsafe { unreachable }
-    if(body.find(string_view("/courses/elf/lessons/bytes")) == std::NPOS) { env.error("missing bytes lesson entry") }
-    if(body.find(string_view("/courses/elf/lessons/execution")) == std::NPOS) { env.error("missing execution lesson entry") }
-    if(body.find(string_view("\"entries\"")) == std::NPOS) { env.error("missing entries key") }
+    if(body.find_or_npos(string_view("/courses/elf/lessons/bytes")) == std::NPOS) { env.error("missing bytes lesson entry") }
+    if(body.find_or_npos(string_view("/courses/elf/lessons/execution")) == std::NPOS) { env.error("missing execution lesson entry") }
+    if(body.find_or_npos(string_view("\"entries\"")) == std::NPOS) { env.error("missing entries key") }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }

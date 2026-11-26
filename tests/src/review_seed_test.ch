@@ -19,7 +19,7 @@ public func test_review_seeding_creates_items(env : &mut TestEnv) {
     state.concept_id = concept_id.copy()
     state.course_id = course_id.copy()
     state.attempts = 1
-    underlayer_repository::upsert_concept_state(&raw db, &raw state)
+    underlayer_repository::upsert_concept_state(&raw db, &state)
 
     // Seed and verify creation
     var created = underlayer_repository::seed_review_items(&raw db, &learner_id, &course_id)
@@ -57,20 +57,23 @@ public func test_review_due_seeds_automatically(env : &mut TestEnv) {
     state.concept_id = concept_id.copy()
     state.course_id = course_id.copy()
     state.attempts = 2
-    underlayer_repository::upsert_concept_state(&raw db, &raw state)
+    underlayer_repository::upsert_concept_state(&raw db, &state)
 
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:19979")
     var srv = server.Server(cfg)
-    srv.router.add("GET", "/api/review/due", (|&db, &courses_dir|(req, res) => {
-        underlayer_web::handle_review_due(db, courses_dir, &req, &raw mut res)
+    var dbp65_addr : usize = (&raw db) as usize
+    srv.router.add("GET", "/api/review/due", (|dbp65_addr, courses_dir|(req) => {
+        var dbp65 : *underlayer_db::DbClient = dbp65_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_review_due(dbp65, &courses_dir, &req))
     }))
-    srv.serve_async(19979u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
     var res = client.get("http://127.0.0.1:19979/api/review/due?course_id=elf")
-    if(res is Result.Err) { env.error("request failed"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     if(resp.status != 200u) { env.error("expected 200") }
 
@@ -84,6 +87,6 @@ public func test_review_due_seeds_automatically(env : &mut TestEnv) {
         if(created == 0) { env.error("seeding produced no items") }
     }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }

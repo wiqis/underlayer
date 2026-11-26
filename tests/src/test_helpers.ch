@@ -59,7 +59,7 @@ public namespace test_helpers {
     // accepts for real.
     public func make_session_token(db : *underlayer_db::DbClient, learner_id : &string) : string {
         var token = underlayer_web::generate_random_hex(64)
-        var token_hash = underlayer_web::hash_token(&raw token)
+        var token_hash = underlayer_web::hash_token(&token)
         var session_id = underlayer_web::generate_random_hex(32)
         var now = underlayer_core::current_timestamp()
         var expires_at = now + 2592000
@@ -91,11 +91,11 @@ public namespace test_helpers {
     // omits it gets a 401 and fails for a reason that has nothing to do with
     // what it is testing, which is the worst kind of failure to debug.
     //
-    // Returns the same Result<Response, string> as Client::get, so callers
+    // Returns the same Result<Response, HttpError> as Client::get, so callers
     // keep the `is Result.Err` / `Ok(resp)` shape they already use.
-    public func authed_get(client : &http::Client, url_str : &string, token : &string) : std::Result<http::Response, std::string> {
+    public func authed_get(client : &http::Client, url_str : &string, token : &string) : std::Result<http::Response, http::HttpError> {
         var u_opt = http::URL::parse(url_str.to_view())
-        if(u_opt is std::Option.None) { return std::Result.Err<http::Response, std::string>(string("invalid URL")) }
+        if(u_opt is std::Option.None) { return std::Result.Err<http::Response, http::HttpError>(http::HttpError.InvalidUrl()) }
         var Some(u) = u_opt else unsafe { unreachable }
         var rb = http::RequestBuilder("GET", std::replace(&mut u, http::URL()))
         var auth_value = string("Bearer ")
@@ -105,9 +105,9 @@ public namespace test_helpers {
     }
 
     // POST with the same header.  `content_type` keeps the call sites readable.
-    public func authed_post(client : &http::Client, url_str : &string, token : &string, body : &string_view, content_type : *char = "text/plain") : std::Result<http::Response, std::string> {
+    public func authed_post(client : &http::Client, url_str : &string, token : &string, body : &string_view, content_type : std::str = "text/plain") : std::Result<http::Response, http::HttpError> {
         var u_opt = http::URL::parse(url_str.to_view())
-        if(u_opt is std::Option.None) { return std::Result.Err<http::Response, std::string>(string("invalid URL")) }
+        if(u_opt is std::Option.None) { return std::Result.Err<http::Response, http::HttpError>(http::HttpError.InvalidUrl()) }
         var Some(u) = u_opt else unsafe { unreachable }
         var rb = http::RequestBuilder("POST", std::replace(&mut u, http::URL()))
         rb.set_body(body, content_type)

@@ -187,7 +187,10 @@ public namespace underlayer_content {
                     if (event.origin !== account) { return; }
                     if (event.data && event.data.type === 'login_success') {
                         if (dialog.open) { dialog.close(); }
-                        window.__ulCompleteSignIn(function () { window.location.reload(); });
+                        window.__ulCompleteSignIn(function () {
+                            var next = window.__ulNextPath ? window.__ulNextPath() : '';
+                            if (next) { window.location.href = next; } else { window.location.reload(); }
+                        });
                     }
                 });
             };

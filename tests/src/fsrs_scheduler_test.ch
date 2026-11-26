@@ -70,16 +70,16 @@ func rate_and_read_stability(
     var res = test_helpers::authed_post(client, &url, token, &ebv, "application/json")
     if(res is Result.Err) { env.error("review submit failed"); return -1.0 }
     var Ok(resp) = res else unsafe { unreachable }
-    var body_opt = resp.body.read_to_string()
+    var body_opt = resp.body.text()
     if(body_opt is Option.None) { env.error("no body from review submit"); return -1.0 }
     var Some(body) = body_opt else unsafe { unreachable }
     var key = string("\"stability\":")
-    var at = body.find(key.to_view())
+    var at = body.find_or_npos(key.to_view())
     if(at == std::NPOS) { env.error("review submit response has no stability"); return -1.0 }
     var tail = string()
     var i = at + key.size()
     while(i < body.size()) {
-        var ch = body.get(i)
+        var ch = body.at(i)
         if(ch == ',' || ch == '}') { break }
         tail.append(ch)
         i = i + 1
@@ -114,10 +114,13 @@ public func test_repeated_good_ratings_accumulate_stability(env : &mut TestEnv) 
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20180")
     var srv = server.Server(cfg)
-    srv.router.add("POST", "/api/review/submit", (|&db|(req, res) => {
-        underlayer_web::handle_review_submit(db, &raw mut req, &raw mut res)
+    var dbp117_addr : usize = (&raw db) as usize
+    srv.router.add("POST", "/api/review/submit", (|dbp117_addr|(req) => {
+        var dbp117 : *underlayer_db::DbClient = dbp117_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_review_submit(dbp117, &mut req))
     }))
-    srv.serve_async(20180u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
@@ -125,7 +128,7 @@ public func test_repeated_good_ratings_accumulate_stability(env : &mut TestEnv) 
     var concept = string("fsrs-accumulates")
 
     var first = rate_and_read_stability(env, &client, &base, &token, &concept, &string("3"))
-    if(first <= 0.0) { env.error("fsrs: first rating returned no stability"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(first <= 0.0) { env.error("fsrs: first rating returned no stability"); stop.shutdown(); underlayer_db::close(&raw db); return }
     // S0("Good") is w[3] = 0.1901. Asserting the STARTING VALUE pins the
     // parameter table as well as the memory: a change to w[3] is a change to
     // the model and should fail here rather than silently alter every interval.
@@ -156,7 +159,7 @@ public func test_repeated_good_ratings_accumulate_stability(env : &mut TestEnv) 
         env.error("fsrs: stability did not grow over nine Good ratings — the value is not surviving the round trip")
     }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -173,10 +176,13 @@ public func test_again_lowers_stability_rather_than_raising_it(env : &mut TestEn
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20181")
     var srv = server.Server(cfg)
-    srv.router.add("POST", "/api/review/submit", (|&db|(req, res) => {
-        underlayer_web::handle_review_submit(db, &raw mut req, &raw mut res)
+    var dbp177_addr : usize = (&raw db) as usize
+    srv.router.add("POST", "/api/review/submit", (|dbp177_addr|(req) => {
+        var dbp177 : *underlayer_db::DbClient = dbp177_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_review_submit(dbp177, &mut req))
     }))
-    srv.serve_async(20181u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
@@ -190,10 +196,10 @@ public func test_again_lowers_stability_rather_than_raising_it(env : &mut TestEn
         i = i + 1
     }
     var before = rate_and_read_stability(env, &client, &base, &token, &concept, &string("3"))
-    if(before <= 0.0) { env.error("fsrs: no stability before the lapse"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(before <= 0.0) { env.error("fsrs: no stability before the lapse"); stop.shutdown(); underlayer_db::close(&raw db); return }
 
     var after = rate_and_read_stability(env, &client, &base, &token, &concept, &string("1"))
-    if(after <= 0.0) { env.error("fsrs: no stability after the lapse"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(after <= 0.0) { env.error("fsrs: no stability after the lapse"); stop.shutdown(); underlayer_db::close(&raw db); return }
 
     // THE ASSERTION. A floor of 1.0 on the lapse branch made this comparison
     // fail in the worst possible direction: forgetting RAISED stability.
@@ -201,7 +207,7 @@ public func test_again_lowers_stability_rather_than_raising_it(env : &mut TestEn
         env.error("fsrs: rating Again must LOWER stability — it did not, so a lapse is recorded as progress")
     }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }
 
@@ -224,10 +230,13 @@ public func test_stored_stability_survives_the_database_round_trip(env : &mut Te
     var cfg = server.ServerConfig()
     cfg.addr = string("127.0.0.1:20182")
     var srv = server.Server(cfg)
-    srv.router.add("POST", "/api/review/submit", (|&db|(req, res) => {
-        underlayer_web::handle_review_submit(db, &raw mut req, &raw mut res)
+    var dbp229_addr : usize = (&raw db) as usize
+    srv.router.add("POST", "/api/review/submit", (|dbp229_addr|(req) => {
+        var dbp229 : *underlayer_db::DbClient = dbp229_addr as *underlayer_db::DbClient
+        return underlayer_web::deliver(&req, underlayer_web::handle_review_submit(dbp229, &mut req))
     }))
-    srv.serve_async(20182u)
+    var stop = srv.handle()
+    srv.serve_async()
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
@@ -235,12 +244,12 @@ public func test_stored_stability_survives_the_database_round_trip(env : &mut Te
     var concept = string("fsrs-roundtrip")
 
     var reported = rate_and_read_stability(env, &client, &base, &token, &concept, &string("3"))
-    if(reported <= 0.0) { env.error("fsrs: no stability reported"); srv.shutdown(); underlayer_db::close(&raw db); return }
+    if(reported <= 0.0) { env.error("fsrs: no stability reported"); stop.shutdown(); underlayer_db::close(&raw db); return }
 
     var stored = underlayer_repository::get_review_item_by_concept(&raw db, &learner, &string("elf"), &concept)
     if(stored.id.size() == 0) {
         env.error("fsrs: the first rating created no review_items row, so nothing is remembered at all")
-        srv.shutdown()
+        stop.shutdown()
         underlayer_db::close(&raw db)
         return
     }
@@ -254,6 +263,6 @@ public func test_stored_stability_survives_the_database_round_trip(env : &mut Te
         env.error("fsrs: stored stability lost its fraction — it did not survive the round trip")
     }
 
-    srv.shutdown()
+    stop.shutdown()
     underlayer_db::close(&raw db)
 }

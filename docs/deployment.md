@@ -71,10 +71,11 @@ Any non-zero exit fails the job. There is **no deploy step, no publish step, no
 - **The write probe needs a disposable DB.** `helpful_dedupe_check.py` registers
   two throwaway learners and casts votes. It is safe in CI because the database
   is created fresh for the job. Never point it at production.
-- **The `@test` suite is not in CI.** `tests/chemical.mod` stalls in the compiler
-  at its last module (known blocker, 2026-11-24; see `AGENTS.md`). The workflow
-  verifies the served artifact instead. That is not the same thing, and this
-  document does not claim it is.
+- **The `@test` suite is not in CI (yet).** `tests/chemical.mod` was unblocked on
+  2026-11-26 (A3): it builds with `TCCCompiler tests/chemical.mod -o ../build/tests.exe --no-cache`
+  (no `--test`) and runs 138/138 green. The workflow does not invoke it yet — wiring it
+  into CI belongs to A2/A5, and until then the workflow verifies the served artifact
+  only. That is not the same thing, and this document does not claim it is.
 
 ## 3. Build and run
 
