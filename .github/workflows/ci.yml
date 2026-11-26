@@ -1,0 +1,136 @@
+# Verification-only CI. It builds the server and the ELF static pages, starts
+# the server on a free port, and runs the served-artifact checkers. It does NOT
+# deploy, publish, push, or use any secret. The founder deploys manually.
+#
+# HONEST LIMITS
+#   * TCCCompiler is a native binary that this repository does not build. The
+#     job is single-platform (windows-latest) because that is the only platform
+#     where the compiler is verified on the development machine. Point
+#     `compiler_root` (workflow_dispatch) or the CHEMICAL_ROOT repository
+#     variable at a checkout whose cmake-build-debug/ holds TCCCompiler.exe.
+#     If neither is set the job fails with an actionable message; it never
+#     guesses a path from someone else's laptop.
+#   * The live-browser theme check is not run here (no browser is provisioned);
+#     theme_check.py still runs its full static contract in CI. Pass --browser
+#     locally to add the Playwright proof.
+#   * The Chemical @test suite is a separate application and is currently
+#     blocked in the compiler (see AGENTS.md). These checks cover the served
+#     artifact instead; they are not a substitute for that suite.
+
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      compiler_root:
+        description: 'Directory containing cmake-build-debug/TCCCompiler.exe'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    env:
+      # Set the CHEMICAL_ROOT repository variable once; workflow_dispatch can
+      # override it per run. scripts/_common.sh also honours this variable.
+      CHEMICAL_ROOT: ${{ inputs.compiler_root || vars.CHEMICAL_ROOT || '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Locate TCCCompiler
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${CHEMICAL_ROOT:-}" ]; then
+            echo "::error::CHEMICAL_ROOT is unset. Set it as a repository variable or pass compiler_root to workflow_dispatch."
+            exit 1
+          fi
+          compiler=""
+          for dir in cmake-build-debug build .; do
+            for name in TCCCompiler.exe TCCCompiler; do
+              if [ -f "$CHEMICAL_ROOT/$dir/$name" ]; then compiler="$CHEMICAL_ROOT/$dir/$name"; break 2; fi
+            done
+          done
+          if [ -z "$compiler" ]; then
+            echo "::error::No TCCCompiler under $CHEMICAL_ROOT (checked cmake-build-debug/, build/, .)."
+            exit 1
+          fi
+          echo "Using compiler: $compiler"
+          echo "UL_COMPILER=$compiler" >> "$GITHUB_ENV"
+
+      - name: Build server (-bm-modules --no-cache)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          "$UL_COMPILER" chemical.mod -o build/underlayer-verify.exe -bm-modules --no-cache
+
+      - name: Build ELF static pages
+        shell: bash
+        run: bash scripts/build_static.sh elf --quiet
+
+      - name: Start server on a free port
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT="$(python -c "import socket;s=socket.socket();s.bind(('127.0.0.1',0));print(s.getsockname()[1]);s.close()")"
+          export BASE="http://localhost:$PORT"
+          echo "PORT=$PORT" >> "$GITHUB_ENV"
+          echo "BASE=$BASE" >> "$GITHUB_ENV"
+          rm -f ci-underlayer.db
+          PORT="$PORT" DATABASE_URL=./ci-underlayer.db COURSES_DIR=./courses \
+            ./build/underlayer-verify.exe > build/ci-server.log 2>&1 &
+          echo $! > build/ci-server.pid
+          for i in $(seq 1 30); do
+            if curl -fsS --connect-timeout 2 --max-time 5 "$BASE/api/health" > /dev/null 2>&1; then
+              echo "server healthy on $BASE"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::server did not become healthy; tail of build/ci-server.log:"
+          tail -40 build/ci-server.log || true
+          exit 1
+
+      - name: Endpoint matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in \
+            /api/health \
+            / \
+            /api/courses \
+            /courses/elf \
+            /courses/elf/lessons/bytes \
+            /api/courses/elf/lessons/bytes/units; do
+            code="$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 3 --max-time 10 "$BASE$path")"
+            echo "  $code  $path"
+            [ "$code" = "200" ] || { echo "::error::$path answered $code"; exit 1; }
+          done
+
+      - name: Served-artifact checkers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/journey_quality_check.py "$BASE" --workers 8
+          python tools/theme_check.py "$BASE"
+          python tools/lesson_pager_check.py "$BASE"
+
+      - name: Stop server
+        if: always()
+        shell: bash
+        run: |
+          if [ -f build/ci-server.pid ]; then
+            pid="$(cat build/ci-server.pid)"
+            kill "$pid" 2>/dev/null || true
+            taskkill //F //PID "$pid" 2>/dev/null || true
+          fi
