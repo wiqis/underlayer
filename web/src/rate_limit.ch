@@ -87,8 +87,39 @@ public namespace underlayer_web {
 
     // Create the table.  Idempotent, and called from init_schema's migration
     // path so a fresh database has it.
+    //
+    // NOTE (2026-11-26): the authoritative startup purge is
+    // repository/src/schema_migrations.ch::purge_expired_rate_limits, called
+    // from repository/src/schema.ch after run_support_tables (checklist 2.2.64).
+    // This helper is retained as the web-layer home of the same contract, and
+    // this extra sweep is deliberately GENEROUS (24h, below) so it can never
+    // delete a row the 10-minute startup purge would have kept.  It is a second
+    // net, not a second policy.  Consolidating the two owners is a follow-up.
     public func ensure_rate_limit_table(db : *DbClient) {
         var sql = string("CREATE TABLE IF NOT EXISTS rate_limits (bucket TEXT PRIMARY KEY, window_start INTEGER, count INTEGER)")
+        underlayer_db::exec_sql(db, &raw sql)
+        purge_stale_rate_limits(db)
+    }
+
+    // BOUNDED PURGE.  One row per distinct IP per endpoint group, written by
+    // anonymous requests; without a purge the table grows forever.  A bucket
+    // older than a generous retention window can no longer affect a decision
+    // (rate_limit_ok_with resets a count whose window_start is not the current
+    // window), so deleting it cannot change a single future answer.  That is
+    // what makes this safe to run at startup with no timer and no background
+    // thread.
+    //
+    // 24 hours rather than one 5-minute window: the fast purge in the schema
+    // migration uses two windows (600s).  A wider, idempotent sweep here only
+    // removes rows that are dead by BOTH measures, so the two cannot disagree.
+    // No module-level state: the cutoff is computed locally per call.
+    private func rate_limit_purge_retention() : i64 { return 86400 }
+
+    public func purge_stale_rate_limits(db : *DbClient) {
+        var cutoff = underlayer_core::current_timestamp() - rate_limit_purge_retention()
+        var cutoff_s = underlayer_core::int_to_string(cutoff)
+        var sql = string("DELETE FROM rate_limits WHERE window_start < ")
+        sql.append_view(cutoff_s.to_view())
         underlayer_db::exec_sql(db, &raw sql)
     }
 
