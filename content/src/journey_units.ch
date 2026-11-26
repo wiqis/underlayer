@@ -112,6 +112,26 @@ public namespace underlayer_content {
                 return jqPurpose(u);
             }
 
+            // Focus management. A heading is not a keyboard focus target until
+            // it has tabindex, so the tabindex is added HERE, at runtime, by
+            // the journey -- never authored into a lesson and never built by
+            // string concatenation. Moving focus to the staged step's heading
+            // is what tells a keyboard or screen-reader user that the step
+            // changed; the ribbon stays the compact aria-live announcement and
+            // the stage itself stays aria-live=off so the whole lesson is not
+            // read out on every step.
+            function jqFocusEl(el) {
+                if(!el) { return; }
+                if(!el.hasAttribute('tabindex')) { el.setAttribute('tabindex', '-1'); }
+                if(el.focus) { el.focus(); }
+            }
+
+            function jqFocusStep(u) {
+                if(!u) { return; }
+                var h = u.querySelector('h2');
+                jqFocusEl(h ? h : u);
+            }
+
             function jqKeyPoint(u) {
                 var derived = u.getAttribute('data-remember');
                 if(derived && jqTrim(derived).length > 0) { return jqTrim(derived); }

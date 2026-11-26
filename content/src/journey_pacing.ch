@@ -27,6 +27,9 @@ public namespace underlayer_content {
                 jqHide(jqEl('ul-journey-controls'), true);
                 jqHide(jqEl('ul-journey-finish'), true);
                 jqHide(jqEl('ul-journey-paused'), false);
+                // Pausing collapses the lesson to one obvious action. Focus
+                // that action rather than leaving focus on a now-hidden button.
+                jqFocusEl(jqEl('ul-journey-resume'));
             }
 
             function jqResume() {
@@ -38,7 +41,7 @@ public namespace underlayer_content {
                 jqStep(saved);
             }
 
-            function jqDeep() {
+            function jqDeep(focus) {
                 // Put the active unit back in the lesson's authored order so
                 // the full reference reads top to bottom, not with one unit
                 // stranded inside the journey shell.
@@ -73,6 +76,13 @@ public namespace underlayer_content {
                 // every control except the return button.
                 jqHide(jqEl('ul-journey-controls'), false);
                 jqHide(jqEl('ul-journey-return'), false);
+                // An explicit Deep dive moves focus to the full-reference
+                // heading. Boot restores a saved deep view with jqDeep(false)
+                // so focus is not stolen on page load.
+                if(focus === true) {
+                    var lesson = jqLesson();
+                    jqFocusEl(lesson ? lesson.querySelector('h1') : null);
+                }
             }
 
             function jqReturn() {
@@ -122,6 +132,10 @@ public namespace underlayer_content {
                 } else if(link) { jqHide(link, true); }
                 jqHide(jqEl('ul-journey-finish'), false);
                 jqSet(jqKey('finished'), '1');
+                // Reaching the recap is an explicit action (Continue on the
+                // last step or Return from the deep dive); name the recap for
+                // the screen reader instead of leaving focus on a hidden step.
+                jqFocusEl(jqEl('ul-journey-finish-head'));
             }
 
             function jqClickedAction(ev) {
@@ -152,8 +166,8 @@ public namespace underlayer_content {
                 jqBindClick('ul-journey-back', function() { jqStep(jqState.idx - 1); });
                 jqBindClick('ul-journey-pause', jqPause);
                 jqBindClick('ul-journey-resume', jqResume);
-                jqBindClick('ul-journey-deep', jqDeep);
-                jqBindClick('ul-journey-deep-finish', jqDeep);
+                jqBindClick('ul-journey-deep', function() { jqDeep(true); });
+                jqBindClick('ul-journey-deep-finish', function() { jqDeep(true); });
                 jqBindClick('ul-journey-return', jqReturn);
                 jqBindClick('ul-journey-reveal', jqReveal);
                 jqBindClick('ul-journey-reveal-earlier', jqRevealEarlier);

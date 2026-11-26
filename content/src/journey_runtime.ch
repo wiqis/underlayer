@@ -141,6 +141,11 @@ public namespace underlayer_content {
                 jqUpdateContinue();
                 var stage = jqEl('ul-journey-stage');
                 if(stage && stage.scrollIntoView && i > 0) { stage.scrollIntoView({ block: 'start' }); }
+                // Every caller of jqStep acts on an explicit user action
+                // (Start, Continue, Back, Resume, Return, arrow keys). Boot
+                // never calls jqStep, so this cannot steal focus on page load.
+                // The focus ring comes from the shell's :focus-visible rule.
+                jqFocusStep(u);
             }
 
             function jqBoot() {
@@ -190,7 +195,9 @@ public namespace underlayer_content {
                 if(isNaN(savedStep)) { savedStep = 0; }
                 if(savedStep < 0 || savedStep >= units.length) { savedStep = 0; }
                 jqBind();
-                if(jqGet(jqKey('deep')) === '1') { jqDeep(); return; }
+                // Restoring a saved deep view at load is not a user action:
+                // pass false so jqDeep does not move focus on page load.
+                if(jqGet(jqKey('deep')) === '1') { jqDeep(false); return; }
                 if(jqGet(jqKey('paused')) === '1') {
                     jqState.paused = true;
                     jqHide(jqEl('ul-journey-arrival'), true);

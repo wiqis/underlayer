@@ -73,6 +73,34 @@ def words(value):
     return [w for w in re.split(r'\s+', value.strip()) if w]
 
 
+def boot_segment(page):
+    """The emitted jqBoot body, up to the DOMContentLoaded dispatch."""
+    start = page.find('function jqBoot()')
+    if start < 0:
+        return ''
+    end = page.find('if(document.readyState', start)
+    if end < 0:
+        end = min(start + 4000, len(page))
+    return page[start:end]
+
+
+def check_landmark_page(base, label):
+    """Exactly one <main> landmark and no second role=main on a served page."""
+    failures = []
+    path = label
+    try:
+        page = fetch(base, path)
+    except (urllib.error.HTTPError, urllib.error.URLError) as exc:
+        return ['GET %s failed: %s' % (path, exc)]
+    mains = len(re.findall(r'<main(?:\s|>)', page))
+    if mains != 1:
+        failures.append('expected exactly one <main> landmark, found %d' % mains)
+    roles = len(re.findall(r'role="main"', page))
+    if roles != 0:
+        failures.append('role="main" duplicates the native <main> landmark (%d)' % roles)
+    return failures
+
+
 def check_lesson(base, course, concept):
     """Return a list of failure strings; empty list means the lesson passed."""
     failures = []
@@ -194,6 +222,44 @@ def check_lesson(base, course, concept):
     if 'max-width:640px' not in page or 'flex-direction:column' not in page:
         failures.append('mobile layout rules are missing')
 
+    # Focus management. A step change is only perceivable to a keyboard or
+    # screen-reader user if focus actually moves to the staged unit's heading.
+    # The tabindex must be added by the runtime, not authored into 469 lessons.
+    for marker in ('function jqFocusEl', 'function jqFocusStep',
+                   "setAttribute('tabindex', '-1')", 'jqFocusStep(u);',
+                   "jqFocusEl(jqEl('ul-journey-resume'))",
+                   "jqFocusEl(jqEl('ul-journey-finish-head'))",
+                   'jqDeep(true)'):
+        if marker not in page:
+            failures.append('focus management marker missing: %s' % marker)
+
+    # Boot must not steal focus: restoring a saved deep view passes false, and
+    # the boot body contains no focus() call and never enters a step.
+    boot = boot_segment(page)
+    if not boot:
+        failures.append('cannot locate the jqBoot body for the no-focus-on-load check')
+    else:
+        if 'jqDeep(false)' not in boot:
+            failures.append('boot restores a saved deep view without the no-focus guard')
+        if '.focus(' in boot:
+            failures.append('boot steals focus on page load')
+        if 'jqStep(' in boot:
+            failures.append('boot enters a step (and focuses it) on page load')
+
+    # Announcement scope: the ribbon and feedback announce, the staged unit
+    # does not (the whole lesson would be read out), and both reveal answers
+    # are live regions so a screen reader is told when the answer appears.
+    if 'id="ul-journey-ribbon" hidden aria-live="polite"' not in page:
+        failures.append('ribbon is not a polite live region')
+    if 'id="ul-journey-stage" aria-live="off"' not in page:
+        failures.append('stage must not announce the whole lesson (aria-live=off)')
+    if 'id="ul-journey-feedback" hidden aria-live="polite"' not in page:
+        failures.append('feedback is not a polite live region')
+    if 'id="ul-journey-answer" aria-live="polite"' not in page:
+        failures.append('retrieval answer reveal is not announced')
+    if 'id="ul-journey-answer-earlier" aria-live="polite"' not in page:
+        failures.append('earlier retrieval answer reveal is not announced')
+
     return failures
 
 
@@ -218,10 +284,18 @@ def main():
         print('FATAL: /api/courses returned no lessons to check')
         return 2
 
+    landmark_labels = ['/', '/courses']
+    for course in courses:
+        cid = course.get('id')
+        if cid:
+            label = '/courses/' + cid
+            if label not in landmark_labels:
+                landmark_labels.append(label)
+
     passed = 0
     failed = 0
-    print('Journey quality check: %s, %d lesson(s), %d course(s)'
-          % (args.base, len(lessons), len(courses)))
+    print('Journey quality check: %s, %d lesson(s), %d course(s), %d page(s)'
+          % (args.base, len(lessons), len(courses), len(landmark_labels)))
     if args.workers > 1:
         with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as pool:
             results = list(pool.map(
@@ -237,6 +311,20 @@ def main():
         else:
             passed += 1
             print('PASS %s/%s' % (course, concept))
+
+    # One landmark per served page: the course landing used to be a bare div.
+    landmark_results = [check_landmark_page(args.base, label)
+                        for label in landmark_labels]
+    for label, failures in zip(landmark_labels, landmark_results):
+        if failures:
+            failed += 1
+            print('FAIL PAGE %s' % label)
+            for line in failures:
+                print('     - ' + line)
+        else:
+            passed += 1
+            print('PASS PAGE %s' % label)
+
     print('RESULT: %d passed, %d failed, %d total' % (passed, failed, passed + failed))
     return 1 if failed else 0
 

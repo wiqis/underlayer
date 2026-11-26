@@ -65,7 +65,7 @@ using underlayer_models::Course
                 </div>
             </div>
 
-            <div class="course-landing" id="main-content">
+            <main class="course-landing" id="main-content">
                 <div class="cmdk-overlay" id="cmdk" hidden role="dialog" aria-modal="true" aria-label="Quick jump">
                     <div class="cmdk-panel">
                         <input type="text" class="cmdk-input" id="cmdk-input" placeholder="Jump to a concept… (Esc to close)" autocomplete="off" />
@@ -94,7 +94,7 @@ using underlayer_models::Course
                         the course JSON at <code>/api/courses/{esc_course_id}</code>.</p>
                     </noscript>
                 </div>
-            </div>
+            </main>
         }
 
         render_landing_js(&mut page)

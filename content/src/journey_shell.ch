@@ -61,10 +61,10 @@ public namespace underlayer_content {
                 <div class="journey-retrieve" id="ul-journey-retrieve" hidden>
                     <p class="journey-retrieve-ask" id="ul-journey-ask"></p>
                     <button type="button" class="journey-btn journey-reveal" id="ul-journey-reveal" aria-label="Reveal the answer to this recall question">I'm stuck - show me</button>
-                    <p class="journey-retrieve-answer" id="ul-journey-answer" hidden></p>
+                    <p class="journey-retrieve-answer" id="ul-journey-answer" aria-live="polite" hidden></p>
                     <p class="journey-retrieve-ask journey-ask-earlier" id="ul-journey-ask-earlier" hidden></p>
                     <button type="button" class="journey-btn journey-reveal" id="ul-journey-reveal-earlier" aria-label="Reveal the answer to the earlier recall question" hidden>I'm stuck - show me</button>
-                    <p class="journey-retrieve-answer" id="ul-journey-answer-earlier" hidden></p>
+                    <p class="journey-retrieve-answer" id="ul-journey-answer-earlier" aria-live="polite" hidden></p>
                 </div>
                 <p class="journey-action-feedback" id="ul-journey-feedback" hidden aria-live="polite"></p>
                 <div class="journey-controls" id="ul-journey-controls" hidden>
@@ -83,7 +83,7 @@ public namespace underlayer_content {
                     <button type="button" class="journey-btn journey-resume" id="ul-journey-resume" aria-label="Resume the guided journey from the saved step">Resume where I left off</button>
                 </div>
                 <div class="journey-finish" id="ul-journey-finish" hidden>
-                    <h2 class="journey-finish-head">What you can now do</h2>
+                    <h2 class="journey-finish-head" id="ul-journey-finish-head">What you can now do</h2>
                     <p class="journey-finish-line" id="ul-journey-can"></p>
                     <a class="journey-btn journey-nextlesson" id="ul-journey-nextlesson" hidden>Next lesson</a>
                     <button type="button" class="journey-btn journey-deep-finish" id="ul-journey-deep-finish" aria-label="Expand the full technical reference">Deep dive - the full technical reference</button>
