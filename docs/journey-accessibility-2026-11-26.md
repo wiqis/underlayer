@@ -239,3 +239,10 @@ not touch it. The owner should add/tick, with priority P1:
 - I did not edit ELF quiz content, `docs/features-complete.md`, or any Android
   file. Servers on 9000/9001/9002/9003 were not stopped; the 9003 health probe
   timed out during measurement but that server was not touched.
+- Reproducibility caveat: the 9004 binary was compiled from a worktree that
+  **also contained another agent's uncommitted ELF quiz content edits**. My
+  commit stages only the seven files listed in section 2, so a build from HEAD
+  alone has the focus/semantics changes but not that in-progress content. The
+  focus and landmark assertions are independent of quiz wording; the takeaway
+  assertions passed against the combined worktree (364/364). Those content
+  edits were left for their owner to commit.
