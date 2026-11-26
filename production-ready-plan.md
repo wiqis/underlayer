@@ -34,12 +34,13 @@ feature (CodeCrafters has one; we do not plan it — F6 must not claim it), and 
 modes (voice/switch/external-keyboard-Bluetooth/controller/stylus/multitouch) beyond the
 explicit deferral in C8. They remain documented, unowned, and deliberately deferred.
 
-**Two narrow, explicitly ruled exceptions** (a carve-out written here, not only in a workstream):
+**One narrow, explicitly ruled exception** (a carve-out written here, not only in a workstream):
 - **Public proof-of-work only**: §8 items 8.1.10–8.1.17 (visibility, `/u/username` permalink, SEO,
-  statistics, certificates, course list) are pulled into scope by G8 **subject to §6.11**.
-- **Opt-in learner email only**: §17 items 17.1.7, 17.1.15, 17.4.1, 17.5.1–17.5.2 are pulled
-  into scope by I12 **subject to §6.10**. No in-app notification feature is added.
-If either ruling is negative, the corresponding package is killed and the items return to §0.1.
+  statistics, certificates, course list) are pulled into scope by G8, ruled positive 2026-11-26
+  (§6.11). No social graph, following, feeds or messages.
+
+**Learner email stays deferred**: §6.10 was ruled negative — I12 is killed and all §17 items
+remain out of scope.
 
 **GitHub Pages is also not a target of this plan.** No Pages URL exists, `courses/*/output` is
 gitignored, and agents cannot push generated files. The backend-optional promise is verified
@@ -178,7 +179,7 @@ letters **D1–D9** are reserved for Android work packages in §3.
 | EC13 | Competitive learner surface | Onboarding v2 with placement (G1), Today/daily plan (G2), FSRS controls (G3), energy/pacing/retry ladder (G4), four new graded types (G5), web PWA (G6), faceted discovery (G7) and Android Today/review (G11) are live and browser/device-verified. | ❌ none of G1–G7/G11 exists today |
 | EC14 | Trust and maintainability surface | Public proof-of-work (G8), change log + feedback closure (G9), data-control panel (G10), structured authoring pipeline (G12) and safe local→account takeover (G13) are live and verified. | 🟡 profile shell + visibility toggle and the five data endpoints already exist; server-rendered proof, unified panel, changelog/feedback closure, authoring pipeline and takeover do not |
 | EC15 | Production integrity | Single-instance deployment (H1), proxy-safe rate limiting (H2), uniform headers/CSP (H3), full CI gate corpus (H4), build provenance (H5), deployed-DB restore drill (H6), graceful shutdown (H7), secrets inventory (H8), embedded sign-in proof (H11) and byte-verification coverage (H12) are green with linked logs; **H9–H17 each have a linked green log or a dated, owner-signed exception**. | ❌ none of H1–H17 exists today |
-| EC16 | Discovery, depth and support | Robots/sitemap/meta/canonical live and indexed (I1), hint route repaired (I2), explanations on every graded and in-page item (I3/I4), 33 learner specimen packs (I5), curriculum depth charter (I6), metadata contract (I7), signed-in page proof (I8), support channel (I11) and honest landing prerequisites/time (I14); **I9–I13 are at least measured and dispositioned**, with §6.10/§6.11 rulings recorded where they pull deferred items into scope. | ❌ none of I1–I14 exists today |
+| EC16 | Discovery, depth and support | Robots/sitemap/meta/canonical live and indexed (I1), hint route repaired (I2), explanations on every graded and in-page item (I3/I4), 33 learner specimen packs (I5), curriculum depth charter (I6), metadata contract (I7), signed-in page proof (I8), support channel (I11) and honest landing prerequisites/time (I14); **I9/I10/I11/I13/I14 are at least measured and dispositioned**; I12 is killed by ruling (§6.10). | ❌ none of I1–I14 exists today |
 
 ---
 
@@ -195,11 +196,11 @@ commit subjects and decision-log entries. Every task gets a named owner at wave 
 |---|---|---|---|
 | A1 | Reconcile drifted docs with served behaviour (docs only — **not** the two Kotlin comment blocks, which D1 owns) | `docs/deployment.md` §6 items 1 and 6; `docs/plan.md` Status; `docs/mobile-api.md` §"Blocked"; `Android/.../docs/underlayer-client-status.md`; `docs/competitors.md:150`, `:168` **and** `:28`; `Web/underlayer/AGENTS.md:672`; `Docs/profitability-plan.md:90` **and** `:242`; `Docs/action-plan.md:47`; `docs/production-hardening-2026-11-26.md:211` **and** `:222-226`; **do not edit** `offline-pack.md`, `WebCourseApi.kt:141-159`, `AccountBridge.kt`, or `features-complete.md` §12 (all correct or owned by D1); live `/privacy`, `/terms` | Every doc row A1 owns states the measured fact and date; no claim contradicted by §1.1. The D1-owned Kotlin row stays marked "corrected in Wave 3". §1.3 accounting updated to eleven drift rows (ten corrected here) plus one not-drift row. |
 | A2 | Make the CI job real | `.github/workflows/ci.yml`, `docs/deployment.md` | **Provision the compiler** (checkout/build/cache `TCCCompiler` from the Chemical source, or use a documented self-hosted runner that has it) — a stock `windows-latest` has no `CHEMICAL_ROOT` compiler. Build from a **clean checkout**, record compiler version/digest/pin location in `docs/deployment.md`; run the job on a runner, keep the green log, link it from `docs/deployment.md`. No deploy/publish step added. |
-| A3 | Unblock or formally replace the `@test` suite | `tests/chemical.mod`, `AGENTS.md:674-676` | Either `tests.exe` builds and runs, or an ADR in `docs/` records checker-only verification as an accepted risk with named owner and review date. Do not patch library test sources. |
+| A3 | **Hard gate:** unblock the `@test` suite | `tests/chemical.mod`, `AGENTS.md:674-676`, sibling repos read-only: `Web/timeline/tests/` + `scripts/test.sh`, `Web/123Mind` test setup, `Web/easytodo/tests/` + `scripts/test.sh` | `TCCCompiler tests/chemical.mod -o ../build/tests.exe --no-cache` builds and `tests.exe` runs green. First **analyse how Timeline and 123Mind (and easyToDo) wire their working Chemical test suites — read only, do not modify their code** — then apply the manifest/source-set pattern to Underlayer. Do not patch library test sources in those repos. Checker-only verification is explicitly rejected by the founder (§6.4, 2026-11-26). |
 | A4 | Verify the repaired non-vacuity harness | `tools/checker_nonvacuity.py::check_theme` | The plant was already repaired (commit `cb47c27`, plants a no-op in `render_theme_boot_js`); re-run it against a seeded copy and confirm it fails `theme_check.py`. Re-scope from "repair" to "verify"; do not lease a new repair. |
 | A5 | Make checkers first-class | `tools/journey_quality_check.py`, `theme_check.py`, `lesson_pager_check.py`, `helpful_dedupe_check.py` | Re-run all four against a **clean build of HEAD**, record commit/digest; then wire them into CI against a disposable DB; each has a documented negative case. Prior baselines: 364/364, 56/56, 35/35, 12/12 (see §1.2 caveat). |
 | A6 | Add a served-behaviour contract probe for the account bridge | new `tools/bridge_probe.py` | Asserts `POST /api/auth/from-account` returns a non-404 for a bad token and 401 with no token; run against local and deployed URLs. Prevents the stale "endpoint does not exist" claim recurring. |
-| A7 | Decision log housekeeping | `Docs/decisions.md` | Append entries **as each ruling is made**, never as a batch: §6.1 and §6.4 in Wave 0; §6.2 and §6.5 in Wave 1; §6.3, §6.9 **and §6.11** in Wave 4; §6.7, §6.8 **and §6.10** in Wave 5. §6.6 is a confirmation of an existing ruling — no new entry unless the founder reverses it. Every entry carries an `- Owner:` line for the work packages it unblocks. Never rewrite history. |
+| A7 | Decision log housekeeping | `Docs/decisions.md` | **Satisfied for §6.1–§6.11** by the consolidated 2026-11-26 entry already appended ("Founder rulings for executing the Underlayer production-ready plan"), which includes the written paid-path proposal required by §6.1. Any later ruling gets its own entry with an `- Owner:` line. Never rewrite history. |
 | A8 | Final truth sweep | this plan (§1.1, §1.3, §2 current-state column) | Re-run every §1.1 live probe and refresh §1.1, the §1.3 drift table and the "Current state" column of §2 after F0/E1/E2 ship; record the date and commit/digest. Assign an owner at Wave 5 kickoff. |
 
 **Dependencies:** A3 blocked by the §6.4 ruling; A7 entries blocked by their respective §6 rulings.
@@ -234,7 +235,7 @@ commit subjects and decision-log entries. Every task gets a named owner at wave 
 | C6 | Real browser + accessibility pass | Chrome CDP / browser-use, visible emulator | **All six** course families named in EC6 are driven with keyboard focus, theme persistence, quiz feedback and one retrieval gate. A note is not coverage; any exception requires an ad-hoc dated `Docs/decisions.md` entry with an `- Owner:` line (§0.2 rule 10, EC6). One real screen-reader session recorded or the gap explicitly accepted under the same rule; `:focus-visible` ring consistent (checklist 7.1.39). |
 | C7 | Navigation and home polish | checklist 7.1.14, 7.1.24, 7.1.25, 7.1.40, 7.1.41 | One shared nav shell (seven hand-rolled landing navs merged); home shows "Continue learning" + due-review badge and an unread indicator for signed-in learners; signed-out dashboard shows a login prompt rather than demo data (verify against the current server-side gate); the 11 "Your space" pages share one collection shell. |
 | C8 | Responsive/visualisation follow-ups | checklist 7.4.13, 7.5.4–7.5.11 | Responsive visualisations verified at 1280/420 px; custom shortcuts shipped or deferred with a written reason; specialist input (voice/switch/controller/stylus/multitouch) moved to "not planned" per §0.1. |
-| C9 | Tick only newly shipped checklist items | `docs/features-complete.md` | Verify P1 a11y ticks 2.2.123–125 are present (they are); tick only items newly shipped in C1–C8 **plus the narrowly ruled §8/§17 items from G8/I12 if §6.11/§6.10 are positive**; refresh totals at the top of this plan. Do not reclassify §12. |
+| C9 | Tick only newly shipped checklist items | `docs/features-complete.md` | Verify P1 a11y ticks 2.2.123–125 are present (they are); tick only items newly shipped in C1–C8 **plus the narrowly ruled §8 proof-of-work items from G8 (§6.11 positive)**; §17 items stay deferred (§6.10 negative). Refresh totals at the top of this plan. Do not reclassify §12. |
 
 **Dependencies:** A1 (truth), A4/A5 (checkers), **I2 (hint route must be repaired before C2's hint proof)**. **No dependency on the course-#2 decision** — that blocks E1 only.
 
@@ -343,8 +344,7 @@ Fences: no §10 Admin/CMS UI, no new auth system (§6.6), no CD/push, no remote 
 
 **Goal:** make what is already shipped genuinely good, make "all courses" an honest statement,
 and give a zero-budget product a discovery and support surface. Fences: no Social/Gamification/
-i18n/CMS/in-app notifications/AI/Enterprise/projects (§0.1); I12 is opt-in external email;
-I13 creates navigation links only, never moves learning data (§6.6).
+i18n/CMS/in-app notifications/AI/Enterprise/projects (§0.1); **I12 is killed by the §6.10 ruling — no email work**; I13 creates navigation links only, never moves learning data (§6.6).
 
 | ID | Task | Files / commands | Acceptance | Wave / priority |
 |---|---|---|---|---|
@@ -359,7 +359,7 @@ I13 creates navigation links only, never moves learning data (§6.6).
 | I9 | Anonymous demo-data honesty + dev-showcase gating | `web/src/handlers_analytics*.ch`, `handlers_streaks.ch`, `handlers_progress*.ch`, `app/main.ch` (`/components`), new `tools/anonymous_surface_check.py` | Every anonymous endpoint returning learner-shaped values either 401 or carries `"demo": true` plus an explicit "Sign in to see your data" UI; no page presents demo numbers as the learner's own. `/components` gated behind a debug flag (404/302 in release). Checker enumerates anonymous-200 endpoints with a planted unmarked payload. F0's `/privacy` matches final behaviour. | 2/3 — P2 |
 | I10 | Search API contract clarity (non-breaking) | `.agents/skills/api_reference/SKILL.md`, `docs/mobile-api.md`, `web/src/handlers_search.ch`, `app/main.ch` (header only), new `tools/search_consumer_check.py` | Keep the frozen `/api/search` payload unchanged; add `Link: </api/search/concepts?q=…>; rel="alternate"`, document both endpoints with live examples, mark `/api/search` course-title-only/deprecated-without-removal. Checker fails if any shipped concept-search consumer calls `/api/search`; asserts the measured totals differ. | 3 — P2 |
 | I11 | Public support and contact channel | new `web/src/pages_support.ch`, `app/main.ch`, nav + all page footers, `web/src/pages_legal.ch`, `docs/deployment.md` | `/support` 200, server-rendered: supported channels, named owner, published response-time target, `mailto:support@wiqis.com`; every public page footer and the Android Help & Support dialog link to it; F0's `/privacy` names the same channel. Operator rota from H9's allow-list when available; a named owner is recorded regardless. Checker asserts exactly one support link per served page and no 420 px overflow. | 3 — P1 |
-| I12 | Consent-based Underlayer learner email loop (**subject to §6.10**; pulls §17 items 17.1.7, 17.1.15, 17.4.1, 17.5.1–2 into scope) | `web/src/pages_settings.ch`, `pages_onboarding.ch`, `Web/account` consent field, `manage` list config, `emaillib` | Explicit opt-in in Settings + at onboarding completion (unchecked by default) with source + timestamp on the shared account; `manage` gets an "Underlayer learners" list; one monthly "what changed" mail generated from G9's changelog with working unsubscribe and <0.5% unsubscribe rate; consent visible/revocable in G10's data panel. One end-to-end subscribe → send → click → unsubscribe trace in `manage`. | 5 — P2 |
+| I12 | **KILLED by founder ruling §6.10 (2026-11-26)** — consent-based learner email loop | — | No work. All §17 items stay deferred. The change log (G9) is reachable only by visiting the site. Do not implement, do not tick §17 checklist items. | — |
 | I13 | Workspace cross-links (links only, no data migration) | lesson footer + `content/src/journey_shell.ch`, Timeline share target, `Web/timeline`, 123Mind node action, attribution log | "Save to Timeline" from a lesson takeaway and open a linked concept from a Timeline note / 123Mind node; every link carries UTM/install-referrer and states origin product. No learning-data copy, entitlement coupling or new login. Two round trips verified on deployed hosts with attribution; each cross-repo change has its own owner under the two-subagent batch limit. | 5 — P2 |
 | I14 | Course-landing prerequisite and time transparency | `content/src/course_landing.ch`, `web/src/handlers_courses.ch`, `pages_courses.ch`, `journey_shell.ch`, new `tools/course_landing_contract.py` | Every landing renders declared dependencies with `min_mastery_pct`, a "read these first" path, total minutes computed from concept estimates, and an honest state when enrolment is gated but UI cannot show it. Replace template time values (PE's uniform 15 min etc.) with per-concept estimates from unit count or measurement; `last_verified` shown (I7). Checker asserts API↔landing parity for 33/33 and flags uniform minute distributions, with a negative plant. | 3 — P2 |
 
@@ -379,7 +379,7 @@ to the documented batch limit of two subagents with disjoint file ownership.
 | **Wave 2 — Learning loop** | Weeks 3–7 | C1–C9, E3, **E4, E5**, F0, **G1 (steps 1–4/6), G2, G4, G5 (types), G9**, **H5–H7 finish, H10, H12 start (31 courses), H14**, **I1 verify, I2, I9** | EC6–EC8 true; 329 concepts have a graded action or honest reflection state; static output verified; legal surface updated; browser drive passes; checklist refreshed. E3 sequenced **after** C1 with one shared owner. Onboarding shell, Today and pacing ship here; G1's diagnostic scorer follows in Wave 3. Build provenance, DB durability, shutdown, web telemetry, verification coverage, anonymous-write audit, SEO verification, the shadowed hint fix and demo-data honesty land here. |
 | **Wave 3 — Client + release** | Weeks 6–10 | D1–D9 (under option (b)), **G1 (scorer), G3, G6, G7, G10, G11, G13**, **H8, H11, H12 finish, H15 start**, **I3, I4, I8, I10, I11, I14** | EC9, EC10 **and EC3** true; a signed release installed and driven on a visible emulator; sync demonstrated end to end; Data Safety filed. Plus: FSRS controls, PWA, faceted search, data panel, Android Today/review, safe takeover, secrets inventory, embedded sign-in proof, 33/33 verification coverage, explained graded/in-page feedback, signed-in page proof, support channel and honest landing pages. Under options (a)/(c) this gate becomes EC9 only and D6/D8/D9 move to Wave 4 (§6.1). |
 | **Wave 4 — Mission course + money** | Weeks 8–14 | **E6**, E1, E2, F1–**F5** (+ D6/D8/D9 only under options (a)/(c)), **G5 (labs), G8, G12, G11/G13 if deferred**, **H9, H12 finish (33/33 after I5), H13, H16, H17 start**, **I5, I6, I7** | EC11 true; the §6.3-named paid course exists (E6); course-pass purchase end to end on web and Android; certificate shipped; public proof-of-work and authoring pilot in place. Operator identity, content migration, retention, rollout flags, specimen packs, curriculum depth charter and the metadata contract land here. |
-| **Wave 5 — Surface** | Weeks 14–18 | F6, F7, **A8, G12 validation**, **H15 finish, H16/H17 finish**, **I12 (subject to §6.10), I13** | Public pages live; revision cadence adopted with a visible change log; consent email loop and workspace cross-links live; **EC12–EC16 true** after A8's final drift sweep and the competitive/integrity/discovery verification. |
+| **Wave 5 — Surface** | Weeks 14–18 | F6, F7, **A8, G12 validation**, **H15 finish, H16/H17 finish**, **I13** | Public pages live; revision cadence adopted with a visible change log; workspace cross-links live; **EC12–EC16 true** after A8's final drift sweep and the competitive/integrity/discovery verification. I12 is killed — no email work. |
 
 **Illustrative dependency graph (not a blocking schedule — §3 dependency lines are
 authoritative):** `A1 → A2 → A4/A5 → C1 → E3`; `A1 → A6 → D2 → D1 → D6`; `F0 → D6/F3`;
@@ -448,9 +448,13 @@ externally-marketable paid course like HAT; (c) both, sequential. Recommendation
 for the mission, **(b) or (c) as the paid course**; the §6.3 entry must name the paid course
 explicitly, and F3/F4/F6 depend on that course existing (§3).
 
-### 6.4 Verification policy — blocks A3
-Either unblock the `@test` compiler stall or formally accept checkers-as-tests. Recommendation:
-try the unblock for one bounded session; if it stalls, accept with a named owner and review date.
+### 6.4 Verification policy — RULED 2026-11-26: hard gate, blocks A3
+The founder rejected checkers-as-tests. **A3 must make `tests.exe` build and run green.**
+First analyse (read-only, never modify) how `Web/timeline`, `Web/123Mind` and `Web/easytodo`
+wire their working Chemical test suites — their `tests/chemical.mod`, `scripts/test.sh`, manifest
+`source "..."/import ... if test` rules and module import graphs — then apply the pattern to
+Underlayer. Do not patch sibling repos and do not patch library test sources. If the stall
+persists, report it with the exact compiler evidence; do not silently downgrade the gate.
 
 ### 6.5 CSP scope — blocks B5 depth
 Full tightening needs externalising thousands of inline scripts/styles. **Choose:** (a) stepwise
@@ -484,13 +488,9 @@ rename as proposed before any new course work; (b) defer until after E1. Recomme
 **(a) for naming, (b) for the restructure** — fix the naming now (cheap, prevents new drift),
 restructure after course #2 proves the shape. A7 logs this entry in Wave 4.
 
-### 6.10 Opt-in learner email — blocks I12
-`Docs/monetization-and-growth.md` names an "Underlayer learners" list, and G9 generates a change
-log that reaches nobody without distribution. **Choose:** (a) allow the narrow §17 email items
-listed in §0.1 and ship I12 with explicit, revocable consent; (b) keep all §17 items deferred and
-kill I12. Recommendation: **(a)** — it is the only non-paid distribution channel, and the
-company's email rules (consent in the account model, `manage` as sole delivery system, monthly
-cadence, one-click unsubscribe) already govern it. A7 logs this entry in Wave 5.
+### 6.10 Opt-in learner email — RULED 2026-11-26: negative, I12 killed
+Learner email stays deferred; all §17 items remain out of scope. I12 is not executed and no §17
+checklist item is ticked. The change log (G9) is reachable only on the site.
 
 ### 6.11 Public proof-of-work scope — blocks G8
 G8 pulls §8 items 8.1.10–8.1.17 into scope; the page shell and visibility toggle already exist
@@ -562,9 +562,9 @@ a throwaway database — `helpful_dedupe_check.py` is rate-limit-sensitive after
 Expected entries: Android freeze (§6.1 — **must include the written paid-path proposal** per
 `profitability-plan.md:99`), storage (§6.2), course #2 **and the named paid course** (§6.3),
 verification policy (§6.4), CSP scope (§6.5), open-source claim (§6.7), i18n deferral (§6.8),
-course-structure/naming ruling (§6.9), opt-in learner email (§6.10), public proof-of-work scope
-(§6.11). §6.6 is a confirmation of an existing ruling, so no new entry is required unless the
-founder reverses it.
+course-structure/naming ruling (§6.9), public proof-of-work scope (§6.11). **All eleven were ruled
+on 2026-11-26 in one consolidated `Docs/decisions.md` entry — no further entries are needed for
+§6.1–§6.11.** §6.10 was negative (I12 killed). §6.6 is a confirmation of an existing ruling.
 
 ---
 
