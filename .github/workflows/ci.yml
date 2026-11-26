@@ -13,6 +13,8 @@
 #   * The live-browser theme check is not run here (no browser is provisioned);
 #     theme_check.py still runs its full static contract in CI. Pass --browser
 #     locally to add the Playwright proof.
+#   * helpful_dedupe_check.py WRITES to the disposable ci-underlayer.db. It
+#     registers two throwaway learners; never point it at production.
 #   * The Chemical @test suite is a separate application and is currently
 #     blocked in the compiler (see AGENTS.md). These checks cover the served
 #     artifact instead; they are not a substitute for that suite.
@@ -124,6 +126,7 @@ jobs:
           python tools/journey_quality_check.py "$BASE" --workers 8
           python tools/theme_check.py "$BASE"
           python tools/lesson_pager_check.py "$BASE"
+          python tools/helpful_dedupe_check.py "$BASE"
 
       - name: Stop server
         if: always()
