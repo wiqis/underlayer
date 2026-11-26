@@ -309,10 +309,11 @@
 - [x] P1 2.2.54 The server REFUSES TO START on a DATABASE_URL it cannot use. Pointed at the Turso URL the Dockerfile documents, it booted, reported healthy, accepted traffic and failed every write -- the remote backend is not implemented. It now exits before schema init, the seeding and the accept loop, and says what to use instead
 - [x] P1 2.2.55 POST /api/exercises/import and POST /api/exercises/seed are REFUSED, not merely authenticated. An anonymous POST inserted caller-supplied questions and the answer key into `exercises`, the global bank every learner is graded against. A token check would make this "any registered learner", which is the same defect with a login in front of it, and an account is free. 401 anonymous, 403 authenticated; the original handlers stay in the tree as the record
 - [x] P1 2.2.56 POST /api/reviews/:id/helpful requires a session. It was an unauthenticated vote with no dedupe, moving `helpful_count` without limit -- and that count is what the course landing page shows a visitor deciding whether to read the review. The dedupe is the remaining half and needs a per-learner column
+- [x] P1 2.2.56b Helpful-vote dedupe, the remaining half of 2.2.56. `review_helpful_votes(review_id, learner_id, created_at)` has a UNIQUE composite key; `mark_helpful_once` gates on `INSERT OR IGNORE` + `rows_affected`, so three votes from one learner moved `helpful_count` 3 -> 1 with one vote row, while a second learner's first vote moved it to 2. Repeat votes answer `duplicate:true`, anonymous stays 401. `tools/helpful_dedupe_check.py` (12 checks) is the regression gate and runs in CI against a disposable DB
 - [x] P1 2.2.57 Rate limiting on /api/auth/login, /register, /forgot-password and /reset-password: 8 attempts per 5 minutes per IP. bcrypt cost 12 costs this server 0.44s of CPU per attempt, so an unthrottled login endpoint is a denial-of-service from one HTTP client. Counters live in a `rate_limits` TABLE rather than in memory: this codebase has no module-level mutable state, and an in-memory counter resets on every restart and fails open with a second process. X-Forwarded-For is NOT trusted -- it is set by whoever sends the request
 - [x] P1 2.2.58 Security headers on every response, applied in the four send_* helpers so every route inherits them: nosniff, X-Frame-Options DENY, Referrer-Policy, HSTS. Verified on all 447 baseline URLs. Deliberately NO Content-Security-Policy: this codebase emits inline script and style by the thousand through the #js/#css macros, so a policy forbidding inline breaks the product and one with unsafe-inline buys almost nothing
 - [x] P1 2.2.59 scripts/build_static.sh pre-renders every course to courses/<id>/output/. courses/*/output is gitignored -- correctly -- with the consequence that a CLEAN CLONE HAD NO STATIC PAGES AT ALL and GitHub Pages served an empty site. 34 courses, 432 pages, 0 truncated. A failing course is reported and the rest continue, because a partial static site is still usable
-- [x] P1 2.2.60 tools/theme_check.py (29 checks) -- the theme read must be inside <head> on a themed page, absent on a lesson page (whose palette is hardcoded light), and the pre-paint script must agree with the nav's getTheme() on where the choice comes from and what class is applied. Its plant in checker_nonvacuity is the actual reported defect, not a made-up one
+- [x] P1 2.2.60 tools/theme_check.py, reconciled 2026-11-26 from 29 stale checks to 56 static + 5 live-browser checks. It hard-coded `localStorage.getItem('theme')`, a key that no longer exists: the brand shell uses `wiqis-theme` and calls apply(get()) in <head>. Lessons are exempt from the BRAND SHELL, not from theming -- they carry the small boot, so the old "no theme read on a lesson" assertion was a false positive. --browser (Playwright) proves a stored dark choice sets html.dark and colorScheme=dark when <body> first appears. Non-vacuity: script in body, missing, stale key and missing apply() all fail. NOTE: the checker_nonvacuity plant for this checker is stale (see docs/production-hardening-2026-11-26.md §7)
 - [x] P1 2.2.61 tools/integration_holes.py -- the question "where are we no options for features we already have", measured instead of answered from memory. Every route in app/main.ch, every caller path in 998 page-building sources (432 pre-rendered pages read from DISK, plus web/src and content/src). Baseline on 2026-10-03: 110 of 146 API routes reachable, 36 with no UI caller at all. Its first version reported 87 holes including /api/review/start, whose own page test asserts on it -- it missed __ulFetch( because session_js.ch replaced 17 duplicated fetch sites with one helper. Second version reported ZERO because app/main.ch is the route table and names every path by definition. Both were the tool lying, and both are documented where they were fixed, because a scanner that over-reports gets ignored and then protects nothing
 - [x] P1 2.2.62 Rate limiting completed past the four auth endpoints. POST /api/exercises/submit accepted ten submissions in ten consecutive requests with no objection -- each inserts into exercise_attempts and re-grades, so it is a write amplifier AND a way to manufacture a flattering history. POST /api/feedback and /api/feedback/report-exercise write into a table a human triages. POST /api/learners inserted into the ACCOUNTS table unauthenticated, forever, with a hardcoded email and no password, and reads no request body at all. Two ceilings, because the two surfaces have opposite shapes: auth 8/5min (a person types a password; above ~10 is a script, and bcrypt costs 0.44s of CPU per attempt) and learning writes 120/5min (a reviewer doing a course in one sitting produces about 12). /api/learning/view is deliberately NOT limited -- every lesson page load posts it, and it only advances a timestamp on the caller's own row
 - [x] P1 2.2.63 tools/security_check.py CHECK 14 now FIRES every rate-limit gate and requires each to refuse. This exists because the gate on /api/exercises/submit compiled, its group string was present in the binary, and it NEVER RAN: 125 consecutive submissions answered 200 and no bucket row was written. The cause is the closure capture shape -- `&raw db` inside a closure that captured db BY REFERENCE compiles, is emitted, and does nothing, while the identical call in a by-value closure works. A limiter that silently never fires is worse than no limiter, because it reads as coverage. The call site now uses a local copy, and the check would catch it coming back
@@ -1316,7 +1317,7 @@
 - [ ] P3 11.4.9 Review data export (JSON, CSV)
 - [ ] P3 11.4.10 Bulk operations (bulk import, bulk export)
 - [ ] P3 11.4.11 Migration tools (version migration)
-- [ ] P3 11.4.12 Backup/restore tools
+- [x] P3 11.4.12 Backup/restore tools — tools/backup_db.py uses sqlite3's backup() API with integrity_check on source and copy, timestamped output, temp-file+rename, and no overwrite without --force; restore procedure in docs/deployment.md §4. Verified on a copy of the live DB (647,168 bytes, 158 pages, both checks ok)
 - [ ] P3 11.4.13 Data transformation (format conversion)
 - [ ] P3 11.4.14 Data validation (import validation)
 - [ ] P3 11.4.15 Data deduplication (remove duplicates)
@@ -1549,7 +1550,7 @@
 - [ ] P3 15.2.10 Load test runner (k6, Artillery)
 - [ ] P3 15.2.11 Course test report (HTML report)
 - [ ] P3 15.2.12 Course test coverage (what is tested)
-- [ ] P3 15.2.13 Course test CI integration (GitHub Actions)
+- [x] P3 15.2.13 Course test CI integration (GitHub Actions) — .github/workflows/ci.yml builds the ELF static pages via scripts/build_static.sh and runs the endpoint matrix plus journey_quality_check, theme_check, lesson_pager_check and helpful_dedupe_check; verification only, never deploy/push
 - [ ] P3 15.2.14 Course test parallelization
 - [ ] P3 15.2.15 Course test retry (flaky test handling)
 
@@ -1568,9 +1569,9 @@
 
 ### 15.4 CI/CD
 
-- [ ] P3 15.4.1 Build automation (on commit)
-- [ ] P3 15.4.2 Test automation (on PR)
-- [ ] P3 15.4.3 Deployment automation (on merge to main)
+- [x] P3 15.4.1 Build automation (on commit) — ci.yml builds the server with -bm-modules --no-cache and the ELF static pages on every push and PR; the founder deploys manually
+- [x] P3 15.4.2 Test automation (on PR) — ci.yml runs the endpoint matrix and four served-artifact checkers on every PR, failing on any non-zero exit
+- [ ] P3 15.4.3 Deployment automation (on merge to main) — deliberately NOT automated: no deploy, no push and no secrets in the workflow
 - [ ] P3 15.4.4 Rollback automation (on failure)
 - [ ] P3 15.4.5 Monitoring automation (after deploy)
 - [ ] P3 15.4.6 Alerting automation (on error spike)

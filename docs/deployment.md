@@ -1,289 +1,220 @@
-# Deployment Architecture
+# Deployment Architecture — current reality (2026-11-26)
 
-## Overview
+This document replaces the old "auto-deploy on every push" description, which
+was never true of this repository. Where the earlier file described a pipeline,
+it described an intention. This one describes what exists and runs today, and
+says plainly what does not.
 
-Underlayer has two deployment targets:
-1. **Web platform** — hosted service for browsing courses and managing account
-2. **Android app** — offline-first course player with download and local learning
+## 1. What is actually deployed
 
-Both are built from the same Chemical codebase. The web platform serves the API and web UI. The Android app downloads courses and provides the offline learning experience.
+One native server binary (`underlayer.exe`), built from this checkout with the
+Chemical compiler, serving:
 
-## Auto-Deployment Pipeline
+- the pre-rendered course pages and the server-rendered account pages, and
+- the JSON API under `/api/*`.
 
-```
-git push main
-  ↓
-CI: Build Chemical project
-  ↓
-CI: Run integration tests
-  ↓
-CI: Build web platform
-  ↓
-CI: Build Android APK (if app changes)
-  ↓
-CD: Deploy web to hosting
-  ↓
-CD: Upload APK to distribution
-  ↓
-CD: Update course CDN (if course content changed)
-```
+State lives in a **single local SQLite file** (`DATABASE_URL`, default
+`./underlayer.db`). Course manifests are discovered at startup from
+`COURSES_DIR` (default `./courses`). The binary is self-contained; the only
+runtime inputs are the port, the database path, the courses directory and the
+optional Turso token.
 
-### Design Principle
+**The founder deploys manually.** There is no CD. A commit does not change the
+live site. Do not describe the CI workflow below as a deployment pipeline.
 
-**Code must be correct before merge.** There is no "fix it later" — the auto-deploy pipeline means every commit goes live. This enforces:
+### What is NOT deployed from this repository
 
-- All tests pass before merge
-- Code review before merge
-- No broken builds in production
+- **The Android client** is a separate repo (`Android/Apps/underlayer-kmp`),
+  with a frozen `applicationId` (`com.wakaztahir.learnpythonapp`). This
+  repository's workflow does not build an APK, upload one, or update a CDN.
+- **Static course output** (`courses/*/output/`) is generated and gitignored.
+  GitHub Pages needs it regenerated (`bash scripts/build_static.sh …`) before a
+  pages deploy; committing generated files is not the mechanism.
+- **A remote database backend.** `DATABASE_URL` pointing at `libsql://` or
+  `https://` is **refused at startup** with a FATAL log. The remote branch of
+  `exec_sql`/`query_sql` is not implemented; a build that accepted such a URL
+  would report healthy and lose every write. The Dockerfile still mentions a
+  remote URL as an option — that comment is aspirational. Use a local file on a
+  mounted volume (the Dockerfile defaults to `/data/underlayer.db`).
 
-### Rollback
+## 2. CI — verification only
 
-If any deployment step fails:
-1. Previous version stays live
-2. Failure is reported immediately
-3. Fix is committed and pipeline re-runs
+`.github/workflows/ci.yml` runs on `push`, `pull_request` and
+`workflow_dispatch`. It:
 
-## Web Platform
+1. checks out the repository with read-only permissions;
+2. locates `TCCCompiler` from the `compiler_root` dispatch input or the
+   `CHEMICAL_ROOT` repository variable (it never guesses a path from a
+   developer's laptop, and fails with an actionable message if neither is set);
+3. builds the server with `-bm-modules --no-cache`;
+4. builds the ELF static pages with `bash scripts/build_static.sh elf --quiet`;
+5. starts the server on a free OS-assigned port with a **disposable**
+   `ci-underlayer.db`;
+6. runs the endpoint matrix, then
+   `tools/journey_quality_check.py`, `tools/theme_check.py`,
+   `tools/lesson_pager_check.py` and `tools/helpful_dedupe_check.py`;
+7. stops the server in an `always()` step.
 
-### Stack
+Any non-zero exit fails the job. There is **no deploy step, no publish step, no
+`git push`, and no secret of any kind** in the workflow.
 
-- **Server:** Chemical `http::server::Server` with thread pool
-- **Database:** SQLite via Turso HTTP v2 (local dev + cloud)
-- **Storage:** Tigris S3 (course assets, APK downloads)
-- **Hosting:** Fly.io or similar (single binary deployment)
+### Honest limits of the workflow
 
-### Modules
+- **Single platform.** The job uses `windows-latest` because that is the only
+  platform where TCCCompiler is verified here. The compiler is a native binary
+  this repository does not build; a Linux runner would need a Linux compiler
+  checkout and its own verification.
+- **No browser in CI.** `theme_check.py` runs all 56 static contract checks. The
+  extra Playwright proof that a stored `dark` choice is applied before the first
+  body paint runs locally with `python tools/theme_check.py BASE --browser`
+  (or `THEME_CHECK_BROWSER=1`).
+- **The write probe needs a disposable DB.** `helpful_dedupe_check.py` registers
+  two throwaway learners and casts votes. It is safe in CI because the database
+  is created fresh for the job. Never point it at production.
+- **The `@test` suite is not in CI.** `tests/chemical.mod` stalls in the compiler
+  at its last module (known blocker, 2026-11-24; see `AGENTS.md`). The workflow
+  verifies the served artifact instead. That is not the same thing, and this
+  document does not claim it is.
 
-```
-src/main.ch              (wiring only)
-   ↓
-web/                     (public pages, SSR)
-   ↓
-admin/                   (course management)
-   ↓
-api/                     (JSON REST endpoints)
-   ↓
-content/                 (course rendering, exercise engine)
-   ↓
-learning/                (FSRS, progress, review scheduling)
-   ↓
-repository/              (ALL data access)
-   ↓
-models/                  (domain structs)
-database/                (Turso HTTP client)
-storage/                 (S3 client)
-   ↓
-core/                    (config, logging, utils)
-```
+## 3. Build and run
 
-### API Endpoints
-
-| Endpoint | Method | Purpose |
-|---|---|---|
-| `/api/health` | GET | Health check |
-| `/api/courses` | GET | List available courses |
-| `/api/courses/:id` | GET | Course metadata |
-| `/api/courses/:id/download` | GET | Download course zip |
-| `/api/learner/state` | GET | Get learner state |
-| `/api/learner/state` | POST | Update learner state |
-| `/api/learner/review` | GET | Get due review items |
-| `/api/learner/review` | POST | Submit review results |
-| `/api/learner/session` | POST | Log a learning session |
-
-### Authentication
-
-- Simple token-based auth for Android app
-- Web: optional account (courses can be used without account)
-- Learner state is tied to device ID or account
-
-## Android App
-
-### Stack
-
-- **Language:** Chemical (compiled to native via TCC or LLVM)
-- **UI:** Native Android (JNI bridge to Chemical)
-- **Storage:** SQLite (local database for learner state)
-- **Course Storage:** File system (downloaded course directories)
-
-### Architecture
-
-```
-Android UI (Kotlin/Java)
-   ↓ JNI
-Chemical Runtime
-   ↓
-Course Player (renders course content)
-   ↓
-FSRS Engine (spaced repetition scheduling)
-   ↓
-Local SQLite (learner state, review history)
-   ↓
-File System (downloaded courses)
-```
-
-### Offline-First Design
-
-The app works entirely offline after course download:
-
-1. **First launch:** Download courses from server
-2. **Learning:** All content is local, no network needed
-3. **Review:** Spaced repetition runs locally
-4. **Sync:** When online, sync learner state to server
-5. **Updates:** When online, check for course updates
-
-### Download Flow
-
-```
-User taps "Download" on a course
-  ↓
-App requests course zip from server
-  ↓
-Zip downloaded to temp directory
-  ↓
-Zip extracted to courses/<id>/
-  ↓
-Course manifest loaded
-  ↓
-Review items generated (if first download)
-  ↓
-Learner state initialized
-  ↓
-Course available offline
-```
-
-### Course Player
-
-The course player renders course content locally:
-
-1. **Read manifest.json** — get concept list, metadata
-2. **Render lesson** — convert concept content to native UI
-3. **Present exercises** — interactive exercise engine
-4. **Show visualizations** — render interactive diagrams
-5. **Track progress** — record attempts, accuracy, timing
-6. **Schedule reviews** — FSRS engine computes next review times
-
-### Sync Protocol
-
-When the app comes online:
-
-```
-App sends:
-  - Device ID
-  - Last sync timestamp
-  - Learner state (concept states, review items, session history)
-
-Server responds:
-  - Updated learner state (merged from other devices if multi-device)
-  - Course updates (new versions available)
-  - New courses (if any)
-```
-
-Conflict resolution: server state wins. Single-device primary.
-
-## Course Distribution
-
-### Course as Zip
-
-Courses are distributed as zip files:
-
-```
-elf-v1.zip
-  manifest.json
-  concepts/
-  exercises/
-  visualizations/
-  assets/
-  reviews/
-```
-
-### CDN Hosting
-
-Course zips are hosted on CDN (Tigris S3). When a course version bumps:
-1. New zip is uploaded to CDN
-2. Old zip remains available (for version pinning)
-3. App checks for updates on sync
-
-### Course Updates
-
-When a course updates:
-1. App detects new version on sync
-2. Downloads only changed content (delta update)
-3. Merges with existing local copy
-4. Re-generates review items for changed concepts
-5. Notifies learner: "Course X has been updated. 3 concepts changed."
-
-## Build System
-
-### Chemical Build
-
-Build from the Underlayer directory itself — the project no longer needs to be linked
-into the Chemical repo as `lang/compiled/underlayer`. `database/chemical.mod` imports the
-sqlite3 bindings by URL (`import "github.com/chemicallang/sqlite3"`), which the compiler
-caches under `build/remote/`. Only the compiler binary has to live inside the Chemical
-repo (it needs `import std`).
+From the repository root, with `CHEMICAL` pointing at the compiler checkout:
 
 ```bash
-# CHEMICAL=<path to the chemical repo checkout>
-# Build web platform (from the Underlayer root)
-$CHEMICAL/cmake-build-debug/TCCCompiler chemical.mod \
+"$CHEMICAL/cmake-build-debug/TCCCompiler.exe" chemical.mod \
     -o build/underlayer.exe -bm-modules --no-cache
-
-# Run it (COURSES_DIR defaults to ./courses, PORT defaults to 9000)
-PORT=9000 ./build/underlayer.exe
-
-# Run the test suite (114 tests)
-$CHEMICAL/cmake-build-debug/TCCCompiler chemical.mod -o build/tests.exe \
-    -frecompile-plugins --test --no-cache && ./build/tests.exe
+PORT=9000 DATABASE_URL=./underlayer.db COURSES_DIR=./courses ./build/underlayer.exe
 ```
 
-Use `--no-cache`: an incremental build can miss edits to a module that already
-compiled, which looks exactly like "my change did nothing". The scripts under
-`scripts/` still assume a `lang/compiled/underlayer` layout; run the commands above
-directly when that symlink is not set up.
+Windows PowerShell:
+
+```powershell
+& 'D:\Programming\Chemical\chemical\cmake-build-debug\TCCCompiler.exe' chemical.mod -o build\underlayer.exe -bm-modules --no-cache
+$env:PORT='9000'; $env:DATABASE_URL='./underlayer.db'; $env:COURSES_DIR='./courses'
+.\build\underlayer.exe
+```
+
+Smoke test (all three must answer 200):
+
+```
+GET /api/health
+GET /courses/elf/lessons/bytes
+GET /api/courses/elf/lessons/bytes/units
+```
+
+`AGENTS.md` requires the server to build and serve the ELF course after every
+change. Build to a new binary name when another server holds the current one
+open on Windows.
+
+### Static pages
 
 ```bash
-# Android (cross-compilation target, historical path)
-cmake-build-debug/TCCCompiler lang/compiled/underlayer/chemical.mod \
-    -o lang/compiled/underlayer/build/libunderlayer.so --target android -bm-modules
+bash scripts/build_static.sh elf        # one course
+bash scripts/build_static.sh            # every course
 ```
 
-### CI Pipeline
+The script compiles each course, runs its generator and then the guided-journey
+injector. Generated output is intentionally untracked; regenerate it wherever a
+static site is served from.
 
-```yaml
-# .github/workflows/deploy.yml
-on:
-  push:
-    branches: [main]
-
-jobs:
-  build-and-deploy:
-    steps:
-      - checkout
-      - setup-chemical
-      - build-web
-      - test-web
-      - deploy-web
-      - build-android (if app changes)
-      - upload-apk
-      - update-cdn (if courses change)
-```
-
-## Environment Variables
+### Environment variables (actually read)
 
 | Variable | Purpose | Default |
 |---|---|---|
-| `PORT` | Server port | 9000 |
-| `DATABASE_URL` | Turso HTTP URL | local |
-| `DATABASE_TOKEN` | Turso auth token | - |
-| `STORAGE_BUCKET` | Tigris S3 bucket | - |
-| `STORAGE_ENDPOINT` | Tigris S3 endpoint | - |
-| `STORAGE_KEY` | Tigris access key | - |
-| `STORAGE_SECRET` | Tigris secret key | - |
-| `COURSE_CDN_URL` | CDN URL for course downloads | - |
+| `PORT` | HTTP port | `9000` |
+| `DATABASE_URL` | SQLite file path; remote URLs are refused | `./underlayer.db` |
+| `DATABASE_TOKEN` | Turso auth token (unused for local SQLite) | empty |
+| `COURSES_DIR` | Course content directory | `./courses` |
 
-## Monitoring
+There is no Tigris/S3 storage client, no `STORAGE_BUCKET`, and no CDN upload in
+this build, whatever older docs said.
 
-- Health check endpoint: `/api/health`
-- Deployment status: CI/CD pipeline notifications
-- Course download counts: tracked in repository
-- Error logging: to file, no external service dependency
+## 4. Backup and restore
+
+`tools/backup_db.py` uses the standard-library `sqlite3.Connection.backup()`
+API, so it takes a **consistent snapshot even while the server has the DB
+open**. A plain file copy of a live WAL database can lose committed pages. The
+source is opened read-only; `PRAGMA integrity_check` runs on the source and on
+the copy; a failed check aborts and leaves no output file. Existing destinations
+are never overwritten without `--force`.
+
+Take a timestamped backup into a directory:
+
+```powershell
+py -3 tools\backup_db.py .\underlayer.db .\backups
+# -> backups\underlayer-YYYYmmdd-HHMMSS.db
+```
+
+Or name the file explicitly:
+
+```powershell
+py -3 tools\backup_db.py .\underlayer.db .\backups\nightly.db --force
+```
+
+Verified 2026-11-26 against a **copy** of the live DB (the live DB was never
+touched): source 647,168 bytes, `integrity_check ok`, backup 647,168 bytes /
+158 pages, `integrity_check ok`. Refusing an existing destination returned
+exit 1; `--force` succeeded; a deliberately corrupted source was rejected with
+`database disk image is malformed` and wrote no file.
+
+### Restore
+
+1. Stop the server. This is the important step: restoring underneath a running
+   process can mix old and new pages.
+2. Keep the current file as a fallback (rename it; do not delete it).
+3. Copy the chosen backup over the path in `DATABASE_URL`:
+
+   ```powershell
+   Copy-Item .\backups\underlayer-20261126-143508.db .\underlayer.db
+   ```
+
+4. Start the server. Startup migrations are forward-only and idempotent, so an
+   older backup is brought up to the current schema automatically.
+5. Verify `/api/health`, `/courses/elf/lessons/bytes` and one account action.
+6. Confirm any data written between the backup and the stop is re-entered or
+   intentionally discarded — a restore is a point-in-time rollback, not a merge.
+
+## 5. Rate-limit storage and retention
+
+Login, register, forgot/reset, the account bridge and the learning-write
+endpoints are limited by rows in the `rate_limits` table, not by in-memory
+counters: a counter that dies with the process resets on every restart and fails
+open with a second process. The limit is 8/5 minutes for auth and 120/5 minutes
+for learning writes, keyed by the socket peer address (never `X-Forwarded-For`,
+which the caller controls).
+
+Stale buckets are removed at startup: the authoritative purge is
+`repository/src/schema_migrations.ch::purge_expired_rate_limits` (two windows),
+called from `repository/src/schema.ch`. `web/src/rate_limit.ch` adds a wider,
+idempotent 24-hour sweep from `ensure_rate_limit_table`. Both conditions delete
+only buckets the limiter already treats as expired, so neither can change a
+future decision. Verified on a restart of a copy: a stale row was removed and a
+fresh row kept; nine wrong logins from one IP answered `401 ×8` then `429` with
+`Retry-After: 120`.
+
+## 6. Still open (do not mistake these for done)
+
+1. **No Content-Security-Policy.** Deliberate: the macros emit inline scripts
+   and styles by the thousand, so a policy forbidding inline breaks the product
+   and one with `unsafe-inline` buys almost nothing. First step is externalising
+   the inline scripts.
+2. **SQLite concurrency.** One handle behind a 12-thread pool. 40 concurrent
+   writes stored 40/40 with no loss in the test performed, but a single handle
+   cannot be *documented* safe without `SQLITE_OPEN_FULLMUTEX` or a connection
+   per thread, and it caps the platform at one process.
+3. **No remote database backend.** See §1. Scaling out needs it, and it does not
+   exist.
+4. **No deployment automation, rollback automation or post-deploy monitoring**
+   (checklist 15.4.3–15.4.7). The founder deploys by hand.
+5. **CI limits** — see §2: one platform, no browser, no `@test` suite, and a
+   write probe that needs a disposable database.
+6. **`tools/checker_nonvacuity.py`'s `theme_check` plant is stale.** It plants
+   `if(lesson) { return }` in `content/src/theme_boot.ch`, but that guard was
+   removed when the theme boot began covering lessons too, and it looks for the
+   old phrase "inside <head>" in the checker output. The checker itself was
+   proven non-vacuous directly (missing script, script moved to body, stale key
+   and missing `apply(get())` all fail), but the non-vacuity harness needs a new
+   plant before it can certify this checker again.
+7. **Two owners for the rate-limit purge** (§5). Consolidating them belongs to
+   the schema layer; until then the wider sweep is harmless dead weight at
+   startup.
