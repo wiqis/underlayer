@@ -21,8 +21,11 @@ public namespace underlayer_web {
         // is a reader with a dark OS reading a bright page.
         underlayer_content::render_theme_boot_js(page, false)
         underlayer_content::render_color_scheme_meta(page)
-        var title = std::string_view("Help & Guide — Underlayer")
-        page.appendTitle(&title)
+        var title = std::string("Help & Guide — Underlayer")
+        var seo_desc = seo_desc_help()
+        var seo_path = string("/help")
+        var seo_ld = string()
+        append_seo_head(page, &title, &seo_desc, &seo_path, &seo_ld)
 
         #html {
             <div class="help-page">
@@ -207,8 +210,11 @@ public namespace underlayer_web {
         // is a reader with a dark OS reading a bright page.
         underlayer_content::render_theme_boot_js(page, false)
         underlayer_content::render_color_scheme_meta(page)
-        var title = std::string_view("Keyboard Shortcuts — Underlayer")
-        page.appendTitle(&title)
+        var title = std::string("Keyboard Shortcuts — Underlayer")
+        var seo_desc = seo_desc_shortcuts()
+        var seo_path = string("/shortcuts")
+        var seo_ld = string()
+        append_seo_head(page, &title, &seo_desc, &seo_path, &seo_ld)
 
         #html {
             <div class="help-page">
@@ -338,8 +344,11 @@ public namespace underlayer_web {
         // is a reader with a dark OS reading a bright page.
         underlayer_content::render_theme_boot_js(page, false)
         underlayer_content::render_color_scheme_meta(page)
-        var title = std::string_view("Frequently Asked Questions — Underlayer")
-        page.appendTitle(&title)
+        var title = std::string("Frequently Asked Questions — Underlayer")
+        var seo_desc = seo_desc_faq()
+        var seo_path = string("/faq")
+        var seo_ld = string()
+        append_seo_head(page, &title, &seo_desc, &seo_path, &seo_ld)
 
         #html {
             <div class="help-page">
@@ -460,8 +469,11 @@ public namespace underlayer_web {
         // is a reader with a dark OS reading a bright page.
         underlayer_content::render_theme_boot_js(page, false)
         underlayer_content::render_color_scheme_meta(page)
-        var title = std::string_view("About Underlayer")
-        page.appendTitle(&title)
+        var title = std::string("About Underlayer")
+        var seo_desc = seo_desc_about()
+        var seo_path = string("/about")
+        var seo_ld = string()
+        append_seo_head(page, &title, &seo_desc, &seo_path, &seo_ld)
 
         #html {
             <div class="help-page">

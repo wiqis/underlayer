@@ -21,8 +21,11 @@ public namespace underlayer_web {
         var page = HtmlPage()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
-        var title = std::string_view("Underlayer - Learn Things Deeply")
-        page.appendTitle(&title)
+        var title = std::string("Underlayer - Learn Things Deeply")
+        var description = seo_desc_home()
+        var canonical_path = std::string("/")
+        var empty_ld = std::string()
+        append_seo_head(&mut page, &title, &description, &canonical_path, &empty_ld)
         // The shared session helper and the onboarding gate -- see pages_gate.ch.
         render_session_js(&mut page)
         var start = start_here_href()

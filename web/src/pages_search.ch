@@ -24,7 +24,11 @@ public namespace underlayer_web {
         var courses = underlayer_repository::list_courses(courses_dir)
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
-        page.appendTitle(std::string_view("Search — Underlayer"))
+        var seo_title = string("Search — Underlayer")
+        var seo_desc = seo_desc_search()
+        var seo_path = string("/search")
+        var seo_ld = string()
+        append_seo_head(page, &seo_title, &seo_desc, &seo_path, &seo_ld)
 
         // Trimmed FIRST, then tested.  The order was the other way round, so
         // /search?q=%20%20%20 reported a count of matches for an empty bold

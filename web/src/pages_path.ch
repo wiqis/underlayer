@@ -35,7 +35,11 @@ public namespace underlayer_web {
         var start = start_here_href()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
-        page.appendTitle(std::string_view("Learning Path — Underlayer"))
+        var seo_title = string("Learning Path — Underlayer")
+        var seo_desc = seo_desc_path()
+        var seo_path = string("/learning-path")
+        var seo_ld = string()
+        append_seo_head(page, &seo_title, &seo_desc, &seo_path, &seo_ld)
 
         #html {
             {render_nav_bar(page)}

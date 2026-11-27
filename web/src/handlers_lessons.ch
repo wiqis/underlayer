@@ -21,6 +21,12 @@ public namespace underlayer_web {
             var err = std::string("lesson not found")
             return send_error(404u, &err)
         }
+        // I1: one title, a 140-158 char description, canonical, og tags and
+        // Course + BreadcrumbList JSON-LD. Applied BEFORE the pager/header
+        // patches so their size-based sentinel logic still measures only
+        // their own effect. No aggregateRating: no ratings are shipped.
+        var seo_html = apply_lesson_seo(&html, &course, &pid)
+        html = seo_html
         // Prev/next links, resolved HERE rather than in the lesson's own
         // script.  The course manifest is already loaded above -- it is what
         // decided whether this lesson exists -- so the information was in hand
@@ -94,6 +100,9 @@ public namespace underlayer_web {
             return send_error(404u, &err)
         }
         var html = underlayer_content::render_course_landing(&course)
+        // I1: the same head contract as a lesson, with a three-crumb trail.
+        var seo_html = apply_landing_seo(&html, &course)
+        html = seo_html
         // ONE CLEAR STARTING PATH.  Every course still lists every lesson below;
         // the reader no longer has to choose among them before beginning.
         if(course.concepts.size() > 0) {

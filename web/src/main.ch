@@ -40,6 +40,10 @@
 //   mobile_native.ch         — handle_lesson_native (structured lesson JSON, no WebView)
 //   handlers_mobile.ch       — handle_progress_sync_push / _pull (S-2)
 //   mobile_sync_json.ch      — change parsing, changes/FSRS JSON builders for S-2
+//   seo_head.ch              — PUBLIC_BASE_URL, descriptions, HtmlPage head
+//                              assembly, JSON-LD and served-document injection
+//   seo_copy.ch              — fixed 140-158 char descriptions for static pages
+//   handlers_seo.ch          — /robots.txt, /sitemap.xml, /favicon.ico (I1)
 //
 // Collection-level pages (the course index, the learning path, concept search):
 //   routes_data.ch           — RouteStep, PathRoute, mk_step, build_routes, route_orphans

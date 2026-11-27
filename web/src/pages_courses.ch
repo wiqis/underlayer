@@ -52,7 +52,11 @@ public namespace underlayer_web {
         var start = start_here_href()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
-        page.appendTitle(std::string_view("All Courses — Underlayer"))
+        var seo_title = string("All Courses — Underlayer")
+        var seo_desc = seo_desc_courses()
+        var seo_path = string("/courses")
+        var seo_ld = string()
+        append_seo_head(page, &seo_title, &seo_desc, &seo_path, &seo_ld)
 
         #html {
             {render_nav_bar(page)}

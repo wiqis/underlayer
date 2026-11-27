@@ -143,9 +143,13 @@ static site is served from.
 | `DATABASE_URL` | SQLite file path; remote URLs are refused | `./underlayer.db` |
 | `DATABASE_TOKEN` | Turso auth token (unused for local SQLite) | empty |
 | `COURSES_DIR` | Course content directory | `./courses` |
+| `PUBLIC_BASE_URL` (I1) | Public origin used by canonicals, og:url, sitemap locs and robots' `Sitemap:` line | `https://underlayer.wiqis.com` |
 
-There is no Tigris/S3 storage client, no `STORAGE_BUCKET`, and no CDN upload in
-this build, whatever older docs said.
+`PUBLIC_BASE_URL` is read on demand (like `ACCOUNT_URL`), so a local run sets
+it to `http://localhost:<port>` and nothing about the served markup or the
+sitemap depends on a compile-time production host. There is no Tigris/S3
+storage client, no `STORAGE_BUCKET`, and no CDN upload in this build, whatever
+older docs said.
 
 ## 4. Backup and restore
 
@@ -267,6 +271,41 @@ log: build/h6-restore-drill.log, scripts/restore_drill.py
 Those RPO/RTO numbers describe the **local drill**, not the deployed service;
 production targets are not claimed until the founder records the snapshot
 schedule and mount.
+
+### I1/I2 — discovery surface and its two new gates (2026-11-27)
+
+Three new literal routes (`/robots.txt`, `/sitemap.xml`, `/favicon.ico`) are
+registered before the `web::App` catch-all and answer through
+`deliver_with_learner`. They therefore inherit the H3 header contract, request
+id, ETag/304 and gzip rather than bypassing it. The sitemap is generated from
+the repository's own course loader — 4 entry pages + 6 guide/legal pages + 33
+course landings + 329 concept URLs = **372** — with `<lastmod>` derived from
+the verified 2026-11-26 content snapshot and the manifest's `version` (no
+course changelog exists yet). Head metadata on served pages is emitted by
+`HtmlPage`; no markup is string-built. The full status ledger, including the
+Search Console baseline ("baseline pending founder access") and the honest
+list of what was **not** verified, is `docs/seo-content-status.md`.
+
+Two local-only gates were added; **CI wiring is the coordinator's step (H4)**,
+not part of this change. Add these commands to the served-artifact checker
+stage:
+
+```
+python3 tools/literal_route_shadow_check.py
+python3 tools/literal_route_shadow_check.py --selftest
+python3 tools/seo_surface_check.py "$BASE_URL"
+python3 tools/seo_surface_check.py --selftest
+```
+
+`literal_route_shadow_check.py` is the source-level guard for I2: the router is
+first-match-wins in registration order, so `GET /api/exercises/hint` must stay
+ahead of `GET /api/exercises/:conceptId`. `seo_surface_check.py` builds its
+expected URL set from `/api/courses` + `/api/courses/<id>` (not a hardcoded
+count), checks the sitemap set and every served page's head, and has both a
+synthetic `--selftest` and a live `--plant` negative case.
+
+The journey checker needs `--workers 8` locally; a sequential crawl of 329
+lessons is correct but exceeds a 10-minute command timeout on this machine.
 
 ## 5. Rate-limit key, trust boundary and retention (H2/B7, 2026-11-26)
 

@@ -306,10 +306,24 @@ public namespace underlayer_web {
         }
 
         var hint = string()
-        // 4.2.5: Hint 1 is conceptual, Hint 2 is directional, Hint 3 is almost answer
-        if(level == 1) { hint = ex.hint1.copy() }
-        else if(level == 2) { hint = ex.hint2.copy() }
-        else { hint = ex.hint3.copy() }
+        // 4.2.5: Hint 1 is conceptual, Hint 2 is directional, Hint 3 is almost answer.
+        // I2: only hint1 exists in today's seeded banks. A level that has no
+        // authored hint falls back to the conceptual one instead of answering
+        // 200 with an empty string -- G4's retry ladder must always show
+        // something the lesson actually says, and must never reveal the answer
+        // by inventing a level-3 hint from the explanation.
+        var h1 = ex.hint1.copy()
+        var h2 = ex.hint2.copy()
+        var h3 = ex.hint3.copy()
+        if(level == 1) { hint = h1 }
+        else if(level == 2) {
+            hint = h2
+            if(hint.empty()) { hint = h1 }
+        } else {
+            hint = h3
+            if(hint.empty()) { hint = h2 }
+            if(hint.empty()) { hint = h1 }
+        }
 
         var body = std::string("{\"hint\":\"")
         var h_esc = underlayer_core::json_escape(&hint.to_view())

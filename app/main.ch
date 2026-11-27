@@ -678,6 +678,16 @@ public func main() : int {
         var db = request_db()
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_exercise_stats(db, &req))
     })
+    // I2: THE HINT ROUTE MUST BE REGISTERED BEFORE /api/exercises/:conceptId.
+    // The router is first-match-wins in registration order. With the literal
+    // route below the parameterised one, GET /api/exercises/hint was captured
+    // as conceptId="hint" and answered 200 {"concept_id":"hint","exercises":[],
+    // "total":0}; the progressive hints (G4's retry ladder) were unreachable.
+    // tools/literal_route_shadow_check.py fails a planted regression of this.
+    srv.router.add("GET", "/api/exercises/hint", ||(req) => {
+        var db = request_db()
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_exercise_hint(db, &req))
+    })
     // ---- Exercise API (4.1.1-4.1.5, 4.2.1-4.2.5) ----
     srv.router.add("GET", "/api/exercises/:conceptId", ||(req) => {
         var db = request_db()
@@ -730,10 +740,6 @@ public func main() : int {
             return underlayer_web::deliver_with_learner(request_db(), &req, refusal)
         }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_exercise_submit(db, &mut req))
-    })
-    srv.router.add("GET", "/api/exercises/hint", ||(req) => {
-        var db = request_db()
-        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_exercise_hint(db, &req))
     })
     // Course index — /courses. Registered BEFORE /courses/:courseId so the
     // exact path wins over the parameterised one. This is the page every
@@ -811,6 +817,20 @@ public func main() : int {
             return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::redirect_to(&home))
             }
         }
+    })
+    // ---- I1: organic discovery surface ---------------------------------
+    // Explicit routes BEFORE the web::App catch-all. They go through
+    // deliver_with_learner, so H3's uniform security headers, the access line,
+    // ETag/304 and gzip apply to them exactly as to every handler route.
+    srv.router.add("GET", "/robots.txt", ||(req) => {
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_robots_txt(&req))
+    })
+    srv.router.add("GET", "/sitemap.xml", ||(req) => {
+        var courses_dir = underlayer_web::request_courses_dir()
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_sitemap_xml(&courses_dir, &req))
+    })
+    srv.router.add("GET", "/favicon.ico", ||(req) => {
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_favicon_ico(&req))
     })
     // Home page â€” a per-request response (see the note on handle_home).
     srv.router.add("GET", "/", ||(req) => {

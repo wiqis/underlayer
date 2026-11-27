@@ -19,8 +19,11 @@ public namespace underlayer_web {
         // is a reader with a dark OS reading a bright page.
         underlayer_content::render_theme_boot_js(page, false)
         underlayer_content::render_color_scheme_meta(page)
-        var title = std::string_view("Terms of Service — Underlayer")
-        page.appendTitle(&title)
+        var title = std::string("Terms of Service — Underlayer")
+        var seo_desc = seo_desc_terms()
+        var seo_path = string("/terms")
+        var seo_ld = string()
+        append_seo_head(page, &title, &seo_desc, &seo_path, &seo_ld)
 
         #html {
             <div class="legal-page">
@@ -115,8 +118,11 @@ public namespace underlayer_web {
         // is a reader with a dark OS reading a bright page.
         underlayer_content::render_theme_boot_js(page, false)
         underlayer_content::render_color_scheme_meta(page)
-        var title = std::string_view("Privacy Policy — Underlayer")
-        page.appendTitle(&title)
+        var title = std::string("Privacy Policy — Underlayer")
+        var seo_desc = seo_desc_privacy()
+        var seo_path = string("/privacy")
+        var seo_ld = string()
+        append_seo_head(page, &title, &seo_desc, &seo_path, &seo_ld)
 
         #html {
             <div class="legal-page" data-page="privacy">
