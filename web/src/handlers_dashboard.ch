@@ -174,6 +174,23 @@ public namespace underlayer_web {
                     </Card>
                 </div>
 
+                // 5.1.20: the two recommendation endpoints existed with no
+                // consumer anywhere in the UI. This is one suggested action,
+                // built from what is due and from the learner's own session
+                // history, not a separate "recommendations" page.
+                <div style="margin-bottom: 2rem;">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>A suggested next step</CardTitle>
+                        </CardHeader>
+                        <CardBody>
+                            <Text muted={true}>From what is due, and the time you study best.</Text>
+                            <div id="wd-rec-items" aria-live="polite"></div>
+                            <div id="wd-rec-time" aria-live="polite"></div>
+                        </CardBody>
+                    </Card>
+                </div>
+
                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
                     <Card>
                         <CardHeader>

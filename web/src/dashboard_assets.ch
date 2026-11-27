@@ -161,7 +161,42 @@ public namespace underlayer_web {
                     coursesEl.appendChild(wdEl('div', 'my-empty', 'Could not load your courses. Is the backend running?'));
                 });
             }
-            document.addEventListener('DOMContentLoaded', function() { wdLoad(); });
+            // 5.1.20: a visible consumer for /api/review/recommendations and
+            // /api/review/time-recommendation. Both go through __ulFetch so the
+            // HttpOnly cookie (browser) and the legacy bearer (API/static) both
+            // resolve the same learner, and a 401 never becomes data-shaped
+            // JSON that paints a confident wrong suggestion.
+            function wdLoadRecommendations() {
+                var items = document.getElementById('wd-rec-items');
+                var time = document.getElementById('wd-rec-time');
+                if (!items || !time) { return; }
+                if (typeof window.__ulFetch !== 'function') { return; }
+                window.__ulFetch('/api/review/recommendations', { silent401: true })
+                    .then(function(r) { return r.json(); })
+                    .then(function(d) {
+                        var recs = d.recommendations || [];
+                        if (recs.length === 0) {
+                            items.textContent = 'Nothing due right now - open a lesson when you are ready.';
+                            return;
+                        }
+                        var lines = [];
+                        for (var i = 0; i < recs.length; i++) {
+                            var rec = recs[i];
+                            lines.push(rec.label + ': ' + rec.count + ' item(s), about ' + rec.estimated_minutes + ' min');
+                        }
+                        items.textContent = lines.join(' | ');
+                    })
+                    .catch(function() { items.textContent = 'Could not load a suggestion right now.'; });
+                window.__ulFetch('/api/review/time-recommendation', { silent401: true })
+                    .then(function(r) { return r.json(); })
+                    .then(function(d) {
+                        var s = d.suggestion;
+                        if (!s) { s = 'any time that suits you'; }
+                        time.textContent = 'Your best recorded time: ' + s;
+                    })
+                    .catch(function() { time.textContent = ''; });
+            }
+            document.addEventListener('DOMContentLoaded', function() { wdLoad(); wdLoadRecommendations(); });
         }
     }
 

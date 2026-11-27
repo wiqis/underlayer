@@ -20,6 +20,15 @@ NEGATIVE CASE (how to prove this checker can fail):
       landmark check.
     * `--lessons elf:no-such-concept` fails with a fetch error, proving an empty
       or unreachable lesson set is not silently reported as a pass.
+    * C4: replacing a served `data-aim` with the old bare objective
+      ("Understanding bytes.") is reported as an aim-wording failure; replacing
+      it with the mandated prefix but a tail that is NOT that step's own
+      takeaway is reported as an aim-derivation failure.
+    * C5: planting a takeaway that ends in `?`, or one that repeats its own
+      `data-recall-q`, or a space/comma pair (`"register ,"`) in any derived
+      attribute, is reported as a named failure. Each assertion has a seeded
+      negative plant (build/inspect_c4c5_plants.py) that must make this checker
+      exit 1 before the green run can be trusted.
 """
 
 import argparse
@@ -32,6 +41,15 @@ import urllib.error
 import urllib.request
 
 NO_FACT = 'No new fact to memorise - this step is about seeing the link'
+AIM_PREFIX = 'In this step you will be able to '
+NO_FACT_AIM = AIM_PREFIX + 'see how the ideas in this step connect.'
+AIM_TAIL = 'explain: '
+SPACE_BEFORE_PUNCT = re.compile(r'\s+[.,;:!?]')
+# Fixed, authored prefixes are stripped before the scan. A derived takeaway can
+# legitimately BEGIN with punctuation ("explain: .text, 23 bytes", "You saw:
+# .bss claims four bytes") because section names are facts in their own right.
+# Nothing inside the derived text is exempt.
+RECALL_PREFIXES = ('You saw: ', 'From earlier: ', 'Recall the idea from ')
 
 
 def fetch(base, path):
@@ -162,8 +180,11 @@ def check_lesson(base, course, concept):
     if 'id="ul-journey-aim"' not in page or 'id="ul-journey-meta"' not in page:
         failures.append('arrival aim or meta line missing')
     aim = re.search(r'id="ul-journey-aim"[^>]*>(.*?)</p>', page, re.S)
-    if not aim or not html.unescape(re.sub(r'<[^>]+>', '', aim.group(1))).strip():
+    arrival_aim = html.unescape(re.sub(r'<[^>]+>', '', aim.group(1))).strip() if aim else ''
+    if not arrival_aim:
         failures.append('arrival aim is empty')
+    elif not arrival_aim.startswith(AIM_PREFIX):
+        failures.append('arrival aim is not the mandated ability sentence: %r' % arrival_aim[:120])
     if page.count('id="ul-journey-start"') != 1:
         failures.append('arrival must have exactly one Start action')
 
@@ -211,6 +232,48 @@ def check_lesson(base, course, concept):
         recall_a = attr(tag, 'data-recall-a')
         if not recall_q or not recall_a:
             failures.append('unit %s has no recall question/answer' % unit_id)
+
+        # C4: the aim is mandated wording AND must be derived from this step's
+        # own verified takeaway, not a bare manifest noun phrase such as
+        # "Understanding bytes.".  The derivation is reproduced exactly here so
+        # a plausible-looking but invented objective cannot pass.
+        aim_v = attr(tag, 'data-aim')
+        if not aim_v:
+            failures.append('unit %s has no data-aim' % unit_id)
+        elif not aim_v.startswith(AIM_PREFIX):
+            failures.append('aim wording in %s is not "%s": %r'
+                            % (unit_id, AIM_PREFIX + '___', aim_v[:120]))
+        else:
+            tail = aim_v[len(AIM_PREFIX):]
+            if not tail or not tail.rstrip().endswith(('.', '!')):
+                failures.append('aim in %s has no complete ability sentence: %r'
+                                % (unit_id, aim_v[:120]))
+            elif remember == NO_FACT:
+                if aim_v != NO_FACT_AIM:
+                    failures.append('no-fact step %s has a fabricated aim: %r'
+                                    % (unit_id, aim_v[:120]))
+            elif tail != AIM_TAIL + remember:
+                failures.append('aim in %s is not derived from its own takeaway: %r'
+                                % (unit_id, aim_v[:120]))
+
+        # C5: whitespace artefacts immediately before punctuation are visible
+        # in the "Remember this" card and in the retrieval prompts.  Assert the
+        # clean shape on every derived attribute, not only on the takeaway.
+        for name, value in (('data-aim', aim_v), ('data-remember', remember),
+                            ('data-recall-q', recall_q), ('data-recall-a', recall_a)):
+            if not value:
+                continue
+            scanned = value
+            if name == 'data-aim' and scanned.startswith(AIM_PREFIX + AIM_TAIL):
+                scanned = scanned[len(AIM_PREFIX) + len(AIM_TAIL):]
+            else:
+                for prefix in RECALL_PREFIXES:
+                    if scanned.startswith(prefix):
+                        scanned = scanned[len(prefix):]
+                        break
+            if SPACE_BEFORE_PUNCT.search(scanned):
+                failures.append('whitespace before punctuation in %s of %s: %r'
+                                % (name, unit_id, value[:120]))
 
     # Retrieval gate must ask about the step just finished, not a stale
     # unit-retrieve from several steps ago.

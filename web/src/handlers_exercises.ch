@@ -135,6 +135,12 @@ public namespace underlayer_web {
         body.append_view("\"")
         // 4.2.8: Solution reveal after 3 failed attempts (client tracks attempts)
         body.append_view(",\"show_solution_after\":3")
+        // 4.2.19: the UI must not print a streak for a signed-out learner.  The
+        // server already resolves the HttpOnly cookie or a bearer token, so the
+        // response says which identity the streak below belongs to.
+        body.append_view(",\"authenticated\":")
+        var learner_id0 = auth_get_learner_id(db, &*req)
+        if(learner_id0.size() > 0) { body.append_view("true") } else { body.append_view("false") }
         var now = underlayer_core::current_timestamp()
 
         // ---- 4.1.28: Feed the learning loop ----
@@ -142,7 +148,7 @@ public namespace underlayer_web {
         // so practice had zero effect on scheduling. Map correct/incorrect to an
         // FSRS rating (Good=3 / Again=1), update the concept state, and seed/update
         // the concept's review item — same pipeline as /api/review/submit.
-        var learner_id = auth_get_learner_id(db, &*req)
+        var learner_id = learner_id0.copy()
         var authenticated = learner_id.size() > 0
         // Multi-course: the lesson page passes its course (query param or JSON
         // body). Deterministic fallback: look up which seeded course owns this

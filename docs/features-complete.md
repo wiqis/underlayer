@@ -608,7 +608,7 @@
 - [x] P1 4.1.27 Exercise seeding at startup or on first lesson request (DB starts empty; /api/exercises/seed exists but is manual-only)
 - [x] P1 4.1.28 Exercise submit updates concept_states and creates/updates review_items via FSRS (currently grades only — results never reach the learning loop)
 - [x] P1 4.1.29 Exercise UI on lesson pages supports all 8 exercise types (multiple choice, multi-select, fill-blank, hex-inspect, ordering, matching, labeling, predict)
-- [ ] P2 4.1.30 Progressive hints UI wired to GET /api/exercises/hint (API exists, no frontend consumer)
+- [x] P2 4.1.30 Progressive hints UI wired to GET /api/exercises/hint — every lesson exercise card now carries a "Need a hint?" control that walks levels 1-3, renders the server's own authored hint in a polite live region, and disables at level 3. Verified against the repaired I2 route on port 9037.
 
 ### 4.2 Exercise Feedback
 
@@ -630,7 +630,7 @@
 - [x] P2 4.2.16 Mistake pattern detection (common errors)
 - [x] P2 4.2.17 Personalized feedback based on mistake pattern
 - [x] P2 4.2.18 Feedback quality rating (was this helpful?)
-- [ ] P2 4.2.19 Real exercise streak counter in submit response (currently hardcoded 0 in JSON)
+- [x] P2 4.2.19 Real exercise streak counter in the submit response now has a consumer — the response publishes `authenticated` and the server-resolved `streak`; the exercise feedback shows "N correct in a row" only when a learner resolved and N > 0, never a misleading 0 to a signed-out reader.
 
 ### 4.3 Exercise Generation
 
@@ -707,7 +707,7 @@
 - [x] P1 5.1.17 Review page calls POST /api/review/end on session completion (sessions currently stay "active" forever)
 - [x] P1 5.1.18 Review session controls UI: pause/resume/abort/undo/skip buttons wired to /api/session/* (APIs exist, zero frontend consumers)
 - [x] P1 5.1.19 Review submit/start resolve learner via bearer token only — remove "demo" learner_id fallback that lets anonymous ratings pollute data
-- [ ] P2 5.1.20 Review recommendations surfaced in UI: /api/review/recommendations and /api/review/time-recommendation have no frontend consumer
+- [x] P2 5.1.20 Review recommendations surfaced on /dashboard: a "suggested next step" card consumes /api/review/recommendations (type, count and minutes) and /api/review/time-recommendation (best recorded time), both through __ulFetch so cookie and bearer identity agree.
 
 ### 5.2 Review Item Types
 
@@ -807,8 +807,8 @@
 - [x] P2 6.2.13 Engagement analytics (sessions per week)
 - [x] P2 6.2.14 Velocity analytics (concepts per week)
 - [x] P2 6.2.15 Comparative analytics (vs other learners)
-- [ ] P2 6.2.16 Analytics pages consume the extended analytics endpoints (temporal/retention/dropoff/funnel/platform/cohorts/devices APIs exist — only sessions + overview are fetched by UI)
-- [ ] P2 6.2.17 Progress page and analytics pages pass auth bearer token on fetch (learner identity currently ambiguous server-side)
+- [x] P2 6.2.16 Analytics page consumes temporal, retention, dropoff and funnel endpoints — a server-rendered "How you study" panel writes only textContent, showing most-active hour, weekly return rate, stalled concepts and read-to-mastered counts. Platform/cohorts/devices remain unconsumed and are not claimed.
+- [x] P2 6.2.17 Progress and analytics fetches use the shared __ulFetch wrapper: it sends Authorization: Bearer <legacy token> when present and credentials: 'same-origin' so the HttpOnly cookie also resolves; the server keeps both paths. Analytics sessions/velocity calls were converted from bare fetch.
 
 ### 6.3 Retention Metrics
 
@@ -2706,3 +2706,5 @@
 - [x] P1 2.2.123 `tools/journey_quality_check.py` — stdlib-only served-HTML checker for the journey contract. Default checks the first lesson of every course from `/api/courses`; `--all` checks every concept, `--lessons course:concept,...` overrides the set, `--workers N` fetches in parallel. Asserts shell/metadata, arrival, one-step CSS and staged unit, ribbon, progressive disclosure, gated action, per-unit takeaways and recall attributes, pacing/finish, keyboard/mobile rules, and absence of the stale-retrieval selector; prints pass/fail counts and exits 1 on any failure. Baseline 0 passed / 33 failed; final 33 passed / 0 failed on port 9001, plus 8/8 on the requested cross-course sample. Extended on 2026-11-26 with focus-target, boot-guard, aria-live and single-`<main>` assertions: 364 passed / 0 failed against the accessibility build, and 2 passed / 34 failed against the old build (non-vacuous).
 - [x] P1 2.2.124 Guided lesson journey focus management: after an explicit learner action, focus moves to the staged step's `<h2>` (given `tabindex="-1"` at runtime); Deep dive focuses the recap heading, Return restores the exact step and its heading, Pause focuses Resume, and initial page load never steals focus. Verified in Chrome with real keyboard input; `:focus-visible` outline measured on the staged heading. Audit: docs/journey-accessibility-2026-11-26.md
 - [x] P1 2.2.125 One native `<main>` landmark on the course landing and index pages (no duplicate `role="main"`), and retrieval answer regions marked `aria-live="polite"` so a revealed answer is announced without reading the whole lesson. Measured before: `/courses/elf` had zero `<main>`; after: one on every checked page.
+- [x] P1 2.2.126 Journey arrival and per-step aims now use the mandate's sentence "In this step you will be able to ___" across all 329 live concepts; the blank is filled from that step's own verified takeaway (or the mandated no-fact line), never from a bare manifest noun phrase such as "Understanding bytes.". `tools/journey_quality_check.py` asserts both the wording and the derivation; seeded plants for a bare phrase and an invented tail are detected.
+- [x] P1 2.2.127 Takeaway/recall quality sweep: zero takeaways ending in `?`, zero repeats of the recall question, zero whitespace before punctuation in any derived attribute, across all 329 concepts. The checker asserts all three; planted `?`, repeated-question and `"bytes ."` cases each fail named assertions.

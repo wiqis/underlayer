@@ -147,6 +147,25 @@ public namespace underlayer_web {
                     </div>
                 </div>
 
+                // 6.2.16: the four extended learner-analytics endpoints existed
+                // with no consumer. These four lines are server-rendered spans;
+                // the script below only writes textContent into them, so no
+                // value fetched from the API can become markup.
+                <div class="section-card" id="extended-analytics"
+                     data-total="{total_concepts}" data-mastered="{mastered_count}"
+                     data-learning="{learning_count}" data-reviewing="{reviewing_count}"
+                     data-unlearned="{unlearned_count}" data-easy="{easy_count}"
+                     data-medium="{medium_count}" data-hard="{hard_count}">
+                    <h2>How you study</h2>
+                    <p class="section-desc">Measured from your own sessions and answers.</p>
+                    <dl class="xa-grid">
+                        <div><dt>Most active time</dt><dd id="xa-temporal">-</dd></div>
+                        <div><dt>Weekly return rate</dt><dd id="xa-retention">-</dd></div>
+                        <div><dt>Started but stalled</dt><dd id="xa-dropoff">-</dd></div>
+                        <div><dt>Read to mastered</dt><dd id="xa-funnel">-</dd></div>
+                    </dl>
+                </div>
+
                 <div class="section-card">
                     <h2>Recent Sessions</h2>
                     <div class="table-container">
@@ -227,10 +246,15 @@ public namespace underlayer_web {
             .data-table tr:last-child td { border-bottom: none; }
             .data-table tr:hover td { background: hsl(var(--accent) / 50%); }
             .muted { color: hsl(var(--muted-foreground)); text-align: center; padding: 1.5rem; font-size: 0.9rem; }
+            .xa-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem 1.5rem; margin: 0; }
+            .xa-grid > div { padding: 0.75rem; background: hsl(var(--secondary)); border-radius: 8px; }
+            .xa-grid dt { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; color: hsl(var(--muted-foreground)); }
+            .xa-grid dd { margin: 0.25rem 0 0; font-size: 0.95rem; font-weight: 600; color: hsl(var(--foreground)); }
 
             @media (max-width: 768px) {
                 .container { padding: 1rem; }
                 .stats-grid { grid-template-columns: repeat(2, 1fr); }
+                .xa-grid { grid-template-columns: 1fr; }
                 .bar-label { width: 70px; font-size: 0.75rem; }
                 .diff-legend { flex-direction: column; gap: 0.5rem; }
             }
@@ -263,26 +287,100 @@ public namespace underlayer_web {
                 return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
             }
 
+            // 6.2.16 + 6.2.17: four real consumers for the extended learner
+            // analytics endpoints. Every call goes through __ulFetch, which
+            // sends the HttpOnly cookie for a browser session and the legacy
+            // bearer for API/static callers -- one identity, both paths. Values
+            // are written with textContent into server-rendered spans, never
+            // assembled into markup.
+            function xaLoad() {
+                if (typeof window.__ulFetch !== 'function') { return; }
+                window.__ulFetch('/api/analytics/temporal', { silent401: true })
+                    .then(function(r) { return r.json(); })
+                    .then(function(d) {
+                        var hours = d.by_hour || [];
+                        var bestHour = -1;
+                        var bestCount = -1;
+                        for (var i = 0; i < hours.length; i++) {
+                            if (hours[i].sessions > bestCount) {
+                                bestCount = hours[i].sessions;
+                                bestHour = hours[i].hour;
+                            }
+                        }
+                        if (bestHour < 0) { setText('xa-temporal', 'Not enough sessions yet'); return; }
+                        var part = 'Evening';
+                        if (bestHour < 12) { part = 'Morning'; }
+                        else if (bestHour < 17) { part = 'Afternoon'; }
+                        setText('xa-temporal', part + ' around ' + bestHour + ':00');
+                    })
+                    .catch(function() { setText('xa-temporal', 'Unavailable'); });
+
+                window.__ulFetch('/api/analytics/retention', { silent401: true })
+                    .then(function(r) { return r.json(); })
+                    .then(function(d) {
+                        if (!d.has_history) { setText('xa-retention', 'Not enough history yet'); return; }
+                        setText('xa-retention', d.return_rate_pct + '% of active weeks, ' + d.active_days + ' active days');
+                    })
+                    .catch(function() { setText('xa-retention', 'Unavailable'); });
+
+                window.__ulFetch('/api/analytics/dropoff', { silent401: true })
+                    .then(function(r) { return r.json(); })
+                    .then(function(d) {
+                        if (d.count === 0) { setText('xa-dropoff', 'None'); return; }
+                        var items = d.items || [];
+                        if (items.length === 0) { setText('xa-dropoff', d.count + ' concept(s)'); return; }
+                        setText('xa-dropoff', d.count + ' concept(s), oldest: ' + items[0].concept_id);
+                    })
+                    .catch(function() { setText('xa-dropoff', 'Unavailable'); });
+
+                window.__ulFetch('/api/analytics/funnel', { silent401: true })
+                    .then(function(r) { return r.json(); })
+                    .then(function(d) {
+                        setText('xa-funnel', d.concepts_attempted + ' read, ' + d.concepts_mastered + ' mastered');
+                    })
+                    .catch(function() { setText('xa-funnel', 'Unavailable'); });
+            }
+
             window.addEventListener("DOMContentLoaded", function() {
                 renderBars();
                 renderDifficulty();
+                xaLoad();
                 loadVelocity();
                 loadSessions();
             });
 
+            // The #js macro treats `{name}` as a JavaScript object literal, not
+            // as an interpolation: the old `var total = {total_concepts};`
+            // emitted `{ total_concepts: total_concepts }` and threw at load,
+            // which aborted the whole DOMContentLoaded listener (including the
+            // extended analytics panels). Server values now cross the boundary
+            // as escaped data-* attributes on the #html block above.
+            function xaNumber(name, fallback) {
+                var card = document.getElementById('extended-analytics');
+                if (!card) { return fallback; }
+                var raw = card.getAttribute('data-' + name);
+                var n = parseInt(raw, 10);
+                if (isNaN(n)) { return fallback; }
+                return n;
+            }
+
             function renderBars() {
-                var total = {total_concepts};
+                var total = xaNumber('total', 0);
                 if(total <= 0) { total = 1; }
-                setWidth('bar-mastered', ({mastered_count} * 100) / total);
-                setWidth('bar-learning', ({learning_count} * 100) / total);
-                setWidth('bar-reviewing', ({reviewing_count} * 100) / total);
-                setWidth('bar-unlearned', ({unlearned_count} * 100) / total);
+                var mastered = xaNumber('mastered', 0);
+                var learning = xaNumber('learning', 0);
+                var reviewing = xaNumber('reviewing', 0);
+                var unlearned = xaNumber('unlearned', 0);
+                setWidth('bar-mastered', (mastered * 100) / total);
+                setWidth('bar-learning', (learning * 100) / total);
+                setWidth('bar-reviewing', (reviewing * 100) / total);
+                setWidth('bar-unlearned', (unlearned * 100) / total);
             }
 
             function renderDifficulty() {
-                var easy = {easy_count};
-                var med = {medium_count};
-                var hard = {hard_count};
+                var easy = xaNumber('easy', 0);
+                var med = xaNumber('medium', 0);
+                var hard = xaNumber('hard', 0);
                 var total = easy + med + hard;
                 if(total <= 0) { total = 1; }
                 setWidth('diff-easy', (easy * 100) / total);
@@ -291,7 +389,7 @@ public namespace underlayer_web {
             }
 
             function loadVelocity() {
-                fetch('/api/analytics/velocity')
+                window.__ulFetch('/api/analytics/velocity', { silent401: true })
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         var weeks = data.weeks || [];
@@ -327,7 +425,7 @@ public namespace underlayer_web {
             }
 
             function loadSessions() {
-                fetch('/api/sessions')
+                window.__ulFetch('/api/sessions', { silent401: true })
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         var sessions = Array.isArray(data) ? data : (data.sessions || []);
@@ -597,7 +695,7 @@ public namespace underlayer_web {
             }
 
             function loadSessions() {
-                fetch('/api/sessions')
+                window.__ulFetch('/api/sessions', { silent401: true })
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         var sessions = Array.isArray(data) ? data : (data.sessions || []);
