@@ -174,6 +174,37 @@ public namespace underlayer_content {
         return s.substring(a, b)
     }
 
+    // Prose assembled from marked-up source can leave a space before a full
+    // stop or a comma ("... was in which register .").  In a "Remember this"
+    // card that is a visible artefact, not a fact.  Every derived value passes
+    // through jpAttrTag below, so this is the one choke point that keeps all
+    // five derived attributes free of whitespace before punctuation.
+    private func jpDeSpacePunct(s : &string) : string {
+        var out = string()
+        var i : size_t = 0
+        while(i < s.size()) {
+            var c = s.at(i)
+            // i > 0 keeps a leading full stop (" .text ..." is a section name).
+            // Authored prefixes such as "explain: " are protected by the caller,
+            // not by a blanket rule for every colon: "Note: .bss" and "Map; ."
+            // are real whitespace artefacts and must be cleaned here.
+            if(i > 0 && jpIsSpace(c)) {
+                var j = i
+                while(j < s.size() && jpIsSpace(s.at(j))) { j = j + 1 }
+                if(j < s.size()) {
+                    var next = s.at(j)
+                    if(next == '.' || next == ',' || next == ';' || next == ':' || next == '!' || next == '?') {
+                        i = j
+                        c = next
+                    }
+                }
+            }
+            out.append(c)
+            i = i + 1
+        }
+        return out
+    }
+
     private func jpCountWords(s : &string) : size_t {
         var count : size_t = 0
         var i : size_t = 0
@@ -417,22 +448,24 @@ public namespace underlayer_content {
         return fallback.copy()
     }
 
-    // ONE source sentence, whole. The old arrival line stitched three strings
-    // together ("In this step ... explore X - fragment. Starting here: ...")
-    // and then ran jpWords(..., 30) over the result, which cut it off at an
-    // arbitrary word mid-sentence. A reader cannot act on half a sentence.
-    // Prefer the course's own description sentence; fall back to the unit's own
-    // first sentence; if neither is a short, complete sentence, use one short
-    // plain sentence rather than inventing a fact or truncating either source.
-    private func jpAim(title : &string, description : &string, slice : &string, first : bool) : string {
-        var desc_raw = jpDecode(description)
-        var desc = jpFirstSentence(&desc_raw)
-        if(desc.size() > 0 && desc.size() <= 400) { return desc.copy() }
-        var purpose_raw = jpInner(slice, string_view("<p"), string_view("</p>"))
-        var purpose_clean = jpClean(&purpose_raw)
-        var purpose = jpFirstSentence(&purpose_clean)
-        if(purpose.size() > 0 && purpose.size() <= 400) { return purpose.copy() }
-        return string("In this step you will work through one idea at a time.")
+    // THE ARRIVAL OBJECTIVE, IN THE MANDATE'S WORDS.
+    //
+    // docs/learner-first-mandate.md requires one sentence: "In this step you
+    // will be able to ___".  The old code returned the manifest description
+    // verbatim ("Understanding bytes.") for every unit of every lesson: a noun
+    // phrase, not an ability, and exactly the defect C4 names.  The blank is
+    // now filled from THIS STEP'S OWN takeaway, which jpRemember already derived
+    // from the lesson's prose (or its verified quiz explanation).  Nothing is
+    // authored here: the words after the colon are the learner's own text.  The
+    // one mandated no-fact step says plainly what it offers instead.
+    private func jpAim(remember : &string) : string {
+        var none = jpNoFact()
+        if(remember.equals(&none)) {
+            return string("In this step you will be able to see how the ideas in this step connect.")
+        }
+        var out = string("In this step you will be able to explain: ")
+        out.append_view(remember.to_view())
+        return out
     }
 
     private func jpCanDo(slice : &string) : string {
@@ -445,8 +478,32 @@ public namespace underlayer_content {
         return jpWords(&line, 25)
     }
 
+    private func jpWithFixedPrefix(prefix : &string, s : &string) : string {
+        var out = prefix.copy()
+        var rest = s.substring(prefix.size(), s.size())
+        var cleaned = jpDeSpacePunct(&rest)
+        out.append_view(cleaned.to_view())
+        return out
+    }
+
+    // Only these exact authored phrases get a protected trailing space. They
+    // are the four fixed leads the pedagogy layer itself emits; everything
+    // after them is derived lesson text and is cleaned without exemption.
+    private func jpDeSpaceKnown(s : &string) : string {
+        var p = string("In this step you will be able to explain: ")
+        if(jpFindFrom(s, p.to_view(), 0) == 0) { return jpWithFixedPrefix(&p, s) }
+        p = string("You saw: ")
+        if(jpFindFrom(s, p.to_view(), 0) == 0) { return jpWithFixedPrefix(&p, s) }
+        p = string("From earlier: ")
+        if(jpFindFrom(s, p.to_view(), 0) == 0) { return jpWithFixedPrefix(&p, s) }
+        p = string("Recall the idea from ")
+        if(jpFindFrom(s, p.to_view(), 0) == 0) { return jpWithFixedPrefix(&p, s) }
+        return jpDeSpacePunct(s)
+    }
+
     private func jpAttrTag(name : &string, value : &string) : string {
-        var escaped = underlayer_core::html_escape(value)
+        var cleaned = jpDeSpaceKnown(value)
+        var escaped = underlayer_core::html_escape(&cleaned)
         var tag = string(" ")
         tag.append_string(name)
         tag.append_view(string_view("=\""))
@@ -462,7 +519,6 @@ public namespace underlayer_content {
         var out = string()
         var cursor : size_t = 0
         var previous = string()
-        var index : size_t = 0
         var needle = string_view("<div class=\"unit")
         while(true) {
             var start = jpFindFrom(src, &needle, cursor)
@@ -480,7 +536,7 @@ public namespace underlayer_content {
             }
             var body = src.substring(gt + 1, body_end)
             var remember = jpRemember(&body)
-            var aim = jpAim(title, description, &body, index == 0)
+            var aim = jpAim(&remember)
             var question = jpQuestion(&body, &previous)
             var answer = jpAnswer(&body, &remember)
             var can = jpCanDo(&body)
@@ -504,7 +560,6 @@ public namespace underlayer_content {
             out.append_view(attr.to_view())
             previous = remember
             cursor = gt
-            index = index + 1
             if(last) { break }
         }
         out.append_view(src.to_view().subview(cursor, src.size()))
