@@ -554,6 +554,16 @@ founder action after the next release; no deployed shutdown proof is claimed.
   whose six plants are all certified.
 
 
+## 5f. Known test-suite flakiness (observed 2026-11-26,Wave 1)
+During the I1/I2 verification batch, two of five `tests.exe` runs reported
+136–137/138 with `RUNTIME ERROR: invalid memory access` in the upstream
+`http::Server::release_connection` / `std::Arc::get`. A fresh rebuild passed
+3/3 consecutive runs with 138/138 and no runtime errors. The cause is not
+established; do not treat a single green run as proof. The CI summary-line gate
+(A2) refuses a partial run, but this flakiness is recorded here so an intermittent
+red run is investigated rather than rerun until green. Owner: unassigned —
+assign at the next wave kickoff. Upstream `lang/libs/http` is read-only here.
+
 ## 6. Still open (do not mistake these for done)
 
 1. **CSP externalisation is still open — the "no CSP" claim is historical
