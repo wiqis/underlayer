@@ -307,6 +307,83 @@ synthetic `--selftest` and a live `--plant` negative case.
 The journey checker needs `--workers 8` locally; a sequential crawl of 329
 lessons is correct but exceeds a 10-minute command timeout on this machine.
 
+### I9/H14 — anonymous surface honesty and anonymous writes (2026-11-27)
+
+**I9 — the 13 unmarked learner-shaped anonymous 200s were resolved by
+classification, not by a blanket change.** The shipped JSON shape is unchanged
+apart from the additive fields below; `/api/search` was not touched.
+
+| Decision | Endpoints | Why |
+|---|---|---|
+| **401** `{"error":"Sign in to see your data"}` | `/api/streaks`, `/api/streaks/weekly`, `/api/progress`, `/api/progress/:courseId`, `/api/progress/export`, `/api/me/overview`, `/api/exercises/failures`, `/api/nav-status`, `/api/review/recommendations` | Each is one learner's own state (streak, export, "me", failures, due queue). With no session the old handler answered for the shared `demo` row, which reads as the visitor's own data. Pure personal data has no honest anonymous form. |
+| **200 + additive `"demo":true,"message":"Sign in to see your data"`** | `/api/analytics/overview`, `/api/analytics/concept/:conceptId`, `/api/analytics/retention`, `/api/analytics/funnel` | Aggregate/curiosity views stay public, but the marker says on the wire that the numbers belong to the demo learner. The four pages that paint learner numbers (`/dashboard`, `/progress`, `/analytics`, `/streaks`) remain 303-gated, so no page can present them as the visitor's own. |
+
+The marker is emitted only when `has_session()` is false; a signed-in caller
+gets byte-identical JSON to before the change. `/components` remains gated by
+the same `UL_BUILD_MODE` provenance (404 in release), as recorded above.
+
+**H14 — release builds must not create or delete persistent rows anonymously.**
+Measured against a release-like binary on a disposable SQLite file, five routes
+wrote rows with no credentials; with a richer probe payload six write/del
+operations fired, and a seventh route (`reactivate`) was an upsert masked by an
+earlier probe. Debug/test binaries keep the old behaviour byte-for-byte so
+`tests.exe` still drives `POST /api/learners` (138/138). In release:
+
+- the **test-only** route (`POST /api/learners`) answers **404 "Not found"** —
+  it inserts into `learners` with a hardcoded identity and no password, and its
+  rate limiter still fires first so `security_check`'s existing bucket assertion
+  keeps proving that gate runs;
+- the **six real feature routes** answer **401** when no session resolves, via
+  `require_session_in_release()`. This is deliberately narrower than a
+  build-mode 404: a gate that disabled these routes for signed-in learners
+  would silently break shipped features (measured: `security_check`'s account
+  deletion check calls `POST /api/streaks/activity` with a valid token).
+
+| Route | Persistent effect when anonymous | Release |
+|---|---|---|
+| `POST /api/learners` | inserts `learners` with a hardcoded identity | 404 (test-only) |
+| `POST /api/goals` | inserts `learning_goals` for `demo` | 401 without session |
+| `DELETE /api/goals` | deletes `learning_goals` for `demo` | 401 without session |
+| `POST /api/user/deactivate` | upserts `learner_settings`, deletes `auth_sessions` | 401 without session |
+| `POST /api/user/reactivate` | upserts `learner_settings` on a fresh DB | 401 without session |
+| `POST /api/progress/import` | inserts `concept_states` / `review_items` | 401 without session |
+| `POST /api/streaks/activity` | inserts `daily_activity` / `learning_streaks` | 401 without session |
+
+Authenticated calls to all six are unchanged in release: the gate passes as
+soon as `has_session()` is true, so no product feature is lost.
+
+**Deliberately left unauthenticated — documented behaviours, not oversights:**
+
+- The auth lifecycle (`register`, `login`, `logout`, `from-account`,
+  `forgot-password`, `reset-password`, `verify-email`). Requiring a session to
+  obtain the first session is impossible; these writes are the shipped account
+  contract (see `docs/mobile-api.md`), not a discretionary anonymous write.
+  `tools/anonymous_write_check.py` exempts exactly these seven and prints the
+  reason for each exemption.
+- `POST /api/progress/share` returns a share URL only; it inserts no row.
+- `POST /api/fsrs/optimize|reset|import` are stateless today — they compute and
+  return parameters and write nothing. This is G3's known persistence gap, not
+  an anonymous-write surface; gating them would hide that gap rather than fix
+  it.
+- Public catalogue and navigation reads keep their existing `demo` fallbacks
+  where the payload is not learner-shaped. I9's checker keys on learner-shaped
+  fields specifically; it does not flag course metadata.
+- G13's guest progress takeover is a separate feature and is untouched.
+
+Local gates (CI wiring is the coordinator's H4 step):
+
+```
+python3 tools/anonymous_surface_check.py --base "$BASE_URL"
+python3 tools/anonymous_surface_check.py --selftest
+python3 tools/anonymous_write_check.py --base "$BASE_URL" --db "$DISPOSABLE_DB"
+python3 tools/anonymous_write_check.py --selftest
+python3 tools/security_check.py --port "$PORT"   # includes the H14 13b assertion
+```
+
+Neither write checker will accept a non-loopback URL or a production-looking
+DB name, and `anonymous_write_check.py` refuses a server whose `/api/health`
+does not report `build_mode=release`. Both have negative plants that must fail.
+
 ## 5. Rate-limit key, trust boundary and retention (H2/B7, 2026-11-26)
 
 Login, register, forgot/reset, the account bridge and the learning-write
