@@ -1,0 +1,117 @@
+{
+  "course_id": "x86simd",
+  "bundle": "x86simd-specimen.zip",
+  "sha256": "f2ba4dceb9eeed08250fc5ed126ad47e80258ef4fcb6a42b1d748ad19aae42ac",
+  "bytes": 157851,
+  "file_count": 19,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 483,
+      "sha256": "e365d52fe226d025e1ef49fc0f2d3db3af2af2905d529d509ed019eae6f9c75c"
+    },
+    {
+      "path": "build_samples.sh",
+      "bytes": 8185,
+      "sha256": "b1d06c02d70700d3009acf61e3827c1f44b50472007bc964f0a24807c2041ebb"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 54067,
+      "sha256": "770914ff937c8085a76b7b30513a3137fbec8964b234c2025f5175f54c36f522"
+    },
+    {
+      "path": "run1.txt",
+      "bytes": 76481,
+      "sha256": "9ca715567c1d28db1615c4a2d4efa8bf4a8a363add85cf0d6d7f2a20c0ce70d4"
+    },
+    {
+      "path": "run2.txt",
+      "bytes": 76493,
+      "sha256": "53cf103dde3b394a69f09710d449ca5366e79d35fee84fb11214af5ba96b65dd"
+    },
+    {
+      "path": "vec1.c",
+      "bytes": 16666,
+      "sha256": "cecf4091b9256aa3d0036b505c46f2b1952c025aa48d05b3eb05832f7428125c"
+    },
+    {
+      "path": "vec2.c",
+      "bytes": 24157,
+      "sha256": "ee4347bb28ce95f96511babd52ef49839116ec5d6aac862850b9fd2983c1f7a5"
+    },
+    {
+      "path": "vec3b.c",
+      "bytes": 3957,
+      "sha256": "bd2f6d82e6eb208908baea29b23f491fe8db3a0b14050bf4d192647da849988e"
+    },
+    {
+      "path": "vec4.c",
+      "bytes": 32916,
+      "sha256": "6cd029bcb531327d9c8b918614ec91978d196c1c2e77ca454f60637046ed61ac"
+    },
+    {
+      "path": "vec5.c",
+      "bytes": 25332,
+      "sha256": "6df21cac2fc30d544b9eb8918f21d43adfcf1ce3730a9e33f226424fd1ae3bd5"
+    },
+    {
+      "path": "vec7.c",
+      "bytes": 28182,
+      "sha256": "164186048ac2d2c7419e4260db89ae36169ddbda17edf11de616970546e045e1"
+    },
+    {
+      "path": "veccore.c",
+      "bytes": 7306,
+      "sha256": "a55d8138cf1e9772b6298b1b178cfbabf2b2c34399d6fe18625d0691f0adf79f"
+    },
+    {
+      "path": "vecdump.c",
+      "bytes": 2317,
+      "sha256": "1e7e81330527c46528e3396117660e5d0a89087724e06cfb8161549d59318347"
+    },
+    {
+      "path": "vecdump.h",
+      "bytes": 2671,
+      "sha256": "9a752aa02ed237cf236f3260f3fe812882609430cc5ba4db0d79380a65fdbd2a"
+    },
+    {
+      "path": "vecdump.out",
+      "bytes": 76485,
+      "sha256": "1e13f2dce135d4a54f92895377cc8dd7e371da0b5d3feb686b977646755933a8"
+    },
+    {
+      "path": "vecdump_dis.txt",
+      "bytes": 4257,
+      "sha256": "e7f9d10e79375ba8a7477bf451e777a0c5053802f295638458b932fc1ff6f0cb"
+    },
+    {
+      "path": "vecmaps.c",
+      "bytes": 22991,
+      "sha256": "a94fd4cd0f22a2d51a3bd8c66e823d39f626993b4b92f8175dd8f141aae20c11"
+    },
+    {
+      "path": "vecmaps.h",
+      "bytes": 1959,
+      "sha256": "0954182db1aca9052701728e0ff006d21f10c3080360006fed8ef7739ea4c5ae"
+    },
+    {
+      "path": "vecmaps_dis.txt",
+      "bytes": 14066,
+      "sha256": "a104f1600b5dfc07907fb2249192db2a81180405ad7b3c7ffaba6e1f405f1c43"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/x86simd/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/x86simd/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "course_id": "dyn",
+  "bundle": "dyn-specimen.zip",
+  "sha256": "15608de1267634de511ed86a9ab4183da2f96a187f301b756fca2c5d02c46cc8",
+  "bytes": 20487,
+  "file_count": 4,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 1217,
+      "sha256": "e68e613b221cd3af29a902e50b15c6201a5ae4f623c3957d2851d2394ec2ad4f"
+    },
+    {
+      "path": "build_samples.sh",
+      "bytes": 24391,
+      "sha256": "a83d27fa98b274b0503a86218d83a9bb7aefec5cfcbf4429194b82409893c32a"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 20005,
+      "sha256": "b1d888afb6f0d400c56af3a9c4303751054492a3aa1af44a5ed1d39b69fb446a"
+    },
+    {
+      "path": "dynscope.py",
+      "bytes": 15671,
+      "sha256": "411f961e97ebbaf993d2593d73d31024b4ba8909230814afe2643632e341c940"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/dyn/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/dyn/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

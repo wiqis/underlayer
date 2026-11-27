@@ -1,0 +1,42 @@
+{
+  "course_id": "link",
+  "bundle": "link-specimen.zip",
+  "sha256": "e0490af56a3c5c272663915ba4cd8349ecc9cd771a3ea359ef2acd59f149e5e0",
+  "bytes": 20456,
+  "file_count": 4,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 1768,
+      "sha256": "e8a10feb0f594d3abc153bc0c349f3b1697a1b68d02684ca5aba3e00d0c7c923"
+    },
+    {
+      "path": "build_samples.sh",
+      "bytes": 20953,
+      "sha256": "cdbd3758ccbd2e2651768aa9d3c61700864237c02e7cf8dec518c8607c5cfa69"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 21849,
+      "sha256": "dd3c8089bb1999e6df8884d9c3804732da0d638a6fbb25547f7d44d1c53ee03a"
+    },
+    {
+      "path": "linklab.py",
+      "bytes": 13376,
+      "sha256": "b7ae03d370bcc20aac474ac97c9a7f55c052e6b57a146c6e38db95e0968a9769"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/link/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/link/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

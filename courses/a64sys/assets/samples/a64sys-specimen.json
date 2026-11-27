@@ -1,0 +1,128 @@
+{
+  "course_id": "a64sys",
+  "bundle": "a64sys-specimen.zip",
+  "sha256": "c34ddf71a3be1cc3f63de10a50b909644e56d2ab33f6ed63f3b5d82811e86d8f",
+  "bytes": 229012,
+  "file_count": 21,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 353,
+      "sha256": "a19de8f2c3f5e767b2236c2133443fd07aefcb242cfa1cbe991b8ec6c1b83b16"
+    },
+    {
+      "path": "_no2m.o",
+      "bytes": 13104,
+      "sha256": "1c1061802fba66adb1bff3db2fed0f9a51dbf6adce3da93523840d207911bbfd"
+    },
+    {
+      "path": "a64sys.out",
+      "bytes": 115893,
+      "sha256": "ed270dd3852b36cadfcd44f48d0264e7c57a59217b40457c1ed2f2ae9b929a14"
+    },
+    {
+      "path": "a64sys.py",
+      "bytes": 196916,
+      "sha256": "8ff2294eedf5b40e9c8c7ce7f85a63ab4008e2b1121800c1da8c267204876805"
+    },
+    {
+      "path": "build_samples.sh",
+      "bytes": 1763,
+      "sha256": "5a54c3f268d3ca2e6b72d899286ef49376c34f52a7e239cf862e722094c1e7fe"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 37323,
+      "sha256": "caa8716aa50e532375bc5b4a69f8b7265b9f127b1abfd13a7aa36d9127824f1e"
+    },
+    {
+      "path": "rel.o",
+      "bytes": 4199472,
+      "sha256": "59ae8679ea5256611594f7e0d045886108f96268ff0eb773e8c72f23b989116d"
+    },
+    {
+      "path": "rel.s",
+      "bytes": 1929,
+      "sha256": "102e402661047efa0b5d0e58b638b9149e413e73ae2537e2e4649f977dc3073e"
+    },
+    {
+      "path": "run1.txt",
+      "bytes": 114921,
+      "sha256": "f0def2364786bd0bbe12ac551d3d7e27dfd48756501438088b85c940f1463d7b"
+    },
+    {
+      "path": "run2.txt",
+      "bytes": 114921,
+      "sha256": "f0def2364786bd0bbe12ac551d3d7e27dfd48756501438088b85c940f1463d7b"
+    },
+    {
+      "path": "sys.c",
+      "bytes": 14825,
+      "sha256": "2425e166cc94dfbba67b9a4c39b8fb1d475a1f003cedc3c58fc21665320bc704"
+    },
+    {
+      "path": "sys_O0.o",
+      "bytes": 2106560,
+      "sha256": "c560f59995d7aedf52c3b3f6e79b53a14a185b7a8b806ad81ca2fe1f7bceef5f"
+    },
+    {
+      "path": "sys_O0.s",
+      "bytes": 33056,
+      "sha256": "315280d72eda40812c659c086a9f8d80413a3fac72b6a66dc4ca7a61e030a4f4"
+    },
+    {
+      "path": "sys_O1.o",
+      "bytes": 2106248,
+      "sha256": "ac65fdd6589fc4c8347e7b53513d3eecaa876698172870f4777c0049499e1b37"
+    },
+    {
+      "path": "sys_O1.s",
+      "bytes": 24227,
+      "sha256": "25636c6c519eaa821d68dd102f53bff6de68584153b6ed2ca6cad4e3f1eb26b2"
+    },
+    {
+      "path": "sys_O2.o",
+      "bytes": 2106472,
+      "sha256": "b5707b63a91aa92f1b0376c1e800938bae822df0d2772c3aec6d3b08cabe0ed3"
+    },
+    {
+      "path": "sys_O2.s",
+      "bytes": 24421,
+      "sha256": "b687af7aba26280930e5180ab695cdc0990f640cf2639df79821ca33bc9085b9"
+    },
+    {
+      "path": "sys_Os.o",
+      "bytes": 2106472,
+      "sha256": "b5707b63a91aa92f1b0376c1e800938bae822df0d2772c3aec6d3b08cabe0ed3"
+    },
+    {
+      "path": "sys_Os.s",
+      "bytes": 24421,
+      "sha256": "b687af7aba26280930e5180ab695cdc0990f640cf2639df79821ca33bc9085b9"
+    },
+    {
+      "path": "vec.o",
+      "bytes": 7168,
+      "sha256": "bdf4b0cb6dcb80cbe7da9f5643ccde7fb36bf41289a4774f51287ffa4fb051b1"
+    },
+    {
+      "path": "vec.s",
+      "bytes": 2455,
+      "sha256": "f1b5e3cbe2a029216eae6b3970bcd6f40be3a7cbeafca8838f1e47c868fbc079"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "fleet toolchain recorded in courses/*/research.md",
+    "note": "research.md absent; fleet versions stated as the pinned corpus toolchain, not a per-file measurement"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/a64sys/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

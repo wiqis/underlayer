@@ -1,0 +1,317 @@
+{
+  "course_id": "rvat",
+  "bundle": "rvat-specimen.zip",
+  "sha256": "3db389f6c0f80b87dc29b0c825ec1182181b2faf3dbdc3e7c4281a1aff7ae5be",
+  "bytes": 325338,
+  "file_count": 59,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 1302,
+      "sha256": "8955112ae8ab30da882cf95d21d43bf0dfc81cb97dacd6197c30aa54c73ef578"
+    },
+    {
+      "path": "0x00000800,",
+      "bytes": 70,
+      "sha256": "36df220c690e11cf45be6a18321e5e3d1a42b638dbf24821a54818aadfa2f21d"
+    },
+    {
+      "path": "amo.c",
+      "bytes": 3066,
+      "sha256": "a0aac52ca49c76509380ebcb1e4d4664250c0708f18ddce91d7f5904b2d65b5e"
+    },
+    {
+      "path": "amo.o",
+      "bytes": 904,
+      "sha256": "9f8c0afd61edbce5ca9953ba8d3af6e61a6f28af591691d139ec10a64f24c9b6"
+    },
+    {
+      "path": "amo.s",
+      "bytes": 2885,
+      "sha256": "ff743d93a1ede39a95774a3d86de73dbb5c65e1bd5c3e62fe4e39dc0428a676d"
+    },
+    {
+      "path": "amo_a_O2.o",
+      "bytes": 2200,
+      "sha256": "92692ae1ca804af768faa91825815b0500ff237210ede0adba0afd218feed76b"
+    },
+    {
+      "path": "amo_a_O2_objdump.txt",
+      "bytes": 1574,
+      "sha256": "e8612c7aab0f3346334159e484a15c71a1d138f68021c622351b5ad61466e6cb"
+    },
+    {
+      "path": "amo_march_rv64gc.o",
+      "bytes": 2224,
+      "sha256": "33af63bdbb905e2320528fe55f212b290824c99b236b983faaf575194db4a0ec"
+    },
+    {
+      "path": "amo_march_rv64i.o",
+      "bytes": 4960,
+      "sha256": "262e566fb33d1650fe43f3e9f80e77e575919440e7f7c44d6e5c7fa92c1a1720"
+    },
+    {
+      "path": "amo_march_rv64im.o",
+      "bytes": 4976,
+      "sha256": "0b083fcf73bb6c4a52a207b61b27535c3e5aadeedee2872d67d82c1ccdbc2d1a"
+    },
+    {
+      "path": "amo_march_rv64ima.o",
+      "bytes": 2200,
+      "sha256": "92692ae1ca804af768faa91825815b0500ff237210ede0adba0afd218feed76b"
+    },
+    {
+      "path": "amo_march_rv64imac.o",
+      "bytes": 2184,
+      "sha256": "46573b543e7dda7fc58ffb29b1f3e8fc6ad080156ce0bc907c67275fb9d38cc2"
+    },
+    {
+      "path": "amo_march_rv64imafd.o",
+      "bytes": 2224,
+      "sha256": "0a2cf3639ad0e53b4c91566c0f6b161b58e0373c3dd4e7b99c38c98c7e087f32"
+    },
+    {
+      "path": "amo_noa_O2.o",
+      "bytes": 4976,
+      "sha256": "0b083fcf73bb6c4a52a207b61b27535c3e5aadeedee2872d67d82c1ccdbc2d1a"
+    },
+    {
+      "path": "amo_noa_O2_objdump.txt",
+      "bytes": 4816,
+      "sha256": "2978ccc508a0c0cba8c63e67041f16715dfb5a427abea289b5dafbdd4950d4e5"
+    },
+    {
+      "path": "amo_objdump.txt",
+      "bytes": 2344,
+      "sha256": "697113b0b7534d7697f1d6d7434f8978039e9c5ca814384b4fb3fca1c220b53c"
+    },
+    {
+      "path": "amo_warnings.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "build_samples.sh",
+      "bytes": 16868,
+      "sha256": "a8300e7c1e36e9f61ca00536d1a0555cf775599881d3df2ddaec29ad70c83a73"
+    },
+    {
+      "path": "corrupt.py",
+      "bytes": 15307,
+      "sha256": "263a276d19b5c45016c55cbc4fa0025d0844d240e2bd5084ccfcde8b568c4d2d"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 79197,
+      "sha256": "ffccbf901bc3b444a414cbbf8cca914068adb9efc23298c18d7b53526c69e88b"
+    },
+    {
+      "path": "fence.c",
+      "bytes": 2988,
+      "sha256": "cd360fb64bbc25e8f22b415d0dbfd541ea2851c32a896e665d50bd0afb8dccc4"
+    },
+    {
+      "path": "fence.o",
+      "bytes": 864,
+      "sha256": "c66a05d9812a95b2a133b84cd83020d33226bede1024b1f9abe762b005e79fd7"
+    },
+    {
+      "path": "fence.s",
+      "bytes": 2195,
+      "sha256": "49df19f78ad961032394a9f2aebf728d45710f03d4f6251cc3458e51197cd64f"
+    },
+    {
+      "path": "fence_c_O0.o",
+      "bytes": 5160,
+      "sha256": "9443b40c2ed94926bd234fdb6077ef9e854adeac58483eec74fb0fbeb4cbce23"
+    },
+    {
+      "path": "fence_c_O1.o",
+      "bytes": 3992,
+      "sha256": "6255897a8401947dd0ce3660d66c7adc7e3b44bcae7c3956e1c89d03715f278a"
+    },
+    {
+      "path": "fence_c_O2.o",
+      "bytes": 3992,
+      "sha256": "6255897a8401947dd0ce3660d66c7adc7e3b44bcae7c3956e1c89d03715f278a"
+    },
+    {
+      "path": "fence_c_O2_objdump.txt",
+      "bytes": 2510,
+      "sha256": "c04094d3746785eafca08eb2984539b3a7e41eb144a310503fdc955f6d2e6115"
+    },
+    {
+      "path": "fence_c_O3.o",
+      "bytes": 3992,
+      "sha256": "6255897a8401947dd0ce3660d66c7adc7e3b44bcae7c3956e1c89d03715f278a"
+    },
+    {
+      "path": "fence_objdump.txt",
+      "bytes": 1524,
+      "sha256": "53871649a9af243d1420a2849c1c95319d1d5deac68c38d380dde816c951b71e"
+    },
+    {
+      "path": "lock86.s",
+      "bytes": 3612,
+      "sha256": "5baa4a8c0295e98682fa6bf0150a6aff8f0af3bcd5f3f9ea00912d53a62ed054"
+    },
+    {
+      "path": "lock86_listing.txt",
+      "bytes": 1638,
+      "sha256": "3de83a6e85cc6121a8d132f25d5e77f1e5cd5d8f35ae935b2a8adfe87d609813"
+    },
+    {
+      "path": "run1.txt",
+      "bytes": 167339,
+      "sha256": "2b883ca2cec4769c69db0e63557e7549d33c8ff7c1101ab6b5adb4f158a05bb1"
+    },
+    {
+      "path": "run2.txt",
+      "bytes": 167339,
+      "sha256": "2b883ca2cec4769c69db0e63557e7549d33c8ff7c1101ab6b5adb4f158a05bb1"
+    },
+    {
+      "path": "rvat.out",
+      "bytes": 167339,
+      "sha256": "2b883ca2cec4769c69db0e63557e7549d33c8ff7c1101ab6b5adb4f158a05bb1"
+    },
+    {
+      "path": "rvat.py",
+      "bytes": 257728,
+      "sha256": "66cc58f1ea365982c8733a7158c69c848c48c5a70721be693781258dc56ffb5f"
+    },
+    {
+      "path": "vec.c",
+      "bytes": 2013,
+      "sha256": "b711fab0e2446461de087ff1d8242ef0df2059b10d9bc0c92d107bbfde294c38"
+    },
+    {
+      "path": "vec.o",
+      "bytes": 1376,
+      "sha256": "d29f09a649bf6b8527a5eac2fdefba7221370bb6b56bf16f67a26c2d34285a51"
+    },
+    {
+      "path": "vec.s",
+      "bytes": 9936,
+      "sha256": "6773c3d0833b63eac047210698b8bda91ad0f3fbaf62a30abfa190224d2e95c8"
+    },
+    {
+      "path": "vec_noV_O0.o",
+      "bytes": 2048,
+      "sha256": "32faf9eb8adf5d86cb27e50ac107c06be46bc75525fc4219546649dea7c51e47"
+    },
+    {
+      "path": "vec_noV_O0_objdump.txt",
+      "bytes": 6091,
+      "sha256": "3c4c7e872d902e17e4c66d9584f1574ae1217d72d17511f6fe285716daed2380"
+    },
+    {
+      "path": "vec_noV_O1.o",
+      "bytes": 1672,
+      "sha256": "f1789374c4046c0161629f34da75809f2239ad2471d304028a23ad27eddf484e"
+    },
+    {
+      "path": "vec_noV_O1_objdump.txt",
+      "bytes": 2205,
+      "sha256": "2b87f08b204430cfe204b830b31550ac659b1ad3a12efe03e51fe16247aa3ac2"
+    },
+    {
+      "path": "vec_noV_O2.o",
+      "bytes": 1672,
+      "sha256": "f1789374c4046c0161629f34da75809f2239ad2471d304028a23ad27eddf484e"
+    },
+    {
+      "path": "vec_noV_O2_objdump.txt",
+      "bytes": 2205,
+      "sha256": "37ae61cd8987f74db0e027424e07e87bfd83a435b0ae1165437eebc8ddeb90d0"
+    },
+    {
+      "path": "vec_noV_O3.o",
+      "bytes": 1672,
+      "sha256": "f1789374c4046c0161629f34da75809f2239ad2471d304028a23ad27eddf484e"
+    },
+    {
+      "path": "vec_noV_O3_objdump.txt",
+      "bytes": 2205,
+      "sha256": "6063f4a1535e7d319bd740f697bae32819469f296ccef30d13bdee97f85e0306"
+    },
+    {
+      "path": "vec_noV_Os.o",
+      "bytes": 1672,
+      "sha256": "53ecbc942e72646d805afbbdcc62ece3ebea7add34ffbe9efcb5a314f77b34e3"
+    },
+    {
+      "path": "vec_noV_Os_objdump.txt",
+      "bytes": 2181,
+      "sha256": "258510f52cf5a99c475ce13ec36973cf69581175bd6eff80c18f1eda091fe034"
+    },
+    {
+      "path": "vec_objdump.txt",
+      "bytes": 8978,
+      "sha256": "59d04eab6a4d2cca0aba1cd24d070aa01a7eb25d9a563e1bff584441edbc6279"
+    },
+    {
+      "path": "vec_V_O0.o",
+      "bytes": 2144,
+      "sha256": "1ac9ed40f85c103d06e5ca72ce9a09700e9afc33420a9537d5abb8990299d827"
+    },
+    {
+      "path": "vec_V_O0_objdump.txt",
+      "bytes": 6262,
+      "sha256": "b69ef34af4fa532dcdfdb8540882f086bc8a5874eb7e226cbc5b04a69a7858ff"
+    },
+    {
+      "path": "vec_V_O1.o",
+      "bytes": 1760,
+      "sha256": "4c72b37f9d8d359a5d85eae361889bbc487ad731ce6f36c76f8a22edea25c198"
+    },
+    {
+      "path": "vec_V_O1_objdump.txt",
+      "bytes": 2203,
+      "sha256": "1762d8a9700f19779eb24e469b0014e1f9c6d451f8b4de823293a717b9f5e9e1"
+    },
+    {
+      "path": "vec_V_O2.o",
+      "bytes": 2224,
+      "sha256": "b87e68b2203d1356923b98f8d23d287e94a253f1ff3e6b6ce07ce7e56f7f085b"
+    },
+    {
+      "path": "vec_V_O2_objdump.txt",
+      "bytes": 8192,
+      "sha256": "2b6ce40319e0064e358651b2ca0d46fb78265e25532265a91d4da944c49f823a"
+    },
+    {
+      "path": "vec_V_O3.o",
+      "bytes": 2224,
+      "sha256": "b87e68b2203d1356923b98f8d23d287e94a253f1ff3e6b6ce07ce7e56f7f085b"
+    },
+    {
+      "path": "vec_V_O3_objdump.txt",
+      "bytes": 8192,
+      "sha256": "3ec8ef034d3483d6e484d069f4d9f59ddb2d2240ecbfb85329e7dd92faae604f"
+    },
+    {
+      "path": "vec_V_Os.o",
+      "bytes": 1888,
+      "sha256": "cd088f2539e8bea1fcb6dbd9cfca3f6ff2a2fbef35a6c2acd3815b6eb1f7eaa4"
+    },
+    {
+      "path": "vec_V_Os_objdump.txt",
+      "bytes": 3596,
+      "sha256": "9701638bcb2db88585d602512019c34344e01195e774ed4792cfb0191919cbb9"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/rvat/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/rvat/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

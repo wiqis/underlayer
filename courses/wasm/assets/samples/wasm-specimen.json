@@ -1,0 +1,187 @@
+{
+  "course_id": "wasm",
+  "bundle": "wasm-specimen.zip",
+  "sha256": "4b0bee2b0da3025be3de15edc30ef1e2828d40b4a6e2567a0aae380ce44ec082",
+  "bytes": 26657,
+  "file_count": 33,
+  "files": [
+    {
+      "path": "__pycache__/wasm_decode.cpython-312.pyc",
+      "bytes": 23938,
+      "sha256": "fc2d9cfeacf70a941bb3c8786d719537531253ac4c3e86fa2dc85e845bc3992c"
+    },
+    {
+      "path": "body.wasm",
+      "bytes": 114,
+      "sha256": "ff7304976bd262120fc229fbefac7d40c0cbf1e829a4d385c860206ce61dcf63"
+    },
+    {
+      "path": "body.wat",
+      "bytes": 409,
+      "sha256": "1370321ef1e0a26b8a2ee66d70d668a680a9f911bdecda7d04367d12607593b9"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 12525,
+      "sha256": "3d92c99061dcd340cac3ef28b6c05e75094711b33778f238bd47d697e12c7797"
+    },
+    {
+      "path": "data0.wasm",
+      "bytes": 41,
+      "sha256": "f8c8f65a118a62a0d7254a2f236bf62672a20220731c1697719dca9094862efb"
+    },
+    {
+      "path": "data1.wasm",
+      "bytes": 38,
+      "sha256": "55902daafc0132680a65f5d815306bf63f21839d25a4b19e4d65ce6632ab6b7c"
+    },
+    {
+      "path": "data2.wasm",
+      "bytes": 42,
+      "sha256": "70b13b02777d88a42d71be01fb02bbef6b70d5ec43939d88ad06901b7364eb09"
+    },
+    {
+      "path": "decls.wasm",
+      "bytes": 132,
+      "sha256": "1634d604400b87d76ef45da0f6f21ec2e716c2035266a21b24c62ca4bfbcdb0e"
+    },
+    {
+      "path": "decls.wat",
+      "bytes": 563,
+      "sha256": "61a18c177adcadf5ea6c0e46331fd315f4fbedd4f4a101bae97054f79a48be19"
+    },
+    {
+      "path": "elems.wasm",
+      "bytes": 84,
+      "sha256": "39cb0cd55bc095e0bb2fd431fe99d46e36a9e01a95bbc5c8552ac223bf682cb8"
+    },
+    {
+      "path": "elems.wat",
+      "bytes": 377,
+      "sha256": "16ebc54ba5fb2067e8ee967ab97291485a615446449e5c4e67c336d97dcf6880"
+    },
+    {
+      "path": "externs.c",
+      "bytes": 126,
+      "sha256": "a9b362722c9e1c4ffbee19c87f5c4f0256e626d691f8e87271fe18d9cb32f1ec"
+    },
+    {
+      "path": "externs.o",
+      "bytes": 393,
+      "sha256": "ca4a2700ad9e3652b18df90d685133fee0138c922d99651405325c971015e7b3"
+    },
+    {
+      "path": "form4.wasm",
+      "bytes": 48,
+      "sha256": "359af6b1678d6a5ca16fe989adf38a8d9e56ef016d6db8d3d695802c7601d48c"
+    },
+    {
+      "path": "form5.wasm",
+      "bytes": 43,
+      "sha256": "d9667ebea0d2732d50e869c98cf862e5489c4df959ae6651d4265e6a28d8e319"
+    },
+    {
+      "path": "form6.wasm",
+      "bytes": 50,
+      "sha256": "593af0652a32c859fd33cf7cec5f85b73fbb2e0900ce28163ed0b8cc6eebde68"
+    },
+    {
+      "path": "form7.wasm",
+      "bytes": 43,
+      "sha256": "befefd5c8daa9653eabb59865418e6caf06746444cfe492d81aa82958c1c1eb5"
+    },
+    {
+      "path": "globs.wasm",
+      "bytes": 70,
+      "sha256": "94ce0b6df8a76b6c76a09c8482da9d7a12105bde9b120ee09f8af6ca458a1885"
+    },
+    {
+      "path": "globs.wat",
+      "bytes": 313,
+      "sha256": "57351825b2c25d7a6c7e5f932bdde7c4f487f3c957814ba13f1ee3b04d02abde"
+    },
+    {
+      "path": "handwritten.wasm",
+      "bytes": 97,
+      "sha256": "cfceb2c1be5876a1c75e7f6def1b586583ee066d94a11972a8ed110a184f00ac"
+    },
+    {
+      "path": "handwritten.wat",
+      "bytes": 345,
+      "sha256": "2310be7d442b640aa76e01f984b7f5dd1653f0635388373e9748d28aaf4ab45f"
+    },
+    {
+      "path": "long_custom.wasm",
+      "bytes": 344,
+      "sha256": "ef1cee83f27538d274926591976107578188a18c237c8b1cfd4e3c113579a65d"
+    },
+    {
+      "path": "minimal.wasm",
+      "bytes": 8,
+      "sha256": "93a44bbb96c751218e4c00d479e4c14358122a389acca16205b1e4d0dc5f9476"
+    },
+    {
+      "path": "minimal.wat",
+      "bytes": 8,
+      "sha256": "1885772b94ca41b360d9bd07535547f4c8ef16cbe7e49d2c8e9780247e26c4de"
+    },
+    {
+      "path": "neg.wasm",
+      "bytes": 96,
+      "sha256": "1f8f190becdb57ccae5620133d39c9000ed22b69646a881d8938873c501d0951"
+    },
+    {
+      "path": "neg.wat",
+      "bytes": 285,
+      "sha256": "98a6e334b3d4bb77f617b4714982eceefd91d1227df927a4b95cce94cbc174b4"
+    },
+    {
+      "path": "ops.wasm",
+      "bytes": 156,
+      "sha256": "de1d9d63619105d6bb64c5171468e68251402f257acf7c9a972a1530676418d5"
+    },
+    {
+      "path": "ops.wat",
+      "bytes": 848,
+      "sha256": "a739ef0b1d01c160759927389b98bc184235dce1fe86264cfec31826e3f78510"
+    },
+    {
+      "path": "simple.c",
+      "bytes": 79,
+      "sha256": "18db3110bfe3b70e7df74df2ad2e4bdad78afcf09592c4058fa4b0958f234dc3"
+    },
+    {
+      "path": "simple.o",
+      "bytes": 342,
+      "sha256": "2eb6d61af85f7fa18cd516ecb8f54d0caf165f64b78ff05e0a875d57552e8dfa"
+    },
+    {
+      "path": "sym.c",
+      "bytes": 47,
+      "sha256": "be292bf8ad092466bec7d772b92e165bb82ea0ff507bbae4d309bc3e7baf78f2"
+    },
+    {
+      "path": "sym.o",
+      "bytes": 452,
+      "sha256": "177af23b6351468babe764670b84abb07a54f0bae0573876688f12c286a0aac8"
+    },
+    {
+      "path": "wasm_decode.py",
+      "bytes": 17169,
+      "sha256": "051488fe96edc556ac7cf06f4abdeb2b3e6e5aa03f36c6cdd472ce6883f4ba95"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/wasm/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/wasm/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

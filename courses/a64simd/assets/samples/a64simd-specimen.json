@@ -1,0 +1,137 @@
+{
+  "course_id": "a64simd",
+  "bundle": "a64simd-specimen.zip",
+  "sha256": "f5d74d9495bce98cde06277c2e24593da5ed993249153fdd41bc6477d04cb29b",
+  "bytes": 233684,
+  "file_count": 23,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 869,
+      "sha256": "9a6a7d66dbe2604fbf8ccd092a44015eb54e331266080454ff8e5090c480113e"
+    },
+    {
+      "path": "_guards.py",
+      "bytes": 5328,
+      "sha256": "970ee46fca2321376034c9afd07736130587bc39b47db8b990245fc36b0e7fcf"
+    },
+    {
+      "path": "a64data.out",
+      "bytes": 124944,
+      "sha256": "56fe161778ada1167a54f60e2ee308ac8af2f3fe2ad0585883a8e422568af12a"
+    },
+    {
+      "path": "a64data.py",
+      "bytes": 279763,
+      "sha256": "aaf8c06e12b6e38a5b39e5827000db2e86e8bbd06a62f5aafe8b6025f5173738"
+    },
+    {
+      "path": "build_samples.sh",
+      "bytes": 3030,
+      "sha256": "4e0160961fb345fc95a1c9d3f41638ad0b7b2df760543f047c9cfadb818d6154"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 43813,
+      "sha256": "9ad2c95793dcaba9a87f3e5449a4f0c1e4de0e96ebc2409eaef6f1dd1dfb035f"
+    },
+    {
+      "path": "data.c",
+      "bytes": 4925,
+      "sha256": "97acd79478c6aceee690f871a3a2fee33701b44a651b3a091c84262a9c30ce42"
+    },
+    {
+      "path": "data_O0.o",
+      "bytes": 5000,
+      "sha256": "96464b2bb7458cea01fcd8b897aa6319af3065c54bb3ee255bfadf456fd744be"
+    },
+    {
+      "path": "data_O0.s",
+      "bytes": 25475,
+      "sha256": "f75ae3be3059d6a04e4184605622340d9f1197e07b0925ed95eee03e79207dbf"
+    },
+    {
+      "path": "data_O1.o",
+      "bytes": 3440,
+      "sha256": "b3448a1956d96f52ca68bba17ed87359615695447f34fb01b77534be475beb4f"
+    },
+    {
+      "path": "data_O1.s",
+      "bytes": 11395,
+      "sha256": "815d252bcec574e20e67fb800201980cfa38035a599e91e3e69af95278b3b79b"
+    },
+    {
+      "path": "data_O2.o",
+      "bytes": 4048,
+      "sha256": "fb7a30060c01be08f4c382e7576f38f4c835ba750202a0e5cb007a36398aef2b"
+    },
+    {
+      "path": "data_O2.s",
+      "bytes": 14929,
+      "sha256": "0a75d3a9a6ff7832385e9a7cc2a0c8c917c8d6dca80130a2feb6cbc177aaf8c3"
+    },
+    {
+      "path": "data_O2_novec.s",
+      "bytes": 11395,
+      "sha256": "815d252bcec574e20e67fb800201980cfa38035a599e91e3e69af95278b3b79b"
+    },
+    {
+      "path": "data_Os.o",
+      "bytes": 3432,
+      "sha256": "bfe885061aade8e108903ba5f48ca6299e0e1239403ea176c07fc0214f7683e5"
+    },
+    {
+      "path": "data_Os.s",
+      "bytes": 11388,
+      "sha256": "0bc3d67a08256d4ae9a779e94dcbf9ad9f78600ecab241c5f2278b55db9d8939"
+    },
+    {
+      "path": "pair.c",
+      "bytes": 1577,
+      "sha256": "9269797bb76bde1633daf93e593bb0dc6c1c007ee0b0d76975cf4840aa1bbc36"
+    },
+    {
+      "path": "pair_base.o",
+      "bytes": 1560,
+      "sha256": "37a50c9f64199af7e7a2938d613ae22f00387720ec26983f709829b6e9c6e04b"
+    },
+    {
+      "path": "pair_base.s",
+      "bytes": 3603,
+      "sha256": "f669060ddf3add6dfa1b99682198ed7271fa39be637ba9fd20776e7c805b0241"
+    },
+    {
+      "path": "pair_lse.o",
+      "bytes": 1432,
+      "sha256": "d857f3661f6c8a9c38a9748a7c98a5326ceea879692e58b06d9fa291893a18c1"
+    },
+    {
+      "path": "pair_lse.s",
+      "bytes": 2155,
+      "sha256": "191baae3c72cd711d3cec591b9a336f8f75ee108b179aad8423f0d273cb15f31"
+    },
+    {
+      "path": "run1.txt",
+      "bytes": 124944,
+      "sha256": "56fe161778ada1167a54f60e2ee308ac8af2f3fe2ad0585883a8e422568af12a"
+    },
+    {
+      "path": "run2.txt",
+      "bytes": 124944,
+      "sha256": "56fe161778ada1167a54f60e2ee308ac8af2f3fe2ad0585883a8e422568af12a"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/a64simd/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/a64simd/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

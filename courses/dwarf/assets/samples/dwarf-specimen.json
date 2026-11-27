@@ -1,0 +1,152 @@
+{
+  "course_id": "dwarf",
+  "bundle": "dwarf-specimen.zip",
+  "sha256": "e3e139c3e15359f963de65a926789a375b102a4de73e3d5619aa6cf2e9cc0471",
+  "bytes": 40803,
+  "file_count": 26,
+  "files": [
+    {
+      "path": "calls.c",
+      "bytes": 121,
+      "sha256": "571c3ef4d4913d040104ed2cc46478121bcc48a3ead3173dd04e419c16297612"
+    },
+    {
+      "path": "calls_clang_v5.o",
+      "bytes": 3264,
+      "sha256": "97b27ba21b5010d2e55d8a58aa539005ae32e9ef065efca25503e28be3780acb"
+    },
+    {
+      "path": "calls_O2.o",
+      "bytes": 4776,
+      "sha256": "60d314e73441bce2272ff29c0730497ccd81d7845c9637b31d4968707c8ae1f1"
+    },
+    {
+      "path": "frame_debug_frame.o",
+      "bytes": 3936,
+      "sha256": "f07aaacf61825f4071a8ae838cfdd731968292662bdf277cac6e8c1e9de370c8"
+    },
+    {
+      "path": "inline.c",
+      "bytes": 355,
+      "sha256": "775e513a38ddb66d1efb2c76fcf6094bb3446d96912efb8cd62d9e3116c44c17"
+    },
+    {
+      "path": "inline_O2.o",
+      "bytes": 5512,
+      "sha256": "ea327e07cdd99c354eea07d06b7473d9114772e3b488d80bac2ee5fcaafadb6c"
+    },
+    {
+      "path": "portability.c",
+      "bytes": 176,
+      "sha256": "bd0153cb8526d2ccdbf696b5c988ba9427314f00ff5edd87cef839cba6ab122e"
+    },
+    {
+      "path": "split.dwp",
+      "bytes": 2176,
+      "sha256": "44b7154c46adb50468ae92543a9a2b6cbeba1f1071d0ad2dcd2d3dc8eabcb696"
+    },
+    {
+      "path": "split_exe",
+      "bytes": 17440,
+      "sha256": "790e0c02d300bcfdc23a9b0764e2160ec9a3e335a1923d875c9e3449bea43d64"
+    },
+    {
+      "path": "split_main.dwo",
+      "bytes": 1488,
+      "sha256": "11e75c8a953e0ebbb916bd3ed3a41672f9027e3e099aff171ede67b7f646b276"
+    },
+    {
+      "path": "split_types.dwo",
+      "bytes": 1592,
+      "sha256": "ef4fcc6689e273a47d3078537f951962dc10c7a6ee289c095ed7bae94262c290"
+    },
+    {
+      "path": "types.c",
+      "bytes": 751,
+      "sha256": "18c7063febf76b9d12bc0e633b42999f0ee51a2b12fc4159eeddf5fa8d37f214"
+    },
+    {
+      "path": "types_aarch64.o",
+      "bytes": 4096,
+      "sha256": "644f901df65e9112be8bfa16fc32b27901b3617d58cb277ca6832a4156f14d20"
+    },
+    {
+      "path": "types_clang_v4.o",
+      "bytes": 3160,
+      "sha256": "8776dafe80b222fd9490a1c3a0f6dd6f3a7c2777ac9442c81536509e99fe8a9e"
+    },
+    {
+      "path": "types_i386.o",
+      "bytes": 2708,
+      "sha256": "00308ff8293509a7df60e0f3e112569742d23bc1146fa629d45e59a27eccaddf"
+    },
+    {
+      "path": "types_main.c",
+      "bytes": 220,
+      "sha256": "4c7ac9ef36a1c4b8c2ca31d9bcd17dba4c8321531792246a28bb44336e4d22d9"
+    },
+    {
+      "path": "types_O0",
+      "bytes": 18712,
+      "sha256": "f74ab61296e894d50d1265d520db4413adfb41e182b6583854bd24b41a4a50c1"
+    },
+    {
+      "path": "types_O2",
+      "bytes": 19160,
+      "sha256": "e306541d702b91209ebc72f9874dbdb75ab79966030a1a5be0d97c3327d52ef1"
+    },
+    {
+      "path": "types_pub",
+      "bytes": 19304,
+      "sha256": "2f03a6c487c43f42ac07e003d7968811bd200f157909c0294e17a149d4fb7b72"
+    },
+    {
+      "path": "types_split",
+      "bytes": 18136,
+      "sha256": "2dcfcacdf76ae98a44e2b26a616951c8c3d0d5937f86d8f9e743a58ac91fb273"
+    },
+    {
+      "path": "types_split.dwo",
+      "bytes": 2160,
+      "sha256": "6402c0f2f7e12d69b0ae12decda8d901e70f4ff0b6a42a0ae753eb7eb32b7b06"
+    },
+    {
+      "path": "types_v2.o",
+      "bytes": 4128,
+      "sha256": "7d5d7b50c3ae4fd69461ba5b87b8b51e8d7a986aedd27a2125a6d142e2e059f0"
+    },
+    {
+      "path": "types_v3.o",
+      "bytes": 3664,
+      "sha256": "8e47ef3421ed37d6d68a7764deed8fd62cbf2ed166f17955370d6e32f1a904f0"
+    },
+    {
+      "path": "types_v4.o",
+      "bytes": 3560,
+      "sha256": "6957b7f41503b3875f9bf3d19b7b4d770952214475c000db9ffe23977e29e025"
+    },
+    {
+      "path": "types_v4_typesection.o",
+      "bytes": 4032,
+      "sha256": "58bbee8269681aebf547d0f9c5836f96fb9fe67a35c5de6d7ba0e4070cf2929a"
+    },
+    {
+      "path": "types_v5_typesection.o",
+      "bytes": 4280,
+      "sha256": "19f1afe3bb2a03593e2b784c8b84224ea7190a5699340dbfca1b1867e8166e77"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/dwarf/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/dwarf/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

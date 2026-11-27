@@ -1,0 +1,327 @@
+{
+  "course_id": "obj",
+  "bundle": "obj-specimen.zip",
+  "sha256": "dc0765cee7cc1ee6f038b853d683f5ffa51cc5ca8144aad64cc5d9241ccd6575",
+  "bytes": 39902,
+  "file_count": 61,
+  "files": [
+    {
+      "path": "aarch64_enc.py",
+      "bytes": 5218,
+      "sha256": "02bcf754defe1225bd2c3470310b335d2f68476ac54a809d3cfaa6dc7c514985"
+    },
+    {
+      "path": "adrp_test.c",
+      "bytes": 414,
+      "sha256": "20d0a5d6c12df8573f792debdf13ed4daec20125356a7a878ef172820a8f2bb2"
+    },
+    {
+      "path": "adrp_test.o",
+      "bytes": 1200,
+      "sha256": "b384a172123205cd571f668398ad05a0a52e67894e4e37d4555dc8e9e9e5ba37"
+    },
+    {
+      "path": "app.c",
+      "bytes": 135,
+      "sha256": "188873dc8792ab034e05bbbbb00a49d5719fb27c891ece1d2f4bfe83d60c130d"
+    },
+    {
+      "path": "app.o",
+      "bytes": 1264,
+      "sha256": "1f4c5820a9c7a1e180ad0d274a582f9b4e5ebbf18c66719cd0eb4891c6a690c6"
+    },
+    {
+      "path": "ardec.py",
+      "bytes": 5321,
+      "sha256": "fe25e22d94f2ae0e0e87af56049f7446e2b882333d4722e6f32fd05f614beaa1"
+    },
+    {
+      "path": "build_samples.sh",
+      "bytes": 4815,
+      "sha256": "f79edb7878d50d61215e4c64ed0e2c7ea89fa9dd177c281b6122994085ca1b66"
+    },
+    {
+      "path": "ca_coff.o",
+      "bytes": 729,
+      "sha256": "c71961500fcd6ac4d713253e17a5f09f868a091a09e0db06b78567491ed4abea"
+    },
+    {
+      "path": "ca_elf.o",
+      "bytes": 1320,
+      "sha256": "c26fd417ca25113d85609467fcedfdebf2f28d7aa2893a7c4192c8ce6d0c3a1e"
+    },
+    {
+      "path": "ca_macho.o",
+      "bytes": 592,
+      "sha256": "8f8b324fb3ac9684b0b5fb6faf30e575ef67eba120ff2ecd7f06b84c4ec87985"
+    },
+    {
+      "path": "cb_coff.o",
+      "bytes": 729,
+      "sha256": "4828d26feacc91940ce28ba28035530f399eb2d2a676bb498ad8611fd42e4c5b"
+    },
+    {
+      "path": "cb_elf.o",
+      "bytes": 1320,
+      "sha256": "24cf8818bf7b02946687b22e43283e78b6e856734a8de24050b8089a03db6478"
+    },
+    {
+      "path": "cb_macho.o",
+      "bytes": 592,
+      "sha256": "a27c2a2cc2dd608160fdc8b05edfb17866675526268c1775367e2764f6769ec0"
+    },
+    {
+      "path": "comdat_a.cpp",
+      "bytes": 92,
+      "sha256": "b8de9bdcf6ba3b46cd87a17f3cbf657bcf2b34a4000b9849280139990dea768c"
+    },
+    {
+      "path": "comdat_b.cpp",
+      "bytes": 92,
+      "sha256": "a2091f21bd1a1cb00b64947d4b08f13d596bee01a043b7717a0747e7b57bbd1e"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 19732,
+      "sha256": "494d93126e407838dacbd58989809adeae1d1ed6a04a4030320a8235f56e8773"
+    },
+    {
+      "path": "demo.c",
+      "bytes": 1040,
+      "sha256": "efd6b7e76ade5a9fd30dfbb18d5c0003c0221a4b65067b7792c6ca8de71a38d9"
+    },
+    {
+      "path": "demo_arm64elf.o",
+      "bytes": 2176,
+      "sha256": "9f2aad16ccbc588af1915eb38b9659d3f6c94b7ce503b0ccd125ca091dd107b0"
+    },
+    {
+      "path": "demo_coff.o",
+      "bytes": 1098,
+      "sha256": "4475fcb963906ec70b579508117271bd6b6917629c01ea235910cf4c5db7a098"
+    },
+    {
+      "path": "demo_elf.o",
+      "bytes": 1952,
+      "sha256": "590e7c2761a7aff7ee27a8abd7aa1cd125937e8b47e67cc0fed0f0a4cecbee72"
+    },
+    {
+      "path": "demo_elfgcc.o",
+      "bytes": 2136,
+      "sha256": "67e68daa70bd4399ca415d8416025e00ea489ba582c489cf5a2eb092219bd0a5"
+    },
+    {
+      "path": "demo_i386_elf.o",
+      "bytes": 1492,
+      "sha256": "2c82cdcf84d4d996f96df9d5641e30c56b0d6cf036b75bb8dfb7d865efa255f7"
+    },
+    {
+      "path": "demo_i386_nopic.o",
+      "bytes": 1340,
+      "sha256": "e2540e8c236be5538c20b235b2950512ffc27d8d3911e8b074236719ac1219cb"
+    },
+    {
+      "path": "demo_macho.o",
+      "bytes": 1224,
+      "sha256": "77473f8e4e68c4a9775aca4a55b7fc0abbd545846be143956663d49fb7e2d54c"
+    },
+    {
+      "path": "dup_a.c",
+      "bytes": 73,
+      "sha256": "ade28eebd846d2dc561b86a05e31f6d1b2117b968f3448c701ce7e52486fc52f"
+    },
+    {
+      "path": "dup_a.o",
+      "bytes": 1032,
+      "sha256": "57c83f081eb75b59401066b8df7e621ed4884e5e0c5294d8724acb54596e3fd3"
+    },
+    {
+      "path": "dup_b.c",
+      "bytes": 73,
+      "sha256": "a5514c294f7dcd0c9ece4d49e03be7222540df5747fbcba5a4bb4b3de965ceee"
+    },
+    {
+      "path": "dup_b.o",
+      "bytes": 1032,
+      "sha256": "1ae74e9f3a8837faa28d6bc3863dbaefbdefbaaec55acadbc0a6b5bcb3b01839"
+    },
+    {
+      "path": "emit_elf.py",
+      "bytes": 10909,
+      "sha256": "668f58ff9e457697aea149f711462e6a75e7b4df0b62f5d547e940a5b7e867cc"
+    },
+    {
+      "path": "enc.c",
+      "bytes": 228,
+      "sha256": "eb5240d6877fbb3113f61e7947c6bd8d290a3b29f90a8a73238dbb7fda41e248"
+    },
+    {
+      "path": "enc_a64_nopic.o",
+      "bytes": 1784,
+      "sha256": "22917deb9b5526d6f25c253061a2df948536ceb81807c3c97cd1209fe4c7154d"
+    },
+    {
+      "path": "enc_nopic.o",
+      "bytes": 1672,
+      "sha256": "3555497fb209f580ba3cf65a7ebf7c676575de1a65e497bf87bdb1baabb99efb"
+    },
+    {
+      "path": "hand.o",
+      "bytes": 936,
+      "sha256": "695ce3967d5cfd89a6370529526b80dd0d0cb16df6b72ca00f6b85d626fe9b99"
+    },
+    {
+      "path": "l1.c",
+      "bytes": 68,
+      "sha256": "2c1d3fd56422d817ea12e7c68be35e8997ad3fc6b295114d4aae13a9265a79c0"
+    },
+    {
+      "path": "l1.o",
+      "bytes": 1080,
+      "sha256": "24bac696cd90688229e1dcb4c6e6458d048373cc96b620b5d334224714c4398b"
+    },
+    {
+      "path": "l2.c",
+      "bytes": 68,
+      "sha256": "39105cf167358b1df80eccb3147946069b8fc0cb94fc89be1b4136cac973efce"
+    },
+    {
+      "path": "l2.o",
+      "bytes": 1080,
+      "sha256": "208f3f1a0809edef0d3b5f9e596fab99212cca8af311c5f88a113a66dd8d4e18"
+    },
+    {
+      "path": "l3.c",
+      "bytes": 36,
+      "sha256": "af523b69fceb5d2bbb1a2af5961653e5cc0245a08082ba1727d63f57c1055508"
+    },
+    {
+      "path": "l3.o",
+      "bytes": 952,
+      "sha256": "3f8fde92a5c693e6eca88166643818c219bc5412a81df61dc6a635948123ef2b"
+    },
+    {
+      "path": "libchain.a",
+      "bytes": 3398,
+      "sha256": "d38d23bb92cfedbbdef431773532e8b7ae2b50f869e1ae8009854414e3907582"
+    },
+    {
+      "path": "libdemo.a",
+      "bytes": 3372,
+      "sha256": "4c1ddafa156555ab303c0983d46ba66dd51a468ad6273ae696e69a66b303314a"
+    },
+    {
+      "path": "main.c",
+      "bytes": 64,
+      "sha256": "939e869942bcdfc5d8f85c6af0c3d345d33b34f6b69ff92514723db373f450e2"
+    },
+    {
+      "path": "main.o",
+      "bytes": 1080,
+      "sha256": "bc9ce0b48f6f62e7ab930e227990975087b084fcd154752ee8f86f937e073944"
+    },
+    {
+      "path": "mathlib.c",
+      "bytes": 68,
+      "sha256": "79a296d02099ceac75be49d4d5bf96afd907611285afe90d90473f5557e681e4"
+    },
+    {
+      "path": "mathlib.o",
+      "bytes": 1032,
+      "sha256": "7dd8d7c39f211b72b8b27496c16f7f487dfb006605c344de84d18351aeeb36fe"
+    },
+    {
+      "path": "strlib.c",
+      "bytes": 113,
+      "sha256": "55d78655c69c7d59841c4a03cba7c93dc3fc5327e4c9579f10c1a319b970fe98"
+    },
+    {
+      "path": "strlib.o",
+      "bytes": 1080,
+      "sha256": "b6017ef2a4fd4fd3a1a0f4b9712233f9f10911e35da01c1ce327ad478c86152f"
+    },
+    {
+      "path": "unused.c",
+      "bytes": 40,
+      "sha256": "bc48428956eda878d46d370122bf78415f08ef71b00e63faa0bdfe34295bd0c0"
+    },
+    {
+      "path": "unused.o",
+      "bytes": 960,
+      "sha256": "e9df76389e79c37a43bac842f281ae2acb10eaa86645be159f3b9936d348ae79"
+    },
+    {
+      "path": "uw.c",
+      "bytes": 229,
+      "sha256": "1ba8c3613586fefe6704c4f14525d1353e5f6599dd4018995deabf2e5b99f4fc"
+    },
+    {
+      "path": "uw_coff.o",
+      "bytes": 860,
+      "sha256": "39022d9b9916dcade29cfb04ca8957a5728ed360b11c61c6bb3653610c5a19da"
+    },
+    {
+      "path": "uw_elf.o",
+      "bytes": 1128,
+      "sha256": "7bded597e4f065d99e547af55f86561cdfe43abc50fc712602910c8aa6eef6eb"
+    },
+    {
+      "path": "uw_macho.o",
+      "bytes": 552,
+      "sha256": "1514d1b6fdeefe9cd91e2d51e4b001990c78699a69c58fcf8994a34d925576aa"
+    },
+    {
+      "path": "w.c",
+      "bytes": 134,
+      "sha256": "58d86963f174363dec3744846c5771b3290d20922850f35be21094c4fd7b72d3"
+    },
+    {
+      "path": "w2.c",
+      "bytes": 136,
+      "sha256": "4ebf14b6e5d7a815f6aa912e2562648aaf27bf77a0a14c9ed089a99243829f74"
+    },
+    {
+      "path": "w2_coff.o",
+      "bytes": 622,
+      "sha256": "b8ed559c7baf18ab6f5f6f0768a27484bed97a514b708847b7fb45a00ff1f91c"
+    },
+    {
+      "path": "w2_elf.o",
+      "bytes": 1032,
+      "sha256": "9187b6bc6ec83b2641e2573819e33fe78c15acc18203a8cc6611f39091d450cf"
+    },
+    {
+      "path": "w2_macho.o",
+      "bytes": 568,
+      "sha256": "96cc15120f436bbb5f68f6eee643855b85ea85c3b4afbd67c5d1bcf9a37ba7c4"
+    },
+    {
+      "path": "w_coff.o",
+      "bytes": 697,
+      "sha256": "96b3332707e9dc0701d1b119d67239550461d2b03ca957ecc9f840c440b04096"
+    },
+    {
+      "path": "w_elf.o",
+      "bytes": 1128,
+      "sha256": "491751b89b44457810a5f1646fce5705e8f4e1dce4111f8692cec49e1af53575"
+    },
+    {
+      "path": "w_macho.o",
+      "bytes": 584,
+      "sha256": "dcaf93cca043c850582bbd63af98228c452de6ed6f7ecc1036f4bfebfe9d9ba9"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/obj/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/obj/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

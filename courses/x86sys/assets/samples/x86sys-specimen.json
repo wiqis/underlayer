@@ -1,0 +1,62 @@
+{
+  "course_id": "x86sys",
+  "bundle": "x86sys-specimen.zip",
+  "sha256": "373d768b2d01c9c79c7aac650af53979c0164df3e43b4f717e8e05d74248b319",
+  "bytes": 121627,
+  "file_count": 8,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 439,
+      "sha256": "bfbe1e589396629799310d28740f3816ee81ae19d9f61458b94e94fc4486fd5e"
+    },
+    {
+      "path": "build_samples.sh",
+      "bytes": 3989,
+      "sha256": "9bd6b96b5b51d5f3cf8a272ca3fc0e17db908052c839b4d8c3df8ac8dae63dd5"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 52998,
+      "sha256": "7a3d2dbf9fba46046d60b1828fe154d035de2fa77e8a6ddb86114368535e4b3f"
+    },
+    {
+      "path": "run1.txt",
+      "bytes": 68478,
+      "sha256": "53900092c93fa2ed99f8f41c2bcf44fbd8678784cc0daf4f6fc401ca8ab8976d"
+    },
+    {
+      "path": "run2.txt",
+      "bytes": 68478,
+      "sha256": "6207a0ad6601226ed0ec57c8c60e01c31723d9a25831e7e0b9f1473d46ebf6d1"
+    },
+    {
+      "path": "sysdump.c",
+      "bytes": 126306,
+      "sha256": "b6e60d646401b2c87a37ccfddd960e86443abe6949b1b0ed746dd9aec4d446e0"
+    },
+    {
+      "path": "sysdump.out",
+      "bytes": 68478,
+      "sha256": "ba18c4cc9d267ac7402e1580559209705457424d4ee8a27df8b90a745698c667"
+    },
+    {
+      "path": "sysdump_dis.txt",
+      "bytes": 484,
+      "sha256": "bc6e303abd6e9548239b1756867163b04435d885d586b5b37eef5bbbe5e3a06f"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/x86sys/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/x86sys/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

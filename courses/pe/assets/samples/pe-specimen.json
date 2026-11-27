@@ -1,0 +1,73 @@
+{
+  "course_id": "pe",
+  "bundle": "pe-specimen.zip",
+  "sha256": "afafa70613cada5b6188cf778ecccf01bea971ed55cbd2ad1441b418b659da00",
+  "bytes": 12636,
+  "file_count": 10,
+  "files": [
+    {
+      "path": "coff_parse.py",
+      "bytes": 10810,
+      "sha256": "31ea7cc50d94d717eec232ccd84fa6302e5e3d3e424980eb09b9fe2c031a7e59"
+    },
+    {
+      "path": "comdat.obj",
+      "bytes": 1627,
+      "sha256": "170002bcfa1280ccb14954ef36f02d0376c15b241568b968c990a7fd74126922"
+    },
+    {
+      "path": "comdat_linked.exe",
+      "bytes": 4770,
+      "sha256": "d12ac3d386129fc4521879f2beaca0a9121c2161560fa3398ead17264414e334"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 4029,
+      "sha256": "ed7802580f53cd9e32793fbb31db6846bcff20373d94802691c689a9091ed399"
+    },
+    {
+      "path": "directive_used.exe",
+      "bytes": 4564,
+      "sha256": "914973129a72934c5cdc9b45dd8eefd0962e15a05c2f561beb3b890aea6bb79f"
+    },
+    {
+      "path": "link_prog.exe",
+      "bytes": 5292,
+      "sha256": "baea89c5f41aec7559c090fa4fdb5ec832b79d84dd81dc1e9875e9450c734248"
+    },
+    {
+      "path": "sample_gnu.obj",
+      "bytes": 1335,
+      "sha256": "cc14500ca8ba5dd455b05ad4cd7e197d44195b1ae5731b4f2258118a6a23e38e"
+    },
+    {
+      "path": "sample_m32.obj",
+      "bytes": 1140,
+      "sha256": "7693afb2ab1fbc5ecf8b8e3b41ef83fac4292a9921d94b152e2596af73f77e57"
+    },
+    {
+      "path": "sample_msvc.obj",
+      "bytes": 1455,
+      "sha256": "de9d7dd27c33b3f5f859e89cad3ec69b68e39af31f9f313ba09bb4cc073aec62"
+    },
+    {
+      "path": "SOURCES.md",
+      "bytes": 1425,
+      "sha256": "6fcbc31973c487747fdfba6e01a7607390c3e3c0f3c37adf14a42c175720b766"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "note": "gcc/readelf did not produce or read the PE specimens; LLVM 21.1.8 llvm-readobj did",
+    "source": "courses/coff/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/pe/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

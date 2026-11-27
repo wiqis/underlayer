@@ -1,0 +1,58 @@
+{
+  "course_id": "macho",
+  "bundle": "macho-specimen.zip",
+  "sha256": "a3adc8efe5993770ba2ad4701beca50a80d4fedf5a07790e21513293ed8c4da4",
+  "bytes": 565132,
+  "file_count": 7,
+  "files": [
+    {
+      "path": "libasyncProfiler.dylib",
+      "bytes": 1446144,
+      "sha256": "cc6df2aed99432ee091ed7aba65543491dd26698fcefce67da4f62a329195347"
+    },
+    {
+      "path": "prog.c",
+      "bytes": 221,
+      "sha256": "fb6e5b6aef479715764d8b820a42ff5258cb6cb0d3c1b1d5253d1f08e56c21fd"
+    },
+    {
+      "path": "prog64.macho",
+      "bytes": 12616,
+      "sha256": "621e1348b5421df7a74c92e0a3554d61420217ccaa5ba5a1491e3062c2b82f3a"
+    },
+    {
+      "path": "prog64.o",
+      "bytes": 992,
+      "sha256": "9e3d3d5f28b98ff475c9f23bc5fd415083fff5bc0156631599beed37ebc7558f"
+    },
+    {
+      "path": "prog_arm64.macho",
+      "bytes": 33536,
+      "sha256": "efb3b512811eeba846d6cdbfa160fb72a67900db61a03ef99584cdfe858a6069"
+    },
+    {
+      "path": "prog_arm64.o",
+      "bytes": 1096,
+      "sha256": "d81670141f119db2bed8102f54179991d7ff6f69462056d6311f949fa28139eb"
+    },
+    {
+      "path": "universal.macho",
+      "bytes": 66304,
+      "sha256": "14856d99556385f89a166a0d0f1b3d1924172319972f83dff62e73a357ba1c4e"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "fleet toolchain recorded in courses/*/research.md",
+    "note": "research.md absent; fleet versions stated as the pinned corpus toolchain, not a per-file measurement"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/macho/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

@@ -1,0 +1,222 @@
+{
+  "course_id": "jvm",
+  "bundle": "jvm-specimen.zip",
+  "sha256": "2acbf603cffeded0f2a6589a27e6c63507c73372c6e053e1c6632df52453f824",
+  "bytes": 48288,
+  "file_count": 40,
+  "files": [
+    {
+      "path": "__pycache__/class_decode.cpython-312.pyc",
+      "bytes": 26036,
+      "sha256": "25be7409e341c3bb55f5f14a178c10ca5967d71f0af7b98d117a24cffc37e89e"
+    },
+    {
+      "path": "Cf.class",
+      "bytes": 4454,
+      "sha256": "d155be681a0e7c810d81771a1f3f0b20fb5ef084def2a7b1795b8f783da64e99"
+    },
+    {
+      "path": "Cf.java",
+      "bytes": 5197,
+      "sha256": "5e90ed207f4b526f66dbcac4a5917502b583801561b7664b772db35fe85b8bfe"
+    },
+    {
+      "path": "class_decode.py",
+      "bytes": 18699,
+      "sha256": "351a7e9813f4564f1bc4837dde715c0bd7e00cbbdc9678126e4a76a3d9912b89"
+    },
+    {
+      "path": "classes/Anno.class",
+      "bytes": 383,
+      "sha256": "49865d00da99883d8274df41c4d931768f339bada63833a196643e64a56bf0bd"
+    },
+    {
+      "path": "classes/Anno2.class",
+      "bytes": 185,
+      "sha256": "f38ce9f028c84890d9a76299e2e2a65b49de86e61f40efb906ffa1442ac37d2c"
+    },
+    {
+      "path": "classes/Consts.class",
+      "bytes": 661,
+      "sha256": "beb41f347635ee96067b9c76c77d0b416302ce66258de9d49a5f337a29ea9fc7"
+    },
+    {
+      "path": "classes/Desc.class",
+      "bytes": 822,
+      "sha256": "e4baffbb719323b07b79ba1bd0165ae3641ead5a4f6368e0f5e617b368a63b97"
+    },
+    {
+      "path": "classes/Flags.class",
+      "bytes": 792,
+      "sha256": "df46c0f5b02ab5ca7337d158fa9fae702b5e0cf672424bd836fb973b310844c3"
+    },
+    {
+      "path": "classes/Gen.class",
+      "bytes": 992,
+      "sha256": "a0605d0d29627b50a305ccd489119a3a9eff318873b92d6a92fb4c55934f0626"
+    },
+    {
+      "path": "classes/Hello.class",
+      "bytes": 409,
+      "sha256": "3742eee67f44192fd89eed410d1110dde47b6d129838c06879ee82aea26dae77"
+    },
+    {
+      "path": "classes/Inner$1.class",
+      "bytes": 487,
+      "sha256": "ea65a143f84ddc57d9e8cd85f623a72937281693243973214ac19a5529d5adcd"
+    },
+    {
+      "path": "classes/Inner$1Local.class",
+      "bytes": 440,
+      "sha256": "e3e8b5db4eb715f764b4df80ae4151e98ad938cab11439899d0c6b5b63537850"
+    },
+    {
+      "path": "classes/Inner$E.class",
+      "bytes": 916,
+      "sha256": "1f9f87a26a3790fc1f86d0814ff94d8aac7e37e4beec24424b451aac6311ad76"
+    },
+    {
+      "path": "classes/Inner$Iface.class",
+      "bytes": 185,
+      "sha256": "c7db77609d0ef944a3cff207f24b1bcb39572365bc5def7d0a9d5e2f62669a5f"
+    },
+    {
+      "path": "classes/Inner$Member.class",
+      "bytes": 418,
+      "sha256": "18cf8122a81287363a37a2653f3f8cf31be8d544a614513e778034076fed9496"
+    },
+    {
+      "path": "classes/Inner$Nested.class",
+      "bytes": 277,
+      "sha256": "6ea424d9b777a8d3dc2bd83379481d937475c6c18d687e1c3eb58e68866dd3e7"
+    },
+    {
+      "path": "classes/Inner.class",
+      "bytes": 567,
+      "sha256": "d9a43863cc7ba3493a8db6901ef3636da6ec38af26e9de57110db75792ee1fa6"
+    },
+    {
+      "path": "classes/Lambda.class",
+      "bytes": 3621,
+      "sha256": "9c2075e864d8e5a39e4071bad8c82084c7b1d352bc9fcc958ad24cde2a7974c4"
+    },
+    {
+      "path": "classes/Marker.class",
+      "bytes": 473,
+      "sha256": "4c7b6655e5c2054a1562675cbe231e2509ff6bc3d0c261366de9797f9b0d09a1"
+    },
+    {
+      "path": "classes/module-info.class",
+      "bytes": 370,
+      "sha256": "f0f754d824a66430bf8874f2dcf9d4619ead0e1cc8d05b9e9851208a5026aadd"
+    },
+    {
+      "path": "classes/Rec.class",
+      "bytes": 1452,
+      "sha256": "02a69fb4fd1a43dce5488ad786cf39dcf5a05ab68474f66bd487a3eb57e2b9a4"
+    },
+    {
+      "path": "classes/Sealed$A.class",
+      "bytes": 1106,
+      "sha256": "60df4d3a455e1353df5111a9aa9b1c9d9b78b92296f6c48eca419389cb2daeee"
+    },
+    {
+      "path": "classes/Sealed$B.class",
+      "bytes": 1140,
+      "sha256": "a4cb47743605479aef8f31df59a16a2490e4d1a026455a7f34e4416be1c2273c"
+    },
+    {
+      "path": "classes/Sealed.class",
+      "bytes": 228,
+      "sha256": "0c70fc97352c2a142f7cc3f270a38dea6e2fc6679bfbbb87d966cccb91e97acf"
+    },
+    {
+      "path": "classes/Shapes.class",
+      "bytes": 842,
+      "sha256": "1151d16dcb7eda3a78f5ca552677ecefcdba44b10583f7891df4d579fff5a72c"
+    },
+    {
+      "path": "classes/Slots.class",
+      "bytes": 661,
+      "sha256": "b59c6034f9a7169d68d3598166099df6f284eef5b95bc2d6d8a6ade9d47376b3"
+    },
+    {
+      "path": "classes/Str.class",
+      "bytes": 532,
+      "sha256": "b3971a4d4a0facb0eed5a275c0a8f41d5c4feb118a51ad2792cb0861cba4dc3f"
+    },
+    {
+      "path": "classes/Wide.class",
+      "bytes": 6175,
+      "sha256": "44f3a9e122a56da170939b0d60edde1cd0026698a676d2353a02883554db7d1a"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 13785,
+      "sha256": "1c9c21e691247efd7c2f96090c66c3880226045383d062a033a5a64762bb5786"
+    },
+    {
+      "path": "src/Anno.java",
+      "bytes": 287,
+      "sha256": "7147d2646f5a36581fd2dc37072529c5d6f48f12251353331094baaf24c5ee8f"
+    },
+    {
+      "path": "src/Consts.java",
+      "bytes": 712,
+      "sha256": "97e1bd528c911517ed407b9f5b3f7f7c3f17ca6c9b4f6b0104ad207e13748ba9"
+    },
+    {
+      "path": "src/Flags.java",
+      "bytes": 474,
+      "sha256": "975ddac7a2ea58559e6787e9caeb6056011bf7275b5b4752256b7d84c06c0252"
+    },
+    {
+      "path": "src/Gen.java",
+      "bytes": 266,
+      "sha256": "becc766990d404938c5fecaecf93f3d68961d89e2ae7402a5552b20d1417eb81"
+    },
+    {
+      "path": "src/Inner.java",
+      "bytes": 246,
+      "sha256": "c0e55dd8266503b03c0c3a99222d79e88d211cb60c1667be76df56d354c211b8"
+    },
+    {
+      "path": "src/Lambda.java",
+      "bytes": 620,
+      "sha256": "a3524c1c2c58ff4bb997bfcd143ec773788974eba00b1e92d9def6ff0bfb660f"
+    },
+    {
+      "path": "src/Rec.java",
+      "bytes": 156,
+      "sha256": "bad67616a33be2ceda27c8529e80e9937b1398f1529bd14667932d905093506a"
+    },
+    {
+      "path": "src/Sealed.java",
+      "bytes": 156,
+      "sha256": "39de8795f734d88746127aa9d78c6f5ab6331041d8adf9977ba22199f8a9771a"
+    },
+    {
+      "path": "src/Shapes.java",
+      "bytes": 698,
+      "sha256": "b4ca3c16a094780a143ca6a5104e6497f22a0931bf43754c008efc23f1f4bde9"
+    },
+    {
+      "path": "src/Str.java",
+      "bytes": 468,
+      "sha256": "9024ecb043b5e85662d3417c6a39f1f2d7123d3e4df3d5706bd738683c0b76fb"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/jvm/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/jvm/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

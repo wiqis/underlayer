@@ -1,0 +1,222 @@
+{
+  "course_id": "coff",
+  "bundle": "coff-specimen.zip",
+  "sha256": "ac11a92e86b39aab2ff41b41e820f80ffbfd4c10ffba54942eb7e704f8996158",
+  "bytes": 30701,
+  "file_count": 40,
+  "files": [
+    {
+      "path": "ar_decode.py",
+      "bytes": 5266,
+      "sha256": "e592c078b9bd1806f0da5c672ec2afc596051c8a69437a87becaff2be3aa9427"
+    },
+    {
+      "path": "arm64.c",
+      "bytes": 195,
+      "sha256": "9fb673611784236e1fc961890f5cb10869447e7e9977b39d4eb38b00b04a3565"
+    },
+    {
+      "path": "arm64.obj",
+      "bytes": 1140,
+      "sha256": "111a63c46a694e05fbc4cf193d88372216a2e4264aa76fd4123b6a7ec015cb49"
+    },
+    {
+      "path": "coff_parse.py",
+      "bytes": 10810,
+      "sha256": "31ea7cc50d94d717eec232ccd84fa6302e5e3d3e424980eb09b9fe2c031a7e59"
+    },
+    {
+      "path": "comdat.cpp",
+      "bytes": 210,
+      "sha256": "0e4e989a51d06b0cbbc4d2d26b718af4ac7a995b122e3bd9c068e0e3053b10a4"
+    },
+    {
+      "path": "comdat.obj",
+      "bytes": 1627,
+      "sha256": "170002bcfa1280ccb14954ef36f02d0376c15b241568b968c990a7fd74126922"
+    },
+    {
+      "path": "comdat_a.cpp",
+      "bytes": 77,
+      "sha256": "09ceed91c9cde0e6d50ebaa24e7d5ddf82891049b352512d8f533e7320c73d77"
+    },
+    {
+      "path": "comdat_a.obj",
+      "bytes": 750,
+      "sha256": "cafe886ad4b06d0951918defa83396c2604535ada55cf764b1b3deda1b067323"
+    },
+    {
+      "path": "comdat_b.cpp",
+      "bytes": 78,
+      "sha256": "10bbb03338d67b72f0eba6a5b667e87c4e96bf353a4ec2b844ce74d14513125d"
+    },
+    {
+      "path": "comdat_b.obj",
+      "bytes": 750,
+      "sha256": "9a5a348db9d6f3c16eef0fd550fe55d8d2de5c15441e6fc6d7e370c01052eb1a"
+    },
+    {
+      "path": "comdat_linked.exe",
+      "bytes": 4770,
+      "sha256": "d12ac3d386129fc4521879f2beaca0a9121c2161560fa3398ead17264414e334"
+    },
+    {
+      "path": "comdat_linked.map",
+      "bytes": 9520,
+      "sha256": "e66e8c50441252254b69c70219d0c261d796d978cdca50cea69a68a1b533dca2"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 4029,
+      "sha256": "ed7802580f53cd9e32793fbb31db6846bcff20373d94802691c689a9091ed399"
+    },
+    {
+      "path": "demo.lib",
+      "bytes": 1960,
+      "sha256": "79ef99380528ed3c71512d22fea57e05664b15ef8c5a8303c19f1d990c673b86"
+    },
+    {
+      "path": "directive.c",
+      "bytes": 78,
+      "sha256": "1d825862800ef9e21943430c41834f829430ebef9d90350e85b07d9ad6e70419"
+    },
+    {
+      "path": "directive.obj",
+      "bytes": 691,
+      "sha256": "d601ba1b3a6a1ebf8e05788c982ce55d0f460714e83dfb4ad8ca71bee8858594"
+    },
+    {
+      "path": "directive_used.c",
+      "bytes": 110,
+      "sha256": "47c72db94bfb8abd83030f7f434ed04e334fb1279a85c0d707af70916ee4528c"
+    },
+    {
+      "path": "directive_used.exe",
+      "bytes": 4564,
+      "sha256": "914973129a72934c5cdc9b45dd8eefd0962e15a05c2f561beb3b890aea6bb79f"
+    },
+    {
+      "path": "directive_used.map",
+      "bytes": 8995,
+      "sha256": "1e7a3c8922852a7c4ffb0dbf223a01505ef1ccdf43af385b2990172087c399ed"
+    },
+    {
+      "path": "directive_used.obj",
+      "bytes": 736,
+      "sha256": "489f2490b25d705a2009b4aa2fa8f8d3ada766f353572ff803dc00c6f6be9fbf"
+    },
+    {
+      "path": "lib1.c",
+      "bytes": 62,
+      "sha256": "73c896dc0642b2ecb164950e569881efba37616120130153138c11d2549298f6"
+    },
+    {
+      "path": "lib1.obj",
+      "bytes": 823,
+      "sha256": "591d868063108fcfc45f00b4c914d720dfb0cfc973de3e618d708a0247ccd383"
+    },
+    {
+      "path": "lib2.c",
+      "bytes": 44,
+      "sha256": "ccb517af5b99edfe2ee1d20deb8d5026823da0ec8c80fa8a52e9d0a4e34cdbd5"
+    },
+    {
+      "path": "lib2.obj",
+      "bytes": 802,
+      "sha256": "04f02151af3036f6e10b3467c431a7a65a62a644d1e86cee69a9f0e0af4417a3"
+    },
+    {
+      "path": "lineno.obj",
+      "bytes": 1485,
+      "sha256": "ffcdf0cbbc1ea19d8080ae6f948aa27b4e587df32f53e2994c61d7ab0252273d"
+    },
+    {
+      "path": "link_lib.c",
+      "bytes": 62,
+      "sha256": "73c896dc0642b2ecb164950e569881efba37616120130153138c11d2549298f6"
+    },
+    {
+      "path": "link_lib.obj",
+      "bytes": 621,
+      "sha256": "6f18a91b5c86448df76664caab29b5373c4c1409e7b0a74410ac906a327523a9"
+    },
+    {
+      "path": "link_prog.c",
+      "bytes": 134,
+      "sha256": "f6d10f7b4a7eabc441c6808dc202d46ad164f9fc04a6ec609dbe8d31adb1ed56"
+    },
+    {
+      "path": "link_prog.exe",
+      "bytes": 5292,
+      "sha256": "baea89c5f41aec7559c090fa4fdb5ec832b79d84dd81dc1e9875e9450c734248"
+    },
+    {
+      "path": "link_prog.map",
+      "bytes": 9455,
+      "sha256": "9f958f53c751fb3301b7b50bd6e2eaa80a806f42e64fc580778d7fbf15ba9974"
+    },
+    {
+      "path": "link_prog.obj",
+      "bytes": 718,
+      "sha256": "8ef22d6f751f024131dd75843183babf6347759337cc173ae31ef0714ca88ffe"
+    },
+    {
+      "path": "sample.c",
+      "bytes": 390,
+      "sha256": "5e64a7184579a24811abf8cecf773c2db5d974b4e6bdb5e1137e7763dfce68a0"
+    },
+    {
+      "path": "sample_gnu.obj",
+      "bytes": 1335,
+      "sha256": "cc14500ca8ba5dd455b05ad4cd7e197d44195b1ae5731b4f2258118a6a23e38e"
+    },
+    {
+      "path": "sample_m32.obj",
+      "bytes": 1140,
+      "sha256": "7693afb2ab1fbc5ecf8b8e3b41ef83fac4292a9921d94b152e2596af73f77e57"
+    },
+    {
+      "path": "sample_msvc.obj",
+      "bytes": 1455,
+      "sha256": "de9d7dd27c33b3f5f859e89cad3ec69b68e39af31f9f313ba09bb4cc073aec62"
+    },
+    {
+      "path": "tls.c",
+      "bytes": 128,
+      "sha256": "91de6df278bc9dc2849e5314ee071f352a945eb5caacf9fb988f98293e42b88e"
+    },
+    {
+      "path": "tls.map",
+      "bytes": 9008,
+      "sha256": "7ce9f8575eafcee6568e9198a70f8ddf174020eb0c39e0e81febc0257740b46b"
+    },
+    {
+      "path": "tls.obj",
+      "bytes": 898,
+      "sha256": "2fd8e632f4df5d34959d7fe7e613c2db96e6ab8c3a4736bc5d1ecabf1fe99d90"
+    },
+    {
+      "path": "weak.c",
+      "bytes": 101,
+      "sha256": "f75fade4df6ef6676eac90442b39329168ba0452d215846dbb24a85dacc93f07"
+    },
+    {
+      "path": "weak.obj",
+      "bytes": 860,
+      "sha256": "b629be61a4ced24a6ce3b44b0b50dc8621a07917683068d7e48634052111f2c2"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/coff/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/coff/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

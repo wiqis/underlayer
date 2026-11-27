@@ -1,0 +1,42 @@
+{
+  "course_id": "reloc",
+  "bundle": "reloc-specimen.zip",
+  "sha256": "92db42f82e50ef4c8349be81df6ae6bf57e47584fe6fd34f4204f2f08d231c1b",
+  "bytes": 15069,
+  "file_count": 4,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 616,
+      "sha256": "da71b645a8090985de65aeb05b9d1451b37aed5f692484cf1196d3e55bb7b685"
+    },
+    {
+      "path": "apply_relocs.py",
+      "bytes": 13875,
+      "sha256": "031c421066039b88a0f4ba4a799eb47f4f3dbc04fdb50661c515e47dd68bee60"
+    },
+    {
+      "path": "build_samples.sh",
+      "bytes": 11633,
+      "sha256": "3f8a052fd59507e329a307a4fe07567929753eb6d02eac38d4aec79938ab9318"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 16790,
+      "sha256": "951289b904361694e025834ae1ca437d31fac8cc3b93025bddb9f326fab0ac02"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/reloc/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/reloc/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

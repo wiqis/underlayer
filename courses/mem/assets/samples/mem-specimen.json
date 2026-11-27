@@ -1,0 +1,57 @@
+{
+  "course_id": "mem",
+  "bundle": "mem-specimen.zip",
+  "sha256": "29f87abdde7845db1a124157e5ee54b7c2895f9a69ba10836721a409752acf81",
+  "bytes": 84260,
+  "file_count": 7,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 61,
+      "sha256": "22007493c05b0f550505e645ebdd11724497c137fbcb07d2f15fa34e83b7de90"
+    },
+    {
+      "path": "build_samples.sh",
+      "bytes": 2455,
+      "sha256": "3c19c772cf8651915373ee9b2e8dfa7622cbadd8785e6b26b5156e599a16fa92"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 58326,
+      "sha256": "a5fd0570e7c4b05a030fc6a97b83de5f67c2bc094b1dc28eea68c0215136028e"
+    },
+    {
+      "path": "membench.c",
+      "bytes": 98890,
+      "sha256": "e8cd53eb9b3c20d4922d0d6c423bd635987a5c4b517a20ff512efbcc56d3f2c5"
+    },
+    {
+      "path": "run1.txt",
+      "bytes": 30550,
+      "sha256": "f679c6db7f8f0278aedf688bad253584a978c95b27060725c864e00f6c38d9f8"
+    },
+    {
+      "path": "run2.txt",
+      "bytes": 30546,
+      "sha256": "71a981996015ec032930eddf011c3f6db8a62d1dab6dad5999909969a7f8ef6f"
+    },
+    {
+      "path": "run3.txt",
+      "bytes": 30726,
+      "sha256": "7c37b5eb94198ae8925accf25175732ffe7921c789abb582fab8ad48e204fd5b"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/mem/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/mem/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "course_id": "priv",
+  "bundle": "priv-specimen.zip",
+  "sha256": "8afeca981acb827c3572591149158980c940863ad00d7e5637c59eaf162401d8",
+  "bytes": 66196,
+  "file_count": 7,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 159,
+      "sha256": "ddad617a114d16c6ce731e71c9a1df02bdb0bbdca712e08baa16967b31fdd3b4"
+    },
+    {
+      "path": "build_samples.sh",
+      "bytes": 1389,
+      "sha256": "e7b64fdea8f280e5a999ab7af62f311ba2cd3fc28d30c063e9eb5bfead711347"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 25493,
+      "sha256": "4468c4bfb461a73c61960875ef75af8afe195931c8f544297479567b8f9ff247"
+    },
+    {
+      "path": "privbench.c",
+      "bytes": 68555,
+      "sha256": "71f70196af2e021a7b400c81955f576259916dd456c30fab01c9f8326cf26afa"
+    },
+    {
+      "path": "privbench.out",
+      "bytes": 28445,
+      "sha256": "b3b6bf6186982acaabfb51982e4949b530c739018983561af0cad8a710fc83a8"
+    },
+    {
+      "path": "run1.txt",
+      "bytes": 28444,
+      "sha256": "dcff463fea9cff406a061677f4e4407e9e69a633942cb90107d142cd40e6f087"
+    },
+    {
+      "path": "run2.txt",
+      "bytes": 28445,
+      "sha256": "4dbb77550c2ac9754bc8bc2e715ed8b3d9eb601b2bb9a23d83d929299605eb21"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/priv/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/priv/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

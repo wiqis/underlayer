@@ -1,0 +1,57 @@
+{
+  "course_id": "smp",
+  "bundle": "smp-specimen.zip",
+  "sha256": "197a4593570b8ab2db21df99d6e6a9160f5f74dffda79609a21a40ef8aff4afc",
+  "bytes": 59098,
+  "file_count": 7,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 127,
+      "sha256": "84bda70cfd4f2886923a39ad320d3bfbea525608336a69abcfb3c97628493d07"
+    },
+    {
+      "path": "build_samples.sh",
+      "bytes": 1617,
+      "sha256": "0ff9b0364c8b6276fc9fcea4f502763f234a0f6f20feb70cb1d844d832913417"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 22368,
+      "sha256": "b4deb0898ab1c059d1996e30ec3523166bdc03eae1d3faab9cbf42db8825a5d5"
+    },
+    {
+      "path": "run1.txt",
+      "bytes": 28395,
+      "sha256": "6294da776a538c0f1a269aae808adc2144cbb69cd782511be9a035113f75104f"
+    },
+    {
+      "path": "run2.txt",
+      "bytes": 28395,
+      "sha256": "b64f80a399413980d66aae4cf9868c67590bb4887ed3737706541fa5644e44f0"
+    },
+    {
+      "path": "smpbench.c",
+      "bytes": 63909,
+      "sha256": "afd657a62d5affbf2fea786ccc97c9e8f9b58d7be237333d689710a90e333159"
+    },
+    {
+      "path": "smpbench.out",
+      "bytes": 28394,
+      "sha256": "8b8bf15cbfae56a5849028dd946a6d68f861ebb1f966f3582bf5a9373ec25967"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/smp/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/smp/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

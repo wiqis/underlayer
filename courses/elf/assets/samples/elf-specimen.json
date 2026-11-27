@@ -1,0 +1,62 @@
+{
+  "course_id": "elf",
+  "bundle": "elf-specimen.zip",
+  "sha256": "5f8e169143cbd53ee3ef0b3dd405c8dd5d7fc2898b602c79cf8318dd9990e6cb",
+  "bytes": 24498,
+  "file_count": 8,
+  "files": [
+    {
+      "path": "cbbench",
+      "bytes": 37960,
+      "sha256": "cb9546e88e3de8420659607e22aa721f48532583b8b8188d10effa51ad37894b"
+    },
+    {
+      "path": "demo_arm64elf.o",
+      "bytes": 2176,
+      "sha256": "9f2aad16ccbc588af1915eb38b9659d3f6c94b7ce503b0ccd125ca091dd107b0"
+    },
+    {
+      "path": "demo_elf.o",
+      "bytes": 1952,
+      "sha256": "590e7c2761a7aff7ee27a8abd7aa1cd125937e8b47e67cc0fed0f0a4cecbee72"
+    },
+    {
+      "path": "demo_elfgcc.o",
+      "bytes": 2136,
+      "sha256": "67e68daa70bd4399ca415d8416025e00ea489ba582c489cf5a2eb092219bd0a5"
+    },
+    {
+      "path": "demo_i386_elf.o",
+      "bytes": 1492,
+      "sha256": "2c82cdcf84d4d996f96df9d5641e30c56b0d6cf036b75bb8dfb7d865efa255f7"
+    },
+    {
+      "path": "emit_elf.py",
+      "bytes": 10909,
+      "sha256": "668f58ff9e457697aea149f711462e6a75e7b4df0b62f5d547e940a5b7e867cc"
+    },
+    {
+      "path": "SOURCES.md",
+      "bytes": 1286,
+      "sha256": "51ffff493e12e786e101261afb7c580742ebb2b116e5708d89886c9d5767fe57"
+    },
+    {
+      "path": "types_O0",
+      "bytes": 18712,
+      "sha256": "f74ab61296e894d50d1265d520db4413adfb41e182b6583854bd24b41a4a50c1"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/obj/research.md; courses/compback/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/elf/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

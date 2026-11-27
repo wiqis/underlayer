@@ -1,0 +1,82 @@
+{
+  "course_id": "rvasm",
+  "bundle": "rvasm-specimen.zip",
+  "sha256": "d1d3f0c1a8a35fba04b7702072122f182890ebc17dd1d8bc6d7404414d032c2f",
+  "bytes": 276542,
+  "file_count": 12,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 1936,
+      "sha256": "f002efa74f2d7aa74bd07da208341be074b3b7e291b9628f744733ae55aa87a7"
+    },
+    {
+      "path": "build_samples.sh",
+      "bytes": 5285,
+      "sha256": "125f09c5f7ef9c522c6f982a26b3c87bb2f0993bb514e4d282776c77caea0f9c"
+    },
+    {
+      "path": "corpus.c",
+      "bytes": 1906,
+      "sha256": "4df8938eea61805818b8aab82e4385dbeed04a4a8c171c137c966795be3f058a"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 34136,
+      "sha256": "6e964cd112394780abe4a6ea152eba8e80c0483f8a4eee89faa76e0df995deec"
+    },
+    {
+      "path": "far.c",
+      "bytes": 361,
+      "sha256": "d8814071cdef810bc622e42596ead92ae1bf18c261dfeff78f4eec98af7faa57"
+    },
+    {
+      "path": "far_a64_relocs.txt",
+      "bytes": 857,
+      "sha256": "c875cc67052193798a1d53449129b29610bca668dd4cdbbb788d2f774edf16ef"
+    },
+    {
+      "path": "far_riscv_relocs.txt",
+      "bytes": 1336,
+      "sha256": "a880df3b7dbf51f5e0a99e460d9115541bd51d83f7da1084dbc8d04f0bfa382a"
+    },
+    {
+      "path": "run1.txt",
+      "bytes": 154787,
+      "sha256": "47149747dc64b8e30c8ca194e5947eaf20ebde50c4161110535facbcacab32a2"
+    },
+    {
+      "path": "run2.txt",
+      "bytes": 154787,
+      "sha256": "47149747dc64b8e30c8ca194e5947eaf20ebde50c4161110535facbcacab32a2"
+    },
+    {
+      "path": "rv.s",
+      "bytes": 5343,
+      "sha256": "99974344839737cca0f44475d346130e2e2445af373f011d1152c0e6b1a34faa"
+    },
+    {
+      "path": "rvdec.out",
+      "bytes": 154787,
+      "sha256": "47149747dc64b8e30c8ca194e5947eaf20ebde50c4161110535facbcacab32a2"
+    },
+    {
+      "path": "rvdec.py",
+      "bytes": 379282,
+      "sha256": "16763edf567604d603138c062a6bee4dd5b7ea119d7fd070919539ec51951130"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/rvasm/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/rvasm/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

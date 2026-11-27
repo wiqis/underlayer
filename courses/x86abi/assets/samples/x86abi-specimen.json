@@ -1,0 +1,107 @@
+{
+  "course_id": "x86abi",
+  "bundle": "x86abi-specimen.zip",
+  "sha256": "f4d0a422fa5e6fdf5d8f0c0afd0c6b59443399e0d8262498684aecd4d96a83aa",
+  "bytes": 93186,
+  "file_count": 17,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 475,
+      "sha256": "8556345bfbc6f0cdbdeb472e32230921590f2bcd4d97f221c38e61cd39477b02"
+    },
+    {
+      "path": "abi_cfi.txt",
+      "bytes": 857,
+      "sha256": "05fe6c4a493ce0a456ac51552003719cdbcb09622505a80a091f69ce4e65d66b"
+    },
+    {
+      "path": "abi_control.txt",
+      "bytes": 818,
+      "sha256": "77daefbb55b15f08db974574c0e2faf6baea1c7cd30ae1499b48deb0a03ef22c"
+    },
+    {
+      "path": "abi_dis.txt",
+      "bytes": 12587,
+      "sha256": "10bec147dc818d80d004d30ca2c7acc3abb989b45f7c96ce823fc3c9c3c8a1df"
+    },
+    {
+      "path": "abi_libc.txt",
+      "bytes": 3178,
+      "sha256": "f1f27d450f8b85b3eb6c2ec6e7fecd1d067aaee1a81c6b3276261c6bbba925e7"
+    },
+    {
+      "path": "abidump.c",
+      "bytes": 73066,
+      "sha256": "572e745962241d48350316214214fcaa29ce5bebcf6c1e76be14defdec1da4fb"
+    },
+    {
+      "path": "abidump.out",
+      "bytes": 30691,
+      "sha256": "674305153db95783a237cf77d0ad31ea544213369eba56018bae177736bd090b"
+    },
+    {
+      "path": "abidump_corpus.c",
+      "bytes": 6622,
+      "sha256": "9586e5b066a632b39ddb13dc9937d90004eb9a3bdbc209ad321dc8f26ae5a691"
+    },
+    {
+      "path": "abilint.py",
+      "bytes": 13208,
+      "sha256": "ac606b778177829419fa6f9845a53a555c1f440fbfbc7531023dea2739075b2d"
+    },
+    {
+      "path": "abis.S",
+      "bytes": 19190,
+      "sha256": "44a49f87818c6a4ed68783af57bb5449be8a7b94dd35065a6d930b989924cee5"
+    },
+    {
+      "path": "build_samples.sh",
+      "bytes": 9655,
+      "sha256": "2613f7a81f10690fddee489d4cbe87aa2e9639576f5f4fa4dec907b22fa6b6cc"
+    },
+    {
+      "path": "control.s",
+      "bytes": 4505,
+      "sha256": "410cf44380c86316d51dd94b83eed27736afb4ee3349d924d693e09a79b93a63"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 32700,
+      "sha256": "b41e4edea3d8ff0e6bbb38211e2b0e0eeda1e2413da8242dab6ba8333b15908e"
+    },
+    {
+      "path": "mkabi.py",
+      "bytes": 10344,
+      "sha256": "b3f54412cf154f84c35ea43fe8507da4a58b259174b63a0f1c8e68bec5afc8ed"
+    },
+    {
+      "path": "run1.txt",
+      "bytes": 30691,
+      "sha256": "674305153db95783a237cf77d0ad31ea544213369eba56018bae177736bd090b"
+    },
+    {
+      "path": "run2.txt",
+      "bytes": 30691,
+      "sha256": "183112588a9acaa087411d7e6b032f1b942c4eebcd427c548897e1b1f9aba9c0"
+    },
+    {
+      "path": "uwprobe.c",
+      "bytes": 1228,
+      "sha256": "e401485a22f690a42ac8de85ab9f54845c930a5c57d4500b349b8f42c9de4193"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/x86abi/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/x86abi/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

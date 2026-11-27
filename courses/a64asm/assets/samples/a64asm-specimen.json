@@ -1,0 +1,72 @@
+{
+  "course_id": "a64asm",
+  "bundle": "a64asm-specimen.zip",
+  "sha256": "4c7c09d1d9a2924a1db4bc7fb43f676eaa5232685b0b88d729277c6fb23c14ad",
+  "bytes": 219962,
+  "file_count": 10,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 1847,
+      "sha256": "1e557d285945dccc7a769bb50e07b7375bfb805ad6dd40a549704efc3b380fb8"
+    },
+    {
+      "path": "a64.s",
+      "bytes": 5561,
+      "sha256": "221e9ff78e97792ddcd178694b1823f12417b1008acf5fae3e9e4d12ab58567b"
+    },
+    {
+      "path": "a64dec.out",
+      "bytes": 129615,
+      "sha256": "dd5e7b90dec75f9627aa5315c82dcbc1bef6135fd8af2b6b907e241c42fa8995"
+    },
+    {
+      "path": "a64dec.py",
+      "bytes": 258823,
+      "sha256": "663c4855f64097e2f2e9fe1bf101865a56ffedb4a7b3030d3e5be0969e3bdaf7"
+    },
+    {
+      "path": "build_samples.sh",
+      "bytes": 3855,
+      "sha256": "5ef9c65828fb57a4988584671820006297a16f4f1499f16cef853078cb3ad400"
+    },
+    {
+      "path": "corpus.c",
+      "bytes": 3487,
+      "sha256": "27bc912e68e6f07c5dd31f3bdd024800512545ae5d81f5ba8c418ca0d9b3b8f3"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 55741,
+      "sha256": "9f668743a681cfa078f6c625b5969a89901079142ed917d3be830131a6cef3ac"
+    },
+    {
+      "path": "fields.txt",
+      "bytes": 4191,
+      "sha256": "a24f4547989b73456cfd58a2e2925d36cc8e50b90b602bbec3a4d206ce78b24f"
+    },
+    {
+      "path": "run1.txt",
+      "bytes": 129615,
+      "sha256": "dd5e7b90dec75f9627aa5315c82dcbc1bef6135fd8af2b6b907e241c42fa8995"
+    },
+    {
+      "path": "run2.txt",
+      "bytes": 129615,
+      "sha256": "dd5e7b90dec75f9627aa5315c82dcbc1bef6135fd8af2b6b907e241c42fa8995"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/a64asm/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/a64asm/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

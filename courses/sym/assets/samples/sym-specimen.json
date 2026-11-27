@@ -1,0 +1,62 @@
+{
+  "course_id": "sym",
+  "bundle": "sym-specimen.zip",
+  "sha256": "aa2f27817f0e671f9a0700929aeb8d06ba89dfbc1e796b39a34e7126c39f7d8a",
+  "bytes": 18594,
+  "file_count": 8,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 754,
+      "sha256": "acb0167771560f8dd902d5543de7be307f55c40083b30d2dd3b7457498448f9a"
+    },
+    {
+      "path": "build_samples.sh",
+      "bytes": 13610,
+      "sha256": "e5b99feb44b7ddfeb541799c3ca1a95629ea4bed25182d6173af4ab224f03090"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 15506,
+      "sha256": "310d96378e37900ca7a7c77187877933f68505b7be16215bcf1d9d3e1e0863bb"
+    },
+    {
+      "path": "ord_map",
+      "bytes": 16000,
+      "sha256": "269eaf0fe6c5ba66c4b0f923354b93bbdad2747a8315c20e998d1d33879d822a"
+    },
+    {
+      "path": "symtables.py",
+      "bytes": 17207,
+      "sha256": "57b17321073f32a03ff118df6b46a23ba6cf915759775483da5a27699d9bf6c0"
+    },
+    {
+      "path": "ver/vmap",
+      "bytes": 129,
+      "sha256": "0b890625ed385a26c2d5740ad24427154c42e7e7c5457df8bc03f6b84dcdcecb"
+    },
+    {
+      "path": "ver/vmap_at",
+      "bytes": 38,
+      "sha256": "9ef9dbb72d1f6e5648a6f5d7aa4b78e7066eb03777e7b19ac7ef303c86a44d48"
+    },
+    {
+      "path": "ver/vmap_dup",
+      "bytes": 116,
+      "sha256": "17da0f7a5426963b9fc31181fcdccbc65e419060960ac9a504cdcf08b6be299c"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/sym/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/sym/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}

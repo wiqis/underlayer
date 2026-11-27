@@ -1,0 +1,82 @@
+{
+  "course_id": "rvabi",
+  "bundle": "rvabi-specimen.zip",
+  "sha256": "474cb701886eaa917db89bece7607a0ff5793e0cc9d536aa98af535e6022a12d",
+  "bytes": 192972,
+  "file_count": 12,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 1880,
+      "sha256": "7a7248bda212ea085ad06c2ae9272fa3c57bc15bee759e3d94ffa1842adfa1a1"
+    },
+    {
+      "path": "abi.c",
+      "bytes": 8121,
+      "sha256": "ed505ca7ee1c86676532406ee084b483eb7054a30dae07d7f8ea3ec381e9740c"
+    },
+    {
+      "path": "build_samples.sh",
+      "bytes": 7040,
+      "sha256": "2240a4ab37942af849bcf098766c8a610f07f1e1a7835aee3f6b1f15900757c7"
+    },
+    {
+      "path": "cpc.c",
+      "bytes": 3082,
+      "sha256": "e2b564274836d32e8138144adaf519870951273f34c994d74c728481ae3ff2a5"
+    },
+    {
+      "path": "crosscheck.py",
+      "bytes": 34552,
+      "sha256": "e38e13112be1531aca268cade385a6e1502f20adb2dc75613640768cb07141f3"
+    },
+    {
+      "path": "noflags.c",
+      "bytes": 4422,
+      "sha256": "190b9fd7a055b3b9f2b7b5406e3593abbe8668c06c01ac5ae4446f33acd79832"
+    },
+    {
+      "path": "probe.s",
+      "bytes": 2736,
+      "sha256": "d5f138858e6021ce0010e046d4c86f75a004e4936d5eb144f12fe2bdc53d8bbf"
+    },
+    {
+      "path": "regs.c",
+      "bytes": 3980,
+      "sha256": "125d20fe5c00d107234ffc577456052971c0cee1c6b8892bdf518e9075705209"
+    },
+    {
+      "path": "run1.txt",
+      "bytes": 110720,
+      "sha256": "2249ce5122a102d42c399fc8f659817fd91c79252886145cede28779400298e2"
+    },
+    {
+      "path": "run2.txt",
+      "bytes": 110720,
+      "sha256": "2249ce5122a102d42c399fc8f659817fd91c79252886145cede28779400298e2"
+    },
+    {
+      "path": "rvabi.out",
+      "bytes": 110720,
+      "sha256": "2249ce5122a102d42c399fc8f659817fd91c79252886145cede28779400298e2"
+    },
+    {
+      "path": "rvabi.py",
+      "bytes": 199496,
+      "sha256": "35c1b730a07085f232cdb45f2cbe75763d7f0034e04b5eed33fcd4ecafebb822"
+    }
+  ],
+  "toolchain": {
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "source": "courses/rvabi/research.md"
+  },
+  "verification_date": "2026-11-27",
+  "source": "courses/rvabi/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
+}
