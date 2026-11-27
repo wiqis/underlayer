@@ -57,13 +57,30 @@ COPY --from=builder /workspace/build/underlayer.exe ./
 # <course>/manifest.json, so the manifests have to be on disk.
 COPY courses/ ./courses/
 
-# Learner state is SQLite. A local file keeps a single instance working, but the
-# container filesystem is ephemeral: for durable state point DATABASE_URL at a
-# remote libsql/Turso URL (https:// or libsql://) or mount a volume at /data.
+# Learner state is SQLite. The container filesystem is ephemeral: mount a
+# DURABLE volume at /data (a Cloud Run volume mount, not an in-container mkdir).
+# Remote libsql/Turso URLs are FATAL-refused at startup by this build; do not
+# point DATABASE_URL at one.
 RUN mkdir -p /data
+
+# H5 build provenance (no secrets). Supply these at build time:
+#   docker build --build-arg UL_BUILD_COMMIT=<sha> \
+#     --build-arg UL_BUILD_COMPILER_VERSION="$(chemical --version)" \
+#     --build-arg UL_BUILD_AT=<ISO-8601-UTC> \
+#     --build-arg UL_BUILD_MODE=release ...
+# A release-mode image with any identifying value missing exits FATAL before
+# serving (core/src/build_info.ch). debug is the local-build default.
+ARG UL_BUILD_COMMIT=unknown
+ARG UL_BUILD_COMPILER_VERSION=unknown
+ARG UL_BUILD_AT=unknown
+ARG UL_BUILD_MODE=debug
 ENV PORT=8080 \
     COURSES_DIR=./courses \
-    DATABASE_URL=/data/underlayer.db
+    DATABASE_URL=/data/underlayer.db \
+    UL_BUILD_COMMIT=${UL_BUILD_COMMIT} \
+    UL_BUILD_COMPILER_VERSION=${UL_BUILD_COMPILER_VERSION} \
+    UL_BUILD_AT=${UL_BUILD_AT} \
+    UL_BUILD_MODE=${UL_BUILD_MODE}
 
 EXPOSE 8080
 CMD ["./underlayer.exe"]

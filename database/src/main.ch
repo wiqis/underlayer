@@ -241,7 +241,15 @@ public namespace underlayer_db {
             }
             return result
         }
-        var h = open_handle(&url, (sqlite::OpenFlag.READWRITE | sqlite::OpenFlag.CREATE) as int)
+        // B3 / founder ruling §6.2: one handle is shared by every worker in the
+        // server's thread pool. OPEN_FULLMUTEX makes SQLite serialize access to
+        // that handle on all platforms, so 12 workers cannot race inside the C
+        // library. We deliberately keep ONE process: H1 enforces max-instances=1
+        // and a second process sharing this file is a FATAL config, not a scale
+        // strategy. (The alternative, a connection per thread, is not needed
+        // with a serialized handle and would hide a second source of truth.)
+        var open_flags = sqlite::OpenFlag.READWRITE | sqlite::OpenFlag.CREATE | sqlite::OpenFlag.FULLMUTEX
+        var h = open_handle(&url, open_flags as int)
         if(h == null) {
             var open_msg = string("[underlayer_db] Error opening SQLite database: ")
             open_msg.append_string(&url)
@@ -256,6 +264,8 @@ public namespace underlayer_db {
             return result
         }
         apply_pragmas(h)
+        var mutex_msg = std::string("[underlayer_db] SQLite handle opened with SQLITE_OPEN_FULLMUTEX (single-process ceiling accepted)")
+        underlayer_core::log_line(&mutex_msg)
         var local_result = DbClient {
             is_sqlite = true,
             sqlite_handle = h,

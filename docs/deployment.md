@@ -192,6 +192,82 @@ exit 1; `--force` succeeded; a deliberately corrupted source was rejected with
 6. Confirm any data written between the backup and the stop is re-entered or
    intentionally discarded — a restore is a point-in-time rollback, not a merge.
 
+### H5 — build provenance baseline (2026-11-27)
+
+`/api/health` now returns four **additive** fields; `status` and `version` keep
+their exact bytes because clients and the served-behaviour checkers parse them:
+
+```
+before (pre-change binary, 2026-11-27): {"status": "ok", "version": "0.1.0"}
+after  (local binary, 2026-11-27):     {"status": "ok", "version": "0.1.0", "commit": "ea3261cc91ec774e17bdfe86e343d5777fdee97d", "compiler_version": "Chemical v0.6.0", "build_mode": "debug", "built_at": "2026-11-27T00:00:00Z"}
+```
+
+Values come from `UL_BUILD_COMMIT`, `UL_BUILD_COMPILER_VERSION`,
+`UL_BUILD_MODE` and `UL_BUILD_AT` (see `core/src/build_info.ch`). A release
+build with any of the three identifying values missing or `unknown` logs a
+FATAL line and exits 1 **before** schema init; verified locally on 2026-11-27
+(`build/h5-after.err.log`). The runtime inputs are set by the deploy step, not
+baked as secrets into the image.
+
+Provisional baseline recorded here (update this line when the founder commits
+and deploys the release build — the deployed service on 2026-11-27 still
+answers only `{"status":"ok","version":"0.1.0"}`, so its provenance is
+**not measurable** and there is no deployed rollback digest yet):
+
+- Build digest: ea3261cc91ec774e17bdfe86e343d5777fdee97d
+- Compiler pin: Chemical v0.6.0
+- Deployed provenance: **FOUNDER ACTION** — set the four `UL_BUILD_*` values in
+  the release deploy, then run `py -3 tools/release_probe.py
+  https://underlayer.wiqis.com` and replace the two lines above with the
+  observed values. Until then `release_probe.py` fails against the deployed
+  host by design; no deployed release is claimed.
+
+`tools/release_probe.py --selftest` runs one positive and four negative cases
+(wrong mode, wrong compiler, missing field, changed client contract) with no
+network dependency. It never writes to a database or a deployed service.
+
+### H6 — where production data lives, and the restore drill (2026-11-27)
+
+**Known from this repo:** the Docker image sets `DATABASE_URL=/data/underlayer.db`
+and creates `/data`; it does **not** declare a volume, and the container
+filesystem is ephemeral. A revision swap discards anything written to a path
+that is not mounted. **Not verifiable from this machine:** whether the Cloud Run
+service actually attaches a volume/NFS mount at `/data` is founder-console
+state. Do not assume the deployed DB persists across revisions.
+
+- **FOUNDER ACTION (blocks H6 in production):** run
+  `gcloud run services describe underlayer --region <region> --format='value(spec.template.spec.volumes,spec.template.spec.containers[].volumeMounts)'`
+  and record the result here, with the setting applied and by whom. `gcloud` is
+  **not installed on this machine**, so this could not be measured from an
+  agent session. If no durable mount exists, production data is currently lost
+  on every deploy and H1/H6 cannot be called green.
+- **Snapshot policy (defined, not yet automated):** daily snapshot at 03:00 UTC
+  of the live SQLite file via `tools/backup_db.py` (consistent even with the
+  server open), retain **30 days**, verify `integrity_check ok` on every
+  snapshot, alarm on a missed run. Scheduler/Cloud Run job creation is a
+  founder action; no cron is wired in this change.
+- **Named owner:** `TBD — founder to name` (placeholder; a named human is
+  required before this is an operational control).
+
+**Drill performed 2026-11-27, on copies only (production DB never opened):**
+
+```
+source: disposable build/h6/source.db, one throwaway account + one progress row
+backup: tools/backup_db.py -> build/h6/snapshots/source-20261127-120900.db
+        source 4096 B, backup 561152 B / 137 pages, integrity_check ok on both
+sha256: 621c41f5122df7228750b17297d0f412b92e57422981b2ae88f4ca10e66d70b0
+restore: copied the snapshot to a SEPARATE staging path build/h6/staging.db
+verify: staging /api/health 200, login 200, /api/progress/sync 200,
+        progress row h6-drill-unit present
+RPO measured in drill: 1.3 s (snapshot age at restore)
+RTO measured in drill: 1.3 s (restart to verified)
+log: build/h6-restore-drill.log, scripts/restore_drill.py
+```
+
+Those RPO/RTO numbers describe the **local drill**, not the deployed service;
+production targets are not claimed until the founder records the snapshot
+schedule and mount.
+
 ## 5. Rate-limit key, trust boundary and retention (H2/B7, 2026-11-26)
 
 Login, register, forgot/reset, the account bridge and the learning-write
@@ -384,6 +460,41 @@ https://underlayer.wiqis.com`, confirm the six frozen pages/404 now match
 `/api/health`, and link the output here.
 
 
+## 5e. Graceful shutdown and timeouts (H7, 2026-11-27)
+
+**Upstream finding (read, not patched):** `lang/libs/http/src/server.ch`
+provides `Server::handle()` → `ShutdownHandle::shutdown()` and a poll-based
+accept loop, but registers **no** OS signal handler and does not drain on
+SIGTERM by itself. On shutdown, `serve()` returns and the worker-pool
+destructor joins workers after their queues drain; that is the drain, but it
+has to be triggered by our code.
+
+**Implemented in `app/main.ch`:** handlers for SIGTERM/SIGINT (plus SIGBREAK on
+Windows) set one boolean latch; a watcher thread notices it, logs
+`shutdown signal received`, calls `ShutdownHandle.shutdown()` (stop accepting),
+lets the upstream pool drain in-flight work, then closes the DB and logs
+`[underlayer] shutdown complete` before returning 0. Per-request work is
+bounded by `header_timeout_secs=5`, `body_timeout_secs=30`, so the drain is
+bounded by 30 s. The upstream `ServerConfig` has **no separate idle-timeout
+field**; an idle keep-alive connection is bounded by the header-read timeout.
+The worker pool size is **12**, `max_inflight=256`; both are logged at startup
+(`server config: worker_count=12 …`). The only new global is
+one boolean signal latch, written by the handler and read by the watcher; no
+route, FFI string or DB access goes through it.
+
+**Kill test (disposable server, 2026-11-27; `scripts/shutdown_probe.py`, log
+`build/h7-shutdown-result.log`):** four wrong-password logins and one
+`POST /api/progress/sync` were in flight when CTRL_BREAK_EVENT was sent.
+In-flight outcomes: `sync=200`, `login×4=401` (clean completions, no 503 and no
+connection reset); exit code 0. Log contains both shutdown lines and no
+`database is locked` / `SQL FAILED`. Restart on the **same DB**: health 200,
+login 200, `/api/progress/sync?since=0` 200 with the progress row intact.
+
+**Cloud Run caveat:** Cloud Run sends SIGTERM to the container; on Linux our
+SIGTERM handler is the path exercised above conceptually, but this machine is
+Windows and the local drill used SIGBREAK. A deployed SIGTERM drill is a
+founder action after the next release; no deployed shutdown proof is claimed.
+
 ### H4 exclusions (owner for every gap)
 
 * `checker_nonvacuity.py::check_nesting` and `::check_link` -- their controls
@@ -414,10 +525,17 @@ https://underlayer.wiqis.com`, confirm the six frozen pages/404 now match
    allows `'unsafe-inline'` because the macros emit inline scripts and styles
    by the thousand; tightening it via externalisation remains the open work,
    which is why this item is not deleted.
-2. **SQLite concurrency.** One handle behind a 12-thread pool. 40 concurrent
-   writes stored 40/40 with no loss in the test performed, but a single handle
-   cannot be *documented* safe without `SQLITE_OPEN_FULLMUTEX` or a connection
-   per thread, and it caps the platform at one process.
+2. **SQLite concurrency — RESOLVED 2026-11-27 (B3, founder ruling §6.2).** The
+   one handle is now opened with `SQLITE_OPEN_FULLMUTEX`
+   (`database/src/main.ch`), so the C library serialises all 12 workers.
+   Re-test on a disposable DB: **40/40 registrations returned a session token,
+   40/40 distinct rows stored, `integrity_check ok`, zero `SQL FAILED` /
+   `database is locked` lines** (`build/b3-concurrent-result.log`,
+   `scripts/sqlite_concurrency_probe.py`). The **single-process ceiling is
+   accepted explicitly**: H1 must keep `max-instances=1`; a second process on
+   the same file is a FATAL config, not a scale path. No connection-per-thread
+   pool was added — with a serialised handle it would create a second source
+   of truth without buying concurrency.
 3. **No remote database backend.** See §1. Scaling out needs it, and it does not
    exist.
 4. **No deployment automation, rollback automation or post-deploy monitoring**
@@ -441,3 +559,17 @@ https://underlayer.wiqis.com`, confirm the six frozen pages/404 now match
    INDEX), and the negative case must name `truncated` **and** print a
    `CHECKS FAILED` summary; a connection-reset traceback is not a named
    failure. Do not re-repair either plant.
+7. **H5 release provenance — deployed values not yet measurable.** The code and
+   local verification are in place (§4 H5), but the deployed service still
+   answers the two-field health payload. Recording a real deployed rollback
+   digest requires a release deploy with the four `UL_BUILD_*` inputs — **founder
+   action**; see §4. `tools/release_probe.py` is expected to fail against the
+   current deployment.
+8. **H6 production durability — unverified.** The image uses an ephemeral
+   filesystem and declares no volume; whether `/data` is mounted on Cloud Run
+   is founder-console state (§4 H6). The local staging restore drill passed,
+   but no production snapshot schedule or named owner exists yet, so no
+   production RPO/RTO is claimed. If no durable mount exists this becomes P0.
+9. **H7 deployed SIGTERM drill — not run.** Upstream has a stop handle but no
+   signal path; our path is verified locally with SIGBREAK on Windows
+   (§5e). A Linux/Cloud Run SIGTERM drill after deploy is a **founder action**.

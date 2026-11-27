@@ -33,12 +33,54 @@ public func request_db() : *underlayer_db::DbClient {
     return unsafe(g_db)
 }
 
+// ---- Graceful shutdown (H7) ------------------------------------------------
+// The upstream HTTP server exposes ShutdownHandle but registers NO OS signal
+// handler and does not drain on SIGTERM (verified in lang/libs/http/src/server.ch:
+// `serve` only polls `stopping`; `ShutdownHandle.shutdown` is caller-driven).
+// The trigger therefore lives here. A C signal handler cannot capture state,
+// so one boolean latch is unavoidable here: the stdlib `atomic` module exists
+// but `atomic::AtomicU8` collides with `cstd::atomic<T>` in this build, and the
+// module-import alias syntax needed to disambiguate it is not supported by
+// chemical.mod. A top-level function-call initializer is also unsupported.
+// The latch is touched
+// only by the handler (write true) and the watcher (read); no route, no FFI
+// string and no database access ever goes through it. Those two one-line
+// unsafe boundaries are the whole of this process-wide state.
+var g_shutdown_requested : bool = false
+
+func on_shutdown_signal(sig : int) {
+    unsafe { g_shutdown_requested = true }
+}
+
+func shutdown_requested() : bool {
+    return unsafe(g_shutdown_requested)
+}
+
+func shutdown_watcher(handle : server.ShutdownHandle) {
+    while(!shutdown_requested()) {
+        std::concurrent.sleep_ms(100u)
+    }
+    var msg = std::string("[underlayer] shutdown signal received; stopping accept loop (active requests drain <=30s via body timeout)")
+    underlayer_core::log_line(&msg)
+    handle.shutdown()
+}
+
 public func main() : int {
     // ---- Config & DB ----
     var cfg = underlayer_core::load_config()
     var port = cfg.port
     var db_url = cfg.db_url.copy()
     var db_token = cfg.db_token.copy()
+
+    // H5: a release build with no provenance must not serve traffic.
+    var bi = underlayer_core::current_build_info()
+    if(!underlayer_core::validate_build_info(&bi)) {
+        var fatal_bi = underlayer_core::build_info_failure_message(&bi)
+        underlayer_core::log_line(&fatal_bi)
+        return 1
+    }
+    var provenance = underlayer_core::build_info_startup_line(&bi)
+    underlayer_core::log_line(&provenance)
 
     var start_msg = std::string("[underlayer] Starting Underlayer on port ")
     start_msg.append_string(&underlayer_core::u32_to_string(port))
@@ -127,7 +169,23 @@ public func main() : int {
     var port_str = underlayer_core::u32_to_string(port)
     addr.append_view(port_str.to_view())
     cfg_server.addr = addr
+    // H7: explicit timeout and concurrency contract. 12 workers matches the
+    // documented pool size; per-request work is bounded by a 5 s header read
+    // and a 30 s body read, which also bounds shutdown draining to <=30 s.
+    cfg_server.worker_count = 12u
+    cfg_server.header_timeout_secs = 5
+    cfg_server.body_timeout_secs = 30
+    cfg_server.max_inflight = 256u
+    var timeout_msg = std::string("[underlayer] server config: worker_count=12 header_timeout_secs=5 body_timeout_secs=30 max_inflight=256")
+    underlayer_core::log_line(&timeout_msg)
     var srv = server.Server(cfg_server)
+    var shutdown_handle = srv.handle()
+    var watcher = std::thread.spawn_void(shutdown_watcher, shutdown_handle)
+    var sigterm_rc = unsafe(signal(SIGTERM, on_shutdown_signal))
+    var sigint_rc = unsafe(signal(SIGINT, on_shutdown_signal))
+    comptime if(def.windows) {
+        var sigbreak_rc = unsafe(signal(SIGBREAK, on_shutdown_signal))
+    }
 
     // Shared courses_dir for route handlers
     var courses_dir = cfg.courses_dir.copy()
@@ -167,8 +225,11 @@ public func main() : int {
         }
     })
     // ---- Health check ----
+    // H5: additive provenance fields. `status` and `version` keep their exact
+    // bytes, because clients and the served-behaviour checkers parse them.
     srv.router.add("GET", "/api/health", ||(req) => {
-        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_health(&req))
+        var body = underlayer_core::health_json_with_build_info()
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_str(&body))
     })
 
     // Review page (HTML UI)
@@ -1663,6 +1724,12 @@ public func main() : int {
     underlayer_core::log_line(&courses_msg)
     srv.serve()
 
+    // `serve()` returns only after the accept loop stops and the worker pool
+    // has drained queued/in-flight requests, so the DB handle is safe to close
+    // here. Any work still running past the 30 s body timeout is bounded by the
+    // upstream server, not by an invented sleep in this file.
     underlayer_db::close(&raw db)
+    var shutdown_done = std::string("[underlayer] shutdown complete")
+    underlayer_core::log_line(&shutdown_done)
     return 0
 }
