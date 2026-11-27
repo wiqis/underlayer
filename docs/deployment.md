@@ -554,15 +554,83 @@ founder action after the next release; no deployed shutdown proof is claimed.
   whose six plants are all certified.
 
 
-## 5f. Known test-suite flakiness (observed 2026-11-26,Wave 1)
-During the I1/I2 verification batch, two of five `tests.exe` runs reported
-136–137/138 with `RUNTIME ERROR: invalid memory access` in the upstream
-`http::Server::release_connection` / `std::Arc::get`. A fresh rebuild passed
-3/3 consecutive runs with 138/138 and no runtime errors. The cause is not
-established; do not treat a single green run as proof. The CI summary-line gate
-(A2) refuses a partial run, but this flakiness is recorded here so an intermittent
-red run is investigated rather than rerun until green. Owner: unassigned —
-assign at the next wave kickoff. Upstream `lang/libs/http` is read-only here.
+## 5f. Test-suite flake: upstream `http::Server` teardown (investigated 2026-11-27)
+
+**Status: root cause located upstream; NOT fixed in this repo. A partial
+mitigation is applied; the suite is still nondeterministic. Do not treat a
+green run as proof.** CI's summary-line gate (A2) still refuses a partial run.
+
+### Symptom (re-measured)
+Baseline `tests-diag.exe` built from `tests/chemical.mod` (no `--test`),
+12 consecutive runs: **3/12 failed** — 136, 136, 137 of 138 — each with
+`RUNTIME ERROR: invalid memory access` at `std::Arc::get`. The failing test
+name varies between runs; the faulting arc is always the `Arc<Mutex<uint>>`
+`std_stdArc__cgs__a56329b9d998`, i.e. `Server.inflight`.
+
+### Root cause — upstream, file:line
+The error is a use-after-free of the `Server` object reached from a worker's
+callback. The relevant upstream sites (all read-only here) are:
+
+* `lang/libs/http/src/server.ch:463-466` — `serve_async(self)` consumes the
+  `Server` **by value** and spawns `serve_thread(server : Server)`
+  (`server.ch:626-629`), which takes it by value again. The spawned thread owns
+  the `Server` value; its address is a raw `selfp : *Server` taken at
+  `server.ch:517` and `server.ch:563` and copied into pool/IOCP closures.
+* `lang/libs/http/src/server.ch:388-392` (`release_connection`) and
+  `server.ch:378-384` (`try_reserve_connection`) dereference
+  `self.inflight` — an `Arc<Mutex<uint>>` — through that raw pointer.
+* `lang/libs/http/src/server.ch:513-604` — `serve_iocp` returns as soon as the
+  accept loop observes `stopping`. It never unregisters sockets, drains the
+  completion port, cancels pending `WSARecv`, or closes/frees the `cp`
+  allocation; every `AsyncContext` callback still holds `selfp`
+  (`server.ch:563-600`).
+* `lang/libs/net/win/iocp.ch:90-108` — `CompletionPort::poll` invokes those
+  callbacks inline on pool workers, including during the server's own teardown.
+* `lang/libs/std/src/concurrency/threadpool.ch:363-377,435-448` —
+  `ThreadPool::delete` joins workers, but it does not drain IOCP completions,
+  so a callback can call `release_connection()` after the `Server` is destroyed.
+
+`--emit-c` output confirms the faulting function has exactly two callers,
+`try_reserve_connection` and `release_connection`, both loading
+`server->inflight` and then `Arc::get` (`tests/build/Translated.c:103166-103208,
+98664-98679`). The generated `is_running`/`shutdown` paths use a *different*
+Arc instantiation (`Arc<Mutex<bool>>`, `...3ed23381dad8`), so those are not
+the faulting path.
+
+The proper fix must be upstream: make the serving `Server` heap-owned with a
+lifetime that outlives every callback, and drain/cancel the completion port
+before returning from `serve_iocp`. That is outside the permitted scope here.
+
+### Workarounds measured (none gives a clean 15/15)
+Each alternative was built with `--no-cache` and run repeatedly:
+
+| Change | Result |
+|---|---|
+| Baseline | 3/12 runs failed (136/136/137) |
+| `--serial` (runner flag passed to `tests.exe`) | 6/12 failed — not a fix |
+| RAII guard joining the `Thread` from `serve_async` at test-scope exit | 3/15 failed; one run stalled 182 s waiting on a join — not a fix |
+| `cfg.worker_count = 1u` in all 126 test configs | 13/15 failed (and a different fault address) — worse |
+| Make all 379 `stop.shutdown()` calls no-ops | 1/12 failed — reduced but not eliminated |
+| Make all `underlayer_db::close` calls no-ops | 3/12 failed — no effect |
+| Run all 138 tests one-per-process via `--test-names` | 1/276 test invocations failed — still nonzero |
+| `@test.retry(4)` on all 138 tests (runner retries crashed children) | 1/15 runs failed — hides, does not fix |
+
+Because the residual failure survives every in-repo variation, this is recorded
+as an upstream defect rather than claimed fixed. Final clean-machine gate on
+the shipped tree (`tests-final-diag.exe`, 15 consecutive runs): **2/15 runs
+still failed** — run 9 reported 138/138 but emitted the Arc runtime error from
+a child exiting after it had reported success; run 10 reported 137/138 with
+the same error. The other 13 runs were 138/138 with no runtime errors.
+
+### In-repo change applied
+`tests/src/page_html_test.ch` — `test_review_page_has_html` used port 19971,
+which `account_bridge_test.ch` also uses. With parallel child processes that
+makes this test's `bind()` fail independently of the page under test. It now
+uses the previously unused port 19998. This is a separate, deterministic test
+bug found during the investigation; it does not address the Arc lifetime race.
+
+**Next action:** assign an owner upstream (`lang/libs/http`) to implement the
+drain + heap-owned lifetime fix, then re-run the 15x gate above.
 
 ## 5g. Health alerting, on-call and web analytics (B2, 2026-11-27)
 

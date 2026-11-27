@@ -151,7 +151,10 @@ public func test_review_page_has_html(env : &mut TestEnv) {
     var db = test_helpers::setup_test_db()
     var courses_dir = string("./courses")
     var cfg = server.ServerConfig()
-    cfg.addr = string("127.0.0.1:19971")
+    // 19971 is taken by account_bridge_test's sign-in server. The runner runs
+    // tests in parallel child processes, so a shared port makes this test's
+    // bind() fail intermittently for a reason unrelated to the page under test.
+    cfg.addr = string("127.0.0.1:19998")
     var srv = server.Server(cfg)
     var dbp154_addr : usize = (&raw db) as usize
     srv.router.add("GET", "/review", (|dbp154_addr, courses_dir|(req) => {
@@ -163,7 +166,7 @@ public func test_review_page_has_html(env : &mut TestEnv) {
     std::concurrent.sleep_ms(200u)
 
     var client = http::Client()
-    var res = client.get("http://127.0.0.1:19971/review")
+    var res = client.get("http://127.0.0.1:19998/review")
     if(res is Result.Err) { env.error("request failed"); stop.shutdown(); underlayer_db::close(&raw db); return }
     var Ok(resp) = res else unsafe { unreachable }
     var body_opt = resp.body.text()
