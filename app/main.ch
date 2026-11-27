@@ -33,6 +33,38 @@ public func request_db() : *underlayer_db::DbClient {
     return unsafe(g_db)
 }
 
+// ---- H14: debug-only routes ---------------------------------------------
+// A handful of routes exist for the test harness and for the signed-out demo
+// flows that tests.exe still drives.  They write persistent rows under the
+// shared "demo" identity, so a release build must not expose them: the answer
+// is the same 404 an unknown path gets, before any handler or rate limiter
+// runs.  Debug and test binaries keep the old behaviour byte-for-byte, which
+// is what keeps tests.exe at 138/138.  No state is captured: build provenance
+// is read from the environment on each call, exactly as /components already
+// does it (I9).
+func is_debug_build() : bool {
+    var bi = underlayer_core::current_build_info()
+    var release_mode = string("release")
+    return !bi.build_mode.equals(&release_mode)
+}
+
+func debug_only_not_found() : http::Response {
+    var body = string("Not found")
+    return underlayer_web::send_status_text(404u, &body)
+}
+
+// Feature routes that used to write under the shared "demo" identity keep their
+// full behaviour in debug (tests.exe drives them). In release they require a
+// real session: 401 for anonymous callers, unchanged for signed-in learners.
+// This is narrower than a 404 -- a build-mode gate must not silently disable a
+// shipped feature for its actual users.
+func require_session_in_release(db : *underlayer_db::DbClient, req : &http::Request) : std::Option<http::Response> {
+    if(is_debug_build()) { return std::Option.None<http::Response>() }
+    if(underlayer_web::has_session(db, req)) { return std::Option.None<http::Response>() }
+    var msg = string("Sign in to see your data")
+    return std::Option.Some<http::Response>(underlayer_web::send_error(401u, &msg))
+}
+
 // ---- Graceful shutdown (H7) ------------------------------------------------
 // The upstream HTTP server exposes ShutdownHandle but registers NO OS signal
 // handler and does not drain on SIGTERM (verified in lang/libs/http/src/server.ch:
@@ -210,6 +242,15 @@ public func main() : int {
             var Some(refusal) = gate else unsafe { unreachable }
             return underlayer_web::deliver_with_learner(request_db(), &req, refusal)
         }
+        // H14: test-only route. It inserts into `learners` with a hardcoded
+        // identity and no credentials, so release answers like an unknown path.
+        // Debug keeps it for tests/src/additional_api_test.ch (138/138). The
+        // limiter above still runs in both modes: security_check's existing
+        // bucket assertion must keep proving the gate fires, and a rate-limit
+        // bucket is infrastructure, not a learner row.
+        if(!is_debug_build()) {
+            return underlayer_web::deliver_with_learner(request_db(), &req, debug_only_not_found())
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_create_learner(db, &req))
     })
     srv.router.add("GET", "/api/learners/:learnerId", ||(req) => {
@@ -365,6 +406,13 @@ public func main() : int {
     // ---- Session Recommendations (1.2.25) ----
     srv.router.add("GET", "/api/review/recommendations", ||(req) => {
         var db = request_db()
+        // I9: due counts describe ONE learner's queue. With no session the
+        // handler used to answer for the shared "demo" row, so a signed-out
+        // reader was shown numbers that looked like theirs. No session, no data.
+        if(!underlayer_web::has_session(db, &req)) {
+            var msg = string("Sign in to see your data")
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_error(401u, &msg))
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_session_recommendations(db, &req))
     })
     // ---- Time-of-Day Recommendation (1.2.27) ----
@@ -400,6 +448,11 @@ public func main() : int {
     srv.router.add("GET", "/api/progress", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
+        // I9: personal learning data. 401 rather than the demo learner's row.
+        if(!underlayer_web::has_session(db, &req)) {
+            var msg = string("Sign in to see your data")
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_error(401u, &msg))
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_progress(db, &courses_dir, &req))
     })
     // ---- What am I doing: courses in progress, coverage, and the exercises
@@ -410,16 +463,33 @@ public func main() : int {
     srv.router.add("GET", "/api/me/overview", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
+        // I9: the route is literally named "me". An anonymous caller has no
+        // overview; answering with an empty/demo one invites a false reading.
+        if(!underlayer_web::has_session(db, &req)) {
+            var msg = string("Sign in to see your data")
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_error(401u, &msg))
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_my_overview(db, &courses_dir, &req))
     })
     // ---- Which quiz did I fail.  The same list without the course summary. ----
     srv.router.add("GET", "/api/exercises/failures", ||(req) => {
         var db = request_db()
+        // I9: a list of exercises THIS learner got wrong is personal data.
+        if(!underlayer_web::has_session(db, &req)) {
+            var msg = string("Sign in to see your data")
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_error(401u, &msg))
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_exercise_failures(db, &req))
     })
     // ---- Progress Export (6.1.7) ----
     srv.router.add("GET", "/api/progress/export", ||(req) => {
         var db = request_db()
+        // I9: a data export is the purest form of personal data. Never export
+        // the shared demo row to an unauthenticated caller.
+        if(!underlayer_web::has_session(db, &req)) {
+            var msg = string("Sign in to see your data")
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_error(401u, &msg))
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_progress_export(db, &req))
     })
     // ---- Session Analytics (6.2.1) ----
@@ -521,6 +591,12 @@ public func main() : int {
     srv.router.add("GET", "/api/progress/:courseId", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
+        // I9: per-course progress is the visitor's own learning state. Gate
+        // before the demo fallback in the handler; /api/progress/elf included.
+        if(!underlayer_web::has_session(db, &req)) {
+            var msg = string("Sign in to see your data")
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_error(401u, &msg))
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_course_progress(db, &courses_dir, &req))
     })
     // ---- Learning Goals (6.1.5) ----
@@ -530,11 +606,23 @@ public func main() : int {
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_goals(db, &req))
     })
     srv.router.add("POST", "/api/goals", ||(req) => {
+        // H14: an anonymous goal writes learning_goals under the shared demo id.
         var db = request_db()
+        var gate = require_session_in_release(db, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return underlayer_web::deliver_with_learner(request_db(), &req, refusal)
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_set_goal(db, &mut req))
     })
     srv.router.add("DELETE", "/api/goals", ||(req) => {
+        // H14: the same demo bucket could also be DELETED by an anonymous caller.
         var db = request_db()
+        var gate = require_session_in_release(db, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return underlayer_web::deliver_with_learner(request_db(), &req, refusal)
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_delete_goal(db, &req))
     })
     // ---- Weakness Dashboard (1.4.21) ----
@@ -606,6 +694,13 @@ public func main() : int {
     srv.router.add("GET", "/api/nav-status", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
+        // I9: concepts started/mastered and the due badge belong to a learner.
+        // An anonymous page simply has no bar to paint; it must not paint the
+        // shared demo learner's bar and call it the visitor's progress.
+        if(!underlayer_web::has_session(db, &req)) {
+            var msg = string("Sign in to see your data")
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_error(401u, &msg))
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_nav_status(db, &courses_dir, &req))
     })
     // ---- Nav Search / Quick Jump (P2 7.1.10 command palette) ----
@@ -1030,11 +1125,25 @@ public func main() : int {
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_delete_account(db, &req))
     })
     srv.router.add("POST", "/api/user/deactivate", ||(req) => {
+        // H14: writes learner_settings and deletes auth_sessions for "demo"
+        // when no session resolves. Account state changes are not anonymous.
         var db = request_db()
+        var gate = require_session_in_release(db, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return underlayer_web::deliver_with_learner(request_db(), &req, refusal)
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_deactivate_account(db, &req))
     })
     srv.router.add("POST", "/api/user/reactivate", ||(req) => {
+        // H14: the matching upsert writes learner_settings on a fresh DB even
+        // though the probe only saw it change an existing row. Gate it too.
         var db = request_db()
+        var gate = require_session_in_release(db, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return underlayer_web::deliver_with_learner(request_db(), &req, refusal)
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_reactivate_account(db, &req))
     })
     // Progress sharing (from handlers_data.ch)
@@ -1055,7 +1164,14 @@ public func main() : int {
         }
     })
     srv.router.add("POST", "/api/progress/import", ||(req) => {
+        // H14: an import inserts concept_states / review_items under "demo".
+        // G13's one-shot guest takeover is a separate feature and is untouched.
         var db = request_db()
+        var gate = require_session_in_release(db, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return underlayer_web::deliver_with_learner(request_db(), &req, refusal)
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_import_progress(db, &mut req))
     })
     srv.router.add("GET", "/api/user/:username", ||(req) => {
@@ -1649,14 +1765,31 @@ public func main() : int {
     // ---- Streaks API ----
     srv.router.add("GET", "/api/streaks", ||(req) => {
         var db = request_db()
+        // I9: a streak is personal. The handler's "demo" fallback used to give
+        // every signed-out visitor the same invented streak.
+        if(!underlayer_web::has_session(db, &req)) {
+            var msg = string("Sign in to see your data")
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_error(401u, &msg))
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_streak(db, &req))
     })
     srv.router.add("POST", "/api/streaks/activity", ||(req) => {
+        // H14: writes daily_activity + learning_streaks for the shared demo id.
         var db = request_db()
+        var gate = require_session_in_release(db, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return underlayer_web::deliver_with_learner(request_db(), &req, refusal)
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_record_activity(db, &req))
     })
     srv.router.add("GET", "/api/streaks/weekly", ||(req) => {
         var db = request_db()
+        // I9: a per-day activity calendar is the visitor's own history.
+        if(!underlayer_web::has_session(db, &req)) {
+            var msg = string("Sign in to see your data")
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_error(401u, &msg))
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_weekly_activity(db, &req))
     })
     // ---- Study Planner API ----

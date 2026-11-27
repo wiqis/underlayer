@@ -45,9 +45,12 @@ public namespace underlayer_web {
         return send_json_str(&body)
     }
 
-    // P2 6.2.12: Retention analytics — active days, span, weekly return rate
+    // P2 6.2.12: Retention analytics — active days, span, weekly return rate.
+    // I9: aggregate/curiosity view kept public, but a signed-out caller is told
+    // these are demo numbers rather than its own history (additive fields only).
     public func handle_retention_analytics(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
+        var anon = !has_session(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var r = underlayer_repository::query_retention(db, &learner_id)
         var weeks = underlayer_repository::query_retention_weeks(db, &learner_id)
@@ -132,6 +135,9 @@ public namespace underlayer_web {
         } else {
             body.append_view("null")
         }
+        if(anon) {
+            body.append_view(",\"demo\":true,\"message\":\"Sign in to see your data\"")
+        }
         body.append_view("}")
         return send_json_str(&body)
     }
@@ -181,8 +187,12 @@ public namespace underlayer_web {
     }
 
     // P2 6.2.11: Funnel analytics — registered -> attempted -> reviewed -> mastered
+    // I9: same aggregate/curiosity rule as retention — public but demo-marked
+    // when there is no session, so no page can mistake the numbers for the
+    // visitor's own.
     public func handle_funnel_analytics(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
+        var anon = !has_session(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var r = underlayer_repository::query_funnel(db, &learner_id)
         var registered : i64 = 0
@@ -214,6 +224,9 @@ public namespace underlayer_web {
         body.append_view(",\"sessions\":")
         var _g3 = underlayer_core::int_to_string(sessions)
         body.append_string(&_g3)
+        if(anon) {
+            body.append_view(",\"demo\":true,\"message\":\"Sign in to see your data\"")
+        }
         body.append_view("}")
         return send_json_str(&body)
     }

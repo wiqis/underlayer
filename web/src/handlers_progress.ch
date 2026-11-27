@@ -288,9 +288,12 @@ public namespace underlayer_web {
         return send_json_str(&body)
     }
 
-    // 6.2.2: Concept analytics (mastery, time, attempts)
+    // 6.2.2: Concept analytics (mastery, time, attempts).
+    // I9: a per-concept curiosity view. Public, but demo-marked when the caller
+    // has no session so its counters are never read as the visitor's own.
     public func handle_concept_analytics(db : *DbClient, concept_id : &string_view, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
+        var anon = !has_session(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var cid = sv_to_string(concept_id)
         var course_id = string("elf")
@@ -343,6 +346,9 @@ public namespace underlayer_web {
         body.append_view(",\"streak\":")
         var streak_out = underlayer_core::int_to_string(state.streak as i64)
         body.append_string(&streak_out)
+        if(anon) {
+            body.append_view(",\"demo\":true,\"message\":\"Sign in to see your data\"")
+        }
         body.append_view("}")
         return send_json_str(&body)
     }

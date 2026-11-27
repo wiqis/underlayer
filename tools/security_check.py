@@ -617,6 +617,48 @@ def main():
                   'HTTP %d %s' % (stx, bodyx[:90]))
 
         budget()
+        print('=== CHECK 13b  H14 anonymous-write routes are release-only ===')
+        # H14: these routes create or delete persistent rows under the shared
+        # "demo" identity when no session resolves. Debug keeps them byte-for-
+        # byte because tests.exe drives /api/learners (138 tests); a release
+        # build must answer like an unknown path before any handler runs.
+        # The build mode is read from /api/health, never assumed: asserting the
+        # gate against a debug binary would be a false alarm, and asserting
+        # "debug is open" against release would hide a real regression.
+        sth, bh = http('GET', '/api/health', args.port)
+        mode = ''
+        if sth == 200:
+            try:
+                mode = json.loads(bh).get('build_mode', '')
+            except (ValueError, AttributeError):
+                mode = ''
+        H14_ROUTES = (
+            ('POST', '/api/learners'),
+            ('POST', '/api/goals'),
+            ('DELETE', '/api/goals'),
+            ('POST', '/api/user/deactivate'),
+            ('POST', '/api/user/reactivate'),
+            ('POST', '/api/progress/import'),
+            ('POST', '/api/streaks/activity'),
+        )
+        if mode == 'release':
+            seen = []
+            statuses = []
+            for method, ep in H14_ROUTES:
+                stg, bg = http(method, ep, args.port)
+                seen.append('%s %s->%d' % (method, ep, stg))
+                statuses.append(stg)
+            # /api/learners is test-only and 404s. The other six are real
+            # features: release requires a session (401) without disabling them
+            # for signed-in learners. Both are a gate; a 2xx never is.
+            check('H14 all %d anonymous-write routes gated in release' % len(H14_ROUTES),
+                  all(code in (401, 403, 404) for code in statuses), ', '.join(seen))
+        else:
+            stl, bl = http('POST', '/api/learners', args.port)
+            check('H14 debug keeps test-only /api/learners (build_mode=%r)' % mode,
+                  stl != 404, 'HTTP %d %s' % (stl, bl[:90]))
+
+        budget()
         print('=== CHECK 14  EVERY rate-limit gate actually fires ===')
         # THE ONE THAT MATTERS MOST IN THIS FILE.
         #

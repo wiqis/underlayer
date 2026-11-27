@@ -36,9 +36,14 @@ public namespace underlayer_web {
         return underlayer_web::send_html(&html_out)
     }
 
-    // GET /api/analytics/overview — JSON overview stats
+    // GET /api/analytics/overview — JSON overview stats.
+    // I9: this is a curiosity/aggregate view, so it stays available to a
+    // signed-out reader — but the numbers are the shared demo learner's, never
+    // the visitor's. The additive `demo` marker says so on the wire, and the
+    // message repeats it in words. A signed-in caller gets an unchanged body.
     public func handle_analytics_overview_api(db : *DbClient, req : &http::Request) : http::Response {
         var learner_id = auth_get_learner_id(db, req)
+        var anon = !has_session(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
 
@@ -126,6 +131,9 @@ public namespace underlayer_web {
         body.append_view(",\"streak\":")
         var st_out = underlayer_core::int_to_string(streak)
         body.append_string(&st_out)
+        if(anon) {
+            body.append_view(",\"demo\":true,\"message\":\"Sign in to see your data\"")
+        }
         body.append_view("}")
         return send_json_str(&body)
     }
