@@ -1726,6 +1726,15 @@ public func main() : int {
         return 1
     }
     unsafe { web::install(&raw mut app) }
+    // B5: the external pre-paint theme bootstrap. Must be an EXPLICIT route
+    // ahead of the catch-all below: the frozen web::App has no artifact at this
+    // path, so a catch-all hit would serve the 404 and the theme would flash.
+    // The JS bytes and the pinned hash live in content/src/theme_boot.ch; this
+    // route only answers them, with the same CSP/ETag/request-id as everything
+    // else. No caller-supplied header influences the response.
+    srv.router.add("GET", "/assets/theme-boot.js", ||(req) => {
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_theme_boot(&req))
+    })
     // The catch-all: one registration per method, last in the table, so every
     // explicit route above keeps first refusal. `web::serve_request` answers from
     // the frozen site (pages, assets with their immutable cache headers, 404).

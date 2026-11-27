@@ -46,6 +46,14 @@
 //
 //   default-src 'self'               anything not named below stays on this host
 //   script-src 'self' 'unsafe-inline'
+//                                    B5 externalised the theme boot to a
+//                                    same-origin SRI-hashed asset ('self'
+//                                    already covers it). The hash is NOT in
+//                                    this policy: CSP3 would then ignore
+//                                    'unsafe-inline' and break the thousands
+//                                    of macro-emitted inline blocks. Measured
+//                                    with a CDP drive; see docs/deployment.md
+//                                    §6 item 1. No tightened CSP is claimed.
 //   style-src  'self' 'unsafe-inline'    the #js/#css macros emit inline blocks
 //   img-src 'self' data: https://storage.googleapis.com
 //                                    data: for lesson diagrams, GCS for avatars

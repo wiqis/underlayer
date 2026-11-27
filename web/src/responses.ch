@@ -47,6 +47,16 @@ public namespace underlayer_web {
         // style-src violation for the <link> and a font-src violation for the
         // woff2 files. They are added EXACTLY where needed: Google remains
         // absent from default-src, script-src, img-src and connect-src.
+        // B5: the pre-paint theme boot is now an external, SRI-hashed script at
+        // /assets/theme-boot.js, allowed here by the existing 'self' source.
+        // The hash is deliberately NOT added to script-src: under CSP3 a hash
+        // or nonce source makes the browser IGNORE 'unsafe-inline', and the
+        // #html/#css/#js macros still emit inline blocks by the thousand. A CDP
+        // drive with the hash present produced 33 script-src violations on
+        // three pages (see docs/deployment.md §6 item 1). That is the measured
+        // reason full tightening is a follow-up, not a claim of "no unsafe".
+        // frame-src/connect-src are byte-for-byte unchanged: the account iframe
+        // and Google consent popup depend on those exact entries.
         var policy = string("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://storage.googleapis.com; connect-src 'self' ")
         policy.append_view(account.to_view())
         policy.append_view("; frame-src ")

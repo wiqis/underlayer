@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # ================================================================
 # Dockerfile — Build Underlayer using the Chemical toolchain
 #
@@ -5,20 +6,15 @@
 # Dependencies: cloned from GitHub by the modules' imports. The brand layer is
 # private: the two .cloud.mod manifests import github.com/wiqis/brandlib instead
 # of the local ../../WebLibs/brandlib path, and are copied over their local
-# twins below (same pattern as Web/timeline and Web/123mind). GITHUB_TOKEN must
-# have read access to the wiqis org. database/chemical.mod also pulls
+# twins below (same pattern as Web/timeline and Web/123mind). A GitHub token
+# with read access to the wiqis org is needed for that clone — see the H8
+# BuildKit secret-mount note below. database/chemical.mod also pulls
 # chemicallang/sqlite3, compiled from C source — no shared libraries to ship.
 # ================================================================
 
 FROM chemicallang/chemical:v0.6.2-tcc-ubuntu AS builder
 
 RUN apt-get update && apt-get install -y git ca-certificates && rm -rf /var/lib/apt/lists/*
-
-ARG GITHUB_TOKEN=
-RUN set -eux; \
-    if [ -n "${GITHUB_TOKEN:-}" ]; then \
-        git config --global url."https://x-access-token:${GITHUB_TOKEN:-}@github.com/".insteadOf "https://github.com/"; \
-    fi
 
 WORKDIR /workspace
 
@@ -40,8 +36,32 @@ COPY content/ ./content/
 # Surfaces the compiler version in the build log — this project is sensitive to it.
 RUN chemical --version
 
-RUN mkdir -p /workspace/build && \
-    chemical chemical.mod -o /workspace/build/underlayer.exe --mode release --no-cache
+# H8 — the build token is a BuildKit SECRET, not a build ARG.
+# Build args are recorded in image metadata and `docker history`, so a token
+# passed with --build-arg would be recoverable from a pushed image. A secret
+# mount exists only for the duration of this RUN and is never committed. It has
+# to be on the COMPILE step: the compiler is what clones the private module.
+#
+# The token is also never allowed to reach the layer filesystem: git's config is
+# written to a temp file, exported via GIT_CONFIG_GLOBAL for THIS shell only, and
+# removed in the same RUN before it exits. No ENV records it. Builds of the
+# public dependency set work with no secret supplied at all.
+#
+# Usage:
+#   docker build --secret id=github_token,env=GITHUB_TOKEN -t underlayer .
+# (or ,src=/path/to/token-file; never --build-arg GITHUB_TOKEN).
+RUN --mount=type=secret,id=github_token,target=/run/secrets/github_token \
+    mkdir -p /workspace/build && set -eu; \
+    cfg=/tmp/underlayer-gitconfig; \
+    rm -f "$cfg"; \
+    if [ -s /run/secrets/github_token ]; then \
+        token="$(cat /run/secrets/github_token)"; \
+        printf '[url "https://x-access-token:%s@github.com/"]\n\tinsteadOf = https://github.com/\n' "$token" > "$cfg"; \
+        export GIT_CONFIG_GLOBAL="$cfg"; \
+    fi; \
+    export GIT_TERMINAL_PROMPT=0; \
+    chemical chemical.mod -o /workspace/build/underlayer.exe --mode release --no-cache; \
+    rm -f "$cfg"
 
 # ── Runtime ─────────────────────────────────────────────────
 FROM ubuntu:24.04

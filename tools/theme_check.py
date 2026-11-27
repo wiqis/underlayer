@@ -103,10 +103,22 @@ def brand_script(head):
 
 
 def boot_script(head):
-    """The small underlayer fallback: delegates to $wiqisThemeGet or resolves the key itself."""
-    for s in scripts(head):
-        if '$wiqisThemeGet' in s and "getItem('wiqis-theme')" in s:
-            return s
+    """The small underlayer fallback: delegates to $wiqisThemeGet or resolves the key itself.
+
+    B5: HTTP-served brand-shell pages load the SAME source from the blocking
+    external asset /assets/theme-boot.js with a pinned SRI hash; lesson pages
+    (also exported for file://) keep the inline IIFE. Both are the boot, and
+    both must be in <head>. A `defer`/`async` attribute would silently
+    reintroduce the flash, so it is rejected here.
+    """
+    for match in re.finditer(r'<script([^>]*)>(.*?)</script>', head, re.S):
+        attrs, body = match.group(1), match.group(2)
+        if '$wiqisThemeGet' in body and "getItem('wiqis-theme')" in body:
+            return body
+        if ('src="/assets/theme-boot.js"' in attrs and
+                'integrity="sha384-' in attrs and
+                'async' not in attrs and 'defer' not in attrs):
+            return 'external:/assets/theme-boot.js'
     return None
 
 

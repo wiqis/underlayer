@@ -26,12 +26,26 @@
 // is emitted inside <head> immediately before </head> (page.ch:864-867), which is
 // exactly the slot for this.
 //
-// WHY IT IS INLINED AND NOT A SEPARATE .js FILE.  An external stylesheet or
-// script is fetched, and a fetch is a round trip during which the browser is
-// holding an UNPAINTED document. Inlining removes the round trip entirely, which
-// is the whole point: this is not a performance nicety, it is the difference
-// between the correct colour appearing first and appearing second. It also keeps
-// the statically pre-rendered lesson pages working from file:// with no server.
+// B5 (2026-11-27) — FIRST STEP OF A STEPWISE CSP EXTERNALISATION.
+//
+// The script used to be inline on EVERY themed page, and it was one of the
+// reasons `script-src` had to keep `'unsafe-inline'`. HTTP-served brand-shell
+// pages now load the SAME source from a same-origin blocking external asset,
+// `/assets/theme-boot.js`, with a pinned SRI `integrity` hash. A blocking
+// external script still runs before the body is parsed, so there is no flash.
+//
+// The hash was deliberately NOT added to CSP `script-src`: under CSP3 that
+// makes the browser ignore `'unsafe-inline'`, breaking the macro-emitted inline
+// blocks (33 violations measured in a CDP drive). The asset is therefore
+// covered by the existing `'self'` source and verified by SRI, not by a new
+// policy entry. No tightened CSP is claimed.
+//
+// Lesson pages KEEP the inline copy. They are also pre-rendered for `file://`,
+// where an absolute `/assets/...` URL points at the filesystem root and never
+// resolves. Backend-optional is a core constraint: breaking the theme on a
+// downloaded course is not an acceptable trade for a partial CSP win. This is
+// an explicitly PARTIAL externalisation — see `docs/deployment.md` §6 item 1
+// for the inventory and the remaining work.
 //
 // WHY IT DELEGATES TO WiqisTheme WHEN THAT IS PRESENT.  The head script must
 // run before the nav's own helpers are DEFINED, so it cannot call them; but
@@ -49,6 +63,25 @@
 using std::string
 
 public namespace underlayer_content {
+
+    // The exact bytes of the external asset. `web/src/theme_boot_asset.ch`
+    // serves this string and the `<script>` tag below pins its hash; the inline
+    // fallback carries the same bytes. `tools/theme_boot_hash_check.py` proves
+    // all three agree; a mismatch would make the browser refuse an SRI script
+    // and reintroduce the flash.
+    //
+    // Deliberately a single quoted literal: no string appends build markup or
+    // JS here, and every quote inside is a single quote so the Chemical string
+    // literal stays unambiguous.
+    public func theme_boot_js_source() : string {
+        return string("(function(){var g=window.$wiqisThemeGet;if(typeof g==='function'){window.$wiqisThemeSet(g());return;}var p='system';try{p=localStorage.getItem('wiqis-theme')||'system';}catch(e){p='system';}var d=p==='dark';if(p==='system'){d=false;try{d=!!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);}catch(e){d=false;}}var el=document.documentElement;el.classList.toggle('dark',d);el.setAttribute('data-theme',p);el.style.colorScheme=d?'dark':'light';})();")
+    }
+
+    // SHA-384 of theme_boot_js_source(), base64, pinned once in the SRI
+    // `integrity` attribute below. Chemical cannot interpolate a value into a
+    // `<script>` string literal, so the hash appears as a literal there rather
+    // than through a constant; tools/theme_boot_hash_check.py is what keeps the
+    // two from drifting. Deliberately NOT present in the CSP `script-src`.
 
     // Emit the pre-paint theme script into <head> -- ON EVERY PAGE, lessons
     // included.
@@ -83,7 +116,20 @@ public namespace underlayer_content {
         // The script is also deliberately SELF-CONTAINED and IIFE-wrapped: it
         // must not depend on any other function being defined, because nothing
         // else has been parsed yet at this point in the document.
-        var boot = string("<script>(function(){var g=window.$wiqisThemeGet;if(typeof g==='function'){window.$wiqisThemeSet(g());return;}var p='system';try{p=localStorage.getItem('wiqis-theme')||'system';}catch(e){p='system';}var d=p==='dark';if(p==='system'){d=false;try{d=!!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);}catch(e){d=false;}}var el=document.documentElement;el.classList.toggle('dark',d);el.setAttribute('data-theme',p);el.style.colorScheme=d?'dark':'light';})();</script>")
+        //
+        // `lesson = true` means a lesson page (HTTP-served OR pre-rendered for
+        // file://): keep the inline form (same bytes), because an absolute
+        // asset URL cannot resolve from disk. Every HTTP-served brand-shell
+        // page takes the external branch.
+        var boot = string()
+        if(lesson) {
+            boot = string("<script>(function(){var g=window.$wiqisThemeGet;if(typeof g==='function'){window.$wiqisThemeSet(g());return;}var p='system';try{p=localStorage.getItem('wiqis-theme')||'system';}catch(e){p='system';}var d=p==='dark';if(p==='system'){d=false;try{d=!!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);}catch(e){d=false;}}var el=document.documentElement;el.classList.toggle('dark',d);el.setAttribute('data-theme',p);el.style.colorScheme=d?'dark':'light';})();</script>")
+        } else {
+            boot = string("<script src=\"/assets/theme-boot.js\" integrity=\"sha384-+gwYSbETg+BseeAs0LJMGgeg+pDg1DdV59E7dJ0v+GH9CookguKFp6Nw5IFZ8dcH\"></script>")
+        }
+        // One append for both branches: the checker_nonvacuity plant replaces
+        // this line and must kill the boot on served pages as well as on static
+        // pages, otherwise it certifies nothing.
         var bv = boot.to_view()
         page.append_head_view(&bv)
     }

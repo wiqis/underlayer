@@ -564,16 +564,152 @@ established; do not treat a single green run as proof. The CI summary-line gate
 red run is investigated rather than rerun until green. Owner: unassigned —
 assign at the next wave kickoff. Upstream `lang/libs/http` is read-only here.
 
+## 5g. Health alerting, on-call and web analytics (B2, 2026-11-27)
+
+**Status: configuration and decision recorded; the alert and the named human are
+founder actions. No alert is live and no GA4 stream was created by this work.**
+
+- **Named on-call owner:** `TBD — founder to name`. This is a placeholder, not an
+  operational control. The same placeholder is used for H6's snapshot owner in
+  §4; both must be replaced with a human before EC2/EC15 can be called true.
+- **Alert rule (to apply in Cloud Monitoring):**
+  - Resource: the Cloud Run revision serving `underlayer.wiqis.com`.
+  - Probe: `GET https://underlayer.wiqis.com/api/health` every **60 s**, from at
+    least two regions. Expected: HTTP **200** *and* JSON `status == "ok"` *and*
+    `version == "0.1.0"` (the unchanged client contract).
+  - Trigger: **2 consecutive failed probes** (≥120 s of failure). Severity P1 →
+    page the named owner. A single isolated failure is a signal, not an incident.
+  - Second signal: 5xx ratio **> 1 % over 5 minutes**, or any `SQL FAILED` /
+    `database is locked` line in Cloud Logging → same owner. `X-Request-Id` and
+    the `[request]` line in §5a give the correlation key to quote in the page.
+  - Recovery: 5 consecutive healthy probes → auto-resolve, but the incident
+    still gets a written note in the decision log.
+- **Incident runbook — exact path:** `docs/deployment.md#5g-health-alerting-on-call-and-web-analytics-b2-2026-11-27`.
+  The runbook is this subsection until a dedicated `docs/incident-runbook.md` is
+  created by the owner; steps, in order:
+  1. Acknowledge the page; record the time, the failing region(s) and the
+     `X-Request-Id` from the Cloud Logging `[request]` line.
+  2. Re-probe `GET /api/health` by hand. If it answers, check whether the alert
+     was a transient region failure before changing anything.
+  3. Run `py -3 tools/release_probe.py https://underlayer.wiqis.com` — this is
+     the **health identity check**, not a liveness replacement. It verifies the
+     deployed payload still matches the recorded commit/compiler pin (§4 H5) and
+     is expected to fail until the founder deploys a release build with the four
+     `UL_BUILD_*` values. A 200 with a two-field payload means "healthy but
+     unverified provenance", not "wrong service".
+  4. Check the last deployment digest and whether `DATABASE_URL` still points at
+     the durable mount (§4 H6). If `/data` is not mounted, a recent revision swap
+     has lost writes — do not restart again before taking a snapshot.
+  5. Verify single-instance state (§5h). A second instance on the same SQLite
+     file is a FATAL config, not a scale path.
+  6. Mitigation: roll back to the previous binary digest from H5 (§4), restore a
+     snapshot into a **staging** path first, and re-run `/api/health` plus one
+     account action. Never restore underneath a running process.
+  7. Close out: write the date, root cause, digest, RPO/RTO and owner into
+     `Docs/decisions.md`; link the log. Company rule: never push or deploy from
+     an agent session.
+
+**Decision awaiting the founder — W4-1 web GA4 streams.** The company
+`Docs/firebase-telemetry-plan.md` W4-1 asks for GA4 web streams on
+`underlayer.wiqis.com` (and `timeline.wiqis.com`) with consent-aware gtag and the
+same event names as Android. This is **separate from §6.10**, which ruled learner
+email/I12 negative; that ruling does not dispose of GA4. No stream, gtag snippet
+or web event implementation was added here — that is a founder/owner decision on
+whether web analytics is wanted at all, and, if yes, which property and consent
+mechanism. The authoritative decision entry belongs in `Docs/decisions.md` and is
+owned by the founder/coordinator, not by this agent. H10 (web error reporting)
+depends on a W4-1 ruling; do not pre-empt it.
+
+**H8** is inventoried in `docs/secrets.md`: the Dockerfile build token is now a
+BuildKit secret mount, and no secret literal is tracked. Docker's daemon is
+unavailable on this machine, so `docker history` / image-scan verification and
+the staging rotation are founder actions, not claimed checks.
+
+## 5h. Single-instance enforcement (H1, 2026-11-27)
+
+**Status: documented and tooled; the Cloud Run setting itself is a
+founder console action. No production change was made.**
+
+B3 measured 40/40 concurrent writes through one `SQLITE_OPEN_FULLMUTEX` handle.
+That is safe for **one process only**. A second instance gets a second SQLite
+file and the fleet silently diverges; it must never be treated as a scale path.
+
+Cloud Run settings to apply (owner: **TBD — founder to name**; a named human is
+required before EC5 is true):
+
+```bash
+gcloud run services update underlayer --region <region> \
+  --max-instances=1 \
+  --min-instances=1
+```
+
+- `max-instances=1` is **mandatory**. Any deployment with `max-instances > 1`
+  (or no cap that allows scale-out) is a FATAL config until a durable shared DB
+  exists; B4's remote backend is unimplemented and FATAL-refused at startup.
+- `min-instances>=1` is recommended: with `min-instances=0` a cold start creates
+  a new container and a new empty `/data` file, which looks healthy while losing
+  the previous instance's writes. It does not replace the H6 volume check.
+- Record the applied values, the revision and who applied them here **after**
+  the founder runs the command. `gcloud` is not installed on this machine, so no
+  deployed value was measured.
+
+**Two-client consistency probe recipe** (tool:
+`tools/instance_consistency_probe.py`):
+
+```bash
+# Local / disposable base only. One throwaway registration + two logins, no
+# progress writes; two independent session tokens for the SAME learner.
+py -3 tools/instance_consistency_probe.py http://127.0.0.1:9032 --disposable
+
+# Or supply two existing tokens (zero writes):
+py -3 tools/instance_consistency_probe.py http://127.0.0.1:9032 \
+    --token-a TOKEN_A --token-b TOKEN_B
+```
+
+Each round reads `GET /api/auth/me` and `GET /api/progress` with both tokens and
+requires byte-equivalent normalised JSON across clients and across all 10 rounds.
+A `*.wiqis.com` base is refused unless `--founder-approved` is passed; this
+agent did **not** run the probe against the deployed service. Token values are
+never printed (only an 8-hex fingerprint). `--selftest` proves a drifting stub
+is caught. Local run on 2026-11-27 against the disposable `build/b5b-verify.db`:
+10 rounds × 2 clients × 2 endpoints identical; production refusal exit 2.
+
 ## 6. Still open (do not mistake these for done)
 
-1. **CSP externalisation is still open — the "no CSP" claim is historical
-   (corrected 2026-11-26).** At the time this list was written the site sent no
-   CSP; a live probe on 2026-11-26 returns
+1. **CSP externalisation: step 1 shipped 2026-11-27; the policy is NOT
+   tightened. The "no CSP" claim is historical (corrected 2026-11-26).** A live
+   probe returns
    `Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://storage.googleapis.com; connect-src 'self' https://account.wiqis.com; frame-src https://account.wiqis.com https://accounts.google.com; form-action 'self'; base-uri 'self'; object-src 'none'`
-   (plus HSTS `max-age=31536000`) on `/courses/elf/lessons/bytes`. It still
-   allows `'unsafe-inline'` because the macros emit inline scripts and styles
-   by the thousand; tightening it via externalisation remains the open work,
-   which is why this item is not deleted.
+   (plus HSTS `max-age=31536000`). **Byte-for-byte unchanged by B5** — the
+   `frame-src`/`connect-src` account+Google entries are load-bearing and were
+   not touched.
+
+   What changed: the pre-paint theme boot on HTTP-served brand-shell pages
+   (`/courses`, `/help`, …) now loads from the same-origin blocking asset
+   `/assets/theme-boot.js`, pinned with
+   `integrity="sha384-+gwYSbETg+BseeAs0LJMGgeg+pDg1DdV59E7dJ0v+GH9CookguKFp6Nw5IFZ8dcH"`.
+   The asset is served by one explicit route ahead of the `web::App` catch-all;
+   its JS bytes and the hash live in `content/src/theme_boot.ch` and are checked
+   against `web/src/responses.ch` by `tools/theme_boot_hash_check.py --selftest`
+   (and, with a live base, by the same tool without the flag).
+
+   **Why the hash is in the SRI attribute and not in `script-src`:** a CDP drive
+   on 2026-11-27 first added the hash to `script-src` and measured **33 CSP
+   violations** (`script-src-elem`/`script-src-attr`, "inline") across
+   `/courses` (3), a lesson (28) and `/help` (2). Under CSP3 a hash or nonce
+   source makes the browser IGNORE `'unsafe-inline'`, and the `#html`/`#css`/
+   `#js` macros emit inline blocks by the thousand. So the hash in the policy
+   would break the product, not tighten it. It was reverted in the same change.
+
+   **What is still open:** (a) every inline script/style emitted by the macros
+   must be externalised or individually hashed before `'unsafe-inline'` can be
+   removed; (b) lesson pages are also pre-rendered for `file://`, where an
+   absolute asset URL does not resolve — they keep the inline boot, and a
+   portable asset-path strategy is needed before they can move. No full CSP is
+   claimed. Browser evidence after the reverted policy: zero
+   `securitypolicyviolation` events on `/courses`, a lesson and `/help`, with
+   `wiqis-theme=dark` present at first `<body>` (`tools/theme_boot_csp_probe.py`);
+   `theme_check.py` 56/56 static and 61/61 with `--browser`.
 2. **SQLite concurrency — RESOLVED 2026-11-27 (B3, founder ruling §6.2).** The
    one handle is now opened with `SQLITE_OPEN_FULLMUTEX`
    (`database/src/main.ch`), so the C library serialises all 12 workers.
