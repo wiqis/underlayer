@@ -113,5 +113,98 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Look at the first table, which is the one people do not expect. A ______ prefix with nothing to be locked against costs 2.54× a plain store, on a machine with no other thread running.",
+      "answer": "lock",
+      "options": "lock|measure()|lock xadd",
+      "correct_index": 0,
+      "explanation": "The lesson states: Look at the first table, which is the one people do not expect. A lock prefix with nothing to be locked against costs 2.54× a plain store, on a machine with no other thread running.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/smp_atomic.ch:111",
+      "source_quote": "lock",
+      "concept_id": "smp-atomic"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The harness is ______, 73 checks in eight groups, and it does not re-measure anything. It reads the recorded output of the artifact and asks whether the claims are still there. The interesting thing is not that the checks exist but what they are willing to assert, and that is decided by a single number the artifact prints before it makes any claim at all:",
+      "answer": "crosscheck.py",
+      "options": "crosscheck.py|LOWER BOUND|AGREE",
+      "correct_index": 0,
+      "explanation": "The lesson states: The harness is crosscheck.py, 73 checks in eight groups, and it does not re-measure anything. It reads the recorded output of the artifact and asks whether the claims are still there. The interesting thing is not that the checks exist but what they are willing to assert, and that is decided by a single number the artifact prints before it makes any claim at all:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/smp_harness.ch:48",
+      "source_quote": "crosscheck.py",
+      "concept_id": "smp-harness"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: One node. Its CPU list is ______ — every logical CPU on the machine, which is the kernel saying there is nowhere else to be. Every core is the same distance from every address, so a measurement on this machine of “how far is memory” would produce one number and it would be true of every core, which is precisely the property NUMA exists to violate.",
+      "answer": "0-11",
+      "options": "0-11|/sys|cpu2",
+      "correct_index": 0,
+      "explanation": "The lesson states: One node. Its CPU list is 0-11 — every logical CPU on the machine, which is the kernel saying there is nowhere else to be. Every core is the same distance from every address, so a measurement on this machine of “how far is memory” would produce one number and it would be true of every core, which is precisely the property NUMA exists to violate.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/smp_numa.ch:107",
+      "source_quote": "0-11",
+      "concept_id": "smp-numa"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Which statement is made in this lesson?",
+      "answer": "The loop is the smallest message-passing pattern there is, and it is deliberately the weakest one:",
+      "options": "The loop is the smallest message-passing pattern there is, and it is deliberately the weakest one:|Every number in this course is a claim about a pair of cores, and a pair of cores means nothing until you can say which pair. Two threads on unspecified CPUs is not a measurement; it is a rumour with a number attached. The artifact puts it as the first of six rules in its own header, and the reason it learned it was expensive:|So this concept is where the pinning acquires a meaning. To say “two threads on cpu2 and cpu4” is not to name two integers. It is to say: two different physical cores, each with its own L1 and its own L2, both inside one package, both sitting on a shared L3 — and every experiment later in the course either depends on that being true or is invalid because it is not.",
+      "correct_index": 0,
+      "explanation": "This sentence is stated verbatim in this lesson: The loop is the smallest message-passing pattern there is, and it is deliberately the weakest one:",
+      "hint1": "Re-read the model and detail sections of this lesson.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/smp_ordering.ch:55",
+      "source_quote": "The loop is the smallest message-passing pattern there is, and it is deliberately the weakest one:",
+      "concept_id": "smp-ordering"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: G is row A with the ______ removed. In this table they are indistinguishable — 0.82× — and the next concept shows the same two bodies costing 2.54× when nothing else is in the run. That is not a contradiction, and the artifact's explanation is the most useful thing in this table:",
+      "answer": "lock",
+      "options": "lock|g_line|cd courses/smp/assets/samples && ./build_samples.sh",
+      "correct_index": 0,
+      "explanation": "The lesson states: G is row A with the lock removed. In this table they are indistinguishable — 0.82× — and the next concept shows the same two bodies costing 2.54× when nothing else is in the run. That is not a contradiction, and the artifact's explanation is the most useful thing in this table:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/smp_sharing.ch:209",
+      "source_quote": "lock",
+      "concept_id": "smp-sharing"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: On RISC-V the ordering is a separate thing with a price list. ______ and FENCE w,r are cheaper than a bare FENCE because they order fewer edges. That is the one design on this list where the hardware lets you ask for exactly the guarantee you need, and it is also the one that puts the most responsibility on the person writing the code.",
+      "answer": "FENCE rw,rw",
+      "options": "FENCE rw,rw|lock|fetch_add",
+      "correct_index": 0,
+      "explanation": "The lesson states: On RISC-V the ordering is a separate thing with a price list. FENCE rw,rw and FENCE w,r are cheaper than a bare FENCE because they order fewer edges. That is the one design on this list where the hardware lets you ask for exactly the guarantee you need, and it is also the one that puts the most responsibility on the person writing the code.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/smp_three.ch:204",
+      "source_quote": "FENCE rw,rw",
+      "concept_id": "smp-three"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The walk is: for each ______ directory, read online, keep it if the file says 1, stop at the first cpuN whose directory is gone. Straightforward, and the first version of it had this shape:",
+      "answer": "cpuN",
+      "options": "cpuN|/sys|online",
+      "correct_index": 0,
+      "explanation": "The lesson states: The walk is: for each cpuN directory, read online, keep it if the file says 1, stop at the first cpuN whose directory is gone. Straightforward, and the first version of it had this shape:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/smp_topology.ch:84",
+      "source_quote": "cpuN",
+      "concept_id": "smp-topology"
+    }
   ]
 }

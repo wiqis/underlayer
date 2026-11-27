@@ -69,5 +69,59 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The method, and it is x86abi’s method for the same reason: every argument is read from its own ______ global, so the compiler cannot forward-fold it, cannot constant-propagate it, and cannot reorder two arguments that happen to have the same value. Without that, f(a, b) returning a - b compiles to nothing at -O1 and the measurement is about the compiler rather than about the ABI.",
+      "answer": "volatile",
+      "options": "volatile|clang|f(a, b)",
+      "correct_index": 0,
+      "explanation": "The lesson states: The method, and it is x86abi’s method for the same reason: every argument is read from its own volatile global, so the compiler cannot forward-fold it, cannot constant-propagate it, and cannot reorder two arguments that happen to have the same value. Without that, f(a, b) returning a - b compiles to nothing at -O1 and the measurement is about the compiler rather than about the ABI.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_calling.ch:49",
+      "source_quote": "volatile",
+      "concept_id": "rv-calling"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Almost every “what does compression cost” measurement in the wild is a comparison of two ______ settings that differ in more than one letter. Here, two pairs, and the difference between them is the lesson:",
+      "answer": "-march",
+      "options": "-march|jal|ret",
+      "correct_index": 0,
+      "explanation": "The lesson states: Almost every “what does compression cost” measurement in the wild is a comparison of two -march settings that differ in more than one letter. Here, two pairs, and the difference between them is the lesson:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_compressed_cost.ch:54",
+      "source_quote": "-march",
+      "concept_id": "rv-compressed-cost"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: An absence is the hardest kind of claim to teach, because there is nothing to point at. A reader who has never compared the three targets has no reason to believe that ______ is not merely unusual on RISC-V but absent — and the difference between those two is the difference between “clang chose a branch here” and “clang had no choice.”",
+      "answer": "CMOVcc",
+      "options": "CMOVcc|cmov|rv32-unprivileged",
+      "correct_index": 0,
+      "explanation": "The lesson states: An absence is the hardest kind of claim to teach, because there is nothing to point at. A reader who has never compared the three targets has no reason to believe that CMOVcc is not merely unusual on RISC-V but absent — and the difference between those two is the difference between “clang chose a branch here” and “clang had no choice.”",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_noflags.ch:56",
+      "source_quote": "CMOVcc",
+      "concept_id": "rv-noflags"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: First: a decoder reads the fields its rendering needs. For ______ the inherited decoder emits one field line — the funct3 — and explains the rest in prose, because the CSS format’s rs2 exists only to be printed. So the lookup returned nothing, and the first version of the store audit reported the eighth integer argument of m18 as having arrived in t0 when it arrived in a7.",
+      "answer": "c.sdsp ra, 24(sp)",
+      "options": "c.sdsp ra, 24(sp)|t0|s0",
+      "correct_index": 0,
+      "explanation": "The lesson states: First: a decoder reads the fields its rendering needs. For c.sdsp ra, 24(sp) the inherited decoder emits one field line — the funct3 — and explains the rest in prose, because the CSS format’s rs2 exists only to be printed. So the lookup returned nothing, and the first version of the store audit reported the eighth integer argument of m18 as having arrived in t0 when it arrived in a7.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_registers.ch:55",
+      "source_quote": "c.sdsp ra, 24(sp)",
+      "concept_id": "rv-registers"
+    }
   ]
 }

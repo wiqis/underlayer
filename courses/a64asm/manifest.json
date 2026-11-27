@@ -78,5 +78,72 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Four bytes is four bytes for ______, which does nothing. The x86-64 encoding has a one-byte nop and a two-byte ret; this one pays four bytes each. The artifact measured the whole of that and the answer is not “AArch64 is worse”:",
+      "answer": "nop",
+      "options": "nop|%4|chain closed EXACTLY",
+      "correct_index": 0,
+      "explanation": "The lesson states: Four bytes is four bytes for nop, which does nothing. The x86-64 encoding has a one-byte nop and a two-byte ret; this one pays four bytes each. The artifact measured the whole of that and the answer is not “AArch64 is worse”:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_asm.ch:78",
+      "source_quote": "nop",
+      "concept_id": "a64-asm"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Sixteen conditions in a four-bit field, and the table below is built by assembling one ______ per value rather than by quoting a list of names:",
+      "answer": "csel",
+      "options": "csel|SETcc|csel w0, w1, w2, eq",
+      "correct_index": 0,
+      "explanation": "The lesson states: Sixteen conditions in a four-bit field, and the table below is built by assembling one csel per value rather than by quoting a list of names:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_cond.ch:53",
+      "source_quote": "csel",
+      "concept_id": "a64-cond"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Four bits at position 25 are the first thing a decoder looks at. The class names are quoted from the architecture's reference manual; the class membership is measured, by taking the instructions out of five object files, reading four bits out of each, and asking ______ what that instruction is:",
+      "answer": "llvm-objdump-21",
+      "options": "llvm-objdump-21|fields.txt|ret",
+      "correct_index": 0,
+      "explanation": "The lesson states: Four bits at position 25 are the first thing a decoder looks at. The class names are quoted from the architecture's reference manual; the class membership is measured, by taking the instructions out of five object files, reading four bits out of each, and asking llvm-objdump-21 what that instruction is:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_encoding.ch:55",
+      "source_quote": "llvm-objdump-21",
+      "concept_id": "a64-encoding"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The last concept ended with a row that reads ______ and a note that a logical immediate is not a number. This concept is that note, and it is the most interesting encoding in the whole architecture: a twelve-bit field that is not a twelve-bit number, and which reaches more distinct constants than any other twelve-bit field in the instruction set.",
+      "answer": "imm16 001fffe0 bits[20:5] movz w0, #0x0000",
+      "options": "imm16 001fffe0 bits[20:5] movz w0, #0x0000|and|orr",
+      "correct_index": 0,
+      "explanation": "The lesson states: The last concept ended with a row that reads imm16 001fffe0 bits[20:5] movz w0, #0x0000 and a note that a logical immediate is not a number. This concept is that note, and it is the most interesting encoding in the whole architecture: a twelve-bit field that is not a twelve-bit number, and which reaches more distinct constants than any other twelve-bit field in the instruction set.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_immediate.ch:47",
+      "source_quote": "imm16 &nbsp; 001fffe0 &nbsp; bits[20:5] &nbsp; movz w0, #0x0000",
+      "concept_id": "a64-immediate"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The four concepts before this one made a lot of claims. Some of them were wrong — the class field was two bits, the 64-bit all-ones was encodable, the ______ cells were SET forms — and being wrong about a bit pattern is the cheap kind of wrong, because a wrong bit pattern is visibly wrong to anyone who checks it.",
+      "answer": "op2",
+      "options": "op2|sp|llvm-objdump-21 --triple=aarch64",
+      "correct_index": 0,
+      "explanation": "The lesson states: The four concepts before this one made a lot of claims. Some of them were wrong — the class field was two bits, the 64-bit all-ones was encodable, the op2 cells were SET forms — and being wrong about a bit pattern is the cheap kind of wrong, because a wrong bit pattern is visibly wrong to anyone who checks it.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_verify.ch:48",
+      "source_quote": "op2",
+      "concept_id": "a64-verify"
+    }
   ]
 }

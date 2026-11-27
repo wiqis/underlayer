@@ -131,5 +131,124 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Every fault in this course is a signal, and the parent has to learn the signal's ______ and si_addr from a child. How it learns them is the whole design, and the first version got it wrong in the way that is most expensive to notice.",
+      "answer": "si_code",
+      "options": "si_code|si_addr|si_code 128",
+      "correct_index": 0,
+      "explanation": "The lesson states: Every fault in this course is a signal, and the parent has to learn the signal's si_code and si_addr from a child. How it learns them is the whole design, and the first version got it wrong in the way that is most expensive to notice.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_boundary.ch:53",
+      "source_quote": "si_code",
+      "concept_id": "x86-boundary"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: And the ______ table has a row that is the best single illustration of why architectures accumulate scars:",
+      "answer": "CR0",
+      "options": "CR0|NOT MEASURED|CR2",
+      "correct_index": 0,
+      "explanation": "The lesson states: And the CR0 table has a row that is the best single illustration of why architectures accumulate scars:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_cr.ch:77",
+      "source_quote": "CR0",
+      "concept_id": "x86-cr"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The addresses are trivial: ______ to DR3 each hold one linear address, and there are four of them because there are four, and that is the whole of the hardware's breakpoint capacity. DR4 and DR5 are not registers at all — they are aliases of DR6 and DR7 when CR4.DE is clear, and #UD when it is set, which is the one time on this whole page where a CR4 bit from the previous concept reappears.",
+      "answer": "DR0",
+      "options": "DR0|DR3|DR4",
+      "correct_index": 0,
+      "explanation": "The lesson states: The addresses are trivial: DR0 to DR3 each hold one linear address, and there are four of them because there are four, and that is the whole of the hardware's breakpoint capacity. DR4 and DR5 are not registers at all — they are aliases of DR6 and DR7 when CR4.DE is clear, and #UD when it is set, which is the one time on this whole page where a CR4 bit from the previous concept reappears.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_debug.ch:53",
+      "source_quote": "DR0",
+      "concept_id": "x86-debug"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Every arm below is a forked child with the signal handlers reset, and the result crosses the fork through a ______ page the child's own handler wrote. Nine int $N vectors are in the table too, because the shape of their failure is the point.",
+      "answer": "MAP_SHARED",
+      "options": "MAP_SHARED|MEASURED|QUOTED",
+      "correct_index": 0,
+      "explanation": "The lesson states: Every arm below is a forked child with the signal handlers reset, and the result crosses the fork through a MAP_SHARED page the child's own handler wrote. Nine int $N vectors are in the table too, because the shape of their failure is the point.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_exceptions.ch:82",
+      "source_quote": "MAP_SHARED",
+      "concept_id": "x86-exceptions"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Six ______ regions, read out of /proc/self/pagemap at four points, and the only thing that changes is one bit:",
+      "answer": "mmap",
+      "options": "mmap|/proc/self/pagemap|mprotect",
+      "correct_index": 0,
+      "explanation": "The lesson states: Six mmap regions, read out of /proc/self/pagemap at four points, and the only thing that changes is one bit:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_paging.ch:138",
+      "source_quote": "mmap",
+      "concept_id": "x86-paging"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Which statement is made in this lesson?",
+      "answer": "The architecture provides four things, and they are enough to build any profiler on any machine:",
+      "options": "The architecture provides four things, and they are enough to build any profiler on any machine:|This is the section that matters, and it is short:|So this concept is reference material with the absence proved. The counters and events are quoted and marked. The absence is measured three ways, and the third of those ways is the one that made the course's original sentence wrong.",
+      "correct_index": 0,
+      "explanation": "This sentence is stated verbatim in this lesson: The architecture provides four things, and they are enough to build any profiler on any machine:",
+      "hint1": "Re-read the model and detail sections of this lesson.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_pmu.ch:53",
+      "source_quote": "The architecture provides four things, and they are enough to build any profiler on any machine:",
+      "concept_id": "x86-pmu"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: And note the two different ______ values: 0xffffffff00000000 for the IDT and 0xfffffffe00000000 for the GDT. The harness checks each against the base the corresponding instruction printed, so the claim is a comparison and not a coincidence.",
+      "answer": "si_addr",
+      "options": "si_addr|SIDT|SGDT",
+      "correct_index": 0,
+      "explanation": "The lesson states: And note the two different si_addr values: 0xffffffff00000000 for the IDT and 0xfffffffe00000000 for the GDT. The harness checks each against the base the corresponding instruction printed, so the claim is a comparison and not a coincidence.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_rings.ch:139",
+      "source_quote": "si_addr",
+      "concept_id": "x86-rings"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Here is the whole table. A distinct marker goes into each of the thirteen registers other than ______ and RCX, one syscall executes, and each register is read back in the same inline-assembly block before the compiler has had a chance to touch anything:",
+      "answer": "RAX",
+      "options": "RAX|syscall|RCX",
+      "correct_index": 0,
+      "explanation": "The lesson states: Here is the whole table. A distinct marker goes into each of the thirteen registers other than RAX and RCX, one syscall executes, and each register is read back in the same inline-assembly block before the compiler has had a chance to touch anything:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_syscall.ch:80",
+      "source_quote": "RAX",
+      "concept_id": "x86-syscall"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: This concept re-derives the rule on five access widths where the privilege course derived it on three, and the extension earned its place: it found a wrong constant in the first draft, and the constant was one that half the documentation quotes. The rule is ______, and the constant is 2^64 - 2^47 and not 0xffffffff80000000.",
+      "answer": "first rejected = 2^47 - (access size - 1)",
+      "options": "first rejected = 2^47 - (access size - 1)|si_addr|si_code",
+      "correct_index": 0,
+      "explanation": "The lesson states: This concept re-derives the rule on five access widths where the privilege course derived it on three, and the extension earned its place: it found a wrong constant in the first draft, and the constant was one that half the documentation quotes. The rule is first rejected = 2^47 - (access size - 1), and the constant is 2^64 - 2^47 and not 0xffffffff80000000.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_virtual.ch:48",
+      "source_quote": "first rejected = 2^47 - (access size - 1)",
+      "concept_id": "x86-virtual"
+    }
   ]
 }

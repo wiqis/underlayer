@@ -114,5 +114,98 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: So why does ______ exist? Because the requirement is a fault requirement, and the artifact measures that separately — by forking a child process and catching what comes back:",
+      "answer": "_mm256_load_pd",
+      "options": "_mm256_load_pd|vpgatherdd|k",
+      "correct_index": 0,
+      "explanation": "The lesson states: So why does _mm256_load_pd exist? Because the requirement is a fault requirement, and the artifact measures that separately — by forking a child process and catching what comes back:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/simd_boundaries.ch:61",
+      "source_quote": "_mm256_load_pd",
+      "concept_id": "simd-boundaries"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The difference between 3.90× and 0.11× is three ______ declarations. Not the trip count, not the optimisation level, not a missing -march. That is a fact about code generation, and it is the reason this concept exists: you cannot find it with a stopwatch, because both arms are timings and the timings only tell you that one was fast.",
+      "answer": "double *",
+      "options": "double *|-O2|-march",
+      "correct_index": 0,
+      "explanation": "The lesson states: The difference between 3.90× and 0.11× is three double * declarations. Not the trip count, not the optimisation level, not a missing -march. That is a fact about code generation, and it is the reason this concept exists: you cannot find it with a stopwatch, because both arms are timings and the timings only tell you that one was fast.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/simd_compiler.ch:69",
+      "source_quote": "double *",
+      "concept_id": "simd-compiler"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The harness is ______, 131 checks in nine groups, and it does not re-measure anything. It reads the recorded output and asks whether the claims are still there. The interesting thing is not that the checks exist but what they are willing to assert, and that is decided by one number the artifact prints before it makes any claim at all:",
+      "answer": "crosscheck.py",
+      "options": "crosscheck.py|run1.txt|run2.txt",
+      "correct_index": 0,
+      "explanation": "The lesson states: The harness is crosscheck.py, 131 checks in nine groups, and it does not re-measure anything. It reads the recorded output and asks whether the claims are still there. The interesting thing is not that the checks exist but what they are willing to assert, and that is decided by one number the artifact prints before it makes any claim at all:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/simd_harness.ch:48",
+      "source_quote": "crosscheck.py",
+      "concept_id": "simd-harness"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Given a register holding ______, there are three ways to get a0+a1+a2+a3 out of it, and they differ in what they cost and in what they assume.",
+      "answer": "a = (a0, a1, a2, a3)",
+      "options": "a = (a0, a1, a2, a3)|a0+a1+a2+a3|sum += v[i]",
+      "correct_index": 0,
+      "explanation": "The lesson states: Given a register holding a = (a0, a1, a2, a3), there are three ways to get a0+a1+a2+a3 out of it, and they differ in what they cost and in what they assume.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/simd_reduce.ch:65",
+      "source_quote": "a = (a0, a1, a2, a3)",
+      "concept_id": "simd-reduce"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Which statement is made in this lesson?",
+      "answer": "Four bodies over the same 64 doubles, differing in one arithmetic instruction. The first is a copy — two loads and a store, no arithmetic at all — and it is an arm rather than a preamble because “what does the arithmetic cost” has no answer without it.",
+      "options": "Four bodies over the same 64 doubles, differing in one arithmetic instruction. The first is a copy — two loads and a store, no arithmetic at all — and it is an arm rather than a preamble because “what does the arithmetic cost” has no answer without it.|Now the two arms from the top of this concept, and the mechanism they differ by. Both run sixteen 4-wide FMAs per iteration over the same data. One accumulates into a single register; the other into four:|Start with a debt, because the debt is the reason this course exists and it is a single sentence in a file you may have read. The execution course's dependency concept explains that a loop unrolls into “multiples of the SIMD width”, and its latency concept says a different shape does “the same work in SIMD”. Both use the phrase as a known quantity. Across the five CPU-architecture courses before this one, a word-boundary count finds lane zero times, XMM, YMM and ZMM zero times, and emmintrin zero times.",
+      "correct_index": 0,
+      "explanation": "This sentence is stated verbatim in this lesson: Four bodies over the same 64 doubles, differing in one arithmetic instruction. The first is a copy — two loads and a store, no arithmetic at all — and it is an arm rather than a preamble because “what does the arithmetic cost” has no answer without it.",
+      "hint1": "Re-read the model and detail sections of this lesson.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/simd_shapes.ch:62",
+      "source_quote": "Four bodies over the same 64 doubles, differing in one arithmetic instruction. The first is a <em>copy</em> &mdash; two loads and a store, no arithmetic at all &mdash; and it is an arm rather than a preamble because &ldquo;what does the arithmetic cost&rdquo; has no answer without it.",
+      "concept_id": "simd-shapes"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Take the loop this course has been measuring — ______ over 64 doubles, with a reduction at the end — and ask what each architecture can do with it. Read this as a table of decisions, not of features.",
+      "answer": "A[i] = A[i]*B[i] + C[i]",
+      "options": "A[i] = A[i]*B[i] + C[i]|vpgatherdd|vpgatherqd",
+      "correct_index": 0,
+      "explanation": "The lesson states: Take the loop this course has been measuring — A[i] = A[i]*B[i] + C[i] over 64 doubles, with a reduction at the end — and ask what each architecture can do with it. Read this as a table of decisions, not of features.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/simd_three.ch:110",
+      "source_quote": "A[i] = A[i]*B[i] + C[i]",
+      "concept_id": "simd-three"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: So the first thing this course owes you is a definition, and a definition in this collection is a table with integers in it rather than a paragraph. Here it is — and it is computed by the artifact at run time from ______, not copied out of a manual, so it is a fact about this build rather than a fact about a document:",
+      "answer": "sizeof",
+      "options": "sizeof|lane|XMM",
+      "correct_index": 0,
+      "explanation": "The lesson states: So the first thing this course owes you is a definition, and a definition in this collection is a table with integers in it rather than a paragraph. Here it is — and it is computed by the artifact at run time from sizeof, not copied out of a manual, so it is a fact about this build rather than a fact about a document:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/simd_width.ch:54",
+      "source_quote": "sizeof",
+      "concept_id": "simd-width"
+    }
   ]
 }

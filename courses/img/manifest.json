@@ -104,5 +104,85 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Five courses into this chain you can read a relocation record, a linker script, a ______ entry, and the loader’s own symbol bindings. Every one of those facts lives in a file. Now ask the question none of them could answer: when the kernel runs that file, how does the program find out where it landed?",
+      "answer": "DT_NEEDED",
+      "options": "DT_NEEDED|main|e_entry = 0x1130",
+      "correct_index": 0,
+      "explanation": "The lesson states: Five courses into this chain you can read a relocation record, a linker script, a DT_NEEDED entry, and the loader’s own symbol bindings. Every one of those facts lives in a file. Now ask the question none of them could answer: when the kernel runs that file, how does the program find out where it landed?",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/img_auxv.ch:26",
+      "source_quote": "DT_NEEDED",
+      "concept_id": "img-auxv"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: You can now read the auxv. You cannot yet use it, because knowing that ______ holds 0xe and knowing what to do with 0xe are different skills, and the second one is where programs go wrong.",
+      "answer": "AT_PHNUM",
+      "options": "AT_PHNUM|0xe|AT_PAGESZ",
+      "correct_index": 0,
+      "explanation": "The lesson states: You can now read the auxv. You cannot yet use it, because knowing that AT_PHNUM holds 0xe and knowing what to do with 0xe are different skills, and the second one is where programs go wrong.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/img_entries.ch:27",
+      "source_quote": "AT_PHNUM",
+      "concept_id": "img-entries"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: ______ is the kernel’s own list. One line per mapped region, and the format is worth reading once properly because every column is a fact about a decision the kernel made:",
+      "answer": "/proc/<pid>/maps",
+      "options": "/proc/<pid>/maps|mmap|MAP_FIXED",
+      "correct_index": 0,
+      "explanation": "The lesson states: /proc/<pid>/maps is the kernel’s own list. One line per mapped region, and the format is worth reading once properly because every column is a fact about a decision the kernel made:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/img_place.ch:38",
+      "source_quote": "/proc/&lt;pid&gt;/maps",
+      "concept_id": "img-place"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Trap one: ______ inside main is not the stack pointer the kernel set. Trap two: the auxv is not the array after envp — it is the array after the NULL that ends envp, and the difference is one word.",
+      "answer": "%rsp",
+      "options": "%rsp|main|envp",
+      "correct_index": 0,
+      "explanation": "The lesson states: Trap one: %rsp inside main is not the stack pointer the kernel set. Trap two: the auxv is not the array after envp — it is the array after the NULL that ends envp, and the difference is one word.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/img_stack.ch:27",
+      "source_quote": "%rsp",
+      "concept_id": "img-stack"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Every dynamic process on Linux maps a shared library that has no file on disk. It appears in ______ under the name [vdso] — square brackets, which is the kernel’s way of saying there is no path here. It has an address, given to the process in the auxv as AT_SYSINFO_EHDR. And it has, if you read it, a perfectly ordinary ELF header.",
+      "answer": "/proc/<pid>/maps",
+      "options": "/proc/<pid>/maps|[vdso]|AT_SYSINFO_EHDR",
+      "correct_index": 0,
+      "explanation": "The lesson states: Every dynamic process on Linux maps a shared library that has no file on disk. It appears in /proc/<pid>/maps under the name [vdso] — square brackets, which is the kernel’s way of saying there is no path here. It has an address, given to the process in the auxv as AT_SYSINFO_EHDR. And it has, if you read it, a perfectly ordinary ELF header.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/img_vdso.ch:26",
+      "source_quote": "/proc/&lt;pid&gt;/maps",
+      "concept_id": "img-vdso"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: And note what the script does not do: it never shells out to ______. It parses the 64-byte ELF header itself, with struct.unpack_from. That is deliberate and it is the mission of this collection in one line — the tool is the oracle, and the format is the subject. A crosscheck that used readelf to verify readelf’s fields would prove that readelf is consistent with itself.",
+      "answer": "readelf",
+      "options": "readelf|stdin|imgdump",
+      "correct_index": 0,
+      "explanation": "The lesson states: And note what the script does not do: it never shells out to readelf. It parses the 64-byte ELF header itself, with struct.unpack_from. That is deliberate and it is the mission of this collection in one line — the tool is the oracle, and the format is the subject. A crosscheck that used readelf to verify readelf’s fields would prove that readelf is consistent with itself.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/img_walk.ch:146",
+      "source_quote": "readelf",
+      "concept_id": "img-walk"
+    }
   ]
 }

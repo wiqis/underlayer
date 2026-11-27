@@ -93,5 +93,85 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The SMP course measured what a lost update costs and told you to use ______. This concept is the exhaustive answer to the question that follows immediately and is almost never asked: which instructions can you put it on, and what happens if you leave it off? The answer is not “the ones that write memory”, and it is emphatically not “all the read-modify-writes”.",
+      "answer": "lock",
+      "options": "lock|lock inc|INC",
+      "correct_index": 0,
+      "explanation": "The lesson states: The SMP course measured what a lost update costs and told you to use lock. This concept is the exhaustive answer to the question that follows immediately and is almost never asked: which instructions can you put it on, and what happens if you leave it off? The answer is not “the ones that write memory”, and it is emphatically not “all the read-modify-writes”.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_atomics.ch:47",
+      "source_quote": "lock",
+      "concept_id": "x86-atomics"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Two-operand SSE means the destination is also a source, so ______ destroys xmm0. If you needed xmm0 afterwards you had to copy it first, and the copy is an instruction. The three-operand form lets you write vaddps xmm2, xmm0, xmm1 and keep both sources.",
+      "answer": "addps xmm0, xmm1",
+      "options": "addps xmm0, xmm1|xmm0|vaddps xmm2, xmm0, xmm1",
+      "correct_index": 0,
+      "explanation": "The lesson states: Two-operand SSE means the destination is also a source, so addps xmm0, xmm1 destroys xmm0. If you needed xmm0 afterwards you had to copy it first, and the copy is an instruction. The three-operand form lets you write vaddps xmm2, xmm0, xmm1 and keep both sources.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_avx.ch:53",
+      "source_quote": "addps xmm0, xmm1",
+      "concept_id": "x86-avx"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Every AVX-512 instruction starts with the two bytes ______ and an eleven-bit field layout. Here is the field table, and every row is a thing the VEX prefix could not express at all:",
+      "answer": "62",
+      "options": "62|0x62|BOUND",
+      "correct_index": 0,
+      "explanation": "The lesson states: Every AVX-512 instruction starts with the two bytes 62 and an eleven-bit field layout. Here is the field table, and every row is a thing the VEX prefix could not express at all:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_avx512.ch:81",
+      "source_quote": "62",
+      "concept_id": "x86-avx512"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: So this concept builds three readers instead of one: an encoder, a decoder, and ______. The first two are written from the same table and are therefore a consistency check. The third was not written from that table by anybody on this project and is therefore a check. The difference between those two words is the entire content of this page.",
+      "answer": "objdump",
+      "options": "objdump|objdump -D -b binary|vaddps",
+      "correct_index": 0,
+      "explanation": "The lesson states: So this concept builds three readers instead of one: an encoder, a decoder, and objdump. The first two are written from the same table and are therefore a consistency check. The third was not written from that table by anybody on this project and is therefore a check. The difference between those two words is the entire content of this page.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_bytes.ch:59",
+      "source_quote": "objdump",
+      "concept_id": "x86-bytes"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: “What does ______ actually encode?” has an answer, and it is short enough to print in full. NOT MEASURED here — disassembled, not quoted, because the point of the table is that the encoding is small enough to be completely understood:",
+      "answer": "SFENCE",
+      "options": "SFENCE|NOT MEASURED|MFENCE",
+      "correct_index": 0,
+      "explanation": "The lesson states: “What does SFENCE actually encode?” has an answer, and it is short enough to print in full. NOT MEASURED here — disassembled, not quoted, because the point of the table is that the encoding is small enough to be completely understood:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_order.ch:53",
+      "source_quote": "SFENCE",
+      "concept_id": "x86-order"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The table is ______, which is a real distinction here and not a formality: the fault half of every row is measured in the next section, one forked child per row, and the encoding half is quoted from the SDM and then checked byte-for-byte in the last concept.",
+      "answer": "PRINTED AND NOT MEASURED",
+      "options": "PRINTED AND NOT MEASURED|SIGSEGV|aps",
+      "correct_index": 0,
+      "explanation": "The lesson states: The table is PRINTED AND NOT MEASURED, which is a real distinction here and not a formality: the fault half of every row is measured in the next section, one forked child per row, and the encoding half is quoted from the SDM and then checked byte-for-byte in the last concept.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_sse.ch:53",
+      "source_quote": "PRINTED AND NOT MEASURED",
+      "concept_id": "x86-sse"
+    }
   ]
 }

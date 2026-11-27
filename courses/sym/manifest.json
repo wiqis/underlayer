@@ -10,27 +10,45 @@
   "importance": "critical",
   "completion_criteria": "Read all 12 concepts and reproduce the 84 measured checks in courses/sym/assets/samples/crosscheck.py",
   "min_score": 70,
-  "dependencies": ["obj"],
+  "dependencies": [
+    "obj"
+  ],
   "modules": [
     {
       "id": "identity",
       "title": "What a Symbol Is",
-      "concepts": ["sym-intro", "sym-binding", "sym-visibility"]
+      "concepts": [
+        "sym-intro",
+        "sym-binding",
+        "sym-visibility"
+      ]
     },
     {
       "id": "algorithm",
       "title": "The Resolution Algorithm",
-      "concepts": ["sym-algorithm", "sym-order", "sym-duplicate"]
+      "concepts": [
+        "sym-algorithm",
+        "sym-order",
+        "sym-duplicate"
+      ]
     },
     {
       "id": "runtime",
       "title": "Resolution at Runtime",
-      "concepts": ["sym-hash", "sym-plt", "sym-binding-time", "sym-copy-reloc"]
+      "concepts": [
+        "sym-hash",
+        "sym-plt",
+        "sym-binding-time",
+        "sym-copy-reloc"
+      ]
     },
     {
       "id": "versioning",
       "title": "Versions and Invented Symbols",
-      "concepts": ["sym-version", "sym-linker-defined"]
+      "concepts": [
+        "sym-version",
+        "sym-linker-defined"
+      ]
     }
   ],
   "concepts": [
@@ -141,6 +159,164 @@
       "estimated_minutes": 23,
       "difficulty": "advanced",
       "importance": "medium"
+    }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The same four object files, in a different order, and one order links while the other does not. Every symbol involved is defined exactly once. There is no duplicate, no missing definition, no ambiguity. The failure is purely about sequence, and the message names ______ — a symbol that is defined, in db.o, inside an archive that was on the command line.",
+      "answer": "b_data",
+      "options": "b_data|db.o|.o",
+      "correct_index": 0,
+      "explanation": "The lesson states: The same four object files, in a different order, and one order links while the other does not. Every symbol involved is defined exactly once. There is no duplicate, no missing definition, no ambiguity. The failure is purely about sequence, and the message names b_data — a symbol that is defined, in db.o, inside an archive that was on the command line.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sym_algorithm.ch:53",
+      "source_quote": "b_data",
+      "concept_id": "sym-algorithm"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Take a function and give it ______. Then compile it and look at what changed:",
+      "answer": "static",
+      "options": "static|GLOBAL|LOCAL",
+      "correct_index": 0,
+      "explanation": "The lesson states: Take a function and give it static. Then compile it and look at what changed:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sym_binding.ch:27",
+      "source_quote": "static",
+      "concept_id": "sym-binding"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Linking with ______ is the standard hardening advice, and the reason usually given is that it removes the lazy PLT, which is a writable-then-jump sequence on the stack and therefore a target. It is good advice. Here is what it actually does:",
+      "answer": "-z now",
+      "options": "-z now|.got.plt|.got",
+      "correct_index": 0,
+      "explanation": "The lesson states: Linking with -z now is the standard hardening advice, and the reason usually given is that it removes the lazy PLT, which is a writable-then-jump sequence on the stack and therefore a target. It is good advice. Here is what it actually does:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sym_binding_time.ch:26",
+      "source_quote": "-z now",
+      "concept_id": "sym-binding-time"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: There is one ______. It has an initial value of 7, set by the library’s initialiser code. The program writes to it. The library reads it. Three participants, one name, and nobody has said where the bytes live. That is the question this concept is about, and the answer is chosen by a compiler flag.",
+      "answer": "lib_data",
+      "options": "lib_data|GLOB_DAT|COPY",
+      "correct_index": 0,
+      "explanation": "The lesson states: There is one lib_data. It has an initial value of 7, set by the library’s initialiser code. The program writes to it. The library reads it. Three participants, one name, and nobody has said where the bytes live. That is the question this concept is about, and the answer is chosen by a compiler flag.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sym_copy_reloc.ch:41",
+      "source_quote": "lib_data",
+      "concept_id": "sym-copy-reloc"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Forty translation units include it. Each one gets its own ______. Each of those forty object files contains a definition of debug_enabled. And this linked, every day, for about thirty years, on every Linux distribution ever shipped.",
+      "answer": "config.o",
+      "options": "config.o|debug_enabled|-fcommon",
+      "correct_index": 0,
+      "explanation": "The lesson states: Forty translation units include it. Each one gets its own config.o. Each of those forty object files contains a definition of debug_enabled. And this linked, every day, for about thirty years, on every Linux distribution ever shipped.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sym_duplicate.ch:34",
+      "source_quote": "config.o",
+      "concept_id": "sym-duplicate"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: So any course text that says “the hash table” and then walks you through ______ is describing a section your ld will not produce unless you ask. The three build styles:",
+      "answer": ".hash",
+      "options": ".hash|ld|.gnu.hash",
+      "correct_index": 0,
+      "explanation": "The lesson states: So any course text that says “the hash table” and then walks you through .hash is describing a section your ld will not produce unless you ask. The three build styles:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sym_hash.ch:36",
+      "source_quote": ".hash",
+      "concept_id": "sym-hash"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Nothing in ______ changed, and the program went from an error to working. No header was included. No declaration was written. The name answer appeared in main.c with no definition anywhere near it, and the only thing that changed is that some other file on the command line happened to define it.",
+      "answer": "main.c",
+      "options": "main.c|answer|printf",
+      "correct_index": 0,
+      "explanation": "The lesson states: Nothing in main.c changed, and the program went from an error to working. No header was included. No declaration was written. The name answer appeared in main.c with no definition anywhere near it, and the only thing that changed is that some other file on the command line happened to define it.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sym_intro.ch:55",
+      "source_quote": "main.c",
+      "concept_id": "sym-intro"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The ______/__stop_ pair is the more useful of the two and much less known. It gives you the bounds of a section without a linker script, which means without knowing the link layout in advance — and that is exactly what you need when the code doing the iterating is a shared object that will be linked against something you have not seen yet.",
+      "answer": "__start_",
+      "options": "__start_|edata|__bss_start",
+      "correct_index": 0,
+      "explanation": "The lesson states: The __start_/__stop_ pair is the more useful of the two and much less known. It gives you the bounds of a section without a linker script, which means without knowing the link layout in advance — and that is exactly what you need when the code doing the iterating is a shared object that will be linked against something you have not seen yet.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sym_linker_defined.ch:73",
+      "source_quote": "__start_",
+      "concept_id": "sym-linker-defined"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: and then, five minutes later, after moving ______ one position earlier, it links. Nothing about the code changed. The order of two strings on a command line is the difference between a working program and a build failure, and the error message names a symbol that is defined, somewhere, in a library that is on the command line.",
+      "answer": "-lbar",
+      "options": "-lbar|mb.o|-Wl,--as-needed",
+      "correct_index": 0,
+      "explanation": "The lesson states: and then, five minutes later, after moving -lbar one position earlier, it links. Nothing about the code changed. The order of two strings on a command line is the difference between a working program and a build failure, and the error message names a symbol that is defined, somewhere, in a library that is on the command line.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sym_order.ch:33",
+      "source_quote": "-lbar",
+      "concept_id": "sym-order"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: A call to a function in another shared library cannot be a ______ instruction, because at link time nobody knows where that function is. It might be in a library that does not exist yet, loaded from a path chosen by configuration, on a machine with a different set of packages installed.",
+      "answer": "call",
+      "options": "call|printf|printf@plt",
+      "correct_index": 0,
+      "explanation": "The lesson states: A call to a function in another shared library cannot be a call instruction, because at link time nobody knows where that function is. It might be in a library that does not exist yet, loaded from a path chosen by configuration, on a machine with a different set of packages installed.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sym_plt.ch:26",
+      "source_quote": "call",
+      "concept_id": "sym-plt"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: In 2012 glibc replaced its ______ with a thread-safe implementation that used more memory and was slower on some workloads. Every program on every distribution broke. The fix is the subject of this concept, and it is a solution you can look up in any binary on your machine:",
+      "answer": "malloc",
+      "options": "malloc|malloc@GLIBC_2.2.5|.gnu.version",
+      "correct_index": 0,
+      "explanation": "The lesson states: In 2012 glibc replaced its malloc with a thread-safe implementation that used more memory and was slower on some workloads. Every program on every distribution broke. The fix is the subject of this concept, and it is a solution you can look up in any binary on your machine:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sym_version.ch:26",
+      "source_quote": "malloc",
+      "concept_id": "sym-version"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Read the case of those letters. Uppercase means ______, lowercase means LOCAL. And hid_fn and int_fn are lowercase — they are LOCAL symbols.",
+      "answer": "GLOBAL",
+      "options": "GLOBAL|LOCAL|hid_fn",
+      "correct_index": 0,
+      "explanation": "The lesson states: Read the case of those letters. Uppercase means GLOBAL, lowercase means LOCAL. And hid_fn and int_fn are lowercase — they are LOCAL symbols.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sym_visibility.ch:48",
+      "source_quote": "GLOBAL",
+      "concept_id": "sym-visibility"
     }
   ]
 }

@@ -103,5 +103,85 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Three courses in this collection already taught the three calling conventions, in full, each with its document named: ______, a64-aapcs, and rv-calling. This page does not repeat a single table from them. If you want to know which registers carry arguments on AArch64, you already know, and the right page for that is the one linked above.",
+      "answer": "x86-calling",
+      "options": "x86-calling|a64-aapcs|rv-calling",
+      "correct_index": 0,
+      "explanation": "The lesson states: Three courses in this collection already taught the three calling conventions, in full, each with its document named: x86-calling, a64-aapcs, and rv-calling. This page does not repeat a single table from them. If you want to know which registers carry arguments on AArch64, you already know, and the right page for that is the one linked above.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/cb_abi.ch:27",
+      "source_quote": "x86-calling",
+      "concept_id": "cb-abi"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: And ______ gives a smaller ratio than -O0. Nobody writes that sentence in a tutorial. It is here because it is what the machine did.",
+      "answer": "-O1",
+      "options": "-O1|-O0|-O2",
+      "correct_index": 0,
+      "explanation": "The lesson states: And -O1 gives a smaller ratio than -O0. Nobody writes that sentence in a tutorial. It is here because it is what the machine did.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/cb_ir.ch:58",
+      "source_quote": "-O1",
+      "concept_id": "cb-ir"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Two selectors run over all four kernels. ______ dispatches on the pattern as written. isel_kind dispatches on operand kind alone.",
+      "answer": "isel_tree",
+      "options": "isel_tree|isel_kind|cbir.py",
+      "correct_index": 0,
+      "explanation": "The lesson states: Two selectors run over all four kernels. isel_tree dispatches on the pattern as written. isel_kind dispatches on operand kind alone.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/cb_isel.ch:47",
+      "source_quote": "isel_tree",
+      "concept_id": "cb-isel"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Each kernel’s table ends in a column that says ______ nine times, and that word means something specific:",
+      "answer": "yes",
+      "options": "yes|no|aligned(64)",
+      "correct_index": 0,
+      "explanation": "The lesson states: Each kernel’s table ends in a column that says yes nine times, and that word means something specific:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/cb_regalloc.ch:85",
+      "source_quote": "yes",
+      "concept_id": "cb-regalloc"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: This is worth more than any number on the page. ______ is a dependency chain: its critical path equals its length, so every legal schedule of it is the input order. Run a list scheduler on it and it prints three copies of the input. A reader who has not spotted that concludes scheduling works, because the output is stable and reproducible and the checksum never moves.",
+      "answer": "kernel_a",
+      "options": "kernel_a|height|height_hi",
+      "correct_index": 0,
+      "explanation": "The lesson states: This is worth more than any number on the page. kernel_a is a dependency chain: its critical path equals its length, so every legal schedule of it is the input order. Run a list scheduler on it and it prints three copies of the input. A reader who has not spotted that concludes scheduling works, because the output is stable and reproducible and the checksum never moves.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/cb_sched.ch:60",
+      "source_quote": "kernel_a",
+      "concept_id": "cb-sched"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: And note what is not claimed. The artifact does not say the ______ leaf was allocated well. It says it was allocated without spilling, and that is a completely different sentence — the first is a judgement about quality and the second is a count of what did not happen.",
+      "answer": "-O2",
+      "options": "-O2|-O0|cb-ir",
+      "correct_index": 0,
+      "explanation": "The lesson states: And note what is not claimed. The artifact does not say the -O2 leaf was allocated well. It says it was allocated without spilling, and that is a completely different sentence — the first is a judgement about quality and the second is a count of what did not happen.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/cb_verify.ch:93",
+      "source_quote": "-O2",
+      "concept_id": "cb-verify"
+    }
   ]
 }

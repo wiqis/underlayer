@@ -75,5 +75,59 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Zero against twenty-two. And notice what was asked: the RISC-V count is nine probes including the literal word ______, and the answer is the assembler’s unknown token — not a bad operand, not a warning:",
+      "answer": "lock",
+      "options": "lock|LOCK|xchg",
+      "correct_index": 0,
+      "explanation": "The lesson states: Zero against twenty-two. And notice what was asked: the RISC-V count is nine probes including the literal word lock, and the answer is the assembler’s unknown token — not a bad operand, not a warning:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_amo.ch:38",
+      "source_quote": "lock",
+      "concept_id": "rv-amo"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: A configuration instruction that sets a policy is not much use until you can see what the policy does. So: the mask. And the first result is that it is one bit at ______ in three different instruction groups — arithmetic, unit-stride load, unit-stride store — with every pair XORed and every result printed.",
+      "answer": "inst[25]",
+      "options": "inst[25]|vm|vmsne.vi v1, v2, 0",
+      "correct_index": 0,
+      "explanation": "The lesson states: A configuration instruction that sets a policy is not much use until you can see what the policy does. So: the mask. And the first result is that it is one bit at inst[25] in three different instruction groups — arithmetic, unit-stride load, unit-stride store — with every pair XORed and every result printed.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_dataflow.ch:26",
+      "source_quote": "inst[25]",
+      "concept_id": "rv-dataflow"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: MEASURED-ON-BYTES. ______ carries fm at inst[31:28], a four-bit pred at [27:24], a four-bit succ at [23:20], and then rs1 and rd — which are reserved and zero. Here is the whole table, with the spelling rebuilt from the decoded bits rather than copied from the reader:",
+      "answer": "fence",
+      "options": "fence|ldr|ldar",
+      "correct_index": 0,
+      "explanation": "The lesson states: MEASURED-ON-BYTES. fence carries fm at inst[31:28], a four-bit pred at [27:24], a four-bit succ at [23:20], and then rs1 and rd — which are reserved and zero. Here is the whole table, with the spelling rebuilt from the decoded bits rather than copied from the reader:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_fence.ch:38",
+      "source_quote": "fence",
+      "concept_id": "rv-fence"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: ______ — a CSR read, an ordinary Zicsr instruction, the same encoding as csrr a7, cycle with a different number. And the CSR number is measurable, and it lands in the range the privileged course already decomposed:",
+      "answer": "csrr a7, vlenb",
+      "options": "csrr a7, vlenb|vsetvli|inst[19:15]",
+      "correct_index": 0,
+      "explanation": "The lesson states: csrr a7, vlenb — a CSR read, an ordinary Zicsr instruction, the same encoding as csrr a7, cycle with a different number. And the CSR number is measurable, and it lands in the range the privileged course already decomposed:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_vector.ch:42",
+      "source_quote": "csrr a7, vlenb",
+      "concept_id": "rv-vector"
+    }
   ]
 }

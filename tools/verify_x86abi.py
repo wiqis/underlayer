@@ -18,6 +18,25 @@ import sys
 BASE = 'http://localhost:9000'
 COURSE = "x86abi"
 
+# E3 poison: see tools/verify_a64abi.py for the rationale.  --poison runs only
+# the isolated count mutation, never the live-server checks.
+if '--poison' in sys.argv:
+    import os
+    from verifier_poison import (poison_workspace, copy_file,
+                                 assert_count_moves)
+    with poison_workspace('x86abi-count-') as root:
+        rel = 'courses/%s/manifest.json' % COURSE
+        p = copy_file(rel, os.path.join(root, rel.replace('/', os.sep)))
+        before = len(json.load(open(p, encoding='utf-8'))['concepts'])
+        with open(p, encoding='utf-8') as f:
+            data = json.load(f)
+        data['concepts'].pop()
+        with open(p, 'w', encoding='utf-8', newline='\n') as f:
+            json.dump(data, f)
+        after = len(json.load(open(p, encoding='utf-8'))['concepts'])
+        assert_count_moves('x86abi concept count', before, after)
+    sys.exit(0)
+
 m = json.load(open('courses/%s/manifest.json' % COURSE))
 
 # manifest order: module order, then position within the module

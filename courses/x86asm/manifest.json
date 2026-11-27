@@ -82,5 +82,72 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Those are the same three bytes. The first line is AT&T syntax, the second is Intel syntax, and between them the operands are reversed. Read the AT&T line as “add xmm0 by xmm1, and put the result in xmm0” and you have it right. Read the Intel line as “add xmm0 by xmm1” and you have computed the wrong thing, in a language where ______ really does mean xmm0 = xmm0 + xmm1.",
+      "answer": "addps xmm0, xmm1",
+      "options": "addps xmm0, xmm1|as|objdump",
+      "correct_index": 0,
+      "explanation": "The lesson states: Those are the same three bytes. The first line is AT&T syntax, the second is Intel syntax, and between them the operands are reversed. Read the AT&T line as “add xmm0 by xmm1, and put the result in xmm0” and you have it right. Read the Intel line as “add xmm0 by xmm1” and you have computed the wrong thing, in a language where addps xmm0, xmm1 really does mean xmm0 = xmm0 + xmm1.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_asm.ch:57",
+      "source_quote": "addps xmm0, xmm1",
+      "concept_id": "x86-asm"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: A ______ whose condition is FALSE still reads its source operand. And a branch that is not taken touches nothing. That is not a timing observation, it is not a micro-architectural detail, and it is not a matter of degree: it is a fault. The cmov read a page that had been made unreadable and the process died; the branch over the same page lived.",
+      "answer": "cmovl",
+      "options": "cmovl|cmov|cmovl %edx, %ecx",
+      "correct_index": 0,
+      "explanation": "The lesson states: A cmovl whose condition is FALSE still reads its source operand. And a branch that is not taken touches nothing. That is not a timing observation, it is not a micro-architectural detail, and it is not a matter of degree: it is a fault. The cmov read a page that had been made unreadable and the process died; the branch over the same page lived.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_flags.ch:58",
+      "source_quote": "cmovl",
+      "concept_id": "x86-flags"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: A word-boundary scan over the concept files of all 21 shipped courses, taken the morning this one was written, found ______ and CMP and MOVZX and LEAQ and SHR and ROL and SETcc and CMOVcc in zero files. Not one. And those are not exotic instructions: they are the arithmetic that everything else is written in terms of.",
+      "answer": "SUB",
+      "options": "SUB|CMP|MOVZX",
+      "correct_index": 0,
+      "explanation": "The lesson states: A word-boundary scan over the concept files of all 21 shipped courses, taken the morning this one was written, found SUB and CMP and MOVZX and LEAQ and SHR and ROL and SETcc and CMOVcc in zero files. Not one. And those are not exotic instructions: they are the arithmetic that everything else is written in terms of.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_integers.ch:47",
+      "source_quote": "SUB",
+      "concept_id": "x86-integers"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The harness is ______, 155 checks in nine groups, and it does not re-measure anything. It reads the recorded output of the artifact and asks whether the claims are still there. The interesting thing is not that the checks exist but what they are willing to assert, and that is decided by a single number the artifact prints before it makes any claim at all:",
+      "answer": "crosscheck.py",
+      "options": "crosscheck.py|x86dec.c|imm_bytes",
+      "correct_index": 0,
+      "explanation": "The lesson states: The harness is crosscheck.py, 155 checks in nine groups, and it does not re-measure anything. It reads the recorded output of the artifact and asks whether the claims are still there. The interesting thing is not that the checks exist but what they are willing to assert, and that is decided by a single number the artifact prints before it makes any claim at all:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_map.ch:48",
+      "source_quote": "crosscheck.py",
+      "concept_id": "x86-map"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The ISA course taught that you can write ______ and 0xC5 in a byte stream and that they change how the rest decodes. The modes concept told you that 0x62 is BOUND in 32-bit mode and EVEX in 64-bit. That is the whole of what the collection says about these three bytes, and it is the whole of what anybody can say about them by recognising them.",
+      "answer": "0xC4",
+      "options": "0xC4|0xC5|0x62",
+      "correct_index": 0,
+      "explanation": "The lesson states: The ISA course taught that you can write 0xC4 and 0xC5 in a byte stream and that they change how the rest decodes. The modes concept told you that 0x62 is BOUND in 32-bit mode and EVEX in 64-bit. That is the whole of what the collection says about these three bytes, and it is the whole of what anybody can say about them by recognising them.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_vex.ch:47",
+      "source_quote": "0xC4",
+      "concept_id": "x86-vex"
+    }
   ]
 }

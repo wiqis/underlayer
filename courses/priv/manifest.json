@@ -123,5 +123,111 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: ______ 1 is SEGV_MAPERR: the CPU accepted the address and the page tables said no. si_code 128 is SI_KERNEL: the CPU rejected the address itself.",
+      "answer": "si_code",
+      "options": "si_code|0x0000800000000000|CR4.LA57",
+      "correct_index": 0,
+      "explanation": "The lesson states: si_code 1 is SEGV_MAPERR: the CPU accepted the address and the page tables said no. si_code 128 is SI_KERNEL: the CPU rejected the address itself.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/priv_canonical.ch:93",
+      "source_quote": "si_code",
+      "concept_id": "priv-canonical"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Every tutorial of the x86-64 system-call ABI opens with the same table: number in ______, arguments in RDI, RSI, RDX, R10, R8, R9, answer in RAX, clobbered registers RCX and R11. Where does that table come from?",
+      "answer": "RAX",
+      "options": "RAX|RDI|RSI",
+      "correct_index": 0,
+      "explanation": "The lesson states: Every tutorial of the x86-64 system-call ABI opens with the same table: number in RAX, arguments in RDI, RSI, RDX, R10, R8, R9, answer in RAX, clobbered registers RCX and R11. Where does that table come from?",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/priv_convention.ch:47",
+      "source_quote": "RAX",
+      "concept_id": "priv-convention"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The ______ row is the important one, and it is the one that overturns the mental model. Read Intel's own pseudocode for the instruction: its entire guard clause is",
+      "answer": "SYSCALL",
+      "options": "SYSCALL|INT n|clock_gettime",
+      "correct_index": 0,
+      "explanation": "The lesson states: The SYSCALL row is the important one, and it is the one that overturns the mental model. Read Intel's own pseudocode for the instruction: its entire guard clause is",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/priv_doors.ch:82",
+      "source_quote": "SYSCALL",
+      "concept_id": "priv-doors"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The ______ format is a bitfield. It is not a selector, and reading it as one is the single most common error in fault-handler code.",
+      "answer": "#PF",
+      "options": "#PF|si_code|RSVD",
+      "correct_index": 0,
+      "explanation": "The lesson states: The #PF format is a bitfield. It is not a selector, and reading it as one is the single most common error in fault-handler code.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/priv_errorcode.ch:54",
+      "source_quote": "#PF",
+      "concept_id": "priv-errorcode"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Exercise 1: the one the criterion names. In ______, find the declaration",
+      "answer": "privbench.c",
+      "options": "privbench.c|limit/16 + 1|b8",
+      "correct_index": 0,
+      "explanation": "The lesson states: Exercise 1: the one the criterion names. In privbench.c, find the declaration",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/priv_harness.ch:165",
+      "source_quote": "privbench.c",
+      "concept_id": "priv-harness"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: ______ stores the IDT register into a ten-byte region of memory. That region has a fixed layout, and the order is the base first and the limit second:",
+      "answer": "SIDT",
+      "options": "SIDT|limit/16 + 1|0xffffffff00000000",
+      "correct_index": 0,
+      "explanation": "The lesson states: SIDT stores the IDT register into a ten-byte region of memory. That region has a fixed layout, and the order is the base first and the limit second:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/priv_table.ch:54",
+      "source_quote": "SIDT",
+      "concept_id": "priv-table"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Which statement is made in this lesson?",
+      "answer": "Strip the vocabulary away and every one of these machines has the same five things:",
+      "options": "Strip the vocabulary away and every one of these machines has the same five things:|Strip the three tables down to a single line each, and the portable content is the shape rather than the number:|Something happens every time your program asks for a thing it cannot do for itself — read a file, change a page's permissions, ask the clock. Every one of those events passes through a hardware table, and on x86-64 that table has a name, an address, and a size. You can read two of those three from user mode.",
+      "correct_index": 0,
+      "explanation": "This sentence is stated verbatim in this lesson: Strip the vocabulary away and every one of these machines has the same five things:",
+      "hint1": "Re-read the model and detail sections of this lesson.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/priv_three.ch:57",
+      "source_quote": "Strip the vocabulary away and every one of these machines has the same five things:",
+      "concept_id": "priv-three"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Vector 1, ______, has no single class. A debug register that fires on an instruction fetch is a fault, so you may retry; one that fires on a data access is a trap, so you may not. The class is a function of the cause, and the manual's class column for vector 1 is not a simplification — it is the honest answer.",
+      "answer": "#DB",
+      "options": "#DB|#GP|#PF",
+      "correct_index": 0,
+      "explanation": "The lesson states: Vector 1, #DB, has no single class. A debug register that fires on an instruction fetch is a fault, so you may retry; one that fires on a data access is a trap, so you may not. The class is a function of the cause, and the manual's class column for vector 1 is not a simplification — it is the honest answer.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/priv_vectors.ch:87",
+      "source_quote": "#DB",
+      "concept_id": "priv-vectors"
+    }
   ]
 }

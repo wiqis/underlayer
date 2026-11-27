@@ -121,5 +121,111 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Which statement is made in this lesson?",
+      "answer": "The arithmetic is short enough to do in your head, which is why it is worth doing before running anything:",
+      "options": "The arithmetic is short enough to do in your head, which is why it is worth doing before running anything:|The prediction, and then what happened to it:|The consequence is measurable, and it is one of the few places in this course where a prediction can be written down before the measurement and then confirmed by it. On this machine:",
+      "correct_index": 0,
+      "explanation": "This sentence is stated verbatim in this lesson: The arithmetic is short enough to do in your head, which is why it is worth doing before running anything:",
+      "hint1": "Re-read the model and detail sections of this lesson.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/mem_associativity.ch:58",
+      "source_quote": "The arithmetic is short enough to do in your head, which is why it is worth doing before running anything:",
+      "concept_id": "mem-associativity"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Which statement is made in this lesson?",
+      "answer": "The measurement is a chase over a permutation, and the model of what it should produce is simple enough to be checked by hand — which is what makes the shape of the observed curve informative when it does not match.",
+      "options": "The measurement is a chase over a permutation, and the model of what it should produce is simple enough to be checked by hand — which is what makes the shape of the observed curve informative when it does not match.|The artifact's own summary of the table, which is the paragraph a reader should still be able to check against the rows:|The previous course ended with an instrument that had been through eleven rounds of fixing and had five numbered rules written into its own source. It measured registers and instruction addresses, it never once loaded an array, and its own harness says so: the arithmetic results are real and almost irrelevant to most programs, because most programs are limited by their loads and their stores.",
+      "correct_index": 0,
+      "explanation": "This sentence is stated verbatim in this lesson: The measurement is a chase over a permutation, and the model of what it should produce is simple enough to be checked by hand — which is what makes the shape of the observed curve informative when it does not match.",
+      "hint1": "Re-read the model and detail sections of this lesson.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/mem_hierarchy.ch:70",
+      "source_quote": "The measurement is a chase over a permutation, and the model of what it should produce is simple enough to be checked by hand &mdash; which is what makes the shape of the observed curve informative when it does not match.",
+      "concept_id": "mem-hierarchy"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Section 0 comes first because it establishes the limit the whole course is bounded by. There is no hardware performance counter in this guest, and the artifact proves it rather than assuming it — by forking a child that executes ______ and reporting the signal the child died from:",
+      "answer": "RDPMC",
+      "options": "RDPMC|layout_of(base, n, gap, off)|off = 64",
+      "correct_index": 0,
+      "explanation": "The lesson states: Section 0 comes first because it establishes the limit the whole course is bounded by. There is no hardware performance counter in this guest, and the artifact proves it rather than assuming it — by forking a child that executes RDPMC and reporting the signal the child died from:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/mem_instrument.ch:216",
+      "source_quote": "RDPMC",
+      "concept_id": "mem-instrument"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Which statement is made in this lesson?",
+      "answer": "Two bodies, and the difference between them is one instruction each:",
+      "options": "Two bodies, and the difference between them is one instruction each:|The 38× figure is a ratio, and this is the first place in the course where quoting a ratio rather than two absolute numbers pays off. Across the three runs shipped with the course:|Here is one working set, on one machine, through one memory system, measured two ways:",
+      "correct_index": 0,
+      "explanation": "This sentence is stated verbatim in this lesson: Two bodies, and the difference between them is one instruction each:",
+      "hint1": "Re-read the model and detail sections of this lesson.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/mem_latency.ch:45",
+      "source_quote": "Two bodies, and the difference between them is one instruction each:",
+      "concept_id": "mem-latency"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Which statement is made in this lesson?",
+      "answer": "Both arms of the experiment run the same trained loop, in two threads started together at a barrier, each on its own pointer:",
+      "options": "Both arms of the experiment run the same trained loop, in two threads started together at a barrier, each on its own pointer:|Seven repetitions of the whole two-thread experiment, minimum of each arm, nanoseconds per iteration, with the logical CPUs the threads were found on:|The previous course ended with an instrument that had been through eleven rounds of fixing and had five numbered rules written into its own source. It measured registers and instruction addresses, it never once loaded an array, and its own harness says so: the arithmetic results are real and almost irrelevant to most programs, because most programs are limited by their loads and their stores.",
+      "correct_index": 0,
+      "explanation": "This sentence is stated verbatim in this lesson: Both arms of the experiment run the same trained loop, in two threads started together at a barrier, each on its own pointer:",
+      "hint1": "Re-read the model and detail sections of this lesson.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/mem_sharing.ch:46",
+      "source_quote": "Both arms of the experiment run the same trained loop, in two threads started together at a barrier, each on its own pointer:",
+      "concept_id": "mem-sharing"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: That last line is the reason to read this concept rather than skim it. A huge-page claim is the easiest thing in this course to fake: ask for huge pages, print “with huge pages” above a column, and nobody can tell from the numbers whether anything collapsed. The line that makes it honest costs one ______ of /proc/self/smaps.",
+      "answer": "read()",
+      "options": "read()|PT_LOAD|p_align",
+      "correct_index": 0,
+      "explanation": "The lesson states: That last line is the reason to read this concept rather than skim it. A huge-page claim is the easiest thing in this course to fake: ask for huge pages, print “with huge pages” above a column, and nobody can tell from the numbers whether anything collapsed. The line that makes it honest costs one read() of /proc/self/smaps.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/mem_translation.ch:52",
+      "source_quote": "read()",
+      "concept_id": "mem-translation"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: So the last two things this course ships are not measurements. They are a program that checks the measurement while it runs, and a second program that reads the first one's output afterwards and checks the claims in it against the numbers printed in it and against the arithmetic the machine's own ______ implies:",
+      "answer": "/sys",
+      "options": "/sys|L1 < 2.0 ns|core_id",
+      "correct_index": 0,
+      "explanation": "The lesson states: So the last two things this course ships are not measurements. They are a program that checks the measurement while it runs, and a second program that reads the first one's output afterwards and checks the claims in it against the numbers printed in it and against the arithmetic the machine's own /sys implies:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/mem_verify.ch:29",
+      "source_quote": "/sys",
+      "concept_id": "mem-verify"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Eight footprints from 16 KiB to 64 MiB. ______ is a read-only sweep; st64 writes all 64 bytes of each line, st4 writes 4; NTfull and NTpart use non-temporal stores. Every column is nanoseconds per line, minimum of three, with four lines per loop iteration so the loop is not the bottleneck at the sizes the model is about:",
+      "answer": "read",
+      "options": "read|movntdq|stnp",
+      "correct_index": 0,
+      "explanation": "The lesson states: Eight footprints from 16 KiB to 64 MiB. read is a read-only sweep; st64 writes all 64 bytes of each line, st4 writes 4; NTfull and NTpart use non-temporal stores. Every column is nanoseconds per line, minimum of three, with four lines per loop iteration so the loop is not the bottleneck at the sizes the model is about:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/mem_writes.ch:90",
+      "source_quote": "read",
+      "concept_id": "mem-writes"
+    }
   ]
 }

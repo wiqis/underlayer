@@ -78,5 +78,72 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The AArch64 version of that contract is the AAPCS64 — the Procedure Call Standard for the Arm 64-bit Architecture, published by Arm in the ______ repository. This course quotes release 2025Q4, issued 23 January 2026, and quotes it by section number, because \"the standard says\" without a section is a sentence a reader cannot check.",
+      "answer": "ARM-software/abi-aa",
+      "options": "ARM-software/abi-aa|NSRN|NGRN",
+      "correct_index": 0,
+      "explanation": "The lesson states: The AArch64 version of that contract is the AAPCS64 — the Procedure Call Standard for the Arm 64-bit Architecture, published by Arm in the ARM-software/abi-aa repository. This course quotes release 2025Q4, issued 23 January 2026, and quotes it by section number, because \"the standard says\" without a section is a sentence a reader cannot check.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_aapcs.ch:62",
+      "source_quote": "ARM-software/abi-aa",
+      "concept_id": "a64-aapcs"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The frame census is the count of who asked. Twenty-five functions, four optimisation levels, and the same C compiled for both targets. A pre-indexed ______ counts as an allocation, because it is one — a count of sub sp, sp, #N alone misses every function that fused the allocation into a save.",
+      "answer": "[sp, #-N]!",
+      "options": "[sp, #-N]!|%rsp|LR",
+      "correct_index": 0,
+      "explanation": "The lesson states: The frame census is the count of who asked. Twenty-five functions, four optimisation levels, and the same C compiled for both targets. A pre-indexed [sp, #-N]! counts as an allocation, because it is one — a count of sub sp, sp, #N alone misses every function that fused the allocation into a save.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_frame.ch:119",
+      "source_quote": "[sp, #-N]!",
+      "concept_id": "a64-frame"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: There is a second trap in the same concept and it is about the number 31 — ______, xzr, and not a general register at all, depending on which of three fields you read it out of. The encoding course measured that the register field is five bits wide and that a field map cannot express the difference, because the difference is not in the field. It is in the group.",
+      "answer": "sp",
+      "options": "sp|x0|x7",
+      "correct_index": 0,
+      "explanation": "The lesson states: There is a second trap in the same concept and it is about the number 31 — sp, xzr, and not a general register at all, depending on which of three fields you read it out of. The encoding course measured that the register field is five bits wide and that a field map cannot express the difference, because the difference is not in the field. It is in the group.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_registers.ch:62",
+      "source_quote": "sp",
+      "concept_id": "a64-registers"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Why the split exists at all: a fixed rule is the only kind of rule that can be checked. “The callee preserves ______–x28 unless it uses them, in which case it restores them” is a sentence two compilers can both obey without exchanging a word. “The callee preserves the registers it used” is not, because each side would have to know what the other did.",
+      "answer": "x19",
+      "options": "x19|x28|x29",
+      "correct_index": 0,
+      "explanation": "The lesson states: Why the split exists at all: a fixed rule is the only kind of rule that can be checked. “The callee preserves x19–x28 unless it uses them, in which case it restores them” is a sentence two compilers can both obey without exchanging a word. “The callee preserves the registers it used” is not, because each side would have to know what the other did.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_save.ch:67",
+      "source_quote": "x19",
+      "concept_id": "a64-save"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: It cannot. The CPU is gone, the registers are gone, and the stack below ______ is, on AArch64, the region concept 3's standard forbids anyone to read. So the frame has to describe itself, in advance, in a language that is not assembly.",
+      "answer": "sp",
+      "options": "sp|.eh_frame|nonleaf",
+      "correct_index": 0,
+      "explanation": "The lesson states: It cannot. The CPU is gone, the registers are gone, and the stack below sp is, on AArch64, the region concept 3's standard forbids anyone to read. So the frame has to describe itself, in advance, in a language that is not assembly.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_unwind.ch:50",
+      "source_quote": "sp",
+      "concept_id": "a64-unwind"
+    }
   ]
 }

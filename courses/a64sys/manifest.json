@@ -88,5 +88,85 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: 1,516 to 1,459 named, 0 to 57 disagreements, and every one of the 57 is an ______ or an msr printed by name. A check that has never been seen to fail is a check with no reason to be believed, and this one has now been seen to fail, which is the only property that makes the zero mean anything.",
+      "answer": "mrs",
+      "options": "mrs|a64-verify|a64-unwind",
+      "correct_index": 0,
+      "explanation": "The lesson states: 1,516 to 1,459 named, 0 to 57 disagreements, and every one of the 57 is an mrs or an msr printed by name. A check that has never been seen to fail is a check with no reason to be believed, and this one has now been seen to fail, which is the only property that makes the zero mean anything.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_evidence.ch:169",
+      "source_quote": "mrs",
+      "concept_id": "a64-evidence"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: And the other measurement on this page, which is a register choice rather than an instruction count: a handler that reads all three registers at once gets ______, x9 and x10, not x0, x1 and x2.",
+      "answer": "x8",
+      "options": "x8|switch|ESR_EL1",
+      "correct_index": 0,
+      "explanation": "The lesson states: And the other measurement on this page, which is a register choice rather than an instruction count: a handler that reads all three registers at once gets x8, x9 and x10, not x0, x1 and x2.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_exceptions.ch:173",
+      "source_quote": "x8",
+      "concept_id": "a64-exceptions"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: All sixteen are multiples of 0x80, all sixteen fall between 0x800 and 0xf80, and the sixteenth is at 0xf80 — so the table spans exactly sixteen slots from 0x800 to 0xfff inclusive. The size came out of the symbol table, not out of a formula I typed in. That distinction is the whole method: ______ asked the assembler, and the answer was 2048.",
+      "answer": ".size vectors, . - vectors",
+      "options": ".size vectors, . - vectors|b|VBAR_ELx",
+      "correct_index": 0,
+      "explanation": "The lesson states: All sixteen are multiples of 0x80, all sixteen fall between 0x800 and 0xf80, and the sixteenth is at 0xf80 — so the table spans exactly sixteen slots from 0x800 to 0xfff inclusive. The size came out of the symbol table, not out of a formula I typed in. That distinction is the whole method: .size vectors, . - vectors asked the assembler, and the answer was 2048.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_interrupts.ch:107",
+      "source_quote": ".size vectors, . - vectors",
+      "concept_id": "a64-interrupts"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Here is the ELF-side half of the subject in a single table, read by two independent parsers — ______ in the artifact and llvm-readelf-21 -S on the command line:",
+      "answer": "struct.unpack_from",
+      "options": "struct.unpack_from|unsigned long|llvm-readelf-21 -S",
+      "correct_index": 0,
+      "explanation": "The lesson states: Here is the ELF-side half of the subject in a single table, read by two independent parsers — struct.unpack_from in the artifact and llvm-readelf-21 -S on the command line:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_pagetables.ch:155",
+      "source_quote": "struct.unpack_from",
+      "concept_id": "a64-pagetables"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Here is the whole encoding, measured from five real assembler outputs. Every word below is MEASURED-ON-BYTES: it came out of ______ and it was read twice, by the decoder in the artifact and by llvm-objdump-21.",
+      "answer": "clang",
+      "options": "clang|svc #0|llvm-objdump-21",
+      "correct_index": 0,
+      "explanation": "The lesson states: Here is the whole encoding, measured from five real assembler outputs. Every word below is MEASURED-ON-BYTES: it came out of clang and it was read twice, by the decoder in the artifact and by llvm-objdump-21.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_syscall.ch:84",
+      "source_quote": "clang",
+      "concept_id": "a64-syscall"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Three registers, and the encodings name them with nine bits. The first measured result on the page is that they are all ______ and are told apart by a two-bit op2 field:",
+      "answer": "CRn = 2",
+      "options": "CRn = 2|op2|T0SZ = 16",
+      "correct_index": 0,
+      "explanation": "The lesson states: Three registers, and the encodings name them with nine bits. The first measured result on the page is that they are all CRn = 2 and are told apart by a two-bit op2 field:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_virtual.ch:84",
+      "source_quote": "CRn = 2",
+      "concept_id": "a64-virtual"
+    }
   ]
 }

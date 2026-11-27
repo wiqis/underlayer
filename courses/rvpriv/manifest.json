@@ -71,5 +71,59 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The last mechanical question is whether the decoder that produced these numbers is right. It is checked by a second reader — ______ — against this file’s own decoder, over the whole corpus.",
+      "answer": "llvm-objdump-21",
+      "options": "llvm-objdump-21|a64sys|inst[31:20]",
+      "correct_index": 0,
+      "explanation": "The lesson states: The last mechanical question is whether the decoder that produced these numbers is right. It is checked by a second reader — llvm-objdump-21 — against this file’s own decoder, over the whole corpus.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_boundary.ch:162",
+      "source_quote": "llvm-objdump-21",
+      "concept_id": "rv-boundary"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The accessibility half is measured too, which is the check on it. ______ at 0xc00 and mvendorid at 0xf11 both have csr[11:10] = 11 and both are read-only; stvec at 0x105 and satp at 0x180 both have 00 and both are read/write. The artifact’s sentence about that is the one worth keeping:",
+      "answer": "cycle",
+      "options": "cycle|0xc00|mvendorid",
+      "correct_index": 0,
+      "explanation": "The lesson states: The accessibility half is measured too, which is the check on it. cycle at 0xc00 and mvendorid at 0xf11 both have csr[11:10] = 11 and both are read-only; stvec at 0x105 and satp at 0x180 both have 00 and both are read/write. The artifact’s sentence about that is the one worth keeping:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_modes.ch:55",
+      "source_quote": "cycle",
+      "concept_id": "rv-modes"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: That fact has a consequence two steps later that is easy to miss. Because a page table is a page, ______’s PPN is a page number rather than an address. Hold that thought — it is the reason the PPN field is 36 bits and not 44.",
+      "answer": "satp",
+      "options": "satp|MODE|ASID",
+      "correct_index": 0,
+      "explanation": "The lesson states: That fact has a consequence two steps later that is easy to miss. Because a page table is a page, satp’s PPN is a page number rather than an address. Hold that thought — it is the reason the PPN field is 36 bits and not 44.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_paging.ch:38",
+      "source_quote": "satp",
+      "concept_id": "rv-paging"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Now the measurement. The corpus contains three wrappers: one that puts the syscall number in ______, one that puts it in a6 — the register a reader would guess from x86-64, where the number goes in rax — and one other.",
+      "answer": "a7",
+      "options": "a7|0x00000073|a6",
+      "correct_index": 0,
+      "explanation": "The lesson states: Now the measurement. The corpus contains three wrappers: one that puts the syscall number in a7, one that puts it in a6 — the register a reader would guess from x86-64, where the number goes in rax — and one other.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_traps.ch:30",
+      "source_quote": "a7",
+      "concept_id": "rv-traps"
+    }
   ]
 }

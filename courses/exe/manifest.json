@@ -96,5 +96,85 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: And the practical consequence is immediate and does not need the mechanism. Every bench function in the artifact is marked ______, and making that change was the single largest improvement to the instrument — it is what turned the latency table from a set of numbers that contradicted each other into monotonic series. The rest of this course’s numbers exist because of that one attribute.",
+      "answer": "aligned(64)",
+      "options": "aligned(64)|getconf|/sys",
+      "correct_index": 0,
+      "explanation": "The lesson states: And the practical consequence is immediate and does not need the mechanism. Every bench function in the artifact is marked aligned(64), and making that change was the single largest improvement to the instrument — it is what turned the latency table from a set of numbers that contradicted each other into monotonic series. The rest of this course’s numbers exist because of that one attribute.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/exe_deps.ch:153",
+      "source_quote": "aligned(64)",
+      "concept_id": "exe-deps"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Retraction 1: “the flags register has no rename, so flag-writing instructions serialise.” Wrong. Four ______s, which all write the flags, cost 1.45× the floor. Writing the flags repeatedly is nearly free.",
+      "answer": "TEST",
+      "options": "TEST|ROR|ADC",
+      "correct_index": 0,
+      "explanation": "The lesson states: Retraction 1: “the flags register has no rename, so flag-writing instructions serialise.” Wrong. Four TESTs, which all write the flags, cost 1.45× the floor. Writing the flags repeatedly is nearly free.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/exe_frontend.ch:160",
+      "source_quote": "TEST",
+      "concept_id": "exe-frontend"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Which statement is made in this lesson?",
+      "answer": "Three separate things get confused when you time a CPU, and separating them is most of the work:",
+      "options": "Three separate things get confused when you time a CPU, and separating them is most of the work:|The artifact measures its own noise before it measures anything else, and the first number it printed was wrong:|The ISA course ended with a decoder that can tell you what any byte sequence means. It is a complete account of the encoding. It says nothing at all about what the hardware does next — and that is the subject of this course and the next five.",
+      "correct_index": 0,
+      "explanation": "This sentence is stated verbatim in this lesson: Three separate things get confused when you time a CPU, and separating them is most of the work:",
+      "hint1": "Re-read the model and detail sections of this lesson.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/exe_instrument.ch:55",
+      "source_quote": "Three separate things get confused when you time a CPU, and separating them is most of the work:",
+      "concept_id": "exe-instrument"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: What was being measured is the loop. The body is ______ plus dec plus jnz, and the dec→jnz pair is a loop-carried dependency: the counter must be decremented before the branch can read its flags. That chain is one link long no matter what the body does, so with a one-instruction body the branch is the bottleneck and the add hides underneath it.",
+      "answer": "add",
+      "options": "add|dec|jnz",
+      "correct_index": 0,
+      "explanation": "The lesson states: What was being measured is the loop. The body is add plus dec plus jnz, and the dec→jnz pair is a loop-carried dependency: the counter must be decremented before the branch can read its flags. That chain is one link long no matter what the body does, so with a one-instruction body the branch is the bottleneck and the add hides underneath it.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/exe_latency.ch:150",
+      "source_quote": "add",
+      "concept_id": "exe-latency"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: That is a measurement, not an excuse. ______ fails on this machine, perf_event_paranoid is 4, and the event sources are all software constructs — breakpoint, kprobe, tracepoint, the IBM performance counters. There is no hardware performance monitoring unit, so a branch misprediction cannot be counted.",
+      "answer": "perf stat -e branch-misses",
+      "options": "perf stat -e branch-misses|perf_event_paranoid|breakpoint",
+      "correct_index": 0,
+      "explanation": "The lesson states: That is a measurement, not an excuse. perf stat -e branch-misses fails on this machine, perf_event_paranoid is 4, and the event sources are all software constructs — breakpoint, kprobe, tracepoint, the IBM performance counters. There is no hardware performance monitoring unit, so a branch misprediction cannot be counted.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/exe_speculate.ch:38",
+      "source_quote": "perf stat -e branch-misses",
+      "concept_id": "exe-speculate"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Which statement is made in this lesson?",
+      "answer": "What a claim needs before a harness may assert it, and what happens when it does not have it:",
+      "options": "What a claim needs before a harness may assert it, and what happens when it does not have it:|Thirty-seven checks in nine groups, and the grouping is the design:|The ISA course ended with a decoder that can tell you what any byte sequence means. It is a complete account of the encoding. It says nothing at all about what the hardware does next — and that is the subject of this course and the next five.",
+      "correct_index": 0,
+      "explanation": "This sentence is stated verbatim in this lesson: What a claim needs before a harness may assert it, and what happens when it does not have it:",
+      "hint1": "Re-read the model and detail sections of this lesson.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/exe_verify.ch:50",
+      "source_quote": "What a claim needs before a harness may assert it, and what happens when it does not have it:",
+      "concept_id": "exe-verify"
+    }
   ]
 }

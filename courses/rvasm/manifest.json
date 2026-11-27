@@ -78,5 +78,72 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The method here is exhaustive and it is cheap. All 65,536 half-words, written into a ______ section as data, disassembled by the second reader, and classified twice: once by this file’s reserved rules and once by whether the reader prints a mnemonic. A two-independent-classification check over an exhaustive set cannot be vacuous — a vacuous comparison of 49,152 items would have to compare nothing.",
+      "answer": ".text",
+      "options": ".text|sp|0x0002",
+      "correct_index": 0,
+      "explanation": "The lesson states: The method here is exhaustive and it is cheap. All 65,536 half-words, written into a .text section as data, disassembled by the second reader, and classified twice: once by this file’s reserved rules and once by whether the reader prints a mnemonic. A two-independent-classification check over an exhaustive set cannot be vacuous — a vacuous comparison of 49,152 items would have to compare nothing.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_compressed.ch:60",
+      "source_quote": ".text",
+      "concept_id": "rv-compressed"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The ______ row moved bits 25 and 30 out of a seven-bit field, and a reader is entitled to ask whether the measurement failed. It did not, and the reason is the field is not seven bits of one thing:",
+      "answer": "funct7+funct3",
+      "options": "funct7+funct3|addi a1, a1, 0|addi a1, a1, 0x800",
+      "correct_index": 0,
+      "explanation": "The lesson states: The funct7+funct3 row moved bits 25 and 30 out of a seven-bit field, and a reader is entitled to ask whether the measurement failed. It did not, and the reason is the field is not seven bits of one thing:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_encoding.ch:135",
+      "source_quote": "funct7+funct3",
+      "concept_id": "rv-encoding"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The third refusal is a different kind of measurement and it is more interesting than the first two. ______ with an amount of 64 is refused with “[0, 63]”, and the reason is that the amount is a six-bit field:",
+      "answer": "slli",
+      "options": "slli|inst[25]|inst[24]",
+      "correct_index": 0,
+      "explanation": "The lesson states: The third refusal is a different kind of measurement and it is more interesting than the first two. slli with an amount of 64 is refused with “[0, 63]”, and the reason is that the amount is a six-bit field:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_immediate.ch:65",
+      "source_quote": "slli",
+      "concept_id": "rv-immediate"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: But the interesting string is not the ______ you typed. It is the one the object file carries, and the object is what a linker reads. Tag_RISCV_arch is read out of .riscv.attributes by this file’s own ELF reader, and the rows below are MEASURED-ON-BYTES:",
+      "answer": "-march",
+      "options": "-march|Tag_RISCV_arch|.riscv.attributes",
+      "correct_index": 0,
+      "explanation": "The lesson states: But the interesting string is not the -march you typed. It is the one the object file carries, and the object is what a linker reads. Tag_RISCV_arch is read out of .riscv.attributes by this file’s own ELF reader, and the rows below are MEASURED-ON-BYTES:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_isa.ch:63",
+      "source_quote": "-march",
+      "concept_id": "rv-isa"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The artifact is ______. Part one of it imports os, re, struct and sys and nothing else, and that is a claim a reader can check by reading four lines rather than taking a promise. ELF64 section headers are read by hand with struct.unpack_from — e_shoff at 0x28, e_shentsize/e_shnum/e_shstrndx at 0x3a, 64 bytes per entry — and .text is found by NAME.",
+      "answer": "rvdec.py",
+      "options": "rvdec.py|os|re",
+      "correct_index": 0,
+      "explanation": "The lesson states: The artifact is rvdec.py. Part one of it imports os, re, struct and sys and nothing else, and that is a claim a reader can check by reading four lines rather than taking a promise. ELF64 section headers are read by hand with struct.unpack_from — e_shoff at 0x28, e_shentsize/e_shnum/e_shstrndx at 0x3a, 64 bytes per entry — and .text is found by NAME.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_verify.ch:55",
+      "source_quote": "rvdec.py",
+      "concept_id": "rv-verify"
+    }
   ]
 }

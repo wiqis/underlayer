@@ -78,5 +78,72 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: What is measurable is what the compiler does with the feature. The same C, the same ______, one flag apart:",
+      "answer": "-O2",
+      "options": "-O2|LDAXR|STXR",
+      "correct_index": 0,
+      "explanation": "The lesson states: What is measurable is what the compiler does with the feature. The same C, the same -O2, one flag apart:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_atomic.ch:118",
+      "source_quote": "-O2",
+      "concept_id": "a64-atomic"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The first version of this file had one poison, and it could not fail. Removing ______ moved the named count by 61 and the disagreement count by 0 — and the sentence printed underneath the numbers claimed that both had moved and that every difference was an exclusive. Both sentences were false, and the false number was printed right beside them. That is retraction R27.",
+      "answer": "m_exclusive",
+      "options": "m_exclusive|[POISON FAILED]|m_lse",
+      "correct_index": 0,
+      "explanation": "The lesson states: The first version of this file had one poison, and it could not fail. Removing m_exclusive moved the named count by 61 and the disagreement count by 0 — and the sentence printed underneath the numbers claimed that both had moved and that every difference was an exclusive. Both sentences were false, and the false number was printed right beside them. That is retraction R27.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_dataflow.ch:130",
+      "source_quote": "m_exclusive",
+      "concept_id": "a64-dataflow"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: One bit. ______ is 64 bits of access and ldr q0 is 128, and the entire difference is bit 23 — not bit 30, not bit 31, and nowhere near the top of the word where a reader's expectation sits.",
+      "answer": "ldr b0",
+      "options": "ldr b0|b|h",
+      "correct_index": 0,
+      "explanation": "The lesson states: One bit. ldr b0 is 64 bits of access and ldr q0 is 128, and the entire difference is bit 23 — not bit 30, not bit 31, and nowhere near the top of the word where a reader's expectation sits.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_neon.ch:78",
+      "source_quote": "ldr b0",
+      "concept_id": "a64-neon"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The register sharing is the load-bearing part and it is what the shared-resource rule means: an implementation that has SVE also has Advanced SIMD, on the same physical registers, and SVE's ______'s bottom 128 bits are Advanced SIMD's V0. One file register, two views, and the second view is wider.",
+      "answer": "Z0",
+      "options": "Z0|V0|bits[23:22]",
+      "correct_index": 0,
+      "explanation": "The lesson states: The register sharing is the load-bearing part and it is what the shared-resource rule means: an implementation that has SVE also has Advanced SIMD, on the same physical registers, and SVE's Z0's bottom 128 bits are Advanced SIMD's V0. One file register, two views, and the second view is wider.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_neonspace.ch:55",
+      "source_quote": "Z0",
+      "concept_id": "a64-neonspace"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: x86-64's memory model is strong and mostly implicit: a program is sequentially consistent unless it says otherwise, and the exceptions are three opcodes — ______, LFENCE, SFENCE — which a program sprinkles at the places it wants to be weaker.",
+      "answer": "MFENCE",
+      "options": "MFENCE|LFENCE|SFENCE",
+      "correct_index": 0,
+      "explanation": "The lesson states: x86-64's memory model is strong and mostly implicit: a program is sequentially consistent unless it says otherwise, and the exceptions are three opcodes — MFENCE, LFENCE, SFENCE — which a program sprinkles at the places it wants to be weaker.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_order.ch:58",
+      "source_quote": "MFENCE",
+      "concept_id": "a64-order"
+    }
   ]
 }

@@ -93,5 +93,85 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: A function call on x86-64 has no visible ceremony. There is no ______ of the arguments, no stack frame set up by the callee, no ret address computed. The caller puts six values into six registers and executes call, and that is the entire mechanism. Which six registers is therefore not a detail — it is the calling convention, and there is nowhere else to look it up.",
+      "answer": "push",
+      "options": "push|ret|call",
+      "correct_index": 0,
+      "explanation": "The lesson states: A function call on x86-64 has no visible ceremony. There is no push of the arguments, no stack frame set up by the callee, no ret address computed. The caller puts six values into six registers and executes call, and that is the entire mechanism. Which six registers is therefore not a detail — it is the calling convention, and there is nowhere else to look it up.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_calling.ch:47",
+      "source_quote": "push",
+      "concept_id": "x86-calling"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Start from the only fact. A ______ decrements %rsp by 8 and writes the return address at the new %rsp. Everything in this concept is a consequence of that one behaviour, and the consequence you must hold on to is:",
+      "answer": "call",
+      "options": "call|jmp|subq $8, %rsp",
+      "correct_index": 0,
+      "explanation": "The lesson states: Start from the only fact. A call decrements %rsp by 8 and writes the return address at the new %rsp. Everything in this concept is a consequence of that one behaviour, and the consequence you must hold on to is:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_frame.ch:58",
+      "source_quote": "call",
+      "concept_id": "x86-frame"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: But “the six callee-saved registers are ______, rbp, r12–r15” is a sentence most people have read and none have checked, and the checking is worth doing, because the table is not the claim. The claim is a behaviour: put a value in %r12, call something, and see whether it is still there. That is a five-line experiment, and the next section runs it.",
+      "answer": "rbx",
+      "options": "rbx|rbp|r12",
+      "correct_index": 0,
+      "explanation": "The lesson states: But “the six callee-saved registers are rbx, rbp, r12–r15” is a sentence most people have read and none have checked, and the checking is worth doing, because the table is not the claim. The claim is a behaviour: put a value in %r12, call something, and see whether it is still there. That is a five-line experiment, and the next section runs it.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_saved.ch:49",
+      "source_quote": "rbx",
+      "concept_id": "x86-saved"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: You have spent four concepts learning that a frame is described by a prologue: a ______, a sub, a mov. The instructions say what happens. Now imagine you are a profiler, or a crash reporter, or a debugger, and you are standing in a function that has already run its prologue and you want to know where the frame above it is.",
+      "answer": "push",
+      "options": "push|sub|mov",
+      "correct_index": 0,
+      "explanation": "The lesson states: You have spent four concepts learning that a frame is described by a prologue: a push, a sub, a mov. The instructions say what happens. Now imagine you are a profiler, or a crash reporter, or a debugger, and you are standing in a function that has already run its prologue and you want to know where the frame above it is.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_unwind.ch:47",
+      "source_quote": "push",
+      "concept_id": "x86-unwind"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: A variadic function breaks that completely. ______ does not know how many arguments it was called with, or what they are, and neither does the code that walks the list. Something has to carry the information, and the ABI's answer is a small block of stack that the callee fills in before it can read anything, plus one integer in %rax that says how much of it is worth filling in.",
+      "answer": "printf",
+      "options": "printf|%rax|%al",
+      "correct_index": 0,
+      "explanation": "The lesson states: A variadic function breaks that completely. printf does not know how many arguments it was called with, or what they are, and neither does the code that walks the list. Something has to carry the information, and the ABI's answer is a small block of stack that the callee fills in before it can read anything, plus one integer in %rax that says how much of it is worth filling in.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_varargs.ch:48",
+      "source_quote": "printf",
+      "concept_id": "x86-varargs"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The first corpus marked its functions ______, which stops the inliner and nothing else. At -O2 the bodies are pure, so gcc constant-folded every one of them: the calls vanished, call_each became a run of mov $0x7, %edi; call abi_sink, and the register assignment was no longer anywhere in the program. A census would still have printed six numbers. The numbers would have been about nothing.",
+      "answer": "noinline",
+      "options": "noinline|SIGSEGV|call",
+      "correct_index": 0,
+      "explanation": "The lesson states: The first corpus marked its functions noinline, which stops the inliner and nothing else. At -O2 the bodies are pure, so gcc constant-folded every one of them: the calls vanished, call_each became a run of mov $0x7, %edi; call abi_sink, and the register assignment was no longer anywhere in the program. A census would still have printed six numbers. The numbers would have been about nothing.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_verify.ch:56",
+      "source_quote": "noinline",
+      "concept_id": "x86-verify"
+    }
   ]
 }

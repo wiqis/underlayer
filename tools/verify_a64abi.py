@@ -27,6 +27,27 @@ import sys
 BASE = 'http://localhost:9000'
 COURSE = "a64abi"
 
+# E3 poison: every reported count must have a mutation that moves it.  The
+# harness reports the manifest concept count; removing one concept in an
+# isolated copy must change that count.  This runs only with --poison and does
+# not touch the real manifest or need the server.
+if '--poison' in sys.argv:
+    import os
+    from verifier_poison import (poison_workspace, copy_file,
+                                 assert_count_moves)
+    with poison_workspace('a64abi-count-') as root:
+        rel = 'courses/%s/manifest.json' % COURSE
+        p = copy_file(rel, os.path.join(root, rel.replace('/', os.sep)))
+        before = len(json.load(open(p, encoding='utf-8'))['concepts'])
+        with open(p, encoding='utf-8') as f:
+            data = json.load(f)
+        data['concepts'].pop()
+        with open(p, 'w', encoding='utf-8', newline='\n') as f:
+            json.dump(data, f)
+        after = len(json.load(open(p, encoding='utf-8'))['concepts'])
+        assert_count_moves('a64abi concept count', before, after)
+    sys.exit(0)
+
 m = json.load(open('courses/%s/manifest.json' % COURSE))
 
 # manifest order: module order, then position within the module

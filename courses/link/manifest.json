@@ -10,27 +10,45 @@
   "importance": "critical",
   "completion_criteria": "Read all 10 concepts, reproduce the 116 measured checks in courses/link/assets/samples/crosscheck.py, and run courses/link/assets/samples/linklab.py tour",
   "min_score": 70,
-  "dependencies": ["obj", "sym", "reloc"],
+  "dependencies": [
+    "obj",
+    "sym",
+    "reloc"
+  ],
   "modules": [
     {
       "id": "script",
       "title": "The Script You Already Use",
-      "concepts": ["link-default-script", "link-script-language", "link-order"]
+      "concepts": [
+        "link-default-script",
+        "link-script-language",
+        "link-order"
+      ]
     },
     {
       "id": "placement",
       "title": "Placing Things",
-      "concepts": ["link-location-counter", "link-memory-regions", "link-phdrs"]
+      "concepts": [
+        "link-location-counter",
+        "link-memory-regions",
+        "link-phdrs"
+      ]
     },
     {
       "id": "selection",
       "title": "Roots and Selection",
-      "concepts": ["link-keep-gc", "link-orphans"]
+      "concepts": [
+        "link-keep-gc",
+        "link-orphans"
+      ]
     },
     {
       "id": "static",
       "title": "Static, and Build One",
-      "concepts": ["link-static-real", "link-write-script"]
+      "concepts": [
+        "link-static-real",
+        "link-write-script"
+      ]
     }
   ],
   "concepts": [
@@ -123,6 +141,138 @@
       "estimated_minutes": 26,
       "difficulty": "advanced",
       "importance": "critical"
+    }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Which is also why the syntax is a language and not a flag set. There is no way to express “put this section after that one, aligned to the next page” as a command-line flag, and pretending otherwise is what makes ______ command lines unreadable.",
+      "answer": "ld",
+      "options": "ld|e_type|-T",
+      "correct_index": 0,
+      "explanation": "The lesson states: Which is also why the syntax is a language and not a flag set. There is no way to express “put this section after that one, aligned to the next page” as a command-line flag, and pretending otherwise is what makes ld command lines unreadable.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/link_default_script.ch:71",
+      "source_quote": "ld",
+      "concept_id": "link-default-script"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Which bytes does this lesson show in its worked dump at offset 1171?",
+      "answer": "48 8d 3d 8c 0e 00 00",
+      "options": "48 8d 3d 8c 0e 00 00|be 2a 00 00 00|31 c0",
+      "correct_index": 0,
+      "explanation": "The lesson's worked dump at offset 1171 reads 48 8d 3d 8c 0e 00 00.",
+      "hint1": "Look up the offset in this lesson's worked hex dump.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/link_keep_gc.ch:112",
+      "source_quote": "48 8d 3d 8c 0e 00 00",
+      "concept_id": "link-keep-gc"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: ______ is at 0x900000, exactly as written, and answer is at 0x9000f0 — 240 bytes further on. Setting the address of an output section sets the address of its first byte, and the first byte belongs to whatever the first matching rule put there. In this binary that is _start and the C runtime, not your function.",
+      "answer": ".text",
+      "options": ".text|answer|_start",
+      "correct_index": 0,
+      "explanation": "The lesson states: .text is at 0x900000, exactly as written, and answer is at 0x9000f0 — 240 bytes further on. Setting the address of an output section sets the address of its first byte, and the first byte belongs to whatever the first matching rule put there. In this binary that is _start and the C runtime, not your function.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/link_location_counter.ch:39",
+      "source_quote": ".text",
+      "concept_id": "link-location-counter"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Two regions, four attributes between them, and one operator (______) that says which region each output section is spending from. It links, and the result is at 0x08000000:",
+      "answer": "> rom",
+      "options": "> rom|ORIGIN = 0x08000000|.text",
+      "correct_index": 0,
+      "explanation": "The lesson states: Two regions, four attributes between them, and one operator (> rom) that says which region each output section is spending from. It links, and the result is at 0x08000000:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/link_memory_regions.ch:39",
+      "source_quote": "&gt; rom",
+      "concept_id": "link-memory-regions"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Six rules, and a program with ten functions has its ______ divided among them. The question this concept answers is: what decides which function lands where? Not the compiler. The compiler chose the names; the script decides the order.",
+      "answer": ".text",
+      "options": ".text|hot|.text.hot",
+      "correct_index": 0,
+      "explanation": "The lesson states: Six rules, and a program with ten functions has its .text divided among them. The question this concept answers is: what decides which function lands where? Not the compiler. The compiler chose the names; the script decides the order.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/link_order.ch:40",
+      "source_quote": ".text",
+      "concept_id": "link-order"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Placed at 0x1133, flagged executable (______), and the linker said nothing. It put a section you did not ask for, in a place you did not choose, and did not tell you. That behaviour has a name — the section is an orphan — and there is a flag that makes the linker admit what it did.",
+      "answer": "AX",
+      "options": "AX|--orphan-handling=error|main",
+      "correct_index": 0,
+      "explanation": "The lesson states: Placed at 0x1133, flagged executable (AX), and the linker said nothing. It put a section you did not ask for, in a place you did not choose, and did not tell you. That behaviour has a name — the section is an orphan — and there is a flag that makes the linker admit what it did.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/link_orphans.ch:44",
+      "source_quote": "AX",
+      "concept_id": "link-orphans"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Two commands, and they are the whole of segment control. ______ declares the segments that will exist. The :code and :data at the end of each rule assign sections to them. And FLAGS(5) is not a mnemonic: it is the literal p_flags bitmask, where PF_X = 1 and PF_W = 2. 5 is R|X. 6 is R|W.",
+      "answer": "PHDRS",
+      "options": "PHDRS|:code|:data",
+      "correct_index": 0,
+      "explanation": "The lesson states: Two commands, and they are the whole of segment control. PHDRS declares the segments that will exist. The :code and :data at the end of each rule assign sections to them. And FLAGS(5) is not a mnemonic: it is the literal p_flags bitmask, where PF_X = 1 and PF_W = 2. 5 is R|X. 6 is R|W.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/link_phdrs.ch:40",
+      "source_quote": "PHDRS",
+      "concept_id": "link-phdrs"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Phase 1 is why you can put ______ before SECTIONS and nothing breaks, and why putting it inside SECTIONS is a syntax error rather than a surprise. The commands are not a sequence of statements to be executed in order; they are a set of settings, plus one block that is walked in order.",
+      "answer": "ENTRY",
+      "options": "ENTRY|SECTIONS|if",
+      "correct_index": 0,
+      "explanation": "The lesson states: Phase 1 is why you can put ENTRY before SECTIONS and nothing breaks, and why putting it inside SECTIONS is a syntax error rather than a surprise. The commands are not a sequence of statements to be executed in order; they are a set of settings, plus one block that is walked in order.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/link_script_language.ch:79",
+      "source_quote": "ENTRY",
+      "concept_id": "link-script-language"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: 52 times bigger, and the ______ changed. Those are the two headline facts and they are not independent — and the connection between them runs straight through a linker script, which is why this concept is in this course.",
+      "answer": "e_type",
+      "options": "e_type|libc.so|PT_INTERP",
+      "correct_index": 0,
+      "explanation": "The lesson states: 52 times bigger, and the e_type changed. Those are the two headline facts and they are not independent — and the connection between them runs straight through a linker script, which is why this concept is in this course.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/link_static_real.ch:44",
+      "source_quote": "e_type",
+      "concept_id": "link-static-real"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Nine concepts of reading, and this one writes. The tool is ______, in this course’s sample directory, and it is deliberately shaped around the three things the course established rather than around convenience:",
+      "answer": "linklab.py",
+      "options": "linklab.py|PASS|FAIL",
+      "correct_index": 0,
+      "explanation": "The lesson states: Nine concepts of reading, and this one writes. The tool is linklab.py, in this course’s sample directory, and it is deliberately shaped around the three things the course established rather than around convenience:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/link_write_script.ch:26",
+      "source_quote": "linklab.py",
+      "concept_id": "link-write-script"
     }
   ]
 }

@@ -131,5 +131,124 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Read what that error is actually telling you. It does not say “wrong code” or “incompatible object”. It names the relocation type — ______ — and the symbol, and then it prescribes the flag. That specificity is the whole subject of this concept: a PIC violation is not a policy disagreement, it is a fact about a relocation type, and a fact can be named.",
+      "answer": "R_X86_64_32",
+      "options": "R_X86_64_32|32|REX_GOTPCRELX",
+      "correct_index": 0,
+      "explanation": "The lesson states: Read what that error is actually telling you. It does not say “wrong code” or “incompatible object”. It names the relocation type — R_X86_64_32 — and the symbol, and then it prescribes the flag. That specificity is the whole subject of this concept: a PIC violation is not a policy disagreement, it is a fact about a relocation type, and a fact can be named.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/pic_violation.ch:43",
+      "source_quote": "R_X86_64_32",
+      "concept_id": "pic-violation"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: There is also a code-size cost, and it is the smaller of the two but it is not zero. The PIC form is 10 bytes against 6, so the extra is 4 bytes per reference — not the 1 byte you might predict from the ______ prefix alone, because the second instruction is the bulk of it.",
+      "answer": "REX",
+      "options": "REX|b|a",
+      "correct_index": 0,
+      "explanation": "The lesson states: There is also a code-size cost, and it is the smaller of the two but it is not zero. The PIC form is 10 bytes against 6, so the extra is 4 bytes per reference — not the 1 byte you might predict from the REX prefix alone, because the second instruction is the bulk of it.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/pie_cost.ch:60",
+      "source_quote": "REX",
+      "concept_id": "pie-cost"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: That last line is the whole concept. There is no mechanism by which ______ can check what ld -no-pie will do, and no mechanism by which the linker can check what the compiler emitted. They are separate processes making a correlated decision, and the correlation is maintained by a build system.",
+      "answer": "clang -fPIE",
+      "options": "clang -fPIE|ld -no-pie|-no-pie",
+      "correct_index": 0,
+      "explanation": "The lesson states: That last line is the whole concept. There is no mechanism by which clang -fPIE can check what ld -no-pie will do, and no mechanism by which the linker can check what the compiler emitted. They are separate processes making a correlated decision, and the correlation is maintained by a build system.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/pie_flags.ch:83",
+      "source_quote": "clang -fPIE",
+      "concept_id": "pie-flags"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Nothing clever here — one function, one pointer, printed. The address of ______ is a fact about the load, and it is the most direct available proxy for “where did the loader put this image”.",
+      "answer": "main",
+      "options": "main|(S + Δ) - (P + Δ) = S - P|ET_EXEC",
+      "correct_index": 0,
+      "explanation": "The lesson states: Nothing clever here — one function, one pointer, printed. The address of main is a fact about the load, and it is the most direct available proxy for “where did the loader put this image”.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/pie_randomize.ch:37",
+      "source_quote": "main",
+      "concept_id": "pie-randomize"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Every symbol it references is defined in it. That is what makes “apply the relocations” a question with a right answer instead of a question about a layout the applier was never told. Every other specimen in this course’s sample directory references ______s, which makes them good for measuring and useless for building.",
+      "answer": "extern",
+      "options": "extern|-O1|ET_REL",
+      "correct_index": 0,
+      "explanation": "The lesson states: Every symbol it references is defined in it. That is what makes “apply the relocations” a question with a right answer instead of a question about a layout the applier was never told. Every other specimen in this course’s sample directory references externs, which makes them good for measuring and useless for building.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/reloc_apply.ch:55",
+      "source_quote": "extern",
+      "concept_id": "reloc-apply"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Here is a source file. Nothing about it is architecture-specific, and nothing about it is position-dependent — every symbol is ______, so there is nothing local to reason about:",
+      "answer": "extern",
+      "options": "extern|-fno-pic|ADRP",
+      "correct_index": 0,
+      "explanation": "The lesson states: Here is a source file. Nothing about it is architecture-specific, and nothing about it is position-dependent — every symbol is extern, so there is nothing local to reason about:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/reloc_arch_contrast.ch:26",
+      "source_quote": "extern",
+      "concept_id": "reloc-arch-contrast"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Read the bytes, not the annotation. ______ is the opcode. The four bytes after it are the displacement: 00 00 00 00. The disassembler helpfully annotates the resolved-looking address as 0x6, which is where the next instruction is — not where target is. target is not at offset 6 of this object file. It is not in this object file at all.",
+      "answer": "8b 05",
+      "options": "8b 05|00 00 00 00|0x6",
+      "correct_index": 0,
+      "explanation": "The lesson states: Read the bytes, not the annotation. 8b 05 is the opcode. The four bytes after it are the displacement: 00 00 00 00. The disassembler helpfully annotates the resolved-looking address as 0x6, which is where the next instruction is — not where target is. target is not at offset 6 of this object file. It is not in this object file at all.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/reloc_encoding_limits.ch:39",
+      "source_quote": "8b 05",
+      "concept_id": "reloc-encoding-limits"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Where the ______ form appears is the interesting part — it needs a genuine absolute address:",
+      "answer": "32",
+      "options": "32|R_X86_64_PC32|ld",
+      "correct_index": 0,
+      "explanation": "The lesson states: Where the 32 form appears is the interesting part — it needs a genuine absolute address:",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/reloc_why_so_many.ch:109",
+      "source_quote": "32",
+      "concept_id": "reloc-why-so-many"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Two ______ calls, in one function, in one object file. Not one relocation each that the loader patches — two function calls, to a function the object file imports from somewhere else. Nothing in the previous two modules prepares you for a relocation list that contains a call.",
+      "answer": "__tls_get_addr",
+      "options": "__tls_get_addr|-O0|local-exec",
+      "correct_index": 0,
+      "explanation": "The lesson states: Two __tls_get_addr calls, in one function, in one object file. Not one relocation each that the loader patches — two function calls, to a function the object file imports from somewhere else. Nothing in the previous two modules prepares you for a relocation list that contains a call.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/tls_model.ch:45",
+      "source_quote": "__tls_get_addr",
+      "concept_id": "tls-model"
+    }
   ]
 }

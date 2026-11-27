@@ -115,5 +115,98 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Which bytes does this lesson show in its worked dump at offset 1192?",
+      "answer": "64 48 8b 04 25 28 00",
+      "options": "64 48 8b 04 25 28 00|48 89 44 24 18|48 8b 44 24 18",
+      "correct_index": 0,
+      "explanation": "The lesson's worked dump at offset 1192 reads 64 48 8b 04 25 28 00.",
+      "hint1": "Look up the offset in this lesson's worked hex dump.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sec_canary.ch:30",
+      "source_quote": "64 48 8b 04 25 28 00",
+      "concept_id": "sec-canary"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Control-flow Enforcement Technology is the newest feature in this course and the only one where the obvious measurement is wrong. The obvious measurement is “does the binary contain ______”. Measured on a binary built with protection explicitly disabled, the answer is yes — five of them.",
+      "answer": "endbr64",
+      "options": "endbr64|main|helper",
+      "correct_index": 0,
+      "explanation": "The lesson states: Control-flow Enforcement Technology is the newest feature in this course and the only one where the obvious measurement is wrong. The obvious measurement is “does the binary contain endbr64”. Measured on a binary built with protection explicitly disabled, the answer is yes — five of them.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sec_cet.ch:27",
+      "source_quote": "endbr64",
+      "concept_id": "sec-cet"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: There are two hardening concepts in this collection already, and both are honest about what they are. ______ covers NULL-page protection, ASLR and PIE on Mach-O. pe-security-flags covers DllCharacteristics: the ASLR bit, the NX bit, the CFG bit. Both are lists of flag names, on platforms this chain has not otherwise touched.",
+      "answer": "macho-hardening",
+      "options": "macho-hardening|pe-security-flags|DllCharacteristics",
+      "correct_index": 0,
+      "explanation": "The lesson states: There are two hardening concepts in this collection already, and both are honest about what they are. macho-hardening covers NULL-page protection, ASLR and PIE on Mach-O. pe-security-flags covers DllCharacteristics: the ASLR bit, the NX bit, the CFG bit. Both are lists of flag names, on platforms this chain has not otherwise touched.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sec_defaults.ch:26",
+      "source_quote": "macho-hardening",
+      "concept_id": "sec-defaults"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Every other hardening feature in this course leaves a bit in a header: a segment flag, a dynamic tag, a property note. FORTIFY leaves nothing, and that is why it is the one most often assumed rather than verified. There is no ______ bit anywhere in an ELF file. What there is, is a different set of imports.",
+      "answer": "FORTIFY",
+      "options": "FORTIFY|strcpy|__strcpy_chk",
+      "correct_index": 0,
+      "explanation": "The lesson states: Every other hardening feature in this course leaves a bit in a header: a segment flag, a dynamic tag, a property note. FORTIFY leaves nothing, and that is why it is the one most often assumed rather than verified. There is no FORTIFY bit anywhere in an ELF file. What there is, is a different set of imports.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sec_fortify.ch:26",
+      "source_quote": "FORTIFY",
+      "concept_id": "sec-fortify"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Six concepts, one artifact, and a habit. The artifact is a reader: given a binary and no build system, it reports what hardening the file actually contains. It does not use ______, objdump, or a compiler — it parses the ELF header, the program headers, the section table, the dynamic array, the string table and a note, with struct.unpack_from and nothing else.",
+      "answer": "readelf",
+      "options": "readelf|objdump|struct.unpack_from",
+      "correct_index": 0,
+      "explanation": "The lesson states: Six concepts, one artifact, and a habit. The artifact is a reader: given a binary and no build system, it reports what hardening the file actually contains. It does not use readelf, objdump, or a compiler — it parses the ELF header, the program headers, the section table, the dynamic array, the string table and a note, with struct.unpack_from and nothing else.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sec_posture.ch:26",
+      "source_quote": "readelf",
+      "concept_id": "sec-posture"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The consequence is not academic. The dynamic linking course measured that ______ disappears under -z now and said so without saying why. The why is that under lazy binding the loader still has to write the resolved address into that slot — so the page holding it cannot be read-only, and partial RELRO cannot cover it. The eight writable bytes are not an oversight. They are the loader’s workspace.",
+      "answer": ".got.plt",
+      "options": ".got.plt|-z now|-z relro",
+      "correct_index": 0,
+      "explanation": "The lesson states: The consequence is not academic. The dynamic linking course measured that .got.plt disappears under -z now and said so without saying why. The why is that under lazy binding the loader still has to write the resolved address into that slot — so the page holding it cannot be read-only, and partial RELRO cannot cover it. The eight writable bytes are not an oversight. They are the loader’s workspace.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sec_relro.ch:28",
+      "source_quote": ".got.plt",
+      "concept_id": "sec-relro"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: One bit, and it is a request. ______ is a program header that says “when you map the stack, use these permissions”, and the kernel is free to grant less. On this system the default is RW, so the stack is not executable, and -Wl,-z,execstack is the flag that gives it away.",
+      "answer": "PT_GNU_STACK",
+      "options": "PT_GNU_STACK|RW|-Wl,-z,execstack",
+      "correct_index": 0,
+      "explanation": "The lesson states: One bit, and it is a request. PT_GNU_STACK is a program header that says “when you map the stack, use these permissions”, and the kernel is free to grant less. On this system the default is RW, so the stack is not executable, and -Wl,-z,execstack is the flag that gives it away.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/sec_wx.ch:38",
+      "source_quote": "PT_GNU_STACK",
+      "concept_id": "sec-wx"
+    }
   ]
 }

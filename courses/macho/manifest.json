@@ -25,10 +25,10 @@
       "type": "multiple_choice",
       "question": "What four bytes open every 64-bit Mach-O file, and what is their hex value when read as a little-endian 32-bit integer?",
       "answer": "CF FA ED FE (0xFEEDFACF read little-endian)",
-      "options": "7F 45 4C 46 (ELF magic)|CF FA ED FE (MH_MAGIC_64)|4D 5A (MZ)",
+      "options": "7F 45 4C 46 (ELF magic)|CF FA ED FE (0xFEEDFACF read little-endian)|4D 5A (MZ)",
       "correct_index": 1,
       "explanation": "A 64-bit Mach-O file starts with bytes CF FA ED FE. Read as a little-endian uint32 this is 0xFEEDFACF (MH_MAGIC_64). 7F 45 4C 46 is ELF, 4D 5A is PE.",
-      "hint1": "The magic spells 'feed face' when reassembled as a 32-bit little-endian word.",
+      "hint1": "The little-endian word is 0xFEEDFACF, not 0xFEEDFACE - the 64-bit magic has a C in the last nibble.",
       "difficulty": 0.3
     },
     {

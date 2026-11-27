@@ -112,5 +112,98 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Six concepts, one artifact, and a habit. The artifact is a decoder: give it bytes and it tells you what instructions they are, and it prints the derivation for every field it consumed. It does not shell out to ______ and it does not use a compiler. It parses the ELF section table to find code, then decodes each instruction from the rules in this course.",
+      "answer": "objdump",
+      "options": "objdump|emit|--why",
+      "correct_index": 0,
+      "explanation": "The lesson states: Six concepts, one artifact, and a habit. The artifact is a decoder: give it bytes and it tells you what instructions they are, and it prints the derivation for every field it consumed. It does not shell out to objdump and it does not use a compiler. It parses the ELF section table to find code, then decodes each instruction from the rules in this course.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/isa_decode.ch:27",
+      "source_quote": "objdump",
+      "concept_id": "isa-decode"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: obj-arch-table asked how many bytes an instruction is and would not answer. The ModRM concept said ______ and rm decide the trailing bytes. The SIB concept found a case where that is not quite enough. This concept closes it: one formula, and the reason a formula beats a table.",
+      "answer": "mod",
+      "options": "mod|rm|66 2E 0F 1F 84 00 00 00 00 00",
+      "correct_index": 0,
+      "explanation": "The lesson states: obj-arch-table asked how many bytes an instruction is and would not answer. The ModRM concept said mod and rm decide the trailing bytes. The SIB concept found a case where that is not quite enough. This concept closes it: one formula, and the reason a formula beats a table.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/isa_length.ch:27",
+      "source_quote": "mod",
+      "concept_id": "isa-length"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Every course before this one used x86-64 machine code as an opaque byte string. The architecture table concept said an x86-64 relocation patches a 4-byte field and asked where in the instruction that field sits — then declined to answer, because answering is a disassembler’s job. The relocations course could say “a ______ is at offset 1” and never say why.",
+      "answer": "disp32",
+      "options": "disp32|e_machine|0x62",
+      "correct_index": 0,
+      "explanation": "The lesson states: Every course before this one used x86-64 machine code as an opaque byte string. The architecture table concept said an x86-64 relocation patches a 4-byte field and asked where in the instruction that field sits — then declined to answer, because answering is a disassembler’s job. The relocations course could say “a disp32 is at offset 1” and never say why.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/isa_modes.ch:27",
+      "source_quote": "disp32",
+      "concept_id": "isa-modes"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: And the split is memorable: ______ is exactly 64 of the 256 — a clean quarter — and those are the register forms. The other 192 are memory forms, and within those the mod field is choosing how to spend the next few bytes.",
+      "answer": "mod=11",
+      "options": "mod=11|mod|mod=00",
+      "correct_index": 0,
+      "explanation": "The lesson states: And the split is memorable: mod=11 is exactly 64 of the 256 — a clean quarter — and those are the register forms. The other 192 are memory forms, and within those the mod field is choosing how to spend the next few bytes.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/isa_modrm.ch:57",
+      "source_quote": "mod=11",
+      "concept_id": "isa-modrm"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: That is the general shape of the whole map, and it is the answer to “why is the opcode table so weird”. An opcode is a slot, and slots outlive their contents. The REX collision and the EVEX collision are the same phenomenon, and so is ______.",
+      "answer": "C4",
+      "options": "C4|0F 0B|0x0F",
+      "correct_index": 0,
+      "explanation": "The lesson states: That is the general shape of the whole map, and it is the answer to “why is the opcode table so weird”. An opcode is a slot, and slots outlive their contents. The REX collision and the EVEX collision are the same phenomenon, and so is C4.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/isa_opcodes.ch:96",
+      "source_quote": "C4",
+      "concept_id": "isa-opcodes"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: And the rule that catches everyone, including this course’s author before it was measured: the extension bit ADDS 8. It does not select “the ninth register”. So ______ with reg=000 is r8, and with reg=100 it is r12. The field stays a 3-bit number and the bit supplies bit 3.",
+      "answer": "R=1",
+      "options": "R=1|W|R",
+      "correct_index": 0,
+      "explanation": "The lesson states: And the rule that catches everyone, including this course’s author before it was measured: the extension bit ADDS 8. It does not select “the ninth register”. So R=1 with reg=000 is r8, and with reg=100 it is r12. The field stays a 3-bit number and the bit supplies bit 3.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/isa_rex.ch:44",
+      "source_quote": "R=1",
+      "concept_id": "isa-rex"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The addressing forms ModRM gives you are ______, [reg+disp] and [rip+disp]. Three forms. But the language you are compiling has arrays, and an array element is base + index*scale. Three forms is not enough to express arr[i].",
+      "answer": "[reg]",
+      "options": "[reg]|[reg+disp]|[rip+disp]",
+      "correct_index": 0,
+      "explanation": "The lesson states: The addressing forms ModRM gives you are [reg], [reg+disp] and [rip+disp]. Three forms. But the language you are compiling has arrays, and an array element is base + index*scale. Three forms is not enough to express arr[i].",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/isa_sib.ch:27",
+      "source_quote": "[reg]",
+      "concept_id": "isa-sib"
+    }
   ]
 }

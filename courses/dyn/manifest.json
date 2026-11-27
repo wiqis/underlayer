@@ -143,5 +143,137 @@
       "difficulty": "advanced",
       "importance": "critical"
     }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The ______ is byte-identical, and a whole section disappeared. The symbol-resolution course established that -z now changes no code, and that is exactly right. What that course could not show is the second half: .got.plt is gone, and .got grew from 0x28 to 0x48 to absorb it.",
+      "answer": ".plt",
+      "options": ".plt|-z now|.got.plt",
+      "correct_index": 0,
+      "explanation": "The lesson states: The .plt is byte-identical, and a whole section disappeared. The symbol-resolution course established that -z now changes no code, and that is exactly right. What that course could not show is the second half: .got.plt is gone, and .got grew from 0x28 to 0x48 to absorb it.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/dyn_bind_time.ch:42",
+      "source_quote": ".plt",
+      "concept_id": "dyn-bind-time"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: What ______ actually does, as four separate decisions rather than one.",
+      "answer": "-fPIC -shared",
+      "options": "-fPIC -shared|T|.dynsym",
+      "correct_index": 0,
+      "explanation": "The lesson states: What -fPIC -shared actually does, as four separate decisions rather than one.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/dyn_build_so.ch:45",
+      "source_quote": "-fPIC -shared",
+      "concept_id": "dyn-build-so"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Everything so far in this course has assumed the libraries are in ______. That is a link-time decision, written into the file. dlopen is the one mechanism that adds to the scope after the program has started — and it is how plugins, drivers, and graphics backends have always worked.",
+      "answer": "DT_NEEDED",
+      "options": "DT_NEEDED|dlopen|NULL",
+      "correct_index": 0,
+      "explanation": "The lesson states: Everything so far in this course has assumed the libraries are in DT_NEEDED. That is a link-time decision, written into the file. dlopen is the one mechanism that adds to the scope after the program has started — and it is how plugins, drivers, and graphics backends have always worked.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/dyn_dlopen.ch:27",
+      "source_quote": "DT_NEEDED",
+      "concept_id": "dyn-dlopen"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The previous concept left one symbol in ______ because the source happened to define one public function. Real libraries define dozens. What decides which of them the world can see is four separate mechanisms, and the most popular one has a trap in it that costs a day.",
+      "answer": ".dynsym",
+      "options": ".dynsym|-fvisibility=hidden|calls_all",
+      "correct_index": 0,
+      "explanation": "The lesson states: The previous concept left one symbol in .dynsym because the source happened to define one public function. Real libraries define dozens. What decides which of them the world can see is four separate mechanisms, and the most popular one has a trap in it that costs a day.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/dyn_export.ch:27",
+      "source_quote": ".dynsym",
+      "concept_id": "dyn-export"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: ______ is 110, not 11. And mid_value is not in the program at all — it lives in libb.so, which knows nothing about main2.c and was compiled and linked without it. A function inside a library, calling another function by name, reached a definition in the executable that neither of them mentions.",
+      "answer": "mid_value()",
+      "options": "mid_value()|mid_value|libb.so",
+      "correct_index": 0,
+      "explanation": "The lesson states: mid_value() is 110, not 11. And mid_value is not in the program at all — it lives in libb.so, which knows nothing about main2.c and was compiled and linked without it. A function inside a library, calling another function by name, reached a definition in the executable that neither of them mentions.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/dyn_interpose.ch:44",
+      "source_quote": "mid_value()",
+      "concept_id": "dyn-interpose"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: A tree with two branches. ______ needs libd2.so and libb.so; the first needs libdeep.so, the second needs liba.so; all three need libc. Two plausible orders exist and only one of them is correct.",
+      "answer": "order",
+      "options": "order|libd2.so|libb.so",
+      "correct_index": 0,
+      "explanation": "The lesson states: A tree with two branches. order needs libd2.so and libb.so; the first needs libdeep.so, the second needs liba.so; all three need libc. Two plausible orders exist and only one of them is correct.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/dyn_order_runtime.ch:42",
+      "source_quote": "order",
+      "concept_id": "dyn-order-runtime"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Eight concepts of reading, and this one writes. The artifact is ______, in this course’s sample directory, and it does one thing: it rebuilds the loader’s scope from the files and resolves symbols the way ld.so does, without a loader.",
+      "answer": "dynscope.py",
+      "options": "dynscope.py|ld.so|LD_DEBUG=bindings",
+      "correct_index": 0,
+      "explanation": "The lesson states: Eight concepts of reading, and this one writes. The artifact is dynscope.py, in this course’s sample directory, and it does one thing: it rebuilds the loader’s scope from the files and resolves symbols the way ld.so does, without a loader.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/dyn_resolve.ch:27",
+      "source_quote": "dynscope.py",
+      "concept_id": "dyn-resolve"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: ______ has a reference to a symbol it does not contain. The linker cannot resolve it — the answer is in another file. Something has to answer it, and that something is the loader, and the way it decides is the subject of this course.",
+      "answer": "libb.so",
+      "options": "libb.so|libfoo.so|DT_NEEDED",
+      "correct_index": 0,
+      "explanation": "The lesson states: libb.so has a reference to a symbol it does not contain. The linker cannot resolve it — the answer is in another file. Something has to answer it, and that something is the loader, and the way it decides is the subject of this course.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/dyn_scope.ch:41",
+      "source_quote": "libb.so",
+      "concept_id": "dyn-scope"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: 2001 against 7. The library’s own ______ returns 2*3, plus one, so 7. The program’s returns 2*1000, so 2001. -Bsymbolic made the library win its own argument — and it is one instruction.",
+      "answer": "helper",
+      "options": "helper|2*3|2*1000",
+      "correct_index": 0,
+      "explanation": "The lesson states: 2001 against 7. The library’s own helper returns 2*3, plus one, so 7. The program’s returns 2*1000, so 2001. -Bsymbolic made the library win its own argument — and it is one instruction.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/dyn_symbolic.ch:50",
+      "source_quote": "helper",
+      "concept_id": "dyn-symbolic"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: Two different addresses for one variable. The Relocations course established why — a thread-local has no address until a thread exists — and showed the four models and the one that has to call a function. What it could not show is where the storage comes from, and the answer turns out to be a decision the kernel makes before ______ runs, using a number the linker computed and the loader copied.",
+      "answer": "main",
+      "options": "main|TPOFF32|%fs:0",
+      "correct_index": 0,
+      "explanation": "The lesson states: Two different addresses for one variable. The Relocations course established why — a thread-local has no address until a thread exists — and showed the four models and the one that has to call a function. What it could not show is where the storage comes from, and the answer turns out to be a decision the kernel makes before main runs, using a number the linker computed and the loader copied.",
+      "hint1": "Find this sentence in the lesson and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "content/src/dyn_tls_block.ch:43",
+      "source_quote": "main",
+      "concept_id": "dyn-tls-block"
+    }
   ]
 }
