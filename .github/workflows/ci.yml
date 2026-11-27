@@ -275,6 +275,17 @@ jobs:
           # I1: sitemap/robots/canonical/JSON-LD over the generated URL list.
           python tools/seo_surface_check.py --selftest
           python tools/seo_surface_check.py "$BASE"
+          # I14: course landing parity with the API. `--allow-uniform pe` is an
+          # explicit, dated exception pending the PE per-concept minute fix (I14).
+          python tools/course_landing_contract.py --selftest
+          python tools/course_landing_contract.py --base "$BASE" \
+            --allow-uniform pe
+          # C1: generated graded banks are a hard gate.
+          python tools/verify_graded_banks.py
+          # NOTE: I9's anonymous_surface_check and H12's verify_course_bytes are
+          # deliberately NOT wired as green gates yet: the former still finds 13
+          # unmarked endpoints, the latter has six pre-existing specimen-blocked
+          # harnesses. Wire them only when their own acceptance criteria pass.
           # B7: empty-bucket probe on this job's disposable DB. The
           # deployed two-network half is a founder action, NOT in CI.
           python tools/rate_limit_deployed_probe.py --local --port "$PORT" \
