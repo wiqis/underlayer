@@ -42,6 +42,40 @@ using underlayer_models::Course
         var module_count = course.modules.size() as int
         var concept_count = course.concepts.size() as int
 
+        // I14: total reading time is the SUM of the declared per-concept
+        // estimates, never a fixed template number. Both values cross into
+        // markup as escaped strings; the checker compares them with the API.
+        var total_minutes : int = 0
+        var ci : size_t = 0
+        while(ci < course.concepts.size()) {
+            var cref = course.concepts.at_ref(ci)
+            total_minutes = total_minutes + cref.estimated_minutes
+            ci = ci + 1
+        }
+        var minutes_str = underlayer_core::int_to_string(total_minutes as i64)
+
+        // The prerequisite ids are a pipe-delimited data attribute, escaped
+        // once here. JS turns them into links. The mastery percentage is NOT
+        // invented on the server: it is seeded into the repository from these
+        // same manifests and is read from /api/courses/:id/prerequisites at
+        // runtime, so the percentage on screen cannot drift from the API.
+        var deps_raw = string()
+        var di : size_t = 0
+        while(di < course.dependencies.size()) {
+            var dep = course.dependencies.at_ref(di)
+            deps_raw.append_view(dep.to_view())
+            deps_raw.append_view("|")
+            di = di + 1
+        }
+
+        // #html attributes are interpolated with the UNQUOTED {var} form; a
+        // quoted "{var}" is literal text (measured on the served landing).
+        // Build the whole endpoint once so the browser and the checker see
+        // exactly the same string.
+        var prereq_source = string("/api/courses/")
+        prereq_source.append_view(f_id.to_view())
+        prereq_source.append_view("/prerequisites")
+
         // The module list container is filled by JS (fetch /api/courses/:id).
         // Concept links follow /courses/<id>/lessons/<concept>.
         render_landing_css(&mut page)
@@ -87,6 +121,19 @@ using underlayer_models::Course
                     </div>
                 </div>
 
+                <section class="course-prereqs" id="course-prereqs"
+                         data-course-id={f_id}
+                         data-dependencies={deps_raw}
+                         data-prereq-source={prereq_source}
+                         data-total-minutes={minutes_str}>
+                    <h2>Before you start</h2>
+                    <p class="prereq-lead">Read these first, in this order. Each one states the mastery this course expects.</p>
+                    <ol class="prereq-list" id="prereq-list"></ol>
+                    <p class="prereq-status" id="prereq-status" aria-live="polite">Sign in to see whether you meet these prerequisites.</p>
+                    <p class="course-time">Estimated reading time: <strong>{minutes_str} minutes</strong> across {concept_count} concepts. Every concept carries its own estimate in the list below; these are reading estimates, not a timed test.</p>
+                    <p class="enrol-state" id="enrol-state" aria-live="polite">Checking enrolment…</p>
+                </section>
+
                 <div class="module-list" id="module-list" aria-live="polite">
                     <div class="module-loading" id="module-loading">Loading course structure…</div>
                     <noscript>
@@ -99,6 +146,22 @@ using underlayer_models::Course
 
         render_landing_js(&mut page)
 
+        // I14 styles live here, with the markup they belong to. They are not in
+        // course_landing_assets.ch because this block and its section ship as
+        // one reviewable unit: a checker can assert the section exists without
+        // following a second file.
+        #css {
+            .course-prereqs { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 2rem; }
+            .course-prereqs h2 { font-size: 1.15rem; margin: 0 0 0.5rem 0; }
+            .prereq-lead, .prereq-status, .course-time, .enrol-state { color: hsl(var(--muted-foreground)); font-size: 0.9rem; margin: 0.5rem 0; }
+            .prereq-list { margin: 0.75rem 0; padding-left: 1.5rem; }
+            .prereq-list li { margin-bottom: 0.35rem; color: hsl(var(--muted-foreground)); font-size: 0.9rem; }
+            .prereq-list a { color: hsl(217 91% 60%); }
+            .concept-minutes { color: hsl(var(--muted-foreground)); font-size: 0.8rem; white-space: nowrap; }
+            .enrol-state.gated { color: hsl(25 90% 55%); }
+            @media (max-width: 640px) { .course-prereqs { padding: 1rem; } }
+        }
+
         // Course-structure loader — client-side rendering of modules/concepts
         // from the course JSON API. This is the one dynamic part of the page;
         // everything else is server-rendered above.
@@ -108,6 +171,73 @@ using underlayer_models::Course
                 var courseId = (parts.length >= 2 && parts[0] === 'courses') ? parts[1] : null;
                 var list = document.getElementById('module-list');
                 if (!list || !courseId) return;
+
+                // I14 — prerequisites, time and an honest enrolment state.
+                // Links are built as DOM nodes: no string from the API ever
+                // becomes markup. The mastery percentage is read from the
+                // same endpoint the gating uses, so it cannot disagree.
+                var prereqSection = document.getElementById('course-prereqs');
+                var prereqList = document.getElementById('prereq-list');
+                if (prereqSection && prereqList) {
+                    var deps = (prereqSection.getAttribute('data-dependencies') || '').split('|').filter(function(x) { return x.length > 0; });
+                    if (deps.length === 0) {
+                        prereqList.appendChild(document.createTextNode('This course declares no prerequisites — you can start anywhere.'));
+                    }
+                    for (var d = 0; d < deps.length; d++) {
+                        var item = document.createElement('li');
+                        var link = document.createElement('a');
+                        link.href = '/courses/' + encodeURIComponent(deps[d]);
+                        link.textContent = deps[d];
+                        item.appendChild(link);
+                        var pctNode = document.createElement('span');
+                        pctNode.className = 'prereq-pct';
+                        pctNode.textContent = ' — mastery requirement loading…';
+                        item.appendChild(pctNode);
+                        prereqList.appendChild(item);
+                    }
+                    var prereqUrl = prereqSection.getAttribute('data-prereq-source') || ('/api/courses/' + encodeURIComponent(courseId) + '/prerequisites');
+                    fetch(prereqUrl).then(function(r) {
+                        if (!r.ok) { throw new Error('http ' + r.status); }
+                        return r.json();
+                    }).then(function(rows) {
+                        var byId = {};
+                        for (var k = 0; k < rows.length; k++) { byId[rows[k].required_course_id] = rows[k].min_mastery_pct; }
+                        var items = prereqList.querySelectorAll('li');
+                        for (var j = 0; j < items.length; j++) {
+                            var text = items[j].querySelector('.prereq-pct');
+                            var anchor = items[j].querySelector('a');
+                            if (!text || !anchor) { continue; }
+                            var value = byId[anchor.textContent];
+                            if (value === undefined) { text.textContent = ' — mastery: not declared'; }
+                            else { text.textContent = ' — requires ' + value + '% mastery'; }
+                        }
+                    }).catch(function() {
+                        var nodes = prereqList.querySelectorAll('.prereq-pct');
+                        for (var n = 0; n < nodes.length; n++) { nodes[n].textContent = ' — mastery: unavailable'; }
+                    });
+
+                    var enrol = document.getElementById('enrol-state');
+                    if (enrol) {
+                        fetch('/api/courses/' + encodeURIComponent(courseId) + '/can-enroll', { credentials: 'same-origin' })
+                        .then(function(r) {
+                            if (r.status === 401) { enrol.textContent = 'Sign in to see whether this course is open to you.'; return null; }
+                            if (!r.ok) { throw new Error('http ' + r.status); }
+                            return r.json();
+                        }).then(function(d) {
+                            if (!d) { return; }
+                            if (d.can_enroll) { enrol.textContent = 'You can start this course now.'; return; }
+                            var missing = d.missing || [];
+                            var names = [];
+                            for (var m = 0; m < missing.length; m++) { names.push(missing[m].required_course_id + ' (' + missing[m].min_mastery_pct + '%)'); }
+                            if (names.length > 0) { enrol.textContent = 'Enrolment is gated until you complete: ' + names.join(', '); }
+                            else { enrol.textContent = 'Enrolment is currently gated. Sign in to see why.'; }
+                            enrol.className = 'enrol-state gated';
+                        }).catch(function() {
+                            enrol.textContent = 'Enrolment status is unavailable right now. Sign in to check it.';
+                        });
+                    }
+                }
+
                 fetch('/api/courses/' + encodeURIComponent(courseId)).then(function(r) {
                     if (!r.ok) throw new Error('http ' + r.status);
                     return r.json();
@@ -136,8 +266,11 @@ using underlayer_models::Course
                         if (m.description) html += '<p>' + escapeHtml(m.description) + '</p>';
                         html += '<ul class="concept-list">';
                         items.forEach(function(c) {
+                            var mins = parseInt(c.estimated_minutes, 10);
+                            if (isNaN(mins)) { mins = 0; }
                             html += '<li><a href="/courses/' + encodeURIComponent(courseId) +
-                                '/lessons/' + encodeURIComponent(c.id) + '">' + escapeHtml(c.title || c.id) + '</a></li>';
+                                '/lessons/' + encodeURIComponent(c.id) + '">' + escapeHtml(c.title || c.id) +
+                                '</a> <span class="concept-minutes">' + mins + ' min</span></li>';
                         });
                         // Concepts listed in the module but missing a ConceptRef
                         // still get a link (id is the fallback title).

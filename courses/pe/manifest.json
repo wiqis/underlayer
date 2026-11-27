@@ -467,7 +467,7 @@
       "title": "Why the Portable Executable Format Exists",
       "module_id": "fundamentals",
       "description": "The MZ-PE chain and the course map.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 10,
       "difficulty": "beginner",
       "importance": "core"
     },
@@ -476,7 +476,7 @@
       "title": "PE File Layout",
       "module_id": "fundamentals",
       "description": "Headers, section table, and section data, end to end.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 12,
       "difficulty": "beginner",
       "importance": "core"
     },
@@ -485,7 +485,7 @@
       "title": "The COFF Heritage",
       "module_id": "fundamentals",
       "description": "PE is a COFF image: object files vs images, machine types.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 11,
       "difficulty": "beginner",
       "importance": "core"
     },
@@ -521,7 +521,7 @@
       "title": "The Data Directories",
       "module_id": "addressing",
       "description": "Sixteen RVA+size slots that point at every special table.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 19,
       "difficulty": "intermediate",
       "importance": "core"
     },
@@ -530,7 +530,7 @@
       "title": "VA, RVA, and File Offset",
       "module_id": "addressing",
       "description": "The three address spaces of a PE file and how they relate.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 18,
       "difficulty": "intermediate",
       "importance": "core"
     },
@@ -539,7 +539,7 @@
       "title": "Converting RVAs to File Offsets",
       "module_id": "addressing",
       "description": "The section-walk algorithm, with a verified worked example.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 17,
       "difficulty": "intermediate",
       "importance": "core"
     },
@@ -548,7 +548,7 @@
       "title": "The Section Table",
       "module_id": "sections",
       "description": "IMAGE_SECTION_HEADER: 40 bytes per section.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 18,
       "difficulty": "intermediate",
       "importance": "core"
     },
@@ -557,7 +557,7 @@
       "title": "Common Sections",
       "module_id": "sections",
       "description": ".text, .rdata, .data, .pdata, .rsrc, and .reloc.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 18,
       "difficulty": "intermediate",
       "importance": "core"
     },
@@ -566,7 +566,7 @@
       "title": "Alignment: FileAlignment vs SectionAlignment",
       "module_id": "sections",
       "description": "Why sizes differ on disk and in memory.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 19,
       "difficulty": "intermediate",
       "importance": "core"
     },
@@ -575,7 +575,7 @@
       "title": "The Import Tables",
       "module_id": "imports-exports",
       "description": "Descriptors, thunks, hint/name entries, and the IAT.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 18,
       "difficulty": "intermediate",
       "importance": "core"
     },
@@ -584,7 +584,7 @@
       "title": "The Export Tables",
       "module_id": "imports-exports",
       "description": "The export directory, ordinals, names, and forwarders.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 18,
       "difficulty": "intermediate",
       "importance": "core"
     },
@@ -593,7 +593,7 @@
       "title": "Delay-Load Imports",
       "module_id": "imports-exports",
       "description": "Loading a DLL on first call instead of at process start.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 18,
       "difficulty": "intermediate",
       "importance": "core"
     },
@@ -602,7 +602,7 @@
       "title": "Base Relocations",
       "module_id": "relocations-hardening",
       "description": "The .reloc blocks that let the image move.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 18,
       "difficulty": "intermediate",
       "importance": "core"
     },
@@ -611,7 +611,7 @@
       "title": "Security & Subsystem Flags",
       "module_id": "relocations-hardening",
       "description": "DllCharacteristics (ASLR, NX, CFG), subsystems, Authenticode.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 19,
       "difficulty": "intermediate",
       "importance": "core"
     },
@@ -620,7 +620,7 @@
       "title": "The Load Configuration",
       "module_id": "relocations-hardening",
       "description": "Security cookies, SEH tables, and Control Flow Guard.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 20,
       "difficulty": "intermediate",
       "importance": "core"
     },
@@ -629,7 +629,7 @@
       "title": "The Resource Directory",
       "module_id": "runtime-tables",
       "description": "The three-level .rsrc tree: Type, Name, Language.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 19,
       "difficulty": "advanced",
       "importance": "core"
     },
@@ -638,7 +638,7 @@
       "title": "Thread-Local Storage",
       "module_id": "runtime-tables",
       "description": "The TLS directory, templates, and callbacks.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 19,
       "difficulty": "advanced",
       "importance": "core"
     },
@@ -647,7 +647,7 @@
       "title": "Exception Tables (.pdata)",
       "module_id": "runtime-tables",
       "description": "RUNTIME_FUNCTION entries that make x64 unwinding work.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 19,
       "difficulty": "advanced",
       "importance": "core"
     },
@@ -656,7 +656,7 @@
       "title": "How the Windows Loader Maps a PE",
       "module_id": "loading-execution",
       "description": "From MZ probe to mapped sections and bound imports.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 20,
       "difficulty": "advanced",
       "importance": "core"
     },
@@ -665,7 +665,7 @@
       "title": "Process Memory Layout",
       "module_id": "loading-execution",
       "description": "ImageBase, sections in memory, heap, and stack.",
-      "estimated_minutes": 15,
+      "estimated_minutes": 18,
       "difficulty": "advanced",
       "importance": "core"
     },
@@ -674,9 +674,10 @@
       "title": "The Startup Sequence",
       "module_id": "loading-execution",
       "description": "Entry point to CRT initialization to main().",
-      "estimated_minutes": 15,
+      "estimated_minutes": 20,
       "difficulty": "advanced",
       "importance": "core"
     }
-  ]
+  ],
+  "minutes_method": "I14/PE 2026-11-27: ELF-style teaching-order module base minutes (fundamentals 12, headers 15, addressing 18, sections 18, imports-exports 18, relocations-hardening 18, runtime-tables 20, loading-execution 20) plus clamp(round((visible_words - 1318.5)/150), -3, +3). visible_words counted from each concept's own content/src/pe_<concept>.ch with markup stripped; all 24 lessons have eight teaching units, so length is the per-concept differentiator. No timing measurement is claimed."
 }

@@ -13,35 +13,24 @@ public func render_obj_landing() : string {
     var title = std::string_view("Object Files — Underlayer")
     page.appendTitle(&title)
 
-            // THE PRE-PAINT THEME.  These landing pages hand-roll their navbar
-        // instead of calling render_site_nav, so they are the only pages that
-        // would miss the <head> theme script and therefore the only pages that
-        // paint light first and repaint -- the flash reported on 2026-10-02.
-        // Measured before this: 0 of 432 static pages carried it.
-        //
-        // The real fix is to call render_site_nav here like every other page.
-        // That is a layout change to seven pages and belongs in its own commit;
-        // until then these two lines are what stops them flashing, and this
-        // comment is what stops the next reader from thinking the duplication
-        // is accidental.
-        render_theme_boot_js(&mut page, false)
-        render_color_scheme_meta(&mut page)
+        // I5: file:// pages keep the bundle link RELATIVE to the generated
+        // course directory. The served pages cannot link to it yet: app/main.ch
+        // routes every nested /courses/* asset URL to the web::App 404 (see
+        // docs/verification-coverage.md). Adding that link broke 24 verifier
+        // harnesses' internal-link check, so it is deliberately not shipped.
+        #html {
+            <aside class="specimen-link" data-specimen-link="obj">
+                <a href="assets/samples/obj-specimen.zip">Download verified specimen pack</a>
+                <span class="specimen-toolchain">Produced and checked with clang 21.1.8 / gcc 15.2.0 / readelf 2.46</span>
+            </aside>
+        }
+
+        // C7: one shell. The hand-rolled six-link navbar, its own
+        // theme script and its own identity slot were removed in
+        // favour of the same render_site_nav call a lesson uses.
+        render_site_nav(&mut page)
 
 #html {
-        <a href="#main-content" class="skip-link">Skip to content</a>
-        <div class="navbar">
-            <div class="nav-inner">
-                <a href="/" class="nav-brand">Underlayer</a>
-                <div class="nav-links">
-                    <a href="/" class="nav-link">Home</a>
-                    <a href="/courses/obj" class="nav-link active">Courses</a>
-                    <a href="/dashboard" class="nav-link">Dashboard</a>
-                    <a href="/review" class="nav-link">Review</a>
-                    <a href="/progress" class="nav-link">Progress</a>
-                </div>
-            </div>
-        </div>
-
         <div class="course-landing" id="main-content">
             <div class="course-header">
                 <h1>Object Files</h1>
@@ -125,15 +114,10 @@ public func render_obj_landing() : string {
     }
 
     #css {
+        .specimen-link { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: baseline; background: hsl(var(--secondary)); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; }
+        .specimen-link a { color: hsl(217 91% 60%); font-weight: 600; }
+        .specimen-toolchain { color: hsl(var(--muted-foreground)); font-size: 0.85rem; }
         body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.7; margin: 0; color: #111827; background: #ffffff; }
-        .skip-link { position: absolute; left: -9999px; }
-        .skip-link:focus { left: 1rem; top: 1rem; background: #ffffff; padding: 0.5rem 0.75rem; border: 2px solid #3b82f6; z-index: 100; }
-        .navbar { background: #111827; color: #ffffff; padding: 0.75rem 1rem; }
-        .nav-inner { max-width: 900px; margin: 0 auto; display: flex; align-items: center; gap: 1.5rem; }
-        .nav-brand { color: #ffffff; font-weight: 700; text-decoration: none; }
-        .nav-links { display: flex; gap: 1rem; margin-left: auto; }
-        .nav-link { color: #d1d5db; text-decoration: none; font-size: 0.9rem; }
-        .nav-link:hover, .nav-link.active { color: #ffffff; text-decoration: underline; }
         .course-landing { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
         .course-header h1 { font-size: 2rem; margin: 0 0 0.5rem; }
         .course-description { color: #4b5563; font-size: 1.05rem; }
@@ -154,7 +138,7 @@ public func render_obj_landing() : string {
         .module-note { font-size: 0.9rem; color: #6b7280; font-style: italic; }
         .course-footer-note { margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid #e5e7eb; color: #4b5563; font-size: 0.95rem; }
         code { background: #f3f4f6; padding: 0.15rem 0.4rem; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 0.9em; }
-        @media (max-width: 640px) { .course-landing { padding: 1.5rem 1rem 3rem; } .nav-links { display: none; } }
+        @media (max-width: 640px) { .course-landing { padding: 1.5rem 1rem 3rem; } }
     }
 
     return page.toString()
