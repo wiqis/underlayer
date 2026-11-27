@@ -868,6 +868,17 @@ public func main() : int {
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_settings_page(&req))
     })
     srv.router.add("GET", "/components", ||(req) => {
+        // I9: the component gallery is a developer showcase (~124 KB), not a
+        // learner page. It is reachable only in a local debug/test binary, via
+        // the existing UL_BUILD_MODE env flag; a release-like binary answers
+        // exactly like any other unknown path. No extra global state, no
+        // capture in the route closure, and no weakening of any other gate.
+        var bi = underlayer_core::current_build_info()
+        var release_mode = string("release")
+        if(bi.build_mode.equals(&release_mode)) {
+            var body = std::string("Not found")
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_status_text(404u, &body))
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_components_demo_page(&req))
     })
     srv.router.add("GET", "/u/:username", ||(req) => {

@@ -742,6 +742,36 @@ never printed (only an 8-hex fingerprint). `--selftest` proves a drifting stub
 is caught. Local run on 2026-11-27 against the disposable `build/b5b-verify.db`:
 10 rounds × 2 clients × 2 endpoints identical; production refusal exit 2.
 
+## 5i. Play Data Safety (F0) — founder action, NOT filed
+
+**Status: the legal pages are updated; the Play Console declaration is not.**
+No agent can sign in to Play Console or attest to data handling on the
+founder's behalf, so this section records the work rather than claiming it.
+
+- **App:** `com.wakaztahir.learnpythonapp` (frozen application id — do not
+  rename it, including in this declaration).
+- **Owner:** `TBD — founder to name`. Placeholder, not an attestation.
+- **What the declaration must match (measured from the served app, not invented):**
+  - Sign-in is embedded from `account.wiqis.com`; Google sign-in may be used.
+    The account service handles credentials; Underlayer receives an account
+    identifier and keeps learning data in its own database.
+  - An HttpOnly session cookie is set on sign-in; local storage keeps a legacy
+    token mirror for API/offline callers and display preferences.
+  - Learning data collected: lesson views, exercise attempts, review ratings,
+    notes, bookmarks, study plans, streaks.
+  - Payments: none are live today. If a course pass is introduced, Paddle is
+    merchant of record (`Docs/profitability-plan.md` P2-01); Underlayer keeps
+    only entitlement status and a receipt reference, not card data. Refund
+    revokes entitlement on the next request (P2-04).
+  - The live `/privacy` and `/terms` pages are re-dated 2026-11-27 and are the
+    public wording the declaration should point at.
+- **Founder steps:** sign in to Play Console → the app's **Data safety** form →
+  declare the categories above accurately (including whether data is encrypted
+  in transit and whether it is shared with the account service / Paddle) →
+  save and submit with the next release. Record the submission date and the
+  named owner in `Docs/decisions.md` when done.
+- **Do not claim EC3/EC10 "Data Safety filed" until that log exists.**
+
 ## 6. Still open (do not mistake these for done)
 
 1. **CSP externalisation: step 1 shipped 2026-11-27; the policy is NOT
