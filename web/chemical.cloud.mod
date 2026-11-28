@@ -33,3 +33,7 @@ import "../models"
 import "../repository"
 import "../content"
 import "../learning"
+// E1/E6: helpers.ch dispatches to these course-local render modules.
+// Keep in lockstep with web/chemical.mod.
+import "../courses/binread"
+import "../courses/front"

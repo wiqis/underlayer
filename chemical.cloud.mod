@@ -27,6 +27,9 @@ import fs
 import net
 import encoding
 import uuid
+// E1/E6: course-local render modules. Keep in lockstep with chemical.mod.
+import "./courses/binread"
+import "./courses/front"
 
 import test if test
 import test_env if test

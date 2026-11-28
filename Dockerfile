@@ -31,6 +31,11 @@ COPY web/ ./web/
 # web/ has its own brandlib import — overwrite it with the GitHub-URL manifest.
 COPY web/chemical.cloud.mod ./web/chemical.mod
 COPY content/ ./content/
+# E1/E6: the two course-local render modules are IMPORTED by the root and web
+# manifests (helpers.ch dispatches to them), so their sources must be present at
+# compile time. Their modules resolve ../../content and ../../core from here.
+COPY courses/binread/ ./courses/binread/
+COPY courses/front/ ./courses/front/
 
 # Surfaces the compiler version in the build log — this project is sensitive to it.
 RUN chemical --version
