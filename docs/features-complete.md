@@ -281,7 +281,7 @@
 - [x] P3 2.2.14 Concept validation: asset availability check
 - [x] P3 2.2.15 Concept validation: link validity check
 - [x] P3 2.2.16 Concept validation: accessibility check
-- [ ] P3 2.2.17 Concept preview: render concept without publishing
+- [x] P3 2.2.17 Concept preview: render concept without publishing — `tools/author_preview.py` serves the G12 generated `elf/bytes` pilot lesson on loopback only; 3/3 negative plants.
 - [ ] P3 2.2.18 Concept diff: compare two versions of a concept
 - [ ] P3 2.2.19 Concept history: view all changes to a concept
 - [ ] P3 2.2.20 Concept rollback: revert to previous version
@@ -392,6 +392,8 @@
 - [x] P1 2.2.62 A CLAIM RETRACTED from the dynamic-linking course, and the retraction is on the course's own landing page and in two of the crosscheck's assertions. The first draft of the breadth-first concept said `--as-needed` dropped liba.so from the second build's DT_NEEDED, and told a tidier story about link order than the truth. It did not: liba.so is in BOTH lists. The real mechanism is the direct one and is a better lesson precisely because nothing is hidden -- DT_NEEDED order follows the link line order, and the shim library precedes liba.so in both builds, by THREE POSITIONS in one and by ONE in the other, so moving -la up one place changes which definition wins with identical source and identical flags. The corrected claim is asserted in build_samples.sh, in crosscheck.py (under an explicit RETRACTION comment), and taught in the concept
 - [x] P1 2.2.63 Four bugs in `courses/dyn/assets/samples/dynscope.py`, recorded because each is a way of being confidently wrong rather than a typo, and two of them are the class of bug the course teaches about. (1) e_shstrndx was read by unpacking FIVE half-words at offset 58 and assigning the last three; only three header fields live there, so the other two reads ran past the end of the ELF header into the first section header, and every string-table lookup then failed with "subsection not found". (2) Deduplication compared a DT_NEEDED NAME against a list of PATHS, so "liba.so" never matched and libc.so.6 entered the scope four times. (3) resolve_path used an absolute candidate AS the path instead of joining the name to it, so $ORIGIN resolved to a directory and the scope contained directories. (4) THE FIRST VERSION WAS A RECURSIVE DESCENT, producing DEPTH-FIRST order -- which is the exact error the third concept spends twenty minutes warning about, so an artifact demonstrating the mistake is worse than no artifact. Also recorded: the static-TLS surplus threshold was NOT measured, because the attempt (32 dlopen-able libraries each with 256 bytes of __thread state) failed to LINK -- --as-needed dropped every one of them with nothing referencing them. A measurement that requires the thing under test to be present has a failure mode that looks exactly like success, so the number is left unclaimed and the exercise handed to the reader with the failure written down
 - [x] P1 2.2.61 `courses/reloc/assets/samples/apply_relocs.py` -- the course's buildable artifact, and the checks that keep it honest. Three bugs found and fixed while writing it, each of which is a trap rather than a typo: the relocation table was keyed by NAME while the file stores a NUMBER (so R_X86_64_32S, type 11, was "unknown"), the overflow message hardcoded "PC32" and so misreported the ABSOLUTE relocation that actually breaks, and the --all-bases sweep used a growing step whose cap put it at ~10MB -- nowhere near the 2GB boundary it claimed to be finding. Verified: PLT32 at field 0x14 yields -0x18, and the bytes `e8 e8 ff ff ff` call -0x18 from 0x18 and land exactly on `pick` at 0x00. The specimen needs `volatile` (or -O1 collapses the file to one constant load from .rodata.cst16) and `noinline` (or `pick` is inlined and the only PC-relative relocation disappears), which is the same -O1-deletes-the-evidence trap as 2.2.60. crosscheck.py now asserts 87 claims, all passing and reproducible from an empty directory
+- [x] P2 2.2.38 G12 structured authoring pipeline (not CMS): a non-agent author edits ONE `content/authoring/<course>/<concept>.json`, runs `tools/author_generate.py` to produce the existing `content/src/*.ch` shape, `tools/author_lint.py` enforces objective wording, takeaway length, no invented byte claims and answer-key traceability (6/6 plants), and `tools/author_preview.py` serves the pilot. Pilot: `elf/bytes`. No admin UI and no §24 CMS ticks.
+
 ### 2.3 Asset Management
 
 - [ ] P3 2.3.1 Static file serving from courses/name/assets/
@@ -610,6 +612,12 @@
 - [x] P1 4.1.28 Exercise submit updates concept_states and creates/updates review_items via FSRS (currently grades only — results never reach the learning loop)
 - [x] P1 4.1.29 Exercise UI on lesson pages supports all 8 exercise types (multiple choice, multi-select, fill-blank, hex-inspect, ordering, matching, labeling, predict)
 - [x] P2 4.1.30 Progressive hints UI wired to GET /api/exercises/hint — every lesson exercise card now carries a "Need a hint?" control that walks levels 1-3, renders the server's own authored hint in a polite live region, and disables at level 3. Verified against the repaired I2 route on port 9037.
+- [x] P1 4.1.31 G5 graded type `order_steps` — pipe-separated order check; key from `content/src/link_order.ch:83-85`, driven in the browser with `which rule caught it|then which pattern|then object order`.
+- [x] P1 4.1.32 G5 graded type `byte_range` — hex/range key copied verbatim from `content/src/bytes.ch:88` (`7f 45 4c 46`).
+- [x] P1 4.1.33 G5 graded type `decode_field` — key from `content/src/x86_frame.ch:58` (`call`).
+- [x] P1 4.1.34 G5 graded type `output_match` — key from `content/src/jvm_header.ch:74` (`Hello.class`).
+- [x] P1 4.1.35 G5 `specimen_lab` in all six course families (formats, linking, x86, ARM, RISC, compiler/VM): each opens the course's existing specimen bundle and grades a string quoted from that course's verified lesson. No compiler runner (E1 owns it).
+- [x] P1 4.1.36 G5 served contract: `tools/g5_types_check.py` checks type reporting and right/wrong grading on a fresh binary with 4/4 negative plants; browser drive solved one of each new type (`build/shots-final/evidence.json`).
 
 ### 4.2 Exercise Feedback
 
@@ -790,6 +798,8 @@
 - [ ] P3 6.1.18 Progress streaks (consecutive days)
 - [ ] P3 6.1.19 Progress achievements (badges earned)
 - [ ] P3 6.1.20 Progress API endpoint
+- [x] P1 6.1.21 G13 safe guest → account takeover: `POST /api/progress/takeover/token` mints a one-hour one-shot token; `POST /api/progress/takeover` replays guest changes through the same per-key `updated_at` rule as `/api/progress/sync`, never writes FSRS-authoritative fields, and refuses a replay with 409. Two offline lessons import; a newer server state wins. One dismissible "keep this progress" prompt on `/`. `docs/mobile-api.md` names it the only supported import path; `/api/progress/import` is untouched.
+- [x] P1 6.1.22 G13 served proof: `tools/takeover_check.py` (4/4 negative plants) and a browser drive of the prompt, keep path and dismissal (`build/shots-final/evidence.json`).
 
 ### 6.2 Learning Analytics
 

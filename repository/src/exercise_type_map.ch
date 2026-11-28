@@ -40,6 +40,21 @@ public namespace underlayer_repository {
         if(type_str.equals(string("predict"))) {
             return underlayer_models::exercise_type_predict()
         }
+        if(type_str.equals(string("order_steps"))) {
+            return underlayer_models::exercise_type_order_steps()
+        }
+        if(type_str.equals(string("byte_range"))) {
+            return underlayer_models::exercise_type_byte_range()
+        }
+        if(type_str.equals(string("decode_field"))) {
+            return underlayer_models::exercise_type_decode_field()
+        }
+        if(type_str.equals(string("output_match"))) {
+            return underlayer_models::exercise_type_output_match()
+        }
+        if(type_str.equals(string("specimen_lab"))) {
+            return underlayer_models::exercise_type_specimen_lab()
+        }
         return underlayer_models::exercise_type_recognize()
     }
 
@@ -56,6 +71,11 @@ public namespace underlayer_repository {
         if(t.id.equals(string("ordering"))) { return string("ordering") }
         if(t.id.equals(string("labeling"))) { return string("labeling") }
         if(t.id.equals(string("predict"))) { return string("predict") }
+        if(t.id.equals(string("order_steps"))) { return string("order_steps") }
+        if(t.id.equals(string("byte_range"))) { return string("byte_range") }
+        if(t.id.equals(string("decode_field"))) { return string("decode_field") }
+        if(t.id.equals(string("output_match"))) { return string("output_match") }
+        if(t.id.equals(string("specimen_lab"))) { return string("specimen_lab") }
         return string("multiple_choice")
     }
 

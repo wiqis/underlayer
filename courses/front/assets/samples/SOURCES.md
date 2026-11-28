@@ -1,6 +1,8 @@
 # Specimen sources — `front` (compiler front end)
 
 **Verification date:** 2026-11-28.
+**Toolchain contract:** python-cpython312 (declared in `front-specimen.json`;
+no gcc/clang/readelf was used to produce this bundle).
 **Toolchain:** CPython 3.12.2 (tags/v3.12.2:6abddd9, Feb 6 2024, 21:26:36)
 [MSC v.1937 64 bit (AMD64)], Windows. The two authorities are the standard
 library modules `tokenize` and `ast` shipped with that interpreter; no third

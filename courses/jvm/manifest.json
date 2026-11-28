@@ -462,6 +462,17 @@
       "source_ref": "content/src/jvm_versions.ch:165",
       "source_quote": "String concatenation. The <code>StringBuilder</code> chain's ten instructions and seven pool entries were replaced by two extra <code>invokedynamic</code> instructions, their bootstrap entries and pool entries &mdash; a change that bought uniformity and cost bytes, because the <code>StringBuilder</code> form was never a run-time cost either. The nest attributes are 14 bytes, and they are the obvious red herring",
       "concept_id": "jvm-versions"
+    },
+    {
+      "g5_id": "g5-output-match-1",
+      "concept_id": "jvm-header",
+      "type": "output_match",
+      "question": "Match the exact filename this lesson says was walked from the top of the JVM course samples.",
+      "answer": "Hello.class",
+      "explanation": "from this course's samples, walked from the top",
+      "difficulty": 0.4,
+      "source_ref": "content/src/jvm_header.ch:74",
+      "source_quote": "Hello.class"
     }
   ],
   "toolchain": "gcc 15.2.0 / clang 21.1.8 / readelf 2.46",

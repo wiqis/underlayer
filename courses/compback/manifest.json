@@ -182,6 +182,17 @@
       "source_ref": "content/src/cb_verify.ch:93",
       "source_quote": "-O2",
       "concept_id": "cb-verify"
+    },
+    {
+      "g5_id": "g5-lab-compiler-vm",
+      "concept_id": "cb-ir",
+      "type": "specimen_lab",
+      "question": "Open courses/compback/assets/samples/compback-specimen.zip alongside this lesson. Which optimisation flag does the lesson quote when it reports the smaller instruction ratio?",
+      "answer": "-O1",
+      "explanation": "gives a smaller ratio than",
+      "difficulty": 0.5,
+      "source_ref": "content/src/cb_ir.ch:58",
+      "source_quote": "-O1"
     }
   ],
   "toolchain": "gcc 15.2.0 / clang 21.1.8 / readelf 2.46",

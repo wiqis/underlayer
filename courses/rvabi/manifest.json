@@ -122,6 +122,17 @@
       "source_ref": "content/src/rv_registers.ch:55",
       "source_quote": "c.sdsp ra, 24(sp)",
       "concept_id": "rv-registers"
+    },
+    {
+      "g5_id": "g5-lab-risc",
+      "concept_id": "rv-calling",
+      "type": "specimen_lab",
+      "question": "Open courses/rvabi/assets/samples/rvabi-specimen.zip alongside this lesson. Which C qualifier does the lesson say marks each argument slot?",
+      "answer": "volatile",
+      "explanation": "every argument is read from its own",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_calling.ch:49",
+      "source_quote": "volatile"
     }
   ],
   "toolchain": "gcc 15.2.0 / clang 21.1.8 / readelf 2.46",

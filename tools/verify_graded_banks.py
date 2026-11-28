@@ -31,7 +31,7 @@ from verifier_poison import (poison_workspace, copy_file, copy_dir,
 
 KNOWN_TYPES = {'multiple_choice', 'free_recall', 'multi_recognize', 'matching',
                'labeling', 'order_steps', 'byte_range', 'decode_field',
-               'output_match', 'hex_inspect', 'ordering'}
+               'output_match', 'hex_inspect', 'ordering', 'specimen_lab'}
 TAG_RE = re.compile(r'<[^>]+>')
 
 

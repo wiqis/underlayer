@@ -200,6 +200,30 @@ is the stored spacing in whole days (0 when there is no last review).
   `last_studied`, `next_review` and `difficulty_rating`) — **do not use that
   endpoint for sync**.
 
+## Importing guest progress: `POST /api/progress/takeover` (G13, 2026-11-28)
+
+**This is the only supported import path.** A guest who completed lessons
+offline (changes queued in `localStorage` as `ul_guest_changes`) signs in and
+one dismissible prompt on `/` offers to keep that work. The client:
+
+1. `POST /api/progress/takeover/token` (anonymous) → `{"token":"…","expires_in":3600}`.
+   Only the SHA-256 of the 64-hex token is stored; it expires in one hour.
+2. `POST /api/progress/takeover` with the session bearer or HttpOnly cookie:
+   `{"token":"…","changes":[{"course_id":"…","concept_id":"…","unit_id":"…","status":"…","step_index":N,"updated_at":<unix seconds>}, …]}`.
+
+The server consumes the token **atomically before any write** (`used_at` is a
+compare-and-set), so a replay gets `409` and performs no writes. Every change
+then goes through the **same** `progress_sync_apply` function and per-key
+`updated_at` rule as `/api/progress/sync`: equal timestamps are a no-op, and a
+newer server state wins. `stability`, `reps`, `interval`, `next_review`,
+`attempts`, `correct` and `streak` are never written — the response's `fsrs`
+block is a read-only projection. The client clears `ul_guest_changes` only
+after an `applied: true` response.
+
+`POST /api/progress/import` remains deployed for compatibility but is **not**
+a supported import path: it zeroed FSRS-authoritative columns and was the
+defect this endpoint exists to replace. It is deliberately untouched here.
+
 ## `GET /api/progress/sync?since=<unix seconds>`
 
 Bearer authentication required. Returns every stored key for the learner with

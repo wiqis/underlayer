@@ -28,6 +28,12 @@ public namespace underlayer_web {
             .home-course-meta { color: hsl(var(--muted-foreground)); font-size: 0.9rem; margin: 0 0 0.9rem; }
             .home-course-link { font-weight: 600; font-size: 0.95rem; }
 
+            .takeover-prompt { max-width: 720px; margin: 1.5rem auto 0; padding: 1rem 1.25rem; border: 1px solid hsl(var(--border)); border-left: 4px solid hsl(var(--primary)); border-radius: 12px; background: hsl(var(--card)); }
+            .takeover-prompt h2 { font-size: 1.1rem; margin: 0 0 0.5rem; }
+            .takeover-prompt p { margin: 0 0 0.75rem; color: hsl(var(--muted-foreground)); }
+            .takeover-prompt button { margin-right: 0.5rem; }
+            .takeover-status { margin-top: 0.5rem; min-height: 1.25rem; font-size: 0.9rem; }
+
             .search-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000; }
             .search-modal.open { display: flex; align-items: flex-start; justify-content: center; padding-top: 20vh; }
             .search-backdrop { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); }
@@ -122,12 +128,55 @@ public namespace underlayer_web {
                 });
             }
 
+            // G13 — one dismissible prompt. The guest changes were recorded
+            // offline in localStorage; the server token is one-shot and the
+            // replay uses the same per-key updated_at rule as sync. On success
+            // (and only then) the local queue is cleared.
+            function takeoverInit() {
+                var prompt = document.getElementById('takeover-prompt');
+                if(!prompt) { return; }
+                var changes = null;
+                try { changes = JSON.parse(localStorage.getItem('ul_guest_changes') || 'null'); } catch(e) { changes = null; }
+                var token = localStorage.getItem('session_token') || '';
+                if(!changes || changes.length === 0 || !token) { return; }
+                if(localStorage.getItem('ul_takeover_dismissed') === '1') { return; }
+                prompt.hidden = false;
+                var status = document.getElementById('takeover-status');
+                document.getElementById('takeover-dismiss').onclick = function() {
+                    localStorage.setItem('ul_takeover_dismissed', '1');
+                    prompt.hidden = true;
+                };
+                document.getElementById('takeover-keep').onclick = function() {
+                    fetch('/api/progress/takeover/token', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } })
+                    .then(function(r) { return r.json(); })
+                    .then(function(d) {
+                        return fetch('/api/progress/takeover', {
+                            method: 'POST', credentials: 'same-origin',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                            body: JSON.stringify({ token: d.token, changes: changes })
+                        });
+                    })
+                    .then(function(r) { return r.json().then(function(j) { return { ok: r.ok, j: j }; }); })
+                    .then(function(out) {
+                        if(out.ok && out.j && out.j.applied) {
+                            localStorage.removeItem('ul_guest_changes');
+                            prompt.hidden = true;
+                            if(status) { status.textContent = 'Progress kept. Your review schedule was not changed.'; }
+                        } else {
+                            if(status) { status.textContent = (out.j && out.j.error) ? out.j.error : 'Could not bring the progress over. Try again.'; }
+                        }
+                    })
+                    .catch(function() { if(status) { status.textContent = 'Could not bring the progress over. Try again.'; } });
+                };
+            }
+
             document.addEventListener("keydown", function(e) {
                 if((e.ctrlKey || e.metaKey) && e.key === "k") { e.preventDefault(); openSearch(); }
                 if(e.key === "Escape") { closeSearch(); }
             });
 
             loadHomeCourses();
+            takeoverInit();
         }
     }
 

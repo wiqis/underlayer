@@ -4,8 +4,8 @@
   "files": [
     {
       "path": "SOURCES.md",
-      "bytes": 1147,
-      "sha256": "fe06a049784fdf79c390c2ddf3bda0f9528d87f43d3789499e54644dfd62762e"
+      "bytes": 1372,
+      "sha256": "43dda87d80b31370c560cb3ce5585868393a9aba3d817dd81f6da965f5c3ae48"
     },
     {
       "path": "readelf_h.txt",
@@ -39,16 +39,21 @@
     }
   ],
   "toolchain": {
-    "readelf": "2.39",
-    "producer": "inherited: gcc 15.2.0 / clang 21.1.8, binutils 2.46"
+    "gcc": "15.2.0",
+    "clang": "21.1.8",
+    "readelf": "2.46",
+    "reader_readelf": "2.39",
+    "producer": "inherited from courses/elf/assets/samples/SOURCES.md: gcc 15.2.0 / clang 21.1.8 / binutils 2.46",
+    "reader": "GNU readelf 2.39 captured the readelf_*.txt evidence; a reader is not a producer"
   },
+  "toolchain_contract": "compiler-toolchain",
   "verification_date": "2026-11-28",
   "not_checked": [
     "specimen execution",
     "platform ABI behaviour",
     "any claim outside the captured readelf output"
   ],
-  "sha256": "ad907095badbb64faa48c4e88c838798a2fa8681ffe1d646e193fb2c4e5d8e1c",
-  "bytes": 20825,
+  "sha256": "5b4dfd8dbeeba8a4f45b0ac6a546cbe0451fe33f4aaef43797d9bb9645e7b10c",
+  "bytes": 20915,
   "file_count": 7
 }

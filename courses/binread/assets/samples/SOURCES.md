@@ -6,11 +6,14 @@ files were captured by running the local `readelf` against specimens copied
 byte-for-byte from the already-verified ELF corpus.
 
 - Copied from `courses/elf/assets/samples/`: `types_O0`, `cbbench`.
-- Their producer toolchain is recorded in
-  `courses/elf/assets/samples/SOURCES.md` as clang 21.1.8 / gcc 15.2.0 with
-  binutils 2.46. Those versions are inherited, not measured here.
+- **Toolchain contract:** compiler-toolchain (declared in
+  `binread-specimen.json`). The producer versions are inherited, recorded as
+  gcc 15.2.0 / clang 21.1.8 / binutils (readelf) 2.46 from
+  `courses/elf/assets/samples/SOURCES.md`; they were NOT measured here and no
+  new version was invented to satisfy the specimen checker.
 - The local reader used to capture the evidence is GNU readelf 2.39
-  (`readelf.exe (GNU Binutils) 2.39`). It is a reader, not the producer.
+  (`readelf.exe (GNU Binutils) 2.39`). It is a reader, not the producer, and is
+  recorded separately as `reader_readelf` in `binread-specimen.json`.
 - Captured commands: `readelf -h`, `readelf -lW`, `readelf -SW`, `readelf -sW`.
 - SHA-256 values are in `binread-specimen.json`.
 

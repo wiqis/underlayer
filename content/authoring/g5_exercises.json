@@ -1,0 +1,125 @@
+{
+  "purpose": "G5 exercise keys. Every answer is copied verbatim from a cited, verified lesson line; the generator refuses to write an item whose quote or key is not present there. No byte, offset or format claim is authored here.",
+  "items": [
+    {
+      "g5_id": "g5-order-steps-1",
+      "course": "link",
+      "concept_id": "link-order",
+      "type": "order_steps",
+      "question": "Put the documented tie-break checks in order, from the lesson's 'ORDER 2' walk-through. Enter the quoted step names separated by pipes.",
+      "answer": "which rule caught it|then which pattern|then object order",
+      "explanation": "then which pattern (ORDER 2, left to right)",
+      "difficulty": 0.5,
+      "g5_source": "content/src/link_order.ch:83-85",
+      "answer_parts": ["which rule caught it", "then which pattern", "then object order"]
+    },
+    {
+      "g5_id": "g5-byte-range-1",
+      "course": "elf",
+      "concept_id": "bytes",
+      "type": "byte_range",
+      "question": "In the ELF specimen lab, which four bytes start the magic quoted in this lesson? Answer exactly as the lesson prints them.",
+      "answer": "7f 45 4c 46",
+      "explanation": "the first four bytes literally spell",
+      "difficulty": 0.4,
+      "source_ref": "content/src/bytes.ch:88",
+      "source_quote": "7f 45 4c 46"
+    },
+    {
+      "g5_id": "g5-decode-field-1",
+      "course": "x86abi",
+      "concept_id": "x86-frame",
+      "type": "decode_field",
+      "question": "Which single instruction does this lesson name as the one that decrements %rsp by 8 and writes the return address?",
+      "answer": "call",
+      "explanation": "A call decrements",
+      "difficulty": 0.4,
+      "source_ref": "content/src/x86_frame.ch:58",
+      "source_quote": "call"
+    },
+    {
+      "g5_id": "g5-output-match-1",
+      "course": "jvm",
+      "concept_id": "jvm-header",
+      "type": "output_match",
+      "question": "Match the exact filename this lesson says was walked from the top of the JVM course samples.",
+      "answer": "Hello.class",
+      "explanation": "from this course's samples, walked from the top",
+      "difficulty": 0.4,
+      "source_ref": "content/src/jvm_header.ch:74",
+      "source_quote": "Hello.class"
+    },
+    {
+      "g5_id": "g5-lab-formats",
+      "course": "elf",
+      "concept_id": "binary-representation",
+      "type": "specimen_lab",
+      "question": "Open courses/elf/assets/samples/elf-specimen.zip alongside this lesson. Which four bytes does the verified dump in the lesson show?",
+      "answer": "40 00 40 00",
+      "explanation": "In little-endian (x86), this is the number",
+      "difficulty": 0.5,
+      "source_ref": "content/src/binary_representation.ch:87",
+      "source_quote": "40 00 40 00"
+    },
+    {
+      "g5_id": "g5-lab-linking",
+      "course": "link",
+      "concept_id": "link-default-script",
+      "type": "specimen_lab",
+      "question": "Open courses/link/assets/samples/link-specimen.zip alongside this lesson. Which tool name does the lesson cite as the syntax language, not a flag set?",
+      "answer": "ld",
+      "explanation": "the syntax is a language and not a flag set",
+      "difficulty": 0.5,
+      "source_ref": "content/src/link_default_script.ch:71",
+      "source_quote": "ld"
+    },
+    {
+      "g5_id": "g5-lab-x86",
+      "course": "x86abi",
+      "concept_id": "x86-calling",
+      "type": "specimen_lab",
+      "question": "Open courses/x86abi/assets/samples/x86abi-specimen.zip alongside this lesson. Which instruction does the lesson say is NOT used to pass the arguments?",
+      "answer": "push",
+      "explanation": "There is no",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_calling.ch:47",
+      "source_quote": "push"
+    },
+    {
+      "g5_id": "g5-lab-arm",
+      "course": "a64abi",
+      "concept_id": "a64-aapcs",
+      "type": "specimen_lab",
+      "question": "Open courses/a64abi/assets/samples/a64abi-specimen.zip alongside this lesson. Which published document does the lesson name as the AArch64 procedure-call contract?",
+      "answer": "ARM-software/abi-aa",
+      "explanation": "Procedure Call Standard for the Arm 64-bit Architecture",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_aapcs.ch:62",
+      "source_quote": "ARM-software/abi-aa"
+    },
+    {
+      "g5_id": "g5-lab-risc",
+      "course": "rvabi",
+      "concept_id": "rv-calling",
+      "type": "specimen_lab",
+      "question": "Open courses/rvabi/assets/samples/rvabi-specimen.zip alongside this lesson. Which C qualifier does the lesson say marks each argument slot?",
+      "answer": "volatile",
+      "explanation": "every argument is read from its own",
+      "difficulty": 0.5,
+      "source_ref": "content/src/rv_calling.ch:49",
+      "source_quote": "volatile"
+    },
+    {
+      "g5_id": "g5-lab-compiler-vm",
+      "course": "compback",
+      "concept_id": "cb-ir",
+      "type": "specimen_lab",
+      "question": "Open courses/compback/assets/samples/compback-specimen.zip alongside this lesson. Which optimisation flag does the lesson quote when it reports the smaller instruction ratio?",
+      "answer": "-O1",
+      "explanation": "gives a smaller ratio than",
+      "difficulty": 0.5,
+      "source_ref": "content/src/cb_ir.ch:58",
+      "source_quote": "-O1"
+    }
+  ]
+}

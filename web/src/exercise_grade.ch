@@ -115,17 +115,29 @@ public namespace underlayer_web {
         // Ordering / matching / labeling: pipe-separated parts, exact after trim+lower.
         if(ex.exercise_type.id.equals(string("ordering")) ||
            ex.exercise_type.id.equals(string("matching")) ||
-           ex.exercise_type.id.equals(string("labeling"))) {
+           ex.exercise_type.id.equals(string("labeling")) ||
+           ex.exercise_type.id.equals(string("order_steps"))) {
             var want = split_pipe(&ex.answer)
             var got = split_pipe(user_answer)
             return vectors_equal(&want, &got)
         }
 
-        // Hex inspect: normalize 0x prefix and case.
-        if(ex.exercise_type.id.equals(string("hex_inspect"))) {
+        // Hex inspect and G5 byte_range: normalize 0x prefix and case.
+        if(ex.exercise_type.id.equals(string("hex_inspect")) ||
+           ex.exercise_type.id.equals(string("byte_range"))) {
             var got_hex = normalize_hex(user_answer)
             var want_hex = normalize_hex(&ex.answer)
             return got_hex.equals(&want_hex)
+        }
+
+        // G5 field/output/lab answers are exact quoted lesson text, compared
+        // after trim + case folding. No new claim is authored while grading.
+        if(ex.exercise_type.id.equals(string("decode_field")) ||
+           ex.exercise_type.id.equals(string("output_match")) ||
+           ex.exercise_type.id.equals(string("specimen_lab"))) {
+            var got_g5 = trim_lower(user_answer)
+            var want_g5 = trim_lower(&ex.answer)
+            return got_g5.equals(&want_g5)
         }
 
         // Free-text answers: fill_blank, recall/apply, explain, and anything

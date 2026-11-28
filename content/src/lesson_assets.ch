@@ -65,6 +65,14 @@ public namespace underlayer_content {
             .concept-list li:last-child { border-bottom: none; }
             .concept-list a { color: hsl(var(--primary)); text-decoration: none; }
             .concept-list a:hover { text-decoration: underline; }
+            /* H15 — reserve space for visual blocks that used to arrive after
+               first paint (hex dumps, tables, figures, quiz controls). Layout
+               reservation only: no byte, offset or spec claim is made here and
+               no content is hidden. */
+            .lesson pre, .lesson .hex-dump, .lesson .hex-interactive { min-height: 3.5rem; }
+            .lesson table { min-height: 2.25rem; }
+            .lesson figure, .lesson img, .lesson svg { min-height: 4rem; }
+            .lesson .quiz, .lesson .quiz-options, .lesson .exercise-ui { min-height: 3rem; }
             @media (max-width: 640px) {
                 .lesson { padding: 1rem; }
                 .unit { padding: 1rem; }

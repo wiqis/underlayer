@@ -48,6 +48,30 @@ import sys
 import urllib.error
 import urllib.request
 
+# A page may legitimately carry TWO different scripts that mention enrolment:
+#   * the prerequisite resolver, which writes the read-only #enrol-state slot
+#     (it must be present for signed-out readers too — it is how the page says
+#     "sign in to see whether this course is open to you");
+#   * the #enroll-btn handler, which POSTs /enroll and must exist ONLY in the
+#     signed-in, not-yet-enrolled state.
+# The old checker asserted the absence of the substring "can-enroll" anywhere,
+# so it reported a real prerequisite script as an orphan.  The assertion below
+# is narrower AND stronger: it identifies the button handler by its DOM target.
+SCRIPT_RE = re.compile(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>', re.S | re.I)
+BUTTON_HANDLER = re.compile(r"getElementById\(['\"]enroll-btn['\"]\)")
+
+
+def inline_scripts(page):
+    return [m.group(1) for m in SCRIPT_RE.finditer(page)]
+
+
+def button_handler(page):
+    """The enrol-BUTTON handler, if any — not the prerequisite state script."""
+    for script in inline_scripts(page):
+        if BUTTON_HANDLER.search(script) and '/enroll' in script:
+            return script
+    return None
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB = os.environ.get('UL_DB', os.path.join(ROOT, 'underlayer.db'))
 
@@ -128,7 +152,10 @@ def courses_with_deps():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--port', type=int, default=9000)
+    ap.add_argument('--selftest', action='store_true')
     args = ap.parse_args()
+    if args.selftest:
+        return run_selftest()
     port = args.port
 
     st, _ = http('GET', '/api/health', port)
@@ -209,9 +236,9 @@ def main():
     ok('a signed-out course page has NO enrol control',
        'enroll-btn' not in page and 'enroll-state' not in page,
        'signed-out reader sees a button they cannot use')
-    ok('and no orphaned enrol script',
-       'can-enroll' not in page,
-       'a script for a control that is not there is dead JavaScript')
+    ok('and no orphaned enrol BUTTON handler',
+       button_handler(page) is None,
+       'a handler for a button the signed-out reader does not have is dead JS')
 
     # -- signed in, not enrolled: the button AND the script
     st, page = http('GET', '/courses/%s' % free, port, token=tok)
@@ -237,7 +264,7 @@ def main():
     ok('and the state says when', bool(m) and 'since' in m.group(1).lower(),
        'state text: %r' % (m.group(1) if m else None))
     ok('and there is no script for a control that is gone',
-       'can-enroll' not in page,
+       button_handler(page) is None,
        'the button is gone but its handler is still on the page')
 
     # ---------------------------------------------------------------- 4
@@ -247,13 +274,13 @@ def main():
     # So the served <script> is extracted and run in node against the real API,
     # and the resulting DOM is read back.
     st, page = http('GET', '/courses/%s' % target, port, token=tok)
-    m = re.search(r'<script>(.*?enroll-btn.*?)</script>', page, re.S)
-    if not m:
+    script = button_handler(page)
+    if not script:
         ok('the enrol script could be extracted', False,
-           'no <script> containing enroll-btn on /courses/%s' % target)
+           'no inline button-handler script on /courses/%s' % target)
     else:
         ok('the enrol script could be extracted', True,
-           '%d bytes of inline script' % len(m.group(1)))
+           '%d bytes of inline script' % len(script))
         # The script goes in ITS OWN FILE and the runner reads it with
         # fs.readFileSync.  Two earlier versions embedded it in the runner's
         # source -- once by interpolating it raw, and once inside a template
@@ -270,7 +297,7 @@ def main():
         # then byte-for-byte what the browser gets.
         script_path = os.path.join('/tmp', 'ul_enrol_script.js')
         with open(script_path, 'w', encoding='utf-8') as f:
-            f.write(m.group(1))
+            f.write(script)
         runner = os.path.join('/tmp', 'ul_enrol_run.js')
         with open(runner, 'w', encoding='utf-8') as f:
             f.write(ENROL_RUNNER
@@ -395,6 +422,42 @@ setTimeout(() => {
   }));
 }, 3000);
 '''
+
+
+PREREQ_SCRIPT = ("<script>(function(){var e=document.getElementById('enrol-state');"
+                 "if(e){fetch('/api/courses/x/can-enroll').then(function(r){return r.json();});}"
+                 "})();</script>")
+HANDLER_SCRIPT = ("<script>(function(){var b=document.getElementById('enroll-btn');"
+                  "if(!b){return;}b.addEventListener('click',function(){"
+                  "fetch('/api/courses/x/enroll',{method:'POST'});});})();</script>")
+
+
+def run_selftest():
+    """The two stale assertions have negative plants; the extractor too."""
+    ok_all = True
+    cases = [
+        ('prerequisite-only page accepted',
+         PREREQ_SCRIPT, False),
+        ('planted button handler on signed-out page rejected',
+         PREREQ_SCRIPT + HANDLER_SCRIPT, True),
+        ('planted button handler on enrolled page rejected',
+         '<span id="enroll-state">Enrolled</span>' + HANDLER_SCRIPT, True),
+    ]
+    for label, html, want_handler in cases:
+        found = button_handler(html) is not None
+        good = found == want_handler
+        print(('PASS: ' if good else 'FAIL: ') + label)
+        ok_all = ok_all and good
+    mixed = ('<script>var download = 1;</script><span class="enroll-wrap">'
+             '<button id="enroll-btn">Enroll</button></span>' + HANDLER_SCRIPT)
+    extracted = button_handler(mixed)
+    clean = (extracted is not None and '</script>' not in extracted
+             and '<span' not in extracted and '/enroll' in extracted)
+    print(('PASS: ' if clean else 'FAIL: ') + 'extractor isolates one script tag')
+    ok_all = ok_all and clean
+    print('ENROLL SELFTEST %s' % ('4/4 — controls accepted, plants rejected'
+                                  if ok_all else 'incomplete'))
+    return 0 if ok_all else 1
 
 
 if __name__ == '__main__':

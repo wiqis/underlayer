@@ -45,6 +45,19 @@ COURSES = ROOT / 'courses'
 LABEL = 'clang 21.1.8 / gcc 15.2.0 / readelf 2.46'
 VERSIONS = {'gcc': '15.2.0', 'clang': '21.1.8', 'readelf': '2.46'}
 DATE = '2026-11-27'
+# Two courses were authored AFTER the 33-course corpus with a different,
+# truthfully recorded toolchain/date. Neither is a waiver: the checker requires
+# the declared contract and EVERY declared version/date to appear verbatim in
+# that bundle's own SOURCES.md (evidence), and refuses an unknown contract.
+#   binread: specimens inherited from ELF (clang/gcc/binutils 2.46 producers),
+#            readelf TEXT captured with the local reader 2.39; verified 11-28.
+#   front:   token/AST fixtures produced by CPython 3.12.2's tokenize + ast;
+#            no gcc/clang/readelf involved; verified 11-28.
+DATE_OVERRIDES = {'binread': '2026-11-28', 'front': '2026-11-28'}
+COMPILER_CONTRACT = 'compiler-toolchain'
+PYTHON_CONTRACT = 'python-cpython312'
+PYTHON_VERSIONS = {'python': '3.12.2'}
+CONTRACTS = {COMPILER_CONTRACT: VERSIONS, PYTHON_CONTRACT: PYTHON_VERSIONS}
 LINK_ATTR = 'data-specimen-link="%s"'
 
 
@@ -69,6 +82,35 @@ def course_ids():
     return sorted(p.name for p in COURSES.iterdir() if (p / 'manifest.json').is_file())
 
 
+def metadata_failures(cid, meta, sources_text):
+    """Validate the declared toolchain contract against the bundle's evidence.
+
+    `sources_text` is the bundle's own SOURCES.md. A course may only use a
+    non-default contract when it is named here AND the exact versions and date
+    are written in that file; an undeclared or unknown contract is a failure.
+    """
+    failures = []
+    contract = meta.get('toolchain_contract') or COMPILER_CONTRACT
+    if contract not in CONTRACTS:
+        failures.append('%s: unknown toolchain contract %r' % (cid, contract))
+        return failures
+    expected = CONTRACTS[contract]
+    toolchain = meta.get('toolchain') or {}
+    for key, value in expected.items():
+        if toolchain.get(key) != value:
+            failures.append('%s: toolchain %s is %r, expected %s (%s)' % (
+                cid, key, toolchain.get(key), value, contract))
+    wanted_date = DATE_OVERRIDES.get(cid, DATE)
+    if meta.get('verification_date') != wanted_date:
+        failures.append('%s: verification_date %r != %s' % (cid, meta.get('verification_date'), wanted_date))
+    # Evidence is mandatory wherever the default corpus contract does not hold.
+    if contract != COMPILER_CONTRACT or cid in DATE_OVERRIDES:
+        for token in list(expected.values()) + [wanted_date, contract]:
+            if token not in sources_text:
+                failures.append('%s: SOURCES.md does not evidence %r' % (cid, token))
+    return failures
+
+
 def check_bundle(cid):
     """Return (failures, meta). Pure disk check — no server needed."""
     failures = []
@@ -86,14 +128,9 @@ def check_bundle(cid):
         failures.append('%s: bundle declares course_id %r' % (cid, meta.get('course_id')))
     if meta.get('bundle') != zip_path.name:
         failures.append('%s: bundle name %r != %s' % (cid, meta.get('bundle'), zip_path.name))
-    toolchain = meta.get('toolchain') or {}
-    for key, expected in VERSIONS.items():
-        if toolchain.get(key) != expected:
-            failures.append('%s: toolchain %s is %r, expected %s' % (
-                cid, key, toolchain.get(key), expected))
-    if meta.get('verification_date') != DATE:
-        failures.append('%s: verification_date %r != %s' % (
-            cid, meta.get('verification_date'), DATE))
+    sources_path = sample_dir / 'SOURCES.md'
+    sources_text = sources_path.read_text(encoding='utf-8') if sources_path.is_file() else ''
+    failures.extend(metadata_failures(cid, meta, sources_text))
 
     entries = meta.get('files') or []
     if len(entries) != meta.get('file_count'):
@@ -180,7 +217,32 @@ def run_selftest():
     for label, result in zip(('no page', 'missing link', 'missing toolchain label'), planted):
         print(('SELFTEST PASS: %s rejected' % label) if result else
               ('FAIL SELFTEST VACUOUS: %s accepted' % label))
-    print('SELFTEST %s' % ('3/3 — controls accepted, plants rejected' if ok else 'incomplete'))
+
+    # Metadata contracts. The controls must be ACCEPTED and every plant
+    # REJECTED — otherwise the two post-corpus courses could bypass the gate.
+    binread_meta = dict(good_meta, toolchain=dict(VERSIONS),
+                        verification_date=DATE_OVERRIDES['binread'])
+    front_meta = dict(good_meta, toolchain=dict(PYTHON_VERSIONS),
+                      toolchain_contract=PYTHON_CONTRACT,
+                      verification_date=DATE_OVERRIDES['front'])
+    bin_src = 'compiler-toolchain gcc 15.2.0 clang 21.1.8 readelf 2.46 2026-11-28'
+    front_src = ('python-cpython312 python 3.12.2 tokenize ast 2026-11-28')
+    meta_cases = [
+        ('binread contract control', 'binread', binread_meta, bin_src, False),
+        ('front contract control', 'front', front_meta, front_src, False),
+        ('unknown contract', 'front', dict(front_meta, toolchain_contract='magic'), front_src, True),
+        ('wrong python version', 'front', dict(front_meta, toolchain={'python': '3.11.0'}), front_src, True),
+        ('date without evidence', 'front', front_meta, 'python-cpython312 python 3.12.2', True),
+        ('default course cannot borrow the later date', 'elf', binread_meta, bin_src, True),
+        ('missing contract evidence', 'front', front_meta, 'python 3.12.2 2026-11-28', True),
+    ]
+    for label, cid, meta, text, want_fail in meta_cases:
+        found = metadata_failures(cid, meta, text)
+        case_ok = bool(found) == want_fail
+        print(('%s: %s (%s)' % ('PASS' if case_ok else 'FAIL', label,
+                                ', '.join(found) or 'no failure')))
+        ok = ok and case_ok
+    print('SELFTEST %s' % ('8/8 — controls accepted, plants rejected' if ok else 'incomplete'))
     return 0 if ok else 1
 
 

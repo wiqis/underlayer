@@ -172,6 +172,28 @@
       "source_ref": "content/src/x86_verify.ch:56",
       "source_quote": "noinline",
       "concept_id": "x86-verify"
+    },
+    {
+      "g5_id": "g5-decode-field-1",
+      "concept_id": "x86-frame",
+      "type": "decode_field",
+      "question": "Which single instruction does this lesson name as the one that decrements %rsp by 8 and writes the return address?",
+      "answer": "call",
+      "explanation": "A call decrements",
+      "difficulty": 0.4,
+      "source_ref": "content/src/x86_frame.ch:58",
+      "source_quote": "call"
+    },
+    {
+      "g5_id": "g5-lab-x86",
+      "concept_id": "x86-calling",
+      "type": "specimen_lab",
+      "question": "Open courses/x86abi/assets/samples/x86abi-specimen.zip alongside this lesson. Which instruction does the lesson say is NOT used to pass the arguments?",
+      "answer": "push",
+      "explanation": "There is no",
+      "difficulty": 0.5,
+      "source_ref": "content/src/x86_calling.ch:47",
+      "source_quote": "push"
     }
   ],
   "toolchain": "gcc 15.2.0 / clang 21.1.8 / readelf 2.46",

@@ -1,0 +1,67 @@
+{
+  "course": "elf",
+  "concept_id": "bytes",
+  "title": "Bytes and Binary (authoring pilot)",
+  "objective": "In this step you will be able to read a hex byte as its decimal value and as an ASCII character.",
+  "takeaway": "A byte holds eight bits; the lesson's 0x41 is decimal 65 and the ASCII letter A.",
+  "source_ref": "content/src/bytes.ch",
+  "units": [
+    {
+      "kind": "why",
+      "heading": "Why bytes matter",
+      "text": "When you see 0x41 in a hex dump, that's the number 65 in decimal. It happens to be the ASCII code for the letter 'A'.",
+      "source_line": 64
+    },
+    {
+      "kind": "model",
+      "heading": "The model",
+      "text": "A byte is 8 bits. Each bit is either 0 or 1. So a byte can represent 2^8 = 256 different values (0-255).",
+      "source_line": 69
+    },
+    {
+      "kind": "reality",
+      "heading": "The encoding, not the letter",
+      "text": "In decimal: 127, 69, 76, 70. In ASCII: . E L F. The first four bytes literally spell ELF.",
+      "source_line": 90
+    },
+    {
+      "kind": "example",
+      "heading": "A real example",
+      "text": "The ELF magic number starts with these 4 bytes: 7f 45 4c 46.",
+      "source_line": 88
+    },
+    {
+      "kind": "interact",
+      "heading": "Try it",
+      "text": "Click on each byte to see its decimal, hex, and ASCII values.",
+      "source_line": 95
+    },
+    {
+      "kind": "retrieve",
+      "heading": "Retrieve",
+      "text": "0x41 is 4*16 + 1 = 65, and 0x41 is the ASCII code for A.",
+      "source_line": 110
+    },
+    {
+      "kind": "apply",
+      "heading": "Apply",
+      "text": "When you see 0x41 in a hex dump, that's the number 65 in decimal.",
+      "source_line": 64
+    },
+    {
+      "kind": "connect",
+      "heading": "Connect",
+      "text": "The ELF magic number starts with these 4 bytes: 7f 45 4c 46.",
+      "source_line": 88
+    }
+  ],
+  "answer_key": {
+    "question": "What decimal value does the hex byte 0x41 represent?",
+    "answer": "65",
+    "options": ["32", "65", "127"],
+    "correct_index": 1,
+    "explanation": "When you see 0x41 in a hex dump, that's the number 65 in decimal.",
+    "source_ref": "content/src/bytes.ch:64",
+    "source_quote": "0x41"
+  }
+}

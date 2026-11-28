@@ -398,6 +398,28 @@
       "source_ref": "content/src/visibility.ch:139",
       "source_quote": "The symbol is not exported — other shared libraries cannot resolve it",
       "concept_id": "visibility"
+    },
+    {
+      "g5_id": "g5-byte-range-1",
+      "concept_id": "bytes",
+      "type": "byte_range",
+      "question": "In the ELF specimen lab, which four bytes start the magic quoted in this lesson? Answer exactly as the lesson prints them.",
+      "answer": "7f 45 4c 46",
+      "explanation": "the first four bytes literally spell",
+      "difficulty": 0.4,
+      "source_ref": "content/src/bytes.ch:88",
+      "source_quote": "7f 45 4c 46"
+    },
+    {
+      "g5_id": "g5-lab-formats",
+      "concept_id": "binary-representation",
+      "type": "specimen_lab",
+      "question": "Open courses/elf/assets/samples/elf-specimen.zip alongside this lesson. Which four bytes does the verified dump in the lesson show?",
+      "answer": "40 00 40 00",
+      "explanation": "In little-endian (x86), this is the number",
+      "difficulty": 0.5,
+      "source_ref": "content/src/binary_representation.ch:87",
+      "source_quote": "40 00 40 00"
     }
   ],
   "visualization_decls": [],

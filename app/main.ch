@@ -648,6 +648,16 @@ public func main() : int {
         var db = request_db()
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_progress_sync_push(db, &mut req))
     })
+    // ---- G13: safe guest -> account takeover. Both literals precede the
+    // /api/progress/:courseId route below so "takeover" is never a course id. ----
+    srv.router.add("POST", "/api/progress/takeover/token", ||(req) => {
+        var db = request_db()
+        return underlayer_web::deliver_with_learner(db, &req, underlayer_web::handle_takeover_token(db, &req))
+    })
+    srv.router.add("POST", "/api/progress/takeover", ||(req) => {
+        var db = request_db()
+        return underlayer_web::deliver_with_learner(db, &req, underlayer_web::handle_progress_takeover(db, &mut req))
+    })
     // ---- Course Progress API ----
     srv.router.add("GET", "/api/progress/:courseId", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()

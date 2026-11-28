@@ -38,6 +38,19 @@ ARCHETYPES = ('/', '/courses', '/courses/elf', '/courses/elf/lessons/bytes',
 WIDTHS = (1280, 420)
 BUDGETS = {'lcp_ms': 2500.0, 'inp_ms': 200.0, 'cls': 0.1, 'bytes': 500 * 1024}
 
+# A DATED, OWNER-SIGNED EXCEPTION — never a silent skip. The Google Fonts
+# stylesheet is emitted by WebLibs/brandlib/src/theme.ch, outside this repo, so
+# it cannot be removed from here. The exception is honoured only while the
+# evidence file below still contains the exact owner and dates; --no-exceptions
+# re-enables the hard failure for CI runs that must prove the clean state.
+FONT_EXCEPTION = {
+    'host': 'fonts.googleapis.com',
+    'owner': 'founder / WebLibs/brandlib',
+    'since': '2026-11-28',
+    'review_by': '2026-12-12',
+    'evidence': os.path.join(REPO, 'docs', 'h15-performance-budget.md'),
+}
+
 OBSERVER_JS = r"""
 window.__ulPerf = { lcp: 0, cls: 0, inp: 0 };
 try {
@@ -103,6 +116,22 @@ def render_blocking_third_party(html, base_host):
     return found
 
 
+def exception_for(host, allow_exceptions=True):
+    """Return the signed exception only while its evidence is intact."""
+    if not allow_exceptions or host != FONT_EXCEPTION['host']:
+        return None
+    try:
+        with open(FONT_EXCEPTION['evidence'], encoding='utf-8') as handle:
+            text = handle.read()
+    except OSError:
+        return None
+    required = (FONT_EXCEPTION['owner'], FONT_EXCEPTION['since'],
+                FONT_EXCEPTION['review_by'])
+    if all(token in text for token in required):
+        return FONT_EXCEPTION
+    return None
+
+
 def p95(values):
     if not values:
         return float('inf')
@@ -153,11 +182,37 @@ def selftest():
         print('%s: %s (%s)' % ('PASS' if ok else 'FAIL', label, found or 'none'))
         if not ok:
             failures.append(label)
+    font_html = ('<link href="https://fonts.googleapis.com/css2?family=Inter" '
+                 'rel="stylesheet">')
+    other_html = '<link href="https://cdn.example.com/a.css" rel="stylesheet">'
+    exception_cases = [
+        ('signed font exception honoured', font_html, True, []),
+        ('signed font exception disabled by --no-exceptions', font_html, False, [FONT_EXCEPTION['host']]),
+        ('unlisted third-party stylesheet still fails', other_html, True, ['cdn.example.com']),
+    ]
+    for label, html, allow, expected_hosts in exception_cases:
+        found = render_blocking_third_party(html, '127.0.0.1:9060')
+        unexcepted = [h for h in found if exception_for(h, allow) is None]
+        ok = unexcepted == expected_hosts
+        print('%s: %s (%s)' % ('PASS' if ok else 'FAIL', label,
+                               unexcepted or 'none'))
+        if not ok:
+            failures.append(label)
+    saved = FONT_EXCEPTION['owner']
+    FONT_EXCEPTION['owner'] = 'nobody'
+    found = render_blocking_third_party(font_html, '127.0.0.1:9060')
+    unexcepted = [h for h in found if exception_for(h) is None]
+    FONT_EXCEPTION['owner'] = saved
+    ok = unexcepted == [FONT_EXCEPTION['host']]
+    print('%s: expired/unsigned exception rejected (%s)' % (
+        'PASS' if ok else 'FAIL', unexcepted or 'none'))
+    if not ok:
+        failures.append('expired exception')
     if failures:
         print('FAIL: perf_budget_check selftest plants not detected: %s' % failures,
               file=sys.stderr)
         return 1
-    print('PASS: perf_budget_check selftest (8 cases, 5 negative plants)')
+    print('PASS: perf_budget_check selftest (12 cases, 8 negative plants)')
     return 0
 
 
@@ -234,6 +289,8 @@ def main():
     ap.add_argument('--base', help='loopback base URL')
     ap.add_argument('--evidence', help='write the raw run table to this JSON file')
     ap.add_argument('--founder-approved', action='store_true')
+    ap.add_argument('--no-exceptions', action='store_true',
+                    help='ignore the dated, owner-signed font exception (CI clean-state proof)')
     ap.add_argument('--selftest', action='store_true')
     args = ap.parse_args()
     if args.selftest:
@@ -251,9 +308,18 @@ def main():
             failures.append('fetch ' + path)
             continue
         blocking = render_blocking_third_party(html, base_host)
+        unexcepted = []
+        for host in blocking:
+            exc = exception_for(host, not args.no_exceptions)
+            if exc:
+                print('EXCEPTED %s: %s (owner %s, since %s, review by %s, '
+                      'evidence %s)' % (path, host, exc['owner'], exc['since'],
+                                        exc['review_by'], exc['evidence']))
+            else:
+                unexcepted.append(host)
         print('%s: %s blocking third-party stylesheet: %s'
-              % ('PASS' if not blocking else 'FAIL', path, blocking or 'none'))
-        if blocking:
+              % ('PASS' if not unexcepted else 'FAIL', path, unexcepted or 'none'))
+        if unexcepted:
             failures.append('blocking-css ' + path)
 
     runs, errors = measure(args.base, args.evidence)

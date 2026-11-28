@@ -1,0 +1,41 @@
+{
+  "course_id": "front",
+  "bundle": "front-specimen.zip",
+  "sha256": "1582d8fcb8e6cb2a95587eb88f8be3b67d2a2100e6698114dd5b48206d01b3d5",
+  "bytes": 2098,
+  "toolchain": {
+    "python": "3.12.2",
+    "source": "courses/front/assets/samples/SOURCES.md - tokenize and ast of CPython 3.12.2"
+  },
+  "toolchain_contract": "python-cpython312",
+  "verification_date": "2026-11-28",
+  "source": "courses/front/assets/samples (verified token/AST fixtures; no gcc/clang/readelf)",
+  "not_checked": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not the correctness of the lesson prose.",
+    "Other Python versions and the full Python grammar are not covered."
+  ],
+  "file_count": 4,
+  "files": [
+    {
+      "path": "specimen.src",
+      "bytes": 20,
+      "sha256": "c8fd7473a1b1c50f48997e8b0a2734bcbdacaf0965d8b2db85c38f4f343911b8"
+    },
+    {
+      "path": "specimen.tokens.json",
+      "bytes": 316,
+      "sha256": "6ee01d66ebf1abadd0ff04369fa2a8c50891e36f97f37e30920cffb77fcb8cf4"
+    },
+    {
+      "path": "specimen.ast.json",
+      "bytes": 478,
+      "sha256": "a6c0fc01b3b09ea87abfc27d8bf586b2c66823c02147054c42616ca70eae64c4"
+    },
+    {
+      "path": "SOURCES.md",
+      "bytes": 2641,
+      "sha256": "6165325f8a00434d51209745fca4a8d1f8c6e5c203a8fb37869ab519069ac736"
+    }
+  ]
+}

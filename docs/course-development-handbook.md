@@ -515,3 +515,35 @@ All templates are in the `course_generation` skill. Here's a quick reference:
 2. **Fill in all sections** — empty sections are incomplete work
 3. **Mark unknowns** — use `[UNVERIFIED]` or `[NEEDS RESEARCH]`
 4. **Version your artifacts** — track what changed between iterations
+
+---
+
+## G12 — structured authoring pipeline (2026-11-28)
+
+A **non-agent author** works in one structured file, not in `.ch` source:
+
+```
+content/authoring/<course>/<concept>.json     # edit this ONE file
+python tools/author_lint.py content/authoring/elf/bytes.json
+python tools/author_generate.py content/authoring/elf/bytes.json
+python tools/author_preview.py --port 9067    # http://127.0.0.1:9067/
+```
+
+- The generated output is `content/authoring/generated/<course>/<concept>.ch`,
+  in the same `#html` / `#css` / `#js` shape as a shipped `content/src/*.ch`
+  concept. All text is escaped; attribute values are escaped. The generator
+  never writes into the served course.
+- `author_lint.py` enforces the "In this step you will be able to ___" wording,
+  a <=180-character declarative takeaway, the eight teaching units, **no
+  invented byte/number claims** (every numeric token must appear on the unit's
+  cited verified line) and answer-key traceability.
+- `author_preview.py` serves the generated lesson markup locally (loopback
+  only). It is an author-review preview, not a second renderer.
+- Pilot: **`elf/bytes`**. Its text is copied from `content/src/bytes.ch` at the
+  cited lines. Negative plants ship with all three tools (lint 6/6,
+  generator lint gate, preview 3/3).
+- **Not claimed:** the pilot is not swapped into the served course, so
+  `journey_quality_check.py` and the byte corpus still validate the shipped
+  lesson, not this generated draft. Swapping it in is a separate, owner-owned
+  step (see the final report's explicit gap list). No admin UI and no §24 CMS
+  ticks were added.

@@ -124,6 +124,14 @@ public namespace underlayer_content {
             .nav-toggle-bars { display: inline-block; position: relative; width: 1rem; height: 2px; background: currentColor; box-shadow: 0 -5px 0 currentColor, 0 5px 0 currentColor; }
 
             @media (max-width: 860px) {
+                /* H15 — the brand layer's Inter stylesheet arrives late and
+                   changes the nav's intrinsic height at narrow widths. Reserve
+                   the post-font height here (in this repo, not brandlib) so the
+                   lesson and footer do not jump when the font swaps. */
+                .navbar { height: 61px; box-sizing: border-box; }
+                .nav-inner { min-height: 60px; }
+                .nav-brand { height: 60px; display: flex; align-items: center; }
+                .nav-right { height: 60px; width: 70px; justify-content: flex-end; }
                 .nav-inner { flex-wrap: nowrap; }
                 .nav-toggle { display: inline-flex; order: 3; }
                 .nav-links { display: none; order: 4; flex-basis: 100%; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 0.15rem; padding-top: 0.5rem; }

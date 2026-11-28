@@ -122,8 +122,13 @@ def seed_learner(base):
     if status != 200:
         return None, None, "register HTTP %d: %s" % (status, body[:200])
     token = json.loads(body).get("session_token", "")
+    # The public page renders `learner_profiles.display_name`, NOT the name
+    # sent to /api/auth/register (which lives in `learners.name`). Seeding only
+    # a username used to make this checker demand "Proof Learner" from a
+    # profile that had no display name at all. Set the field we assert on.
     status, body, _ = fetch(base + "/api/user/profile",
-                            {"username": username, "visibility": "public"},
+                            {"username": username, "visibility": "public",
+                             "display_name": "Proof Learner"},
                             {"Authorization": "Bearer " + token}, method="PUT")
     if status != 200:
         return None, None, "profile update HTTP %d: %s" % (status, body[:200])

@@ -483,3 +483,54 @@ gates are not green yet. All four files are outside this package's ownership.
 4. **`tools/front_runner_check.py` is NOT a server route** by design; no
    `app/main.ch` change is needed for the runner. The browser proof runs
    against the generated static page in backend-optional mode.
+
+---
+
+## 11. Final batch (2026-11-28) — red gates closed, new packages verified
+
+Nothing in this batch was committed or pushed. Server: fresh
+`build/underlayer-finalbatch3.exe`, port **9066**, throwaway
+`verify-finalbatch3-9066.db`.
+
+### Closed RED gates
+
+| Gate | Before | After / evidence |
+|---|---|---|
+| `specimen_link_check.py` | 5 failures: `binread` reader 2.39 vs producer 2.46, date 2026-11-28 vs 2026-11-27, missing `front` bundle | **35/35 bundles, 0 failures.** `binread-specimen.json` now records inherited producers (gcc 15.2.0 / clang 21.1.8 / readelf 2.46) AND the local reader 2.39; the checker validates a declared, evidenced toolchain contract instead of one global version. `front` has a real 4-member bundle from its verified `specimen.src`/`.tokens`/`.ast`/`SOURCES.md` with the CPython 3.12.2 contract. 8/8 selftest cases (5 plants). |
+| `proof_check.py` | 1 failure: expected "Proof Learner" not in served HTML | **0 failures.** The seed registered the name into `learners.name` but never set `learner_profiles.display_name`, which is what `/u/:username` renders. The checker now seeds the field it asserts on; 4/4 plants still rejected. |
+| `enroll_check.py` | 8 failures on the fresh binary (2 stale "orphaned script" + 6 from a regex spanning neighbouring `<script>` tags) | **22/22 passed.** The assertion now targets the `#enroll-btn` handler specifically (the prerequisite `#enrol-state` script legitimately calls `can-enroll`), and the extractor isolates one `<script>` tag. 4/4 selftest plants. |
+| H15 perf | CLS 0.1209 on the 420 px lesson; blocking Google Fonts CSS on 4 pages | **Gate passes with one DATED, OWNER-SIGNED exception.** `content/src/lesson_assets.ch` reserves space for hex dumps/tables/figures/controls and `content/src/lesson_nav_css.ch` reserves the post-font nav height. p95 CLS 0.03; LCP 2144 ms; INP 32 ms; transfer 57984 B. The font link is emitted by `WebLibs/brandlib/src/theme.ch` (outside this repo) and is excepted with owner, since/review dates and evidence path in `docs/h15-performance-budget.md`; `--no-exceptions` keeps the hard failure available. 12 selftest cases / 8 plants. |
+
+### New packages
+
+- **G5** — `order_steps`, `byte_range`, `decode_field`, `output_match` plus six
+  `specimen_lab` items (one per course family) live in model/repository/grading
+  code and in `content/authoring/g5_exercises.json`. `tools/generate_g5_banks.py`
+  wrote 10 traceable items (5/5 selftest plants); graded banks are **366 valid /
+  0 problems**; `tools/g5_types_check.py` passed with right/wrong grading for
+  every new type (4/4 plants); the browser solved one of each.
+- **G12** — `content/authoring/elf/bytes.json` → `tools/author_generate.py` →
+  `content/authoring/generated/elf/bytes.ch` (macro-based, escaped). Lint 0
+  failures (6/6 plants), preview served on 9067 (3/3 plants). The pilot is a
+  draft: it is NOT swapped into the served course, so journey/byte-corpus
+  coverage still applies to the shipped lesson (explicit gap, documented in
+  `docs/course-development-handbook.md`).
+- **G13** — `POST /api/progress/takeover/token` + `POST /api/progress/takeover`
+  replay through `progress_sync_apply` under the same per-key `updated_at`
+  rule, with an atomic one-shot token; FSRS columns are read-only here.
+  `tools/takeover_check.py`: token replay 409 / no writes, two guest lessons
+  imported, newer server row wins, FSRS unchanged (4/4 plants). Browser drive
+  showed the dismissible prompt, the dismiss flag, and "Progress kept" with the
+  local queue cleared. `/api/progress/import` was not touched.
+
+### Gate results on the final binary
+
+journey 369/369; theme 56/56; pager 35/35; dedupe 12/12; bridge 3/3;
+security 73/73; SEO 377/377; graded banks 366 valid; quiz parity 332/332;
+explanations 366/366; landing 35/35; specimen 35/35; metadata 35/35 disk;
+proof 0 failures; enroll 22/22; g_features 46/46 (+4/4 plants); perf PASS with
+the dated font exception; G5 0 failures; author lint 0; takeover 0 failures.
+`build/tests-finalbatch.exe`: first run 137/138 (one transient failure in
+`test_learning_view_still_records_a_real_concept` — "no state row was written",
+not the known Arc flake), second diagnostic run 138/138. Both logs are in
+`build/final-tests-run*.log`.

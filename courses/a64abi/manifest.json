@@ -144,6 +144,17 @@
       "source_ref": "content/src/a64_unwind.ch:50",
       "source_quote": "sp",
       "concept_id": "a64-unwind"
+    },
+    {
+      "g5_id": "g5-lab-arm",
+      "concept_id": "a64-aapcs",
+      "type": "specimen_lab",
+      "question": "Open courses/a64abi/assets/samples/a64abi-specimen.zip alongside this lesson. Which published document does the lesson name as the AArch64 procedure-call contract?",
+      "answer": "ARM-software/abi-aa",
+      "explanation": "Procedure Call Standard for the Arm 64-bit Architecture",
+      "difficulty": 0.5,
+      "source_ref": "content/src/a64_aapcs.ch:62",
+      "source_quote": "ARM-software/abi-aa"
     }
   ],
   "toolchain": "gcc 15.2.0 / clang 21.1.8 / readelf 2.46",

@@ -54,6 +54,14 @@ public namespace underlayer_web {
                 </div>
             </section>
 
+            <aside class="takeover-prompt" id="takeover-prompt" aria-labelledby="takeover-heading" hidden>
+                <h2 id="takeover-heading">Keep this progress?</h2>
+                <p>You finished lessons on this device before signing in. Bring those two lesson steps into this account without changing your review schedule.</p>
+                <button type="button" class="btn btn-primary" id="takeover-keep">Keep this progress</button>
+                <button type="button" class="btn" id="takeover-dismiss">Not now</button>
+                <p class="takeover-status" id="takeover-status" role="status" aria-live="polite"></p>
+            </aside>
+
             <main class="container home-main" id="main-content">
                 <section class="home-next" aria-labelledby="home-next-heading">
                     <h2 id="home-next-heading">Your next lesson</h2>

@@ -259,6 +259,10 @@ public namespace underlayer_repository {
         // migration so the column always exists when this runs.
         var idx_account_user = string("CREATE UNIQUE INDEX IF NOT EXISTS idx_learners_account_user ON learners(account_user_id)")
         underlayer_db::exec_sql(db, &raw idx_account_user)
+        // G13: one-shot tokens for the guest → account takeover. Only the hash
+        // is stored; used_at is the compare-and-set guard against replay.
+        var takeover_tokens = string("CREATE TABLE IF NOT EXISTS progress_takeover_tokens (token_hash TEXT PRIMARY KEY, created_at INTEGER, used_at INTEGER DEFAULT 0, learner_id TEXT)")
+        underlayer_db::exec_sql(db, &raw takeover_tokens)
         // Tables, not columns -- see run_support_tables.  rate_limits backs the
         // login limiter, and it has to exist before the first request rather
         // than on first use.
