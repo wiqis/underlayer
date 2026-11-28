@@ -44,6 +44,18 @@ public namespace underlayer_content {
                 <div class="journey-arrival" id="ul-journey-arrival">
                     <p class="journey-aim" id="ul-journey-aim">In this step you will be able to work through this lesson one idea at a time.</p>
                     <p class="journey-arrival-meta" id="ul-journey-meta" hidden></p>
+                    <div class="journey-energy" id="ul-journey-energy" role="group" aria-label="How are you feeling?">
+                        <span class="journey-energy-label">How are you feeling?</span>
+                        <button type="button" class="journey-energy-btn" data-energy="ready" aria-pressed="false">Ready</button>
+                        <button type="button" class="journey-energy-btn" data-energy="okay" aria-pressed="true">Okay</button>
+                        <button type="button" class="journey-energy-btn" data-energy="low-energy" aria-pressed="false">Low energy</button>
+                    </div>
+                    <div class="journey-energy" id="ul-journey-duration" role="group" aria-label="Session length">
+                        <span class="journey-energy-label">Session length</span>
+                        <button type="button" class="journey-energy-btn" data-minutes="5" aria-pressed="false">5 min</button>
+                        <button type="button" class="journey-energy-btn" data-minutes="10" aria-pressed="true">10 min</button>
+                        <button type="button" class="journey-energy-btn" data-minutes="20" aria-pressed="false">20 min</button>
+                    </div>
                     <button type="button" class="journey-btn journey-start" id="ul-journey-start" aria-label="Start the guided lesson journey">Start the journey</button>
                 </div>
                 <div class="journey-ribbon" id="ul-journey-ribbon" hidden aria-live="polite">
@@ -82,6 +94,11 @@ public namespace underlayer_content {
                     <p class="journey-paused-line">Paused. Your place is saved on this device.</p>
                     <button type="button" class="journey-btn journey-resume" id="ul-journey-resume" aria-label="Resume the guided journey from the saved step">Resume where I left off</button>
                 </div>
+                <div class="journey-break" id="ul-journey-break" hidden role="status">
+                    <h3>Take a break — progress saved</h3>
+                    <p>You can stop here. Coming back will restore this exact step.</p>
+                    <button type="button" class="journey-btn journey-break-resume" id="ul-journey-break-resume">Continue anyway</button>
+                </div>
                 <div class="journey-finish" id="ul-journey-finish" hidden>
                     <h2 class="journey-finish-head" id="ul-journey-finish-head">What you can now do</h2>
                     <p class="journey-finish-line" id="ul-journey-can"></p>
@@ -108,6 +125,13 @@ public namespace underlayer_content {
             .journey-arrival { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 1.5rem; text-align: center; color: hsl(var(--foreground)); }
             .journey-aim { font-size: 1.15rem; margin: 0 0 0.75rem; max-width: 68ch; margin-left: auto; margin-right: auto; line-height: 1.6; }
             .journey-arrival-meta { color: hsl(var(--muted-foreground)); font-size: 0.9rem; margin: 0 0 1.25rem; }
+            .journey-energy { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; align-items: center; margin: 0 0 0.75rem; }
+            .journey-energy-label { color: hsl(var(--muted-foreground)); font-size: 0.85rem; margin-right: 0.25rem; }
+            .journey-energy-btn { border: 1px solid hsl(var(--border)); border-radius: 999px; background: hsl(var(--card)); color: hsl(var(--foreground)); padding: 0.35rem 0.7rem; font-size: 0.8rem; cursor: pointer; }
+            .journey-energy-btn[aria-pressed="true"] { border-color: hsl(var(--primary)); color: hsl(var(--primary)); background: hsl(var(--primary) / 8%); }
+            .journey-break { border: 1px solid hsl(var(--border)); border-left: 4px solid hsl(var(--primary)); border-radius: 10px; background: hsl(var(--card)); color: hsl(var(--foreground)); padding: 1.25rem; margin-top: 1rem; text-align: center; }
+            .journey-break h3 { margin: 0 0 0.5rem; font-size: 1.1rem; }
+            .journey-break p { color: hsl(var(--muted-foreground)); margin: 0 0 1rem; }
             .journey-ribbon { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; align-items: baseline; padding: 0.75rem 1rem; margin-bottom: 1.25rem; border-bottom: 1px solid hsl(var(--border)); font-size: 0.9rem; color: hsl(var(--muted-foreground)); }
             .journey-count { font-weight: 700; color: hsl(var(--foreground)); }
             .journey-purpose { color: hsl(var(--primary)); font-weight: 600; }

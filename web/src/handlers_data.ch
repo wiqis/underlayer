@@ -119,6 +119,8 @@ public namespace underlayer_web {
             var err_msg3 = string("could not delete that data type")
             return send_error(400u, &err_msg3)
         }
+        // G1/G4 rows live in additive tables outside the repository's list.
+        delete_g_state_for_learner(db, &learner_id)
         var ok_body = string("{\"ok\":true,\"data_type\":\"")
         ok_body.append_string(&dt)
         ok_body.append_view("\"}")
@@ -164,6 +166,7 @@ public namespace underlayer_web {
             return send_error(401u, &err_msg)
         }
         var cleared = underlayer_repository::delete_learner_everything(db, &learner_id)
+        delete_g_state_for_learner(db, &learner_id)
         var ok_body = string("{\"ok\":true,\"message\":\"account deleted\",\"cleared\":")
         var cs = underlayer_core::int_to_string(cleared)
         ok_body.append_string(&cs)

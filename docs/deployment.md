@@ -983,3 +983,43 @@ throwaway SQLite file, not against source alone.
 9. **H7 deployed SIGTERM drill — not run.** Upstream has a stop handle but no
    signal path; our path is verified locally with SIGBREAK on Windows
    (§5e). A Linux/Cloud Run SIGTERM drill after deploy is a **founder action**.
+
+
+## G1/G2/G4/G6 — local verification (2026-11-28)
+
+Built to a new binary `build/g1g2g4g6-underlayer.exe` and served on a fresh
+port **9045** with a throwaway SQLite file. No deploy, push or commit was
+performed.
+
+New same-origin routes (all registered before the `web::App` catch-all, so
+`deliver_with_learner` applies CSP, nosniff, HSTS, request id, ETag and gzip to
+them): `GET /onboarding`, `GET /api/onboarding/diagnostic`,
+`POST /api/onboarding/score`, `GET /today`, `GET /api/today`,
+`POST /api/today/plan`, `POST /api/today/complete`, `POST /api/review/start`,
+`POST /api/review/energy`, `GET /manifest.webmanifest`, `GET /sw.js`,
+`GET /icons/:name`. H3's header wrapper was not changed and the CSP was not
+weakened; the manifest and worker contain no third-party or GitHub Pages URL.
+
+The two additive tables (`onboarding_state`, `review_energy`) are created by
+`underlayer_web::init_g_tables` at startup with `CREATE TABLE IF NOT EXISTS`.
+Both are cleared by the existing account/category deletion handlers, so
+`security_check.py` stays at 73/73.
+
+**Verification performed:** `tools/g_features_check.py` 46/46 with 4/4 in-memory
+negative plants; all served checkers green (journey 364/364, theme 56/56,
+pager 35/35, dedupe 12/12, bridge 3/3, security 73/73, SEO 372/372, graded
+banks 346/346, quiz parity 329/329, explanation 346/346, landing 33/33,
+specimen bundles 33/33, support link); `tests.exe` 138/138.
+
+**Browser/CDP drive (Chrome, localhost:9045):** all seven onboarding steps
+were clicked through in both the diagnostic and skip paths; a correct-answer
+run placed the learner at ELF `symbol-table`, while skip and an all-wrong run
+placed them at `bytes`. `/today` with six due items and a 15-minute goal
+rendered three reviews plus one six-minute lesson and recorded the day.
+On `/review`, choosing low-energy + 5 minutes persisted those values and the
+break panel appeared only after the 80% point. The service worker registered
+and cached the visited lesson; with CDP offline the lesson and its in-page quiz
+still worked, progress was queued in localStorage, and reconnecting replayed it
+through `/api/progress/sync` (queue emptied, rows present in
+`concept_unit_progress`). "Download this course" grew the worker cache from 16
+to 40 entries.

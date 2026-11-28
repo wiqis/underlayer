@@ -81,8 +81,21 @@ public namespace underlayer_content {
                             fb.appendChild(st);
                         }
                         if (typeof __ul_report_attempt === 'function') { __ul_report_attempt(res.correct); }
+                        // G4: three consecutive misses offer a break, never a
+                        // red verdict or a percentage score.
+                        if (typeof window.__ulPacingReportResult === 'function') { window.__ulPacingReportResult(res.correct === true); }
                     })
-                    .catch(function() {});
+                    .catch(function() {
+                        // G6: the quiz can still be completed offline. Record
+                        // the attempt locally; replay goes through the same
+                        // unit-progress queue, never through a review rating.
+                        var ctx = __ul_ex_ctx();
+                        if (ctx && typeof window.__ulQueueUnit === 'function') {
+                            window.__ulQueueUnit(ctx.course, ctx.concept, 'unit-exercises', 1, 'seen');
+                        }
+                        fb.className = 'exercise-feedback';
+                        fb.textContent = 'Saved on this device. It will sync when you are back online.';
+                    });
             }
             // 4.1.30: progressive hints, wired to the repaired I2 route.
             // GET /api/exercises/hint takes exercise_id + a 1..3 level. Each
@@ -98,14 +111,18 @@ public namespace underlayer_content {
                 var btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'exercise-check';
-                btn.textContent = 'Need a hint?';
+                // G4 retry ladder: conceptual -> directional -> reveal, with an
+                // explicit "continue anyway" on the last rung. No verdict words.
+                btn.textContent = 'Conceptual hint';
                 var out = document.createElement('p');
                 out.className = 'exercise-hint';
                 out.setAttribute('aria-live', 'polite');
                 var level = 0;
+                var labels = ['Conceptual hint', 'Directional hint', 'Reveal and continue'];
                 btn.onclick = function() {
                     if (level >= 3) { return; }
                     level = level + 1;
+                    btn.textContent = level < 3 ? labels[level] : 'Revealed';
                     var url = '/api/exercises/hint?exercise_id=' + encodeURIComponent(ex.id) + '&level=' + level;
                     var h = {};
                     if (typeof window.__ulHeaders === 'function') { h = window.__ulHeaders(); }
@@ -115,8 +132,19 @@ public namespace underlayer_content {
                             var shown = level;
                             if (d.level) { shown = d.level; }
                             var text = d.hint ? d.hint : 'No hint is authored for this item yet.';
-                            out.textContent = 'Hint ' + shown + ': ' + text;
-                            if (shown >= 3) { btn.disabled = true; }
+                            out.textContent = text;
+                            if (shown >= 3) {
+                                btn.disabled = true;
+                                var cont = document.createElement('button');
+                                cont.type = 'button';
+                                cont.className = 'exercise-check';
+                                cont.textContent = 'Continue anyway';
+                                cont.onclick = function() {
+                                    out.textContent = 'Revealed: ' + (ex.answer || 'see the lesson');
+                                    cont.disabled = true;
+                                };
+                                box.appendChild(cont);
+                            }
                         })
                         .catch(function() { out.textContent = 'Hint not available right now.'; });
                 };

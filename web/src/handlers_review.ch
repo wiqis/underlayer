@@ -22,6 +22,27 @@ public namespace underlayer_web {
         }
         var course_id = string("elf")
 
+        // G4: an energy check-in and a chosen duration travel with the start
+        // request. They are additive fields in the same POST body; a caller
+        // that sends none gets the historical defaults. The values are
+        // whitelisted here and persisted through g_state.ch, never inferred
+        // from a timer.
+        var energy_before = string("okay")
+        var duration_minutes : i64 = 10
+        var start_body = read_body(req)
+        if(start_body.size() > 0) {
+            var spr = json::parse(start_body.to_view())
+            if(spr is std::Result.Ok) {
+                var Ok(sj) = spr else unsafe { unreachable }
+                var eb = json_get_str(&sj, "energy_before")
+                if(eb.size() > 0) { energy_before = eb }
+                var dm = json_get_int(&sj, "duration_minutes") as i64
+                if(dm >= 5 && dm <= 120) { duration_minutes = dm }
+            }
+        }
+        var allowed_energy = string("ready okay low-energy")
+        if(!allowed_energy.contains(&energy_before.to_view())) { energy_before = string("okay") }
+
         // Check for mode parameter (5.1.1-5.1.5)
         var q_mode = string("mode")
         var mode_v = sv_or_empty(req.query.get(std::str.make_view(q_mode.to_view())))
@@ -245,6 +266,7 @@ public namespace underlayer_web {
         var now = underlayer_core::current_timestamp()
         var session_id = underlayer_core::int_to_string(now)
         underlayer_repository::create_session(db, &session_id, &learner_id, now)
+        save_review_energy_start(db, &session_id, &learner_id, &energy_before, duration_minutes)
 
         var body = std::string("{\"session_id\":\"")
         body.append_string(&session_id)
@@ -280,6 +302,17 @@ public namespace underlayer_web {
         body.append_string(&mode)
         body.append_view("\",\"break_reminder_seconds\":1500")
         body.append_view(",\"auto_save_interval_seconds\":30")
+        // G4: 80% of the learner's chosen duration, in seconds. The server
+        // only reports the point; the client chooses when to offer a break.
+        body.append_view(",\"energy_before\":\"")
+        body.append_string(&energy_before)
+        body.append_view("\",\"chosen_duration_minutes\":")
+        var dur_out = underlayer_core::int_to_string(duration_minutes)
+        body.append_string(&dur_out)
+        body.append_view(",\"break_after_seconds\":")
+        var break_at : i64 = duration_minutes * 60 * 80 / 100
+        var br_out = underlayer_core::int_to_string(break_at)
+        body.append_string(&br_out)
         body.append_view(",\"time_per_item_seconds\":")
         var tpi_out = underlayer_core::int_to_string(time_per_item as i64)
         body.append_string(&tpi_out)

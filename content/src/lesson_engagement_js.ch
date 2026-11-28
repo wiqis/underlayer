@@ -228,7 +228,13 @@ public namespace underlayer_content {
                     }
                     window.__ulPill('Logged - read before', 'logged');
                 }).catch(function() {
-                    window.__ulPill('Offline - not recorded', '');
+                    // G6: a read recorded offline is queued as a unit-progress
+                    // change and replayed on reconnect. The server's sync route
+                    // never touches FSRS fields.
+                    if (typeof window.__ulQueueUnit === 'function') {
+                        window.__ulQueueUnit(ctx.course, ctx.concept, 'unit-why', 1, 'seen');
+                    }
+                    window.__ulPill('Offline - saved here', '');
                 });
             };
         }

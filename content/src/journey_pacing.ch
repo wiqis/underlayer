@@ -36,6 +36,7 @@ public namespace underlayer_content {
                 jqState.paused = false;
                 jqSet(jqKey('paused'), '0');
                 jqHide(jqEl('ul-journey-paused'), true);
+                jqHide(jqEl('ul-journey-break'), true);
                 var saved = parseInt(jqGet(jqKey('step')), 10);
                 if(isNaN(saved)) { saved = jqState.idx; }
                 jqStep(saved);
@@ -155,13 +156,91 @@ public namespace underlayer_content {
                 }
             }
 
+            // G4: adaptive pacing without pressure. A chosen duration produces a
+            // SUGGESTION at 80%, never a countdown, and three consecutive
+            // misses produce the same offer. Both save the exact step, which
+            // jqResume() already restores from jqKey('step').
+            var jqPacingDeadline = 0;
+            var jqPacingErrors = 0;
+            var jqPacingBreakShown = false;
+
+            function jqPacingBegin() {
+                var energy = 'okay';
+                var minutes = 10;
+                var eb = document.querySelector('.journey-energy-btn[data-energy][aria-pressed="true"]');
+                var mb = document.querySelector('.journey-energy-btn[data-minutes][aria-pressed="true"]');
+                if (eb) { energy = eb.getAttribute('data-energy'); }
+                if (mb) { minutes = parseInt(mb.getAttribute('data-minutes'), 10) || 10; }
+                jqSet(jqKey('energy'), energy);
+                jqSet(jqKey('duration'), String(minutes));
+                jqPacingDeadline = Date.now() + minutes * 48 * 1000;
+                jqPacingErrors = 0;
+                jqPacingBreakShown = false;
+            }
+
+            function jqPacingBreak() {
+                if (jqPacingBreakShown) { return; }
+                jqPacingBreakShown = true;
+                jqSet(jqKey('step'), String(jqState.idx));
+                jqSet(jqKey('paused'), '1');
+                var all = jqAllUnits();
+                var i = 0;
+                while (i < all.length) {
+                    all[i].setAttribute('hidden', '');
+                    all[i].removeAttribute('data-jq-current');
+                    i = i + 1;
+                }
+                jqHide(jqEl('ul-journey-arrival'), true);
+                jqHide(jqEl('ul-journey-ribbon'), true);
+                jqHide(jqEl('ul-journey-remember'), true);
+                jqHide(jqEl('ul-journey-retrieve'), true);
+                jqHide(jqEl('ul-journey-controls'), true);
+                jqHide(jqEl('ul-journey-break'), false);
+                jqFocusEl(jqEl('ul-journey-break-resume'));
+            }
+
+            function jqPacingCheck() {
+                if (jqPacingDeadline > 0 && Date.now() >= jqPacingDeadline) { jqPacingBreak(); }
+            }
+
+            function jqPacingError(correct) {
+                if (correct === true) { jqPacingErrors = 0; return; }
+                jqPacingErrors = jqPacingErrors + 1;
+                if (jqPacingErrors >= 3) { jqPacingBreak(); }
+            }
+
             function jqBindClick(id, fn) {
                 var el = jqEl(id);
                 if(el) { el.addEventListener('click', fn); }
             }
 
             function jqBind() {
-                jqBindClick('ul-journey-start', function() { jqState.started = true; jqHide(jqEl('ul-journey-arrival'), true); jqStep(jqState.idx); });
+                jqBindClick('ul-journey-start', function() { jqPacingBegin(); jqState.started = true; jqHide(jqEl('ul-journey-arrival'), true); jqStep(jqState.idx); });
+                jqBindClick('ul-journey-break-resume', jqResume);
+                var energy_btns = document.querySelectorAll('.journey-energy-btn[data-energy]');
+                var ei = 0;
+                while (ei < energy_btns.length) {
+                    energy_btns[ei].addEventListener('click', function() {
+                        var group = this.parentNode.querySelectorAll('.journey-energy-btn[data-energy]');
+                        var k = 0;
+                        while (k < group.length) { group[k].setAttribute('aria-pressed', 'false'); k = k + 1; }
+                        this.setAttribute('aria-pressed', 'true');
+                    });
+                    ei = ei + 1;
+                }
+                var minute_btns = document.querySelectorAll('.journey-energy-btn[data-minutes]');
+                var mi = 0;
+                while (mi < minute_btns.length) {
+                    minute_btns[mi].addEventListener('click', function() {
+                        var group = this.parentNode.querySelectorAll('.journey-energy-btn[data-minutes]');
+                        var k = 0;
+                        while (k < group.length) { group[k].setAttribute('aria-pressed', 'false'); k = k + 1; }
+                        this.setAttribute('aria-pressed', 'true');
+                    });
+                    mi = mi + 1;
+                }
+                window.__ulPacingReportResult = jqPacingError;
+                window.setInterval(jqPacingCheck, 5000);
                 jqBindClick('ul-journey-continue', function() { jqStep(jqState.idx + 1); });
                 jqBindClick('ul-journey-back', function() { jqStep(jqState.idx - 1); });
                 jqBindClick('ul-journey-pause', jqPause);

@@ -189,9 +189,9 @@
 
 - [ ] P3 1.6.1 Energy check-in before each session (1-5 scale)
 - [ ] P3 1.6.2 Energy check-in optional (can disable in settings)
-- [ ] P3 1.6.3 Store energy history per learner
+- [x] P3 1.6.3 Store energy history per learner (G4: energy_before/energy_after per review session, in review_energy)
 - [ ] P3 1.6.4 Detect fatigue from performance drop (accuracy < 50% for 5+ items)
-- [ ] P3 1.6.5 Suggest break when fatigue detected
+- [x] P3 1.6.5 Suggest break when fatigue detected (G4: 80% of the chosen duration or three consecutive misses offers "Take a break — progress saved"; no timer pressure)
 - [ ] P3 1.6.6 Suggest stopping when fatigue persistent (3+ fatigue signals)
 - [ ] P3 1.6.7 Adjust session length based on energy (high=30min, low=10min)
 - [ ] P3 1.6.8 Adjust difficulty based on energy (high=hard, low=easy)
@@ -456,7 +456,7 @@
 - [ ] P3 2.5.13 Prerequisite test (prerequisites exist and are valid)
 - [ ] P3 2.5.14 Manifest test (manifest.json is valid)
 - [ ] P3 2.5.15 Integration test (course loads end-to-end)
-- [ ] P3 2.5.16 Offline test (course works without internet)
+- [x] P3 2.5.16 Offline test (course works without internet) — G6: Chrome CDP offline drive reopened a cached ELF lesson, completed its in-page quiz and replayed queued progress on reconnect
 - [ ] P3 2.5.17 Print test (course prints correctly)
 - [ ] P3 2.5.18 Course test runner (run all tests for a course)
 - [ ] P3 2.5.19 Course test report (HTML report of test results)
@@ -1087,7 +1087,7 @@
 - [ ] P3 9.1.8 Lazy loading (images, components)
 - [ ] P3 9.1.9 Code splitting (JavaScript chunks)
 - [ ] P3 9.1.10 Progressive loading (critical CSS, deferred JS)
-- [ ] P3 9.1.11 Service worker caching (offline support)
+- [x] P3 9.1.11 Service worker caching (offline support) — G6: same-origin allow-list, versioned cache, old-cache deletion, `/api/*` never cached
 - [ ] P3 9.1.12 Preloading (preload critical assets)
 - [ ] P3 9.1.13 Prefetching (prefetch next page)
 - [ ] P3 9.1.14 DNS prefetching (external domains)
@@ -1134,17 +1134,17 @@
 - [ ] P3 9.4.1 Service worker caching (cache-first strategy)
 - [ ] P3 9.4.2 IndexedDB storage (structured data)
 - [ ] P3 9.4.3 Background sync (sync when online)
-- [ ] P3 9.4.4 Offline queue (queue actions, sync later)
-- [ ] P3 9.4.5 Conflict resolution (last-write-wins)
+- [x] P3 9.4.4 Offline queue (queue actions, sync later) — localStorage queue replayed through POST /api/progress/sync
+- [x] P3 9.4.5 Conflict resolution (last-write-wins) — the existing sync endpoint's per-key rule; replay never writes FSRS fields
 - [ ] P3 9.4.6 Delta updates (only changed content)
-- [ ] P3 9.4.7 Course pre-caching (cache entire course)
+- [x] P3 9.4.7 Course pre-caching (cache entire course) — "Download this course" on every landing page
 - [ ] P3 9.4.8 Asset pre-caching (cache all assets)
-- [ ] P3 9.4.9 Offline indicators (show offline status)
+- [x] P3 9.4.9 Offline indicators (show offline status) — shared nav indicator
 - [ ] P3 9.4.10 Sync status display (syncing, synced, error)
-- [ ] P3 9.4.11 Offline-first design (work without internet)
-- [ ] P3 9.4.12 Offline progress tracking (localStorage)
+- [x] P3 9.4.11 Offline-first design (work without internet)
+- [x] P3 9.4.12 Offline progress tracking (localStorage)
 - [ ] P3 9.4.13 Offline review scheduling (FSRS in browser)
-- [ ] P3 9.4.14 Offline exercise completion (queue for sync)
+- [x] P3 9.4.14 Offline exercise completion (queue for sync)
 - [ ] P3 9.4.15 Offline notifications (queue for delivery)
 
 ---
@@ -1188,7 +1188,7 @@
 - [ ] P3 10.2.10 User communication (email, in-app)
 - [ ] P3 10.2.11 User groups (organize users)
 - [ ] P3 10.2.12 User invitations (email, link)
-- [ ] P3 10.2.13 User onboarding (welcome flow)
+- [x] P3 10.2.13 User onboarding (welcome flow) — G1: seven steps, skippable verified-bank diagnostic, no signup wall
 - [ ] P3 10.2.14 User engagement scoring
 - [ ] P3 10.2.15 User churn prediction
 
@@ -2039,9 +2039,9 @@
 - [ ] P3 19.7.3 Milestone celebrations (confetti on course completion)
 - [ ] P3 19.7.4 Encouragement after failure ("keep trying!")
 - [ ] P3 19.7.5 Rest reminders ("you have been learning for 30 minutes")
-- [ ] P3 19.7.6 Energy check-ins ("how are you feeling?")
+- [x] P3 19.7.6 Energy check-ins ("how are you feeling?") — ready / okay / low-energy + duration before a session
 - [ ] P3 19.7.7 Positive reinforcement ("great job on that exercise!")
-- [ ] P3 19.7.8 No shame design (missing a day is normal)
+- [x] P3 19.7.8 No shame design (missing a day is normal) — G2 says "Welcome back", with no badge, streak loss, freeze or leaderboard
 - [ ] P3 19.7.9 Flexibility emphasis (learn at your own pace)
 - [ ] P3 19.7.10 Personal growth focus (compare to yourself, not others)
 
@@ -2708,3 +2708,13 @@
 - [x] P1 2.2.125 One native `<main>` landmark on the course landing and index pages (no duplicate `role="main"`), and retrieval answer regions marked `aria-live="polite"` so a revealed answer is announced without reading the whole lesson. Measured before: `/courses/elf` had zero `<main>`; after: one on every checked page.
 - [x] P1 2.2.126 Journey arrival and per-step aims now use the mandate's sentence "In this step you will be able to ___" across all 329 live concepts; the blank is filled from that step's own verified takeaway (or the mandated no-fact line), never from a bare manifest noun phrase such as "Understanding bytes.". `tools/journey_quality_check.py` asserts both the wording and the derivation; seeded plants for a bare phrase and an invented tail are detected.
 - [x] P1 2.2.127 Takeaway/recall quality sweep: zero takeaways ending in `?`, zero repeats of the recall question, zero whitespace before punctuation in any derived attribute, across all 329 concepts. The checker asserts all three; planted `?`, repeated-question and `"bytes ."` cases each fail named assertions.
+
+
+## G work packages — competitive learner surface (2026-11-28)
+
+- [x] P1 G1 Onboarding v2: seven served steps (welcome, motive, prior knowledge, session minutes, skippable 5-8 item diagnostic, building your route, first lesson), no signup wall. Stores goal, prior_knowledge, session_minutes, placement_score and onboarding_complete; every start concept is validated against the course manifest; skipping starts at ELF `bytes`.
+- [x] P1 G1 A real diagnostic scorer: `POST /api/onboarding/score` scores learner answers against C1's verified banks. The pre-existing `POST /api/courses/:id/assess` was measured to score the bank against itself and read no learner answer, so it was left unchanged rather than misused.
+- [x] P1 G2 Today: `GET /today` plus `/api/today/{plan,complete,status}` compose a day through the existing study-plan API. Measured: six due reviews + a 15-minute goal yields three 3-minute reviews and one 6-minute next lesson. Completion records one activity day; a missed day says "Welcome back" with no badge, streak loss, freeze or leaderboard.
+- [x] P1 G4 Energy check-in and pacing: ready/okay/low-energy plus duration are sent to `/api/review/start` and both energy_before and energy_after are persisted. At 80% of the chosen duration or three consecutive misses, "Take a break — progress saved" appears and Resume restores the exact journey step.
+- [x] P1 G4 Retry ladder: the C2 hint button now walks conceptual -> directional -> reveal with an explicit "Continue anyway"; `GET /api/exercises/hint` is the only source of hint text.
+- [x] P1 G6 Installable web app: valid same-origin manifest, versioned service worker with old-cache deletion, an offline state indicator, "Download this course", and a localStorage write queue replayed through `POST /api/progress/sync` (last-write-wins, no FSRS overwrite). CSP and headers were not weakened; no Pages URL was introduced.

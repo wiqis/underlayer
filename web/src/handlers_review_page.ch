@@ -76,6 +76,21 @@ public namespace underlayer_web {
                     <span class="session-state" id="session-state">Active</span>
                 </div>
 
+                <div class="energy-checkin" id="energy-checkin" aria-label="Session check-in">
+                    <h2>Before you start</h2>
+                    <p class="energy-subtitle">How are you feeling? This only changes the pace we suggest.</p>
+                    <div class="energy-options" role="group" aria-label="Energy level">
+                        <button class="energy-btn selected" data-energy="ready" onclick="rvPickEnergy(this)" type="button">Ready to learn</button>
+                        <button class="energy-btn" data-energy="okay" onclick="rvPickEnergy(this)" type="button">Okay, let's go</button>
+                        <button class="energy-btn" data-energy="low-energy" onclick="rvPickEnergy(this)" type="button">Low energy, keep it light</button>
+                    </div>
+                    <div class="energy-options" role="group" aria-label="Session duration">
+                        <button class="energy-btn" data-minutes="5" onclick="rvPickMinutes(this)" type="button">5 min</button>
+                        <button class="energy-btn selected" data-minutes="10" onclick="rvPickMinutes(this)" type="button">10 min</button>
+                        <button class="energy-btn" data-minutes="20" onclick="rvPickMinutes(this)" type="button">20 min</button>
+                    </div>
+                </div>
+
                 <div class="review-mode-grid">
                     <h2>Review Modes</h2>
                     <div class="mode-grid">
@@ -148,6 +163,14 @@ public namespace underlayer_web {
             .btn-easy:hover { background: hsl(245 58% 45%); }
             .hidden { display: none !important; }
             .review-mode-grid h2 { font-size: 1.25rem; margin-bottom: 1rem; color: hsl(var(--foreground)); }
+            .energy-checkin { border: 1px solid hsl(var(--border)); border-radius: 12px; background: hsl(var(--card)); padding: 1.25rem; margin-bottom: 2rem; }
+            .energy-checkin h2 { font-size: 1.25rem; margin: 0 0 0.35rem; color: hsl(var(--foreground)); }
+            .energy-subtitle { color: hsl(var(--muted-foreground)); font-size: 0.9rem; margin: 0 0 1rem; }
+            .energy-options { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+            .energy-btn { padding: 0.55rem 0.9rem; border-radius: 8px; border: 1px solid hsl(var(--border)); background: hsl(var(--background)); color: hsl(var(--foreground)); cursor: pointer; font-size: 0.85rem; }
+            .energy-btn.selected { border-color: hsl(217 91% 60%); background: hsl(217 91% 60% / 8%); }
+            .energy-break { border: 1px solid hsl(var(--border)); border-radius: 12px; background: hsl(var(--card)); padding: 1.25rem; margin-bottom: 1.5rem; text-align: center; }
+            .energy-break p { color: hsl(var(--muted-foreground)); }
             .mode-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
             .mode-card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 1.25rem; cursor: pointer; transition: all 0.15s; }
             .mode-card:hover { border-color: hsl(217 91% 60%); box-shadow: 0 2px 8px hsl(217 91% 60% / 20%); }
@@ -206,8 +229,57 @@ public namespace underlayer_web {
                 return result;
             }
 
-            window.addEventListener("DOMContentLoaded", function() {
+            // G4: the check-in is a choice, not a timer. These two values are
+            // sent with /api/review/start and drive the break threshold.
+            var rvEnergy = 'ready';
+            var rvMinutes = 10;
+            var rvStartedAt = 0;
+            var rvBreakShown = false;
+            function rvPickEnergy(btn) {
+                var kids = btn.parentNode.querySelectorAll('.energy-btn');
+                var i = 0;
+                while (i < kids.length) { kids[i].classList.remove('selected'); i = i + 1; }
+                btn.classList.add('selected');
+                rvEnergy = btn.getAttribute('data-energy');
+            }
+            function rvPickMinutes(btn) {
+                var kids = btn.parentNode.querySelectorAll('.energy-btn');
+                var i = 0;
+                while (i < kids.length) { kids[i].classList.remove('selected'); i = i + 1; }
+                btn.classList.add('selected');
+                rvMinutes = parseInt(btn.getAttribute('data-minutes'), 10);
+            }
+            function rvCheckBreak() {
+                if (rvBreakShown || !rvStartedAt) { return; }
+                var threshold = rvMinutes * 48 * 1000;
+                if (Date.now() - rvStartedAt < threshold) { return; }
+                rvBreakShown = true;
+                var box = document.createElement('div');
+                box.className = 'energy-break';
+                box.setAttribute('role', 'status');
+                var h = document.createElement('h3');
+                h.textContent = 'Take a break — progress saved';
+                var p = document.createElement('p');
+                p.textContent = 'You can stop here. What you have done is saved, and you can pick up the same step later.';
+                var b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'btn btn-ghost';
+                b.textContent = 'Continue anyway';
+                b.onclick = function() { box.remove(); };
+                box.appendChild(h); box.appendChild(p); box.appendChild(b);
+                var card = document.getElementById('review-card-container');
+                if (card && card.parentNode) { card.parentNode.insertBefore(box, card); }
+            }
+            function rvEnergyAfter() {
+                if (!sessionId) { return; }
+                __ulFetch('/api/review/energy', {
+                    method: 'POST', silent401: true,
+                    json: { session_id: sessionId, energy_after: rvEnergy }
+                }).catch(function() {});
+            }
+            window.addEventListener('DOMContentLoaded', function() {
                 fetchDueItems();
+                window.setInterval(rvCheckBreak, 5000);
             });
 
             // THE BEARER HEADER IS NOT BUILT HERE ANY MORE.  This page had three
@@ -280,7 +352,11 @@ public namespace underlayer_web {
                 var concept = document.getElementById("card-concept");
                 concept.textContent = "Starting session";
                 prompt.textContent = "Loading your " + mode + " review session...";
-                __ulFetch('/api/review/start?course_id=' + encodeURIComponent(__ulCourseId()) + '&mode=' + encodeURIComponent(mode) + '&count=10')
+                __ulFetch('/api/review/start?course_id=' + encodeURIComponent(__ulCourseId()) + '&mode=' + encodeURIComponent(mode) + '&count=10', {
+                    method: 'POST',
+                    silent401: true,
+                    json: { course_id: __ulCourseId(), mode: mode, energy_before: rvEnergy, duration_minutes: rvMinutes }
+                })
                     .then(function(r) {
                         return r.json();
                     })
@@ -293,6 +369,8 @@ public namespace underlayer_web {
                         }
                         sessionId = data.session_id || "";
                         sessionStartTime = Date.now();
+                        rvStartedAt = Date.now();
+                        rvBreakShown = false;
                         dueItems = data.items;
                         totalDue = dueItems.length;
                         reviewed = 0;
@@ -399,6 +477,7 @@ public namespace underlayer_web {
 
             function endSession() {
                 if(!sessionId) { return; }
+                rvEnergyAfter();
                 __ulFetch("/api/review/end?session_id=" + encodeURIComponent(sessionId), {
                     method: "POST",
                     noRedirect: true

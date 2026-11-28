@@ -109,6 +109,7 @@ public namespace underlayer_content {
             <div class="navbar">
                 <div class="nav-inner">
                     <a href="/" class="nav-brand">Underlayer</a>
+                    <span class="nav-offline" id="ul-offline-indicator" role="status" hidden>Offline — progress saved here</span>
                     <button type="button" class="nav-toggle" id="ul-nav-toggle" aria-expanded="false" aria-controls="ul-nav-links">
                         <span class="nav-toggle-bars" aria-hidden="true"></span>
                         <span class="nav-toggle-text">Menu</span>
@@ -160,6 +161,7 @@ public namespace underlayer_content {
         // of the nav on a narrow screen.  The early-return below is now about
         // the theme and nothing else, which is what its comment always said.
         render_nav_toggle_js(page)
+        render_pwa_client(page)
         if(lesson) {
             return
         }

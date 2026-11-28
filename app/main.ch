@@ -155,6 +155,9 @@ public func main() : int {
     // ---- Init schema (skip for remote DB) ----
     if(!underlayer_db::is_remote_url(&db_url)) {
         underlayer_repository::init_schema(&raw db)
+        // G1/G2/G4: additive tables with no ALTER of an existing table. Safe to
+        // run on every boot and on a throwaway database.
+        underlayer_web::init_g_tables(&raw db)
 
         // 4.1.27: seed exercises from course manifests at startup (idempotent).
         // Multi-course: loop every course directory found on disk.
@@ -388,6 +391,17 @@ public func main() : int {
         var courses_dir = underlayer_web::request_courses_dir()
         var db = request_db()
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_review_start(db, &courses_dir, &req))
+    })
+    // G4: the browser sends its check-in in a POST body; the GET route above
+    // stays for API clients that only use query params.
+    srv.router.add("POST", "/api/review/start", ||(req) => {
+        var courses_dir = underlayer_web::request_courses_dir()
+        var db = request_db()
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_review_start(db, &courses_dir, &req))
+    })
+    srv.router.add("POST", "/api/review/energy", ||(req) => {
+        var db = request_db()
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_review_energy(db, &req))
     })
     srv.router.add("POST", "/api/review/submit", ||(req) => {
         var db = request_db()
@@ -1229,6 +1243,18 @@ public func main() : int {
         var db = request_db()
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_check_onboarding(db, &req))
     })
+    // G1: verified-bank diagnostic items + the real answer scorer. Additive;
+    // the old /api/courses/:id/assess route keeps its shape.
+    srv.router.add("GET", "/api/onboarding/diagnostic", ||(req) => {
+        var db = request_db()
+        var courses_dir = underlayer_web::request_courses_dir()
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_onboarding_diagnostic(db, &courses_dir, &req))
+    })
+    srv.router.add("POST", "/api/onboarding/score", ||(req) => {
+        var db = request_db()
+        var courses_dir = underlayer_web::request_courses_dir()
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_onboarding_score(db, &courses_dir, &mut req))
+    })
     // ---- Profile stats & courses (Agent 5) ----
     srv.router.add("GET", "/api/user/:username/stats", ||(req) => {
         var db = request_db()
@@ -1840,6 +1866,33 @@ public func main() : int {
             var body = std::string("{\"error\":\"missing plan id\"}")
             return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
+    })
+    // ---- G2: Today ----
+    srv.router.add("GET", "/today", ||(req) => {
+        var db = request_db()
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_today_page(db, &req))
+    })
+    srv.router.add("GET", "/api/today", ||(req) => {
+        var db = request_db()
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_today_status(db, &req))
+    })
+    srv.router.add("POST", "/api/today/plan", ||(req) => {
+        var db = request_db()
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_today_plan(db, &req))
+    })
+    srv.router.add("POST", "/api/today/complete", ||(req) => {
+        var db = request_db()
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_today_complete(db, &req))
+    })
+    // ---- G6: installable web assets (explicit routes ahead of catch-all) ----
+    srv.router.add("GET", "/manifest.webmanifest", ||(req) => {
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_manifest(&req))
+    })
+    srv.router.add("GET", "/sw.js", ||(req) => {
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_service_worker(&req))
+    })
+    srv.router.add("GET", "/icons/:name", ||(req) => {
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_pwa_icon(&req))
     })
     // ---- Delivery: one web::App owns the page layer ----
     //

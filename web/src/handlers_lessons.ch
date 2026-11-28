@@ -132,6 +132,9 @@ public namespace underlayer_web {
         var has_session = has_session_for(dbp, req)
         var enrolled_at = enrollment_state(dbp, req, &cidsv)
         html = apply_enroll_control(&html, &cidsv, enrolled_at, has_session)
+        // G6: the same static lesson pages, cached for offline use. The control
+        // is a no-op on a landing page without the shared course-actions slot.
+        html = apply_download_control(&html, &cidsv)
 
         return send_html(&html)
     }
