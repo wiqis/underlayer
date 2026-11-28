@@ -98,13 +98,16 @@ def expected_for(cid):
     if manifest.get("author") == "Waqas Tahir" or attribution in limits:
         if attribution not in limits:
             limits = limits + [attribution]
+    # A course-local module (E1/E6) declares its own truthful toolchain and
+    # verification date in the manifest. Prefer those once present; the
+    # specimen-derived defaults still cover the original 33 courses.
     return {
         "author": AUTHOR,
         "license": license_name,
         "version": semver_of(manifest.get("version")),
-        "toolchain": label,
-        "spec_source": spec.get("source") or "docs/course-mission.md",
-        "last_verified": spec.get("verification_date") or "2026-11-27",
+        "toolchain": manifest.get("toolchain") or label,
+        "spec_source": manifest.get("spec_source") or spec.get("source") or "docs/course-mission.md",
+        "last_verified": manifest.get("last_verified") or spec.get("verification_date") or "2026-11-27",
         "limitations": limits,
     }
 

@@ -112,3 +112,41 @@ separate plan exists, planned = shipped and the reason column says so.
   concepts of the two cut groups (119 + 104).
 - **I7** publishes the manifest metadata beside these numbers; no manifest is
   edited here.
+
+## 5. E1/E2 addendum (2026-11-28)
+
+This section is additive. It does not rewrite the 33-row matrix above, which
+records the state at the date at the top of this charter.
+
+### 5.1 The first link is now shipped
+
+`courses/front` (3 concepts: `fe-lexer`, `fe-recursive-descent`, `fe-ast`; 72
+minutes) is the first link in the mission chain. It teaches lexing → recursive-
+descent parsing → AST for a real language (Python integer expressions) and
+checks every number against CPython 3.12.2's `tokenize`/`ast` and a specimen on
+disk. It deliberately does **not** teach IR, code generation, object files,
+linking or loading; those remain with `compback` and the format courses. It
+also does not tick parser-design, Pratt/LR/GLR, type checking, inference or
+semantic analysis — those roadmap items stay open and are linked from
+`docs/courses-todo.md`.
+
+| Course | Place in chain | Planned | Shipped | Deferred / reason | Owner / date | Assumptions |
+|---|---|---:|---:|---|---|---|
+| `front` | First link: characters → tokens → AST | 3 | 3 | IR/codegen/linking/loading belong to `compback` and the format courses; no re-teach | Underlayer, 2026-11-28 | Basic Python syntax; no compiler course |
+
+### 5.2 E2 — naming settled, restructure recorded as deferred
+
+Founder ruling **§6.9** (2026-11-26) chose "(a) naming now, (b) restructure
+after course #2". The two outcomes are recorded separately so the cheap fix is
+not mistaken for the expensive one:
+
+| Item | State on 2026-11-28 | Decision owner / date | Execution owner / date |
+|---|---|---|---|
+| `ARM64` (section label) vs `AArch64` (concept text) | **Settled now.** Canonical name is `AArch64`; the historical label stays as history. `docs/course-mission.md` gained the ruling as an additive note | Waqas Tahir, ruling §6.9, 2026-11-26 | E2 recorded it 2026-11-28; unassigned for any later copy sweep pending Wave 4 kickoff (plan §0.2 rule 10) |
+| Fold `## Memory` into *The Memory Hierarchy* | **Deferred** until after E1 proves the finishable-course shape | Waqas Tahir, ruling §6.9, 2026-11-26 | Unassigned — must be named at Wave 4 kickoff; recorded 2026-11-28 |
+| Restructure `## Compilers` into finishable courses | **Deferred** for the same reason; `front` is the first module, not the whole section | Waqas Tahir, ruling §6.9, 2026-11-26 | Unassigned — must be named at Wave 4 kickoff; recorded 2026-11-28 |
+
+No `Docs/decisions.md` entry is appended by this addendum: §6.9 is already
+covered by the consolidated 2026-11-26 entry (plan §3 A7). The owner column
+above is the checkable record required by plan §0.2 rule 10; where it says
+"unassigned", that is a real gap, not an assumption that somebody owns it.

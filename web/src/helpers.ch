@@ -1154,6 +1154,21 @@ public namespace underlayer_web {
         return string()
     }
 
+    // E6: the paid course owns four `bin-*` ids. They are prefixed so no
+    // existing course's concept id can collide with them (ids resolve globally
+    // in this dispatcher).
+    private func render_binread_concept(concept_id : &string) : string {
+        var magic = std::string("bin-magic")
+        var header = std::string("bin-header")
+        var segments = std::string("bin-segments")
+        var symbols = std::string("bin-symbols")
+        if(concept_id.equals(&magic)) { return underlayer_content::render_bin_magic() }
+        if(concept_id.equals(&header)) { return underlayer_content::render_bin_header() }
+        if(concept_id.equals(&segments)) { return underlayer_content::render_bin_segments() }
+        if(concept_id.equals(&symbols)) { return underlayer_content::render_bin_symbols() }
+        return string()
+    }
+
     public func render_concept(concept_id : &string) : string {
         var cid = concept_id.copy()
         // PE concepts first; render_pe_concept returns an empty string for
@@ -1339,6 +1354,12 @@ public namespace underlayer_web {
         // what was grepped.
         var compback_html = render_compback_concept(concept_id)
         if(compback_html.size() > 0) { return compback_html }
+        // E1/E6: two course-local render modules. Each returns an empty string
+        // for ids it does not own, so unknown ids keep falling through.
+        var front_html = front_pages::render_front_concept(concept_id)
+        if(front_html.size() > 0) { return front_html }
+        var bin_html = render_binread_concept(concept_id)
+        if(bin_html.size() > 0) { return bin_html }
         var bytes_id = std::string("bytes")
         var binrep_id = std::string("binary-representation")
         var filelayout_id = std::string("file-layout")

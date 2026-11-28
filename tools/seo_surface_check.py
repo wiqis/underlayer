@@ -144,6 +144,7 @@ def build_expected(base):
     for path in STATIC_PATHS:
         pages[path] = 'static'
     course_ids = [c.get('id') for c in courses if c.get('id')]
+    paid_ids = {c.get('id') for c in courses if c.get('paid')}
     details = {}
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
         futures = {pool.submit(fetch, base, '/api/courses/' + urllib.parse.quote(cid)): cid
@@ -157,6 +158,10 @@ def build_expected(base):
     for cid in course_ids:
         path = '/courses/' + cid
         pages[path] = 'course'
+        # The landing is public store-front, but paid LESSON content correctly
+        # answers 402 without an entitlement. Do not crawl that as a public URL.
+        if cid in paid_ids:
+            continue
         for concept in details[cid].get('concepts', []):
             concept_id = concept.get('id')
             if concept_id:

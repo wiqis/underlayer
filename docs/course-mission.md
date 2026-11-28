@@ -331,7 +331,10 @@ course nobody finishes.
 `## Memory` (27 items) overlaps *The Memory Hierarchy* almost entirely and the
 two should be folded together rather than left as competing structures.
 `## Compilers` (31) needs the same treatment. Neither restructured yet.
-Naming unsettled: the section is `ARM64` but its items say `AArch64`.
+**Naming settled 2026-11-28 (E2, founder ruling §6.9):** the canonical name is
+**AArch64**; `ARM64` is the historical section label and stays as written in
+earlier text (history is not rewritten). See `docs/curriculum-coverage.md` §5
+for the owner/date record and for the deferred restructure.
 
 ### Previously outstanding
 
@@ -441,6 +444,28 @@ already required and are now checkable:
   a failure. This belongs in the mission document rather than in one course's
   notes because it is true of the whole collection, and the collection's other
   seventeen course verifiers are the right place to apply it next.
+
+### Additive note — naming and restructuring (E2, 2026-11-28)
+
+This is an addition to the mission document, not a rewrite of the paragraphs
+above; the "Still outstanding" text keeps its history and gains the ruling at
+the point where a reader would otherwise act on stale naming.
+
+- **Naming, now:** the canonical architecture name is **AArch64**. The roadmap
+  section label `ARM64` is historical, and every new course id, concept and
+  piece of user-facing copy says `AArch64`. Founder ruling §6.9
+  (2026-11-26) chose "fix the naming now, restructure later"; recorded here on
+  2026-11-28 by E2. Execution owner: unassigned until Wave 4 kickoff (plan
+  §0.2 rule 10); decision owner: Waqas Tahir.
+- **Restructure, deferred:** folding `## Memory` into *The Memory Hierarchy*
+  and turning `## Compilers` into finishable courses is **not** done by E2. It
+  stays deferred until after the first mission course (E1) proves the shape,
+  per §6.9. The owner/date record lives in `docs/curriculum-coverage.md` §5.
+- **First link shipped:** `courses/front` delivers lexer → recursive-descent
+  parser → AST with a learner-authored runner. It does **not** deliver IR,
+  code generation, linking or loading; those stay with `compback` and the
+  format courses. This note adds that fact rather than softening the goal
+  above.
 
 ## Related documents
 

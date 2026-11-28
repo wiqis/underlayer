@@ -119,6 +119,12 @@ public namespace underlayer_web {
             var landing = string("/courses/")
             landing.append_view(course.id.to_view())
             append_url_entry(&mut out, &landing, &modified)
+            // A paid lesson answers 402 to an anonymous crawler. The landing is
+            // public store-front; its lesson URLs must not be in the sitemap.
+            if(underlayer_web::is_paid_course(courses_dir, &course.id)) {
+                ci = ci + 1
+                continue
+            }
             var ki : size_t = 0
             while(ki < course.concepts.size()) {
                 var concept = course.concepts.at_ref(ki)

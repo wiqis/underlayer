@@ -58,6 +58,9 @@ def lesson_set(base):
         cid = course.get('id')
         if not cid:
             continue
+        # A paid lesson correctly answers 402 to an anonymous parity crawler.
+        if course.get('paid'):
+            continue
         detail = fetch_json(base, '/api/courses/' + cid)
         for concept in detail.get('concepts', []):
             if concept.get('id'):

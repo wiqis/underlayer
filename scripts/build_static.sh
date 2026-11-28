@@ -75,7 +75,12 @@ for cid in "${COURSES[@]}"; do
     mkdir -p "$dir/build"
 
     build_log="$dir/build/static-build.log"
-    if ! (cd "$dir" && "$UL_COMPILER" chemical.mod \
+    # Course-local render modules (E1/E6) keep their static `main` in a
+    # separate manifest so the server can import the same module without a
+    # duplicate main symbol. Prefer that manifest when it exists.
+    manifest="chemical.mod"
+    if [ -f "$dir/standalone.mod" ]; then manifest="standalone.mod"; fi
+    if ! (cd "$dir" && "$UL_COMPILER" "$manifest" \
             -o "build/$cid-course.exe" -bm-modules --no-cache \
             >"$build_log" 2>&1); then
         FAILED+=("$cid (compile failed -- $build_log)")

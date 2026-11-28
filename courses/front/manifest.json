@@ -1,0 +1,144 @@
+{
+  "id": "front",
+  "title": "Compiler Front End: Lexing, Parsing and the AST",
+  "version": "1.0.0",
+  "description": "The first link in the parsing-to-executable chain. Write a lexer and a recursive-descent parser for a real language, produce an AST, and check every token and node against CPython's own tokenizer and parser plus a real specimen on disk.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "intermediate",
+  "importance": "core",
+  "completion_criteria": "Read all 3 concepts, reproduce the 11-token stream and 9-node AST of courses/front/assets/samples/specimen.src with runner/frontier.py, and drive the interactive runner until your parser and the independent oracle agree on a source you typed. The runner never evaluates your expression and never executes your input.",
+  "min_score": 70,
+  "dependencies": [],
+  "modules": [
+    {
+      "id": "front-end",
+      "title": "The Front End",
+      "concepts": [
+        "fe-lexer",
+        "fe-recursive-descent",
+        "fe-ast"
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "fe-lexer",
+      "title": "A Lexer You Can Check",
+      "module_id": "front-end",
+      "description": "MEASURED. A lexer turns characters into named tokens; this one skips whitespace, emits NUMBER, NAME and OP pairs, and refuses an unexpected character with its zero-based offset. The specimen produces 11 tokens, checked against CPython 3.12.2's tokenize module rather than asserted. Bounded input: 4096 characters.",
+      "estimated_minutes": 22,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "fe-recursive-descent",
+      "title": "Recursive Descent, Written Out",
+      "module_id": "front-end",
+      "description": "MEASURED. Four functions -- expr, term, unary and primary -- turn the 11 tokens into 9 AST nodes. The precedence hierarchy is the operator-precedence table of the Python Language Reference read 2026-11-28, and left-associativity is the while loop inside each level. A leading minus builds a USub node, not a negative literal: the Language Reference says negative numbers are unary operations, and ast.parse proves the shape.",
+      "estimated_minutes": 26,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "fe-ast",
+      "title": "The Tree, and a Runner You Can Disagree With",
+      "module_id": "front-end",
+      "description": "MEASURED. The specimen tree has 9 nodes and root Add(a, Div(Mult(2, Sub(b, 3)), 4)), identical to ast.parse after conversion to the course's node encoding. The interactive runner takes learner-authored source, tokenises and parses it with the lesson's code path, and compares the resulting tree BY VALUE with an independent Pratt parser -- and with the shipped fixture when the source is the specimen. No eval, no network, no file access, 4096-character input bound and a 100000-step parser budget.",
+      "estimated_minutes": 24,
+      "difficulty": "intermediate",
+      "importance": "core"
+    }
+  ],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "What does the lexer emit for a space between two tokens?",
+      "answer": "nothing — a NUMBER and an OP are adjacent",
+      "options": "nothing — a NUMBER and an OP are adjacent|a SPACE token|one merged NUMBER",
+      "correct_index": 0,
+      "explanation": "Whitespace is skipped before any token is produced, so grammar rules never have to mention spaces.",
+      "hint1": "Re-read the unit about the finger moving across the text.",
+      "difficulty": 0.5,
+      "source_ref": "courses/front/src/lexer.ch:67",
+      "source_quote": "nothing &mdash; a <code>NUMBER</code> and an <code>OP</code> are adjacent",
+      "concept_id": "fe-lexer"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: The specimen is ______, followed by one newline.",
+      "answer": "a + 2 * (b - 3) / 4",
+      "options": "a + 2 * (b - 3) / 4|tokenize.generate_tokens|@",
+      "correct_index": 0,
+      "explanation": "The lesson states: The specimen is a + 2 * (b - 3) / 4, followed by one newline.",
+      "hint1": "Find the sentence in the reality unit and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "courses/front/src/lexer.ch:48",
+      "source_quote": "a + 2 * (b - 3) / 4",
+      "concept_id": "fe-lexer"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Why is the multiplication function called before the addition function in the grammar?",
+      "answer": "because * and / bind tighter than + and -",
+      "options": "because * and / bind tighter than + and -|because * appears earlier in the specimen|because multiplication is faster to compute",
+      "correct_index": 0,
+      "explanation": "A tighter-binding operator must become the child of the looser one, so the function for it is one level deeper in the call chain.",
+      "hint1": "Re-read the operator-precedence unit.",
+      "difficulty": 0.5,
+      "source_ref": "courses/front/src/parser.ch:58",
+      "source_quote": "because <code>*</code> and <code>/</code> bind tighter than <code>+</code> and <code>-</code>",
+      "concept_id": "fe-recursive-descent"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: negative numbers such as ______ are syntactically not literals.",
+      "answer": "-3",
+      "options": "-3|USub|a +",
+      "correct_index": 0,
+      "explanation": "The lesson states that negative numbers such as -3 are syntactically not literals, but unary operations involving the minus operator.",
+      "hint1": "Find the quoted Language Reference sentence in the reality unit.",
+      "difficulty": 0.5,
+      "source_ref": "courses/front/src/parser.ch:44",
+      "source_quote": "-3",
+      "concept_id": "fe-recursive-descent"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "What does the runner do when your tree and the oracle tree differ?",
+      "answer": "prints DISAGREE and both trees",
+      "options": "prints DISAGREE and both trees|prints the arithmetic answer|hides the result",
+      "correct_index": 0,
+      "explanation": "It reports DISAGREE and prints both canonical trees, so you can find the first decision that diverged.",
+      "hint1": "Re-read the interact unit of this lesson.",
+      "difficulty": 0.5,
+      "source_ref": "courses/front/src/ast.ch:69",
+      "source_quote": "prints <code>DISAGREE</code> and both trees",
+      "concept_id": "fe-ast"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Complete this sentence from the lesson: CPython 3.12.2's ______ returns the same shape.",
+      "answer": "ast.parse",
+      "options": "ast.parse|USub|Div",
+      "correct_index": 0,
+      "explanation": "The lesson states: CPython 3.12.2's ast.parse returns the same shape.",
+      "hint1": "Find the sentence in the reality unit and read the highlighted term.",
+      "difficulty": 0.5,
+      "source_ref": "courses/front/src/ast.ch:43",
+      "source_quote": "ast.parse",
+      "concept_id": "fe-ast"
+    }
+  ],
+  "toolchain": "CPython 3.12.2 (tags/v3.12.2:6abddd9, Feb 6 2024, 21:26:36) [MSC v.1937 64 bit (AMD64)], standard-library tokenize and ast; Chemical TCCCompiler at D:\\Programming\\Chemical\\chemical\\cmake-build-debug\\TCCCompiler.exe",
+  "spec_source": "courses/front/assets/samples/specimen.src verified by CPython tokenize and ast; Python Language Reference sections 6.17 (operator precedence) and 6.2.3 (literals), https://docs.python.org/3/reference/expressions.html, read 2026-11-28",
+  "last_verified": "2026-11-28",
+  "limitations": [
+    "The language is integers, names, +, -, *, / and parentheses only; no floats, exponentiation, strings, calls, statements or error recovery beyond a first-error message.",
+    "No runtime values are computed: the specimen is parsed, never evaluated, and no claim about a or b is made.",
+    "The oracle is specifically CPython 3.12.2 on Windows; other Python versions and implementations were not checked.",
+    "This is the first link only: semantic analysis, type checking, IR, code generation, object files, linking and loading are deliberately deferred and are not taught here.",
+    "The browser runner compares two parsers inside one page; it does not execute learner-authored program code, and the Python sandbox runner is a constrained exercise envelope, not a security-grade isolation boundary."
+  ]
+}

@@ -64,11 +64,16 @@ def traceable(exp, decl, lesson):
     if quote and norm(quote) in norm(lesson):
         return True
     ref = decl.get('source_ref', '')
-    m = re.match(r'content/src/([^:]+):(\d+)', ref)
+    # Course-local render modules (E1/E6) keep their sources under courses/<id>/src,
+    # not content/src. Resolve both forms from the repo root.
+    m = re.match(r'(content/src/[^:]+|courses/[^:]+):(\d+)', ref)
     if m and quote:
-        path = CONTENT / m.group(1)
+        path = ROOT / m.group(1)
         if path.exists():
-            lines = path.read_text(encoding='utf-8', errors='replace').splitlines()
+            whole = path.read_text(encoding='utf-8', errors='replace')
+            if not lesson or norm(quote) in norm(whole):
+                return True
+            lines = whole.splitlines()
             n = int(m.group(2))
             if 0 < n <= len(lines) and norm(quote) in norm(lines[n - 1]):
                 return True

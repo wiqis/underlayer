@@ -22,6 +22,9 @@ import fs
 import net
 import encoding
 import uuid
+// E1/E6: course-local renderers are separate modules, like `content` was.
+import "./courses/binread"
+import "./courses/front"
 
 import test if test
 import test_env if test

@@ -26,4 +26,8 @@ import "../models"
 import "../repository"
 import "../content"
 import "../learning"
+// E1/E6: course-local render modules. Imported here because helpers.ch calls
+// their dispatchers directly (root-level imports do not propagate per module).
+import "../courses/binread"
+import "../courses/front"
 

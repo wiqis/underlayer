@@ -1,5 +1,5 @@
 // binread — the E6 paid course: read an unknown ELF by hand.
-application binread_course
+module binread_course
 
 source "src"
 

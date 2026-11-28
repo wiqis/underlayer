@@ -843,7 +843,7 @@ Absorbs **Unicode & Text** (10 items), **Compression & Encoding** (16 items), **
 
 ## Planned course 8 of 14 — Compilers, Languages and Build Systems
 
-Slug `compiler`. **67 items, 6 ticked.**
+Slug `compiler`. **67 items, 9 ticked.**
 
 Absorbs **Compilers** (31 items), **Compilers & Languages — Advanced** (21 items), **Build Systems & Toolchains** (15 items).
 
@@ -875,13 +875,15 @@ segments, so the rename cannot be undone by accident and cannot be "tidied"
 back by a later editor.
 
 - [x] Learn Compiler Architecture  — `compiler`, from Compilers, concept `compiler-architecture`. Ticked by `compback`, whose `cb-ir` names the finding rather than the topic: what an IR is for, and what it must not hide. The ratio is read BOTH ways (-O0 1.106, -O2 0.818) and it is NOT MONOTONIC; and at -O2 all three targets agree on every opcode while emitting 253, 190 and 207 instructions. Concept id renamed `cb-ir` — see `tools/verify_compback.py`'s RETIRED list, which asserts `compiler-architecture` ABSENT so the rename cannot be undone by accident
-- [ ] Learn Lexers  — `compiler`, from Compilers, concept `lexers`
+- [x] Learn Lexers  — `compiler`, from Compilers, concept `lexers`. Ticked by `front`'s `fe-lexer`, 22 min: a real lexer for the Python integer-expression subset, verified 11/11 tokens against CPython 3.12.2's `tokenize` on `courses/front/assets/samples/specimen.src`. Concept id renamed `fe-lexer` because ids resolve globally; `tools/verify_front.py` asserts `lexers` ABSENT as a whole segment
 - [ ] Learn Parser Design  — `compiler`, from Compilers, concept `parser-design`
-- [ ] Learn Recursive-Descent Parsing  — `compiler`, from Compilers, concept `recursive-descent-parsing`
-- [ ] Learn Pratt Parsing  — `compiler`, from Compilers, concept `pratt-parsing`
+- [x] Learn Recursive-Descent Parsing  — `compiler`, from Compilers, concept `recursive-descent-parsing`. Ticked by `front`'s `fe-recursive-descent`, 26 min: four functions (`expr`, `term`, `unary`, `primary`) turn the 11 tokens into 9 AST nodes; precedence and left-associativity are cited from the Python Language Reference §6.17 and checked against `ast.parse`. Concept id renamed `fe-recursive-descent`
+- [ ] Learn Pratt Parsing  — `compiler`, from Compilers, concept `pratt-parsing`. A Pratt parser is used as the runner's independent oracle in `front`, but the *concept* is not taught as a lesson, so this item stays open
 - [ ] Learn LR Parsing  — `compiler`, from Compilers, concept `lr-parsing`
 - [ ] Learn GLR Parsing  — `compiler`, from Compilers, concept `glr-parsing`
-- [ ] Learn Abstract Syntax Trees  — `compiler`, from Compilers, concept `abstract-syntax-trees`
+- [x] Learn Abstract Syntax Trees  — `compiler`, from Compilers, concept `abstract-syntax-trees`. Ticked by `front`'s `fe-ast`, 24 min: a 9-node tree checked by value against `ast.parse` and a fixture; the page ships the learner-authored runner (learner types source, lesson code path lexes/parses it, an independent parser compares by value). Concept id renamed `fe-ast`
+
+> **What E1 does NOT deliver (2026-11-28):** no parser-design survey, no PRATT/LR/GLR lesson, no type checking, inference or semantic analysis, no IR/SSA/CFG, no code generation or linking. The runner executes no learner-authored program code: it compares parsers, and the Python envelope is a constrained exercise environment, not a security sandbox. Full scope and deferral list: `courses/front/research.md` §Phases 6–7; next link: `compback`.
 - [ ] Learn Type Checking  — `compiler`, from Compilers, concept `type-checking`
 - [ ] Learn Type Inference  — `compiler`, from Compilers, concept `type-inference`
 - [ ] Learn Semantic Analysis  — `compiler`, from Compilers, concept `semantic-analysis`

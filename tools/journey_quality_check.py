@@ -79,6 +79,10 @@ def lesson_set(base, args):
         cid = course.get('id')
         if not cid:
             continue
+        # A paid course correctly answers 402 to an anonymous crawler. Public
+        # journey checks must not treat that entitlement gate as a broken lesson.
+        if course.get('paid') and not args.lessons:
+            continue
         if args.all:
             detail = fetch_json(base, '/api/courses/' + cid)
             for concept in detail.get('concepts', []):
