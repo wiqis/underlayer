@@ -278,6 +278,19 @@ $ python3 dynscope.py exports liba.so
                 <span><a href="/courses/dyn/lessons/dyn-build-so">Previous: Building a Library</a></span>
                 <span>Next: <a href="/courses/dyn/lessons/dyn-symbolic">One Instruction Called -Bsymbolic</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-dyn-export-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_export.ch:61" onclick="checkQuiz('quiz-dyn-export-i4', this)" aria-label="Option: Four mechanisms, and they are not alternatives — they are layers, applied in a fixed order.">Four mechanisms, and they are not alternatives — they are layers, applied in a fixed order.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_export.ch:174" onclick="checkQuiz('quiz-dyn-export-i4', this)" aria-label="Option: Why a published symbol is a commitment rather than a convenience, and the specific failure that follows from publishing the wrong one.">Why a published symbol is a commitment rather than a convenience, and the specific failure that follows from publishing the wrong one.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_export.ch:264" onclick="checkQuiz('quiz-dyn-export-i4', this)" aria-label="Option: Exercise 2 is the one that closes the loop on the sym course, and it is a five-minute experiment with a satisfying answer.">Exercise 2 is the one that closes the loop on the sym course, and it is a five-minute experiment with a satisfying answer.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_export.ch:270" onclick="checkQuiz('quiz-dyn-export-i4', this)" aria-label="Option: Visibility is the mechanism by which a library opts out of that, and it is therefore a correctness tool rather than a packaging preference.">Visibility is the mechanism by which a library opts out of that, and it is therefore a correctness tool rather than a packaging preference.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The version script is not a subtle failure either — it exports exported_one and nothing else, so calls_all is missing for exactly the same reason." data-source-ref="content/src/dyn_export.ch:133" onclick="checkQuiz('quiz-dyn-export-i4', this)" aria-label="Option: The version script is not a subtle failure either — it exports exported_one and nothing else, so calls_all is missing for exactly the same reason.">The version script is not a subtle failure either — it exports exported_one and nothing else, so calls_all is missing for exactly the same reason.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_export.ch:27" onclick="checkQuiz('quiz-dyn-export-i4', this)" aria-label="Option: The previous concept left one symbol in .dynsym because the source happened to define one public function.">The previous concept left one symbol in .dynsym because the source happened to define one public function.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     
 
@@ -286,6 +299,22 @@ $ python3 dynscope.py exports liba.so
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -247,11 +247,39 @@ public func render_cb_isel() : string {
                 <span>Previous: <a href="/courses/compback/lessons/cb-ir">What an IR Is For, and What It Must Not Be</a></span>
                 <span>Next: <a href="/courses/compback/lessons/cb-regalloc">Register Allocation</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The checksum, which is the receipt and not the count"?</p>
+                <div class="quiz" id="quiz-cb-isel-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The misroute column, and it is not a typo&quot;, not &quot;The checksum, which is the receipt and not the count&quot;." data-source-ref="content/src/cb_isel.ch:47" onclick="checkQuiz('quiz-cb-isel-i4', this)" aria-label="Option: Two selectors run over all four kernels.">Two selectors run over all four kernels.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The x86-64 half, which is a refusal&quot;, not &quot;The checksum, which is the receipt and not the count&quot;." data-source-ref="content/src/cb_isel.ch:155" onclick="checkQuiz('quiz-cb-isel-i4', this)" aria-label="Option: The same question on the other architecture has the opposite answer, and the shape of the code is the interesting part.">The same question on the other architecture has the opposite answer, and the shape of the code is the interesting part.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The checksum, which is the receipt and not the count&quot;." data-source-ref="content/src/cb_isel.ch:239" onclick="checkQuiz('quiz-cb-isel-i4', this)" aria-label="Option: isa-opcodes teaches how to read a byte and stops there; this page asks which bytes to emit.">isa-opcodes teaches how to read a byte and stops there; this page asks which bytes to emit.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Anyone who wants to extend the multiply to four operands has to find twelve bits somewhere, and there are not twelve bits." data-source-ref="content/src/cb_isel.ch:150" onclick="checkQuiz('quiz-cb-isel-i4', this)" aria-label="Option: Anyone who wants to extend the multiply to four operands has to find twelve bits somewhere, and there are not twelve bits.">Anyone who wants to extend the multiply to four operands has to find twelve bits somewhere, and there are not twelve bits.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;You have an operation and you have an instruction. Choosing between them sounds trivial.&quot;, not &quot;The checksum, which is the receipt and not the count&quot;." data-source-ref="content/src/cb_isel.ch:26" onclick="checkQuiz('quiz-cb-isel-i4', this)" aria-label="Option: It is not, and the reason is not that it is hard.">It is not, and the reason is not that it is hard.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

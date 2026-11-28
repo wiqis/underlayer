@@ -240,6 +240,19 @@ $ python3 stackwalk.py --dump          # decoded, no assertions
                 <span><a href="/courses/img/lessons/img-place">Previous: Where the Kernel Put Everything</a></span>
                 <span>Next: <a href="/courses/dyn/lessons/dyn-resolve">Continue: Rebuilding the Scope Yourself</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Eighteen Checks, and Why Each One Earns Its Place"?</p>
+                <div class="quiz" id="quiz-img-walk-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Eighteen Checks, and Why Each One Earns Its Place&quot;." data-source-ref="content/src/img_walk.ch:70" onclick="checkQuiz('quiz-img-walk-i4', this)" aria-label="Option: The split is not arbitrary and it is the reason the thing works.">The split is not arbitrary and it is the reason the thing works.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The Part Worth Copying&quot;, not &quot;Eighteen Checks, and Why Each One Earns Its Place&quot;." data-source-ref="content/src/img_walk.ch:121" onclick="checkQuiz('quiz-img-walk-i4', this)" aria-label="Option: Not the auxv walk — that is in the previous concepts.">Not the auxv walk — that is in the previous concepts.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Eighteen Checks, and Why Each One Earns Its Place&quot;." data-source-ref="content/src/img_walk.ch:226" onclick="checkQuiz('quiz-img-walk-i4', this)" aria-label="Option: Exercise 4 is the sharpest one in the course, and its answer is a real limitation rather than a triumph.">Exercise 4 is the sharpest one in the course, and its answer is a real limitation rather than a triumph.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Eighteen Checks, and Why Each One Earns Its Place&quot;." data-source-ref="content/src/img_walk.ch:232" onclick="checkQuiz('quiz-img-walk-i4', this)" aria-label="Option: This is the concept that completes the chain, and the completion is worth stating plainly.">This is the concept that completes the chain, and the completion is worth stating plainly.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The two “kernel vs kernel” checks are the ones that took the most work and they are the best." data-source-ref="content/src/img_walk.ch:115" onclick="checkQuiz('quiz-img-walk-i4', this)" aria-label="Option: The two “kernel vs kernel” checks are the ones that took the most work and they are the best.">The two “kernel vs kernel” checks are the ones that took the most work and they are the best.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Eighteen Checks, and Why Each One Earns Its Place&quot;." data-source-ref="content/src/img_walk.ch:27" onclick="checkQuiz('quiz-img-walk-i4', this)" aria-label="Option: A parser that prints values is a demo.">A parser that prints values is a demo.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -248,6 +261,22 @@ $ python3 stackwalk.py --dump          # decoded, no assertions
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

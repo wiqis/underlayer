@@ -182,11 +182,39 @@ public func render_smp_ordering() : string {
                 <span>Previous: <a href="/courses/smp/lessons/smp-atomic">A Lock With Nothing to Lock Against</a></span>
                 <span>Next: <a href="/courses/smp/lessons/smp-numa">The Thing This Machine Cannot Do</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: expensive, and irrelevant to the answer"?</p>
+                <div class="quiz" id="quiz-smp-ordering-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: a store, a flag, and a load&quot;, not &quot;The reality: expensive, and irrelevant to the answer&quot;." data-source-ref="content/src/smp_ordering.ch:71" onclick="checkQuiz('quiz-smp-ordering-i4', this)" aria-label="Option: One thread stores a value, then stores a flag saying the value is there, then loads the flag back.">One thread stores a value, then stores a flag saying the value is there, then loads the flag back.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the four things this section cannot do&quot;, not &quot;The reality: expensive, and irrelevant to the answer&quot;." data-source-ref="content/src/smp_ordering.ch:149" onclick="checkQuiz('quiz-smp-ordering-i4', this)" aria-label="Option: Each of those four is a different kind of not-knowing and they are worth separating, because only the first is fundamental.">Each of those four is a different kind of not-knowing and they are worth separating, because only the first is fundamental.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: expensive, and irrelevant to the answer&quot;." data-source-ref="content/src/smp_ordering.ch:176" onclick="checkQuiz('quiz-smp-ordering-i4', this)" aria-label="Option: This concept is the reason that attribution is right, and the reason it cannot be verified from a timing table.">This concept is the reason that attribution is right, and the reason it cannot be verified from a timing table.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="An explicit atomic_thread_fence(seq_cst) in the source is documentation and insurance; the cost is paid only on the targets where the insurance is required." data-source-ref="content/src/smp_ordering.ch:116" onclick="checkQuiz('quiz-smp-ordering-i4', this)" aria-label="Option: An explicit atomic_thread_fence(seq_cst) in the source is documentation and insurance; the cost is paid only on the targets where the insurance is required.">An explicit atomic_thread_fence(seq_cst) in the source is documentation and insurance; the cost is paid only on the targets where the insurance is required.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: expensive, and irrelevant to the answer&quot;." data-source-ref="content/src/smp_ordering.ch:47" onclick="checkQuiz('quiz-smp-ordering-i4', this)" aria-label="Option: The instruction in the last concept makes two promises.">The instruction in the last concept makes two promises.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

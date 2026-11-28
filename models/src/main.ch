@@ -561,6 +561,11 @@ public namespace underlayer_models {
         var correct_index : int         // index into options for recognize type
         var correct_indices : vector<int>  // for multi_recognize: multiple correct indices
         var explanation : string        // shown after answering (4.2.2, 4.2.3)
+        // I3: additive, lesson-sourced feedback for the option the learner
+        // picked. The repository keeps this empty (no schema change); the
+        // submit handler derives it from this exercise's verified answer and
+        // explanation so the JSON contract grows without breaking consumers.
+        var why_wrong : string
         var hint1 : string              // 4.2.4/4.2.5: conceptual hint
         var hint2 : string              // 4.2.4: directional hint
         var hint3 : string              // 4.2.4: almost answer
@@ -578,6 +583,7 @@ public namespace underlayer_models {
                 correct_index = 0,
                 correct_indices = vector<int>(),
                 explanation = string(),
+                why_wrong = string(),
                 hint1 = string(),
                 hint2 = string(),
                 hint3 = string(),

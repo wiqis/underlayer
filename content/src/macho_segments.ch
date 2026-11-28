@@ -146,6 +146,7 @@ public func render_macho_segments() : string {
                 <h2>Connect</h2>
                 <p>You now know how a segment claims memory. The previous concept, <a href="/courses/macho/lessons/macho-load-commands">The Load Command Area</a>, showed how the header points at this command stream; the segment command is simply its most important member.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-sections">Sections</a> — the nsects records packed behind this command, where names, alignment flags, and the S_* type bits live.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: When vmsize exceeds filesize, the extra bytes are mapped as zero-fill — like .bss in ELF. The __DATA segment of libasyncProfiler.dylib shows this: vmsize 0xC000 but filesize 0x4000, so 0x8000 bytes of zero-fill (.bss, .common) cost no disk space. __PAGEZERO maps 4 GiB of unmapped memory at address 0 with no file backing (filesize = 0). It exists so that null-pointer dereferences fault — the loader maps it with no permissions (prot = 0).</p>
             </div>
 
             <div class="lesson-footer">

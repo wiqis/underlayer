@@ -209,11 +209,39 @@ public func render_rv_compressed() : string {
                 <span>Previous: <a href="/courses/rvasm/lessons/rv-encoding">Six Formats and Four Field Positions</a></span>
                 <span>Next: <a href="/courses/rvasm/lessons/rv-immediate">The Immediates That Do Not Fit</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The other cost: the instructions that cannot be shortened"?</p>
+                <div class="quiz" id="quiz-rv-compressed-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;What the extension reserved, and what it did not&quot;, not &quot;The other cost: the instructions that cannot be shortened&quot;." data-source-ref="content/src/rv_compressed.ch:60" onclick="checkQuiz('quiz-rv-compressed-i4', this)" aria-label="Option: The method here is exhaustive and it is cheap.">The method here is exhaustive and it is cheap.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The enumeration, and the one word the two readers disagree about&quot;, not &quot;The other cost: the instructions that cannot be shortened&quot;." data-source-ref="content/src/rv_compressed.ch:108" onclick="checkQuiz('quiz-rv-compressed-i4', this)" aria-label="Option: Two independent classifications of the same exhaustive set.">Two independent classifications of the same exhaustive set.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The other cost: the instructions that cannot be shortened&quot;." data-source-ref="content/src/rv_compressed.ch:204" onclick="checkQuiz('quiz-rv-compressed-i4', this)" aria-label="Option: Backwards, concept 2 ended on the three-bit rd&#x27; field whose value 0 means x8, and this page is what that costs.">Backwards, concept 2 ended on the three-bit rd&#x27; field whose value 0 means x8, and this page is what that costs.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Note the second row: sd ra, 8(sp) is also two bytes, because the assembler chose the compressed form for the base instruction too." data-source-ref="content/src/rv_compressed.ch:189" onclick="checkQuiz('quiz-rv-compressed-i4', this)" aria-label="Option: Note the second row: sd ra, 8(sp) is also two bytes, because the assembler chose the compressed form for the base instruction too.">Note the second row: sd ra, 8(sp) is also two bytes, because the assembler chose the compressed form for the base instruction too.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters, and why it is two ideas&quot;, not &quot;The other cost: the instructions that cannot be shortened&quot;." data-source-ref="content/src/rv_compressed.ch:48" onclick="checkQuiz('quiz-rv-compressed-i4', this)" aria-label="Option: Everyone cites the C extension as the thing that makes RISC-V small.">Everyone cites the C extension as the thing that makes RISC-V small.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

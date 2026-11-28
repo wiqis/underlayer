@@ -120,6 +120,7 @@ UUID: 4C4C44C9-5555-3144-A19F-1D5685FC622F (x86_64) prog64.dSYM/Contents/Resourc
                 <h2>Connect</h2>
                 <p>You can now join a crash address to a source line — when the join exists. The UUID also does humbler work: it is how <a href="/courses/macho/lessons/macho-build-version">Build Versions and UUID</a> ties an exact link to its toolchain metadata, and how <a href="/courses/macho/lessons/macho-code-signing">Code Signing</a> pins a signature to the bytes it covers. Everything in this lesson protects the binary <em>after</em> it ships; the next concept moves to the moment it runs — the region at address zero.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-hardening">__PAGEZERO and Memory Hardening</a> — the 4 GiB guard page, MH_PIE, and W^X, all declared in load commands you can read with otool.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: macOS uses dSYM companion bundles: the main binary keeps LC_UUID (which the dSYM also carries) plus minimal debug hints, while full DWARF sections live in the .dSYM/Contents/Resources/DWARF/&lt;name&gt; file. dsymutil matches them by UUID.</p>
             </div>
 
             <div class="lesson-footer">

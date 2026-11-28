@@ -219,11 +219,39 @@ public func render_a64_neon() : string {
                 <span>End of The AArch64 Data Path: NEON, Atomics and Ordering &middot; Next: <a href="/courses/a64simd/lessons/a64-neonspace">The Shared Memory Space</a></span>
                 <span><a href="/courses">all courses</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What this measurement cannot show"?</p>
+                <div class="quiz" id="quiz-a64-neon-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The measurement: three bits, five values&quot;, not &quot;What this measurement cannot show&quot;." data-source-ref="content/src/a64_neon.ch:93" onclick="checkQuiz('quiz-a64-neon-i4', this)" aria-label="Option: The float groups do the same thing with a two-bit type field, and this is where the comfortable model breaks for the second time.">The float groups do the same thing with a two-bit type field, and this is where the comfortable model breaks for the second time.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: reading a field map off an XOR&quot;, not &quot;What this measurement cannot show&quot;." data-source-ref="content/src/a64_neon.ch:178" onclick="checkQuiz('quiz-a64-neon-i4', this)" aria-label="Option: The method is one line long: assemble an instruction, change one operand, assemble it again, and every bit that moved belongs to that operand.">The method is one line long: assemble an instruction, change one operand, assemble it again, and every bit that moved belongs to that operand.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What this measurement cannot show&quot;." data-source-ref="content/src/a64_neon.ch:213" onclick="checkQuiz('quiz-a64-neon-i4', this)" aria-label="Option: Backwards, into the machine course.">Backwards, into the machine course.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="There is no AArch64 machine here, so no value was loaded, no reinterpretation happened and no lane was read." data-source-ref="content/src/a64_neon.ch:157" onclick="checkQuiz('quiz-a64-neon-i4', this)" aria-label="Option: There is no AArch64 machine here, so no value was loaded, no reinterpretation happened and no lane was read.">There is no AArch64 machine here, so no value was loaded, no reinterpretation happened and no lane was read.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;What this measurement cannot show&quot;." data-source-ref="content/src/a64_neon.ch:55" onclick="checkQuiz('quiz-a64-neon-i4', this)" aria-label="Option: They are not five register files.">They are not five register files.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

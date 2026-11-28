@@ -246,11 +246,39 @@ public func render_a64_atomic() : string {
                 <span>Previous: <a href="/courses/a64simd/lessons/a64-neonspace">The Shared Memory Space</a></span>
                 <span>Next: <a href="/courses/a64simd/lessons/a64-order">Acquire and Release Are Access Modes, Not Barriers</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "FEAT_LSE: one instruction instead of four — and the bit it moved"?</p>
+                <div class="quiz" id="quiz-a64-atomic-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The measurement: acquire is one bit, and it is bit 15&quot;, not &quot;FEAT_LSE: one instruction instead of four — and the bit it moved&quot;." data-source-ref="content/src/a64_atomic.ch:98" onclick="checkQuiz('quiz-a64-atomic-i4', this)" aria-label="Option: Five XORs, five identical masks, and the bit is 15 .">Five XORs, five identical masks, and the bit is 15 .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;What FEAT_LSE does not buy&quot;, not &quot;FEAT_LSE: one instruction instead of four — and the bit it moved&quot;." data-source-ref="content/src/a64_atomic.ch:212" onclick="checkQuiz('quiz-a64-atomic-i4', this)" aria-label="Option: clang emits seven instructions per attempt against the single word&#x27;s four .">clang emits seven instructions per attempt against the single word&#x27;s four .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;FEAT_LSE: one instruction instead of four — and the bit it moved&quot;." data-source-ref="content/src/a64_atomic.ch:239" onclick="checkQuiz('quiz-a64-atomic-i4', this)" aria-label="Option: Forwards, and it is the most important connection in the course.">Forwards, and it is the most important connection in the course.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The point is that the loop is gone — and the loop was not an optimisation artefact, it was forced by the interface above." data-source-ref="content/src/a64_atomic.ch:117" onclick="checkQuiz('quiz-a64-atomic-i4', this)" aria-label="Option: The point is that the loop is gone — and the loop was not an optimisation artefact, it was forced by the interface above.">The point is that the loop is gone — and the loop was not an optimisation artefact, it was forced by the interface above.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;FEAT_LSE: one instruction instead of four — and the bit it moved&quot;." data-source-ref="content/src/a64_atomic.ch:59" onclick="checkQuiz('quiz-a64-atomic-i4', this)" aria-label="Option: The architecture guarantees nothing about when the store fails.">The architecture guarantees nothing about when the store fails.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

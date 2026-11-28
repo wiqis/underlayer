@@ -217,6 +217,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/H1/,/H3/p'
                 <span><a href="/courses/sec/lessons/sec-defaults">Previous: Three Layers, Two Answers</a></span>
                 <span>Next: <a href="/courses/sec/lessons/sec-relro">The Two Tiers of RELRO</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What It Does Not Catch, Measured"?</p>
+                <div class="quiz" id="quiz-sec-canary-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;What It Does Not Catch, Measured&quot;." data-source-ref="content/src/sec_canary.ch:71" onclick="checkQuiz('quiz-sec-canary-i4', this)" aria-label="Option: And here is the part that makes it precise rather than impressionistic.">And here is the part that makes it precise rather than impressionistic.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Counting Tripwires From the File&quot;, not &quot;What It Does Not Catch, Measured&quot;." data-source-ref="content/src/sec_canary.ch:126" onclick="checkQuiz('quiz-sec-canary-i4', this)" aria-label="Option: There is no header field, no flag, no note for the stack protector.">There is no header field, no flag, no note for the stack protector.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;What It Does Not Catch, Measured&quot;." data-source-ref="content/src/sec_canary.ch:204" onclick="checkQuiz('quiz-sec-canary-i4', this)" aria-label="Option: Exercise 5 has the best answer in the course and it is genuinely counter-intuitive.">Exercise 5 has the best answer in the course and it is genuinely counter-intuitive.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What It Does Not Catch, Measured&quot;." data-source-ref="content/src/sec_canary.ch:210" onclick="checkQuiz('quiz-sec-canary-i4', this)" aria-label="Option: The direct technical debt this pays is to the auxiliary vector concept .">The direct technical debt this pays is to the auxiliary vector concept .</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The image course already taught the MAP_FIXED lesson about tools that fail silently; this is the same shape in a different place." data-source-ref="content/src/sec_canary.ch:121" onclick="checkQuiz('quiz-sec-canary-i4', this)" aria-label="Option: The image course already taught the MAP_FIXED lesson about tools that fail silently; this is the same shape in a different place.">The image course already taught the MAP_FIXED lesson about tools that fail silently; this is the same shape in a different place.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;What It Does Not Catch, Measured&quot;." data-source-ref="content/src/sec_canary.ch:26" onclick="checkQuiz('quiz-sec-canary-i4', this)" aria-label="Option: The stack canary is the most widely deployed anti-exploit measure in the world, and almost nobody can say how it works.">The stack canary is the most widely deployed anti-exploit measure in the world, and almost nobody can say how it works.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -225,6 +238,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/H1/,/H3/p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

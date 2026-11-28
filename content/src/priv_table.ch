@@ -182,11 +182,39 @@ public func render_priv_table() : string {
                 <span>First: <a href="/courses/priv">course home</a></span>
                 <span>Next: <a href="/courses/priv/lessons/priv-vectors">Numbers, and the Ones That Are Not Numbers</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: the layout has a trap in it"?</p>
+                <div class="quiz" id="quiz-priv-table-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: a register, a ten-byte slot, and a table&quot;, not &quot;The reality: the layout has a trap in it&quot;." data-source-ref="content/src/priv_table.ch:54" onclick="checkQuiz('quiz-priv-table-i4', this)" aria-label="Option: SIDT stores the IDT register into a ten-byte region of memory.">SIDT stores the IDT register into a ten-byte region of memory.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: three questions with the artifact&quot;, not &quot;The reality: the layout has a trap in it&quot;." data-source-ref="content/src/priv_table.ch:131" onclick="checkQuiz('quiz-priv-table-i4', this)" aria-label="Option: Build it and ask it things.">Build it and ask it things.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: the layout has a trap in it&quot;." data-source-ref="content/src/priv_table.ch:176" onclick="checkQuiz('quiz-priv-table-i4', this)" aria-label="Option: The three-architectures concept is where the DPL-vs-RPL subtlety reappears as a genuinely different design: RISC-V makes the delegation a writable field the firmware owns.">The three-architectures concept is where the DPL-vs-RPL subtlety reappears as a genuinely different design: RISC-V makes the delegation a writable field the firmware owns.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="From the manuals themselves, being internally inconsistent: Intel&#x27;s task-gate pseudocode includes the RPL comparison, and the task gate is also reached by a vector number." data-source-ref="content/src/priv_table.ch:126" onclick="checkQuiz('quiz-priv-table-i4', this)" aria-label="Option: From the manuals themselves, being internally inconsistent: Intel&#x27;s task-gate pseudocode includes the RPL comparison, and the task gate is also reached by a vector number.">From the manuals themselves, being internally inconsistent: Intel&#x27;s task-gate pseudocode includes the RPL comparison, and the task gate is also reached by a vector number.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: the layout has a trap in it&quot;." data-source-ref="content/src/priv_table.ch:47" onclick="checkQuiz('quiz-priv-table-i4', this)" aria-label="Option: Every one of those events passes through a hardware table, and on x86-64 that table has a name, an address, and a size.">Every one of those events passes through a hardware table, and on x86-64 that table has a name, an address, and a size.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

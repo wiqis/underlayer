@@ -284,11 +284,39 @@ public func render_x86_boundary() : string {
                 <span>Previous: <a href="/courses/x86sys/lessons/x86-pmu">The Performance Monitoring Architecture</a></span>
                 <span>End of The x86-64 Machine &middot; <a href="/courses">all courses</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: the inventory"?</p>
+                <div class="quiz" id="quiz-x86-boundary-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: the harness, and the one bug that made it a different instrument&quot;, not &quot;The reality: the inventory&quot;." data-source-ref="content/src/x86_boundary.ch:53" onclick="checkQuiz('quiz-x86-boundary-i4', this)" aria-label="Option: Every fault in this course is a signal, and the parent has to learn the signal&#x27;s si_code and si_addr from a child.">Every fault in this course is a signal, and the parent has to learn the signal&#x27;s si_code and si_addr from a child.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the ten retractions, and what each one cost&quot;, not &quot;The reality: the inventory&quot;." data-source-ref="content/src/x86_boundary.ch:186" onclick="checkQuiz('quiz-x86-boundary-i4', this)" aria-label="Option: Two of the ten are not about the machine at all, and they are the two that a reader is most likely to repeat.">Two of the ten are not about the machine at all, and they are the two that a reader is most likely to repeat.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect, and the last thing&quot;, not &quot;The reality: the inventory&quot;." data-source-ref="content/src/x86_boundary.ch:243" onclick="checkQuiz('quiz-x86-boundary-i4', this)" aria-label="Option: Forwards, and there is a course after this one.">Forwards, and there is a course after this one.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="That is the concept&#x27;s whole argument in one paragraph, and it is a distinction rather than a number." data-source-ref="content/src/x86_boundary.ch:157" onclick="checkQuiz('quiz-x86-boundary-i4', this)" aria-label="Option: That is the concept&#x27;s whole argument in one paragraph, and it is a distinction rather than a number.">That is the concept&#x27;s whole argument in one paragraph, and it is a distinction rather than a number.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this concept exists&quot;, not &quot;The reality: the inventory&quot;." data-source-ref="content/src/x86_boundary.ch:47" onclick="checkQuiz('quiz-x86-boundary-i4', this)" aria-label="Option: Eight concepts of reference, and the reader is left with a set of tables about a machine they are not running on.">Eight concepts of reference, and the reader is left with a set of tables about a machine they are not running on.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

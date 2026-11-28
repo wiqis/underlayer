@@ -277,6 +277,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^  --- group C:/,/^  --- group D:
                 <span><a href="/courses/mem/lessons/mem-instrument">Previous: Measure the Instrument, Then the Memory</a></span>
                 <span>Next: <a href="/courses/mem/lessons/mem-hierarchy">A Band, Not Four Numbers</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What the Instrument Reported"?</p>
+                <div class="quiz" id="quiz-mem-latency-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_latency.ch:82" onclick="checkQuiz('quiz-mem-latency-i4', this)" aria-label="Option: Two consequences fall out of that, and both are testable.">Two consequences fall out of that, and both are testable.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Reading the Table, and a Claim That Was Wrong&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_latency.ch:203" onclick="checkQuiz('quiz-mem-latency-i4', this)" aria-label="Option: The lesson generalises past this table.">The lesson generalises past this table.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_latency.ch:264" onclick="checkQuiz('quiz-mem-latency-i4', this)" aria-label="Option: Exercise 1 is the one that makes the distinction physical.">Exercise 1 is the one that makes the distinction physical.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_latency.ch:270" onclick="checkQuiz('quiz-mem-latency-i4', this)" aria-label="Option: The direct parent is the previous course&#x27;s latency concept , and the relationship is a substitution.">The direct parent is the previous course&#x27;s latency concept , and the relationship is a substitution.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Every line in that last row was in a different 4 KiB page , and this machine&#x27;s translation cache covers 64 of them." data-source-ref="content/src/mem_latency.ch:149" onclick="checkQuiz('quiz-mem-latency-i4', this)" aria-label="Option: Every line in that last row was in a different 4 KiB page , and this machine&#x27;s translation cache covers 64 of them.">Every line in that last row was in a different 4 KiB page , and this machine&#x27;s translation cache covers 64 of them.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_latency.ch:38" onclick="checkQuiz('quiz-mem-latency-i4', this)" aria-label="Option: The two differ by 38×, and neither is wrong.">The two differ by 38×, and neither is wrong.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
@@ -284,6 +297,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^  --- group C:/,/^  --- group D:
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

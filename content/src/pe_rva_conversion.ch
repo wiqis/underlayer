@@ -138,6 +138,7 @@ $ xxd -s 0x1140 -l 16 cli-64.exe
                 <h2>Connect</h2>
                 <p>The algorithm leaned on four fields per section — VirtualAddress, VirtualSize, SizeOfRawData, PointerToRawData — without saying where they come from. They are four of the ten fields in the 40-byte section header, the structure that starts right after the optional header.</p>
                 <p>Next: <a href="/courses/pe/lessons/pe-section-table">The Section Table</a> — the 40-byte record decoded field by field against real bytes, including the eight-character name rule.</p>
+            <p class="verified-answer-key" data-source-ref="courses/pe/manifest.json#exercise_decls">Verified answer key: file = PointerToRawData + (RVA - VirtualAddress) = 0x1C00 + (0x3A04 - 0x3000) = 0x1C00 + 0xA04 = 0x2604.</p>
             </div>
 
             <div class="lesson-footer">

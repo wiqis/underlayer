@@ -198,11 +198,39 @@ public func render_x86_avx512() : string {
                 <span>Previous: <a href="/courses/x86simd/lessons/x86-avx">AVX and AVX2: Three Operands, vzeroupper, and the Upper Half</a></span>
                 <span>Next: <a href="/courses/x86simd/lessons/x86-atomics">The Atomic Set: Which Instructions Imply LOCK</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What is quoted, what is measured, and the two properties that justify all of it"?</p>
+                <div class="quiz" id="quiz-x86-avx512-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: an eleven-bit prefix and eight mask registers&quot;, not &quot;What is quoted, what is measured, and the two properties that justify all of it&quot;." data-source-ref="content/src/x86_avx512.ch:81" onclick="checkQuiz('quiz-x86-avx512-i4', this)" aria-label="Option: Every AVX-512 instruction starts with the two bytes 62 and an eleven-bit field layout.">Every AVX-512 instruction starts with the two bytes 62 and an eleven-bit field layout.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Reading a claim you cannot check, responsibly&quot;, not &quot;What is quoted, what is measured, and the two properties that justify all of it&quot;." data-source-ref="content/src/x86_avx512.ch:175" onclick="checkQuiz('quiz-x86-avx512-i4', this)" aria-label="Option: Apply that to the three claims most often made about AVX-512 on a machine that has none.">Apply that to the three claims most often made about AVX-512 on a machine that has none.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What is quoted, what is measured, and the two properties that justify all of it&quot;." data-source-ref="content/src/x86_avx512.ch:192" onclick="checkQuiz('quiz-x86-avx512-i4', this)" aria-label="Option: Backwards, the previous concept measured the two things VEX changed, and this one is the same exercise at a width that cannot be run.">Backwards, the previous concept measured the two things VEX changed, and this one is the same exercise at a width that cannot be run.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="That is a different failure from the #GP in the first concept, and a program that only handles SIGSEGV will not catch it." data-source-ref="content/src/x86_avx512.ch:142" onclick="checkQuiz('quiz-x86-avx512-i4', this)" aria-label="Option: That is a different failure from the #GP in the first concept, and a program that only handles SIGSEGV will not catch it.">That is a different failure from the #GP in the first concept, and a program that only handles SIGSEGV will not catch it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters, and why this page is different&quot;, not &quot;What is quoted, what is measured, and the two properties that justify all of it&quot;." data-source-ref="content/src/x86_avx512.ch:47" onclick="checkQuiz('quiz-x86-avx512-i4', this)" aria-label="Option: Every other page in this course reports numbers.">Every other page in this course reports numbers.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

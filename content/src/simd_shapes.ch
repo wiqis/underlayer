@@ -182,11 +182,39 @@ public func render_simd_shapes() : string {
                 <span>Previous: <a href="/courses/simd/lessons/simd-compiler">The Compiler, the Intrinsics, and a Control That Lied</a></span>
                 <span>Next: <a href="/courses/simd/lessons/simd-reduce">Going Back to One Scalar</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: independence, measured, and the one place lanes talk"?</p>
+                <div class="quiz" id="quiz-simd-shapes-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: what the arithmetic costs and what it does not&quot;, not &quot;The reality: independence, measured, and the one place lanes talk&quot;." data-source-ref="content/src/simd_shapes.ch:62" onclick="checkQuiz('quiz-simd-shapes-i4', this)" aria-label="Option: Four bodies over the same 64 doubles, differing in one arithmetic instruction.">Four bodies over the same 64 doubles, differing in one arithmetic instruction.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the four rules a vectoriser applies, in order&quot;, not &quot;The reality: independence, measured, and the one place lanes talk&quot;." data-source-ref="content/src/simd_shapes.ch:157" onclick="checkQuiz('quiz-simd-shapes-i4', this)" aria-label="Option: Step 4 is the one people skip and it is the one that decides whether a change is worth reviewing.">Step 4 is the one people skip and it is the one that decides whether a change is worth reviewing.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: independence, measured, and the one place lanes talk&quot;." data-source-ref="content/src/simd_shapes.ch:175" onclick="checkQuiz('quiz-simd-shapes-i4', this)" aria-label="Option: The width concept supplied the register table whose whole content is a division, and this concept is the first place that division stops being enough.">The width concept supplied the register table whose whole content is a division, and this concept is the first place that division stops being enough.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="And the one instruction that is not elementwise, stated precisely because it is the exception that proves the rule." data-source-ref="content/src/simd_shapes.ch:126" onclick="checkQuiz('quiz-simd-shapes-i4', this)" aria-label="Option: And the one instruction that is not elementwise, stated precisely because it is the exception that proves the rule.">And the one instruction that is not elementwise, stated precisely because it is the exception that proves the rule.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: independence, measured, and the one place lanes talk&quot;." data-source-ref="content/src/simd_shapes.ch:47" onclick="checkQuiz('quiz-simd-shapes-i4', this)" aria-label="Option: Every wide instruction in the x86, NEON and RISC-V V sets obeys this.">Every wide instruction in the x86, NEON and RISC-V V sets obeys this.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -218,11 +218,39 @@ public func render_x86_cr() : string {
                 <span>Previous: <a href="/courses/x86sys/lessons/x86-rings">Descriptor Tables and the Privilege Checks</a></span>
                 <span>Next: <a href="/courses/x86sys/lessons/x86-debug">DR0 to DR7 and the Mask a Debugger Must Program</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: every access is a fault, and the five bits that decide the most are among them"?</p>
+                <div class="quiz" id="quiz-x86-cr-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: three registers with different jobs and one that is a number&quot;, not &quot;The reality: every access is a fault, and the five bits that decide the most are among them&quot;." data-source-ref="content/src/x86_cr.ch:76" onclick="checkQuiz('quiz-x86-cr-i4', this)" aria-label="Option: That SEAM row is the one a backend has to get right.">That SEAM row is the one a backend has to get right.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: CR2 , the one control register that is a mailbox&quot;, not &quot;The reality: every access is a fault, and the five bits that decide the most are among them&quot;." data-source-ref="content/src/x86_cr.ch:167" onclick="checkQuiz('quiz-x86-cr-i4', this)" aria-label="Option: CR2 is not a mode.">CR2 is not a mode.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: every access is a fault, and the five bits that decide the most are among them&quot;." data-source-ref="content/src/x86_cr.ch:212" onclick="checkQuiz('quiz-x86-cr-i4', this)" aria-label="Option: Backwards, the previous concept measured the consequence of CR4.UMIP without naming it, and this concept names it and says the naming does not help.">Backwards, the previous concept measured the consequence of CR4.UMIP without naming it, and this concept names it and says the naming does not help.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="That is the entire argument for the process-context identifier: a bit in CR3[11:0] that makes the most expensive operation in the MMU unnecessary." data-source-ref="content/src/x86_cr.ch:162" onclick="checkQuiz('quiz-x86-cr-i4', this)" aria-label="Option: That is the entire argument for the process-context identifier: a bit in CR3[11:0] that makes the most expensive operation in the MMU unnecessary.">That is the entire argument for the process-context identifier: a bit in CR3[11:0] that makes the most expensive operation in the MMU unnecessary.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: every access is a fault, and the five bits that decide the most are among them&quot;." data-source-ref="content/src/x86_cr.ch:47" onclick="checkQuiz('quiz-x86-cr-i4', this)" aria-label="Option: Every one of those decisions is made by a bit that a user process cannot read.">Every one of those decisions is made by a bit that a user process cannot read.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

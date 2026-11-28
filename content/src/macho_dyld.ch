@@ -134,6 +134,7 @@ $ llvm-otool -l libasyncProfiler.dylib | grep -A11 LC_DYLD_INFO_ONLY
                 <h2>Connect</h2>
                 <p>dyld has now consumed the entire format: the <a href="/courses/macho/lessons/macho-hardening">protections</a> it mapped, the <a href="/courses/macho/lessons/macho-dyld-info">rebase and bind streams</a> or <a href="/courses/macho/lessons/macho-chained-fixups">chained fixups</a> it executed, the <a href="/courses/macho/lessons/macho-export-trie">export trie</a> it published, and the LC_MAIN entry it is about to jump to. But "the image is loaded" still hides a question every crash report depends on: at which addresses does all this actually exist right now?</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-memory-layout">Process Memory Layout</a> — preferred addresses, the slide, and the three coordinate systems (file offset, vmaddr, runtime address) that every bug report mixes together.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: dyld is macOS&#x27;s equivalent of ld.so: it maps the executable and its dylib dependencies, applies rebasing and binding (via chained fixups or classic opcodes), runs LC_ROUTINES/mod-init callbacks, then transfers control to LC_MAIN.entryoff. Only after all that does your main() run.</p>
             </div>
 
             <div class="lesson-footer">

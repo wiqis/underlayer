@@ -197,11 +197,40 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/\[4\]/,/^$/p'
                 <span><a href="/courses/sym/lessons/sym-visibility">Previous: Visibility Is Not Binding</a></span>
                 <span>Next: <a href="/courses/sym/lessons/sym-order">Order, Archives and the Map File</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-sym-algorithm-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_algorithm.ch:59" onclick="checkQuiz('quiz-sym-algorithm-i4', this)" aria-label="Option: GNU ld’s static link is a single left-to-right pass with one piece of state: the set of currently-undefined symbols .">GNU ld’s static link is a single left-to-right pass with one piece of state: the set of currently-undefined symbols .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_algorithm.ch:144" onclick="checkQuiz('quiz-sym-algorithm-i4', this)" aria-label="Option: The mutual-dependency case is not a toy, because it is what happens when two independently-maintained libraries each grow a dependency on the other.">The mutual-dependency case is not a toy, because it is what happens when two independently-maintained libraries each grow a dependency on the other.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_algorithm.ch:164" onclick="checkQuiz('quiz-sym-algorithm-i4', this)" aria-label="Option: Then build the trace yourself.">Then build the trace yourself.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_algorithm.ch:190" onclick="checkQuiz('quiz-sym-algorithm-i4', this)" aria-label="Option: Read them in that order and the two lessons are one argument split for length.">Read them in that order and the two lessons are one argument split for length.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="da.o is there because it came along inside the same archive as the member that was pulled; archive granularity is per-file, not per-symbol." data-source-ref="content/src/sym_algorithm.ch:138" onclick="checkQuiz('quiz-sym-algorithm-i4', this)" aria-label="Option: da.o is there because it came along inside the same archive as the member that was pulled; archive granularity is per-file, not per-symbol.">da.o is there because it came along inside the same archive as the member that was pulled; archive granularity is per-file, not per-symbol.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_algorithm.ch:53" onclick="checkQuiz('quiz-sym-algorithm-i4', this)" aria-label="Option: The same four object files, in a different order, and one order links while the other does not.">The same four object files, in a different order, and one order links while the other does not.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

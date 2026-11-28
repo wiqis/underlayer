@@ -148,6 +148,7 @@ public func render_bytes() : string {
             <div class="unit unit-exercises" id="api-exercises" style="display:none">
                 <h2>Practice Exercises</h2>
                 <div id="exercise-list"></div>
+            <p class="verified-answer-key" data-source-ref="courses/elf/manifest.json#exercise_decls">Verified answer key: 0x41 = 4*16 + 1 = 65, which is ASCII &#x27;A&#x27;. See the RETRIEVE unit. 0x48=&#x27;H&#x27;, 0x65=&#x27;e&#x27;, 0x6c=&#x27;l&#x27;, 0x6c=&#x27;l&#x27;. See the APPLY unit. A byte is 8 bits, and 2^8 = 256 (values 0-255). 0x41 is hex digits 4 and 1 (ASCII &#x27;A&#x27;, decimal 65). The grader accepts 41, 0x41, or 0X41.</p>
             </div>
             <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">

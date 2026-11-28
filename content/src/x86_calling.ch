@@ -197,11 +197,39 @@ CALLEE | O2 | f8 | rdi rsi rdx rcx r8 r9 | stack=0x18
                 <span>Previous: <a href="/courses/x86abi">The x86-64 ABI</a></span>
                 <span>Next: <a href="/courses/x86abi/lessons/x86-frame">The Stack Frame, the Red Zone, and Two Rules</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: where the return address is, and the one instruction that is not on the stack"?</p>
+                <div class="quiz" id="quiz-x86-calling-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: the specification as an oracle, the compiler as a test subject&quot;, not &quot;The reality: where the return address is, and the one instruction that is not on the stack&quot;." data-source-ref="content/src/x86_calling.ch:65" onclick="checkQuiz('quiz-x86-calling-i4', this)" aria-label="Option: The System V AMD64 ABI assigns integer arguments to registers in a fixed order.">The System V AMD64 ABI assigns integer arguments to registers in a fixed order.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the audit, and what it is worth&quot;, not &quot;The reality: where the return address is, and the one instruction that is not on the stack&quot;." data-source-ref="content/src/x86_calling.ch:172" onclick="checkQuiz('quiz-x86-calling-i4', this)" aria-label="Option: Sixty-four call sites audited, sixty-four matches, zero differences, at four optimisation levels.">Sixty-four call sites audited, sixty-four matches, zero differences, at four optimisation levels.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: where the return address is, and the one instruction that is not on the stack&quot;." data-source-ref="content/src/x86_calling.ch:191" onclick="checkQuiz('quiz-x86-calling-i4', this)" aria-label="Option: The integer set is where movabs , the instruction every measurement here uses to plant a 64-bit marker, is taught.">The integer set is where movabs , the instruction every measurement here uses to plant a 64-bit marker, is taught.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="A difference between two readings of a register is only meaningful if they are the same reading of the same instant." data-source-ref="content/src/x86_calling.ch:117" onclick="checkQuiz('quiz-x86-calling-i4', this)" aria-label="Option: A difference between two readings of a register is only meaningful if they are the same reading of the same instant.">A difference between two readings of a register is only meaningful if they are the same reading of the same instant.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: where the return address is, and the one instruction that is not on the stack&quot;." data-source-ref="content/src/x86_calling.ch:47" onclick="checkQuiz('quiz-x86-calling-i4', this)" aria-label="Option: A function call on x86-64 has no visible ceremony.">A function call on x86-64 has no visible ceremony.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

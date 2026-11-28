@@ -228,11 +228,39 @@ public func render_x86_debug() : string {
                 <span>Previous: <a href="/courses/x86sys/lessons/x86-cr">CR0 to CR4, Every Bit</a></span>
                 <span>Next: <a href="/courses/x86sys/lessons/x86-virtual">The 48-Bit Split, LA57 and LAM</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: the mask, computed rather than quoted"?</p>
+                <div class="quiz" id="quiz-x86-debug-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: four addresses and one control word&quot;, not &quot;The reality: the mask, computed rather than quoted&quot;." data-source-ref="content/src/x86_debug.ch:54" onclick="checkQuiz('quiz-x86-debug-i4', this)" aria-label="Option: DR6 is status and DR7 is control.">DR6 is status and DR7 is control.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the one debug mechanism ring 3 can reach&quot;, not &quot;The reality: the mask, computed rather than quoted&quot;." data-source-ref="content/src/x86_debug.ch:192" onclick="checkQuiz('quiz-x86-debug-i4', this)" aria-label="Option: The debug registers are unreachable.">The debug registers are unreachable.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: the mask, computed rather than quoted&quot;." data-source-ref="content/src/x86_debug.ch:222" onclick="checkQuiz('quiz-x86-debug-i4', this)" aria-label="Option: Backwards, the previous concept is where CR4.DE lives and where the general shape of “a bit decides whether an instruction exists” was established.">Backwards, the previous concept is where CR4.DE lives and where the general shape of “a bit decides whether an instruction exists” was established.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="A debugger programmed with it would run correctly and break on nothing at all , and a user would conclude the program has no bugs." data-source-ref="content/src/x86_debug.ch:159" onclick="checkQuiz('quiz-x86-debug-i4', this)" aria-label="Option: A debugger programmed with it would run correctly and break on nothing at all , and a user would conclude the program has no bugs.">A debugger programmed with it would run correctly and break on nothing at all , and a user would conclude the program has no bugs.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: the mask, computed rather than quoted&quot;." data-source-ref="content/src/x86_debug.ch:47" onclick="checkQuiz('quiz-x86-debug-i4', this)" aria-label="Option: Eight registers hold four addresses and the control word that says what to do about them.">Eight registers hold four addresses and the control word that says what to do about them.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

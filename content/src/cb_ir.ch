@@ -188,11 +188,39 @@ public func render_cb_ir() : string {
                 <span>Previous: <a href="/courses/compback">Compiler Backend: From IR to Machine Code</a></span>
                 <span>Next: <a href="/courses/compback/lessons/cb-isel">Instruction Selection</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "A level of -O is not a ranking"?</p>
+                <div class="quiz" id="quiz-cb-ir-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The ratio, and why it has to be read in both directions&quot;, not &quot;A level of -O is not a ranking&quot;." data-source-ref="content/src/cb_ir.ch:40" onclick="checkQuiz('quiz-cb-ir-i4', this)" aria-label="Option: One source, five optimisation levels, x86-64.">One source, five optimisation levels, x86-64.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;What replaces LLVM, by file name&quot;, not &quot;A level of -O is not a ranking&quot;." data-source-ref="content/src/cb_ir.ch:149" onclick="checkQuiz('quiz-cb-ir-i4', this)" aria-label="Option: This is the table that makes the mission’s claim concrete rather than aspirational.">This is the table that makes the mission’s claim concrete rather than aspirational.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;A level of -O is not a ranking&quot;." data-source-ref="content/src/cb_ir.ch:181" onclick="checkQuiz('quiz-cb-ir-i4', this)" aria-label="Option: Backwards, exe-latency is where you met the idea that an instruction is not free and that its cost depends on what it waits for.">Backwards, exe-latency is where you met the idea that an instruction is not free and that its cost depends on what it waits for.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="A level is a request, and the compiler decides which of your requests it can honour given what the target makes cheap." data-source-ref="content/src/cb_ir.ch:121" onclick="checkQuiz('quiz-cb-ir-i4', this)" aria-label="Option: A level is a request, and the compiler decides which of your requests it can honour given what the target makes cheap.">A level is a request, and the compiler decides which of your requests it can honour given what the target makes cheap.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The hole in the chain, and what a backend is for&quot;, not &quot;A level of -O is not a ranking&quot;." data-source-ref="content/src/cb_ir.ch:26" onclick="checkQuiz('quiz-cb-ir-i4', this)" aria-label="Option: You have an intermediate representation and you want machine code.">You have an intermediate representation and you want machine code.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

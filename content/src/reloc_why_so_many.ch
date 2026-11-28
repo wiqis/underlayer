@@ -201,11 +201,40 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/\[2\]/,/\[3\]/p'
                 <span><a href="/courses/reloc/lessons/reloc-arch-contrast">Previous: One Relocation, or Two</a></span>
                 <span>Next: <a href="/courses/reloc/lessons/reloc-encoding-limits">The Limits That Shaped the Table</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-reloc-why-so-many-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_why_so_many.ch:56" onclick="checkQuiz('quiz-reloc-why-so-many-i4', this)" aria-label="Option: Group the x86-64 types by what arithmetic they perform .">Group the x86-64 types by what arithmetic they perform .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_why_so_many.ch:137" onclick="checkQuiz('quiz-reloc-why-so-many-i4', this)" aria-label="Option: Why the vocabulary is this shape rather than some tidier shape: three encoding facts, each of which forces a group of types.">Why the vocabulary is this shape rather than some tidier shape: three encoding facts, each of which forces a group of types.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_why_so_many.ch:169" onclick="checkQuiz('quiz-reloc-why-so-many-i4', this)" aria-label="Option: Then classify rather than recall.">Then classify rather than recall.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_why_so_many.ch:193" onclick="checkQuiz('quiz-reloc-why-so-many-i4', this)" aria-label="Option: This concept and One Relocation, or Two are one argument from two ends.">This concept and One Relocation, or Two are one argument from two ends.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="That is the cleanest possible demonstration that groups 1–3 and group 4 are resolved at different times by different programs." data-source-ref="content/src/reloc_why_so_many.ch:132" onclick="checkQuiz('quiz-reloc-why-so-many-i4', this)" aria-label="Option: That is the cleanest possible demonstration that groups 1–3 and group 4 are resolved at different times by different programs.">That is the cleanest possible demonstration that groups 1–3 and group 4 are resolved at different times by different programs.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_why_so_many.ch:26" onclick="checkQuiz('quiz-reloc-why-so-many-i4', this)" aria-label="Option: The ELF x86-64 ABI defines about forty relocation types.">The ELF x86-64 ABI defines about forty relocation types.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

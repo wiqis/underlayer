@@ -193,11 +193,40 @@ $ xxd -l 8 far.o
                 <span><a href="/courses/reloc/lessons/reloc-why-so-many">Previous: Why There Are So Many Kinds</a></span>
                 <span>Next: <a href="/courses/reloc/lessons/pie-flags">The Flags, and Which One Is Which Kind</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-reloc-encoding-limits-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_encoding_limits.ch:45" onclick="checkQuiz('quiz-reloc-encoding-limits-i4', this)" aria-label="Option: Three limits, and each one is a fact about the instruction set rather than about the linker.">Three limits, and each one is a fact about the instruction set rather than about the linker.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_encoding_limits.ch:127" onclick="checkQuiz('quiz-reloc-encoding-limits-i4', this)" aria-label="Option: Limit 3 is where a linker stops patching and starts writing code.">Limit 3 is where a linker stops patching and starts writing code.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_encoding_limits.ch:181" onclick="checkQuiz('quiz-reloc-encoding-limits-i4', this)" aria-label="Option: Question 2 has the answer that makes the whole limit look different.">Question 2 has the answer that makes the whole limit look different.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_encoding_limits.ch:186" onclick="checkQuiz('quiz-reloc-encoding-limits-i4', this)" aria-label="Option: This closes the vocabulary module, and the three concepts make one descending argument.">This closes the vocabulary module, and the three concepts make one descending argument.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Two different outcomes for the same mistake." data-source-ref="content/src/reloc_encoding_limits.ch:122" onclick="checkQuiz('quiz-reloc-encoding-limits-i4', this)" aria-label="Option: Two different outcomes for the same mistake.">Two different outcomes for the same mistake.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_encoding_limits.ch:39" onclick="checkQuiz('quiz-reloc-encoding-limits-i4', this)" aria-label="Option: Read the bytes, not the annotation.">Read the bytes, not the annotation.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

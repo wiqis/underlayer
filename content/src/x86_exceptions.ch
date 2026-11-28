@@ -173,11 +173,39 @@ public func render_x86_exceptions() : string {
                 <span>Previous: <a href="/courses/x86sys/lessons/x86-syscall">SYSCALL and the Four Registers It Touches</a></span>
                 <span>Next: <a href="/courses/x86sys/lessons/x86-rings">Descriptor Tables and the Privilege Checks</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: the six that can be raised, and what came back"?</p>
+                <div class="quiz" id="quiz-x86-exceptions-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: class, error code, and why the class is the interesting field&quot;, not &quot;The reality: the six that can be raised, and what came back&quot;." data-source-ref="content/src/x86_exceptions.ch:53" onclick="checkQuiz('quiz-x86-exceptions-i4', this)" aria-label="Option: Every exception carries three things beyond its number: a mnemonic, a class , and whether it pushes a 32-bit error code.">Every exception carries three things beyond its number: a mnemonic, a class , and whether it pushes a 32-bit error code.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the whole table, and the census that had to be made to add up&quot;, not &quot;The reality: the six that can be raised, and what came back&quot;." data-source-ref="content/src/x86_exceptions.ch:114" onclick="checkQuiz('quiz-x86-exceptions-i4', this)" aria-label="Option: All thirty-two, with the two columns that make it a reference rather than a list.">All thirty-two, with the two columns that make it a reference rather than a list.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: the six that can be raised, and what came back&quot;." data-source-ref="content/src/x86_exceptions.ch:167" onclick="checkQuiz('quiz-x86-exceptions-i4', this)" aria-label="Option: Backwards, the previous concept is the one way in and this one is everything that can come back out.">Backwards, the previous concept is the one way in and this one is everything that can come back out.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Nine int $N vectors are in the table too, because the shape of their failure is the point." data-source-ref="content/src/x86_exceptions.ch:82" onclick="checkQuiz('quiz-x86-exceptions-i4', this)" aria-label="Option: Nine int $N vectors are in the table too, because the shape of their failure is the point.">Nine int $N vectors are in the table too, because the shape of their failure is the point.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: the six that can be raised, and what came back&quot;." data-source-ref="content/src/x86_exceptions.ch:47" onclick="checkQuiz('quiz-x86-exceptions-i4', this)" aria-label="Option: There are thirty-two vector numbers reserved for the processor&#x27;s own use and the rest of a byte&#x27;s range belongs to whoever installs a gate.">There are thirty-two vector numbers reserved for the processor&#x27;s own use and the rest of a byte&#x27;s range belongs to whoever installs a gate.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

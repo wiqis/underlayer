@@ -188,11 +188,39 @@ public func render_a64_encoding() : string {
                 <span>Previous: <a href="/courses/a64asm/lessons/a64-asm">Four Bytes, and a Mnemonic That Is Not In There</a></span>
                 <span>Next: <a href="/courses/a64asm/lessons/a64-immediate">A Constant Is a Rotate and a Run Length</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Three things that are cheaper to state than to prove"?</p>
+                <div class="quiz" id="quiz-a64-encoding-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The class field: four bits, and eleven of sixteen&quot;, not &quot;Three things that are cheaper to state than to prove&quot;." data-source-ref="content/src/a64_encoding.ch:55" onclick="checkQuiz('quiz-a64-encoding-i4', this)" aria-label="Option: Four bits at position 25 are the first thing a decoder looks at.">Four bits at position 25 are the first thing a decoder looks at.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the 21-model dispatch&quot;, not &quot;Three things that are cheaper to state than to prove&quot;." data-source-ref="content/src/a64_encoding.ch:163" onclick="checkQuiz('quiz-a64-encoding-i4', this)" aria-label="Option: Reordering this list changes what the decoder resolves in the overlap, and that is a design decision rather than a refactor.">Reordering this list changes what the decoder resolves in the overlap, and that is a design decision rather than a refactor.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Three things that are cheaper to state than to prove&quot;." data-source-ref="content/src/a64_encoding.ch:184" onclick="checkQuiz('quiz-a64-encoding-i4', this)" aria-label="Option: Concept 5 is where the register-31 mistake in this page is actually found — it was not found by reading this table twice.">Concept 5 is where the register-31 mistake in this page is actually found — it was not found by reading this table twice.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Each of these was asserted in a draft of this course, measured, and retracted." data-source-ref="content/src/a64_encoding.ch:123" onclick="checkQuiz('quiz-a64-encoding-i4', this)" aria-label="Option: Each of these was asserted in a draft of this course, measured, and retracted.">Each of these was asserted in a draft of this course, measured, and retracted.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;Three things that are cheaper to state than to prove&quot;." data-source-ref="content/src/a64_encoding.ch:48" onclick="checkQuiz('quiz-a64-encoding-i4', this)" aria-label="Option: There is no second word to fall back into.">There is no second word to fall back into.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

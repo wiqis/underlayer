@@ -169,11 +169,40 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/\[1\]/,/\[2\]/p'
                 <span>Start of course</span>
                 <span>Next: <a href="/courses/reloc/lessons/reloc-why-so-many">Why There Are So Many Kinds</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-reloc-arch-contrast-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_arch_contrast.ch:53" onclick="checkQuiz('quiz-reloc-arch-contrast-i4', this)" aria-label="Option: Before the numbers, the shape.">Before the numbers, the shape.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_arch_contrast.ch:117" onclick="checkQuiz('quiz-reloc-arch-contrast-i4', this)" aria-label="Option: What this costs in practice, because the two-relocation pattern is not free.">What this costs in practice, because the two-relocation pattern is not free.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_arch_contrast.ch:157" onclick="checkQuiz('quiz-reloc-arch-contrast-i4', this)" aria-label="Option: Question 4 is the one that closes the loop, and it is the reason this concept is not merely an AArch64 curiosity.">Question 4 is the one that closes the loop, and it is the reason this concept is not merely an AArch64 curiosity.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_arch_contrast.ch:162" onclick="checkQuiz('quiz-reloc-arch-contrast-i4', this)" aria-label="Option: The Fixup Record recorded that a linker implements “a vocabulary per target”, and Position Independence showed one x86-64 vocabulary changing under -fPIC .">The Fixup Record recorded that a linker implements “a vocabulary per target”, and Position Independence showed one x86-64 vocabulary changing under -fPIC .</button>
+                    <button class="quiz-option" data-correct="true" data-explain="x86-64 has thousands of opcodes and a uniform displacement, so its relocations are correspondingly uniform." data-source-ref="content/src/reloc_arch_contrast.ch:112" onclick="checkQuiz('quiz-reloc-arch-contrast-i4', this)" aria-label="Option: x86-64 has thousands of opcodes and a uniform displacement, so its relocations are correspondingly uniform.">x86-64 has thousands of opcodes and a uniform displacement, so its relocations are correspondingly uniform.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_arch_contrast.ch:47" onclick="checkQuiz('quiz-reloc-arch-contrast-i4', this)" aria-label="Option: x86-64 emits one relocation per datum reference.">x86-64 emits one relocation per datum reference.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

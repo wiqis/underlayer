@@ -172,11 +172,38 @@ $ python3 rvat.py --run | grep 'lock-prefixed instructions assembled'
                 <span>Previous: <a href="/courses/rvat">RISC-V Atomics and the Vector Extension</a></span>
                 <span>Next: <a href="/courses/rvat/lessons/rv-fence">fence, and an Ordering Model Defined in Terms of It</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "lr and sc: the retry is the instruction"?</p>
+                <div class="quiz" id="quiz-rv-amo-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;One opcode, eleven names, twenty-one holes&quot;, not &quot;lr and sc: the retry is the instruction&quot;." data-source-ref="content/src/rv_amo.ch:57" onclick="checkQuiz('quiz-rv-amo-i4', this)" aria-label="Option: The A extension is one opcode, 0101111 , and inside it a five-bit funct5 at inst[31:27] .">The A extension is one opcode, 0101111 , and inside it a five-bit funct5 at inst[31:27] .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;aq and rl: two adjacent bits, and the XOR is the proof&quot;, not &quot;lr and sc: the retry is the instruction&quot;." data-source-ref="content/src/rv_amo.ch:99" onclick="checkQuiz('quiz-rv-amo-i4', this)" aria-label="Option: The next two bits down, inst[26] and inst[25] , are the ordering.">The next two bits down, inst[26] and inst[25] , are the ordering.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Same hardware, same instruction pair, two instructions per attempt against one, and the difference is entirely in the calling convention of the source language." data-source-ref="content/src/rv_amo.ch:135" onclick="checkQuiz('quiz-rv-amo-i4', this)" aria-label="Option: Same hardware, same instruction pair, two instructions per attempt against one, and the difference is entirely in the calling convention of the source language.">Same hardware, same instruction pair, two instructions per attempt against one, and the difference is entirely in the calling convention of the source language.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The trap, stated before the count&quot;, not &quot;lr and sc: the retry is the instruction&quot;." data-source-ref="content/src/rv_amo.ch:26" onclick="checkQuiz('quiz-rv-amo-i4', this)" aria-label="Option: On x86-64 the atomicity of an ordinary arithmetic instruction depends on a prefix that is not part of the instruction .">On x86-64 the atomicity of an ordinary arithmetic instruction depends on a prefix that is not part of the instruction .</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

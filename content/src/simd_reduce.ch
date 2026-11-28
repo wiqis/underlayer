@@ -223,11 +223,39 @@ public func render_simd_reduce() : string {
                 <span>Previous: <a href="/courses/simd/lessons/simd-shapes">Elementwise, and Independent</a></span>
                 <span>Next: <a href="/courses/simd/lessons/simd-boundaries">Alignment, the Gather, and the Tail</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: what a reduction actually costs, and why tree order"?</p>
+                <div class="quiz" id="quiz-simd-reduce-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: three ways to fold four lanes into one&quot;, not &quot;The reality: what a reduction actually costs, and why tree order&quot;." data-source-ref="content/src/simd_reduce.ch:114" onclick="checkQuiz('quiz-simd-reduce-i4', this)" aria-label="Option: You cannot detect this class of error by measuring more carefully.">You cannot detect this class of error by measuring more carefully.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the four shapes, and the one that is not a reduction&quot;, not &quot;The reality: what a reduction actually costs, and why tree order&quot;." data-source-ref="content/src/simd_reduce.ch:162" onclick="checkQuiz('quiz-simd-reduce-i4', this)" aria-label="Option: All five arms sum the squares of the same 65536 doubles.">All five arms sum the squares of the same 65536 doubles.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: what a reduction actually costs, and why tree order&quot;." data-source-ref="content/src/simd_reduce.ch:218" onclick="checkQuiz('quiz-simd-reduce-i4', this)" aria-label="Option: Outward, the connection to the execution course&#x27;s dependency concept is the deepest in the course.">Outward, the connection to the execution course&#x27;s dependency concept is the deepest in the course.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Summing a million doubles left to right and summing them pairwise do not produce the same number, and neither is “wrong”." data-source-ref="content/src/simd_reduce.ch:144" onclick="checkQuiz('quiz-simd-reduce-i4', this)" aria-label="Option: Summing a million doubles left to right and summing them pairwise do not produce the same number, and neither is “wrong”.">Summing a million doubles left to right and summing them pairwise do not produce the same number, and neither is “wrong”.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: what a reduction actually costs, and why tree order&quot;." data-source-ref="content/src/simd_reduce.ch:47" onclick="checkQuiz('quiz-simd-reduce-i4', this)" aria-label="Option: This concept is that place, and the number is worse than most people expect.">This concept is that place, and the number is worse than most people expect.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

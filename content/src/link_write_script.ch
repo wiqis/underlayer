@@ -265,11 +265,40 @@ $ python3 crosscheck.py
                 <span><a href="/courses/link/lessons/link-static-real">Previous: What -static Actually Does</a></span>
                 <span>End of course &middot; <a href="/courses/link">back to the course page</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-link-write-script-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_write_script.ch:47" onclick="checkQuiz('quiz-link-write-script-i4', this)" aria-label="Option: The tool, and what each subcommand demonstrates.">The tool, and what each subcommand demonstrates.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_write_script.ch:161" onclick="checkQuiz('quiz-link-write-script-i4', this)" aria-label="Option: The difference between a script you wrote and a script you understand, expressed as one experiment.">The difference between a script you wrote and a script you understand, expressed as one experiment.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_write_script.ch:251" onclick="checkQuiz('quiz-link-write-script-i4', this)" aria-label="Option: Exercise 3 is the one that becomes useful immediately and forever.">Exercise 3 is the one that becomes useful immediately and forever.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_write_script.ch:257" onclick="checkQuiz('quiz-link-write-script-i4', this)" aria-label="Option: This is the end of the course, and it is the concept that makes the other nine into a skill rather than knowledge.">This is the end of the course, and it is the concept that makes the other nine into a skill rather than knowledge.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The first existed because the tool initially asserted the first load was executable, which is wrong — the first load is the read-only ELF headers." data-source-ref="content/src/link_write_script.ch:139" onclick="checkQuiz('quiz-link-write-script-i4', this)" aria-label="Option: The first existed because the tool initially asserted the first load was executable, which is wrong — the first load is the read-only ELF headers.">The first existed because the tool initially asserted the first load was executable, which is wrong — the first load is the read-only ELF headers.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_write_script.ch:26" onclick="checkQuiz('quiz-link-write-script-i4', this)" aria-label="Option: Nine concepts of reading, and this one writes.">Nine concepts of reading, and this one writes.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

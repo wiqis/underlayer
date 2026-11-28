@@ -175,11 +175,40 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/\[5\]/,/\[6\]/p'
                 <span><a href="/courses/reloc/lessons/pie-randomize">Previous: Does the Executable Actually Move?</a></span>
                 <span>Next: <a href="/courses/reloc/lessons/pic-violation">The Relocation That Cannot Be Fixed</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-pie-cost-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pie_cost.ch:38" onclick="checkQuiz('quiz-pie-cost-i4', this)" aria-label="Option: Non-PIC and PIC differ in one step, and everything else follows from it.">Non-PIC and PIC differ in one step, and everything else follows from it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pie_cost.ch:116" onclick="checkQuiz('quiz-pie-cost-i4', this)" aria-label="Option: Where the cost stops being negligible, and it is not where people expect.">Where the cost stops being negligible, and it is not where people expect.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pie_cost.ch:163" onclick="checkQuiz('quiz-pie-cost-i4', this)" aria-label="Option: Question 5 is the one that ties the module together, and the answer is no .">Question 5 is the one that ties the module together, and the answer is no .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pie_cost.ch:168" onclick="checkQuiz('quiz-pie-cost-i4', this)" aria-label="Option: This closes the PIE module, and it is deliberately the argument-completing concept rather than the most interesting one.">This closes the PIE module, and it is deliberately the argument-completing concept rather than the most interesting one.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The asymptotic cost is still one extra instruction and one extra dependent load per reference; the constant is 1.9 rather than 2.0 for this function." data-source-ref="content/src/pie_cost.ch:102" onclick="checkQuiz('quiz-pie-cost-i4', this)" aria-label="Option: The asymptotic cost is still one extra instruction and one extra dependent load per reference; the constant is 1.9 rather than 2.0 for this function.">The asymptotic cost is still one extra instruction and one extra dependent load per reference; the constant is 1.9 rather than 2.0 for this function.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pie_cost.ch:33" onclick="checkQuiz('quiz-pie-cost-i4', this)" aria-label="Option: Build it twice and disassemble the same function.">Build it twice and disassemble the same function.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

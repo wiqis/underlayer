@@ -309,11 +309,39 @@ public func render_cb_regalloc() : string {
                 <span>Previous: <a href="/courses/compback/lessons/cb-isel">Instruction Selection</a></span>
                 <span>Next: <a href="/courses/compback/lessons/cb-sched">Instruction Scheduling</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Two off-by-ones that fail in opposite directions"?</p>
+                <div class="quiz" id="quiz-cb-regalloc-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Three allocators, three spill counts, and what the ratio is about&quot;, not &quot;Two off-by-ones that fail in opposite directions&quot;." data-source-ref="content/src/cb_regalloc.ch:67" onclick="checkQuiz('quiz-cb-regalloc-i4', this)" aria-label="Option: The same IR, the same interference graph, three spill policies.">The same IR, the same interference graph, three spill policies.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The one measurement no other course here could take&quot;, not &quot;Two off-by-ones that fail in opposite directions&quot;." data-source-ref="content/src/cb_regalloc.ch:190" onclick="checkQuiz('quiz-cb-regalloc-i4', this)" aria-label="Option: x86-64 runs on this host.">x86-64 runs on this host.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Two off-by-ones that fail in opposite directions&quot;." data-source-ref="content/src/cb_regalloc.ch:301" onclick="checkQuiz('quiz-cb-regalloc-i4', this)" aria-label="Option: Backwards, cb-isel produced the sequence this pass names values in.">Backwards, cb-isel produced the sequence this pass names values in.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The register-allocation version is an interference edge built from a half-open live range when the machine’s intervals are inclusive." data-source-ref="content/src/cb_regalloc.ch:104" onclick="checkQuiz('quiz-cb-regalloc-i4', this)" aria-label="Option: The register-allocation version is an interference edge built from a half-open live range when the machine’s intervals are inclusive.">The register-allocation version is an interference edge built from a half-open live range when the machine’s intervals are inclusive.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Naming values, and the question that is not “which register is free”&quot;, not &quot;Two off-by-ones that fail in opposite directions&quot;." data-source-ref="content/src/cb_regalloc.ch:27" onclick="checkQuiz('quiz-cb-regalloc-i4', this)" aria-label="Option: Selection gave you a sequence of machine operations.">Selection gave you a sequence of machine operations.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -166,11 +166,39 @@ public func render_rv_paging() : string {
                 <span>Previous: <a href="/courses/rvpriv/lessons/rv-modes">The CSR Address and the Twelve Instructions That Touch It</a></span>
                 <span>Next: <a href="/courses/rvpriv/lessons/rv-traps">ecall, the Five Registers, and Why the Mode Is Not in the Instruction</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What was measured here, and what was not"?</p>
+                <div class="quiz" id="quiz-rv-paging-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;satp, and two masks of ours that are wrong on purpose&quot;, not &quot;What was measured here, and what was not&quot;." data-source-ref="content/src/rv_paging.ch:43" onclick="checkQuiz('quiz-rv-paging-i4', this)" aria-label="Option: The layout is MODE at bits 63–60, ASID at 59–44, and the PPN below.">The layout is MODE at bits 63–60, ASID at 59–44, and the PPN below.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;example&quot;, not &quot;What was measured here, and what was not&quot;." data-source-ref="content/src/rv_paging.ch:109" onclick="checkQuiz('quiz-rv-paging-i4', this)" aria-label="Option: The HI20 records name the TARGET — root_pte , l1_pte , l2_pte , the three page tables, which is what you would expect.">The HI20 records name the TARGET — root_pte , l1_pte , l2_pte , the three page tables, which is what you would expect.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What was measured here, and what was not&quot;." data-source-ref="content/src/rv_paging.ch:160" onclick="checkQuiz('quiz-rv-paging-i4', this)" aria-label="Option: Forward to concept 3 , which is what happens when the translation fails and something has to be told about it.">Forward to concept 3 , which is what happens when the translation fails and something has to be told about it.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="This page has more measured bytes than any other in the course and not one page has been walked ." data-source-ref="content/src/rv_paging.ch:138" onclick="checkQuiz('quiz-rv-paging-i4', this)" aria-label="Option: This page has more measured bytes than any other in the course and not one page has been walked .">This page has more measured bytes than any other in the course and not one page has been walked .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Three formats, one number’s difference&quot;, not &quot;What was measured here, and what was not&quot;." data-source-ref="content/src/rv_paging.ch:25" onclick="checkQuiz('quiz-rv-paging-i4', this)" aria-label="Option: RISC-V has three page-table formats and they differ by a single number: how many levels the walk has.">RISC-V has three page-table formats and they differ by a single number: how many levels the walk has.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

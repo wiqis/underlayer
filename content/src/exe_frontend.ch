@@ -279,6 +279,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^F /,/^G /p'
                 <span><a href="/courses/exe/lessons/exe-deps">Previous: A Dependency Is a Constraint, Not a Cost</a></span>
                 <span>Next: <a href="/courses/exe/lessons/exe-speculate">Speculation, and What Could Not Be Measured</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Finding Where the Predictor Stops Coping"?</p>
+                <div class="quiz" id="quiz-exe-frontend-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Finding Where the Predictor Stops Coping&quot;." data-source-ref="content/src/exe_frontend.ch:78" onclick="checkQuiz('quiz-exe-frontend-i4', this)" aria-label="Option: That last point is the one that makes speculation a real design problem rather than a performance trick.">That last point is the one that makes speculation a real design problem rather than a performance trick.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The Branchless Surprise, and Two Retractions&quot;, not &quot;Finding Where the Predictor Stops Coping&quot;." data-source-ref="content/src/exe_frontend.ch:160" onclick="checkQuiz('quiz-exe-frontend-i4', this)" aria-label="Option: Retraction 1: “the flags register has no rename, so flag-writing instructions serialise.” Wrong.">Retraction 1: “the flags register has no rename, so flag-writing instructions serialise.” Wrong.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Finding Where the Predictor Stops Coping&quot;." data-source-ref="content/src/exe_frontend.ch:266" onclick="checkQuiz('quiz-exe-frontend-i4', this)" aria-label="Option: Without one you have a timing difference and two possible explanations, and the honest answer is to say so.">Without one you have a timing difference and two possible explanations, and the honest answer is to say so.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Finding Where the Predictor Stops Coping&quot;." data-source-ref="content/src/exe_frontend.ch:272" onclick="checkQuiz('quiz-exe-frontend-i4', this)" aria-label="Option: The connection to the opcode-map concept is exact and it was set up two courses ago.">The connection to the opcode-map concept is exact and it was set up two courses ago.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The interesting variable is how far back the pattern reaches , and to move that you need a pattern longer than the predictor’s history." data-source-ref="content/src/exe_frontend.ch:123" onclick="checkQuiz('quiz-exe-frontend-i4', this)" aria-label="Option: The interesting variable is how far back the pattern reaches , and to move that you need a pattern longer than the predictor’s history.">The interesting variable is how far back the pattern reaches , and to move that you need a pattern longer than the predictor’s history.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Finding Where the Predictor Stops Coping&quot;." data-source-ref="content/src/exe_frontend.ch:27" onclick="checkQuiz('quiz-exe-frontend-i4', this)" aria-label="Option: Everything measured so far has been about what happens after an instruction is decoded.">Everything measured so far has been about what happens after an instruction is decoded.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -287,6 +300,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^F /,/^G /p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

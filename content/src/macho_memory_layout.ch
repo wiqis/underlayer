@@ -122,6 +122,7 @@ $ python3 -c "print(hex(0x100000000 + 1104))"
                 <h2>Connect</h2>
                 <p>The map is live now: preferred addresses from the <a href="/courses/macho/lessons/macho-segments">segment commands</a>, a randomized slide from dyld, and a translation rule between disk and memory. One number in that picture has not fired yet — LC_MAIN's entryoff of 1104, sitting in __text at 0x100000450, waiting.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-execution">The Startup Sequence</a> — what the kernel does first, where argv really comes from, and why entryoff does not always point at main().</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: With __PAGEZERO consuming 0x0..0x100000000, __TEXT begins at 0x100000000. This gives a huge ASLR-friendly base while keeping NULL-page protection. PIE binaries slide from this base at load time.</p>
             </div>
 
             <div class="lesson-footer">

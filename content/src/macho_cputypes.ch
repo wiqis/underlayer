@@ -122,6 +122,7 @@ $ llvm-readobj --file-headers prog_arm64.macho | grep Cpu
                 <h2>Connect</h2>
                 <p>cputype and cpusubtype are not only header decoration — they are the selection keys of a container format. When one file must carry both an x86_64 slice (0x01000007) and an arm64 slice (0x0100000C), those pairs are written into a big-endian table up front, and the loader picks by them.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-universal">Universal (FAT) Binaries</a> — fat_header, fat_arch, slice offsets and alignment, walked through the real <code>universal.macho</code> and <code>libasyncProfiler.dylib</code>.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: CPU_TYPE_X86_64 = 0x01000007 (CPU_TYPE_X86 | CPU_ARCH_ABI64), CPU_TYPE_ARM64 = 0x0100000C (CPU_TYPE_ARM | CPU_ARCH_ABI64). 0x8664 and 0xAA64 are PE machine values, not Mach-O cputypes. 3 and 0 are cpusubtype values.</p>
             </div>
 
             <div class="lesson-footer">

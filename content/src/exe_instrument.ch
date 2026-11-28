@@ -303,6 +303,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^B /,/^C /p'
                 <span><a href="/courses/isa/lessons/isa-decode">Previous: Decode It Yourself</a></span>
                 <span>Next: <a href="/courses/exe/lessons/exe-latency">Latency and Throughput</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What the Instrument Reported About Itself"?</p>
+                <div class="quiz" id="quiz-exe-instrument-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;What the Instrument Reported About Itself&quot;." data-source-ref="content/src/exe_instrument.ch:82" onclick="checkQuiz('quiz-exe-instrument-i4', this)" aria-label="Option: And the consequence for method is not subtle.">And the consequence for method is not subtle.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Reading a Microbenchmark’s Claims&quot;, not &quot;What the Instrument Reported About Itself&quot;." data-source-ref="content/src/exe_instrument.ch:196" onclick="checkQuiz('quiz-exe-instrument-i4', this)" aria-label="Option: And the fix has a cost worth stating: inline asm is unchecked, untyped, and the compiler will not tell you when you got it wrong.">And the fix has a cost worth stating: inline asm is unchecked, untyped, and the compiler will not tell you when you got it wrong.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;What the Instrument Reported About Itself&quot;." data-source-ref="content/src/exe_instrument.ch:290" onclick="checkQuiz('quiz-exe-instrument-i4', this)" aria-label="Option: Exercise 2 is the one that makes the habit, because the result is counter-intuitive in a way that generalises.">Exercise 2 is the one that makes the habit, because the result is counter-intuitive in a way that generalises.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What the Instrument Reported About Itself&quot;." data-source-ref="content/src/exe_instrument.ch:296" onclick="checkQuiz('quiz-exe-instrument-i4', this)" aria-label="Option: The direct parent is the length concept , and the connection is a single number seen from two sides.">The direct parent is the length concept , and the connection is a single number seen from two sides.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="That is not a workaround; it is the design, and it is in the artifact’s doc comment as one of five numbered rules." data-source-ref="content/src/exe_instrument.ch:136" onclick="checkQuiz('quiz-exe-instrument-i4', this)" aria-label="Option: That is not a workaround; it is the design, and it is in the artifact’s doc comment as one of five numbered rules.">That is not a workaround; it is the design, and it is in the artifact’s doc comment as one of five numbered rules.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;What the Instrument Reported About Itself&quot;." data-source-ref="content/src/exe_instrument.ch:27" onclick="checkQuiz('quiz-exe-instrument-i4', this)" aria-label="Option: The ISA course ended with a decoder that can tell you what any byte sequence means.">The ISA course ended with a decoder that can tell you what any byte sequence means.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -311,6 +324,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^B /,/^C /p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

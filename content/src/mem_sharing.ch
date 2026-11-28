@@ -243,11 +243,40 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^  --- group G:/,/^  --- group H:
                 <span><a href="/courses/mem/lessons/mem-writes">Previous: What a Store Costs</a></span>
                 <span>Next: <a href="/courses/mem/lessons/mem-verify">The Harness, and the Claim It Refuses to Make</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What the Instrument Reported"?</p>
+                <div class="quiz" id="quiz-mem-sharing-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_sharing.ch:63" onclick="checkQuiz('quiz-mem-sharing-i4', this)" aria-label="Option: The model&#x27;s first job is to say why the two arms should differ at all, since the two threads touch disjoint bytes.">The model&#x27;s first job is to say why the two arms should differ at all, since the two threads touch disjoint bytes.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;“False Sharing Has No Effect Here”&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_sharing.ch:134" onclick="checkQuiz('quiz-mem-sharing-i4', this)" aria-label="Option: The first version of this section concluded that false sharing did not matter on this machine.">The first version of this section concluded that false sharing did not matter on this machine.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_sharing.ch:230" onclick="checkQuiz('quiz-mem-sharing-i4', this)" aria-label="Option: Exercise 5 is the one that pays, and its awkwardness is the point.">Exercise 5 is the one that pays, and its awkwardness is the point.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_sharing.ch:236" onclick="checkQuiz('quiz-mem-sharing-i4', this)" aria-label="Option: Backwards, this concept takes the previous concept&#x27;s store and moves it one wire outward.">Backwards, this concept takes the previous concept&#x27;s store and moves it one wire outward.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Three separate runs of this section, seven rows each, 21 rows in total, and not one put the two threads on a single physical core." data-source-ref="content/src/mem_sharing.ch:128" onclick="checkQuiz('quiz-mem-sharing-i4', this)" aria-label="Option: Three separate runs of this section, seven rows each, 21 rows in total, and not one put the two threads on a single physical core.">Three separate runs of this section, seven rows each, 21 rows in total, and not one put the two threads on a single physical core.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_sharing.ch:28" onclick="checkQuiz('quiz-mem-sharing-i4', this)" aria-label="Option: The previous concept measured what a store costs when the line it needs is nowhere in particular.">The previous concept measured what a store costs when the line it needs is nowhere in particular.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

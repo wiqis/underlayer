@@ -302,11 +302,40 @@ $ python3 linklab.py order
                 <span><a href="/courses/link/lessons/link-script-language">Previous: The Language, in the Order It Runs</a></span>
                 <span>Next: <a href="/courses/link/lessons/link-location-counter">The Location Counter</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-link-order-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_order.ch:69" onclick="checkQuiz('quiz-link-order-i4', this)" aria-label="Option: Two orderings, and they are different orderings.">Two orderings, and they are different orderings.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_order.ch:200" onclick="checkQuiz('quiz-link-order-i4', this)" aria-label="Option: Ordering has consequences you can observe, and the one below is the classic embedded bug.">Ordering has consequences you can observe, and the one below is the classic embedded bug.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_order.ch:288" onclick="checkQuiz('quiz-link-order-i4', this)" aria-label="Option: Exercise 2 is the one that matters, and its result is the lesson.">Exercise 2 is the one that matters, and its result is the lesson.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_order.ch:294" onclick="checkQuiz('quiz-link-order-i4', this)" aria-label="Option: This closes the first module.">This closes the first module.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="There is a general lesson here that is worth more than the ordering rule itself, and it applies to every experiment in this course." data-source-ref="content/src/link_order.ch:175" onclick="checkQuiz('quiz-link-order-i4', this)" aria-label="Option: There is a general lesson here that is worth more than the ordering rule itself, and it applies to every experiment in this course.">There is a general lesson here that is worth more than the ordering rule itself, and it applies to every experiment in this course.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_order.ch:40" onclick="checkQuiz('quiz-link-order-i4', this)" aria-label="Option: Six rules, and a program with ten functions has its .text divided among them.">Six rules, and a program with ten functions has its .text divided among them.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

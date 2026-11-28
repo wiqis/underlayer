@@ -330,6 +330,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^I7/,$p'
                 <span><a href="/courses/isa/lessons/isa-sib">Previous: SIB: The Byte That Exists Because rsp Is Special</a></span>
                 <span>Next: <a href="/courses/isa/lessons/isa-decode">Decode It Yourself</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Why the Chain Is the Right Thing to Check"?</p>
+                <div class="quiz" id="quiz-isa-length-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model, and the Two Rules That Break It&quot;, not &quot;Why the Chain Is the Right Thing to Check&quot;." data-source-ref="content/src/isa_length.ch:97" onclick="checkQuiz('quiz-isa-length-i4', this)" aria-label="Option: It produced plausible-looking output for the first few instructions and then nonsense, which is exactly the failure mode a boundary check exists to catch.">It produced plausible-looking output for the first few instructions and then nonsense, which is exactly the failure mode a boundary check exists to catch.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The Formula Is Small; the Table Around It Is Not&quot;, not &quot;Why the Chain Is the Right Thing to Check&quot;." data-source-ref="content/src/isa_length.ch:189" onclick="checkQuiz('quiz-isa-length-i4', this)" aria-label="Option: And notice which lines are hard: not 4 and not 5, but the two tables those lines consult.">And notice which lines are hard: not 4 and not 5, but the two tables those lines consult.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Why the Chain Is the Right Thing to Check&quot;." data-source-ref="content/src/isa_length.ch:317" onclick="checkQuiz('quiz-isa-length-i4', this)" aria-label="Option: Exercise 5 is the one that makes the concept a reflex, and its result is the most useful number in the course.">Exercise 5 is the one that makes the concept a reflex, and its result is the most useful number in the course.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Why the Chain Is the Right Thing to Check&quot;." data-source-ref="content/src/isa_length.ch:324" onclick="checkQuiz('quiz-isa-length-i4', this)" aria-label="Option: The connection to the default-linker-script concept is about what the formula makes possible.">The connection to the default-linker-script concept is about what the formula makes possible.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="This is the same reasoning the object course’s oracle-loop concept used — three independent readers, byte-exact comparison — applied to a different kind of claim." data-source-ref="content/src/isa_length.ch:150" onclick="checkQuiz('quiz-isa-length-i4', this)" aria-label="Option: This is the same reasoning the object course’s oracle-loop concept used — three independent readers, byte-exact comparison — applied to a different kind of claim.">This is the same reasoning the object course’s oracle-loop concept used — three independent readers, byte-exact comparison — applied to a different kind of claim.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Why the Chain Is the Right Thing to Check&quot;." data-source-ref="content/src/isa_length.ch:27" onclick="checkQuiz('quiz-isa-length-i4', this)" aria-label="Option: obj-arch-table asked how many bytes an instruction is and would not answer.">obj-arch-table asked how many bytes an instruction is and would not answer.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -338,6 +351,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^I7/,$p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

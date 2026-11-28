@@ -227,11 +227,39 @@ public func render_a64_frame() : string {
                 <span>Previous: <a href="/courses/a64abi/lessons/a64-registers">One Register, Two Names, and Three Things Called 31</a></span>
                 <span>Next: <a href="/courses/a64abi/lessons/a64-save">Callee-Saved, and the Count of Zero That Is Also a Rule</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The census: 25 of 25, then 14 of 25, against x86-64&#x27;s 7 and then 5"?</p>
+                <div class="quiz" id="quiz-a64-frame-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: the frame is a request, and a request is visible&quot;, not &quot;The census: 25 of 25, then 14 of 25, against x86-64&#x27;s 7 and then 5&quot;." data-source-ref="content/src/a64_frame.ch:73" onclick="checkQuiz('quiz-a64-frame-i4', this)" aria-label="Option: Other code can read it, and an interrupt handler will use it to find your locals.">Other code can read it, and an interrupt handler will use it to find your locals.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the five ways to move SP, and the four that hide&quot;, not &quot;The census: 25 of 25, then 14 of 25, against x86-64&#x27;s 7 and then 5&quot;." data-source-ref="content/src/a64_frame.ch:186" onclick="checkQuiz('quiz-a64-frame-i4', this)" aria-label="Option: This is the trap that produced a wrong number in the first version of this course&#x27;s own census, so it gets its own table.">This is the trap that produced a wrong number in the first version of this course&#x27;s own census, so it gets its own table.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The census: 25 of 25, then 14 of 25, against x86-64&#x27;s 7 and then 5&quot;." data-source-ref="content/src/a64_frame.ch:221" onclick="checkQuiz('quiz-a64-frame-i4', this)" aria-label="Option: Backwards, one concept and one tool.">Backwards, one concept and one tool.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Note the six x86-64 instructions that “touch the stack” and the fact that none of them moves the stack pointer ." data-source-ref="content/src/a64_frame.ch:181" onclick="checkQuiz('quiz-a64-frame-i4', this)" aria-label="Option: Note the six x86-64 instructions that “touch the stack” and the fact that none of them moves the stack pointer .">Note the six x86-64 instructions that “touch the stack” and the fact that none of them moves the stack pointer .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The census: 25 of 25, then 14 of 25, against x86-64&#x27;s 7 and then 5&quot;." data-source-ref="content/src/a64_frame.ch:49" onclick="checkQuiz('quiz-a64-frame-i4', this)" aria-label="Option: The x86-64 frame concept has a surprise in it, and if you have read that course you already know the shape of this one.">The x86-64 frame concept has a surprise in it, and if you have read that course you already know the shape of this one.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -259,6 +259,19 @@ $ python3 crosscheck.py 2&gt;&amp;2 | sed -n '/\\[13\\]/,/\\[14\\]/p'
                 <span><a href="/courses/dyn/lessons/dyn-bind-time">Previous: Lazy, Eager, and What Actually Differs</a></span>
                 <span>Next: <a href="/courses/dyn/lessons/dyn-resolve">Rebuilding the Scope Yourself</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-dyn-tls-block-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_tls_block.ch:48" onclick="checkQuiz('quiz-dyn-tls-block-i4', this)" aria-label="Option: Three parties, and the order they act in is the whole point.">Three parties, and the order they act in is the whole point.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_tls_block.ch:154" onclick="checkQuiz('quiz-dyn-tls-block-i4', this)" aria-label="Option: Why a thread that is created, used and destroyed leaves its block behind, and what that costs.">Why a thread that is created, used and destroyed leaves its block behind, and what that costs.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_tls_block.ch:244" onclick="checkQuiz('quiz-dyn-tls-block-i4', this)" aria-label="Option: Exercise 1 is the one this page explicitly could not complete, and leaving it as an exercise rather than a result is the right call.">Exercise 1 is the one this page explicitly could not complete, and leaving it as an exercise rather than a result is the right call.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_tls_block.ch:250" onclick="checkQuiz('quiz-dyn-tls-block-i4', this)" aria-label="Option: This closes module 3, and it is the third and last piece of a story the Relocations course started and could not finish.">This closes module 3, and it is the third and last piece of a story the Relocations course started and could not finish.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The WAT flags on the section are worth reading: Writable, Allocatable, Thread-local Storage , all three of which the kernel acts on." data-source-ref="content/src/dyn_tls_block.ch:126" onclick="checkQuiz('quiz-dyn-tls-block-i4', this)" aria-label="Option: The WAT flags on the section are worth reading: Writable, Allocatable, Thread-local Storage , all three of which the kernel acts on.">The WAT flags on the section are worth reading: Writable, Allocatable, Thread-local Storage , all three of which the kernel acts on.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_tls_block.ch:26" onclick="checkQuiz('quiz-dyn-tls-block-i4', this)" aria-label="Option: One variable, one source file, two threads.">One variable, one source file, two threads.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     
 
@@ -267,6 +280,22 @@ $ python3 crosscheck.py 2&gt;&amp;2 | sed -n '/\\[13\\]/,/\\[14\\]/p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

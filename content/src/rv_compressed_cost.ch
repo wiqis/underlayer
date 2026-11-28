@@ -172,11 +172,39 @@ public func render_rv_compressed_cost() : string {
                 <span>Previous: <a href="/courses/rvabi/lessons/rv-registers">The Register File as Roles, Not Numbers</a></span>
                 <span>Next: <a href="/courses/rvabi">Back to the course</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The boundary problem, which is where this stops being about the ABI"?</p>
+                <div class="quiz" id="quiz-rv-compressed-cost-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The confound, which is the most useful result in the section&quot;, not &quot;The boundary problem, which is where this stops being about the ABI&quot;." data-source-ref="content/src/rv_compressed_cost.ch:54" onclick="checkQuiz('quiz-rv-compressed-cost-i4', this)" aria-label="Option: Almost every “what does compression cost” measurement in the wild is a comparison of two -march settings that differ in more than one letter.">Almost every “what does compression cost” measurement in the wild is a comparison of two -march settings that differ in more than one letter.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Three sequences, before and after, instruction by instruction&quot;, not &quot;The boundary problem, which is where this stops being about the ABI&quot;." data-source-ref="content/src/rv_compressed_cost.ch:74" onclick="checkQuiz('quiz-rv-compressed-cost-i4', this)" aria-label="Option: Same source, -O2 , and the same ISA apart from the C.">Same source, -O2 , and the same ISA apart from the C.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The boundary problem, which is where this stops being about the ABI&quot;." data-source-ref="content/src/rv_compressed_cost.ch:165" onclick="checkQuiz('quiz-rv-compressed-cost-i4', this)" aria-label="Option: Concept 3 is where the x8–x15 window is introduced as a register-file fact, and this page is where it turns into an instruction-count difference.">Concept 3 is where the x8–x15 window is introduced as a register-file fact, and this page is where it turns into an instruction-count difference.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="If they were equal, the rule would be doing no work: the count would be entirely explained by the symbol table’s instruction sizes." data-source-ref="content/src/rv_compressed_cost.ch:149" onclick="checkQuiz('quiz-rv-compressed-cost-i4', this)" aria-label="Option: If they were equal, the rule would be doing no work: the count would be entirely explained by the symbol table’s instruction sizes.">If they were equal, the rule would be doing no work: the count would be entirely explained by the symbol table’s instruction sizes.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this page is a consequence and not a repeat&quot;, not &quot;The boundary problem, which is where this stops being about the ABI&quot;." data-source-ref="content/src/rv_compressed_cost.ch:48" onclick="checkQuiz('quiz-rv-compressed-cost-i4', this)" aria-label="Option: None of that is repeated here.">None of that is repeated here.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -234,6 +234,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/H4/,/H5/p'
                 <span><a href="/courses/sec/lessons/sec-relro">Previous: The Two Tiers of RELRO</a></span>
                 <span>Next: <a href="/courses/sec/lessons/sec-wx">W^X, and Why TEXTREL Died</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Measured, Including Where It Did Not Fire"?</p>
+                <div class="quiz" id="quiz-sec-fortify-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Measured, Including Where It Did Not Fire&quot;." data-source-ref="content/src/sec_fortify.ch:89" onclick="checkQuiz('quiz-sec-fortify-i4', this)" aria-label="Option: It cannot be retrofitted, it cannot be applied dynamically, and it declines to act whenever the information it needs is not there.">It cannot be retrofitted, it cannot be applied dynamically, and it declines to act whenever the information it needs is not there.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Auditing a Binary You Did Not Build&quot;, not &quot;Measured, Including Where It Did Not Fire&quot;." data-source-ref="content/src/sec_fortify.ch:121" onclick="checkQuiz('quiz-sec-fortify-i4', this)" aria-label="Option: Since the trace is the imports, the audit is one pattern.">Since the trace is the imports, the audit is one pattern.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Measured, Including Where It Did Not Fire&quot;." data-source-ref="content/src/sec_fortify.ch:221" onclick="checkQuiz('quiz-sec-fortify-i4', this)" aria-label="Option: Exercise 2 has the most valuable answer in the course, and it is not a bug.">Exercise 2 has the most valuable answer in the course, and it is not a bug.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Measured, Including Where It Did Not Fire&quot;." data-source-ref="content/src/sec_fortify.ch:227" onclick="checkQuiz('quiz-sec-fortify-i4', this)" aria-label="Option: Two mechanisms, two different kinds of check, measurably different reach.">Two mechanisms, two different kinds of check, measurably different reach.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="strcpy is reliable; memcpy was not, for a reason this course did not determine from source and therefore does not assert." data-source-ref="content/src/sec_fortify.ch:115" onclick="checkQuiz('quiz-sec-fortify-i4', this)" aria-label="Option: strcpy is reliable; memcpy was not, for a reason this course did not determine from source and therefore does not assert.">strcpy is reliable; memcpy was not, for a reason this course did not determine from source and therefore does not assert.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Measured, Including Where It Did Not Fire&quot;." data-source-ref="content/src/sec_fortify.ch:26" onclick="checkQuiz('quiz-sec-fortify-i4', this)" aria-label="Option: Every other hardening feature in this course leaves a bit in a header: a segment flag, a dynamic tag, a property note.">Every other hardening feature in this course leaves a bit in a header: a segment flag, a dynamic tag, a property note.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -242,6 +255,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/H4/,/H5/p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

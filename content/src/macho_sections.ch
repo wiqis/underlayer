@@ -140,6 +140,7 @@ public func render_macho_sections() : string {
                 <h2>Connect</h2>
                 <p>Sections subdivide the <a href="/courses/macho/lessons/macho-segments">LC_SEGMENT_64</a> commands you just decoded — same command stream, one level finer, with the flags word doing the heavy lifting.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-symtab">The Symbol Table</a> — every symbol's n_sect field is one of these section numbers, and the names you have been reading as strings live in a separate table in __LINKEDIT.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: section_64 = 80 bytes: sectname(16) + segname(16) + addr(8) + size(8) + offset(4) + align(4) + reloff(4) + nreloc(4) + flags(4) + reserved1(4) + reserved2(4) + reserved3(4). The &#x27;offset&#x27; field is the file offset of the section&#x27;s data.</p>
             </div>
 
             <div class="lesson-footer">

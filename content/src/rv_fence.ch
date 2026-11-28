@@ -150,11 +150,38 @@ public func render_rv_fence() : string {
                 <span>Previous: <a href="/courses/rvat/lessons/rv-amo">The Reservation, and Why the Retry Is the Instruction</a></span>
                 <span>Next: <a href="/courses/rvat/lessons/rv-vector">vsetvli and the Four Fields It Carries</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The row that is not a fence at all, and the one that is not fence"?</p>
+                <div class="quiz" id="quiz-rv-fence-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Four fields, fifteen spellings, and one hole&quot;, not &quot;The row that is not a fence at all, and the one that is not fence&quot;." data-source-ref="content/src/rv_fence.ch:52" onclick="checkQuiz('quiz-rv-fence-i4', this)" aria-label="Option: And that rebuild is not a style choice.">And that rebuild is not a style choice.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;What the compiler chose, and where it stopped&quot;, not &quot;The row that is not a fence at all, and the one that is not fence&quot;." data-source-ref="content/src/rv_fence.ch:89" onclick="checkQuiz('quiz-rv-fence-i4', this)" aria-label="Option: The model being definitional is a fact about the ISA.">The model being definitional is a fact about the ISA.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Whether the machine gives the weaker barrier or the stronger one is a property of silicon, and there is no RISC-V silicon on this host." data-source-ref="content/src/rv_fence.ch:130" onclick="checkQuiz('quiz-rv-fence-i4', this)" aria-label="Option: Whether the machine gives the weaker barrier or the stronger one is a property of silicon, and there is no RISC-V silicon on this host.">Whether the machine gives the weaker barrier or the stronger one is a property of silicon, and there is no RISC-V silicon on this host.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Three models, and only one of them makes the fence the primitive&quot;, not &quot;The row that is not a fence at all, and the one that is not fence&quot;." data-source-ref="content/src/rv_fence.ch:26" onclick="checkQuiz('quiz-rv-fence-i4', this)" aria-label="Option: The finding on this page is not a number.">The finding on this page is not a number.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

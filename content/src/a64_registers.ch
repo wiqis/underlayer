@@ -177,11 +177,39 @@ public func render_a64_registers() : string {
                 <span>Previous: <a href="/courses/a64abi/lessons/a64-aapcs">The Calling Convention, and the Number That Was 128</a></span>
                 <span>Next: <a href="/courses/a64abi/lessons/a64-frame">No Red Zone, and the Two Instructions That Is Worth</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Register number 31 is three different things"?</p>
+                <div class="quiz" id="quiz-a64-registers-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: one register, one bit, and a rule you already use without knowing&quot;, not &quot;Register number 31 is three different things&quot;." data-source-ref="content/src/a64_registers.ch:67" onclick="checkQuiz('quiz-a64-registers-i4', this)" aria-label="Option: Six instructions, assembled twice each — once with w and once with x — and the two words XOR-ed together.">Six instructions, assembled twice each — once with w and once with x — and the two words XOR-ed together.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: reading the field map, and what it cannot express&quot;, not &quot;Register number 31 is three different things&quot;." data-source-ref="content/src/a64_registers.ch:131" onclick="checkQuiz('quiz-a64-registers-i4', this)" aria-label="Option: A field map says which bits hold the number.">A field map says which bits hold the number.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Register number 31 is three different things&quot;." data-source-ref="content/src/a64_registers.ch:172" onclick="checkQuiz('quiz-a64-registers-i4', this)" aria-label="Option: The x86-64 integer concepts are the direct contrast: 32 registers, a separate 32-bit file, and a 32-bit write that leaves the top half alone.">The x86-64 integer concepts are the direct contrast: 32 registers, a separate 32-bit file, and a 32-bit write that leaves the top half alone.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The AAPCS64 numbers the registers r0 – r30 in the specification, and the specification&#x27;s own convention for 31 is not one register." data-source-ref="content/src/a64_registers.ch:126" onclick="checkQuiz('quiz-a64-registers-i4', this)" aria-label="Option: The AAPCS64 numbers the registers r0 – r30 in the specification, and the specification&#x27;s own convention for 31 is not one register.">The AAPCS64 numbers the registers r0 – r30 in the specification, and the specification&#x27;s own convention for 31 is not one register.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;Register number 31 is three different things&quot;." data-source-ref="content/src/a64_registers.ch:49" onclick="checkQuiz('quiz-a64-registers-i4', this)" aria-label="Option: The previous concept answered which register argument four goes in, and the answer was a list.">The previous concept answered which register argument four goes in, and the answer was a list.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

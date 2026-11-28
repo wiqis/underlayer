@@ -185,11 +185,38 @@ public func render_rv_immediate() : string {
                 <span>Previous: <a href="/courses/rvasm/lessons/rv-compressed">The Extension That Halves Instructions, and the One That Breaks Them</a></span>
                 <span>Next: <a href="/courses/rvasm/lessons/rv-verify">Decode It Yourself, Twice, and Poison It</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The five, and what each one costs"?</p>
+                <div class="quiz" id="quiz-rv-immediate-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The best measurement in the course: what the assembler does instead of refusing&quot;, not &quot;The five, and what each one costs&quot;." data-source-ref="content/src/rv_immediate.ch:109" onclick="checkQuiz('quiz-rv-immediate-i4', this)" aria-label="Option: The plan said the assembler’s diagnostic at the edge of the B-type range would be the best measurement in the concept.">The plan said the assembler’s diagnostic at the edge of the B-type range would be the best measurement in the concept.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The five, and what each one costs&quot;." data-source-ref="content/src/rv_immediate.ch:180" onclick="checkQuiz('quiz-rv-immediate-i4', this)" aria-label="Option: Backwards, concept 2 measured the two masks that differ by one bit, and this page is what that one bit costs in reach.">Backwards, concept 2 measured the two masks that differ by one bit, and this page is what that one bit costs in reach.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Read the first two rows together, because the answer is counter-intuitive and it is the first relief a decoder author gets on this architecture." data-source-ref="content/src/rv_immediate.ch:64" onclick="checkQuiz('quiz-rv-immediate-i4', this)" aria-label="Option: Read the first two rows together, because the answer is counter-intuitive and it is the first relief a decoder author gets on this architecture.">Read the first two rows together, because the answer is counter-intuitive and it is the first relief a decoder author gets on this architecture.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The five, and what each one costs&quot;." data-source-ref="content/src/rv_immediate.ch:47" onclick="checkQuiz('quiz-rv-immediate-i4', this)" aria-label="Option: It is one decision — keep the registers still — paid for five different ways, and the masks in concept 2 are the receipts.">It is one decision — keep the registers still — paid for five different ways, and the masks in concept 2 are the receipts.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -142,6 +142,7 @@ $ stat -c %s cli-64.exe
                 <h2>Connect</h2>
                 <p>Alignment closes Module 3 and Module 4: you can locate every structure, name every address kind, translate RVA to file offset, and now explain every size field in the optional header. The section table also showed you directory RVAs hiding inside <code>.rdata</code> — import descriptors at 0x3A04, the IAT at 0x3000 — without saying how those tables are shaped.</p>
                 <p>Next: <a href="/courses/pe/lessons/pe-imports">The Import Tables</a> — how a PE names the DLLs and functions it needs, and how the loader turns names into callable addresses.</p>
+            <p class="verified-answer-key" data-source-ref="courses/pe/manifest.json#exercise_decls">Verified answer key: SizeOfRawData is rounded up to FileAlignment (0x200 here: 0x17BC -&gt; 0x1800). The spec says if SizeOfRawData exceeds VirtualSize the extra bytes are padding — zeros on disk, zero-fill in memory.</p>
             </div>
 
             <div class="lesson-footer">

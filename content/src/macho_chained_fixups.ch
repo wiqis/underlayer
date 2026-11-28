@@ -100,6 +100,7 @@ $ python3 -c "import struct; d=open('prog64.macho','rb').read(); print(struct.un
                 <h2>Connect</h2>
                 <p>With fixups (rebase and bind) and exports (the trie) resolved, dyld's remaining job on a linked executable is administrative: find its own code path, decide where the process starts, and jump.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-entry">The Dynamic Linker and Entry Point</a> — LC_LOAD_DYLINKER names /usr/lib/dyld, LC_MAIN names the entry file offset, and the slide arithmetic turns both into runtime addresses.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: Chained fixups encode rebase/bind info as a linked list threaded through the pointer slots themselves. Each 64-bit pointer packs a small next-chain offset in its low bits, so dyld follows the chain in-place instead of reading a separate opcode stream. LC_DYLD_CHAINED_FIXUPS points at dyld_chained_fixups_header in __LINKEDIT.</p>
             </div>
 
             <div class="lesson-footer">

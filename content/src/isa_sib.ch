@@ -309,6 +309,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^I4/,/^I5/p'
                 <span><a href="/courses/isa/lessons/isa-modrm">Previous: ModRM: The Two Fields That Decide the Length</a></span>
                 <span>Next: <a href="/courses/isa/lessons/isa-length">The Length Arithmetic</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "All 256 Bytes, and What They Say"?</p>
+                <div class="quiz" id="quiz-isa-sib-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model, and Two Retractions&quot;, not &quot;All 256 Bytes, and What They Say&quot;." data-source-ref="content/src/isa_sib.ch:57" onclick="checkQuiz('quiz-isa-sib-i4', this)" aria-label="Option: Two of the field values are special, and both of my recollections about them were wrong until they were measured .">Two of the field values are special, and both of my recollections about them were wrong until they were measured .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why One Byte Was Worth It&quot;, not &quot;All 256 Bytes, and What They Say&quot;." data-source-ref="content/src/isa_sib.ch:155" onclick="checkQuiz('quiz-isa-sib-i4', this)" aria-label="Option: Step back and ask whether the SIB is a good design, because the answer explains why x86 looks the way it does everywhere else.">Step back and ask whether the SIB is a good design, because the answer explains why x86 looks the way it does everywhere else.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;All 256 Bytes, and What They Say&quot;." data-source-ref="content/src/isa_sib.ch:296" onclick="checkQuiz('quiz-isa-sib-i4', this)" aria-label="Option: Exercise 5 is the one with the most surprising answer, and it is worth doing slowly.">Exercise 5 is the one with the most surprising answer, and it is worth doing slowly.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;All 256 Bytes, and What They Say&quot;." data-source-ref="content/src/isa_sib.ch:302" onclick="checkQuiz('quiz-isa-sib-i4', this)" aria-label="Option: The chain had that number for two courses and no mechanism; this is the mechanism.">The chain had that number for two courses and no mechanism; this is the mechanism.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="8B 04 24 prints a bare [rsp] with no index at all, while 8B 44 25 11 prints [rbp+riz*1+0x11] with a visible zero index." data-source-ref="content/src/isa_sib.ch:129" onclick="checkQuiz('quiz-isa-sib-i4', this)" aria-label="Option: 8B 04 24 prints a bare [rsp] with no index at all, while 8B 44 25 11 prints [rbp+riz*1+0x11] with a visible zero index.">8B 04 24 prints a bare [rsp] with no index at all, while 8B 44 25 11 prints [rbp+riz*1+0x11] with a visible zero index.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;All 256 Bytes, and What They Say&quot;." data-source-ref="content/src/isa_sib.ch:27" onclick="checkQuiz('quiz-isa-sib-i4', this)" aria-label="Option: The addressing forms ModRM gives you are [reg] , [reg+disp] and [rip+disp] .">The addressing forms ModRM gives you are [reg] , [reg+disp] and [rip+disp] .</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -317,6 +330,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^I4/,/^I5/p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

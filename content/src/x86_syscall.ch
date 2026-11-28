@@ -190,11 +190,39 @@ public func render_x86_syscall() : string {
                 <span>Previous: <a href="/courses/x86sys">The x86-64 Machine</a></span>
                 <span>Next: <a href="/courses/x86sys/lessons/x86-exceptions">All Thirty-Two, As an x86-64 Reference</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: thirteen markers, one system call, and the two that had to be put first"?</p>
+                <div class="quiz" id="quiz-x86-syscall-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: the convention is two rows long, and the ISA is the only part of it that is architecture&quot;, not &quot;The reality: thirteen markers, one system call, and the two that had to be put first&quot;." data-source-ref="content/src/x86_syscall.ch:75" onclick="checkQuiz('quiz-x86-syscall-i4', this)" aria-label="Option: That split is the whole of why the fourth argument is R10 .">That split is the whole of why the fourth argument is R10 .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the number, the error, and the six arguments that were ignored&quot;, not &quot;The reality: thirteen markers, one system call, and the two that had to be put first&quot;." data-source-ref="content/src/x86_syscall.ch:168" onclick="checkQuiz('quiz-x86-syscall-i4', this)" aria-label="Option: Three MSRs decide where a system call goes and what is cleared on the way in: IA32_STAR , IA32_LSTAR and IA32_SFMASK .">Three MSRs decide where a system call goes and what is cleared on the way in: IA32_STAR , IA32_LSTAR and IA32_SFMASK .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: thirteen markers, one system call, and the two that had to be put first&quot;." data-source-ref="content/src/x86_syscall.ch:184" onclick="checkQuiz('quiz-x86-syscall-i4', this)" aria-label="Option: The ISA course is where the 0F 05 encoding lives.">The ISA course is where the 0F 05 encoding lives.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="A wrong result that agrees with a story you have already written down is the hardest kind to catch, and this one did." data-source-ref="content/src/x86_syscall.ch:119" onclick="checkQuiz('quiz-x86-syscall-i4', this)" aria-label="Option: A wrong result that agrees with a story you have already written down is the hardest kind to catch, and this one did.">A wrong result that agrees with a story you have already written down is the hardest kind to catch, and this one did.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: thirteen markers, one system call, and the two that had to be put first&quot;." data-source-ref="content/src/x86_syscall.ch:47" onclick="checkQuiz('quiz-x86-syscall-i4', this)" aria-label="Option: There is exactly one instruction in long mode that a user process can execute to reach the kernel, and it is one byte long.">There is exactly one instruction in long mode that a user process can execute to reach the kernel, and it is one byte long.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

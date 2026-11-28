@@ -164,11 +164,40 @@ $ python3 symtables.py /lib/x86_64-linux-gnu/libc.so.6 | grep -A3 'SysV'
                 <span><a href="/courses/sym/lessons/sym-duplicate">Previous: Two Definitions and One Tentative</a></span>
                 <span>Next: <a href="/courses/sym/lessons/sym-plt">The PLT and the GOT</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-sym-hash-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_hash.ch:51" onclick="checkQuiz('quiz-sym-hash-i4', this)" aria-label="Option: Both tables do the same job and both use the same hash function.">Both tables do the same job and both use the same hash function.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_hash.ch:111" onclick="checkQuiz('quiz-sym-hash-i4', this)" aria-label="Option: Why the hash is computed over the base name, stripped of its version.">Why the hash is computed over the base name, stripped of its version.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_hash.ch:152" onclick="checkQuiz('quiz-sym-hash-i4', this)" aria-label="Option: Undefined symbols are the demands the static linker failed to satisfy, and the loader is their last chance.">Undefined symbols are the demands the static linker failed to satisfy, and the loader is their last chance.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_hash.ch:157" onclick="checkQuiz('quiz-sym-hash-i4', this)" aria-label="Option: This opens the runtime module, and the reason the module exists is the gap this concept sits in.">This opens the runtime module, and the reason the module exists is the gap this concept sits in.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Every exported symbol in glibc lands in exactly the bucket elf_hash(name) % 1017 predicts, with @version stripped from the name first." data-source-ref="content/src/sym_hash.ch:106" onclick="checkQuiz('quiz-sym-hash-i4', this)" aria-label="Option: Every exported symbol in glibc lands in exactly the bucket elf_hash(name) % 1017 predicts, with @version stripped from the name first.">Every exported symbol in glibc lands in exactly the bucket elf_hash(name) % 1017 predicts, with @version stripped from the name first.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_hash.ch:27" onclick="checkQuiz('quiz-sym-hash-i4', this)" aria-label="Option: A dynamic loader is given several libraries and a name, and must find the definition in time to patch a call site.">A dynamic loader is given several libraries and a name, and must find the definition in time to patch a call site.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -286,6 +286,18 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^  --- group C:/,/^  --- group D:
                 <span><a href="/courses/mem/lessons/mem-latency">Previous: A Chase and a Sweep Are Different Questions</a></span>
                 <span>Next: <a href="/courses/mem/lessons/mem-associativity">A Number From /sys, a Number Measured</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What the Instrument Reported"?</p>
+                <div class="quiz" id="quiz-mem-hierarchy-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_hierarchy.ch:97" onclick="checkQuiz('quiz-mem-hierarchy-i4', this)" aria-label="Option: The reason a tread tilts is that a level is not a set of lines with a switch on it.">The reason a tread tilts is that a level is not a set of lines with a switch on it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Reading the Curve&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_hierarchy.ch:201" onclick="checkQuiz('quiz-mem-hierarchy-i4', this)" aria-label="Option: Two worked readings, because the arithmetic is where a hierarchy table earns its keep.">Two worked readings, because the arithmetic is where a hierarchy table earns its keep.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_hierarchy.ch:279" onclick="checkQuiz('quiz-mem-hierarchy-i4', this)" aria-label="Option: The direct parent is the previous concept , and the inheritance is explicit rather than implied.">The direct parent is the previous concept , and the inheritance is explicit rather than implied.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="That middle line is the one to internalise, because it is the shape of every performance claim that can be honestly made on this machine." data-source-ref="content/src/mem_hierarchy.ch:171" onclick="checkQuiz('quiz-mem-hierarchy-i4', this)" aria-label="Option: That middle line is the one to internalise, because it is the shape of every performance claim that can be honestly made on this machine.">That middle line is the one to internalise, because it is the shape of every performance claim that can be honestly made on this machine.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_hierarchy.ch:27" onclick="checkQuiz('quiz-mem-hierarchy-i4', this)" aria-label="Option: Every description of a memory hierarchy is a table of four latency numbers, and every table of four numbers is a lie about the shape.">Every description of a memory hierarchy is a table of four latency numbers, and every table of four numbers is a lie about the shape.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
@@ -293,6 +305,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^  --- group C:/,/^  --- group D:
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

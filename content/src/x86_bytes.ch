@@ -243,11 +243,39 @@ public func render_x86_bytes() : string {
                 <span>Previous: <a href="/courses/x86simd/lessons/x86-order">Ordering: TSO, the Three Fences, and the Direction Flag</a></span>
                 <span>End of The x86-64 Data Path &middot; <a href="/courses/x86simd">course index</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What the second reader found that the first could not"?</p>
+                <div class="quiz" id="quiz-x86-bytes-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Thirty cases, and three numbers that are not the same claim&quot;, not &quot;What the second reader found that the first could not&quot;." data-source-ref="content/src/x86_bytes.ch:64" onclick="checkQuiz('quiz-x86-bytes-i4', this)" aria-label="Option: The encoder emits its own bytes to a flat binary, the build script assembles that binary verbatim, and objdump -D -b binary disassembles it.">The encoder emits its own bytes to a flat binary, the build script assembles that binary verbatim, and objdump -D -b binary disassembles it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Twenty-four retractions, sorted, and the one that took three attempts&quot;, not &quot;What the second reader found that the first could not&quot;." data-source-ref="content/src/x86_bytes.ch:197" onclick="checkQuiz('quiz-x86-bytes-i4', this)" aria-label="Option: Not one of the twenty-four is a mistake about how a computer works.">Not one of the twenty-four is a mistake about how a computer works.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What the second reader found that the first could not&quot;." data-source-ref="content/src/x86_bytes.ch:238" onclick="checkQuiz('quiz-x86-bytes-i4', this)" aria-label="Option: Forwards, and the chain in this section is now complete.">Forwards, and the chain in this section is now complete.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="And one more that is not a bug but a fact nobody had written down: the operand map ." data-source-ref="content/src/x86_bytes.ch:160" onclick="checkQuiz('quiz-x86-bytes-i4', this)" aria-label="Option: And one more that is not a bug but a fact nobody had written down: the operand map .">And one more that is not a bug but a fact nobody had written down: the operand map .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this concept is the course&quot;, not &quot;What the second reader found that the first could not&quot;." data-source-ref="content/src/x86_bytes.ch:47" onclick="checkQuiz('quiz-x86-bytes-i4', this)" aria-label="Option: Everything in the five previous pages is a measurement of the hardware.">Everything in the five previous pages is a measurement of the hardware.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

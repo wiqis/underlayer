@@ -233,11 +233,39 @@ public func render_x86_map() : string {
                 <span>Previous: <a href="/courses/x86asm/lessons/x86-vex">Two Bytes, Three, and the Bit That Went Wrong</a></span>
                 <span>End of x86-64 Assembly and Encoding &middot; <a href="/courses/x86asm">back to the course</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: nine groups, and the two that are about the checking"?</p>
+                <div class="quiz" id="quiz-x86-map-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: five rules, each one learned by being wrong&quot;, not &quot;The reality: nine groups, and the two that are about the checking&quot;." data-source-ref="content/src/x86_map.ch:110" onclick="checkQuiz('quiz-x86-map-i4', this)" aria-label="Option: Rule 1 is the one a reader is most likely to think is pedantic, so here is what it costs.">Rule 1 is the one a reader is most likely to think is pedantic, so here is what it costs.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the five failures this harness had of its own&quot;, not &quot;The reality: nine groups, and the two that are about the checking&quot;." data-source-ref="content/src/x86_map.ch:145" onclick="checkQuiz('quiz-x86-map-i4', this)" aria-label="Option: All of them were found by running it.">All of them were found by running it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: nine groups, and the two that are about the checking&quot;." data-source-ref="content/src/x86_map.ch:227" onclick="checkQuiz('quiz-x86-map-i4', this)" aria-label="Option: Backwards, this concept is the ledger for the other four.">Backwards, this concept is the ledger for the other four.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Fifty-one corpus entries are decoded by the artifact’s own length function and compared against the bytes the assembler emitted, which objdump independently confirms." data-source-ref="content/src/x86_map.ch:131" onclick="checkQuiz('quiz-x86-map-i4', this)" aria-label="Option: Fifty-one corpus entries are decoded by the artifact’s own length function and compared against the bytes the assembler emitted, which objdump independently confirms.">Fifty-one corpus entries are decoded by the artifact’s own length function and compared against the bytes the assembler emitted, which objdump independently confirms.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: nine groups, and the two that are about the checking&quot;." data-source-ref="content/src/x86_map.ch:47" onclick="checkQuiz('quiz-x86-map-i4', this)" aria-label="Option: The manifest’s completion criterion for this course is not “read it”.">The manifest’s completion criterion for this course is not “read it”.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

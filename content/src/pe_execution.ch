@@ -145,6 +145,7 @@ public func render_pe_execution() : string {
                 <h2>Connect</h2>
                 <p>That closes the arc: bytes, headers, directories, resources, TLS, exceptions, loading, memory, and now the first instructions that ever execute. Every claim above was read out of <code>cli-64.exe</code> or quoted from the spec and Microsoft documentation.</p>
                 <p>Back to the <a href="/courses/pe">course index</a> to review the full sequence, or revisit <a href="/courses/pe/lessons/pe-loader">the loader lesson</a> — it is the hinge the whole module turns on.</p>
+            <p class="verified-answer-key" data-source-ref="courses/pe/manifest.json#exercise_decls">Verified answer key: The spec defines AddressOfEntryPoint as the address relative to the image base. The loader adds ImageBase (plus relocation delta) to get the final VA. It points at process/CRT startup code, not your main() function.</p>
             </div>
 
             <div class="lesson-footer">

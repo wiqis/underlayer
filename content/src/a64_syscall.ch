@@ -278,11 +278,39 @@ public func render_a64_syscall() : string {
                 <span>Start: <a href="/courses/a64sys/lessons/a64-exceptions">One Register, Three Fields, and Thirty-Nine Meanings</a></span>
                 <span>End of concept 1 &middot; <a href="/courses/a64sys">course index</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The measurement: the same syscall, both architectures, and the relocations"?</p>
+                <div class="quiz" id="quiz-a64-syscall-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: read the instruction word, not the mnemonic&quot;, not &quot;The measurement: the same syscall, both architectures, and the relocations&quot;." data-source-ref="content/src/a64_syscall.ch:95" onclick="checkQuiz('quiz-a64-syscall-i4', this)" aria-label="Option: Sixteen bits, at bits[20:5], and the fifth row is the interesting one because it is the boundary the assembler drew for us.">Sixteen bits, at bits[20:5], and the fifth row is the interesting one because it is the boundary the assembler drew for us.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the argument audit, and the level where the contract is invisible&quot;, not &quot;The measurement: the same syscall, both architectures, and the relocations&quot;." data-source-ref="content/src/a64_syscall.ch:222" onclick="checkQuiz('quiz-a64-syscall-i4', this)" aria-label="Option: Four results, and the third is the one to remember.">Four results, and the third is the one to remember.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The measurement: the same syscall, both architectures, and the relocations&quot;." data-source-ref="content/src/a64_syscall.ch:272" onclick="checkQuiz('quiz-a64-syscall-i4', this)" aria-label="Option: Sideways, three neighbours that own the edges.">Sideways, three neighbours that own the edges.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="It is the AAPCS64 Indirect Result Location Register and an ordinary scratch, and the syscall convention reuses it." data-source-ref="content/src/a64_syscall.ch:169" onclick="checkQuiz('quiz-a64-syscall-i4', this)" aria-label="Option: It is the AAPCS64 Indirect Result Location Register and an ordinary scratch, and the syscall convention reuses it.">It is the AAPCS64 Indirect Result Location Register and an ordinary scratch, and the syscall convention reuses it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The measurement: the same syscall, both architectures, and the relocations&quot;." data-source-ref="content/src/a64_syscall.ch:56" onclick="checkQuiz('quiz-a64-syscall-i4', this)" aria-label="Option: Everything in the last two courses happened while your code was running .">Everything in the last two courses happened while your code was running .</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

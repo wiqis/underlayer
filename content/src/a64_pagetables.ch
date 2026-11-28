@@ -417,11 +417,39 @@ public func render_a64_pagetables() : string {
                 <span>Previous: <a href="/courses/a64sys/lessons/a64-virtual">T0SZ = 64 - 48, and the Field With a Floor</a></span>
                 <span>Next: <a href="/courses/a64sys/lessons/a64-evidence">What Is Measured Here, What Is Quoted, and What You Cannot Conclude</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The measurement, part one: one integer in a section header"?</p>
+                <div class="quiz" id="quiz-a64-pagetables-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: 512 entries, 8 bytes, 4 KiB&quot;, not &quot;The measurement, part one: one integer in a section header&quot;." data-source-ref="content/src/a64_pagetables.ch:150" onclick="checkQuiz('quiz-a64-pagetables-i4', this)" aria-label="Option: None of that is measurable on this host and the file says so rather than inventing a number.">None of that is measurable on this host and the file says so rather than inventing a number.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the block sizes, and the arithmetic that says you cannot use them&quot;, not &quot;The measurement, part one: one integer in a section header&quot;." data-source-ref="content/src/a64_pagetables.ch:342" onclick="checkQuiz('quiz-a64-pagetables-i4', this)" aria-label="Option: The sizes are quoted; the constraint is arithmetic.">The sizes are quoted; the constraint is arithmetic.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The measurement, part one: one integer in a section header&quot;." data-source-ref="content/src/a64_pagetables.ch:411" onclick="checkQuiz('quiz-a64-pagetables-i4', this)" aria-label="Option: Sideways, and this is where the course does its real work.">Sideways, and this is where the course does its real work.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="What is measured is the input to the decision: the two relocations, their four-byte spacing, and the symbol they share." data-source-ref="content/src/a64_pagetables.ch:336" onclick="checkQuiz('quiz-a64-pagetables-i4', this)" aria-label="Option: What is measured is the input to the decision: the two relocations, their four-byte spacing, and the symbol they share.">What is measured is the input to the decision: the two relocations, their four-byte spacing, and the symbol they share.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The measurement, part one: one integer in a section header&quot;." data-source-ref="content/src/a64_pagetables.ch:59" onclick="checkQuiz('quiz-a64-pagetables-i4', this)" aria-label="Option: To a compiler, a level-0 translation table is an array of 512 unsigned long .">To a compiler, a level-0 translation table is an array of 512 unsigned long .</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

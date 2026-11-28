@@ -234,6 +234,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^  --- group D:/,/^  --- group E:
                 <span><a href="/courses/mem/lessons/mem-hierarchy">Previous: A Band, Not Four Numbers</a></span>
                 <span>Next: <a href="/courses/mem/lessons/mem-translation">Translation, and the 512x a Huge Page Buys</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What the Instrument Reported"?</p>
+                <div class="quiz" id="quiz-mem-associativity-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_associativity.ch:77" onclick="checkQuiz('quiz-mem-associativity-i4', this)" aria-label="Option: A layout at stride 4096 puts every line in set 0.">A layout at stride 4096 puts every line in set 0.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The Wrong Cause, Twice&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_associativity.ch:153" onclick="checkQuiz('quiz-mem-associativity-i4', this)" aria-label="Option: And there is an arithmetic tell that would have caught it immediately, which the artifact prints for exactly that reason.">And there is an arithmetic tell that would have caught it immediately, which the artifact prints for exactly that reason.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_associativity.ch:222" onclick="checkQuiz('quiz-mem-associativity-i4', this)" aria-label="Option: Two arms whose addresses collide produce a large, stable, reproducible difference for a reason the experiment&#x27;s own caption denies.">Two arms whose addresses collide produce a large, stable, reproducible difference for a reason the experiment&#x27;s own caption denies.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_associativity.ch:227" onclick="checkQuiz('quiz-mem-associativity-i4', this)" aria-label="Option: The direct parent is the previous concept , and the relationship is the one the two concepts&#x27; own caveats set up.">The direct parent is the previous concept , and the relationship is the one the two concepts&#x27; own caveats set up.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="And the worst row is 9 lines rather than 32, which the model does not explain and the artifact declines to explain." data-source-ref="content/src/mem_associativity.ch:125" onclick="checkQuiz('quiz-mem-associativity-i4', this)" aria-label="Option: And the worst row is 9 lines rather than 32, which the model does not explain and the artifact declines to explain.">And the worst row is 9 lines rather than 32, which the model does not explain and the artifact declines to explain.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_associativity.ch:27" onclick="checkQuiz('quiz-mem-associativity-i4', this)" aria-label="Option: The previous concept measured how many lines fit in each level, and the answer was a curve.">The previous concept measured how many lines fit in each level, and the answer was a curve.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
@@ -241,6 +254,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^  --- group D:/,/^  --- group E:
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

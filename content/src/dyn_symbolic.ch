@@ -287,6 +287,19 @@ $ python3 crosscheck.py 2&gt;&amp;2 | sed -n '/\\[4\\]/,/\\[6\\]/p'
                 <span><a href="/courses/dyn/lessons/dyn-export">Previous: Hiding Things, and the Trap</a></span>
                 <span>Next: <a href="/courses/dyn/lessons/dyn-dlopen">dlopen, dlsym, and the Mode Bits</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-dyn-symbolic-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_symbolic.ch:55" onclick="checkQuiz('quiz-dyn-symbolic-i4', this)" aria-label="Option: Find the difference between the two libraries, because it is smaller than the flag name suggests.">Find the difference between the two libraries, because it is smaller than the flag name suggests.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_symbolic.ch:162" onclick="checkQuiz('quiz-dyn-symbolic-i4', this)" aria-label="Option: The case where a library is genuinely broken by interposition, which is rare, real, and worth recognising when you see it.">The case where a library is genuinely broken by interposition, which is rare, real, and worth recognising when you see it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_symbolic.ch:273" onclick="checkQuiz('quiz-dyn-symbolic-i4', this)" aria-label="Option: Exercise 1 is the one that gives you the rule rather than the anecdote, and the answer is worth predicting before you run it.">Exercise 1 is the one that gives you the rule rather than the anecdote, and the answer is worth predicting before you run it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_symbolic.ch:279" onclick="checkQuiz('quiz-dyn-symbolic-i4', this)" aria-label="Option: This closes the building module, and it is the exact complement of the previous concept .">This closes the building module, and it is the exact complement of the previous concept .</button>
+                    <button class="quiz-option" data-correct="true" data-explain="lib_value is defined in liba.so , not in libb , so -Bsymbolic had nothing to bind and correctly did nothing." data-source-ref="content/src/dyn_symbolic.ch:128" onclick="checkQuiz('quiz-dyn-symbolic-i4', this)" aria-label="Option: lib_value is defined in liba.so , not in libb , so -Bsymbolic had nothing to bind and correctly did nothing.">lib_value is defined in liba.so , not in libb , so -Bsymbolic had nothing to bind and correctly did nothing.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_symbolic.ch:27" onclick="checkQuiz('quiz-dyn-symbolic-i4', this)" aria-label="Option: A library that defines a function and calls it.">A library that defines a function and calls it.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     
 
@@ -295,6 +308,22 @@ $ python3 crosscheck.py 2&gt;&amp;2 | sed -n '/\\[4\\]/,/\\[6\\]/p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

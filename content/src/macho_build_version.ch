@@ -109,6 +109,7 @@ $ /usr/lib/llvm-21/bin/llvm-otool -arch x86_64 -l prog64.macho | grep -A2 LC_UUI
                 <h2>Connect</h2>
                 <p>Knowing <em>which build</em> this is invites the next question: is it also <em>which bytes the developer signed</em>? The UUID identifies a build to tools; macOS wants a cryptographic statement identifying it to a developer — and the load command that carries it is next.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-code-signing">Code Signing</a> — LC_CODE_SIGNATURE, the big-endian superblob, page hashes in the CodeDirectory, and the team identity embedded at byte 101 of ours.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: LC_BUILD_VERSION (0x32) holds platform (1 = PLATFORM_MACOS, 2 = PLATFORM_IOS), minos (minimum OS version required), and sdk (SDK version used to build). It replaced the older LC_VERSION_MIN_MACOSX for newer toolchains.</p>
             </div>
 
             <div class="lesson-footer">

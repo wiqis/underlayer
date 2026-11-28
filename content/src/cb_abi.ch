@@ -256,11 +256,39 @@ SIDE of the bargain, and the order matters:
                 <span>Previous: <a href="/courses/compback/lessons/cb-sched">Instruction Scheduling</a></span>
                 <span>Next: <a href="/courses/compback/lessons/cb-verify">Read a Backend&rsquo;s Decisions Back Out of the Bytes</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Six things, as a list, because a list is what you can go and look for"?</p>
+                <div class="quiz" id="quiz-cb-abi-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;What is QUOTED, and what was actually measured&quot;, not &quot;Six things, as a list, because a list is what you can go and look for&quot;." data-source-ref="content/src/cb_abi.ch:58" onclick="checkQuiz('quiz-cb-abi-i4', this)" aria-label="Option: Read the documents rather than trusting the table, and note that the table is one line per target on purpose.">Read the documents rather than trusting the table, and note that the table is one line per target on purpose.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The three conventions side by side, and what a reader should notice&quot;, not &quot;Six things, as a list, because a list is what you can go and look for&quot;." data-source-ref="content/src/cb_abi.ch:231" onclick="checkQuiz('quiz-cb-abi-i4', this)" aria-label="Option: That last pair of absences is the reason the section stops at six instructions of reading registers.">That last pair of absences is the reason the section stops at six instructions of reading registers.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Six things, as a list, because a list is what you can go and look for&quot;." data-source-ref="content/src/cb_abi.ch:248" onclick="checkQuiz('quiz-cb-abi-i4', this)" aria-label="Option: a64-frame and x86-frame teach what a frame is once one exists; this page is about the order that decides whether one does.">a64-frame and x86-frame teach what a frame is once one exists; this page is about the order that decides whether one does.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Not before code generation, not before register allocation — before selection , which is the very first of the three questions this course asked." data-source-ref="content/src/cb_abi.ch:192" onclick="checkQuiz('quiz-cb-abi-i4', this)" aria-label="Option: Not before code generation, not before register allocation — before selection , which is the very first of the three questions this course asked.">Not before code generation, not before register allocation — before selection , which is the very first of the three questions this course asked.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The obligation is not the convention&quot;, not &quot;Six things, as a list, because a list is what you can go and look for&quot;." data-source-ref="content/src/cb_abi.ch:27" onclick="checkQuiz('quiz-cb-abi-i4', this)" aria-label="Option: Three courses in this collection already taught the three calling conventions, in full, each with its document named: x86-calling , a64-aapcs , and rv-calling .">Three courses in this collection already taught the three calling conventions, in full, each with its document named: x86-calling , a64-aapcs , and rv-calling .</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

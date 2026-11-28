@@ -211,11 +211,39 @@ having to move immediate bits across formats.&rdquo;
                 <span>Previous: <a href="/courses/rvasm/lessons/rv-isa">A Set of Documents, Not a List</a></span>
                 <span>Next: <a href="/courses/rvasm/lessons/rv-compressed">The Extension That Halves Instructions, and the One That Breaks Them</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The compressed extension’s second register encoding"?</p>
+                <div class="quiz" id="quiz-rv-encoding-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The six formats, and where the manual’s four are&quot;, not &quot;The compressed extension’s second register encoding&quot;." data-source-ref="content/src/rv_encoding.ch:74" onclick="checkQuiz('quiz-rv-encoding-i4', this)" aria-label="Option: The count is six and the manual’s own count is four, and both are right about different things.">The count is six and the manual’s own count is four, and both are right about different things.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The masks, and what a mask is not&quot;, not &quot;The compressed extension’s second register encoding&quot;." data-source-ref="content/src/rv_encoding.ch:110" onclick="checkQuiz('quiz-rv-encoding-i4', this)" aria-label="Option: The method: assemble an instruction, change one operand, assemble it again, and OR the XOR over a sweep of variants.">The method: assemble an instruction, change one operand, assemble it again, and OR the XOR over a sweep of variants.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The compressed extension’s second register encoding&quot;." data-source-ref="content/src/rv_encoding.ch:207" onclick="checkQuiz('quiz-rv-encoding-i4', this)" aria-label="Option: Concept 4 takes the two masks that differ by one bit and finds out what a 13-bit permuted displacement actually reaches.">Concept 4 takes the two masks that differ by one bit and finds out what a 13-bit permuted displacement actually reaches.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Every register name in the disassembly is seven too small, every operand is a real register, and nothing about the output looks wrong." data-source-ref="content/src/rv_encoding.ch:184" onclick="checkQuiz('quiz-rv-encoding-i4', this)" aria-label="Option: Every register name in the disassembly is seven too small, every operand is a real register, and nothing about the output looks wrong.">Every register name in the disassembly is seven too small, every operand is a real register, and nothing about the output looks wrong.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The compressed extension’s second register encoding&quot;." data-source-ref="content/src/rv_encoding.ch:48" onclick="checkQuiz('quiz-rv-encoding-i4', this)" aria-label="Option: Concept 1 established that the ISA is a set of documents.">Concept 1 established that the ISA is a set of documents.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

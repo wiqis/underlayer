@@ -308,11 +308,39 @@ $ objdump -D -b binary -m i386:x86-64 -M intel evex.bin
                 <span>Previous: <a href="/courses/x86asm/lessons/x86-flags">From a Comparison to a Boolean</a></span>
                 <span>Next: <a href="/courses/x86asm/lessons/x86-map">The Audit, and the Reader That Agreed With Itself</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: EVEX, which this machine cannot run"?</p>
+                <div class="quiz" id="quiz-x86-vex-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: four encodings, four jobs, one idea&quot;, not &quot;The reality: EVEX, which this machine cannot run&quot;." data-source-ref="content/src/x86_vex.ch:79" onclick="checkQuiz('quiz-x86-vex-i4', this)" aria-label="Option: Two operand slots, one of which is destroyed.">Two operand slots, one of which is destroyed.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: writing a decoder that accepts all four&quot;, not &quot;The reality: EVEX, which this machine cannot run&quot;." data-source-ref="content/src/x86_vex.ch:287" onclick="checkQuiz('quiz-x86-vex-i4', this)" aria-label="Option: Skip it, count it, and report it — do not stop, and do not guess.">Skip it, count it, and report it — do not stop, and do not guess.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: EVEX, which this machine cannot run&quot;." data-source-ref="content/src/x86_vex.ch:302" onclick="checkQuiz('quiz-x86-vex-i4', this)" aria-label="Option: Backwards, isa-rex has the 0x40 - 0x4F byte whose job VEX absorbed, and isa-modes is where the 0x62 collision lives.">Backwards, isa-rex has the 0x40 - 0x4F byte whose job VEX absorbed, and isa-modes is where the 0x62 collision lives.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="It costs nothing to buy and nothing to keep, and no duration in this artifact can price it." data-source-ref="content/src/x86_vex.ch:243" onclick="checkQuiz('quiz-x86-vex-i4', this)" aria-label="Option: It costs nothing to buy and nothing to keep, and no duration in this artifact can price it.">It costs nothing to buy and nothing to keep, and no duration in this artifact can price it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: EVEX, which this machine cannot run&quot;." data-source-ref="content/src/x86_vex.ch:47" onclick="checkQuiz('quiz-x86-vex-i4', this)" aria-label="Option: The ISA course taught that you can write 0xC4 and 0xC5 in a byte stream and that they change how the rest decodes.">The ISA course taught that you can write 0xC4 and 0xC5 in a byte stream and that they change how the rest decodes.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

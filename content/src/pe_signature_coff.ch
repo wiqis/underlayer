@@ -139,6 +139,7 @@ Characteristics 0x102
                 <h2>Connect</h2>
                 <p>The COFF header ends with <code>SizeOfOptionalHeader</code> — a size field that points straight into the next layer. For Sample A it promises 240 bytes of loader instructions; for Sample B, 224. That layer is called "optional" for a historical reason that surprises almost everyone.</p>
                 <p>Next: <a href="/courses/pe/lessons/pe-optional-header">The Optional Header</a> — entry point, image base, alignments, subsystem, and a full side-by-side walk of the PE32 and PE32+ layouts.</p>
+            <p class="verified-answer-key" data-source-ref="courses/pe/manifest.json#exercise_decls">Verified answer key: IMAGE_FILE_HEADER is 20 bytes: Machine(2) + NumberOfSections(2) + TimeDateStamp(4) + PointerToSymbolTable(4) + NumberOfSymbols(4) + SizeOfOptionalHeader(2) + Characteristics(2). IMAGE_FILE_MACHINE_I386 = 0x14C is Intel 386 and compatible 32-bit x86. x64 is 0x8664, ARM64 is 0xAA64.</p>
             </div>
 
             <div class="lesson-footer">

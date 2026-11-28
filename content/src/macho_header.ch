@@ -126,6 +126,7 @@ $ llvm-readobj --file-headers prog64.macho
                 <h2>Connect</h2>
                 <p>Thirty-two bytes, decoded: identity, purpose, bounds, behavior. Two of those fields — cputype and cpusubtype — are the pair the kernel and dyld use to decide whether this file can run on the machine in front of them, and the pair a FAT container stores once per slice.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-cputypes">CPU Types and Subtypes</a> — how 0x01000007 is built from CPU_TYPE_X86 and the ABI64 bit, why the subtype carries a LIB64 flag, and what ARM64E means.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: mach_header_64 = magic(4) + cputype(4) + cpusubtype(4) + filetype(4) + ncmds(4) + sizeofcmds(4) + flags(4) + reserved(4) = 32 bytes. The reserved field exists only in the 64-bit variant. ncmds tells the loader how many load commands to walk; sizeofcmds gives the total bytes those commands occupy (so the first segment&#x27;s data starts at 32 + sizeofcmds). Both are set by the linker and must be consistent with the actual command stream.</p>
             </div>
 
             <div class="lesson-footer">

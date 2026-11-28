@@ -175,11 +175,39 @@ public func render_rv_registers() : string {
                 <span>Previous: <a href="/courses/rvabi/lessons/rv-noflags">No Flags Register, No Condition Codes, No CMOV</a></span>
                 <span>Next: <a href="/courses/rvabi/lessons/rv-compressed-cost">What Compression Does to the ABI and to Disassembly</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Two files, one spelling, and the trap that caught this file"?</p>
+                <div class="quiz" id="quiz-rv-registers-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The audit, before the census&quot;, not &quot;Two files, one spelling, and the trap that caught this file&quot;." data-source-ref="content/src/rv_registers.ch:54" onclick="checkQuiz('quiz-rv-registers-i4', this)" aria-label="Option: Two things went wrong, and both produced numbers that looked entirely reasonable.">Two things went wrong, and both produced numbers that looked entirely reasonable.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Thirty-two registers, counted by role&quot;, not &quot;Two files, one spelling, and the trap that caught this file&quot;." data-source-ref="content/src/rv_registers.ch:92" onclick="checkQuiz('quiz-rv-registers-i4', this)" aria-label="Option: The interesting rows are not the largest ones.">The interesting rows are not the largest ones.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Two files, one spelling, and the trap that caught this file&quot;." data-source-ref="content/src/rv_registers.ch:169" onclick="checkQuiz('quiz-rv-registers-i4', this)" aria-label="Option: Across architectures, a64-registers is the same trap with a worse mechanism, and the comparison is the point.">Across architectures, a64-registers is the same trap with a worse mechanism, and the comparison is the point.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="In the compressed specification c.mv is defined only when rs2 is not x0, and the cell with rs2 = x0 is c.li ." data-source-ref="content/src/rv_registers.ch:142" onclick="checkQuiz('quiz-rv-registers-i4', this)" aria-label="Option: In the compressed specification c.mv is defined only when rs2 is not x0, and the cell with rs2 = x0 is c.li .">In the compressed specification c.mv is defined only when rs2 is not x0, and the cell with rs2 = x0 is c.li .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why the register list is a claim and not a caption&quot;, not &quot;Two files, one spelling, and the trap that caught this file&quot;." data-source-ref="content/src/rv_registers.ch:47" onclick="checkQuiz('quiz-rv-registers-i4', this)" aria-label="Option: The ABI names roles .">The ABI names roles .</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

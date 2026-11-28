@@ -206,11 +206,39 @@ public func render_rv_noflags() : string {
                 <span>Previous: <a href="/courses/rvabi/lessons/rv-calling">The Calling Convention</a></span>
                 <span>Next: <a href="/courses/rvabi/lessons/rv-registers">The Register File as Roles, Not Numbers</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Three targets, one C function, three DISJOINT sets"?</p>
+                <div class="quiz" id="quiz-rv-noflags-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The manual admits it, and the admission is the whole argument&quot;, not &quot;Three targets, one C function, three DISJOINT sets&quot;." data-source-ref="content/src/rv_noflags.ch:63" onclick="checkQuiz('quiz-rv-noflags-i4', this)" aria-label="Option: A course that inferred the absence from a compiler’s output would be arguing from a hole, and a hole is weak evidence.">A course that inferred the absence from a compiler’s output would be arguing from a hole, and a hole is weak evidence.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Eleven functions of ?: , four levels, three buckets&quot;, not &quot;Three targets, one C function, three DISJOINT sets&quot;." data-source-ref="content/src/rv_noflags.ch:129" onclick="checkQuiz('quiz-rv-noflags-i4', this)" aria-label="Option: 1 : 0 for a signed int.">1 : 0 for a signed int.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Three targets, one C function, three DISJOINT sets&quot;." data-source-ref="content/src/rv_noflags.ch:200" onclick="checkQuiz('quiz-rv-noflags-i4', this)" aria-label="Option: Across architectures, a64-cond is this page from the other side.">Across architectures, a64-cond is this page from the other side.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="On x86-64 the sequence for mymin is mov / cmp / cmov / ret : four instructions where RISC-V’s is three." data-source-ref="content/src/rv_noflags.ch:168" onclick="checkQuiz('quiz-rv-noflags-i4', this)" aria-label="Option: On x86-64 the sequence for mymin is mov / cmp / cmov / ret : four instructions where RISC-V’s is three.">On x86-64 the sequence for mymin is mov / cmp / cmov / ret : four instructions where RISC-V’s is three.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why an absence is worth twenty-seven minutes&quot;, not &quot;Three targets, one C function, three DISJOINT sets&quot;." data-source-ref="content/src/rv_noflags.ch:56" onclick="checkQuiz('quiz-rv-noflags-i4', this)" aria-label="Option: An absence is the hardest kind of claim to teach, because there is nothing to point at.">An absence is the hardest kind of claim to teach, because there is nothing to point at.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

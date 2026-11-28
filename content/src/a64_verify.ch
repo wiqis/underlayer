@@ -175,11 +175,39 @@ public func render_a64_verify() : string {
                 <span>Previous: <a href="/courses/a64asm/lessons/a64-cond">Sixteen Conditions, Four Bits, and the Inversion That Hides</a></span>
                 <span>End of AArch64: Encoding From The Ground Up &middot; <a href="/courses">all courses</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Three things that are cheaper to state than to prove"?</p>
+                <div class="quiz" id="quiz-a64-verify-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Two readers, and what they agree on&quot;, not &quot;Three things that are cheaper to state than to prove&quot;." data-source-ref="content/src/a64_verify.ch:55" onclick="checkQuiz('quiz-a64-verify-i4', this)" aria-label="Option: Every instruction in the corpus is decoded twice: once by the model chain, once by llvm-objdump-21 --triple=aarch64 .">Every instruction in the corpus is decoded twice: once by the model chain, once by llvm-objdump-21 --triple=aarch64 .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the harness&quot;, not &quot;Three things that are cheaper to state than to prove&quot;." data-source-ref="content/src/a64_verify.ch:139" onclick="checkQuiz('quiz-a64-verify-i4', this)" aria-label="Option: crosscheck.py reads the recorded output and re-asks the claims.">crosscheck.py reads the recorded output and re-asks the claims.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Three things that are cheaper to state than to prove&quot;." data-source-ref="content/src/a64_verify.ch:169" onclick="checkQuiz('quiz-a64-verify-i4', this)" aria-label="Option: Concept 2 is where the register-31 mistake lived and where the field map that made it visible is measured.">Concept 2 is where the register-31 mistake lived and where the field map that made it visible is measured.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Each was retracted in public, and the history is printed by the artifact rather than fixed in silence." data-source-ref="content/src/a64_verify.ch:129" onclick="checkQuiz('quiz-a64-verify-i4', this)" aria-label="Option: Each was retracted in public, and the history is printed by the artifact rather than fixed in silence.">Each was retracted in public, and the history is printed by the artifact rather than fixed in silence.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;Three things that are cheaper to state than to prove&quot;." data-source-ref="content/src/a64_verify.ch:48" onclick="checkQuiz('quiz-a64-verify-i4', this)" aria-label="Option: The four concepts before this one made a lot of claims.">The four concepts before this one made a lot of claims.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

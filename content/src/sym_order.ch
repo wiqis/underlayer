@@ -158,11 +158,40 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/\[4\]/,/^$/p'
                 <span><a href="/courses/sym/lessons/sym-algorithm">Previous: The Algorithm, Measured</a></span>
                 <span>Next: <a href="/courses/sym/lessons/sym-duplicate">Two Definitions and One Tentative</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-sym-order-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_order.ch:39" onclick="checkQuiz('quiz-sym-order-i4', this)" aria-label="Option: The previous concept gave the algorithm.">The previous concept gave the algorithm.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_order.ch:102" onclick="checkQuiz('quiz-sym-order-i4', this)" aria-label="Option: The practical decision, stated as most build systems actually face it.">The practical decision, stated as most build systems actually face it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_order.ch:146" onclick="checkQuiz('quiz-sym-order-i4', this)" aria-label="Option: That is a real cost of coarse-grained extraction, and it is why thin archives and -ffunction-sections plus --gc-sections exist.">That is a real cost of coarse-grained extraction, and it is why thin archives and -ffunction-sections plus --gc-sections exist.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_order.ch:151" onclick="checkQuiz('quiz-sym-order-i4', this)" aria-label="Option: This is the second half of a pair with The Algorithm, Measured .">This is the second half of a pair with The Algorithm, Measured .</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Cost is proportional to symbols wanted, not to library size , which is the property that makes a thousand-object static library cheap to link against." data-source-ref="content/src/sym_order.ch:97" onclick="checkQuiz('quiz-sym-order-i4', this)" aria-label="Option: Cost is proportional to symbols wanted, not to library size , which is the property that makes a thousand-object static library cheap to link against.">Cost is proportional to symbols wanted, not to library size , which is the property that makes a thousand-object static library cheap to link against.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_order.ch:27" onclick="checkQuiz('quiz-sym-order-i4', this)" aria-label="Option: Almost everyone’s first experience of link order is not a library dependency problem.">Almost everyone’s first experience of link order is not a library dependency problem.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

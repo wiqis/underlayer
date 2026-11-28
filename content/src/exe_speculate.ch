@@ -296,6 +296,19 @@ $ perf stat -e branch-misses,branches ./cycbench 2&gt;&amp;1 | tail -4
                 <span><a href="/courses/exe/lessons/exe-frontend">Previous: The Front End and the Branch Predictor</a></span>
                 <span>Next: <a href="/courses/exe/lessons/exe-verify">The Instrument and the Oracle Loop</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Two Explanations, and Why the Measurement Cannot Separate Them"?</p>
+                <div class="quiz" id="quiz-exe-speculate-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Two Explanations, and Why the Measurement Cannot Separate Them&quot;." data-source-ref="content/src/exe_speculate.ch:70" onclick="checkQuiz('quiz-exe-speculate-i4', this)" aria-label="Option: That word “renamed” is doing more work than it appears to, and it connects directly to the dependency concept .">That word “renamed” is doing more work than it appears to, and it connects directly to the dependency concept .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;What a Limit Looks Like When You Write It Down&quot;, not &quot;Two Explanations, and Why the Measurement Cannot Separate Them&quot;." data-source-ref="content/src/exe_speculate.ch:156" onclick="checkQuiz('quiz-exe-speculate-i4', this)" aria-label="Option: There is a temptation, when an experiment returns nothing, to write the expected number and attribute it to the general case.">There is a temptation, when an experiment returns nothing, to write the expected number and attribute it to the general case.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Two Explanations, and Why the Measurement Cannot Separate Them&quot;." data-source-ref="content/src/exe_speculate.ch:283" onclick="checkQuiz('quiz-exe-speculate-i4', this)" aria-label="Option: Two curves instead of one — miss count and time — and the answer is in whether they are flat together or separately.">Two curves instead of one — miss count and time — and the answer is in whether they are flat together or separately.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Two Explanations, and Why the Measurement Cannot Separate Them&quot;." data-source-ref="content/src/exe_speculate.ch:289" onclick="checkQuiz('quiz-exe-speculate-i4', this)" aria-label="Option: The connection to the opcode-map concept is the one that was set up two courses ago and is now closed.">The connection to the opcode-map concept is the one that was set up two courses ago and is now closed.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The folklore’s precondition — a branch that mispredicts often — was never met here, so the folklore was not tested." data-source-ref="content/src/exe_speculate.ch:151" onclick="checkQuiz('quiz-exe-speculate-i4', this)" aria-label="Option: The folklore’s precondition — a branch that mispredicts often — was never met here, so the folklore was not tested.">The folklore’s precondition — a branch that mispredicts often — was never met here, so the folklore was not tested.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Two Explanations, and Why the Measurement Cannot Separate Them&quot;." data-source-ref="content/src/exe_speculate.ch:27" onclick="checkQuiz('quiz-exe-speculate-i4', this)" aria-label="Option: The obvious centrepiece of a course on how a CPU executes instructions is the cost of a mispredicted branch.">The obvious centrepiece of a course on how a CPU executes instructions is the cost of a mispredicted branch.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -304,6 +317,22 @@ $ perf stat -e branch-misses,branches ./cycbench 2&gt;&amp;1 | tail -4
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

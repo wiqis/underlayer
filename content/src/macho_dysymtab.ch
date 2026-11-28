@@ -127,6 +127,7 @@ address            index
                 <h2>Connect</h2>
                 <p>Everything here indexes the array from <a href="/courses/macho/lessons/macho-symtab">The Symbol Table</a> — same symoff, same nsyms, just ranged and cross-referenced instead of flat.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-relocations">Relocation Entries</a> — how the linker learns what to patch while the file is still an object, before any of these dynamic tables matter.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: The symbol table is partitioned: local symbols first (ilocalsym..), then externally-defined symbols, then externally-undefined (imported) symbols. dyld uses these ranges to build its symbol tables without scanning all nsyms entries.</p>
             </div>
 
             <div class="lesson-footer">

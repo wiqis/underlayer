@@ -245,11 +245,40 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^  --- group F:/,/^  --- group G:
                 <span><a href="/courses/mem/lessons/mem-translation">Previous: Translation, and the 512x a Huge Page Buys</a></span>
                 <span>Next: <a href="/courses/mem/lessons/mem-sharing">Two Threads, One Line</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What the Instrument Reported"?</p>
+                <div class="quiz" id="quiz-mem-writes-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_writes.ch:46" onclick="checkQuiz('quiz-mem-writes-i4', this)" aria-label="Option: The accounting is arithmetic, so it is worth doing before looking at a single measurement.">The accounting is arithmetic, so it is worth doing before looking at a single measurement.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The Ratio That Belonged to the Loop&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_writes.ch:137" onclick="checkQuiz('quiz-mem-writes-i4', this)" aria-label="Option: At 16 KiB the read arm completes a line in 0.196 ns .">At 16 KiB the read arm completes a line in 0.196 ns .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_writes.ch:232" onclick="checkQuiz('quiz-mem-writes-i4', this)" aria-label="Option: Exercise 3 is the one with the immediate payoff, because it converts a table into a habit.">Exercise 3 is the one with the immediate payoff, because it converts a table into a habit.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_writes.ch:238" onclick="checkQuiz('quiz-mem-writes-i4', this)" aria-label="Option: Backwards, this concept is the third and last use of the hierarchy as a boundary to step across.">Backwards, this concept is the third and last use of the hierarchy as a boundary to step across.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="It is the same discipline as the first concept&#x27;s noise floor, applied to a table that keeps producing a number that looks like a result." data-source-ref="content/src/mem_writes.ch:131" onclick="checkQuiz('quiz-mem-writes-i4', this)" aria-label="Option: It is the same discipline as the first concept&#x27;s noise floor, applied to a table that keeps producing a number that looks like a result.">It is the same discipline as the first concept&#x27;s noise floor, applied to a table that keeps producing a number that looks like a result.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_writes.ch:28" onclick="checkQuiz('quiz-mem-writes-i4', this)" aria-label="Option: Every measurement so far in this course has been about loads.">Every measurement so far in this course has been about loads.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

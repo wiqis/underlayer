@@ -206,11 +206,39 @@ public func render_priv_doors() : string {
                 <span>Previous: <a href="/courses/priv/lessons/priv-vectors">Numbers, and the Ones That Are Not Numbers</a></span>
                 <span>Next: <a href="/courses/priv/lessons/priv-convention">The Convention, in the Kernel's Own Bytes</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: four arms, one measurement, and one refusal"?</p>
+                <div class="quiz" id="quiz-priv-doors-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: what each instruction actually does&quot;, not &quot;The reality: four arms, one measurement, and one refusal&quot;." data-source-ref="content/src/priv_doors.ch:53" onclick="checkQuiz('quiz-priv-doors-i4', this)" aria-label="Option: There is a family of x86 instructions for entering the kernel, and they are not variations on a theme.">There is a family of x86 instructions for entering the kernel, and they are not variations on a theme.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: what each door costs you, concretely&quot;, not &quot;The reality: four arms, one measurement, and one refusal&quot;." data-source-ref="content/src/priv_doors.ch:185" onclick="checkQuiz('quiz-priv-doors-i4', this)" aria-label="Option: The vDSO&#x27;s cost deserves the emphasis, because it is the one nobody thinks about.">The vDSO&#x27;s cost deserves the emphasis, because it is the one nobody thinks about.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: four arms, one measurement, and one refusal&quot;." data-source-ref="content/src/priv_doors.ch:200" onclick="checkQuiz('quiz-priv-doors-i4', this)" aria-label="Option: The canonical-address concept then finds the other thing that makes ring 3 ring 3.">The canonical-address concept then finds the other thing that makes ring 3 ring 3.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Two wrong beliefs cancelling into a right observation is not evidence, and the draft that nearly published that story is retraction R2 in the artifact." data-source-ref="content/src/priv_doors.ch:144" onclick="checkQuiz('quiz-priv-doors-i4', this)" aria-label="Option: Two wrong beliefs cancelling into a right observation is not evidence, and the draft that nearly published that story is retraction R2 in the artifact.">Two wrong beliefs cancelling into a right observation is not evidence, and the draft that nearly published that story is retraction R2 in the artifact.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: four arms, one measurement, and one refusal&quot;." data-source-ref="content/src/priv_doors.ch:47" onclick="checkQuiz('quiz-priv-doors-i4', this)" aria-label="Option: There is a gate table, a DPL on every gate, and a rule that refuses a transition when the DPL is too low.">There is a gate table, a DPL on every gate, and a rule that refuses a transition when the DPL is too low.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

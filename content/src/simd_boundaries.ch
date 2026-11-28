@@ -217,11 +217,39 @@ public func render_simd_boundaries() : string {
                 <span>Previous: <a href="/courses/simd/lessons/simd-reduce">Going Back to One Scalar</a></span>
                 <span>Next: <a href="/courses/simd/lessons/simd-three">Three Answers to One Shape</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: the tail, and why the clever answer is the slow one"?</p>
+                <div class="quiz" id="quiz-simd-boundaries-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: a wide instruction is worth what the addresses allow&quot;, not &quot;The reality: the tail, and why the clever answer is the slow one&quot;." data-source-ref="content/src/simd_boundaries.ch:104" onclick="checkQuiz('quiz-simd-boundaries-i4', this)" aria-label="Option: The gather instruction is 2.78× slower than four ordinary scalar loads.">The gather instruction is 2.78× slower than four ordinary scalar loads.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the three rules, and the two that are not what they look like&quot;, not &quot;The reality: the tail, and why the clever answer is the slow one&quot;." data-source-ref="content/src/simd_boundaries.ch:191" onclick="checkQuiz('quiz-simd-boundaries-i4', this)" aria-label="Option: Two of these deserve a note about what they are not , because both are commonly over-generalised.">Two of these deserve a note about what they are not , because both are commonly over-generalised.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: the tail, and why the clever answer is the slow one&quot;." data-source-ref="content/src/simd_boundaries.ch:210" onclick="checkQuiz('quiz-simd-boundaries-i4', this)" aria-label="Option: This concept is that cost&#x27;s price list.">This concept is that cost&#x27;s price list.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="It is a mechanism with two controls supporting it, which is the strongest kind of claim this hardware can support." data-source-ref="content/src/simd_boundaries.ch:129" onclick="checkQuiz('quiz-simd-boundaries-i4', this)" aria-label="Option: It is a mechanism with two controls supporting it, which is the strongest kind of claim this hardware can support.">It is a mechanism with two controls supporting it, which is the strongest kind of claim this hardware can support.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: the tail, and why the clever answer is the slow one&quot;." data-source-ref="content/src/simd_boundaries.ch:47" onclick="checkQuiz('quiz-simd-boundaries-i4', this)" aria-label="Option: Everything so far was about a loop over consecutive elements, where a wide instruction is a straightforward win.">Everything so far was about a loop over consecutive elements, where a wide instruction is a straightforward win.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -275,11 +275,39 @@ ADRP  the assembler does NOT check it: every distance tried up to
                 <span>Previous: <a href="/courses/a64sys/lessons/a64-interrupts">Sixteen Entries of 0x80, and Four Times No Diagnostic</a></span>
                 <span>Next: <a href="/courses/a64sys/lessons/a64-pagetables">Four Levels, and Why a Page Needs a Pair of Relocations</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The measurement: where the two regions meet, and the two reaches"?</p>
+                <div class="quiz" id="quiz-a64-virtual-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: two registers, two regions, one formula&quot;, not &quot;The measurement: where the two regions meet, and the two reaches&quot;." data-source-ref="content/src/a64_virtual.ch:84" onclick="checkQuiz('quiz-a64-virtual-i4', this)" aria-label="Option: Three registers, and the encodings name them with nine bits.">Three registers, and the encodings name them with nine bits.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the 48/52 layout, end to end&quot;, not &quot;The measurement: where the two regions meet, and the two reaches&quot;." data-source-ref="content/src/a64_virtual.ch:245" onclick="checkQuiz('quiz-a64-virtual-i4', this)" aria-label="Option: Three observations, and only the first is a fact this course can stand behind.">Three observations, and only the first is a fact this course can stand behind.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The measurement: where the two regions meet, and the two reaches&quot;." data-source-ref="content/src/a64_virtual.ch:268" onclick="checkQuiz('quiz-a64-virtual-i4', this)" aria-label="Option: Concept 3 is where a translation fault arrives , and this is where it came from.">Concept 3 is where a translation fault arrives , and this is where it came from.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The neutral paging course owns the principle; the x86-64 paging concept is the sibling reference; and this page owns the AArch64 numbers." data-source-ref="content/src/a64_virtual.ch:221" onclick="checkQuiz('quiz-a64-virtual-i4', this)" aria-label="Option: The neutral paging course owns the principle; the x86-64 paging concept is the sibling reference; and this page owns the AArch64 numbers.">The neutral paging course owns the principle; the x86-64 paging concept is the sibling reference; and this page owns the AArch64 numbers.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The measurement: where the two regions meet, and the two reaches&quot;." data-source-ref="content/src/a64_virtual.ch:57" onclick="checkQuiz('quiz-a64-virtual-i4', this)" aria-label="Option: Concept 2 told you how to read a fault.">Concept 2 told you how to read a fault.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

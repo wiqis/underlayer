@@ -164,11 +164,39 @@ public func render_rv_isa() : string {
             <div class="lesson-footer">
                 <span>Next: <a href="/courses/rvasm/lessons/rv-encoding">Six Formats and Four Field Positions</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What this measurement cannot show"?</p>
+                <div class="quiz" id="quiz-rv-isa-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Forty, and the string in the object file&quot;, not &quot;What this measurement cannot show&quot;." data-source-ref="content/src/rv_isa.ch:62" onclick="checkQuiz('quiz-rv-isa-i4', this)" aria-label="Option: Compare that with the corpus’s own opcode space, which concept 2 counts: ordinary C touches 19 of the 128 possible seven-bit opcodes.">Compare that with the corpus’s own opcode space, which concept 2 counts: ordinary C touches 19 of the 128 possible seven-bit opcodes.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The sweep, and what each letter actually bought&quot;, not &quot;What this measurement cannot show&quot;." data-source-ref="content/src/rv_isa.ch:84" onclick="checkQuiz('quiz-rv-isa-i4', this)" aria-label="Option: The same corpus.c — arithmetic, masks, conditionals, a loop, a struct walk, a multiply, a divide, a float accumulator, a call — compiled eight ways.">The same corpus.c — arithmetic, masks, conditionals, a loop, a struct walk, a multiply, a divide, a float accumulator, a call — compiled eight ways.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What this measurement cannot show&quot;." data-source-ref="content/src/rv_isa.ch:161" onclick="checkQuiz('quiz-rv-isa-i4', this)" aria-label="Option: Concept 3 is about the one extension whose cost is a permanent reservation of encoding space rather than a set of instructions.">Concept 3 is about the one extension whose cost is a permanent reservation of encoding space rather than a set of instructions.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="This is a large fraction of what this page is for, so it gets its own section rather than a caveat at the end." data-source-ref="content/src/rv_isa.ch:140" onclick="checkQuiz('quiz-rv-isa-i4', this)" aria-label="Option: This is a large fraction of what this page is for, so it gets its own section rather than a caveat at the end.">This is a large fraction of what this page is for, so it gets its own section rather than a caveat at the end.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;What this measurement cannot show&quot;." data-source-ref="content/src/rv_isa.ch:47" onclick="checkQuiz('quiz-rv-isa-i4', this)" aria-label="Option: RISC-V is the odd one out, and the oddness is a design decision with a measurable consequence.">RISC-V is the odd one out, and the oddness is a design decision with a measurable consequence.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

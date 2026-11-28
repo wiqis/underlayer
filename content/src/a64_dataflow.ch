@@ -208,11 +208,39 @@ concept       label              the claim                                     s
                 <span>Previous: <a href="/courses/a64simd/lessons/a64-order">Acquire and Release Are Access Modes, Not Barriers</a></span>
                 <span>End of The AArch64 Data Path: NEON, Atomics and Ordering &middot; <a href="/courses">all courses</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The number that was zero because the check had stopped working"?</p>
+                <div class="quiz" id="quiz-a64-dataflow-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The table, and the ratio that is the finding&quot;, not &quot;The number that was zero because the check had stopped working&quot;." data-source-ref="content/src/a64_dataflow.ch:92" onclick="checkQuiz('quiz-a64-dataflow-i4', this)" aria-label="Option: Sixteen percent quoted, and that is lower than the machine course&#x27;s fifty-four percent.">Sixteen percent quoted, and that is lower than the machine course&#x27;s fifty-four percent.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The retractions, grouped by what kind of mistake they are&quot;, not &quot;The number that was zero because the check had stopped working&quot;." data-source-ref="content/src/a64_dataflow.ch:146" onclick="checkQuiz('quiz-a64-dataflow-i4', this)" aria-label="Option: Twenty-seven, every one with the measurement that killed it and the source that asserted it.">Twenty-seven, every one with the measurement that killed it and the source that asserted it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The number that was zero because the check had stopped working&quot;." data-source-ref="content/src/a64_dataflow.ch:202" onclick="checkQuiz('quiz-a64-dataflow-i4', this)" aria-label="Option: Back into the section&#x27;s earlier courses.">Back into the section&#x27;s earlier courses.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="A decoder with a shared spec error does not move that number, and there is no other check in this file that would notice." data-source-ref="content/src/a64_dataflow.ch:131" onclick="checkQuiz('quiz-a64-dataflow-i4', this)" aria-label="Option: A decoder with a shared spec error does not move that number, and there is no other check in this file that would notice.">A decoder with a shared spec error does not move that number, and there is no other check in this file that would notice.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this page is last&quot;, not &quot;The number that was zero because the check had stopped working&quot;." data-source-ref="content/src/a64_dataflow.ch:60" onclick="checkQuiz('quiz-a64-dataflow-i4', this)" aria-label="Option: Every claim on the previous four pages carries one of three labels, and on most pages you would be forgiven for not noticing.">Every claim on the previous four pages carries one of three labels, and on most pages you would be forgiven for not noticing.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

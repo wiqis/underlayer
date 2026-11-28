@@ -269,11 +269,40 @@ $ python3 linklab.py base 0x3000000
                 <span><a href="/courses/link/lessons/link-memory-regions">Previous: MEMORY Is a Budget</a></span>
                 <span>Next: <a href="/courses/link/lessons/link-keep-gc">Reachability, and Who the Roots Are</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-link-phdrs-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_phdrs.ch:45" onclick="checkQuiz('quiz-link-phdrs-i4', this)" aria-label="Option: Why there are two tables at all, and what each one is actually for.">Why there are two tables at all, and what each one is actually for.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_phdrs.ch:153" onclick="checkQuiz('quiz-link-phdrs-i4', this)" aria-label="Option: The very first complaint, before it says anything about your sections, is about the program headers.">The very first complaint, before it says anything about your sections, is about the program headers.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_phdrs.ch:255" onclick="checkQuiz('quiz-link-phdrs-i4', this)" aria-label="Option: Exercise 4 is the one that closes the module, and its result is the payoff.">Exercise 4 is the one that closes the module, and its result is the payoff.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_phdrs.ch:261" onclick="checkQuiz('quiz-link-phdrs-i4', this)" aria-label="Option: This closes the placement module, and the three concepts in it are one argument in three parts.">This closes the placement module, and the three concepts in it are one argument in three parts.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The default script has no PHDRS block at all and produces fourteen program headers for a trivial program, every one of them inferred." data-source-ref="content/src/link_phdrs.ch:103" onclick="checkQuiz('quiz-link-phdrs-i4', this)" aria-label="Option: The default script has no PHDRS block at all and produces fourteen program headers for a trivial program, every one of them inferred.">The default script has no PHDRS block at all and produces fourteen program headers for a trivial program, every one of them inferred.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_phdrs.ch:27" onclick="checkQuiz('quiz-link-phdrs-i4', this)" aria-label="Option: Everything so far has been about sections : which input sections go into which output section, and where.">Everything so far has been about sections : which input sections go into which output section, and where.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

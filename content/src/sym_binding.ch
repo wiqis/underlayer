@@ -175,11 +175,40 @@ $ readelf -sW b.o | grep -E ' [gsw]?\(?void\)?$| (g|s|w)$'
                 <span><a href="/courses/sym/lessons/sym-intro">Previous: A Name Is Not a Symbol</a></span>
                 <span>Next: <a href="/courses/sym/lessons/sym-visibility">Visibility Is Not Binding</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-sym-binding-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_binding.ch:51" onclick="checkQuiz('quiz-sym-binding-i4', this)" aria-label="Option: There are three answers in ELF and they form a strict hierarchy.">There are three answers in ELF and they form a strict hierarchy.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_binding.ch:135" onclick="checkQuiz('quiz-sym-binding-i4', this)" aria-label="Option: A static symbol is not merely “less exported” — it is not in the table the loader consults.">A static symbol is not merely “less exported” — it is not in the table the loader consults.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_binding.ch:164" onclick="checkQuiz('quiz-sym-binding-i4', this)" aria-label="Option: Binding is not about the name; it is about the pair of name and binding, and that is the next concept.">Binding is not about the name; it is about the pair of name and binding, and that is the next concept.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_binding.ch:169" onclick="checkQuiz('quiz-sym-binding-i4', this)" aria-label="Option: The obvious next step is Visibility Is Not Binding , and the connection is sharper than the titles suggest.">The obvious next step is Visibility Is Not Binding , and the connection is sharper than the titles suggest.</button>
+                    <button class="quiz-option" data-correct="true" data-explain=".symtab is for the things that can still be changed — it is what ld -r reads, what nm reads, and what a debugger reads." data-source-ref="content/src/sym_binding.ch:112" onclick="checkQuiz('quiz-sym-binding-i4', this)" aria-label="Option: .symtab is for the things that can still be changed — it is what ld -r reads, what nm reads, and what a debugger reads.">.symtab is for the things that can still be changed — it is what ld -r reads, what nm reads, and what a debugger reads.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_binding.ch:27" onclick="checkQuiz('quiz-sym-binding-i4', this)" aria-label="Option: Take a function and give it static .">Take a function and give it static .</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

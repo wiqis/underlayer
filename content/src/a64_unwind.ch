@@ -225,11 +225,39 @@ public func render_a64_unwind() : string {
                 <span>Previous: <a href="/courses/a64abi/lessons/a64-save">Callee-Saved, and the Count of Zero That Is Also a Rule</a></span>
                 <span>End of The AArch64 Procedure Call Standard &middot; <a href="/courses">all courses</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The measurement, and the shape that was not there"?</p>
+                <div class="quiz" id="quiz-a64-unwind-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: one frame, two descriptions, side by side&quot;, not &quot;The measurement, and the shape that was not there&quot;." data-source-ref="content/src/a64_unwind.ch:68" onclick="checkQuiz('quiz-a64-unwind-i4', this)" aria-label="Option: Right: the directives that describe the same frame to something that was not there when the function ran.">Right: the directives that describe the same frame to something that was not there when the function ran.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the second reader&#x27;s own account, printed verbatim&quot;, not &quot;The measurement, and the shape that was not there&quot;." data-source-ref="content/src/a64_unwind.ch:172" onclick="checkQuiz('quiz-a64-unwind-i4', this)" aria-label="Option: Everything above was read out of .eh_frame with struct.unpack_from .">Everything above was read out of .eh_frame with struct.unpack_from .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The measurement, and the shape that was not there&quot;." data-source-ref="content/src/a64_unwind.ch:218" onclick="checkQuiz('quiz-a64-unwind-i4', this)" aria-label="Option: Concept 2 is the hinge — reg31 in the CFI and sp in the instruction field are the same five bits with different owners.">Concept 2 is the hinge — reg31 in the CFI and sp in the instruction field are the same five bits with different owners.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The unwind table is a fixed fraction of the code and it does not shrink when the code does." data-source-ref="content/src/a64_unwind.ch:166" onclick="checkQuiz('quiz-a64-unwind-i4', this)" aria-label="Option: The unwind table is a fixed fraction of the code and it does not shrink when the code does.">The unwind table is a fixed fraction of the code and it does not shrink when the code does.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The measurement, and the shape that was not there&quot;." data-source-ref="content/src/a64_unwind.ch:49" onclick="checkQuiz('quiz-a64-unwind-i4', this)" aria-label="Option: Everything in the last four concepts happened while your function was running .">Everything in the last four concepts happened while your function was running .</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

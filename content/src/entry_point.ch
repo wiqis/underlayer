@@ -173,6 +173,7 @@ Machine: x86-64</pre></div>
             <div class="unit unit-exercises" id="api-exercises" style="display:none">
                 <h2>Practice Exercises</h2>
                 <div id="exercise-list"></div>
+            <p class="verified-answer-key" data-source-ref="courses/elf/manifest.json#exercise_decls">Verified answer key: e_entry points to _start, which sets up libc and then calls main().</p>
             </div>
             <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">

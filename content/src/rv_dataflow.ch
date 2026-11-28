@@ -209,11 +209,39 @@ public func render_rv_dataflow() : string {
                 <span>Previous: <a href="/courses/rvat/lessons/rv-vector">vsetvli and the Four Fields It Carries</a></span>
                 <span>Next: <a href="/courses/rvat">Back to the course</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What the compiler emits, and the finding about -Os"?</p>
+                <div class="quiz" id="quiz-rv-dataflow-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The mask register is not in the encoding&quot;, not &quot;What the compiler emits, and the finding about -Os&quot;." data-source-ref="content/src/rv_dataflow.ch:46" onclick="checkQuiz('quiz-rv-dataflow-i4', this)" aria-label="Option: vm is a single bit that says “use v0”, and v0 is the only mask register the encoding can name .">vm is a single bit that says “use v0”, and v0 is the only mask register the encoding can name .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Two readers, and the count that is not a subset&quot;, not &quot;What the compiler emits, and the finding about -Os&quot;." data-source-ref="content/src/rv_dataflow.ch:106" onclick="checkQuiz('quiz-rv-dataflow-i4', this)" aria-label="Option: The decoder that produced every number on the previous three pages is checked by a second reader — llvm-objdump-21 — over the whole corpus.">The decoder that produced every number on the previous three pages is checked by a second reader — llvm-objdump-21 — over the whole corpus.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What the compiler emits, and the finding about -Os&quot;." data-source-ref="content/src/rv_dataflow.ch:204" onclick="checkQuiz('quiz-rv-dataflow-i4', this)" aria-label="Option: The neutral principles are in smp-atomic and simd-reduce ; the same subject on the two machines this collection can run is x86-atomics and a64-neon .">The neutral principles are in smp-atomic and simd-reduce ; the same subject on the two machines this collection can run is x86-atomics and a64-neon .</button>
+                    <button class="quiz-option" data-correct="true" data-explain="“Smaller” and “fewer vector instructions” are two different claims , and the first version of this paragraph let the second stand in for the first." data-source-ref="content/src/rv_dataflow.ch:90" onclick="checkQuiz('quiz-rv-dataflow-i4', this)" aria-label="Option: “Smaller” and “fewer vector instructions” are two different claims , and the first version of this paragraph let the second stand in for the first.">“Smaller” and “fewer vector instructions” are two different claims , and the first version of this paragraph let the second stand in for the first.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;One bit, in three instruction groups&quot;, not &quot;What the compiler emits, and the finding about -Os&quot;." data-source-ref="content/src/rv_dataflow.ch:26" onclick="checkQuiz('quiz-rv-dataflow-i4', this)" aria-label="Option: A configuration instruction that sets a policy is not much use until you can see what the policy does.">A configuration instruction that sets a policy is not much use until you can see what the policy does.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

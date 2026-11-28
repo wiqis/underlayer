@@ -178,11 +178,39 @@ public func render_x86_verify() : string {
                 <span>Previous: <a href="/courses/x86abi/lessons/x86-unwind">Unwinding, and the Second Language</a></span>
                 <span>End of The x86-64 ABI &middot; <a href="/courses/x86abi">back to the course</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: three results, and one that is a version claim"?</p>
+                <div class="quiz" id="quiz-x86-verify-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: the corpus, and the two things that had to be fixed&quot;, not &quot;The reality: three results, and one that is a version claim&quot;." data-source-ref="content/src/x86_verify.ch:54" onclick="checkQuiz('quiz-x86-verify-i4', this)" aria-label="Option: The audit needs a corpus in which the argument assignment is a fact about the emitted code rather than a fact about the optimiser&#x27;s mood.">The audit needs a corpus in which the argument assignment is a fact about the emitted code rather than a fact about the optimiser&#x27;s mood.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the harness, and the retraction that only a harness could catch&quot;, not &quot;The reality: three results, and one that is a version claim&quot;." data-source-ref="content/src/x86_verify.ch:135" onclick="checkQuiz('quiz-x86-verify-i4', this)" aria-label="Option: The recorded output ships anyway, so the claims are checkable on a machine that never ran the benchmark.">The recorded output ships anyway, so the claims are checkable on a machine that never ran the benchmark.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: three results, and one that is a version claim&quot;." data-source-ref="content/src/x86_verify.ch:172" onclick="checkQuiz('quiz-x86-verify-i4', this)" aria-label="Option: Backwards, this concept consumes all five.">Backwards, this concept consumes all five.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="A new compiler version, a different distribution&#x27;s build flags, or a function compiled by a hand-written assembly file are all outside it." data-source-ref="content/src/x86_verify.ch:115" onclick="checkQuiz('quiz-x86-verify-i4', this)" aria-label="Option: A new compiler version, a different distribution&#x27;s build flags, or a function compiled by a hand-written assembly file are all outside it.">A new compiler version, a different distribution&#x27;s build flags, or a function compiled by a hand-written assembly file are all outside it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: three results, and one that is a version claim&quot;." data-source-ref="content/src/x86_verify.ch:48" onclick="checkQuiz('quiz-x86-verify-i4', this)" aria-label="Option: An ABI is not a description.">An ABI is not a description.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

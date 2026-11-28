@@ -385,6 +385,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^C /,/^D /p'
                 <span><a href="/courses/exe/lessons/exe-speculate">Previous: Speculation, and What Could Not Be Measured</a></span>
                 <span>Next: <a href="/courses/reloc/lessons/pie-cost">Back to the chain: Nine Instructions Against Seventeen</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What the Checks Are, Group by Group"?</p>
+                <div class="quiz" id="quiz-exe-verify-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;What the Checks Are, Group by Group&quot;." data-source-ref="content/src/exe_verify.ch:76" onclick="checkQuiz('quiz-exe-verify-i4', this)" aria-label="Option: That last row is the important one and it is worth dwelling on.">That last row is the important one and it is worth dwelling on.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Breaking the Checker on Purpose&quot;, not &quot;What the Checks Are, Group by Group&quot;." data-source-ref="content/src/exe_verify.ch:199" onclick="checkQuiz('quiz-exe-verify-i4', this)" aria-label="Option: The property of a harness this course cares about most is not that it passes.">The property of a harness this course cares about most is not that it passes.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;What the Checks Are, Group by Group&quot;." data-source-ref="content/src/exe_verify.ch:372" onclick="checkQuiz('quiz-exe-verify-i4', this)" aria-label="Option: Exercise 1 is the one that teaches the difference between checking and asserting.">Exercise 1 is the one that teaches the difference between checking and asserting.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What the Checks Are, Group by Group&quot;." data-source-ref="content/src/exe_verify.ch:378" onclick="checkQuiz('quiz-exe-verify-i4', this)" aria-label="Option: The connection to the object course’s oracle loop is the parent of everything in this concept.">The connection to the object course’s oracle loop is the parent of everything in this concept.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="That is the honest form of a null result, and it is why the number 1.6 is in the code rather than the word “none”." data-source-ref="content/src/exe_verify.ch:194" onclick="checkQuiz('quiz-exe-verify-i4', this)" aria-label="Option: That is the honest form of a null result, and it is why the number 1.6 is in the code rather than the word “none”.">That is the honest form of a null result, and it is why the number 1.6 is in the code rather than the word “none”.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;What the Checks Are, Group by Group&quot;." data-source-ref="content/src/exe_verify.ch:27" onclick="checkQuiz('quiz-exe-verify-i4', this)" aria-label="Option: Under those conditions, the question is not “what did we measure” but “what may we still claim”.">Under those conditions, the question is not “what did we measure” but “what may we still claim”.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -393,6 +406,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^C /,/^D /p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

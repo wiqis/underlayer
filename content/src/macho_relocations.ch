@@ -122,6 +122,7 @@ Relocations &#91;
                 <h2>Connect</h2>
                 <p>Relocations reference the same nlist_64 array indexed by <a href="/courses/macho/lessons/macho-dysymtab">The Dynamic Symbol Table</a> — r_extern = 1 means "look up this symtab index," which is why the two concepts sit side by side.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-dylibs">Dynamic Libraries and Install Names</a> — extern references only resolve if dyld knows which libraries to load and what to call them at runtime: LC_LOAD_DYLIB, install names, and the ordinals bind opcodes will use.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: relocation_info = 8 bytes: r_address (4 bytes, the section offset being relocated) followed by a 4-byte packed field containing r_symbolnum (24 bits), r_pcrel (1), r_length (2), r_extern (1), r_type (4).</p>
             </div>
 
             <div class="lesson-footer">

@@ -244,6 +244,19 @@ $ clang -O1 -o trap trap.c &amp;&amp; ./trap; echo $?
                 <span><a href="/courses/img/lessons/img-stack">Previous: Reading the Initial Stack by Hand</a></span>
                 <span>Next: <a href="/courses/img/lessons/img-vdso">The vDSO: An ELF File With No File</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The Three That Carry the Load"?</p>
+                <div class="quiz" id="quiz-img-entries-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;The Three That Carry the Load&quot;." data-source-ref="content/src/img_entries.ch:49" onclick="checkQuiz('quiz-img-entries-i4', this)" aria-label="Option: Twenty-two entries fall into four groups, and the groups differ in what you may do with the value.">Twenty-two entries fall into four groups, and the groups differ in what you may do with the value.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Reading One Properly&quot;, not &quot;The Three That Carry the Load&quot;." data-source-ref="content/src/img_entries.ch:138" onclick="checkQuiz('quiz-img-entries-i4', this)" aria-label="Option: The reference pattern, which is what stackwalk.py does and what any correct reader should look like.">The reference pattern, which is what stackwalk.py does and what any correct reader should look like.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;The Three That Carry the Load&quot;." data-source-ref="content/src/img_entries.ch:231" onclick="checkQuiz('quiz-img-entries-i4', this)" aria-label="Option: Exercise 3 is the best exercise in the course and it is worth doing slowly.">Exercise 3 is the best exercise in the course and it is worth doing slowly.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The Three That Carry the Load&quot;." data-source-ref="content/src/img_entries.ch:237" onclick="checkQuiz('quiz-img-entries-i4', this)" aria-label="Option: This is where module 1’s two concepts become usable.">This is where module 1’s two concepts become usable.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="It is where the kernel put the dynamic linker — a separate file, /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 , that your program never names." data-source-ref="content/src/img_entries.ch:124" onclick="checkQuiz('quiz-img-entries-i4', this)" aria-label="Option: It is where the kernel put the dynamic linker — a separate file, /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 , that your program never names.">It is where the kernel put the dynamic linker — a separate file, /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 , that your program never names.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;The Three That Carry the Load&quot;." data-source-ref="content/src/img_entries.ch:27" onclick="checkQuiz('quiz-img-entries-i4', this)" aria-label="Option: You can now read the auxv.">You can now read the auxv.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -252,6 +265,22 @@ $ clang -O1 -o trap trap.c &amp;&amp; ./trap; echo $?
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

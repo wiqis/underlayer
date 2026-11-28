@@ -246,11 +246,39 @@ public func render_x86_paging() : string {
                 <span>Previous: <a href="/courses/x86sys/lessons/x86-virtual">The 48-Bit Split, LA57 and LAM</a></span>
                 <span>Next: <a href="/courses/x86sys/lessons/x86-pmu">The Performance Monitoring Architecture</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: one bit that moves, and three that a user process cannot see"?</p>
+                <div class="quiz" id="quiz-x86-paging-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: the index, and the three groups of bits&quot;, not &quot;The reality: one bit that moves, and three that a user process cannot see&quot;." data-source-ref="content/src/x86_paging.ch:64" onclick="checkQuiz('quiz-x86-paging-i4', this)" aria-label="Option: The memory course&#x27;s TLB concept owns that story.">The memory course&#x27;s TLB concept owns that story.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the error code, and the one bit of six that survives&quot;, not &quot;The reality: one bit that moves, and three that a user process cannot see&quot;." data-source-ref="content/src/x86_paging.ch:214" onclick="checkQuiz('quiz-x86-paging-i4', this)" aria-label="Option: The two bits that are missing have a specific cost, and it is worth being concrete about it.">The two bits that are missing have a specific cost, and it is worth being concrete about it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: one bit that moves, and three that a user process cannot see&quot;." data-source-ref="content/src/x86_paging.ch:240" onclick="checkQuiz('quiz-x86-paging-i4', this)" aria-label="Option: This page is the structure those loads are chasing, and the only thing it adds is the flag set and the one direct observation.">This page is the structure those loads are chasing, and the only thing it adds is the flag set and the one direct observation.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Four results in six rows, and each is a fact about the MMU rather than about a document." data-source-ref="content/src/x86_paging.ch:149" onclick="checkQuiz('quiz-x86-paging-i4', this)" aria-label="Option: Four results in six rows, and each is a fact about the MMU rather than about a document.">Four results in six rows, and each is a fact about the MMU rather than about a document.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: one bit that moves, and three that a user process cannot see&quot;." data-source-ref="content/src/x86_paging.ch:47" onclick="checkQuiz('quiz-x86-paging-i4', this)" aria-label="Option: The memory course measured the cost of a walk and this concept is the thing being walked.">The memory course measured the cost of a walk and this concept is the thing being walked.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

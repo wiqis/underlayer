@@ -205,11 +205,39 @@ public func render_x86_rings() : string {
                 <span>Previous: <a href="/courses/x86sys/lessons/x86-exceptions">All Thirty-Two, As an x86-64 Reference</a></span>
                 <span>Next: <a href="/courses/x86sys/lessons/x86-cr">CR0 to CR4, Every Bit</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: both pseudo-descriptors return, and neither table can be read"?</p>
+                <div class="quiz" id="quiz-x86-rings-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: sixteen bits, three fields, and four numbers&quot;, not &quot;The reality: both pseudo-descriptors return, and neither table can be read&quot;." data-source-ref="content/src/x86_rings.ch:53" onclick="checkQuiz('quiz-x86-rings-i4', this)" aria-label="Option: A segment selector is not an index.">A segment selector is not an index.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the two things a segment register still does in 64-bit mode&quot;, not &quot;The reality: both pseudo-descriptors return, and neither table can be read&quot;." data-source-ref="content/src/x86_rings.ch:183" onclick="checkQuiz('quiz-x86-rings-i4', this)" aria-label="Option: Everything else about segments — bases, limits, expand-down, the 32/64-bit flag for data — is either ignored or moved into a model-specific register.">Everything else about segments — bases, limits, expand-down, the 32/64-bit flag for data — is either ignored or moved into a model-specific register.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: both pseudo-descriptors return, and neither table can be read&quot;." data-source-ref="content/src/x86_rings.ch:199" onclick="checkQuiz('quiz-x86-rings-i4', this)" aria-label="Option: Its ring-diagram concept is the why behind the max(CPL,RPL) ≤ DPL comparison; this page is the reference for which comparison applies to which gate.">Its ring-diagram concept is the why behind the max(CPL,RPL) ≤ DPL comparison; this page is the reference for which comparison applies to which gate.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The reads report where a table is , and that is a diagnostic the architecture deliberately provides — except that CR4.UMIP can close the door." data-source-ref="content/src/x86_rings.ch:155" onclick="checkQuiz('quiz-x86-rings-i4', this)" aria-label="Option: The reads report where a table is , and that is a diagnostic the architecture deliberately provides — except that CR4.UMIP can close the door.">The reads report where a table is , and that is a diagnostic the architecture deliberately provides — except that CR4.UMIP can close the door.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: both pseudo-descriptors return, and neither table can be read&quot;." data-source-ref="content/src/x86_rings.ch:47" onclick="checkQuiz('quiz-x86-rings-i4', this)" aria-label="Option: The privilege boundary on x86-64 is not a bit.">The privilege boundary on x86-64 is not a bit.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

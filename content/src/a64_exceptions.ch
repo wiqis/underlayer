@@ -277,11 +277,39 @@ public func render_a64_exceptions() : string {
                 <span>Previous: <a href="/courses/a64sys/lessons/a64-syscall">SVC #imm16, and x8 Is a Convention and Not an Architecture</a></span>
                 <span>Next: <a href="/courses/a64sys/lessons/a64-interrupts">Sixteen Entries of 0x80, and Four Times No Diagnostic</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The measurement: what the compiler does with the value"?</p>
+                <div class="quiz" id="quiz-a64-exceptions-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: a 64-bit register with a 32-bit syndrome in it&quot;, not &quot;The measurement: what the compiler does with the value&quot;." data-source-ref="content/src/a64_exceptions.ch:77" onclick="checkQuiz('quiz-a64-exceptions-i4', this)" aria-label="Option: Four things fall out of that block, and the first is a retraction on a claim in the plan this course was built from.">Four things fall out of that block, and the first is a retraction on a claim in the plan this course was built from.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the field is a discriminated union, and the table is the point&quot;, not &quot;The measurement: what the compiler does with the value&quot;." data-source-ref="content/src/a64_exceptions.ch:208" onclick="checkQuiz('quiz-a64-exceptions-i4', this)" aria-label="Option: This is the one screen in the course that is worth keeping, and it is entirely QUOTED .">This is the one screen in the course that is worth keeping, and it is entirely QUOTED .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The measurement: what the compiler does with the value&quot;." data-source-ref="content/src/a64_exceptions.ch:270" onclick="checkQuiz('quiz-a64-exceptions-i4', this)" aria-label="Option: The ABI course&#x27;s register concept explains why a handler&#x27;s temporaries land in x8 – x10 and not x0 – x2 .">The ABI course&#x27;s register concept explains why a handler&#x27;s temporaries land in x8 – x10 and not x0 – x2 .</button>
+                    <button class="quiz-option" data-correct="true" data-explain="ANDing with 0xf8000000 clears that bit and collapses both cases into one value to compare against." data-source-ref="content/src/a64_exceptions.ch:147" onclick="checkQuiz('quiz-a64-exceptions-i4', this)" aria-label="Option: ANDing with 0xf8000000 clears that bit and collapses both cases into one value to compare against.">ANDing with 0xf8000000 clears that bit and collapses both cases into one value to compare against.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The measurement: what the compiler does with the value&quot;." data-source-ref="content/src/a64_exceptions.ch:57" onclick="checkQuiz('quiz-a64-exceptions-i4', this)" aria-label="Option: A kernel&#x27;s exception handler is about forty instructions long and almost every one of them is a load from a system register.">A kernel&#x27;s exception handler is about forty instructions long and almost every one of them is a load from a system register.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

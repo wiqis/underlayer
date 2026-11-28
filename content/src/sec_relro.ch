@@ -253,6 +253,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/H3/,/H4/p'
                 <span><a href="/courses/sec/lessons/sec-canary">Previous: The Canary and Its Limits</a></span>
                 <span>Next: <a href="/courses/sec/lessons/sec-fortify">FORTIFY Leaves a Trace</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The Eight Bytes"?</p>
+                <div class="quiz" id="quiz-sec-relro-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;The Eight Bytes&quot;." data-source-ref="content/src/sec_relro.ch:73" onclick="checkQuiz('quiz-sec-relro-i4', this)" aria-label="Option: That is the entire design, and it explains why the two tiers are not a “more versus less” choice.">That is the entire design, and it explains why the two tiers are not a “more versus less” choice.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The Check Worth Writing&quot;, not &quot;The Eight Bytes&quot;." data-source-ref="content/src/sec_relro.ch:152" onclick="checkQuiz('quiz-sec-relro-i4', this)" aria-label="Option: Since the tier is a promise and the coverage is the fact, the coverage check is the one to build.">Since the tier is a promise and the coverage is the fact, the coverage check is the one to build.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;The Eight Bytes&quot;." data-source-ref="content/src/sec_relro.ch:240" onclick="checkQuiz('quiz-sec-relro-i4', this)" aria-label="Option: The writable tail scales with the number of exported symbols, and -z now makes it zero at every size.">The writable tail scales with the number of exported symbols, and -z now makes it zero at every size.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The Eight Bytes&quot;." data-source-ref="content/src/sec_relro.ch:246" onclick="checkQuiz('quiz-sec-relro-i4', this)" aria-label="Option: This concept completes a debt owed by three earlier courses, and it is worth naming all three.">This concept completes a debt owed by three earlier courses, and it is worth naming all three.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The dynamic linking course called -z now a change of timing with no code difference, and that is true and incomplete." data-source-ref="content/src/sec_relro.ch:129" onclick="checkQuiz('quiz-sec-relro-i4', this)" aria-label="Option: The dynamic linking course called -z now a change of timing with no code difference, and that is true and incomplete.">The dynamic linking course called -z now a change of timing with no code difference, and that is true and incomplete.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;The Eight Bytes&quot;." data-source-ref="content/src/sec_relro.ch:28" onclick="checkQuiz('quiz-sec-relro-i4', this)" aria-label="Option: The consequence is not academic.">The consequence is not academic.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -261,6 +274,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/H3/,/H4/p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

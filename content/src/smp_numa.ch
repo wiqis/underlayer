@@ -188,11 +188,39 @@ public func render_smp_numa() : string {
                 <span>Previous: <a href="/courses/smp/lessons/smp-ordering">A Duration Is Not a Guarantee</a></span>
                 <span>Next: <a href="/courses/smp/lessons/smp-three">Three Answers to Two Questions</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: one node, one domain"?</p>
+                <div class="quiz" id="quiz-smp-numa-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: two different questions&quot;, not &quot;The reality: one node, one domain&quot;." data-source-ref="content/src/smp_numa.ch:85" onclick="checkQuiz('quiz-smp-numa-i4', this)" aria-label="Option: There is no coherence state to inspect, because no state is involved; there is only where the bits go.">There is no coherence state to inspect, because no state is involved; there is only where the bits go.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the harness&#x27;s own gap, and the sentence it is confusing&quot;, not &quot;The reality: one node, one domain&quot;." data-source-ref="content/src/smp_numa.ch:156" onclick="checkQuiz('quiz-smp-numa-i4', this)" aria-label="Option: That is not a hypothetical.">That is not a hypothetical.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: one node, one domain&quot;." data-source-ref="content/src/smp_numa.ch:181" onclick="checkQuiz('quiz-smp-numa-i4', this)" aria-label="Option: Backwards, the ordering concept established the course&#x27;s largest limit: a duration cannot establish a guarantee.">Backwards, the ordering concept established the course&#x27;s largest limit: a duration cannot establish a guarantee.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="13.05× for true sharing and 10.92× for false sharing are statements about a line changing hands between two caches inside one package." data-source-ref="content/src/smp_numa.ch:129" onclick="checkQuiz('quiz-smp-numa-i4', this)" aria-label="Option: 13.05× for true sharing and 10.92× for false sharing are statements about a line changing hands between two caches inside one package.">13.05× for true sharing and 10.92× for false sharing are statements about a line changing hands between two caches inside one package.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: one node, one domain&quot;." data-source-ref="content/src/smp_numa.ch:47" onclick="checkQuiz('quiz-smp-numa-i4', this)" aria-label="Option: A concept whose experiment produced no result is normally a concept that should be deleted.">A concept whose experiment produced no result is normally a concept that should be deleted.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

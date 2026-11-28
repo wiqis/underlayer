@@ -152,6 +152,7 @@ $ readelf -l /bin/ls | head -10
             <div class="unit unit-exercises" id="api-exercises" style="display:none">
                 <h2>Practice Exercises</h2>
                 <div id="exercise-list"></div>
+            <p class="verified-answer-key" data-source-ref="courses/elf/manifest.json#exercise_decls">Verified answer key: The loader reads e_phoff, then walks the program header table. Sections are for linkers, not loaders. e_shoff holds the file offset of the section header table — here 0x3ff0. The ELF header is at offset 0, program headers follow, then section contents.</p>
             </div>
             <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">

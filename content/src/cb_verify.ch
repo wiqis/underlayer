@@ -240,11 +240,39 @@ measurements:
                 <span>Previous: <a href="/courses/compback/lessons/cb-abi">The Backend and the ABI</a></span>
                 <span>Next: <a href="/courses/compback">Back to the course</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What this cannot do, and why the frame is the signal"?</p>
+                <div class="quiz" id="quiz-cb-verify-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The six rows, and the fourth column is not what the first three are&quot;, not &quot;What this cannot do, and why the frame is the signal&quot;." data-source-ref="content/src/cb_verify.ch:54" onclick="checkQuiz('quiz-cb-verify-i4', this)" aria-label="Option: Six rows, three targets, two optimisation levels.">Six rows, three targets, two optimisation levels.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The boundary, as a table with a count&quot;, not &quot;What this cannot do, and why the frame is the signal&quot;." data-source-ref="content/src/cb_verify.ch:137" onclick="checkQuiz('quiz-cb-verify-i4', this)" aria-label="Option: Everything above is MEASURED .">Everything above is MEASURED .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What this cannot do, and why the frame is the signal&quot;." data-source-ref="content/src/cb_verify.ch:232" onclick="checkQuiz('quiz-cb-verify-i4', this)" aria-label="Option: Backwards, this page reads all five of its predecessors out of the finished bytes, and the two most interesting results are cross-checks rather than readings.">Backwards, this page reads all five of its predecessors out of the finished bytes, and the two most interesting results are cross-checks rather than readings.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The only thing that separates them is that one of them is near a frame and the other is not." data-source-ref="content/src/cb_verify.ch:113" onclick="checkQuiz('quiz-cb-verify-i4', this)" aria-label="Option: The only thing that separates them is that one of them is near a frame and the other is not.">The only thing that separates them is that one of them is near a frame and the other is not.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Every page so far told you what the backend decided. This one asks whether you can find out.&quot;, not &quot;What this cannot do, and why the frame is the signal&quot;." data-source-ref="content/src/cb_verify.ch:27" onclick="checkQuiz('quiz-cb-verify-i4', this)" aria-label="Option: Five pages of this course measured decisions: which machine form, which register, which order, which contract.">Five pages of this course measured decisions: which machine form, which register, which order, which contract.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

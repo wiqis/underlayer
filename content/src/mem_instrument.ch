@@ -386,6 +386,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^  --- group B:/,/^  --- group C:
                 <span><a href="/courses/exe/lessons/exe-verify">Previous: The Instrument and the Oracle Loop</a></span>
                 <span>Next: <a href="/courses/mem/lessons/mem-latency">A Chase and a Sweep Are Different Questions</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What the Instrument Reported About Itself"?</p>
+                <div class="quiz" id="quiz-mem-instrument-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;What the Instrument Reported About Itself&quot;." data-source-ref="content/src/mem_instrument.ch:56" onclick="checkQuiz('quiz-mem-instrument-i4', this)" aria-label="Option: The five rules are inherited from the previous course, unchanged, because they are properties of the CPU and not of the benchmark.">The five rules are inherited from the previous course, unchanged, because they are properties of the CPU and not of the benchmark.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Reading a Microbenchmark&#x27;s Claims&quot;, not &quot;What the Instrument Reported About Itself&quot;." data-source-ref="content/src/mem_instrument.ch:255" onclick="checkQuiz('quiz-mem-instrument-i4', this)" aria-label="Option: The layout bug deserves its own telling, because it is the sharpest example in the collection of a wrong number that passes every self-check.">The layout bug deserves its own telling, because it is the sharpest example in the collection of a wrong number that passes every self-check.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;What the Instrument Reported About Itself&quot;." data-source-ref="content/src/mem_instrument.ch:374" onclick="checkQuiz('quiz-mem-instrument-i4', this)" aria-label="Option: Exercise 5 is the one that decides what the rest of this course can say.">Exercise 5 is the one that decides what the rest of this course can say.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What the Instrument Reported About Itself&quot;." data-source-ref="content/src/mem_instrument.ch:379" onclick="checkQuiz('quiz-mem-instrument-i4', this)" aria-label="Option: What this course adds is the estimator table.">What this course adds is the estimator table.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The paired estimator removes that reason by dividing inside the iteration, before the clock has moved on." data-source-ref="content/src/mem_instrument.ch:215" onclick="checkQuiz('quiz-mem-instrument-i4', this)" aria-label="Option: The paired estimator removes that reason by dividing inside the iteration, before the clock has moved on.">The paired estimator removes that reason by dividing inside the iteration, before the clock has moved on.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;What the Instrument Reported About Itself&quot;." data-source-ref="content/src/mem_instrument.ch:27" onclick="checkQuiz('quiz-mem-instrument-i4', this)" aria-label="Option: The previous course ended with an instrument that had been through eleven rounds of fixing and had five numbered rules written into its own source.">The previous course ended with an instrument that had been through eleven rounds of fixing and had five numbered rules written into its own source.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
@@ -393,6 +406,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^  --- group B:/,/^  --- group C:
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

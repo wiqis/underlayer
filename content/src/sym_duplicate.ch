@@ -176,11 +176,40 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/\[3\]/,/^$/p'
                 <span><a href="/courses/sym/lessons/sym-order">Previous: Order, Archives and the Map File</a></span>
                 <span>Next: <a href="/courses/sym/lessons/sym-hash">Two Hash Tables, One Job</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-sym-duplicate-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_duplicate.ch:67" onclick="checkQuiz('quiz-sym-duplicate-i4', this)" aria-label="Option: The third form is the entire subject of this concept.">The third form is the entire subject of this concept.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_duplicate.ch:129" onclick="checkQuiz('quiz-sym-duplicate-i4', this)" aria-label="Option: Why a compiler was entitled to break this, and why the fallout was as large as it was.">Why a compiler was entitled to break this, and why the fallout was as large as it was.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_duplicate.ch:164" onclick="checkQuiz('quiz-sym-duplicate-i4', this)" aria-label="Option: Question 4 is the one to spend time on, and the answer is the most interesting thing in this concept.">Question 4 is the one to spend time on, and the answer is the most interesting thing in this concept.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_duplicate.ch:169" onclick="checkQuiz('quiz-sym-duplicate-i4', this)" aria-label="Option: This closes the algorithm module, and the closing argument is about decisions made in the wrong place.">This closes the algorithm module, and the closing argument is about decisions made in the wrong place.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="cvar = 5 puts it in .data ; the tentative ones are in .bss ; and two different sections means two different storage." data-source-ref="content/src/sym_duplicate.ch:114" onclick="checkQuiz('quiz-sym-duplicate-i4', this)" aria-label="Option: cvar = 5 puts it in .data ; the tentative ones are in .bss ; and two different sections means two different storage.">cvar = 5 puts it in .data ; the tentative ones are in .bss ; and two different sections means two different storage.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_duplicate.ch:34" onclick="checkQuiz('quiz-sym-duplicate-i4', this)" aria-label="Option: Forty translation units include it.">Forty translation units include it.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -244,6 +244,19 @@ $ python3 dynscope.py scope ./prog
                 <span>Start of course</span>
                 <span>Next: <a href="/courses/dyn/lessons/dyn-interpose">Interposition</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-dyn-scope-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_scope.ch:54" onclick="checkQuiz('quiz-dyn-scope-i4', this)" aria-label="Option: The scope, stated so precisely that you can implement it in an afternoon.">The scope, stated so precisely that you can implement it in an afternoon.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_scope.ch:157" onclick="checkQuiz('quiz-dyn-scope-i4', this)" aria-label="Option: Why a list would be wrong, demonstrated with a program that breaks under one.">Why a list would be wrong, demonstrated with a program that breaks under one.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_scope.ch:230" onclick="checkQuiz('quiz-dyn-scope-i4', this)" aria-label="Option: Exercise 4 is the one that matters, because it is the difference between reading about a data structure and having one.">Exercise 4 is the one that matters, because it is the difference between reading about a data structure and having one.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_scope.ch:236" onclick="checkQuiz('quiz-dyn-scope-i4', this)" aria-label="Option: This is the first concept, and it is the one the other nine depend on.">This is the first concept, and it is the one the other nine depend on.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="-lb is read before anything has referenced liba &#x27;s symbols, so it is dropped, and then the reference to lib_value has nowhere to go." data-source-ref="content/src/dyn_scope.ch:130" onclick="checkQuiz('quiz-dyn-scope-i4', this)" aria-label="Option: -lb is read before anything has referenced liba &#x27;s symbols, so it is dropped, and then the reference to lib_value has nowhere to go.">-lb is read before anything has referenced liba &#x27;s symbols, so it is dropped, and then the reference to lib_value has nowhere to go.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_scope.ch:41" onclick="checkQuiz('quiz-dyn-scope-i4', this)" aria-label="Option: libb.so has a reference to a symbol it does not contain.">libb.so has a reference to a symbol it does not contain.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     
 
@@ -252,6 +265,22 @@ $ python3 dynscope.py scope ./prog
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

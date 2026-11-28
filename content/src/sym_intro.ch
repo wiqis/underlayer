@@ -193,11 +193,40 @@ q1.o:q1.c:(.text+0x0): first defined here
                 <span>Start of course</span>
                 <span>Next: <a href="/courses/sym/lessons/sym-binding">Binding, and the Two Tables</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-sym-intro-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_intro.ch:61" onclick="checkQuiz('quiz-sym-intro-i4', this)" aria-label="Option: Strip away the file formats for a moment and state the problem as cleanly as it can be stated.">Strip away the file formats for a moment and state the problem as cleanly as it can be stated.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_intro.ch:132" onclick="checkQuiz('quiz-sym-intro-i4', this)" aria-label="Option: Why the split matters, concretely, in a situation you will meet.">Why the split matters, concretely, in a situation you will meet.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_intro.ch:152" onclick="checkQuiz('quiz-sym-intro-i4', this)" aria-label="Option: Every measurement in this course is reproducible from one script.">Every measurement in this course is reproducible from one script.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_intro.ch:187" onclick="checkQuiz('quiz-sym-intro-i4', this)" aria-label="Option: This concept is the frame for the course, so the connections from it are the connections between the other eleven.">This concept is the frame for the course, so the connections from it are the connections between the other eleven.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="In one it is an error and in the other it is fine, and the difference is entirely whether some other file supplied a definition." data-source-ref="content/src/sym_intro.ch:127" onclick="checkQuiz('quiz-sym-intro-i4', this)" aria-label="Option: In one it is an error and in the other it is fine, and the difference is entirely whether some other file supplied a definition.">In one it is an error and in the other it is fine, and the difference is entirely whether some other file supplied a definition.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_intro.ch:55" onclick="checkQuiz('quiz-sym-intro-i4', this)" aria-label="Option: Nothing in main.c changed, and the program went from an error to working.">Nothing in main.c changed, and the program went from an error to working.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

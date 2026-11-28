@@ -269,6 +269,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/H6/,/H7/p'
                 <span><a href="/courses/sec/lessons/sec-wx">Previous: W^X, and Why TEXTREL Died</a></span>
                 <span>Next: <a href="/courses/sec/lessons/sec-posture">Reading a Binary's Posture</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Where the Five endbr64 Come From"?</p>
+                <div class="quiz" id="quiz-sec-cet-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Where the Five endbr64 Come From&quot;." data-source-ref="content/src/sec_cet.ch:90" onclick="checkQuiz('quiz-sec-cet-i4', this)" aria-label="Option: And that is the whole reason the obvious measurement fails.">And that is the whole reason the obvious measurement fails.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Parsing the Note&quot;, not &quot;Where the Five endbr64 Come From&quot;." data-source-ref="content/src/sec_cet.ch:151" onclick="checkQuiz('quiz-sec-cet-i4', this)" aria-label="Option: The note is a nested structure, and the nesting is the interesting part.">The note is a nested structure, and the nesting is the interesting part.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Where the Five endbr64 Come From&quot;." data-source-ref="content/src/sec_cet.ch:256" onclick="checkQuiz('quiz-sec-cet-i4', this)" aria-label="Option: A binary with every landing pad in place and no note runs perfectly, and is completely unprotected.">A binary with every landing pad in place and no note runs perfectly, and is completely unprotected.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Where the Five endbr64 Come From&quot;." data-source-ref="content/src/sec_cet.ch:262" onclick="checkQuiz('quiz-sec-cet-i4', this)" aria-label="Option: That concept measured AT_HWCAP and the capability bitmask, and noted that a program should use it rather than parse /proc/cpuinfo .">That concept measured AT_HWCAP and the capability bitmask, and noted that a program should use it rather than parse /proc/cpuinfo .</button>
+                    <button class="quiz-option" data-correct="true" data-explain="And that is the correct default — it means the process entry path is protected regardless of what your build does." data-source-ref="content/src/sec_cet.ch:126" onclick="checkQuiz('quiz-sec-cet-i4', this)" aria-label="Option: And that is the correct default — it means the process entry path is protected regardless of what your build does.">And that is the correct default — it means the process entry path is protected regardless of what your build does.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Where the Five endbr64 Come From&quot;." data-source-ref="content/src/sec_cet.ch:27" onclick="checkQuiz('quiz-sec-cet-i4', this)" aria-label="Option: Control-flow Enforcement Technology is the newest feature in this course and the only one where the obvious measurement is wrong.">Control-flow Enforcement Technology is the newest feature in this course and the only one where the obvious measurement is wrong.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -277,6 +290,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/H6/,/H7/p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

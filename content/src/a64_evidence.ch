@@ -368,11 +368,39 @@ public func render_a64_evidence() : string {
                 <span>Previous: <a href="/courses/a64sys/lessons/a64-pagetables">Four Levels, and Why a Page Needs a Pair of Relocations</a></span>
                 <span>End of The AArch64 Machine: Modes, Memory and Faults &middot; <a href="/courses">all courses</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The measurement that makes the zero mean something: the poison"?</p>
+                <div class="quiz" id="quiz-a64-evidence-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The table: fifty-seven claims, and the ratio is the finding&quot;, not &quot;The measurement that makes the zero mean something: the poison&quot;." data-source-ref="content/src/a64_evidence.ch:104" onclick="checkQuiz('quiz-a64-evidence-i4', this)" aria-label="Option: That ratio is the finding, not a disclaimer.">That ratio is the finding, not a disclaimer.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the retraction list, and the fifteen limits&quot;, not &quot;The measurement that makes the zero mean something: the poison&quot;." data-source-ref="content/src/a64_evidence.ch:322" onclick="checkQuiz('quiz-a64-evidence-i4', this)" aria-label="Option: Printed in the artifact, not in a footnote, because a limit that is a footnote is a limit that gets forgotten.">Printed in the artifact, not in a footnote, because a limit that is a footnote is a limit that gets forgotten.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The measurement that makes the zero mean something: the poison&quot;." data-source-ref="content/src/a64_evidence.ch:361" onclick="checkQuiz('quiz-a64-evidence-i4', this)" aria-label="Option: Concept 3 contributed the largest absence in the course and this page is where the habit of printing an absence lives.">Concept 3 contributed the largest absence in the course and this page is where the habit of printing an absence lives.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="1,516 to 1,459 named, 0 to 57 disagreements, and every one of the 57 is an mrs or an msr printed by name." data-source-ref="content/src/a64_evidence.ch:169" onclick="checkQuiz('quiz-a64-evidence-i4', this)" aria-label="Option: 1,516 to 1,459 named, 0 to 57 disagreements, and every one of the 57 is an mrs or an msr printed by name.">1,516 to 1,459 named, 0 to 57 disagreements, and every one of the 57 is an mrs or an msr printed by name.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The measurement that makes the zero mean something: the poison&quot;." data-source-ref="content/src/a64_evidence.ch:55" onclick="checkQuiz('quiz-a64-evidence-i4', this)" aria-label="Option: Everything in the last five concepts carries one of three labels, and on most pages you would be forgiven for not noticing.">Everything in the last five concepts carries one of three labels, and on most pages you would be forgiven for not noticing.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

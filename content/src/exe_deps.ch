@@ -346,6 +346,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^I /,$p'
                 <span><a href="/courses/exe/lessons/exe-latency">Previous: Latency and Throughput</a></span>
                 <span>Next: <a href="/courses/exe/lessons/exe-frontend">The Front End and the Branch Predictor</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The Address Measurement, and What It Does Not Explain"?</p>
+                <div class="quiz" id="quiz-exe-deps-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;The Address Measurement, and What It Does Not Explain&quot;." data-source-ref="content/src/exe_deps.ch:86" onclick="checkQuiz('quiz-exe-deps-i4', this)" aria-label="Option: The front end has to fetch instructions, and it fetches them in blocks that begin at boundaries determined by the address.">The front end has to fetch instructions, and it fetches them in blocks that begin at boundaries determined by the address.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The Loop Dependency, and the Fix That Is Not Obvious&quot;, not &quot;The Address Measurement, and What It Does Not Explain&quot;." data-source-ref="content/src/exe_deps.ch:158" onclick="checkQuiz('quiz-exe-deps-i4', this)" aria-label="Option: The other dependency in the measurement was there from the start and hid everything for several iterations.">The other dependency in the measurement was there from the start and hid everything for several iterations.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;The Address Measurement, and What It Does Not Explain&quot;." data-source-ref="content/src/exe_deps.ch:332" onclick="checkQuiz('quiz-exe-deps-i4', this)" aria-label="Option: Exercise 5 is the one that unifies the concept, and its outcome is genuinely uncertain, which is why it is worth doing.">Exercise 5 is the one that unifies the concept, and its outcome is genuinely uncertain, which is why it is worth doing.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The Address Measurement, and What It Does Not Explain&quot;." data-source-ref="content/src/exe_deps.ch:338" onclick="checkQuiz('quiz-exe-deps-i4', this)" aria-label="Option: The connection to the linker-script course is the practical payload of this concept, and it is a debt that course could not even see.">The connection to the linker-script course is the practical payload of this concept, and it is a debt that course could not even see.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The loop body is 12 bytes, so offsets 0–52 fit inside one 64-byte line and offset 56 does not." data-source-ref="content/src/exe_deps.ch:131" onclick="checkQuiz('quiz-exe-deps-i4', this)" aria-label="Option: The loop body is 12 bytes, so offsets 0–52 fit inside one 64-byte line and offset 56 does not.">The loop body is 12 bytes, so offsets 0–52 fit inside one 64-byte line and offset 56 does not.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;The Address Measurement, and What It Does Not Explain&quot;." data-source-ref="content/src/exe_deps.ch:27" onclick="checkQuiz('quiz-exe-deps-i4', this)" aria-label="Option: The last concept measured a ratio — 2.7× between dependent and independent execution — without saying what a dependency is .">The last concept measured a ratio — 2.7× between dependent and independent execution — without saying what a dependency is .</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -354,6 +367,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^I /,$p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

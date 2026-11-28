@@ -202,11 +202,39 @@ f7:
                 <span>Previous: <a href="/courses/x86abi/lessons/x86-varargs">The One Place the ABI Describes Itself</a></span>
                 <span>Next: <a href="/courses/x86abi/lessons/x86-verify">Read the ABI Out of the Disassembly</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: what a profiler does when the description is absent"?</p>
+                <div class="quiz" id="quiz-x86-unwind-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: the Canonical Frame Address, and a table of deltas&quot;, not &quot;The reality: what a profiler does when the description is absent&quot;." data-source-ref="content/src/x86_unwind.ch:54" onclick="checkQuiz('quiz-x86-unwind-i4', this)" aria-label="Option: The CFA is not a saved register and it is not a memory location.">The CFA is not a saved register and it is not a memory location.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: two descriptions, and the check nobody does&quot;, not &quot;The reality: what a profiler does when the description is absent&quot;." data-source-ref="content/src/x86_unwind.ch:166" onclick="checkQuiz('quiz-x86-unwind-i4', this)" aria-label="Option: Take the two views of f7 from earlier in this course and put them side by side.">Take the two views of f7 from earlier in this course and put them side by side.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: what a profiler does when the description is absent&quot;." data-source-ref="content/src/x86_unwind.ch:197" onclick="checkQuiz('quiz-x86-unwind-i4', this)" aria-label="Option: Forwards, the last concept is the one that puts a number on all of it.">Forwards, the last concept is the one that puts a number on all of it.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="It is run from three nested noinline functions in a program built twice : once normally, and once with -fno-asynchronous-unwind-tables ." data-source-ref="content/src/x86_unwind.ch:118" onclick="checkQuiz('quiz-x86-unwind-i4', this)" aria-label="Option: It is run from three nested noinline functions in a program built twice : once normally, and once with -fno-asynchronous-unwind-tables .">It is run from three nested noinline functions in a program built twice : once normally, and once with -fno-asynchronous-unwind-tables .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: what a profiler does when the description is absent&quot;." data-source-ref="content/src/x86_unwind.ch:47" onclick="checkQuiz('quiz-x86-unwind-i4', this)" aria-label="Option: You have spent four concepts learning that a frame is described by a prologue: a push , a sub , a mov .">You have spent four concepts learning that a frame is described by a prologue: a push , a sub , a mov .</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

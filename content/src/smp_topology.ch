@@ -255,11 +255,38 @@ public func render_smp_topology() : string {
                 <span>First: <a href="/courses/smp">course home</a></span>
                 <span>Next: <a href="/courses/smp/lessons/smp-sharing">Three Things Called Contention</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: what the machine said"?</p>
+                <div class="quiz" id="quiz-smp-topology-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: three files, one walk, and one missing file&quot;, not &quot;The reality: what the machine said&quot;." data-source-ref="content/src/smp_topology.ch:64" onclick="checkQuiz('quiz-smp-topology-i4', this)" aria-label="Option: The kernel exposes the machine&#x27;s shape in several directories that different subsystems maintain, and they are maintained independently.">The kernel exposes the machine&#x27;s shape in several directories that different subsystems maintain, and they are maintained independently.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: what the machine said&quot;." data-source-ref="content/src/smp_topology.ch:248" onclick="checkQuiz('quiz-smp-topology-i4', this)" aria-label="Option: Every ratio in that table is a claim about the pair cpu2/cpu4 specifically, and if the pin fails the repetition is discarded and counted.">Every ratio in that table is a claim about the pair cpu2/cpu4 specifically, and if the pin fails the repetition is discarded and counted.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Six physical cores, two logical CPUs each, one package, and every sibling relation mutual : cpu2&#x27;s sibling is cpu3 and cpu3&#x27;s sibling is cpu2." data-source-ref="content/src/smp_topology.ch:150" onclick="checkQuiz('quiz-smp-topology-i4', this)" aria-label="Option: Six physical cores, two logical CPUs each, one package, and every sibling relation mutual : cpu2&#x27;s sibling is cpu3 and cpu3&#x27;s sibling is cpu2.">Six physical cores, two logical CPUs each, one package, and every sibling relation mutual : cpu2&#x27;s sibling is cpu3 and cpu3&#x27;s sibling is cpu2.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: what the machine said&quot;." data-source-ref="content/src/smp_topology.ch:47" onclick="checkQuiz('quiz-smp-topology-i4', this)" aria-label="Option: Two threads on unspecified CPUs is not a measurement; it is a rumour with a number attached.">Two threads on unspecified CPUs is not a measurement; it is a rumour with a number attached.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

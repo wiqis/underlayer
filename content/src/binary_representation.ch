@@ -128,6 +128,7 @@ public func render_binary_representation() : string {
             <div class="unit unit-exercises" id="api-exercises" style="display:none">
                 <h2>Practice Exercises</h2>
                 <div id="exercise-list"></div>
+            <p class="verified-answer-key" data-source-ref="courses/elf/manifest.json#exercise_decls">Verified answer key: Bits from the left: 8 + 2 = 10. Binary 1010 = decimal 10. 0x1a = 1*16 + 10 = 26 (&#x27;a&#x27; is 10 in hex).</p>
             </div>
             <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">

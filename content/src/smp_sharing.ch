@@ -265,11 +265,39 @@ public func render_smp_sharing() : string {
                 <span>Previous: <a href="/courses/smp/lessons/smp-topology">A Claim About a Pair</a></span>
                 <span>Next: <a href="/courses/smp/lessons/smp-atomic">A Lock With Nothing to Lock Against</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: the table, and the one ratio that is the course"?</p>
+                <div class="quiz" id="quiz-smp-sharing-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: a controlled experiment, and the one it was not&quot;, not &quot;The reality: the table, and the one ratio that is the course&quot;." data-source-ref="content/src/smp_sharing.ch:79" onclick="checkQuiz('quiz-smp-sharing-i4', this)" aria-label="Option: Read that again slowly, because it is the whole lesson: the number looked fine.">Read that again slowly, because it is the whole lesson: the number looked fine.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the fix, and the trap that hides the fix&quot;, not &quot;The reality: the table, and the one ratio that is the course&quot;." data-source-ref="content/src/smp_sharing.ch:220" onclick="checkQuiz('quiz-smp-sharing-i4', this)" aria-label="Option: The engineering consequence of a B/C of 1.19, 1.03 or 0.97 is a single declaration.">The engineering consequence of a B/C of 1.19, 1.03 or 0.97 is a single declaration.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: the table, and the one ratio that is the course&quot;." data-source-ref="content/src/smp_sharing.ch:258" onclick="checkQuiz('quiz-smp-sharing-i4', this)" aria-label="Option: Backwards, the topology concept supplied the only thing that makes this table readable: the identity of the pairs.">Backwards, the topology concept supplied the only thing that makes this table readable: the identity of the pairs.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Each worker stores to its own line and then opaque-loads the line the other one owns: two lines, two owners, a transfer every iteration." data-source-ref="content/src/smp_sharing.ch:188" onclick="checkQuiz('quiz-smp-sharing-i4', this)" aria-label="Option: Each worker stores to its own line and then opaque-loads the line the other one owns: two lines, two owners, a transfer every iteration.">Each worker stores to its own line and then opaque-loads the line the other one owns: two lines, two owners, a transfer every iteration.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: the table, and the one ratio that is the course&quot;." data-source-ref="content/src/smp_sharing.ch:56" onclick="checkQuiz('quiz-smp-sharing-i4', this)" aria-label="Option: Three things, and the reason they have to be separated is not pedantry.">Three things, and the reason they have to be separated is not pedantry.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -196,11 +196,39 @@ public func render_a64_save() : string {
                 <span>Previous: <a href="/courses/a64abi/lessons/a64-frame">No Red Zone, and the Two Instructions That Is Worth</a></span>
                 <span>Next: <a href="/courses/a64abi/lessons/a64-unwind">The Frame in a Second Language, and the Shape That Was Not There</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What the compiler actually did, and the count that is arithmetic"?</p>
+                <div class="quiz" id="quiz-a64-save-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: the document&#x27;s four rows, and the one everybody drops&quot;, not &quot;What the compiler actually did, and the count that is arithmetic&quot;." data-source-ref="content/src/a64_save.ch:98" onclick="checkQuiz('quiz-a64-save-i4', this)" aria-label="Option: Four rows and four different things, so read them one at a time.">Four rows and four different things, so read them one at a time.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the range that was wrong, and what it would have forced&quot;, not &quot;What the compiler actually did, and the count that is arithmetic&quot;." data-source-ref="content/src/a64_save.ch:169" onclick="checkQuiz('quiz-a64-save-i4', this)" aria-label="Option: The plan for this course said the AAPCS64 preserves the lower 64 bits of v0 – v7 .">The plan for this course said the AAPCS64 preserves the lower 64 bits of v0 – v7 .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What the compiler actually did, and the count that is arithmetic&quot;." data-source-ref="content/src/a64_save.ch:192" onclick="checkQuiz('quiz-a64-save-i4', this)" aria-label="Option: Forwards, one concept, and it is the one that uses everything above.">Forwards, one concept, and it is the one that uses everything above.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="On x86-64 the flags are a register, so preserving them is a memory operation a compiler emits and a reader can count." data-source-ref="content/src/a64_save.ch:164" onclick="checkQuiz('quiz-a64-save-i4', this)" aria-label="Option: On x86-64 the flags are a register, so preserving them is a memory operation a compiler emits and a reader can count.">On x86-64 the flags are a register, so preserving them is a memory operation a compiler emits and a reader can count.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;What the compiler actually did, and the count that is arithmetic&quot;." data-source-ref="content/src/a64_save.ch:49" onclick="checkQuiz('quiz-a64-save-i4', this)" aria-label="Option: Concept 1 said which register argument four goes in.">Concept 1 said which register argument four goes in.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

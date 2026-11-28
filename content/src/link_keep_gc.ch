@@ -314,11 +314,40 @@ $ python3 linklab.py gc
                 <span><a href="/courses/link/lessons/link-phdrs">Previous: PHDRS and the -T Surprise</a></span>
                 <span>Next: <a href="/courses/link/lessons/link-orphans">The Sections the Script Forgot</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-link-keep-gc-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_keep_gc.ch:66" onclick="checkQuiz('quiz-link-keep-gc-i4', this)" aria-label="Option: It is four steps and about forty lines of real linker code.">It is four steps and about forty lines of real linker code.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_keep_gc.ch:182" onclick="checkQuiz('quiz-link-keep-gc-i4', this)" aria-label="Option: The failure this whole mechanism is defending against, because it is the classic linker-script bug and it is silent.">The failure this whole mechanism is defending against, because it is the classic linker-script bug and it is silent.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_keep_gc.ch:290" onclick="checkQuiz('quiz-link-keep-gc-i4', this)" aria-label="Option: Exercise 2 is the one that matters, and it is the closest thing to a real bug you can build in five minutes.">Exercise 2 is the one that matters, and it is the closest thing to a real bug you can build in five minutes.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_keep_gc.ch:296" onclick="checkQuiz('quiz-link-keep-gc-i4', this)" aria-label="Option: This is the first selection concept and it is the answer to the question the language concept planted.">This is the first selection concept and it is the answer to the question the language concept planted.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="--gc-sections is a reachability walk and reachability is a property of the graph the compiler handed over, not of the source you wrote." data-source-ref="content/src/link_keep_gc.ch:132" onclick="checkQuiz('quiz-link-keep-gc-i4', this)" aria-label="Option: --gc-sections is a reachability walk and reachability is a property of the graph the compiler handed over, not of the source you wrote.">--gc-sections is a reachability walk and reachability is a property of the graph the compiler handed over, not of the source you wrote.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_keep_gc.ch:27" onclick="checkQuiz('quiz-link-keep-gc-i4', this)" aria-label="Option: You have a function that nothing calls.">You have a function that nothing calls.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -98,6 +98,7 @@ $ python3 -c "import struct; b=open('libasyncProfiler.dylib','rb').read(); s=b[0
                 <h2>Connect</h2>
                 <p>The superblob proves the bytes and the team; the UUID from the previous lesson proves which link produced them. Neither helps you <em>read</em> the program — for that you need debug information matched to that same identity.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-debug-info">Debug Info</a> — dSYM companion bundles, why full DWARF never ships inside the binary, and how LC_UUID is the join key between a crash and its symbols.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: LC_CODE_SIGNATURE is a linkedit_data_command holding dataoff/datasize pointing at a code signature blob in __LINKEDIT. The blob starts with a superblob header (magic 0xFADE0CC0, length, count) indexing embedded blobs: code directory (0xFADE0C02), requirements, entitlements, and the DER signature.</p>
             </div>
 
             <div class="lesson-footer">

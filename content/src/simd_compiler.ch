@@ -239,11 +239,39 @@ public func render_simd_compiler() : string {
                 <span>Previous: <a href="/courses/simd/lessons/simd-width">A Register With Lanes In It</a></span>
                 <span>Next: <a href="/courses/simd/lessons/simd-shapes">Elementwise, and Independent</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: the first draft of this concept was wrong twice"?</p>
+                <div class="quiz" id="quiz-simd-compiler-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: four forms, two variables, one 2×2&quot;, not &quot;The reality: the first draft of this concept was wrong twice&quot;." data-source-ref="content/src/simd_compiler.ch:74" onclick="checkQuiz('quiz-simd-compiler-i4', this)" aria-label="Option: To find out what the compiler actually does, you look at what the compiler actually emitted.">To find out what the compiler actually does, you look at what the compiler actually emitted.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: what to do about it&quot;, not &quot;The reality: the first draft of this concept was wrong twice&quot;." data-source-ref="content/src/simd_compiler.ch:181" onclick="checkQuiz('quiz-simd-compiler-i4', this)" aria-label="Option: Four things, in the order they are worth doing.">Four things, in the order they are worth doing.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: the first draft of this concept was wrong twice&quot;." data-source-ref="content/src/simd_compiler.ch:232" onclick="checkQuiz('quiz-simd-compiler-i4', this)" aria-label="Option: Backwards, the width concept is the one whose table made this question necessary.">Backwards, the width concept is the one whose table made this question necessary.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The noinline accessors put three calls in the inner loop , so the gap between the two columns is larger than the aliasing effect alone." data-source-ref="content/src/simd_compiler.ch:176" onclick="checkQuiz('quiz-simd-compiler-i4', this)" aria-label="Option: The noinline accessors put three calls in the inner loop , so the gap between the two columns is larger than the aliasing effect alone.">The noinline accessors put three calls in the inner loop , so the gap between the two columns is larger than the aliasing effect alone.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: the first draft of this concept was wrong twice&quot;." data-source-ref="content/src/simd_compiler.ch:61" onclick="checkQuiz('quiz-simd-compiler-i4', this)" aria-label="Option: A compiler will vectorise a straightforward loop at -O2 these days, and it will do it about as well as you would.">A compiler will vectorise a straightforward loop at -O2 these days, and it will do it about as well as you would.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

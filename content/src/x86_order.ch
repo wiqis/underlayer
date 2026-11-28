@@ -195,11 +195,39 @@ public func render_x86_order() : string {
                 <span>Previous: <a href="/courses/x86simd/lessons/x86-atomics">The Atomic Set: Which Instructions Imply LOCK</a></span>
                 <span>Next: <a href="/courses/x86simd/lessons/x86-bytes">Thirty Encodings, Round-Tripped and Cross-Checked</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The ping-pong: seven arms, and the result that is not the expected one"?</p>
+                <div class="quiz" id="quiz-x86-order-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The three fences, which are three bytes and one opcode&quot;, not &quot;The ping-pong: seven arms, and the result that is not the expected one&quot;." data-source-ref="content/src/x86_order.ch:65" onclick="checkQuiz('quiz-x86-order-i4', this)" aria-label="Option: Read the reg column twice.">Read the reg column twice.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The direction flag is bit 10, and there is a story about why it is hard to remember&quot;, not &quot;The ping-pong: seven arms, and the result that is not the expected one&quot;." data-source-ref="content/src/x86_order.ch:140" onclick="checkQuiz('quiz-x86-order-i4', this)" aria-label="Option: This course was written from a brief that said the direction flag is EFLAGS bit 21.">This course was written from a brief that said the direction flag is EFLAGS bit 21.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The ping-pong: seven arms, and the result that is not the expected one&quot;." data-source-ref="content/src/x86_order.ch:189" onclick="checkQuiz('quiz-x86-order-i4', this)" aria-label="Option: Backwards, the previous concept made every instruction atomic and this one says what atomicity does not buy.">Backwards, the previous concept made every instruction atomic and this one says what atomicity does not buy.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="There is no counter here that can count coherence traffic: perf_event_paranoid is 4 and every mechanism named above is inferred from a duration." data-source-ref="content/src/x86_order.ch:133" onclick="checkQuiz('quiz-x86-order-i4', this)" aria-label="Option: There is no counter here that can count coherence traffic: perf_event_paranoid is 4 and every mechanism named above is inferred from a duration.">There is no counter here that can count coherence traffic: perf_event_paranoid is 4 and every mechanism named above is inferred from a duration.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The ping-pong: seven arms, and the result that is not the expected one&quot;." data-source-ref="content/src/x86_order.ch:47" onclick="checkQuiz('quiz-x86-order-i4', this)" aria-label="Option: The previous concept made every instruction in the atomic set individually atomic.">The previous concept made every instruction in the atomic set individually atomic.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

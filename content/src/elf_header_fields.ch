@@ -160,6 +160,7 @@ public func render_elf_header_fields() : string {
             <div class="unit unit-exercises" id="api-exercises" style="display:none">
                 <h2>Practice Exercises</h2>
                 <div id="exercise-list"></div>
+            <p class="verified-answer-key" data-source-ref="courses/elf/manifest.json#exercise_decls">Verified answer key: e_phoff is the file offset of the program header table; e_shoff is the section header table. 9 entries x 56 bytes each = 504 bytes.</p>
             </div>
             <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">

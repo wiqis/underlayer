@@ -264,11 +264,40 @@ $ python3 crosscheck.py run1.txt     # 109 checks against a captured run
                 <span><a href="/courses/mem/lessons/mem-sharing">Previous: Two Threads, One Line</a></span>
                 <span>End of The Memory Hierarchy &middot; <a href="/courses/mem">back to the course</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What the Harness Reported"?</p>
+                <div class="quiz" id="quiz-mem-verify-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The Rules the Harness Follows&quot;, not &quot;What the Harness Reported&quot;." data-source-ref="content/src/mem_verify.ch:48" onclick="checkQuiz('quiz-mem-verify-i4', this)" aria-label="Option: Six rules, each of which exists because an earlier version broke it.">Six rules, each of which exists because an earlier version broke it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The Harness That Took Itself Down&quot;, not &quot;What the Harness Reported&quot;." data-source-ref="content/src/mem_verify.ch:148" onclick="checkQuiz('quiz-mem-verify-i4', this)" aria-label="Option: Every rule in the model above is a scar, and the worst scar belongs to the harness rather than the artifact.">Every rule in the model above is a scar, and the worst scar belongs to the harness rather than the artifact.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;What the Harness Reported&quot;." data-source-ref="content/src/mem_verify.ch:252" onclick="checkQuiz('quiz-mem-verify-i4', this)" aria-label="Option: Exercise 1 is the quickest route to understanding what a harness is for.">Exercise 1 is the quickest route to understanding what a harness is for.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What the Harness Reported&quot;." data-source-ref="content/src/mem_verify.ch:258" onclick="checkQuiz('quiz-mem-verify-i4', this)" aria-label="Option: Backwards, this concept is the ledger for the six before it.">Backwards, this concept is the ledger for the six before it.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The suite did not fail, and it did not pass by ignoring the question: it changed the question to one the data can answer." data-source-ref="content/src/mem_verify.ch:124" onclick="checkQuiz('quiz-mem-verify-i4', this)" aria-label="Option: The suite did not fail, and it did not pass by ignoring the question: it changed the question to one the data can answer.">The suite did not fail, and it did not pass by ignoring the question: it changed the question to one the data can answer.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;What the Harness Reported&quot;." data-source-ref="content/src/mem_verify.ch:28" onclick="checkQuiz('quiz-mem-verify-i4', this)" aria-label="Option: None of those produced a crash, a warning, or an obviously wrong number.">None of those produced a crash, a warning, or an obviously wrong number.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

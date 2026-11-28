@@ -194,11 +194,39 @@ public func render_a64_asm() : string {
                 <span>Previous: <a href="/courses/a64asm">course home</a></span>
                 <span>Next: <a href="/courses/a64asm/lessons/a64-encoding">The Class Field Is Four Bits, and the Field Map Is Measured</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Three things that are cheaper to state than to prove"?</p>
+                <div class="quiz" id="quiz-a64-asm-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: two properties, one of them free&quot;, not &quot;Three things that are cheaper to state than to prove&quot;." data-source-ref="content/src/a64_asm.ch:70" onclick="checkQuiz('quiz-a64-asm-i4', this)" aria-label="Option: Two columns matter more than the rest.">Two columns matter more than the rest.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: reading one word, out loud&quot;, not &quot;Three things that are cheaper to state than to prove&quot;." data-source-ref="content/src/a64_asm.ch:173" onclick="checkQuiz('quiz-a64-asm-i4', this)" aria-label="Option: Every line is arithmetic on the bits and every line is checkable by hand with the constants beside it.">Every line is arithmetic on the bits and every line is checkable by hand with the constants beside it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Three things that are cheaper to state than to prove&quot;." data-source-ref="content/src/a64_asm.ch:189" onclick="checkQuiz('quiz-a64-asm-i4', this)" aria-label="Option: elf-section-vs-segment is why the artifact finds .text by NAME and by the execute flag rather than by index.">elf-section-vs-segment is why the artifact finds .text by NAME and by the execute flag rather than by index.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="This course has a habit the courses before it established, and it is worth showing before the worked example rather than after the last concept." data-source-ref="content/src/a64_asm.ch:139" onclick="checkQuiz('quiz-a64-asm-i4', this)" aria-label="Option: This course has a habit the courses before it established, and it is worth showing before the worked example rather than after the last concept.">This course has a habit the courses before it established, and it is worth showing before the worked example rather than after the last concept.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;Three things that are cheaper to state than to prove&quot;." data-source-ref="content/src/a64_asm.ch:48" onclick="checkQuiz('quiz-a64-asm-i4', this)" aria-label="Option: The purchase is not money.">The purchase is not money.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

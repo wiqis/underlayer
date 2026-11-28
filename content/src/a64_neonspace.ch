@@ -227,11 +227,39 @@ public func render_a64_neonspace() : string {
                 <span>Previous: <a href="/courses/a64simd/lessons/a64-neon">Thirty-Two Registers, Four Ways to Read One</a></span>
                 <span>Next: <a href="/courses/a64simd/lessons/a64-atomic">The Exclusive Monitor, and Why the Retry Is the Instruction</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What this measurement cannot show"?</p>
+                <div class="quiz" id="quiz-a64-neonspace-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The measurement: five compiles, five identical words&quot;, not &quot;What this measurement cannot show&quot;." data-source-ref="content/src/a64_neonspace.ch:84" onclick="checkQuiz('quiz-a64-neonspace-i4', this)" aria-label="Option: Same instruction, five vector lengths, one word.">Same instruction, five vector lengths, one word.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the four refusals, and what they cost&quot;, not &quot;What this measurement cannot show&quot;." data-source-ref="content/src/a64_neonspace.ch:173" onclick="checkQuiz('quiz-a64-neonspace-i4', this)" aria-label="Option: The other half of a shared space is an assembler that does not have every member of it.">The other half of a shared space is an assembler that does not have every member of it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What this measurement cannot show&quot;." data-source-ref="content/src/a64_neonspace.ch:222" onclick="checkQuiz('quiz-a64-neonspace-i4', this)" aria-label="Option: Outward, and this is the page&#x27;s real subject: an encoding that omits a field is making a claim about where the information lives.">Outward, and this is the page&#x27;s real subject: an encoding that omits a field is making a claim about where the information lives.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="That is the cheap way to do it and it is exactly why a decoder needs to know the CPU." data-source-ref="content/src/a64_neonspace.ch:168" onclick="checkQuiz('quiz-a64-neonspace-i4', this)" aria-label="Option: That is the cheap way to do it and it is exactly why a decoder needs to know the CPU.">That is the cheap way to do it and it is exactly why a decoder needs to know the CPU.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;What this measurement cannot show&quot;." data-source-ref="content/src/a64_neonspace.ch:55" onclick="checkQuiz('quiz-a64-neonspace-i4', this)" aria-label="Option: One file register, two views, and the second view is wider.">One file register, two views, and the second view is wider.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

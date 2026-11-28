@@ -210,11 +210,39 @@ public func render_cb_sched() : string {
                 <span>Previous: <a href="/courses/compback/lessons/cb-regalloc">Register Allocation</a></span>
                 <span>Next: <a href="/courses/compback/lessons/cb-abi">The Backend and the ABI</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Four legal orders, and the only thing separating three of them"?</p>
+                <div class="quiz" id="quiz-cb-sched-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The kernel is chosen on purpose, and the choice is the lesson&quot;, not &quot;Four legal orders, and the only thing separating three of them&quot;." data-source-ref="content/src/cb_sched.ch:60" onclick="checkQuiz('quiz-cb-sched-i4', this)" aria-label="Option: This is worth more than any number on the page.">This is worth more than any number on the page.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The trap: a schedule that respects the dependencies it can see&quot;, not &quot;Four legal orders, and the only thing separating three of them&quot;." data-source-ref="content/src/cb_sched.ch:120" onclick="checkQuiz('quiz-cb-sched-i4', this)" aria-label="Option: The kernel stores to [1024+8] and then loads from [1024+8] .">The kernel stores to [1024+8] and then loads from [1024+8] .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Four legal orders, and the only thing separating three of them&quot;." data-source-ref="content/src/cb_sched.ch:202" onclick="checkQuiz('quiz-cb-sched-i4', this)" aria-label="Option: Backwards, exe-latency derived why a dependency chain costs you what it costs, and exe-deps is where out-of-order execution and the rename table were introduced.">Backwards, exe-latency derived why a dependency chain costs you what it costs, and exe-deps is where out-of-order execution and the rename table were introduced.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Read that last sentence carefully, because it is the course’s position on evidence stated once and it applies everywhere." data-source-ref="content/src/cb_sched.ch:114" onclick="checkQuiz('quiz-cb-sched-i4', this)" aria-label="Option: Read that last sentence carefully, because it is the course’s position on evidence stated once and it applies everywhere.">Read that last sentence carefully, because it is the course’s position on evidence stated once and it applies everywhere.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Which order, and why it is the third question rather than the first&quot;, not &quot;Four legal orders, and the only thing separating three of them&quot;." data-source-ref="content/src/cb_sched.ch:45" onclick="checkQuiz('quiz-cb-sched-i4', this)" aria-label="Option: Everything interesting on this page is in one of those three phases, and the phase most textbooks spend least time on is the first.">Everything interesting on this page is in one of those three phases, and the phase most textbooks spend least time on is the first.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

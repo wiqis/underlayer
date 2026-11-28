@@ -246,11 +246,39 @@ public func render_x86_integers() : string {
                 <span>Previous: <a href="/courses/x86asm/lessons/x86-asm">Reading a Disassembly Without Being Fooled</a></span>
                 <span>Next: <a href="/courses/x86asm/lessons/x86-flags">From a Comparison to a Boolean</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: LEA, the two shift counts, and the three widths of MOV"?</p>
+                <div class="quiz" id="quiz-x86-integers-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: four instructions, one control, and a group that does not chain&quot;, not &quot;The reality: LEA, the two shift counts, and the three widths of MOV&quot;." data-source-ref="content/src/x86_integers.ch:65" onclick="checkQuiz('quiz-x86-integers-i4', this)" aria-label="Option: Eight operations per iteration in every arm, the same two loop instructions in every arm, and the operation under test changed and nothing else.">Eight operations per iteration in every arm, the same two loop instructions in every arm, and the operation under test changed and nothing else.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the flag table, and the two rows worth stopping on&quot;, not &quot;The reality: LEA, the two shift counts, and the three widths of MOV&quot;." data-source-ref="content/src/x86_integers.ch:183" onclick="checkQuiz('quiz-x86-integers-i4', this)" aria-label="Option: Every number above is what the machine charges.">Every number above is what the machine charges.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: LEA, the two shift counts, and the three widths of MOV&quot;." data-source-ref="content/src/x86_integers.ch:240" onclick="checkQuiz('quiz-x86-integers-i4', this)" aria-label="Option: isa-opcodes has the fourteen 0F xx opcodes this course never names.">isa-opcodes has the fourteen 0F xx opcodes this course never names.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="A “mov” with a size suffix is a request for a specific width and the hardware gives you exactly that width and nothing more." data-source-ref="content/src/x86_integers.ch:178" onclick="checkQuiz('quiz-x86-integers-i4', this)" aria-label="Option: A “mov” with a size suffix is a request for a specific width and the hardware gives you exactly that width and nothing more.">A “mov” with a size suffix is a request for a specific width and the hardware gives you exactly that width and nothing more.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: LEA, the two shift counts, and the three widths of MOV&quot;." data-source-ref="content/src/x86_integers.ch:47" onclick="checkQuiz('quiz-x86-integers-i4', this)" aria-label="Option: And those are not exotic instructions: they are the arithmetic that everything else is written in terms of.">And those are not exotic instructions: they are the arithmetic that everything else is written in terms of.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -282,6 +282,19 @@ $ python3 crosscheck.py
                 <span><a href="/courses/dyn/lessons/dyn-tls-block">Previous: Where the Thread Blocks Come From</a></span>
                 <span>End of course &middot; <a href="/courses/dyn">back to the course page</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-dyn-resolve-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_resolve.ch:42" onclick="checkQuiz('quiz-dyn-resolve-i4', this)" aria-label="Option: What it has to read, and why each is unavoidable.">What it has to read, and why each is unavoidable.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_resolve.ch:161" onclick="checkQuiz('quiz-dyn-resolve-i4', this)" aria-label="Option: What the artifact deliberately does not do, because the omissions are the specification.">What the artifact deliberately does not do, because the omissions are the specification.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_resolve.ch:268" onclick="checkQuiz('quiz-dyn-resolve-i4', this)" aria-label="Option: Exercise 1 is the one that turns the artifact from a demonstration into a tool, and the failure mode is the lesson.">Exercise 1 is the one that turns the artifact from a demonstration into a tool, and the failure mode is the lesson.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_resolve.ch:274" onclick="checkQuiz('quiz-dyn-resolve-i4', this)" aria-label="Option: This is the end of the course, and it is the concept that makes the other nine into a skill.">This is the end of the course, and it is the concept that makes the other nine into a skill.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="liba.so exports lib_value deliberately and loses to an executable that defined it by accident, because the executable is index 0." data-source-ref="content/src/dyn_resolve.ch:136" onclick="checkQuiz('quiz-dyn-resolve-i4', this)" aria-label="Option: liba.so exports lib_value deliberately and loses to an executable that defined it by accident, because the executable is index 0.">liba.so exports lib_value deliberately and loses to an executable that defined it by accident, because the executable is index 0.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_resolve.ch:27" onclick="checkQuiz('quiz-dyn-resolve-i4', this)" aria-label="Option: Eight concepts of reading, and this one writes.">Eight concepts of reading, and this one writes.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     
 
@@ -290,6 +303,22 @@ $ python3 crosscheck.py
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

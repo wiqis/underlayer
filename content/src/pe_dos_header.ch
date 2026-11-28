@@ -143,6 +143,7 @@ $ xxd -s 0x3c -l 4 cli-64.exe
                 <h2>Connect</h2>
                 <p>You can now read all 64 bytes — and know that Windows only trusts two of them. Follow <code>e_lfanew</code> and you land on the 4-byte signature that opens the modern format, immediately followed by the 20-byte COFF header you already met from the object-file side.</p>
                 <p>Next: <a href="/courses/pe/lessons/pe-signature-coff">PE Signature and COFF Header</a> — verifying <code>PE\0\0</code>, then decoding every COFF field, with both Characteristics flags fully unpacked.</p>
+            <p class="verified-answer-key" data-source-ref="courses/pe/manifest.json#exercise_decls">Verified answer key: The e_lfanew field sits at offset 0x3C (60) in IMAGE_DOS_HEADER and holds the file offset of the &#x27;PE\0\0&#x27; signature. Little-endian 00 01 00 00 = 0x00000100 = 256. e_lfanew is an absolute file offset, so &#x27;PE\0\0&#x27; sits at byte 256.</p>
             </div>
 
             <div class="lesson-footer">

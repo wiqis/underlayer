@@ -275,11 +275,40 @@ $ python3 linklab.py base 0x3000000
                 <span><a href="/courses/link/lessons/link-order">Previous: Which Rule Wins</a></span>
                 <span>Next: <a href="/courses/link/lessons/link-memory-regions">MEMORY Is a Budget</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-link-location-counter-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_location_counter.ch:45" onclick="checkQuiz('quiz-link-location-counter-i4', this)" aria-label="Option: There is exactly one mutable variable in a linker script and it is spelled as a full stop.">There is exactly one mutable variable in a linker script and it is spelled as a full stop.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_location_counter.ch:198" onclick="checkQuiz('quiz-link-location-counter-i4', this)" aria-label="Option: &amp; (MAXPAGESIZE - 1) is the current offset within the page.">&amp; (MAXPAGESIZE - 1) is the current offset within the page.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_location_counter.ch:262" onclick="checkQuiz('quiz-link-location-counter-i4', this)" aria-label="Option: Exercise 5 is the one that shows why the ALIGN s are load-bearing rather than tidy.">Exercise 5 is the one that shows why the ALIGN s are load-bearing rather than tidy.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_location_counter.ch:267" onclick="checkQuiz('quiz-link-location-counter-i4', this)" aria-label="Option: The 0x900000-versus-0x9000f0 gap at the top of this page is the first phenomenon; the 240 bytes after it is the second.">The 0x900000-versus-0x9000f0 gap at the top of this page is the first phenomenon; the 240 bytes after it is the second.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The third is the one worth noting: 0x800000 is an unremarkable address that nothing reserves, and the binary executed there and returned the right answer." data-source-ref="content/src/link_location_counter.ch:173" onclick="checkQuiz('quiz-link-location-counter-i4', this)" aria-label="Option: The third is the one worth noting: 0x800000 is an unremarkable address that nothing reserves, and the binary executed there and returned the right answer.">The third is the one worth noting: 0x800000 is an unremarkable address that nothing reserves, and the binary executed there and returned the right answer.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_location_counter.ch:26" onclick="checkQuiz('quiz-link-location-counter-i4', this)" aria-label="Option: You write an address into a script and you do not get that address.">You write an address into a script and you do not get that address.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -166,11 +166,39 @@ public func render_priv_vectors() : string {
                 <span>Previous: <a href="/courses/priv/lessons/priv-table">A Table You Can Locate and Not Read</a></span>
                 <span>Next: <a href="/courses/priv/lessons/priv-doors">Four Ways In, and One of Them Is Not a Door</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: where the two vendors part company"?</p>
+                <div class="quiz" id="quiz-priv-vectors-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: three classes, and why the class matters more than the name&quot;, not &quot;The reality: where the two vendors part company&quot;." data-source-ref="content/src/priv_vectors.ch:53" onclick="checkQuiz('quiz-priv-vectors-i4', this)" aria-label="Option: Every vector 0–31 is one of three kinds, and the kind determines where the saved instruction pointer points .">Every vector 0–31 is one of three kinds, and the kind determines where the saved instruction pointer points .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: raise some of them for real&quot;, not &quot;The reality: where the two vendors part company&quot;." data-source-ref="content/src/priv_vectors.ch:130" onclick="checkQuiz('quiz-priv-vectors-i4', this)" aria-label="Option: Reading a table is not the same as watching one happen.">Reading a table is not the same as watching one happen.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: where the two vendors part company&quot;." data-source-ref="content/src/priv_vectors.ch:161" onclick="checkQuiz('quiz-priv-vectors-i4', this)" aria-label="Option: Backwards, the previous concept gave you the table these numbers index into.">Backwards, the previous concept gave you the table these numbers index into.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Intel defines #VE , a virtualization exception raised on an EPT violation when the “EPT-violation #VE” VM-execution control is set." data-source-ref="content/src/priv_vectors.ch:109" onclick="checkQuiz('quiz-priv-vectors-i4', this)" aria-label="Option: Intel defines #VE , a virtualization exception raised on an EPT violation when the “EPT-violation #VE” VM-execution control is set.">Intel defines #VE , a virtualization exception raised on an EPT violation when the “EPT-violation #VE” VM-execution control is set.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: where the two vendors part company&quot;." data-source-ref="content/src/priv_vectors.ch:47" onclick="checkQuiz('quiz-priv-vectors-i4', this)" aria-label="Option: The previous concept found a table of 4096 slots and could not read any of them.">The previous concept found a table of 4096 slots and could not read any of them.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

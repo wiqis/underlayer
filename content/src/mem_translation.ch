@@ -282,11 +282,40 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^  --- group E:/,/^  --- group F:
                 <span><a href="/courses/mem/lessons/mem-associativity">Previous: A Number From /sys, a Number Measured</a></span>
                 <span>Next: <a href="/courses/mem/lessons/mem-writes">What a Store Costs</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What the Instrument Reported"?</p>
+                <div class="quiz" id="quiz-mem-translation-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_translation.ch:57" onclick="checkQuiz('quiz-mem-translation-i4', this)" aria-label="Option: Both arms of the experiment hold 512 lines .">Both arms of the experiment hold 512 lines .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The Table That Ran Backwards&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_translation.ch:160" onclick="checkQuiz('quiz-mem-translation-i4', this)" aria-label="Option: The retraction this concept inherits was about a measurement given the wrong cause.">The retraction this concept inherits was about a measurement given the wrong cause.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_translation.ch:269" onclick="checkQuiz('quiz-mem-translation-i4', this)" aria-label="Option: Exercise 2 is the one that changes how a reader uses a machine.">Exercise 2 is the one that changes how a reader uses a machine.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_translation.ch:275" onclick="checkQuiz('quiz-mem-translation-i4', this)" aria-label="Option: Backwards, this concept is the second half of a pair with the associativity concept .">Backwards, this concept is the second half of a pair with the associativity concept .</button>
+                    <button class="quiz-option" data-correct="true" data-explain="For the record of what the collapsed branch looks like, here is the same instrument on the same machine twenty minutes earlier, from research.md ." data-source-ref="content/src/mem_translation.ch:147" onclick="checkQuiz('quiz-mem-translation-i4', this)" aria-label="Option: For the record of what the collapsed branch looks like, here is the same instrument on the same machine twenty minutes earlier, from research.md .">For the record of what the collapsed branch looks like, here is the same instrument on the same machine twenty minutes earlier, from research.md .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;What the Instrument Reported&quot;." data-source-ref="content/src/mem_translation.ch:28" onclick="checkQuiz('quiz-mem-translation-i4', this)" aria-label="Option: The previous concept ended with a retraction, and this concept is the experiment that retraction made possible.">The previous concept ended with a retraction, and this concept is the experiment that retraction made possible.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -168,11 +168,39 @@ public func render_rv_modes() : string {
             <div class="lesson-footer">
                 <span>Next: <a href="/courses/rvpriv/lessons/rv-paging">Sv39, Sv48, Sv57 and satp, Measured on the Compiler's Own Shifts</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What was measured here, and what was not"?</p>
+                <div class="quiz" id="quiz-rv-modes-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Twelve instructions, and one bit between the two families&quot;, not &quot;What was measured here, and what was not&quot;." data-source-ref="content/src/rv_modes.ch:69" onclick="checkQuiz('quiz-rv-modes-i4', this)" aria-label="Option: The CSR address tells you which register.">The CSR address tells you which register.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;example&quot;, not &quot;What was measured here, and what was not&quot;." data-source-ref="content/src/rv_modes.ch:125" onclick="checkQuiz('quiz-rv-modes-i4', this)" aria-label="Option: The base is rv64i ; Zicsr is a separate standard extension that used to be folded into it.">The base is rv64i ; Zicsr is a separate standard extension that used to be folded into it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What was measured here, and what was not&quot;." data-source-ref="content/src/rv_modes.ch:165" onclick="checkQuiz('quiz-rv-modes-i4', this)" aria-label="Option: Across the collection, a64-syscall and x86-syscall ask the same question on machines this collection can run.">Across the collection, a64-syscall and x86-syscall ask the same question on machines this collection can run.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Two retractions came out of this page, and both are printed in full in the artifact." data-source-ref="content/src/rv_modes.ch:150" onclick="checkQuiz('quiz-rv-modes-i4', this)" aria-label="Option: Two retractions came out of this page, and both are printed in full in the artifact.">Two retractions came out of this page, and both are printed in full in the artifact.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The whole privilege convention is four bits of an address&quot;, not &quot;What was measured here, and what was not&quot;." data-source-ref="content/src/rv_modes.ch:26" onclick="checkQuiz('quiz-rv-modes-i4', this)" aria-label="Option: Start with the number, because the number is where the privilege lives.">Start with the number, because the number is where the privilege lives.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

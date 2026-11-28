@@ -253,11 +253,39 @@ public func render_a64_aapcs() : string {
                 <span>Start of The AArch64 Procedure Call Standard: <a href="/courses/a64abi">overview</a></span>
                 <span>Next: <a href="/courses/a64abi/lessons/a64-registers">One Register, Two Names, and Three Things Called 31</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The audit: 36 of 36, by name, at four optimisation levels"?</p>
+                <div class="quiz" id="quiz-a64-aapcs-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: two counters, two banks, and a stack that starts at zero&quot;, not &quot;The audit: 36 of 36, by name, at four optimisation levels&quot;." data-source-ref="content/src/a64_aapcs.ch:68" onclick="checkQuiz('quiz-a64-aapcs-i4', this)" aria-label="Option: The whole of the argument-assignment rule, for a simple case, is two sentences.">The whole of the argument-assignment rule, for a simple case, is two sentences.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the check, and the place a measurement is refused&quot;, not &quot;The audit: 36 of 36, by name, at four optimisation levels&quot;." data-source-ref="content/src/a64_aapcs.ch:198" onclick="checkQuiz('quiz-a64-aapcs-i4', this)" aria-label="Option: The rule is SP mod 16 = 0 at a public interface, and a bl is a public interface.">The rule is SP mod 16 = 0 at a public interface, and a bl is a public interface.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The audit: 36 of 36, by name, at four optimisation levels&quot;." data-source-ref="content/src/a64_aapcs.ch:247" onclick="checkQuiz('quiz-a64-aapcs-i4', this)" aria-label="Option: Coverage: 188 further instructions named at -O0, 115 at -O2, purely by adding those six.">Coverage: 188 further instructions named at -O0, 115 at -O2, purely by adding those six.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Both hypotheses predict that: “one sequence across both banks” and “two independent counters” agree on every assignment when nothing overflows." data-source-ref="content/src/a64_aapcs.ch:148" onclick="checkQuiz('quiz-a64-aapcs-i4', this)" aria-label="Option: Both hypotheses predict that: “one sequence across both banks” and “two independent counters” agree on every assignment when nothing overflows.">Both hypotheses predict that: “one sequence across both banks” and “two independent counters” agree on every assignment when nothing overflows.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The audit: 36 of 36, by name, at four optimisation levels&quot;." data-source-ref="content/src/a64_aapcs.ch:48" onclick="checkQuiz('quiz-a64-aapcs-i4', this)" aria-label="Option: You already know how to read a disassembly.">You already know how to read a disassembly.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

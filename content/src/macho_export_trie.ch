@@ -124,6 +124,7 @@ $ xxd -s 12344 -l 96 prog64.macho</code></pre>
                 <h2>Connect</h2>
                 <p>The trie is the one structure from the dyld_info era that survives intact into modern binaries — prog64 ships it as its own LC. The other four streams do not survive: their job moves into the pointer slots themselves.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-chained-fixups">Chained Fixups</a> — how rebase and bind rows get threaded through the data they fix, so the kernel can apply them while paging faults in, replacing 644+120 opcodes with a linked list in the GOT.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: The export trie is a byte-encoded tree: each node has an optional terminal (export flags + address) and children with label edges. Shared prefixes compress the export list — dyld walks edge-by-edge looking up a symbol name in one pass. It replaced the flat export name array from LC_DYLD_INFO.</p>
             </div>
 
             <div class="lesson-footer">

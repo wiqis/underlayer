@@ -118,6 +118,7 @@ $ xxd -l 32 /usr/bin/ls
                 <h2>Connect</h2>
                 <p>This course follows the same spine the ELF and PE courses did: headers first (what the loader reads), then addressing (how disk maps to memory), then segments and the tables inside them (symbols, dynamic linking, exports), and finally the loader (dyld) itself.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-file-layout">Mach-O File Layout</a> — the full map from byte 0 to the last byte of __LINKEDIT, before any individual field is decoded.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: A 64-bit Mach-O file starts with bytes CF FA ED FE. Read as a little-endian uint32 this is 0xFEEDFACF (MH_MAGIC_64). 7F 45 4C 46 is ELF, 4D 5A is PE. The course covers objects (MH_OBJECT), executables (MH_EXECUTE), universal FAT containers holding multiple architecture slices, and the modern format with LC_DYLD_CHAINED_FIXUPS and LC_DYLD_EXPORTS_TRIE replacing classic LC_DYLD_INFO opcodes.</p>
             </div>
 
             <div class="lesson-footer">

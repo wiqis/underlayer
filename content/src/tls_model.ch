@@ -273,11 +273,40 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/\\[6\\]/,/\\[7\\]/p'
                 <span><a href="/courses/reloc/lessons/pic-violation">Previous: The Relocation That Cannot Be Fixed</a></span>
                 <span>Next: <a href="/courses/reloc/lessons/reloc-apply">Applying Them Yourself</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-tls-model-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/tls_model.ch:50" onclick="checkQuiz('quiz-tls-model-i4', this)" aria-label="Option: Why the address is unknowable, stated so the impossibility is obvious rather than technical.">Why the address is unknowable, stated so the impossibility is obvious rather than technical.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/tls_model.ch:179" onclick="checkQuiz('quiz-tls-model-i4', this)" aria-label="Option: What the two loader calls actually do, and why general-dynamic takes two arguments.">What the two loader calls actually do, and why general-dynamic takes two arguments.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/tls_model.ch:260" onclick="checkQuiz('quiz-tls-model-i4', this)" aria-label="Option: Question 3 is the one that closes the loop, and it is deliberately the measurement this course declined to make.">Question 3 is the one that closes the loop, and it is deliberately the measurement this course declined to make.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/tls_model.ch:265" onclick="checkQuiz('quiz-tls-model-i4', this)" aria-label="Option: This is the second failure concept and it is the deliberate contrast to The Relocation That Cannot Be Fixed .">This is the second failure concept and it is the deliberate contrast to The Relocation That Cannot Be Fixed .</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Row one has both TLSGD and TLSLD , because the extern symbol needs general-dynamic and the module-local one can use local-dynamic." data-source-ref="content/src/tls_model.ch:132" onclick="checkQuiz('quiz-tls-model-i4', this)" aria-label="Option: Row one has both TLSGD and TLSLD , because the extern symbol needs general-dynamic and the module-local one can use local-dynamic.">Row one has both TLSGD and TLSLD , because the extern symbol needs general-dynamic and the module-local one can use local-dynamic.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/tls_model.ch:27" onclick="checkQuiz('quiz-tls-model-i4', this)" aria-label="Option: Every relocation so far had the same shape: read three numbers, do arithmetic, write four bytes.">Every relocation so far had the same shape: read three numbers, do arithmetic, write four bytes.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -140,6 +140,7 @@ STACK_EXECUTION False</code></pre>
                 <h2>Connect</h2>
                 <p>You have read the defense posture straight from the file: a guard page at zero, a random base, W^X segments, policy flags — declared in bytes, enforced by kernel and dyld, attested by the <a href="/courses/macho/lessons/macho-code-signing">code signature</a>. But someone has to actually <em>perform</em> that map: choose the slide, walk the dependencies, fix every pointer.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-dyld">How dyld Loads a Mach-O</a> — seven stages from execve to main, each one anchored to a load command you have already met.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: Beyond null-pointer faults, __PAGEZERO prevents any attacker-mapped page from living at low addresses — classic exploits that mmap at address 0 or low addresses are blocked because the loader already reserved that range with no permissions (prot = 0/0).</p>
             </div>
 
             <div class="lesson-footer">

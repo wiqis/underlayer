@@ -367,6 +367,19 @@ $ python3 x86dec.py corpus
                 <span><a href="/courses/isa/lessons/isa-length">Previous: The Length Arithmetic</a></span>
                 <span>Next: <a href="/courses/reloc/lessons/pic-violation">Back to the chain: The PIC Violation</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The Two Decoders Agree"?</p>
+                <div class="quiz" id="quiz-isa-decode-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;The Two Decoders Agree&quot;." data-source-ref="content/src/isa_decode.ch:68" onclick="checkQuiz('quiz-isa-decode-i4', this)" aria-label="Option: Three design decisions, and each one is a position rather than a default.">Three design decisions, and each one is a position rather than a default.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Using It On Things You Did Not Build&quot;, not &quot;The Two Decoders Agree&quot;." data-source-ref="content/src/isa_decode.ch:225" onclick="checkQuiz('quiz-isa-decode-i4', this)" aria-label="Option: The real use is not your own binaries.">The real use is not your own binaries.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;The Two Decoders Agree&quot;." data-source-ref="content/src/isa_decode.ch:354" onclick="checkQuiz('quiz-isa-decode-i4', this)" aria-label="Option: Exercise 3 is the one that makes the harness a habit rather than a script you run.">Exercise 3 is the one that makes the harness a habit rather than a script you run.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The Two Decoders Agree&quot;." data-source-ref="content/src/isa_decode.ch:360" onclick="checkQuiz('quiz-isa-decode-i4', this)" aria-label="Option: This concept is the payoff for the chain, and the connection runs the full length of it.">This concept is the payoff for the chain, and the connection runs the full length of it.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Three separate parsers in this course were wrong about the oracle’s output format, and every one of the failures looked like the decoder being wrong." data-source-ref="content/src/isa_decode.ch:183" onclick="checkQuiz('quiz-isa-decode-i4', this)" aria-label="Option: Three separate parsers in this course were wrong about the oracle’s output format, and every one of the failures looked like the decoder being wrong.">Three separate parsers in this course were wrong about the oracle’s output format, and every one of the failures looked like the decoder being wrong.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;The Two Decoders Agree&quot;." data-source-ref="content/src/isa_decode.ch:27" onclick="checkQuiz('quiz-isa-decode-i4', this)" aria-label="Option: Six concepts, one artifact, and a habit.">Six concepts, one artifact, and a habit.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -375,6 +388,22 @@ $ python3 x86dec.py corpus
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

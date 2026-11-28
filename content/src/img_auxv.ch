@@ -225,6 +225,19 @@ $ python3 stackwalk.py -v 2&gt;&amp;1 | grep '16 bytes'
                 <span><a href="/courses/dyn/lessons/dyn-resolve">Previous: Rebuilding the Scope Yourself</a></span>
                 <span>Next: <a href="/courses/img/lessons/img-stack">Reading the Initial Stack by Hand</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What the Kernel Actually Passes"?</p>
+                <div class="quiz" id="quiz-img-auxv-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;What the Kernel Actually Passes&quot;." data-source-ref="content/src/img_auxv.ch:50" onclick="checkQuiz('quiz-img-auxv-i4', this)" aria-label="Option: What the kernel is doing, in one picture.">What the kernel is doing, in one picture.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Working With It&quot;, not &quot;What the Kernel Actually Passes&quot;." data-source-ref="content/src/img_auxv.ch:137" onclick="checkQuiz('quiz-img-auxv-i4', this)" aria-label="Option: There is no API, so you read the array yourself.">There is no API, so you read the array yourself.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;What the Kernel Actually Passes&quot;." data-source-ref="content/src/img_auxv.ch:211" onclick="checkQuiz('quiz-img-auxv-i4', this)" aria-label="Option: Exercise 1 has the best answer in it.">Exercise 1 has the best answer in it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What the Kernel Actually Passes&quot;." data-source-ref="content/src/img_auxv.ch:217" onclick="checkQuiz('quiz-img-auxv-i4', this)" aria-label="Option: This concept is the floor the previous five courses stood on without mentioning.">This concept is the floor the previous five courses stood on without mentioning.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The next concept shows where those strings sit in the byte layout, and the artifact asserts that AT_EXECFN matches /proc/&lt;pid&gt;/cmdline read at the same instant." data-source-ref="content/src/img_auxv.ch:131" onclick="checkQuiz('quiz-img-auxv-i4', this)" aria-label="Option: The next concept shows where those strings sit in the byte layout, and the artifact asserts that AT_EXECFN matches /proc/&lt;pid&gt;/cmdline read at the same instant.">The next concept shows where those strings sit in the byte layout, and the artifact asserts that AT_EXECFN matches /proc/&lt;pid&gt;/cmdline read at the same instant.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;What the Kernel Actually Passes&quot;." data-source-ref="content/src/img_auxv.ch:26" onclick="checkQuiz('quiz-img-auxv-i4', this)" aria-label="Option: Five courses into this chain you can read a relocation record, a linker script, a DT_NEEDED entry, and the loader’s own symbol bindings.">Five courses into this chain you can read a relocation record, a linker script, a DT_NEEDED entry, and the loader’s own symbol bindings.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -233,6 +246,22 @@ $ python3 stackwalk.py -v 2&gt;&amp;1 | grep '16 bytes'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

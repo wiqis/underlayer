@@ -9,6 +9,30 @@ using underlayer_repository::parse_i64
 
 public namespace underlayer_web {
 
+    // I3 — "wrong answers explain why" from the lesson's own verified text.
+    // The exercise record carries the answer key and its explanation; both were
+    // authored from that concept's lesson (manifest source_ref/source_quote on
+    // the C1/E3 bank). Nothing here invents a byte, offset or spec claim: the
+    // text is assembled only from fields that are already traceable to the
+    // lesson, and the learner's own choice is named without being called a
+    // failure. Additive: the repository keeps `why_wrong` empty and the submit
+    // response gains a field without changing any existing one.
+    private func exercise_why_wrong(ex : &Exercise, user_answer : &string, correct : bool) : string {
+        var why = string()
+        if(correct) {
+            why.append_view("The other choices do not match this lesson's answer. ")
+        } else {
+            why.append_view("You chose ")
+            why.append_string(user_answer)
+            why.append_view(". That does not match this lesson's answer. ")
+        }
+        why.append_view("The lesson gives ")
+        why.append_string(&ex.answer)
+        why.append_view(". ")
+        why.append_string(&ex.explanation)
+        return why
+    }
+
     // GET /api/exercises/:conceptId — Get exercises for a concept (4.1.1-4.1.5)
     public func handle_get_exercises(db : *DbClient, concept_id : &string_view, req : &http::Request) : http::Response {
         var cid = sv_to_string(concept_id)
@@ -129,6 +153,13 @@ public namespace underlayer_web {
         var exp_esc = underlayer_core::json_escape(&ex.explanation.to_view())
         body.append_string(&exp_esc)
         body.append_view("\"")
+        // I3: why_wrong is additive and present on BOTH outcomes so the UI can
+        // explain the answer without a red verdict or a hidden reveal.
+        body.append_view(",\"why_wrong\":\"")
+        var why = exercise_why_wrong(&ex, &user_answer, correct)
+        var why_esc = underlayer_core::json_escape(&why.to_view())
+        body.append_string(&why_esc)
+        body.append_view("\"")
         body.append_view(",\"correct_answer\":\"")
         var ans_esc = underlayer_core::json_escape(&ex.answer.to_view())
         body.append_string(&ans_esc)
@@ -180,7 +211,11 @@ public namespace underlayer_web {
             state.concept_id = ex.concept_id.copy()
             state.course_id = course_id.copy()
 
-            var params = underlayer_learning::init_fsrs_params()
+            // G3: use the learner's persisted FSRS settings when signed in,
+            // not the hardcoded defaults. Falls back to defaults for a learner
+            // with no saved row, so old accounts behave exactly as before.
+            var fsrs_settings = underlayer_web::load_effective_fsrs(db, &learner_id)
+            var params = fsrs_settings.params
             var rs = ReviewState::make()
             rs.difficulty = state.difficulty_rating
             if(rs.difficulty < 1.0) { rs.difficulty = 5.0 }

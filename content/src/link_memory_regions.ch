@@ -283,11 +283,40 @@ $ python3 linklab.py budget 4M
                 <span><a href="/courses/link/lessons/link-location-counter">Previous: The Location Counter</a></span>
                 <span>Next: <a href="/courses/link/lessons/link-phdrs">PHDRS and the -T Surprise</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-link-memory-regions-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_memory_regions.ch:55" onclick="checkQuiz('quiz-link-memory-regions-i4', this)" aria-label="Option: What a region is, in one sentence, and the four letters in parentheses.">What a region is, in one sentence, and the four letters in parentheses.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_memory_regions.ch:174" onclick="checkQuiz('quiz-link-memory-regions-i4', this)" aria-label="Option: The AT&gt; operator, which solves a problem that appears the moment you have two regions and one of them is not address zero.">The AT&gt; operator, which solves a problem that appears the moment you have two regions and one of them is not address zero.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_memory_regions.ch:269" onclick="checkQuiz('quiz-link-memory-regions-i4', this)" aria-label="Option: Exercise 2 is the one that pays, and for a reason that is not obvious until you run it.">Exercise 2 is the one that pays, and for a reason that is not obvious until you run it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_memory_regions.ch:275" onclick="checkQuiz('quiz-link-memory-regions-i4', this)" aria-label="Option: This is the second placement concept and it is the one that turns placement from a description into a constraint .">This is the second placement concept and it is the one that turns placement from a description into a constraint .</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The second is that changing the attribute from (w) to (rx) changed nothing — both builds produced the same R E segment." data-source-ref="content/src/link_memory_regions.ch:168" onclick="checkQuiz('quiz-link-memory-regions-i4', this)" aria-label="Option: The second is that changing the attribute from (w) to (rx) changed nothing — both builds produced the same R E segment.">The second is that changing the attribute from (w) to (rx) changed nothing — both builds produced the same R E segment.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_memory_regions.ch:39" onclick="checkQuiz('quiz-link-memory-regions-i4', this)" aria-label="Option: Two regions, four attributes between them, and one operator ( &gt; rom ) that says which region each output section is spending from.">Two regions, four attributes between them, and one operator ( &gt; rom ) that says which region each output section is spending from.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

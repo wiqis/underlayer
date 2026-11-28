@@ -246,11 +246,39 @@ glibc printf, al=0: 101.250000 0.000000
                 <span>Previous: <a href="/courses/x86abi/lessons/x86-saved">Callee-Saved and Caller-Saved, by Experiment</a></span>
                 <span>Next: <a href="/courses/x86abi/lessons/x86-unwind">Unwinding, and the Second Language</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: a caller that lies about %al"?</p>
+                <div class="quiz" id="quiz-x86-varargs-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: 176 bytes and one integer&quot;, not &quot;The reality: a caller that lies about %al&quot;." data-source-ref="content/src/x86_varargs.ch:87" onclick="checkQuiz('quiz-x86-varargs-i4', this)" aria-label="Option: It fills in the save area — six integer registers unconditionally, and the SSE registers only if %al is non-zero .">It fills in the save area — six integer registers unconditionally, and the SSE registers only if %al is non-zero .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the save area, from the specification to the addresses&quot;, not &quot;The reality: a caller that lies about %al&quot;." data-source-ref="content/src/x86_varargs.ch:221" onclick="checkQuiz('quiz-x86-varargs-i4', this)" aria-label="Option: Two consequences fall out of the layout and both are worth stating as rules rather than as trivia.">Two consequences fall out of the layout and both are worth stating as rules rather than as trivia.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: a caller that lies about %al&quot;." data-source-ref="content/src/x86_varargs.ch:241" onclick="checkQuiz('quiz-x86-varargs-i4', this)" aria-label="Option: Both are conventions rather than instructions, and both are paid for in bytes.">Both are conventions rather than instructions, and both are paid for in bytes.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The consumer returned 0x4059500000000000 , which is 101.25 — exactly what arm 2 passed, bit for bit, and not what this arm passed." data-source-ref="content/src/x86_varargs.ch:153" onclick="checkQuiz('quiz-x86-varargs-i4', this)" aria-label="Option: The consumer returned 0x4059500000000000 , which is 101.25 — exactly what arm 2 passed, bit for bit, and not what this arm passed.">The consumer returned 0x4059500000000000 , which is 101.25 — exactly what arm 2 passed, bit for bit, and not what this arm passed.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: a caller that lies about %al&quot;." data-source-ref="content/src/x86_varargs.ch:47" onclick="checkQuiz('quiz-x86-varargs-i4', this)" aria-label="Option: Every other rule in this ABI is implicit.">Every other rule in this ABI is implicit.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

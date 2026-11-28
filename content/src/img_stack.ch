@@ -245,6 +245,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | tail -13
                 <span><a href="/courses/img/lessons/img-auxv">Previous: The Auxiliary Vector</a></span>
                 <span>Next: <a href="/courses/img/lessons/img-entries">What Each Entry Is For</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Finding the Bottom"?</p>
+                <div class="quiz" id="quiz-img-stack-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Finding the Bottom&quot;." data-source-ref="content/src/img_stack.ch:54" onclick="checkQuiz('quiz-img-stack-i4', this)" aria-label="Option: The layout, from low addresses to high.">The layout, from low addresses to high.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Doing It For Real&quot;, not &quot;Finding the Bottom&quot;." data-source-ref="content/src/img_stack.ch:123" onclick="checkQuiz('quiz-img-stack-i4', this)" aria-label="Option: Three steps, each of which the artifact performs on every run.">Three steps, each of which the artifact performs on every run.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Finding the Bottom&quot;." data-source-ref="content/src/img_stack.ch:232" onclick="checkQuiz('quiz-img-stack-i4', this)" aria-label="Option: Exercise 4 is the one that generalises past this course.">Exercise 4 is the one that generalises past this course.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Finding the Bottom&quot;." data-source-ref="content/src/img_stack.ch:238" onclick="checkQuiz('quiz-img-stack-i4', this)" aria-label="Option: Within module 1 this is the other half.">Within module 1 this is the other half.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="That is 15 lines in imgdump.c and it is the difference between a parser that works and one that works until the environment is large." data-source-ref="content/src/img_stack.ch:118" onclick="checkQuiz('quiz-img-stack-i4', this)" aria-label="Option: That is 15 lines in imgdump.c and it is the difference between a parser that works and one that works until the environment is large.">That is 15 lines in imgdump.c and it is the difference between a parser that works and one that works until the environment is large.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Finding the Bottom&quot;." data-source-ref="content/src/img_stack.ch:26" onclick="checkQuiz('quiz-img-stack-i4', this)" aria-label="Option: The previous concept said the auxv is an array.">The previous concept said the auxv is an array.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -253,6 +266,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | tail -13
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

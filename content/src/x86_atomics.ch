@@ -185,11 +185,39 @@ public func render_x86_atomics() : string {
                 <span>Previous: <a href="/courses/x86simd/lessons/x86-avx512">AVX-512: ZMM, k0&#8211;k7, and a Decoder That Needs No Silicon</a></span>
                 <span>Next: <a href="/courses/x86simd/lessons/x86-order">Ordering: TSO, the Three Fences, and the Direction Flag</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Instrument two: the value-preserving arm, and why it is the decisive one"?</p>
+                <div class="quiz" id="quiz-x86-atomics-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Instrument one: the counter, and the arms it can decide&quot;, not &quot;Instrument two: the value-preserving arm, and why it is the decisive one&quot;." data-source-ref="content/src/x86_atomics.ch:57" onclick="checkQuiz('quiz-x86-atomics-i4', this)" aria-label="Option: The counter is the obvious instrument — two threads increment a shared word N times each, and a total of 2N means nothing was lost.">The counter is the obvious instrument — two threads increment a shared word N times each, and a total of 2N means nothing was lost.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Two lists that everybody quotes and nobody distinguishes&quot;, not &quot;Instrument two: the value-preserving arm, and why it is the decisive one&quot;." data-source-ref="content/src/x86_atomics.ch:163" onclick="checkQuiz('quiz-x86-atomics-i4', this)" aria-label="Option: And the bit-test row at the end of the counter table is the shape of a limit worth naming.">And the bit-test row at the end of the counter table is the shape of a limit worth naming.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Instrument two: the value-preserving arm, and why it is the decisive one&quot;." data-source-ref="content/src/x86_atomics.ch:179" onclick="checkQuiz('quiz-x86-atomics-i4', this)" aria-label="Option: Backwards, the SMP course&#x27;s atomic concept measured the cost of a race and told you that the fix is lock .">Backwards, the SMP course&#x27;s atomic concept measured the cost of a race and told you that the fix is lock .</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Two threads applying NOT an even number of times between them returns the word to where it started whether or not either was lost." data-source-ref="content/src/x86_atomics.ch:117" onclick="checkQuiz('quiz-x86-atomics-i4', this)" aria-label="Option: Two threads applying NOT an even number of times between them returns the word to where it started whether or not either was lost.">Two threads applying NOT an even number of times between them returns the word to where it started whether or not either was lost.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;Instrument two: the value-preserving arm, and why it is the decisive one&quot;." data-source-ref="content/src/x86_atomics.ch:47" onclick="checkQuiz('quiz-x86-atomics-i4', this)" aria-label="Option: The SMP course measured what a lost update costs and told you to use lock .">The SMP course measured what a lost update costs and told you to use lock .</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

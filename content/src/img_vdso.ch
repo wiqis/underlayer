@@ -232,6 +232,19 @@ $ ./maps | grep vdso
                 <span><a href="/courses/img/lessons/img-entries">Previous: What Each Entry Is For</a></span>
                 <span>Next: <a href="/courses/img/lessons/img-place">Where the Kernel Put Everything</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What Is Measured, and What Is Not"?</p>
+                <div class="quiz" id="quiz-img-vdso-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;What Is Measured, and What Is Not&quot;." data-source-ref="content/src/img_vdso.ch:44" onclick="checkQuiz('quiz-img-vdso-i4', this)" aria-label="Option: Why a kernel builds a library at all.">Why a kernel builds a library at all.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Reading It Yourself&quot;, not &quot;What Is Measured, and What Is Not&quot;." data-source-ref="content/src/img_vdso.ch:119" onclick="checkQuiz('quiz-img-vdso-i4', this)" aria-label="Option: The complete program, and it is short.">The complete program, and it is short.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;What Is Measured, and What Is Not&quot;." data-source-ref="content/src/img_vdso.ch:219" onclick="checkQuiz('quiz-img-vdso-i4', this)" aria-label="Option: Same structure, same field order, same 56-byte record — in a file that no toolchain produced.">Same structure, same field order, same 56-byte record — in a file that no toolchain produced.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What Is Measured, and What Is Not&quot;." data-source-ref="content/src/img_vdso.ch:225" onclick="checkQuiz('quiz-img-vdso-i4', this)" aria-label="Option: That concept covered loading a library at run time from a path, and the loader’s search rules, and the mode bits.">That concept covered loading a library at run time from a path, and the loader’s search rules, and the mode bits.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="That is a general rule about experiments, and this course hit it hard enough to be worth stating as a rule rather than a footnote." data-source-ref="content/src/img_vdso.ch:107" onclick="checkQuiz('quiz-img-vdso-i4', this)" aria-label="Option: That is a general rule about experiments, and this course hit it hard enough to be worth stating as a rule rather than a footnote.">That is a general rule about experiments, and this course hit it hard enough to be worth stating as a rule rather than a footnote.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;What Is Measured, and What Is Not&quot;." data-source-ref="content/src/img_vdso.ch:26" onclick="checkQuiz('quiz-img-vdso-i4', this)" aria-label="Option: Every dynamic process on Linux maps a shared library that has no file on disk.">Every dynamic process on Linux maps a shared library that has no file on disk.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -240,6 +253,22 @@ $ ./maps | grep vdso
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -161,11 +161,39 @@ public func render_priv_convention() : string {
                 <span>Previous: <a href="/courses/priv/lessons/priv-doors">Four Ways In, and One of Them Is Not a Door</a></span>
                 <span>Next: <a href="/courses/priv/lessons/priv-canonical">The Hole Has No Fixed Address</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: read it out of the machine"?</p>
+                <div class="quiz" id="quiz-priv-convention-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: two facts from the architecture, five from the kernel&quot;, not &quot;The reality: read it out of the machine&quot;." data-source-ref="content/src/priv_convention.ch:54" onclick="checkQuiz('quiz-priv-convention-i4', this)" aria-label="Option: Sort the convention into what the hardware guarantees and what a particular operating system chose, and the second list turns out to be nearly everything.">Sort the convention into what the hardware guarantees and what a particular operating system chose, and the second list turns out to be nearly everything.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the symbol that pointed at the wrong image&quot;, not &quot;The reality: read it out of the machine&quot;." data-source-ref="content/src/priv_convention.ch:127" onclick="checkQuiz('quiz-priv-convention-i4', this)" aria-label="Option: Before the numbers above could be read, the program had to find the vDSO.">Before the numbers above could be read, the program had to find the vDSO.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: read it out of the machine&quot;." data-source-ref="content/src/priv_convention.ch:154" onclick="checkQuiz('quiz-priv-convention-i4', this)" aria-label="Option: Forward, the canonical-address concept is the other half of what makes ring 3 ring 3.">Forward, the canonical-address concept is the other half of what makes ring 3 ring 3.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Only two of the five facts about this convention come from the architecture, and this measurement recovers three kernel-chosen numbers without consulting a single manual." data-source-ref="content/src/priv_convention.ch:111" onclick="checkQuiz('quiz-priv-convention-i4', this)" aria-label="Option: Only two of the five facts about this convention come from the architecture, and this measurement recovers three kernel-chosen numbers without consulting a single manual.">Only two of the five facts about this convention come from the architecture, and this measurement recovers three kernel-chosen numbers without consulting a single manual.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: read it out of the machine&quot;." data-source-ref="content/src/priv_convention.ch:48" onclick="checkQuiz('quiz-priv-convention-i4', this)" aria-label="Option: Not from any architecture manual.">Not from any architecture manual.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -223,6 +223,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/H8/,/A /p'
                 <span><a href="/courses/img/lessons/img-walk">Previous: Rebuilding the Image Reader</a></span>
                 <span>Next: <a href="/courses/sec/lessons/sec-canary">The Canary and Its Limits</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Measured, in the Files"?</p>
+                <div class="quiz" id="quiz-sec-defaults-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Measured, in the Files&quot;." data-source-ref="content/src/sec_defaults.ch:41" onclick="checkQuiz('quiz-sec-defaults-i4', this)" aria-label="Option: It gets worse, or better, depending on your temperament.">It gets worse, or better, depending on your temperament.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Doing Something About It&quot;, not &quot;Measured, in the Files&quot;." data-source-ref="content/src/sec_defaults.ch:123" onclick="checkQuiz('quiz-sec-defaults-i4', this)" aria-label="Option: The obvious move is to pass the flags explicitly, and that is correct and insufficient.">The obvious move is to pass the flags explicitly, and that is correct and insufficient.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Measured, in the Files&quot;." data-source-ref="content/src/sec_defaults.ch:210" onclick="checkQuiz('quiz-sec-defaults-i4', this)" aria-label="Option: Exercise 1 is the one that makes the three-layer model concrete, and its result is counter-intuitive.">Exercise 1 is the one that makes the three-layer model concrete, and its result is counter-intuitive.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Measured, in the Files&quot;." data-source-ref="content/src/sec_defaults.ch:216" onclick="checkQuiz('quiz-sec-defaults-i4', this)" aria-label="Option: This concept is the argument for the course, so it is worth being explicit about what it corrects.">This concept is the argument for the course, so it is worth being explicit about what it corrects.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="A canary is read once and compared once , so two references to %fs:0x28 is one tripwire, not two." data-source-ref="content/src/sec_defaults.ch:118" onclick="checkQuiz('quiz-sec-defaults-i4', this)" aria-label="Option: A canary is read once and compared once , so two references to %fs:0x28 is one tripwire, not two.">A canary is read once and compared once , so two references to %fs:0x28 is one tripwire, not two.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Measured, in the Files&quot;." data-source-ref="content/src/sec_defaults.ch:26" onclick="checkQuiz('quiz-sec-defaults-i4', this)" aria-label="Option: There are two hardening concepts in this collection already, and both are honest about what they are.">There are two hardening concepts in this collection already, and both are honest about what they are.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -231,6 +244,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/H8/,/A /p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

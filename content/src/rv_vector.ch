@@ -162,11 +162,39 @@ public func render_rv_vector() : string {
                 <span>Previous: <a href="/courses/rvat/lessons/rv-fence">fence, and an Ordering Model Defined in Terms of It</a></span>
                 <span>Next: <a href="/courses/rvat/lessons/rv-dataflow">Decode the Data Path</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The tail policy: where portable vector code goes to get hard"?</p>
+                <div class="quiz" id="quiz-rv-vector-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Four fields, each isolated by an XOR&quot;, not &quot;The tail policy: where portable vector code goes to get hard&quot;." data-source-ref="content/src/rv_vector.ch:80" onclick="checkQuiz('quiz-rv-vector-i4', this)" aria-label="Option: The manual agrees and says what they are for — the vill bit sits above them and the whole block is reserved if non-zero.">The manual agrees and says what they are for — the vill bit sits above them and the whole block is reserved if non-zero.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Two bits of register identity carrying a three-way choice&quot;, not &quot;The tail policy: where portable vector code goes to get hard&quot;." data-source-ref="content/src/rv_vector.ch:89" onclick="checkQuiz('quiz-rv-vector-i4', this)" aria-label="Option: The length is not the only thing the instruction does not contain.">The length is not the only thing the instruction does not contain.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The tail policy: where portable vector code goes to get hard&quot;." data-source-ref="content/src/rv_vector.ch:157" onclick="checkQuiz('quiz-rv-vector-i4', this)" aria-label="Option: What a vector lane is and what a reduction is — in neutral terms, with no architecture attached — is simd-width and simd-reduce .">What a vector lane is and what a reduction is — in neutral terms, with no architecture attached — is simd-width and simd-reduce .</button>
+                    <button class="quiz-option" data-correct="true" data-explain="There is one more piece of the story and it is about the assembler rather than the hardware." data-source-ref="content/src/rv_vector.ch:140" onclick="checkQuiz('quiz-rv-vector-i4', this)" aria-label="Option: There is one more piece of the story and it is about the assembler rather than the hardware.">There is one more piece of the story and it is about the assembler rather than the hardware.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A 32-bit word that describes a vector of any length&quot;, not &quot;The tail policy: where portable vector code goes to get hard&quot;." data-source-ref="content/src/rv_vector.ch:26" onclick="checkQuiz('quiz-rv-vector-i4', this)" aria-label="Option: MEASURED-ON-BYTES, and this is the sharpest encoding result in the course.">MEASURED-ON-BYTES, and this is the sharpest encoding result in the course.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

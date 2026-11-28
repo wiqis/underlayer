@@ -221,11 +221,39 @@ public func render_x86_flags() : string {
                 <span>Previous: <a href="/courses/x86asm/lessons/x86-integers">The Integer Set, Which Nothing Teaches</a></span>
                 <span>Next: <a href="/courses/x86asm/lessons/x86-vex">Two Bytes, Three, and the Bit That Went Wrong</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: the guard page, and the byte that is not a value"?</p>
+                <div class="quiz" id="quiz-x86-flags-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: three ways to write one line of C, and what each one costs&quot;, not &quot;The reality: the guard page, and the byte that is not a value&quot;." data-source-ref="content/src/x86_flags.ch:64" onclick="checkQuiz('quiz-x86-flags-i4', this)" aria-label="Option: The line is if (a &lt; b) x = 1; else x = 0; .">The line is if (a &lt; b) x = 1; else x = 0; .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: what to emit, and why the choice is not yours&quot;, not &quot;The reality: the guard page, and the byte that is not a value&quot;." data-source-ref="content/src/x86_flags.ch:167" onclick="checkQuiz('quiz-x86-flags-i4', this)" aria-label="Option: The engineering consequence of everything above is a single decision, and it is a decision a compiler makes, not a programmer.">The engineering consequence of everything above is a single decision, and it is a decision a compiler makes, not a programmer.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: the guard page, and the byte that is not a value&quot;." data-source-ref="content/src/x86_flags.ch:215" onclick="checkQuiz('quiz-x86-flags-i4', this)" aria-label="Option: isa-opcodes has the 0F 9C and 0F 4C bytes that setl and cmovl are.">isa-opcodes has the 0F 9C and 0F 4C bytes that setl and cmovl are.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="To ask whether a failing conditional move reads its source, you need an instrument that can tell you whether a read happened." data-source-ref="content/src/x86_flags.ch:104" onclick="checkQuiz('quiz-x86-flags-i4', this)" aria-label="Option: To ask whether a failing conditional move reads its source, you need an instrument that can tell you whether a read happened.">To ask whether a failing conditional move reads its source, you need an instrument that can tell you whether a read happened.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: the guard page, and the byte that is not a value&quot;." data-source-ref="content/src/x86_flags.ch:47" onclick="checkQuiz('quiz-x86-flags-i4', this)" aria-label="Option: The execution course taught the flags&#x27; role : they are the one-bit-wide output of a comparison, and something downstream has to read them.">The execution course taught the flags&#x27; role : they are the one-bit-wide output of a comparison, and something downstream has to read them.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

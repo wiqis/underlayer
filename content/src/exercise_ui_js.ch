@@ -54,9 +54,20 @@ public namespace underlayer_content {
                         } else {
                             fb.className = 'exercise-feedback err';
                         }
-                        var text = (res.correct ? 'Correct! ' : 'Not quite. ') + (res.explanation || '');
-                        if (res.correct_answer && res.correct === false) {
-                            text = text + ' Answer: ' + res.correct_answer;
+                        // I3: both outcomes explain the answer from the lesson.
+                        // Calm framing, no judgement or score. The server's
+                        // why_wrong names the chosen option and gives the
+                        // lesson-sourced reason; explanation is always the
+                        // verified answer key. Older servers lack why_wrong,
+                        // so the fallback keeps the shipped shape working.
+                        var text = '';
+                        if (res.correct) {
+                            text = res.explanation ? res.explanation : 'That matches the lesson.';
+                        } else {
+                            text = res.why_wrong ? res.why_wrong : (res.explanation || 'Look at the lesson again.');
+                            if (res.correct_answer) {
+                                text = text + ' The lesson gives ' + res.correct_answer + '.';
+                            }
                         }
                         fb.textContent = text;
                         // 4.2.19: the real streak is shown only when the server

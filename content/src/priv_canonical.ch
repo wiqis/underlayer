@@ -171,11 +171,39 @@ public func render_priv_canonical() : string {
                 <span>Previous: <a href="/courses/priv/lessons/priv-convention">The Convention, in the Kernel's Own Bytes</a></span>
                 <span>Next: <a href="/courses/priv/lessons/priv-errorcode">Three Error Codes and None of Them Visible</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: the boundary is a function of the access"?</p>
+                <div class="quiz" id="quiz-priv-canonical-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: one comparison, not a range&quot;, not &quot;The reality: the boundary is a function of the access&quot;." data-source-ref="content/src/priv_canonical.ch:54" onclick="checkQuiz('quiz-priv-canonical-i4', this)" aria-label="Option: A 64-bit linear address is canonical when bit 47 equals bit 63.">A 64-bit linear address is canonical when bit 47 equals bit 63.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: how the measurement nearly went wrong, three times&quot;, not &quot;The reality: the boundary is a function of the access&quot;." data-source-ref="content/src/priv_canonical.ch:117" onclick="checkQuiz('quiz-priv-canonical-i4', this)" aria-label="Option: This result took three corrections to reach, and the corrections are the most useful part.">This result took three corrections to reach, and the corrections are the most useful part.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: the boundary is a function of the access&quot;." data-source-ref="content/src/priv_canonical.ch:164" onclick="checkQuiz('quiz-priv-canonical-i4', this)" aria-label="Option: Forward, the error-code concept takes the si_code values this one produces and asks what else the CPU told the kernel that a process cannot see.">Forward, the error-code concept takes the si_code values this one produces and asks what else the CPU told the kernel that a process cannot see.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="If you are writing a crash reporter, a fuzzer harness, or a debugger, this is the single most expensive distinction in this course." data-source-ref="content/src/priv_canonical.ch:111" onclick="checkQuiz('quiz-priv-canonical-i4', this)" aria-label="Option: If you are writing a crash reporter, a fuzzer harness, or a debugger, this is the single most expensive distinction in this course.">If you are writing a crash reporter, a fuzzer harness, or a debugger, this is the single most expensive distinction in this course.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: the boundary is a function of the access&quot;." data-source-ref="content/src/priv_canonical.ch:47" onclick="checkQuiz('quiz-priv-canonical-i4', this)" aria-label="Option: Ring 3 is usually taught as “less privileged,” which is vague.">Ring 3 is usually taught as “less privileged,” which is vague.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

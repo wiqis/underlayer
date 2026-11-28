@@ -223,11 +223,39 @@ public func render_simd_width() : string {
                 <span>Start: <a href="/courses/simd">SIMD and Vector Processing</a></span>
                 <span>Next: <a href="/courses/simd/lessons/simd-compiler">The Compiler, the Intrinsics, and a Control That Lied</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: what the width table is missing"?</p>
+                <div class="quiz" id="quiz-simd-width-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: two columns and one trap&quot;, not &quot;The reality: what the width table is missing&quot;." data-source-ref="content/src/simd_width.ch:70" onclick="checkQuiz('quiz-simd-width-i4', this)" aria-label="Option: Read the table by columns and every row is arithmetic.">Read the table by columns and every row is arithmetic.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: reading the twenty-five integers&quot;, not &quot;The reality: what the width table is missing&quot;." data-source-ref="content/src/simd_width.ch:178" onclick="checkQuiz('quiz-simd-width-i4', this)" aria-label="Option: The width is in the instruction encoding, and the encoding is what makes the two load families different.">The width is in the instruction encoding, and the encoding is what makes the two load families different.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: what the width table is missing&quot;." data-source-ref="content/src/simd_width.ch:217" onclick="checkQuiz('quiz-simd-width-i4', this)" aria-label="Option: Backwards, this concept is the definition the execution course&#x27;s dependency concept and its latency concept both assumed.">Backwards, this concept is the definition the execution course&#x27;s dependency concept and its latency concept both assumed.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The last concept of module 3 measures the tail this machine has to handle without one, and measures the scalar answer as free ." data-source-ref="content/src/simd_width.ch:139" onclick="checkQuiz('quiz-simd-width-i4', this)" aria-label="Option: The last concept of module 3 measures the tail this machine has to handle without one, and measures the scalar answer as free .">The last concept of module 3 measures the tail this machine has to handle without one, and measures the scalar answer as free .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: what the width table is missing&quot;." data-source-ref="content/src/simd_width.ch:47" onclick="checkQuiz('quiz-simd-width-i4', this)" aria-label="Option: Both use the phrase as a known quantity.">Both use the phrase as a known quantity.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

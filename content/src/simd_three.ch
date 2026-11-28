@@ -169,11 +169,39 @@ public func render_simd_three() : string {
                 <span>Previous: <a href="/courses/simd/lessons/simd-boundaries">Alignment, the Gather, and the Tail</a></span>
                 <span>Next: <a href="/courses/simd/lessons/simd-harness">The Harness, and the Eight</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: three architectures, quoted"?</p>
+                <div class="quiz" id="quiz-simd-three-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: five rows, and only three of them are portable&quot;, not &quot;The reality: three architectures, quoted&quot;." data-source-ref="content/src/simd_three.ch:62" onclick="checkQuiz('quiz-simd-three-i4', this)" aria-label="Option: Every vector loop, on every machine, answers the same five questions.">Every vector loop, on every machine, answers the same five questions.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the same loop, three targets, and what changes&quot;, not &quot;The reality: three architectures, quoted&quot;." data-source-ref="content/src/simd_three.ch:110" onclick="checkQuiz('quiz-simd-three-i4', this)" aria-label="Option: Read this as a table of decisions, not of features.">Read this as a table of decisions, not of features.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: three architectures, quoted&quot;." data-source-ref="content/src/simd_three.ch:162" onclick="checkQuiz('quiz-simd-three-i4', this)" aria-label="Option: Backwards, this concept is the answer to both questions the last two concepts raised.">Backwards, this concept is the answer to both questions the last two concepts raised.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="AVX2 added vpgatherdd and vpgatherqd , and the previous concept measured them and found them slower than four ordinary scalar loads ." data-source-ref="content/src/simd_three.ch:94" onclick="checkQuiz('quiz-simd-three-i4', this)" aria-label="Option: AVX2 added vpgatherdd and vpgatherqd , and the previous concept measured them and found them slower than four ordinary scalar loads .">AVX2 added vpgatherdd and vpgatherqd , and the previous concept measured them and found them slower than four ordinary scalar loads .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: three architectures, quoted&quot;." data-source-ref="content/src/simd_three.ch:47" onclick="checkQuiz('quiz-simd-three-i4', this)" aria-label="Option: That is a real limit and the artifact&#x27;s limits block says so in the same words.">That is a real limit and the artifact&#x27;s limits block says so in the same words.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

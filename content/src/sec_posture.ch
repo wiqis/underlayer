@@ -240,6 +240,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | tail -14
                 <span><a href="/courses/sec/lessons/sec-cet">Previous: CET: The Instructions Are Not the Request</a></span>
                 <span>Next: <a href="/courses/img/lessons/img-auxv">Back to the chain: The Auxiliary Vector</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Why Each Check Names Its Source"?</p>
+                <div class="quiz" id="quiz-sec-posture-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Why Each Check Names Its Source&quot;." data-source-ref="content/src/sec_posture.ch:74" onclick="checkQuiz('quiz-sec-posture-i4', this)" aria-label="Option: That pattern is the reason “read the hardening flags” is not a method.">That pattern is the reason “read the hardening flags” is not a method.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Running It On Things You Did Not Build&quot;, not &quot;Why Each Check Names Its Source&quot;." data-source-ref="content/src/sec_posture.ch:142" onclick="checkQuiz('quiz-sec-posture-i4', this)" aria-label="Option: The real use is not your own binaries.">The real use is not your own binaries.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Why Each Check Names Its Source&quot;." data-source-ref="content/src/sec_posture.ch:227" onclick="checkQuiz('quiz-sec-posture-i4', this)" aria-label="Option: Exercise 4 has the most interesting answer and it is a result rather than an exercise.">Exercise 4 has the most interesting answer and it is a result rather than an exercise.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Why Each Check Names Its Source&quot;." data-source-ref="content/src/sec_posture.ch:233" onclick="checkQuiz('quiz-sec-posture-i4', this)" aria-label="Option: This concept is the payoff for the chain, and the connection runs the full length of it.">This concept is the payoff for the chain, and the connection runs the full length of it.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Every line of the report says where its answer came from, and that is not decoration." data-source-ref="content/src/sec_posture.ch:95" onclick="checkQuiz('quiz-sec-posture-i4', this)" aria-label="Option: Every line of the report says where its answer came from, and that is not decoration.">Every line of the report says where its answer came from, and that is not decoration.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Why Each Check Names Its Source&quot;." data-source-ref="content/src/sec_posture.ch:26" onclick="checkQuiz('quiz-sec-posture-i4', this)" aria-label="Option: Six concepts, one artifact, and a habit.">Six concepts, one artifact, and a habit.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -248,6 +261,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | tail -14
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

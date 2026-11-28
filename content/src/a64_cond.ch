@@ -177,11 +177,39 @@ public func render_a64_cond() : string {
                 <span>Previous: <a href="/courses/a64asm/lessons/a64-immediate">A Constant Is a Rotate and a Run Length</a></span>
                 <span>Next: <a href="/courses/a64asm/lessons/a64-verify">Two Readers, and Then One of Them Poisoned</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "NZCV, and what a user-mode program cannot do with it"?</p>
+                <div class="quiz" id="quiz-a64-cond-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The condition is four bits, and here are all sixteen&quot;, not &quot;NZCV, and what a user-mode program cannot do with it&quot;." data-source-ref="content/src/a64_cond.ch:76" onclick="checkQuiz('quiz-a64-cond-i4', this)" aria-label="Option: And there is a naming wrinkle that is a fact about the ISA and a nuisance for a cross-check.">And there is a naming wrinkle that is a fact about the ISA and a nuisance for a cross-check.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The same four bits, five of them, in a branch&quot;, not &quot;NZCV, and what a user-mode program cannot do with it&quot;." data-source-ref="content/src/a64_cond.ch:141" onclick="checkQuiz('quiz-a64-cond-i4', this)" aria-label="Option: The same four bits are at position 4 here and at position 12 in a csel , and the two fields do not overlap.">The same four bits are at position 4 here and at position 12 in a csel , and the two fields do not overlap.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;NZCV, and what a user-mode program cannot do with it&quot;." data-source-ref="content/src/a64_cond.ch:171" onclick="checkQuiz('quiz-a64-cond-i4', this)" aria-label="Option: Concept 2 measured the condition field and the two op2 rows that are not contiguous.">Concept 2 measured the condition field and the two op2 rows that are not contiguous.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Every condition is a function of four flag bits — Negative, Zero, Carry, Overflow." data-source-ref="content/src/a64_cond.ch:125" onclick="checkQuiz('quiz-a64-cond-i4', this)" aria-label="Option: Every condition is a function of four flag bits — Negative, Zero, Carry, Overflow.">Every condition is a function of four flag bits — Negative, Zero, Carry, Overflow.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;NZCV, and what a user-mode program cannot do with it&quot;." data-source-ref="content/src/a64_cond.ch:47" onclick="checkQuiz('quiz-a64-cond-i4', this)" aria-label="Option: On x86-64, producing a boolean from a comparison takes a compare, a SETcc , and usually a widening move.">On x86-64, producing a boolean from a comparison takes a compare, a SETcc , and usually a widening move.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

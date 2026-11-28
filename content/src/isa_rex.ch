@@ -323,6 +323,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^I2/,/^I3/p'
                 <span><a href="/courses/isa/lessons/isa-opcodes">Previous: The Opcode Map and Its Holes</a></span>
                 <span>Next: <a href="/courses/isa/lessons/isa-modrm">ModRM: The Two Fields That Decide the Length</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Measuring the Extension, and the Oracle’s Gap"?</p>
+                <div class="quiz" id="quiz-isa-rex-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Measuring the Extension, and the Oracle’s Gap&quot;." data-source-ref="content/src/isa_rex.ch:68" onclick="checkQuiz('quiz-isa-rex-i4', this)" aria-label="Option: That is a strange design and it is worth asking why, because the answer explains the second rule.">That is a strange design and it is worth asking why, because the answer explains the second rule.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Three Rules, Three Failure Modes&quot;, not &quot;Measuring the Extension, and the Oracle’s Gap&quot;." data-source-ref="content/src/isa_rex.ch:164" onclick="checkQuiz('quiz-isa-rex-i4', this)" aria-label="Option: Each rule has a characteristic bug, and each bug is silent.">Each rule has a characteristic bug, and each bug is silent.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Measuring the Extension, and the Oracle’s Gap&quot;." data-source-ref="content/src/isa_rex.ch:310" onclick="checkQuiz('quiz-isa-rex-i4', this)" aria-label="Option: Exercise 3 is the one that makes the concept a habit, and the failure it produces is the most instructive thing in this unit.">Exercise 3 is the one that makes the concept a habit, and the failure it produces is the most instructive thing in this unit.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Measuring the Extension, and the Oracle’s Gap&quot;." data-source-ref="content/src/isa_rex.ch:316" onclick="checkQuiz('quiz-isa-rex-i4', this)" aria-label="Option: The connection to the PIC concept in the object course is the most direct in the chain, and it is a debt.">The connection to the PIC concept in the object course is the most direct in the chain, and it is a debt.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="If the crosscheck compared operand text, it would fail here — with the decoder right and the oracle wrong." data-source-ref="content/src/isa_rex.ch:139" onclick="checkQuiz('quiz-isa-rex-i4', this)" aria-label="Option: If the crosscheck compared operand text, it would fail here — with the decoder right and the oracle wrong.">If the crosscheck compared operand text, it would fail here — with the decoder right and the oracle wrong.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Measuring the Extension, and the Oracle’s Gap&quot;." data-source-ref="content/src/isa_rex.ch:27" onclick="checkQuiz('quiz-isa-rex-i4', this)" aria-label="Option: x86-64 has sixteen general-purpose registers.">x86-64 has sixteen general-purpose registers.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -331,6 +344,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^I2/,/^I3/p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

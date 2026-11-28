@@ -147,6 +147,7 @@ base 1 funcs 14 names 14 0x164f8 0x16530 0x16568</code></pre>
                 <h2>Connect</h2>
                 <p>Both tables so far are eager: the loader resolves everything before main runs. But a DLL pulled in for one rare code path still taxes every process start — and if it is missing, the process will not start at all. The next lesson shows the structure that moves that cost and that failure to the first call instead.</p>
                 <p>Next: <a href="/courses/pe/lessons/pe-delay-loads">Delay-Load Imports</a> — the second, parallel import machinery and the helper that runs it.</p>
+            <p class="verified-answer-key" data-source-ref="courses/pe/manifest.json#exercise_decls">Verified answer key: AddressOfNames entries are ordered lexically to allow binary search. The ordinal table is a parallel array of 16-bit indexes; the address table is indexed directly by ordinal.</p>
             </div>
 
             <div class="lesson-footer">

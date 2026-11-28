@@ -217,11 +217,39 @@ _probe.s:2: Error: expecting scale factor of 1, 2, 4, or 8: got `3'
                 <span>Previous: <a href="/courses/x86asm">x86-64 Assembly and Encoding</a></span>
                 <span>Next: <a href="/courses/x86asm/lessons/x86-integers">The Integer Set, Which Nothing Teaches</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: the corpus, and the twenty-six instructions gcc chose for itself"?</p>
+                <div class="quiz" id="quiz-x86-asm-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: two syntaxes, one rule each, and the two prefixes that are not syntax&quot;, not &quot;The reality: the corpus, and the twenty-six instructions gcc chose for itself&quot;." data-source-ref="content/src/x86_asm.ch:82" onclick="checkQuiz('quiz-x86-asm-i4', this)" aria-label="Option: Which one is the default flipped for, and it is a toolchain decision rather than an architectural one, which is the point worth keeping.">Which one is the default flipped for, and it is a toolchain decision rather than an architectural one, which is the point worth keeping.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: reading one instruction all the way down&quot;, not &quot;The reality: the corpus, and the twenty-six instructions gcc chose for itself&quot;." data-source-ref="content/src/x86_asm.ch:127" onclick="checkQuiz('quiz-x86-asm-i4', this)" aria-label="Option: Take the row that appears in every disassembly of every compiled program ever written, and read it byte by byte.">Take the row that appears in every disassembly of every compiled program ever written, and read it byte by byte.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: the corpus, and the twenty-six instructions gcc chose for itself&quot;." data-source-ref="content/src/x86_asm.ch:211" onclick="checkQuiz('quiz-x86-asm-i4', this)" aria-label="Option: isa-modes is where the 64-bit mode you have been assuming comes from.">isa-modes is where the 64-bit mode you have been assuming comes from.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="One is hand-written: corpus.s , 52 instructions, every one of them chosen because some claim in these pages depends on its encoding." data-source-ref="content/src/x86_asm.ch:103" onclick="checkQuiz('quiz-x86-asm-i4', this)" aria-label="Option: One is hand-written: corpus.s , 52 instructions, every one of them chosen because some claim in these pages depends on its encoding.">One is hand-written: corpus.s , 52 instructions, every one of them chosen because some claim in these pages depends on its encoding.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: the corpus, and the twenty-six instructions gcc chose for itself&quot;." data-source-ref="content/src/x86_asm.ch:47" onclick="checkQuiz('quiz-x86-asm-i4', this)" aria-label="Option: They are not, and the difference is one line of code that no tool will warn you about.">They are not, and the difference is one line of code that no tool will warn you about.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

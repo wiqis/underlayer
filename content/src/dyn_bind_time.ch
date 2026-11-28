@@ -245,6 +245,19 @@ $ python3 crosscheck.py 2&gt;&amp;2 | sed -n '/\\[7\\]/,/\\[8\\]/p'
                 <span><a href="/courses/dyn/lessons/dyn-dlopen">Previous: dlopen, dlsym, and the Mode Bits</a></span>
                 <span>Next: <a href="/courses/dyn/lessons/dyn-tls-block">Where the Thread Blocks Come From</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-dyn-bind-time-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_bind_time.ch:47" onclick="checkQuiz('quiz-dyn-bind-time-i4', this)" aria-label="Option: What the two PLT slots do, because the difference is entirely about what a slot is for .">What the two PLT slots do, because the difference is entirely about what a slot is for .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_bind_time.ch:137" onclick="checkQuiz('quiz-dyn-bind-time-i4', this)" aria-label="Option: Where the choice actually matters, which is not where most people expect.">Where the choice actually matters, which is not where most people expect.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_bind_time.ch:231" onclick="checkQuiz('quiz-dyn-bind-time-i4', this)" aria-label="Option: Exercise 2 is the one that gives lazy binding a real justification, and it is the argument its proponents actually make.">Exercise 2 is the one that gives lazy binding a real justification, and it is the argument its proponents actually make.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_bind_time.ch:237" onclick="checkQuiz('quiz-dyn-bind-time-i4', this)" aria-label="Option: This is the timing half of module 3, and it is the smallest correction in the course — which is itself worth noting.">This is the timing half of module 3, and it is the smallest correction in the course — which is itself worth noting.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="A two-million-call microbenchmark on this machine gave 5.1, 3.8 and 4.5 nanoseconds per call across lazy, -z now , and LD_BIND_NOW=1 on the lazy binary." data-source-ref="content/src/dyn_bind_time.ch:132" onclick="checkQuiz('quiz-dyn-bind-time-i4', this)" aria-label="Option: A two-million-call microbenchmark on this machine gave 5.1, 3.8 and 4.5 nanoseconds per call across lazy, -z now , and LD_BIND_NOW=1 on the lazy binary.">A two-million-call microbenchmark on this machine gave 5.1, 3.8 and 4.5 nanoseconds per call across lazy, -z now , and LD_BIND_NOW=1 on the lazy binary.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_bind_time.ch:26" onclick="checkQuiz('quiz-dyn-bind-time-i4', this)" aria-label="Option: Build the same program twice and diff it.">Build the same program twice and diff it.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     
 
@@ -253,6 +266,22 @@ $ python3 crosscheck.py 2&gt;&amp;2 | sed -n '/\\[7\\]/,/\\[8\\]/p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

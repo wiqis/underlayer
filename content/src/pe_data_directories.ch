@@ -151,6 +151,7 @@ Entry 4 0000000000000000 00000000 Security Directory</code></pre>
                 <h2>Connect</h2>
                 <p>You have now met three kinds of number in one lesson: file offsets (the Security slot, and everything <code>xxd</code> shows you), RVAs (the other fifteen slots), and — soon — full virtual addresses once the image is loaded. The next lesson separates those three address spaces cleanly.</p>
                 <p>Next: <a href="/courses/pe/lessons/pe-addresses">VA, RVA, and File Offset</a> — the three coordinate systems a PE lives in, and when each one appears.</p>
+            <p class="verified-answer-key" data-source-ref="courses/pe/manifest.json#exercise_decls">Verified answer key: IMAGE_DATA_DIRECTORY = &#123; DWORD VirtualAddress; DWORD Size; &#125; = 8 bytes. The VirtualAddress is the table&#x27;s RVA, Size its length in bytes. The spec says attribute certificates are not loaded into memory as part of the image, so this entry is a file pointer, not an RVA. Everything else in the directory array is an RVA.</p>
             </div>
 
             <div class="lesson-footer">

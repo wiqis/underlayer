@@ -232,11 +232,39 @@ public func render_a64_interrupts() : string {
                 <span>Previous: <a href="/courses/a64sys/lessons/a64-exceptions">One Register, Three Fields, and Thirty-Nine Meanings</a></span>
                 <span>Next: <a href="/courses/a64sys/lessons/a64-virtual">T0SZ = 64 - 48, and the Field With a Floor</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The measurement: the encoding, the install, and four cases of silence"?</p>
+                <div class="quiz" id="quiz-a64-interrupts-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: base plus vector times 0x80&quot;, not &quot;The measurement: the encoding, the install, and four cases of silence&quot;." data-source-ref="content/src/a64_interrupts.ch:78" onclick="checkQuiz('quiz-a64-interrupts-i4', this)" aria-label="Option: The quoted part first, because everything measured on this page is measured against it.">The quoted part first, because everything measured on this page is measured against it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the arithmetic of a vector, and the one thing you cannot check&quot;, not &quot;The measurement: the encoding, the install, and four cases of silence&quot;." data-source-ref="content/src/a64_interrupts.ch:187" onclick="checkQuiz('quiz-a64-interrupts-i4', this)" aria-label="Option: Given a base and a vector number, the entry address is base + vector * 0x80 .">Given a base and a vector number, the entry address is base + vector * 0x80 .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The measurement: the encoding, the install, and four cases of silence&quot;." data-source-ref="content/src/a64_interrupts.ch:225" onclick="checkQuiz('quiz-a64-interrupts-i4', this)" aria-label="Option: Backwards, and the link is one register.">Backwards, and the link is one register.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="One bit — bit 21 — separates the read from the write, and the five-field register name is identical in both." data-source-ref="content/src/a64_interrupts.ch:121" onclick="checkQuiz('quiz-a64-interrupts-i4', this)" aria-label="Option: One bit — bit 21 — separates the read from the write, and the five-field register name is identical in both.">One bit — bit 21 — separates the read from the write, and the five-field register name is identical in both.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The measurement: the encoding, the install, and four cases of silence&quot;." data-source-ref="content/src/a64_interrupts.ch:56" onclick="checkQuiz('quiz-a64-interrupts-i4', this)" aria-label="Option: The table has a hard alignment requirement, the requirement is architectural, and nothing in the toolchain checks it .">The table has a hard alignment requirement, the requirement is architectural, and nothing in the toolchain checks it .</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

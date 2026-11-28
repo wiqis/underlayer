@@ -233,11 +233,40 @@ $ python3 linklab.py show | head -12
                 <span>Start of course</span>
                 <span>Next: <a href="/courses/link/lessons/link-script-language">The Language, in the Order It Runs</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-link-default-script-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_default_script.ch:46" onclick="checkQuiz('quiz-link-default-script-i4', this)" aria-label="Option: Before reading it, it helps to know what a script is and is not, because the most common confusion is about scope.">Before reading it, it helps to know what a script is and is not, because the most common confusion is about scope.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_default_script.ch:125" onclick="checkQuiz('quiz-link-default-script-i4', this)" aria-label="Option: What is actually in those 276 lines, because the shape of the file tells you what the linker is doing and in what order.">What is actually in those 276 lines, because the shape of the file tells you what the linker is doing and in what order.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_default_script.ch:220" onclick="checkQuiz('quiz-link-default-script-i4', this)" aria-label="Option: Question 5 is the one that teaches the most, and it is a trap I would rather you hit deliberately than in production.">Question 5 is the one that teaches the most, and it is a trap I would rather you hit deliberately than in production.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_default_script.ch:225" onclick="checkQuiz('quiz-link-default-script-i4', this)" aria-label="Option: This is the first concept of the course and it exists to remove a blind spot rather than to add a topic.">This is the first concept of the course and it exists to remove a blind spot rather than to add a topic.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Supplying a script selects a fixed, non-relocatable model, and on a toolchain where PIE is the default, adding -T silently changes the output type." data-source-ref="content/src/link_default_script.ch:108" onclick="checkQuiz('quiz-link-default-script-i4', this)" aria-label="Option: Supplying a script selects a fixed, non-relocatable model, and on a toolchain where PIE is the default, adding -T silently changes the output type.">Supplying a script selects a fixed, non-relocatable model, and on a toolchain where PIE is the default, adding -T silently changes the output type.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_default_script.ch:27" onclick="checkQuiz('quiz-link-default-script-i4', this)" aria-label="Option: You have run a linker several thousand times.">You have run a linker several thousand times.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

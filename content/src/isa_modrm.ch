@@ -322,6 +322,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^I3/,/^I4/p'
                 <span><a href="/courses/isa/lessons/isa-rex">Previous: REX: Four Bits That Add Eight</a></span>
                 <span>Next: <a href="/courses/isa/lessons/isa-sib">SIB: The Byte That Exists Because rsp Is Special</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The Answer, and Where It Breaks"?</p>
+                <div class="quiz" id="quiz-isa-modrm-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;The Answer, and Where It Breaks&quot;." data-source-ref="content/src/isa_modrm.ch:87" onclick="checkQuiz('quiz-isa-modrm-i4', this)" aria-label="Option: Read the mod=00 exception carefully, because it is the one that breaks the tidy pattern.">Read the mod=00 exception carefully, because it is the one that breaks the tidy pattern.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Computing the Length Instead of Storing It&quot;, not &quot;The Answer, and Where It Breaks&quot;." data-source-ref="content/src/isa_modrm.ch:169" onclick="checkQuiz('quiz-isa-modrm-i4', this)" aria-label="Option: Since mod and rm decide the trailing byte count, a decoder does not need a table of instruction lengths.">Since mod and rm decide the trailing byte count, a decoder does not need a table of instruction lengths.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;The Answer, and Where It Breaks&quot;." data-source-ref="content/src/isa_modrm.ch:309" onclick="checkQuiz('quiz-isa-modrm-i4', this)" aria-label="Option: Exercise 3 is the one with the best answer in the concept, and the answer is a deflation that is also the point.">Exercise 3 is the one with the best answer in the concept, and the answer is a deflation that is also the point.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The Answer, and Where It Breaks&quot;." data-source-ref="content/src/isa_modrm.ch:315" onclick="checkQuiz('quiz-isa-modrm-i4', this)" aria-label="Option: The connection to obj-arch-table is the whole concept and it deserves to be stated without hedging.">The connection to obj-arch-table is the whole concept and it deserves to be stated without hedging.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Same opcode byte, same length for the first three, and the operation comes from the reg field — the field that elsewhere names a register." data-source-ref="content/src/isa_modrm.ch:149" onclick="checkQuiz('quiz-isa-modrm-i4', this)" aria-label="Option: Same opcode byte, same length for the first three, and the operation comes from the reg field — the field that elsewhere names a register.">Same opcode byte, same length for the first three, and the operation comes from the reg field — the field that elsewhere names a register.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;The Answer, and Where It Breaks&quot;." data-source-ref="content/src/isa_modrm.ch:39" onclick="checkQuiz('quiz-isa-modrm-i4', this)" aria-label="Option: The answer is not a lookup table.">The answer is not a lookup table.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -330,6 +343,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^I3/,/^I4/p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -138,6 +138,7 @@ $ xxd -s 32 -l 8 prog64.macho
                 <h2>Connect</h2>
                 <p>You can now walk the command area safely: fixed prefix at byte 32, variable lengths bounded twice over, LC_REQ_DYLD deciding what happens to unknown types. The most important command in the array is the one that maps the file into memory — LC_SEGMENT_64, four of them in every executable you have seen.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-segments">LC_SEGMENT_64</a> — vmaddr, vmsize, fileoff, filesize, protections, and how __PAGEZERO, __TEXT, __DATA and __LINKEDIT tile both disk and address space.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: Every load_command begins with cmd (identifying the type, e.g. 0x19 = LC_SEGMENT_64) and cmdsize (the full byte length of this command). The loader advances by cmdsize to reach the next command — this is how variable-length commands are walked safely.</p>
             </div>
 
             <div class="lesson-footer">

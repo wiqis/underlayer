@@ -247,6 +247,18 @@ $ python3 dynscope.py scope ./order
                 <span><a href="/courses/dyn/lessons/dyn-interpose">Previous: Interposition</a></span>
                 <span>Next: <a href="/courses/dyn/lessons/dyn-build-so">Building a Library</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-dyn-order-runtime-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_order_runtime.ch:47" onclick="checkQuiz('quiz-dyn-order-runtime-i4', this)" aria-label="Option: Both orders, written out, so the difference is visible rather than argued.">Both orders, written out, so the difference is visible rather than argued.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_order_runtime.ch:150" onclick="checkQuiz('quiz-dyn-order-runtime-i4', this)" aria-label="Option: The case where getting this wrong produces a bug that is nearly impossible to diagnose, because the program works on the machine that built it.">The case where getting this wrong produces a bug that is nearly impossible to diagnose, because the program works on the machine that built it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_order_runtime.ch:239" onclick="checkQuiz('quiz-dyn-order-runtime-i4', this)" aria-label="Option: The Global Scope gave the algorithm and Interposition showed its sharpest consequence.">The Global Scope gave the algorithm and Interposition showed its sharpest consequence.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The (+1 more) and (+4 more) are the deduplication, and they are the reason libc.so.6 appears once despite five objects needing it." data-source-ref="content/src/dyn_order_runtime.ch:119" onclick="checkQuiz('quiz-dyn-order-runtime-i4', this)" aria-label="Option: The (+1 more) and (+4 more) are the deduplication, and they are the reason libc.so.6 appears once despite five objects needing it.">The (+1 more) and (+4 more) are the deduplication, and they are the reason libc.so.6 appears once despite five objects needing it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_order_runtime.ch:27" onclick="checkQuiz('quiz-dyn-order-runtime-i4', this)" aria-label="Option: The previous concept said the scope is a breadth-first walk and moved on.">The previous concept said the scope is a breadth-first walk and moved on.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     
 
@@ -255,6 +267,22 @@ $ python3 dynscope.py scope ./order
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

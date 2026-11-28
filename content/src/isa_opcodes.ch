@@ -297,6 +297,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/I9/,$p'
                 <span><a href="/courses/isa/lessons/isa-modes">Previous: One Byte Stream, Two Meanings</a></span>
                 <span>Next: <a href="/courses/isa/lessons/isa-rex">REX: Four Bits That Add Eight</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Measuring the Map Rather Than Reading the Table"?</p>
+                <div class="quiz" id="quiz-isa-opcodes-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Measuring the Map Rather Than Reading the Table&quot;." data-source-ref="content/src/isa_opcodes.ch:81" onclick="checkQuiz('quiz-isa-opcodes-i4', this)" aria-label="Option: That last line is a design decision with a measurable consequence, and it is worth dwelling on.">That last line is a design decision with a measurable consequence, and it is worth dwelling on.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Auditing a Table Instead of Reading One&quot;, not &quot;Measuring the Map Rather Than Reading the Table&quot;." data-source-ref="content/src/isa_opcodes.ch:152" onclick="checkQuiz('quiz-isa-opcodes-i4', this)" aria-label="Option: The decoder needs a table saying, for each opcode, whether it takes a ModRM byte and whether an immediate follows.">The decoder needs a table saying, for each opcode, whether it takes a ModRM byte and whether an immediate follows.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Measuring the Map Rather Than Reading the Table&quot;." data-source-ref="content/src/isa_opcodes.ch:284" onclick="checkQuiz('quiz-isa-opcodes-i4', this)" aria-label="Option: Exercise 5 is the one that gives the course its shape, and it is worth doing because it inverts the usual reading.">Exercise 5 is the one that gives the course its shape, and it is worth doing because it inverts the usual reading.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Measuring the Map Rather Than Reading the Table&quot;." data-source-ref="content/src/isa_opcodes.ch:290" onclick="checkQuiz('quiz-isa-opcodes-i4', this)" aria-label="Option: A fixed-width architecture has a one-column table.">A fixed-width architecture has a one-column table.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="F3 0F 1E FA is a mandatory-prefix escape: the F3 is not decoration, it is what selects this instruction from the 0F 1E group." data-source-ref="content/src/isa_opcodes.ch:135" onclick="checkQuiz('quiz-isa-opcodes-i4', this)" aria-label="Option: F3 0F 1E FA is a mandatory-prefix escape: the F3 is not decoration, it is what selects this instruction from the 0F 1E group.">F3 0F 1E FA is a mandatory-prefix escape: the F3 is not decoration, it is what selects this instruction from the 0F 1E group.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Measuring the Map Rather Than Reading the Table&quot;." data-source-ref="content/src/isa_opcodes.ch:27" onclick="checkQuiz('quiz-isa-opcodes-i4', this)" aria-label="Option: The last concept ended with a byte that is a prefix in one mode and an instruction in another.">The last concept ended with a byte that is a prefix in one mode and an instruction in another.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -305,6 +318,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/I9/,$p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -118,6 +118,7 @@ public func render_macho_file_layout() : string {
                 <h2>Connect</h2>
                 <p>You have the map now: fixed header at 0, load commands from 32, payload located per segment, __LINKEDIT last. The header region starts with four bytes that decide how every subsequent field is read — they are not the same four bytes in every Mach-O file.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-magic">Magic Numbers and Byte Order</a> — why a thin file opens <code>CF FA ED FE</code>, a universal file opens <code>CA FE BA BE</code>, and only one of them is little-endian.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: A Mach-O file starts with mach_header_64 (32 bytes), followed by the load command array, then segment/section data laid out by file offsets, and finally the __LINKEDIT segment holding symbol tables, string tables, rebase/bind opcodes, and code signatures.</p>
             </div>
 
             <div class="lesson-footer">

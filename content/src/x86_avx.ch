@@ -164,11 +164,39 @@ public func render_x86_avx() : string {
                 <span>Previous: <a href="/courses/x86simd/lessons/x86-sse">SSE and SSE2: The XMM Register and the Alignment Split</a></span>
                 <span>Next: <a href="/courses/x86simd/lessons/x86-avx512">AVX-512: ZMM, k0&#8211;k7, and a Decoder That Needs No Silicon</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The upper half, and the finding that inverts the story"?</p>
+                <div class="quiz" id="quiz-x86-avx-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The three operands, priced at 1.00×&quot;, not &quot;The upper half, and the finding that inverts the story&quot;." data-source-ref="content/src/x86_avx.ch:53" onclick="checkQuiz('quiz-x86-avx-i4', this)" aria-label="Option: Two-operand SSE means the destination is also a source, so addps xmm0, xmm1 destroys xmm0 .">Two-operand SSE means the destination is also a source, so addps xmm0, xmm1 destroys xmm0 .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why the usual story is backwards, and how to tell&quot;, not &quot;The upper half, and the finding that inverts the story&quot;." data-source-ref="content/src/x86_avx.ch:130" onclick="checkQuiz('quiz-x86-avx-i4', this)" aria-label="Option: The story everybody tells is that AVX instructions dirty the upper half, and that this is why vzeroupper exists.">The story everybody tells is that AVX instructions dirty the upper half, and that this is why vzeroupper exists.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The upper half, and the finding that inverts the story&quot;." data-source-ref="content/src/x86_avx.ch:158" onclick="checkQuiz('quiz-x86-avx-i4', this)" aria-label="Option: Backwards, the previous concept measured the alignment rule and found that VEX did not touch it.">Backwards, the previous concept measured the alignment rule and found that VEX did not touch it.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="This inverts the standard account, and the standard account is not wrong so much as confused about which encoding is dangerous ." data-source-ref="content/src/x86_avx.ch:103" onclick="checkQuiz('quiz-x86-avx-i4', this)" aria-label="Option: This inverts the standard account, and the standard account is not wrong so much as confused about which encoding is dangerous .">This inverts the standard account, and the standard account is not wrong so much as confused about which encoding is dangerous .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The upper half, and the finding that inverts the story&quot;." data-source-ref="content/src/x86_avx.ch:47" onclick="checkQuiz('quiz-x86-avx-i4', this)" aria-label="Option: The previous concept measured what the alignment rule costs: nothing, until it costs everything.">The previous concept measured what the alignment rule costs: nothing, until it costs everything.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

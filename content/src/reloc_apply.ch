@@ -303,11 +303,40 @@ $ python3 crosscheck.py
                 <span><a href="/courses/reloc/lessons/tls-model">Previous: The One Relocation That Calls the Loader</a></span>
                 <span>End of course &middot; <a href="/courses/reloc">back to the course page</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-reloc-apply-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_apply.ch:73" onclick="checkQuiz('quiz-reloc-apply-i4', this)" aria-label="Option: What the applier has to hold in its head, and it is shorter than you expect.">What the applier has to hold in its head, and it is shorter than you expect.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_apply.ch:193" onclick="checkQuiz('quiz-reloc-apply-i4', this)" aria-label="Option: The second thing the applier does, and it is the behaviour that separates a patcher from a truncator.">The second thing the applier does, and it is the behaviour that separates a patcher from a truncator.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_apply.ch:290" onclick="checkQuiz('quiz-reloc-apply-i4', this)" aria-label="Option: Exercise 1 is the one that teaches the most, and it takes thirty seconds.">Exercise 1 is the one that teaches the most, and it takes thirty seconds.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_apply.ch:296" onclick="checkQuiz('quiz-reloc-apply-i4', this)" aria-label="Option: This closes the course, and it is the concept that makes the other eight into a single thing.">This closes the course, and it is the concept that makes the other eight into a single thing.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Use the instruction’s address for P and every PC-relative relocation in the file is off by one." data-source-ref="content/src/reloc_apply.ch:171" onclick="checkQuiz('quiz-reloc-apply-i4', this)" aria-label="Option: Use the instruction’s address for P and every PC-relative relocation in the file is off by one.">Use the instruction’s address for P and every PC-relative relocation in the file is off by one.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/reloc_apply.ch:27" onclick="checkQuiz('quiz-reloc-apply-i4', this)" aria-label="Option: Everything in the previous three modules was reading.">Everything in the previous three modules was reading.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

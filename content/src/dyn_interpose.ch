@@ -270,6 +270,19 @@ $ python3 dynscope.py search ./prog2 lib_value
                 <span><a href="/courses/dyn/lessons/dyn-scope">Previous: The Global Scope</a></span>
                 <span>Next: <a href="/courses/dyn/lessons/dyn-order-runtime">Breadth-First, and Why It Matters</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-dyn-interpose-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_interpose.ch:50" onclick="checkQuiz('quiz-dyn-interpose-i4', this)" aria-label="Option: There is nothing mysterious here, and that is the point.">There is nothing mysterious here, and that is the point.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_interpose.ch:155" onclick="checkQuiz('quiz-dyn-interpose-i4', this)" aria-label="Option: The case that makes this a security property rather than a curiosity: an attacker-supplied library that wins a name and is never linked against anything.">The case that makes this a security property rather than a curiosity: an attacker-supplied library that wins a name and is never linked against anything.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_interpose.ch:256" onclick="checkQuiz('quiz-dyn-interpose-i4', this)" aria-label="Option: Exercise 3 is the one that teaches the boundary between the two passes, and it is a question people get wrong with confidence.">Exercise 3 is the one that teaches the boundary between the two passes, and it is a question people get wrong with confidence.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_interpose.ch:262" onclick="checkQuiz('quiz-dyn-interpose-i4', this)" aria-label="Option: This is the second of three scope concepts and the one with the most consequences.">This is the second of three scope concepts and the one with the most consequences.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="And the loader’s answer and the artifact’s answer agree, computed from completely different inputs." data-source-ref="content/src/dyn_interpose.ch:116" onclick="checkQuiz('quiz-dyn-interpose-i4', this)" aria-label="Option: And the loader’s answer and the artifact’s answer agree, computed from completely different inputs.">And the loader’s answer and the artifact’s answer agree, computed from completely different inputs.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_interpose.ch:27" onclick="checkQuiz('quiz-dyn-interpose-i4', this)" aria-label="Option: Add one function to the previous concept’s program.">Add one function to the previous concept’s program.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     
 
@@ -278,6 +291,22 @@ $ python3 dynscope.py search ./prog2 lib_value
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

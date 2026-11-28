@@ -155,11 +155,39 @@ public func render_rv_traps() : string {
                 <span>Previous: <a href="/courses/rvpriv/lessons/rv-paging">Sv39, Sv48, Sv57 and satp, Measured on the Compiler's Own Shifts</a></span>
                 <span>Next: <a href="/courses/rvpriv/lessons/rv-boundary">What This Course Measured, and What It Refused To</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What was measured here, and what was not"?</p>
+                <div class="quiz" id="quiz-rv-traps-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The five trap registers, and the one bit that writes them&quot;, not &quot;What was measured here, and what was not&quot;." data-source-ref="content/src/rv_traps.ch:65" onclick="checkQuiz('quiz-rv-traps-i4', this)" aria-label="Option: Five CSRs carry a trap’s state, and their addresses are the twelve-bit numbers from concept 1 decomposed.">Five CSRs carry a trap’s state, and their addresses are the twelve-bit numbers from concept 1 decomposed.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The interrupt bits: a quoted rule, measured without quoting it&quot;, not &quot;What was measured here, and what was not&quot;." data-source-ref="content/src/rv_traps.ch:118" onclick="checkQuiz('quiz-rv-traps-i4', this)" aria-label="Option: But notice what was measured: the compiler emitted ori a0, a0, &lt;mask&gt; and nothing else.">But notice what was measured: the compiler emitted ori a0, a0, &lt;mask&gt; and nothing else.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What was measured here, and what was not&quot;." data-source-ref="content/src/rv_traps.ch:149" onclick="checkQuiz('quiz-rv-traps-i4', this)" aria-label="Option: Forward to concept 4 , where every measured and quoted claim on the first three pages is counted in one table.">Forward to concept 4 , where every measured and quoted claim on the first three pages is counted in one table.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The fix made the functions return the value instead, so all three write the same register." data-source-ref="content/src/rv_traps.ch:133" onclick="checkQuiz('quiz-rv-traps-i4', this)" aria-label="Option: The fix made the functions return the value instead, so all three write the same register.">The fix made the functions return the value instead, so all three write the same register.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The strongest thing measured on this page, and it is measured as emitted&quot;, not &quot;What was measured here, and what was not&quot;." data-source-ref="content/src/rv_traps.ch:26" onclick="checkQuiz('quiz-rv-traps-i4', this)" aria-label="Option: Everything a system call is — who handles it, what it returns, what the mode transition costs — is unmeasurable on this host.">Everything a system call is — who handles it, what it returns, what the mode transition costs — is unmeasurable on this host.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

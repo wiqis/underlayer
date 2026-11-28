@@ -134,6 +134,7 @@ The Import Tables (interpreted .rdata section contents)
                 <h2>Connect</h2>
                 <p>Imports only make sense if the exporting side records something to find. The next lesson flips the file around: how <code>conpty.dll</code> publishes fourteen names, how ordinals index them, and how one export can secretly be a string pointing at another DLL.</p>
                 <p>Next: <a href="/courses/pe/lessons/pe-exports">The Export Tables</a> — the directory header, the three parallel arrays, and forwarders.</p>
+            <p class="verified-answer-key" data-source-ref="courses/pe/manifest.json#exercise_decls">Verified answer key: The Name field at descriptor offset 12 is the RVA of a null-terminated ASCII DLL name (e.g. &#x27;KERNEL32.dll&#x27;). FirstThunk points at the import address table, not the name. Until binding, IAT entries copy the import lookup table (RVAs of hint/name entries). The loader overwrites each IAT slot with the function&#x27;s real address — that is what makes calls work.</p>
             </div>
 
             <div class="lesson-footer">

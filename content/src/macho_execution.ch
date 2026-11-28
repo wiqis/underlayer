@@ -131,6 +131,7 @@ $ llvm-objdump -d prog64.macho | grep -A4 "^100000450"
                 <h2>Connect</h2>
                 <p>That is the full arc: 32 header bytes that choose the parser, load commands that map, protect, and fix; a signature and UUID that attest; a dSYM that remembers; dyld that performs; a layout that slides; and one offset that fires. The bytes are still on disk exactly as you first read them — every lesson in this course was a different projection of the same file.</p>
                 <p>Back to the course: <a href="/courses/macho">all 24 concepts</a>, the samples to practice on, and the spec sections each claim came from.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: dyld first maps __PAGEZERO/__TEXT/__DATA/__LINKEDIT with correct protections, then walks chained fixups (or LC_DYLD_INFO opcodes) to slide pointers and resolve binds, recursively loads LC_LOAD_DYLIB dependencies, runs constructors, and finally jumps to entryoff. The entry stub sets up the stack and calls the C runtime, which calls main().</p>
             </div>
 
             <div class="lesson-footer">

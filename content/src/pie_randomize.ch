@@ -174,11 +174,40 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/\[4\]/,/\[5\]/p'
                 <span><a href="/courses/reloc/lessons/pie-flags">Previous: The Flags, and Which One Is Which Kind</a></span>
                 <span>Next: <a href="/courses/reloc/lessons/pie-cost">What Position Independence Costs</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-pie-randomize-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pie_randomize.ch:42" onclick="checkQuiz('quiz-pie-randomize-i4', this)" aria-label="Option: There are two different things that could be random, and confusing them is the source of most of the misconception.">There are two different things that could be random, and confusing them is the source of most of the misconception.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pie_randomize.ch:106" onclick="checkQuiz('quiz-pie-randomize-i4', this)" aria-label="Option: Why this mattered historically, because the reason PIE became the default is a specific bug class rather than a general principle.">Why this mattered historically, because the reason PIE became the default is a specific bug class rather than a general principle.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pie_randomize.ch:162" onclick="checkQuiz('quiz-pie-randomize-i4', this)" aria-label="Option: Question 3 is the one that fixes the model, and the answer is instructive.">Question 3 is the one that fixes the model, and the answer is instructive.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pie_randomize.ch:167" onclick="checkQuiz('quiz-pie-randomize-i4', this)" aria-label="Option: This is the empirical centre of the PIE module, and it exists to make the previous concept’s matrix mean something.">This is the empirical centre of the PIE module, and it exists to make the previous concept’s matrix mean something.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The kernel honours that for a non-PIE executable, so the address is the same on every machine, every boot, forever." data-source-ref="content/src/pie_randomize.ch:101" onclick="checkQuiz('quiz-pie-randomize-i4', this)" aria-label="Option: The kernel honours that for a non-PIE executable, so the address is the same on every machine, every boot, forever.">The kernel honours that for a non-PIE executable, so the address is the same on every machine, every boot, forever.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pie_randomize.ch:27" onclick="checkQuiz('quiz-pie-randomize-i4', this)" aria-label="Option: “PIE enables ASLR” is a true sentence that is easy to believe and easy to over-apply.">“PIE enables ASLR” is a true sentence that is easy to believe and easy to over-apply.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

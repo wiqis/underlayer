@@ -129,6 +129,7 @@ $ xxd -s 4096 -l 4 universal.macho
                 <h2>Connect</h2>
                 <p>You can now enter a Mach-O from either door: thin files at magic <code>CF FA ED FE</code>, containers at <code>CA FE BA BE</code> pointing into slices with that same thin magic. Once inside a slice, the 32-byte header hands you off to the region where the format's real instructions live — the flat array of load commands at byte 32.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-load-commands">The Load Command Area</a> — the cmd/cmdsize walk, the LC constants every tool knows, and the real 14-command list of <code>prog64.macho</code>.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: CA FE BA BE (big-endian 0xCAFEBABE) is FAT_MAGIC. The fat_header and fat_arch fields are always big-endian regardless of the slice architectures, so the loader can read nfat_arch and locate each slice before knowing whether that slice is x86_64 or arm64.</p>
             </div>
 
             <div class="lesson-footer">

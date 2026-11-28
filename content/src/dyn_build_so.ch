@@ -234,6 +234,19 @@ $ python3 dynscope.py exports liba.so
                 <span><a href="/courses/dyn/lessons/dyn-order-runtime">Previous: Breadth-First, and Why It Matters</a></span>
                 <span>Next: <a href="/courses/dyn/lessons/dyn-export">Hiding Things, and the Trap</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-dyn-build-so-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_build_so.ch:45" onclick="checkQuiz('quiz-dyn-build-so-i4', this)" aria-label="Option: What -fPIC -shared actually does, as four separate decisions rather than one.">What -fPIC -shared actually does, as four separate decisions rather than one.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_build_so.ch:165" onclick="checkQuiz('quiz-dyn-build-so-i4', this)" aria-label="Option: The middle symlink is the ABI contract and the only one that must be stable.">The middle symlink is the ABI contract and the only one that must be stable.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_build_so.ch:220" onclick="checkQuiz('quiz-dyn-build-so-i4', this)" aria-label="Option: Exercise 3 is the one that makes the interface/mechanism distinction permanent.">Exercise 3 is the one that makes the interface/mechanism distinction permanent.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_build_so.ch:226" onclick="checkQuiz('quiz-dyn-build-so-i4', this)" aria-label="Option: This opens the building module, and it is the mirror image of the ELF course’s shared-libraries concept in a way worth being explicit about.">This opens the building module, and it is the mirror image of the ELF course’s shared-libraries concept in a way worth being explicit about.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Upgrading 1.2.3 to 1.4.0 changes the first and the third and must not change the second, or every program on the system stops running." data-source-ref="content/src/dyn_build_so.ch:110" onclick="checkQuiz('quiz-dyn-build-so-i4', this)" aria-label="Option: Upgrading 1.2.3 to 1.4.0 changes the first and the third and must not change the second, or every program on the system stops running.">Upgrading 1.2.3 to 1.4.0 changes the first and the third and must not change the second, or every program on the system stops running.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_build_so.ch:26" onclick="checkQuiz('quiz-dyn-build-so-i4', this)" aria-label="Option: Every previous course has consumed shared libraries.">Every previous course has consumed shared libraries.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     
 
@@ -242,6 +255,22 @@ $ python3 dynscope.py exports liba.so
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

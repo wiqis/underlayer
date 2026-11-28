@@ -183,11 +183,40 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/\[1\]/,/^$/p'
                 <span><a href="/courses/sym/lessons/sym-binding">Previous: Binding, and the Two Tables</a></span>
                 <span>Next: <a href="/courses/sym/lessons/sym-algorithm">The Algorithm, Measured</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-sym-visibility-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_visibility.ch:55" onclick="checkQuiz('quiz-sym-visibility-i4', this)" aria-label="Option: That is a question about conflict , and only DEFAULT permits a conflict.">That is a question about conflict , and only DEFAULT permits a conflict.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_visibility.ch:134" onclick="checkQuiz('quiz-sym-visibility-i4', this)" aria-label="Option: Same program, same preload, opposite result, and the only difference is one attribute on a function in a library the program never mentions.">Same program, same preload, opposite result, and the only difference is one attribute on a function in a library the program never mentions.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_visibility.ch:171" onclick="checkQuiz('quiz-sym-visibility-i4', this)" aria-label="Option: Question 3 is the one to think hardest about, and it has no answer in this course.">Question 3 is the one to think hardest about, and it has no answer in this course.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_visibility.ch:177" onclick="checkQuiz('quiz-sym-visibility-i4', this)" aria-label="Option: Into the algorithm module: binding and visibility together are what make The Algorithm, Measured a decision procedure rather than a search.">Into the algorithm module: binding and visibility together are what make The Algorithm, Measured a decision procedure rather than a search.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="That is the whole practical content of PROTECTED : it is the only value that lets a name stay exported while being immune to interposition." data-source-ref="content/src/sym_visibility.ch:97" onclick="checkQuiz('quiz-sym-visibility-i4', this)" aria-label="Option: That is the whole practical content of PROTECTED : it is the only value that lets a name stay exported while being immune to interposition.">That is the whole practical content of PROTECTED : it is the only value that lets a name stay exported while being immune to interposition.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_visibility.ch:27" onclick="checkQuiz('quiz-sym-visibility-i4', this)" aria-label="Option: Four attributes, one per visibility.">Four attributes, one per visibility.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

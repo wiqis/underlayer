@@ -117,6 +117,7 @@ $ xxd -s 4096 -l 16 universal.macho
                 <h2>Connect</h2>
                 <p>You have the layout and the regime selector: four bytes at offset 0 tell every tool which structure follows and how to read it. Once the magic says "64-bit thin, little-endian," the next 28 bytes are a fixed eight-field header — the one <code>dyld</code> decodes before anything else.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-header">The mach_header_64 Field by Field</a> — all 32 bytes decoded: cputype, filetype, ncmds, sizeofcmds, flags, and the reserved word.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: CF FA ED FE read little-endian is 0xFEEDFACF = MH_MAGIC_64, the magic for a 64-bit Mach-O. 0xFEEDFACE (bytes CE FA ED FE) is the 32-bit magic, and 0xCAFEBABE is FAT_MAGIC (big-endian).</p>
             </div>
 
             <div class="lesson-footer">

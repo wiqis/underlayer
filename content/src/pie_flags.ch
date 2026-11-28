@@ -196,11 +196,40 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/\[3\]/,/\[4\]/p'
                 <span><a href="/courses/reloc/lessons/reloc-encoding-limits">Previous: The Limits That Shaped the Table</a></span>
                 <span>Next: <a href="/courses/reloc/lessons/pie-randomize">Does the Executable Actually Move?</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-pie-flags-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pie_flags.ch:65" onclick="checkQuiz('quiz-pie-flags-i4', this)" aria-label="Option: Two independent questions, and it is worth being precise that they are asked at different times by different programs.">Two independent questions, and it is worth being precise that they are asked at different times by different programs.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pie_flags.ch:131" onclick="checkQuiz('quiz-pie-flags-i4', this)" aria-label="Option: The mistake that actually happens, because it does not look like a mistake.">The mistake that actually happens, because it does not look like a mistake.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pie_flags.ch:184" onclick="checkQuiz('quiz-pie-flags-i4', this)" aria-label="Option: All four are constructible, all four run, and all four are mistakes.">All four are constructible, all four run, and all four are mistakes.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pie_flags.ch:189" onclick="checkQuiz('quiz-pie-flags-i4', this)" aria-label="Option: This opens the PIE module, and the connection back is the direct answer to a question the vocabulary module left open.">This opens the PIE module, and the connection back is the direct answer to a question the vocabulary module left open.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The next concept measures whether a coherent PIE actually moves; this is the case where one does not and should not." data-source-ref="content/src/pie_flags.ch:126" onclick="checkQuiz('quiz-pie-flags-i4', this)" aria-label="Option: The next concept measures whether a coherent PIE actually moves; this is the case where one does not and should not.">The next concept measures whether a coherent PIE actually moves; this is the case where one does not and should not.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pie_flags.ch:26" onclick="checkQuiz('quiz-pie-flags-i4', this)" aria-label="Option: There are four flags, they all contain “pie” or “pic”, and they do not all mean the same kind of thing.">There are four flags, they all contain “pie” or “pic”, and they do not all mean the same kind of thing.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

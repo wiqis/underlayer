@@ -127,6 +127,7 @@ $ xxd -s $((0x4000 + 573440)) -l 32 libasyncProfiler.dylib
                 <h2>Connect</h2>
                 <p>Four of the five streams are consumed entirely by dyld at load time; the fifth (export_off, 1432 bytes here) is the image's outward face — every name other binaries will bind against.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-export-trie">The Export Trie</a> — the prefix-sharing tree dyld walks to answer "does this dylib export that symbol?", and the structure modern binaries promote into its own load command.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: LC_DYLD_INFO_ONLY = 0x80000022 has the LC_REQ_DYLD bit set (0x80000000), meaning dyld requires it and will refuse to load the binary if it cannot understand it. Plain LC_DYLD_INFO (0x22) lacks that bit and is treated as a hint modern dyld may ignore.</p>
             </div>
 
             <div class="lesson-footer">

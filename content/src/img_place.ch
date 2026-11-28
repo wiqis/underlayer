@@ -225,6 +225,19 @@ $ ./maps | head -30
                 <span><a href="/courses/img/lessons/img-vdso">Previous: The vDSO: An ELF File With No File</a></span>
                 <span>Next: <a href="/courses/img/lessons/img-walk">Rebuilding the Image Reader</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Measured, in a Real Process"?</p>
+                <div class="quiz" id="quiz-img-place-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Measured, in a Real Process&quot;." data-source-ref="content/src/img_place.ch:38" onclick="checkQuiz('quiz-img-place-i4', this)" aria-label="Option: /proc/&lt;pid&gt;/maps is the kernel’s own list.">/proc/&lt;pid&gt;/maps is the kernel’s own list.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The Trap That Cost a Day&quot;, not &quot;Measured, in a Real Process&quot;." data-source-ref="content/src/img_place.ch:132" onclick="checkQuiz('quiz-img-place-i4', this)" aria-label="Option: Those addresses are not the shell’s.">Those addresses are not the shell’s.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Measured, in a Real Process&quot;." data-source-ref="content/src/img_place.ch:212" onclick="checkQuiz('quiz-img-place-i4', this)" aria-label="Option: Exercise 1 is the measurement that ties this concept to the relocations course’s randomisation concept and closes the security thread.">Exercise 1 is the measurement that ties this concept to the relocations course’s randomisation concept and closes the security thread.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Measured, in a Real Process&quot;." data-source-ref="content/src/img_place.ch:218" onclick="checkQuiz('quiz-img-place-i4', this)" aria-label="Option: This concept is the load-bearing correction to a diagram the ELF course drew and a fact the linker script course produced.">This concept is the load-bearing correction to a diagram the ELF course drew and a fact the linker script course produced.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="A null-pointer dereference that only writes is often not exploitable; one that also maps something at address zero turns a bug into arbitrary code execution." data-source-ref="content/src/img_place.ch:116" onclick="checkQuiz('quiz-img-place-i4', this)" aria-label="Option: A null-pointer dereference that only writes is often not exploitable; one that also maps something at address zero turns a bug into arbitrary code execution.">A null-pointer dereference that only writes is often not exploitable; one that also maps something at address zero turns a bug into arbitrary code execution.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Measured, in a Real Process&quot;." data-source-ref="content/src/img_place.ch:26" onclick="checkQuiz('quiz-img-place-i4', this)" aria-label="Option: That picture is right, and it is a diagram, and diagrams do not have addresses in them.">That picture is right, and it is a diagram, and diagrams do not have addresses in them.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -233,6 +246,22 @@ $ ./maps | head -30
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

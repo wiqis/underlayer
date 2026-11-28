@@ -251,11 +251,38 @@ RISC-V
                 <span>Previous: <a href="/courses/priv/lessons/priv-errorcode">Three Error Codes and None of Them Visible</a></span>
                 <span>Next: <a href="/courses/priv/lessons/priv-harness">The Harness, and the Eight Things It Refuses to Let Go</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The model: the five-part shape, and the three spellings"?</p>
+                <div class="quiz" id="quiz-priv-three-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the question to ask on a machine you have&quot;, not &quot;The model: the five-part shape, and the three spellings&quot;." data-source-ref="content/src/priv_three.ch:188" onclick="checkQuiz('quiz-priv-three-i4', this)" aria-label="Option: You have an AArch64 or RISC-V machine, or a cross-compiler and an emulator.">You have an AArch64 or RISC-V machine, or a cross-compiler and an emulator.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The model: the five-part shape, and the three spellings&quot;." data-source-ref="content/src/priv_three.ch:245" onclick="checkQuiz('quiz-priv-three-i4', this)" aria-label="Option: Backwards, this concept reads the other seven as one instance of a design and asks how many other instances there are.">Backwards, this concept reads the other seven as one instance of a design and asks how many other instances there are.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Three architectures, one field, and the two newer ones both decided that the meaning of the bits should depend on the class of the event." data-source-ref="content/src/priv_three.ch:159" onclick="checkQuiz('quiz-priv-three-i4', this)" aria-label="Option: Three architectures, one field, and the two newer ones both decided that the meaning of the bits should depend on the class of the event.">Three architectures, one field, and the two newer ones both decided that the meaning of the bits should depend on the class of the event.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The model: the five-part shape, and the three spellings&quot;." data-source-ref="content/src/priv_three.ch:51" onclick="checkQuiz('quiz-priv-three-i4', this)" aria-label="Option: “Ring 0” is a vendor spelling.">“Ring 0” is a vendor spelling.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

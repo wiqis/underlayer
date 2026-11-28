@@ -125,6 +125,7 @@ $ xxd -l 64 notepad.exe
                 <h2>Connect</h2>
                 <p>This course follows the same spine the ELF course did: headers first (what the loader reads), then addressing (how disk maps to memory), then sections and the tables inside them (imports, exports, relocations, resources), and finally the loader itself.</p>
                 <p>Next: <a href="/courses/pe/lessons/pe-file-layout">PE File Layout</a> — the full map from byte 0 to the last section, before any individual field is decoded.</p>
+            <p class="verified-answer-key" data-source-ref="courses/pe/manifest.json#exercise_decls">Verified answer key: Every PE file starts with the MS-DOS magic 4d 5a (&#x27;MZ&#x27;) at offset 0. 50 45 (&#x27;PE&#x27;) appears later, at the offset stored in e_lfanew. 7f 45 is the ELF magic, not PE. The layered chain is: DOS header (with e_lfanew) → DOS stub → PE signature → COFF file header → optional header (incl. data directories) → section table → section data.</p>
             </div>
 
             <div class="lesson-footer">

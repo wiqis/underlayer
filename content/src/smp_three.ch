@@ -227,11 +227,39 @@ RISC-V
                 <span>Previous: <a href="/courses/smp/lessons/smp-numa">The Thing This Machine Cannot Do</a></span>
                 <span>Next: <a href="/courses/smp/lessons/smp-harness">The Harness, and the Six That Refused to Go Quietly</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: why rows 4 and 5 decide whether your algorithm ports"?</p>
+                <div class="quiz" id="quiz-smp-three-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: the same five-part shape, and it recurs&quot;, not &quot;The reality: why rows 4 and 5 decide whether your algorithm ports&quot;." data-source-ref="content/src/smp_three.ch:87" onclick="checkQuiz('quiz-smp-three-i4', this)" aria-label="Option: Rows 1, 2 and 3 are why the word “coherence” feels like one thing.">Rows 1, 2 and 3 are why the word “coherence” feels like one thing.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: what changes when you port the counter from this course&quot;, not &quot;The reality: why rows 4 and 5 decide whether your algorithm ports&quot;." data-source-ref="content/src/smp_three.ch:176" onclick="checkQuiz('quiz-smp-three-i4', this)" aria-label="Option: Take the one line of code this course measured most carefully and translate it.">Take the one line of code this course measured most carefully and translate it.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: why rows 4 and 5 decide whether your algorithm ports&quot;." data-source-ref="content/src/smp_three.ch:221" onclick="checkQuiz('quiz-smp-three-i4', this)" aria-label="Option: Backwards, the NUMA concept established the machine&#x27;s boundary: one memory domain, so nothing here is a distance measurement.">Backwards, the NUMA concept established the machine&#x27;s boundary: one memory domain, so nothing here is a distance measurement.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Weak ordering does not make a program wrong immediately, it makes it wrong occasionally, and occasionally is the hardest thing to test for." data-source-ref="content/src/smp_three.ch:162" onclick="checkQuiz('quiz-smp-three-i4', this)" aria-label="Option: Weak ordering does not make a program wrong immediately, it makes it wrong occasionally, and occasionally is the hardest thing to test for.">Weak ordering does not make a program wrong immediately, it makes it wrong occasionally, and occasionally is the hardest thing to test for.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: why rows 4 and 5 decide whether your algorithm ports&quot;." data-source-ref="content/src/smp_three.ch:57" onclick="checkQuiz('quiz-smp-three-i4', this)" aria-label="Option: On x86-64 the answer to both is one bit in an instruction prefix.">On x86-64 the answer to both is one bit in an instruction prefix.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

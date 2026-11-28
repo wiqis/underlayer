@@ -262,6 +262,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/I1/,/I2/p'
                 <span><a href="/courses/img/lessons/img-entries">Previous: Where the Entry Points Come From</a></span>
                 <span>Next: <a href="/courses/isa/lessons/isa-opcodes">The Opcode Map and Its Holes</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What It Costs in Practice"?</p>
+                <div class="quiz" id="quiz-isa-modes-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;What It Costs in Practice&quot;." data-source-ref="content/src/isa_modes.ch:42" onclick="checkQuiz('quiz-isa-modes-i4', this)" aria-label="Option: Why the collision exists, and what it costs.">Why the collision exists, and what it costs.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Showing the Reasoning, Not the Answer&quot;, not &quot;What It Costs in Practice&quot;." data-source-ref="content/src/isa_modes.ch:121" onclick="checkQuiz('quiz-isa-modes-i4', this)" aria-label="Option: The artifact for this course is a decoder, and the design decision that matters is what it prints.">The artifact for this course is a decoder, and the design decision that matters is what it prints.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;What It Costs in Practice&quot;." data-source-ref="content/src/isa_modes.ch:249" onclick="checkQuiz('quiz-isa-modes-i4', this)" aria-label="Option: Exercise 4 is the one that makes the concept bite, and its result is the most useful thing in this unit.">Exercise 4 is the one that makes the concept bite, and its result is the most useful thing in this unit.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What It Costs in Practice&quot;." data-source-ref="content/src/isa_modes.ch:255" onclick="checkQuiz('quiz-isa-modes-i4', this)" aria-label="Option: The direct parent of this concept is obj-arch-table , and this is the concept that answers its question.">The direct parent of this concept is obj-arch-table , and this is the concept that answers its question.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="One wrong length does not produce one wrong answer; it invalidates the rest of the reading, and a per-instruction check cannot see that." data-source-ref="content/src/isa_modes.ch:115" onclick="checkQuiz('quiz-isa-modes-i4', this)" aria-label="Option: One wrong length does not produce one wrong answer; it invalidates the rest of the reading, and a per-instruction check cannot see that.">One wrong length does not produce one wrong answer; it invalidates the rest of the reading, and a per-instruction check cannot see that.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;What It Costs in Practice&quot;." data-source-ref="content/src/isa_modes.ch:27" onclick="checkQuiz('quiz-isa-modes-i4', this)" aria-label="Option: Every course before this one used x86-64 machine code as an opaque byte string.">Every course before this one used x86-64 machine code as an opaque byte string.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -270,6 +283,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/I1/,/I2/p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

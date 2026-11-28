@@ -147,6 +147,7 @@ public func render_elf_identification() : string {
             <div class="unit unit-exercises" id="api-exercises" style="display:none">
                 <h2>Practice Exercises</h2>
                 <div id="exercise-list"></div>
+            <p class="verified-answer-key" data-source-ref="courses/elf/manifest.json#exercise_decls">Verified answer key: The ELF magic: 0x7f followed by &#x27;E&#x27;,&#x27;L&#x27;,&#x27;F&#x27; (0x45 0x4c 0x46). EI_CLASS=01 (ELF32) at offset 4 and EI_DATA=02 (big-endian) at offset 5.</p>
             </div>
             <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">

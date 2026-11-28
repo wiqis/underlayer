@@ -201,11 +201,39 @@ public func render_smp_atomic() : string {
                 <span>Previous: <a href="/courses/smp/lessons/smp-sharing">Three Things Called Contention</a></span>
                 <span>Next: <a href="/courses/smp/lessons/smp-ordering">A Duration Is Not a Guarantee</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: 2.54× with nothing to lock against"?</p>
+                <div class="quiz" id="quiz-smp-atomic-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: two configurations, three bodies, one subtraction&quot;, not &quot;The reality: 2.54× with nothing to lock against&quot;." data-source-ref="content/src/smp_atomic.ch:64" onclick="checkQuiz('quiz-smp-atomic-i4', this)" aria-label="Option: Same two cores, same bodies, same iteration count.">Same two cores, same bodies, same iteration count.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the CAS comparison, and the sentence that did not survive it&quot;, not &quot;The reality: 2.54× with nothing to lock against&quot;." data-source-ref="content/src/smp_atomic.ch:149" onclick="checkQuiz('quiz-smp-atomic-i4', this)" aria-label="Option: Read the two ratios against each other rather than separately, because the difference between them is the finding.">Read the two ratios against each other rather than separately, because the difference between them is the finding.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: 2.54× with nothing to lock against&quot;." data-source-ref="content/src/smp_atomic.ch:194" onclick="checkQuiz('quiz-smp-atomic-i4', this)" aria-label="Option: This concept is the other half of that sentence : with nothing else in the run, the lock costs 2.54×.">This concept is the other half of that sentence : with nothing else in the run, the lock costs 2.54×.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Across the three recorded runs the contended lock xadd came out at 22.03, 22.27 and 22.24 ticks/op; the plain-store floor moved between 1.04 and 1.39." data-source-ref="content/src/smp_atomic.ch:126" onclick="checkQuiz('quiz-smp-atomic-i4', this)" aria-label="Option: Across the three recorded runs the contended lock xadd came out at 22.03, 22.27 and 22.24 ticks/op; the plain-store floor moved between 1.04 and 1.39.">Across the three recorded runs the contended lock xadd came out at 22.03, 22.27 and 22.24 ticks/op; the plain-store floor moved between 1.04 and 1.39.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: 2.54× with nothing to lock against&quot;." data-source-ref="content/src/smp_atomic.ch:47" onclick="checkQuiz('quiz-smp-atomic-i4', this)" aria-label="Option: Everything in the last two concepts was two threads fighting.">Everything in the last two concepts was two threads fighting.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

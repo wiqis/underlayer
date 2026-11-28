@@ -201,11 +201,39 @@ public func render_x86_frame() : string {
                 <span>Previous: <a href="/courses/x86abi/lessons/x86-calling">The Calling Convention, and the Register That Wasn't</a></span>
                 <span>Next: <a href="/courses/x86abi/lessons/x86-saved">Callee-Saved and Caller-Saved, by Experiment</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: the red zone, and the eight bytes that are not yours"?</p>
+                <div class="quiz" id="quiz-x86-frame-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: one push, and everything that follows from it&quot;, not &quot;The reality: the red zone, and the eight bytes that are not yours&quot;." data-source-ref="content/src/x86_frame.ch:58" onclick="checkQuiz('quiz-x86-frame-i4', this)" aria-label="Option: Start from the only fact.">Start from the only fact.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: two rules, and the trap in the word “alignment”&quot;, not &quot;The reality: the red zone, and the eight bytes that are not yours&quot;." data-source-ref="content/src/x86_frame.ch:178" onclick="checkQuiz('quiz-x86-frame-i4', this)" aria-label="Option: No subq $8, %rsp .">No subq $8, %rsp .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: the red zone, and the eight bytes that are not yours&quot;." data-source-ref="content/src/x86_frame.ch:195" onclick="checkQuiz('quiz-x86-frame-i4', this)" aria-label="Option: The privilege course&#x27;s canonical-address concept is the one place a similar-sounding word means something quite different, and the two are worth keeping apart.">The privilege course&#x27;s canonical-address concept is the one place a similar-sounding word means something quite different, and the two are worth keeping apart.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The red zone is the 128 bytes immediately below %rsp , which a leaf function may use as locals without adjusting %rsp at all." data-source-ref="content/src/x86_frame.ch:109" onclick="checkQuiz('quiz-x86-frame-i4', this)" aria-label="Option: The red zone is the 128 bytes immediately below %rsp , which a leaf function may use as locals without adjusting %rsp at all.">The red zone is the 128 bytes immediately below %rsp , which a leaf function may use as locals without adjusting %rsp at all.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: the red zone, and the eight bytes that are not yours&quot;." data-source-ref="content/src/x86_frame.ch:47" onclick="checkQuiz('quiz-x86-frame-i4', this)" aria-label="Option: Every call on x86-64 changes the stack pointer by 8 bytes and then requires the stack pointer to be in a particular state.">Every call on x86-64 changes the stack pointer by 8 bytes and then requires the stack pointer to be in a particular state.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

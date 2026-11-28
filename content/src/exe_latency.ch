@@ -336,6 +336,19 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^E /,/^F /p'
                 <span><a href="/courses/exe/lessons/exe-instrument">Previous: Measure the Instrument First</a></span>
                 <span>Next: <a href="/courses/exe/lessons/exe-deps">A Dependency Is a Constraint, Not a Cost</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Why the First Version Measured the Wrong Thing"?</p>
+                <div class="quiz" id="quiz-exe-latency-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Why the First Version Measured the Wrong Thing&quot;." data-source-ref="content/src/exe_latency.ch:130" onclick="checkQuiz('quiz-exe-latency-i4', this)" aria-label="Option: And the honest caveat that the measurement makes unavoidable.">And the honest caveat that the measurement makes unavoidable.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Computing the Width, and Knowing What You Have Not Measured&quot;, not &quot;Why the First Version Measured the Wrong Thing&quot;." data-source-ref="content/src/exe_latency.ch:179" onclick="checkQuiz('quiz-exe-latency-i4', this)" aria-label="Option: The ratio is the number a performance-minded reader wants, so it is worth being precise about what it does and does not give you.">The ratio is the number a performance-minded reader wants, so it is worth being precise about what it does and does not give you.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Why the First Version Measured the Wrong Thing&quot;." data-source-ref="content/src/exe_latency.ch:324" onclick="checkQuiz('quiz-exe-latency-i4', this)" aria-label="Option: Exercise 4 is the one that matters most for a reader who will write real code, and it is the bridge to the next course.">Exercise 4 is the one that matters most for a reader who will write real code, and it is the bridge to the next course.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Why the First Version Measured the Wrong Thing&quot;." data-source-ref="content/src/exe_latency.ch:329" onclick="checkQuiz('quiz-exe-latency-i4', this)" aria-label="Option: The connection to the ISA length concept is the sharpest in the course, and it is the same relationship read from two ends.">The connection to the ISA length concept is the sharpest in the course, and it is the same relationship read from two ends.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="And there is a second, larger reason the same table kept disagreeing with itself between runs, which the next concept is entirely about." data-source-ref="content/src/exe_latency.ch:174" onclick="checkQuiz('quiz-exe-latency-i4', this)" aria-label="Option: And there is a second, larger reason the same table kept disagreeing with itself between runs, which the next concept is entirely about.">And there is a second, larger reason the same table kept disagreeing with itself between runs, which the next concept is entirely about.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Why the First Version Measured the Wrong Thing&quot;." data-source-ref="content/src/exe_latency.ch:27" onclick="checkQuiz('quiz-exe-latency-i4', this)" aria-label="Option: Every performance argument in this collection has been static so far.">Every performance argument in this collection has been static so far.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
 
@@ -344,6 +357,22 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/^E /,/^F /p'
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -231,11 +231,39 @@ public func render_a64_immediate() : string {
                 <span>Previous: <a href="/courses/a64asm/lessons/a64-encoding">The Class Field Is Four Bits, and the Field Map Is Measured</a></span>
                 <span>Next: <a href="/courses/a64asm/lessons/a64-cond">Sixteen Conditions, Four Bits, and the Inversion That Hides</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "And the other two immediates, for contrast"?</p>
+                <div class="quiz" id="quiz-a64-immediate-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: one run of ones, repeated, rotated&quot;, not &quot;And the other two immediates, for contrast&quot;." data-source-ref="content/src/a64_immediate.ch:53" onclick="checkQuiz('quiz-a64-immediate-i4', this)" aria-label="Option: The shape, in full: the constant is built from ONE run of consecutive ones, repeated to fill the register, and rotated.">The shape, in full: the constant is built from ONE run of consecutive ones, repeated to fill the register, and rotated.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: what a wide constant costs&quot;, not &quot;And the other two immediates, for contrast&quot;." data-source-ref="content/src/a64_immediate.ch:179" onclick="checkQuiz('quiz-a64-immediate-i4', this)" aria-label="Option: Section 6 established that a 12-bit immediate reaches three isolated values and section 7 that the logical immediate is not a number at all.">Section 6 established that a 12-bit immediate reaches three isolated values and section 7 that the logical immediate is not a number at all.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;And the other two immediates, for contrast&quot;." data-source-ref="content/src/a64_immediate.ch:227" onclick="checkQuiz('quiz-a64-immediate-i4', this)" aria-label="Option: Outward, this is the concept a compiler backend is written against.">Outward, this is the concept a compiler backend is written against.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="#0x1001 is refused, because 0x1001 is not reachable as a twelve-bit field in any of the three states the scale admits." data-source-ref="content/src/a64_immediate.ch:168" onclick="checkQuiz('quiz-a64-immediate-i4', this)" aria-label="Option: #0x1001 is refused, because 0x1001 is not reachable as a twelve-bit field in any of the three states the scale admits.">#0x1001 is refused, because 0x1001 is not reachable as a twelve-bit field in any of the three states the scale admits.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;And the other two immediates, for contrast&quot;." data-source-ref="content/src/a64_immediate.ch:48" onclick="checkQuiz('quiz-a64-immediate-i4', this)" aria-label="Option: The reason a reader needs this is not curiosity.">The reason a reader needs this is not curiosity.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

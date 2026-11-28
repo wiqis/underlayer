@@ -204,11 +204,40 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/\[5\]/,/\[6\]/p'
                 <span><a href="/courses/sym/lessons/sym-plt">Previous: The PLT and the GOT</a></span>
                 <span>Next: <a href="/courses/sym/lessons/sym-copy-reloc">Who Owns the Storage</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-sym-binding-time-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_binding_time.ch:87" onclick="checkQuiz('quiz-sym-binding-time-i4', this)" aria-label="Option: All of the eager-binding decision is concentrated in one 8-byte cell.">All of the eager-binding decision is concentrated in one 8-byte cell.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_binding_time.ch:136" onclick="checkQuiz('quiz-sym-binding-time-i4', this)" aria-label="Option: The trade, in numbers you can reason about.">The trade, in numbers you can reason about.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_binding_time.ch:192" onclick="checkQuiz('quiz-sym-binding-time-i4', this)" aria-label="Option: Question 4 is the one to sit with.">Question 4 is the one to sit with.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_binding_time.ch:197" onclick="checkQuiz('quiz-sym-binding-time-i4', this)" aria-label="Option: This is the payoff concept of the runtime module, and it depends on The PLT and the GOT being understood literally.">This is the payoff concept of the runtime module, and it depends on The PLT and the GOT being understood literally.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Structural equality is not behavioural evidence, so here is the behavioural test." data-source-ref="content/src/sym_binding_time.ch:93" onclick="checkQuiz('quiz-sym-binding-time-i4', this)" aria-label="Option: Structural equality is not behavioural evidence, so here is the behavioural test.">Structural equality is not behavioural evidence, so here is the behavioural test.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_binding_time.ch:57" onclick="checkQuiz('quiz-sym-binding-time-i4', this)" aria-label="Option: Every opcode, every operand shape, every jump target within the section.">Every opcode, every operand shape, every jump target within the section.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

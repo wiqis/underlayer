@@ -253,11 +253,39 @@ public func render_simd_harness() : string {
                 <span>Previous: <a href="/courses/simd/lessons/simd-three">Three Answers to One Shape</a></span>
                 <span>End of SIMD and Vector Processing &middot; <a href="/courses/simd">back to the course</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: nine groups, and what each one is for"?</p>
+                <div class="quiz" id="quiz-simd-harness-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: five rules, each learned by breaking it&quot;, not &quot;The reality: nine groups, and what each one is for&quot;." data-source-ref="content/src/simd_harness.ch:117" onclick="checkQuiz('quiz-simd-harness-i4', this)" aria-label="Option: Rule 1 is the one a reader is most likely to think is pedantic, so here is what it costs and what it buys.">Rule 1 is the one a reader is most likely to think is pedantic, so here is what it costs and what it buys.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the eight retractions, which are what group H exists for&quot;, not &quot;The reality: nine groups, and what each one is for&quot;." data-source-ref="content/src/simd_harness.ch:160" onclick="checkQuiz('quiz-simd-harness-i4', this)" aria-label="Option: All eight are printed by the artifact in section 8 and asserted as text.">All eight are printed by the artifact in section 8 and asserted as text.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: nine groups, and what each one is for&quot;." data-source-ref="content/src/simd_harness.ch:247" onclick="checkQuiz('quiz-simd-harness-i4', this)" aria-label="Option: Backwards, this concept is the ledger for the other six.">Backwards, this concept is the ledger for the other six.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="I asserts seven limits and then one more check that the artifact names the disassembly as the thing that would settle the missing compiler claim." data-source-ref="content/src/simd_harness.ch:155" onclick="checkQuiz('quiz-simd-harness-i4', this)" aria-label="Option: I asserts seven limits and then one more check that the artifact names the disassembly as the thing that would settle the missing compiler claim.">I asserts seven limits and then one more check that the artifact names the disassembly as the thing that would settle the missing compiler claim.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: nine groups, and what each one is for&quot;." data-source-ref="content/src/simd_harness.ch:47" onclick="checkQuiz('quiz-simd-harness-i4', this)" aria-label="Option: The manifest’s completion criterion for this course is not “read it”.">The manifest’s completion criterion for this course is not “read it”.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

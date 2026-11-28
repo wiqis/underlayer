@@ -317,6 +317,19 @@ $ python3 dynscope.py exports libplug.so
                 <span><a href="/courses/dyn/lessons/dyn-symbolic">Previous: One Instruction Called -Bsymbolic</a></span>
                 <span>Next: <a href="/courses/dyn/lessons/dyn-bind-time">Lazy, Eager, and What Actually Differs</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-dyn-dlopen-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_dlopen.ch:55" onclick="checkQuiz('quiz-dyn-dlopen-i4', this)" aria-label="Option: What the handle is, and what the flags actually do.">What the handle is, and what the flags actually do.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_dlopen.ch:189" onclick="checkQuiz('quiz-dyn-dlopen-i4', this)" aria-label="Option: What a plugin system actually looks like, and why it is written the way it is.">What a plugin system actually looks like, and why it is written the way it is.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_dlopen.ch:302" onclick="checkQuiz('quiz-dyn-dlopen-i4', this)" aria-label="Option: Exercise 1 is the one worth doing before anything else, and it takes two minutes.">Exercise 1 is the one worth doing before anything else, and it takes two minutes.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_dlopen.ch:308" onclick="checkQuiz('quiz-dyn-dlopen-i4', this)" aria-label="Option: This opens the run-time module.">This opens the run-time module.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="RTLD_GLOBAL : reachable to every later global lookup, including from code that was already loaded and knows nothing about this library." data-source-ref="content/src/dyn_dlopen.ch:155" onclick="checkQuiz('quiz-dyn-dlopen-i4', this)" aria-label="Option: RTLD_GLOBAL : reachable to every later global lookup, including from code that was already loaded and knows nothing about this library.">RTLD_GLOBAL : reachable to every later global lookup, including from code that was already loaded and knows nothing about this library.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/dyn_dlopen.ch:27" onclick="checkQuiz('quiz-dyn-dlopen-i4', this)" aria-label="Option: Everything so far in this course has assumed the libraries are in DT_NEEDED .">Everything so far in this course has assumed the libraries are in DT_NEEDED .</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     
 
@@ -325,6 +338,22 @@ $ python3 dynscope.py exports libplug.so
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

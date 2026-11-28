@@ -187,11 +187,40 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/\[9\]/,/\[10\]/p'
                 <span><a href="/courses/sym/lessons/sym-version">Previous: Versioned Symbols</a></span>
                 <span>End of course &mdash; <a href="/courses/sym">back to the course index</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-sym-linker-defined-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_linker_defined.ch:50" onclick="checkQuiz('quiz-sym-linker-defined-i4', this)" aria-label="Option: Two families, and they are useful for different things.">Two families, and they are useful for different things.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_linker_defined.ch:117" onclick="checkQuiz('quiz-sym-linker-defined-i4', this)" aria-label="Option: The use that justifies the whole mechanism: iterating a table without knowing its size.">The use that justifies the whole mechanism: iterating a table without knowing its size.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_linker_defined.ch:146" onclick="checkQuiz('quiz-sym-linker-defined-i4', this)" aria-label="Option: Then build the resolver, which is the from-scratch half of this course.">Then build the resolver, which is the from-scratch half of this course.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_linker_defined.ch:180" onclick="checkQuiz('quiz-sym-linker-defined-i4', this)" aria-label="Option: This closes the course, and the closing argument is about the difference between a symbol that is found and a symbol that is offered .">This closes the course, and the closing argument is about the difference between a symbol that is found and a symbol that is offered .</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Same mechanism, different question, different answer — and that difference is the entire argument for having four visibility values." data-source-ref="content/src/sym_linker_defined.ch:101" onclick="checkQuiz('quiz-sym-linker-defined-i4', this)" aria-label="Option: Same mechanism, different question, different answer — and that difference is the entire argument for having four visibility values.">Same mechanism, different question, different answer — and that difference is the entire argument for having four visibility values.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_linker_defined.ch:26" onclick="checkQuiz('quiz-sym-linker-defined-i4', this)" aria-label="Option: Ask a linker where your data segment ends and it will tell you, with a symbol it made up.">Ask a linker where your data segment ends and it will tell you, with a symbol it made up.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

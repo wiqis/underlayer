@@ -294,11 +294,39 @@ crosscheck: .../smpbench.out
                 <span>Previous: <a href="/courses/smp/lessons/smp-three">Three Answers to Two Questions</a></span>
                 <span>End of Multiprocessor Architecture &middot; <a href="/courses/smp">back to the course</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: eight groups, and what each one is for"?</p>
+                <div class="quiz" id="quiz-smp-harness-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: five rules, each one learned by breaking it&quot;, not &quot;The reality: eight groups, and what each one is for&quot;." data-source-ref="content/src/smp_harness.ch:120" onclick="checkQuiz('quiz-smp-harness-i4', this)" aria-label="Option: A check like that does not protect the claim; it protects the author’s day.">A check like that does not protect the claim; it protects the author’s day.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the four failures this harness had of its own&quot;, not &quot;The reality: eight groups, and what each one is for&quot;." data-source-ref="content/src/smp_harness.ch:226" onclick="checkQuiz('quiz-smp-harness-i4', this)" aria-label="Option: None of the six would have been found by reading the harness.">None of the six would have been found by reading the harness.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: eight groups, and what each one is for&quot;." data-source-ref="content/src/smp_harness.ch:288" onclick="checkQuiz('quiz-smp-harness-i4', this)" aria-label="Option: Backwards, this concept is the ledger for the other six.">Backwards, this concept is the ledger for the other six.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Group A checks that the noise floor was measured and PRINTED before anything was claimed — not that it is small, that it exists." data-source-ref="content/src/smp_harness.ch:143" onclick="checkQuiz('quiz-smp-harness-i4', this)" aria-label="Option: Group A checks that the noise floor was measured and PRINTED before anything was claimed — not that it is small, that it exists.">Group A checks that the noise floor was measured and PRINTED before anything was claimed — not that it is small, that it exists.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: eight groups, and what each one is for&quot;." data-source-ref="content/src/smp_harness.ch:47" onclick="checkQuiz('quiz-smp-harness-i4', this)" aria-label="Option: The manifest’s completion criterion for this course is not “read it”.">The manifest’s completion criterion for this course is not “read it”.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

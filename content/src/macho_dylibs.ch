@@ -114,6 +114,7 @@ $ otool -arch x86_64 -l prog64.macho | grep -A2 LC_LOAD_DYLINKER
                 <h2>Connect</h2>
                 <p>Ordinals give the "which library" half of an extern reference from <a href="/courses/macho/lessons/macho-relocations">Relocation Entries</a>; the "which symbol and where" half is about to be rewritten for load time instead of link time.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-dyld-info">Rebase and Bind Opcodes</a> — the compressed streams in __LINKEDIT that tell dyld which pointers to slide and which symbols (by ordinal!) to resolve, now that every library in the list is open.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: LC_LOAD_DYLIB stores dylib.name.offset (file offset of a null-terminated install name) plus timestamp, current_version, compatibility_version. Bind opcodes use SET_DYLIB_ORDINAL_IMM with a 1-based ordinal counting LC_LOAD_DYLIB/LC_LOAD_WEAK_DYLIB/LC_REEXPORT_DYLIB commands in order.</p>
             </div>
 
             <div class="lesson-footer">

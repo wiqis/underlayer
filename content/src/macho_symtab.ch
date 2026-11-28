@@ -117,6 +117,7 @@ public func render_macho_symtab() : string {
                 <h2>Connect</h2>
                 <p>Each entry's n_sect field points straight back into the <a href="/courses/macho/lessons/macho-sections">Sections</a> you decoded — the section ordinal is nothing more than the position of the section_64 record in load-command order.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-dysymtab">The Dynamic Symbol Table</a> — LC_DYSYMTAB slices this same array into locals, defined externals, and undefined symbols, and adds the indirect table that stubs and GOT slots read.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: LC_SYMTAB has symoff + nsyms (the nlist_64 array) and stroff + strsize (the string table). Each nlist_64&#x27;s n_strx is an offset into the string table. (The fourth pair, extreloff/nextrel, is unused in 64-bit — external relocations live in the object file&#x27;s section headers.)</p>
             </div>
 
             <div class="lesson-footer">

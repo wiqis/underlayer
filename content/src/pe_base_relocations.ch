@@ -143,6 +143,7 @@ print(hex(va), hex(sz), 'entries', n, 'first', 'type', ents[0]&gt;&gt;12, 'off',
                 <h2>Connect</h2>
                 <p>Now that the image can move, the hardening questions begin: did the binary opt into ASLR and DEP? Which subsystem runs it? Is it signed? Those answers live in three small header fields — COFF Characteristics, Subsystem, and DllCharacteristics — plus the certificate table at the end of the file.</p>
                 <p>Next: <a href="/courses/pe/lessons/pe-security-flags">Security &amp; Subsystem Flags</a> — every bit that decides how (and whether) Windows will run you.</p>
+            <p class="verified-answer-key" data-source-ref="courses/pe/manifest.json#exercise_decls">Verified answer key: Each 16-bit type/offset word packs a 4-bit type (e.g. DIR64 = 10) and a 12-bit offset within the block&#x27;s 4K page (Page RVA).</p>
             </div>
 
             <div class="lesson-footer">

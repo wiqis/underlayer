@@ -200,11 +200,39 @@ public func render_a64_order() : string {
                 <span>Previous: <a href="/courses/a64simd/lessons/a64-atomic">The Exclusive Monitor, and Why the Retry Is the Instruction</a></span>
                 <span>Next: <a href="/courses/a64simd/lessons/a64-dataflow">Decode the Data Path</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "DMB, DSB, ISB: two fields, not one"?</p>
+                <div class="quiz" id="quiz-a64-order-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The measurement: twelve functions, three barriers&quot;, not &quot;DMB, DSB, ISB: two fields, not one&quot;." data-source-ref="content/src/a64_order.ch:87" onclick="checkQuiz('quiz-a64-order-i4', this)" aria-label="Option: Read the first two rows again.">Read the first two rows again.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: the one control you may not name&quot;, not &quot;DMB, DSB, ISB: two fields, not one&quot;." data-source-ref="content/src/a64_order.ch:177" onclick="checkQuiz('quiz-a64-order-i4', this)" aria-label="Option: The assembler refuses the architectural name of a register it will accept the encoding of.">The assembler refuses the architectural name of a register it will accept the encoding of.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;DMB, DSB, ISB: two fields, not one&quot;." data-source-ref="content/src/a64_order.ch:194" onclick="checkQuiz('quiz-a64-order-i4', this)" aria-label="Option: Back to the machine course, and this is the connection that makes the section a whole.">Back to the machine course, and this is the connection that makes the section a whole.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Twelve names in sixteen codes, allocated as four domains times two directions plus four combinations, and the combinations are the ones you actually want." data-source-ref="content/src/a64_order.ch:163" onclick="checkQuiz('quiz-a64-order-i4', this)" aria-label="Option: Twelve names in sixteen codes, allocated as four domains times two directions plus four combinations, and the combinations are the ones you actually want.">Twelve names in sixteen codes, allocated as four domains times two directions plus four combinations, and the combinations are the ones you actually want.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;DMB, DSB, ISB: two fields, not one&quot;." data-source-ref="content/src/a64_order.ch:59" onclick="checkQuiz('quiz-a64-order-i4', this)" aria-label="Option: AArch64&#x27;s model is weak , and the only tool for strengthening it is an access mode written on the access itself .">AArch64&#x27;s model is weak , and the only tool for strengthening it is an access mode written on the access itself .</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -315,11 +315,40 @@ $ python3 linklab.py base 0x3000000
                 <span><a href="/courses/link/lessons/link-default-script">Previous: The Program That Placed Your Binary</a></span>
                 <span>Next: <a href="/courses/link/lessons/link-order">Which Rule Wins</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-link-script-language-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_script_language.ch:50" onclick="checkQuiz('quiz-link-script-language-i4', this)" aria-label="Option: Two phases, and almost every misunderstanding is a confusion about which phase a construct belongs to.">Two phases, and almost every misunderstanding is a confusion about which phase a construct belongs to.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_script_language.ch:230" onclick="checkQuiz('quiz-link-script-language-i4', this)" aria-label="Option: The construct that separates a working script from a working embedded script: giving a section an explicit address.">The construct that separates a working script from a working embedded script: giving a section an explicit address.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_script_language.ch:301" onclick="checkQuiz('quiz-link-script-language-i4', this)" aria-label="Option: Step 1 is the one that teaches the most, and it is the exercise I would put first in any linker course.">Step 1 is the one that teaches the most, and it is the exercise I would put first in any linker course.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_script_language.ch:307" onclick="checkQuiz('quiz-link-script-language-i4', this)" aria-label="Option: This concept supplies the grammar, and its only job is to make the next one possible.">This concept supplies the grammar, and its only job is to make the next one possible.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="= on line 2 of the eleven-line script is not decoration; it is the whole reason the first byte of .text is not at 0x400000." data-source-ref="content/src/link_script_language.ch:182" onclick="checkQuiz('quiz-link-script-language-i4', this)" aria-label="Option: = on line 2 of the eleven-line script is not decoration; it is the whole reason the first byte of .text is not at 0x400000.">= on line 2 of the eleven-line script is not decoration; it is the whole reason the first byte of .text is not at 0x400000.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/link_script_language.ch:26" onclick="checkQuiz('quiz-link-script-language-i4', this)" aria-label="Option: A linker script looks like C and is not C.">A linker script looks like C and is not C.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

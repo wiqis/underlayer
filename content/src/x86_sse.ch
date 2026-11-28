@@ -155,11 +155,39 @@ public func render_x86_sse() : string {
                 <span>Start of The x86-64 Data Path &middot; <a href="/courses/x86simd">course index</a></span>
                 <span>Next: <a href="/courses/x86simd/lessons/x86-avx">AVX and AVX2: Three Operands, vzeroupper, and the Upper Half</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The measurement: ten probes, and what they prove"?</p>
+                <div class="quiz" id="quiz-x86-sse-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: eight moves, and what the letters mean&quot;, not &quot;The measurement: ten probes, and what they prove&quot;." data-source-ref="content/src/x86_sse.ch:67" onclick="checkQuiz('quiz-x86-sse-i4', this)" aria-label="Option: The naming is not decorative and it is the fastest way to remember the table.">The naming is not decorative and it is the fastest way to remember the table.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The trap the alignment rule hides&quot;, not &quot;The measurement: ten probes, and what they prove&quot;." data-source-ref="content/src/x86_sse.ch:125" onclick="checkQuiz('quiz-x86-sse-i4', this)" aria-label="Option: A misaligned movaps raises #GP , the kernel turns that into a SIGSEGV , and the resulting core dump points at a wild pointer .">A misaligned movaps raises #GP , the kernel turns that into a SIGSEGV , and the resulting core dump points at a wild pointer .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The measurement: ten probes, and what they prove&quot;." data-source-ref="content/src/x86_sse.ch:149" onclick="checkQuiz('quiz-x86-sse-i4', this)" aria-label="Option: This page is the safety half of the same territory, and it deliberately does not repeat the width experiment.">This page is the safety half of the same territory, and it deliberately does not repeat the width experiment.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="vmovaps and the VEX form of vmovdqa fault exactly like their legacy twins , and this course was written asserting that they would not." data-source-ref="content/src/x86_sse.ch:98" onclick="checkQuiz('quiz-x86-sse-i4', this)" aria-label="Option: vmovaps and the VEX form of vmovdqa fault exactly like their legacy twins , and this course was written asserting that they would not.">vmovaps and the VEX form of vmovdqa fault exactly like their legacy twins , and this course was written asserting that they would not.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The measurement: ten probes, and what they prove&quot;." data-source-ref="content/src/x86_sse.ch:47" onclick="checkQuiz('quiz-x86-sse-i4', this)" aria-label="Option: The SIMD course measured that a wider vector is not automatically faster, and it did it with a body the compiler chose.">The SIMD course measured that a wider vector is not automatically faster, and it did it with a body the compiler chose.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

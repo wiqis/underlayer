@@ -249,11 +249,40 @@ $ python3 crosscheck.py 2&gt;&amp;1 | sed -n '/\\[7\\]/,/\\[8\\]/p'
                 <span><a href="/courses/reloc/lessons/pie-cost">Previous: What Position Independence Costs</a></span>
                 <span>Next: <a href="/courses/reloc/lessons/tls-model">The One Relocation That Calls the Loader</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-pic-violation-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pic_violation.ch:48" onclick="checkQuiz('quiz-pic-violation-i4', this)" aria-label="Option: Work out what the relocation is asking for, and the impossibility is visible in one step.">Work out what the relocation is asking for, and the impossibility is visible in one step.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pic_violation.ch:152" onclick="checkQuiz('quiz-pic-violation-i4', this)" aria-label="Option: Why -fno-pic produces this at all, when the obvious thing for a compiler to do with “I may not move” is simply to work harder.">Why -fno-pic produces this at all, when the obvious thing for a compiler to do with “I may not move” is simply to work harder.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pic_violation.ch:237" onclick="checkQuiz('quiz-pic-violation-i4', this)" aria-label="Option: You can turn a legal object into an illegal one by flipping four bytes of metadata, and the linker cannot tell the difference.">You can turn a legal object into an illegal one by flipping four bytes of metadata, and the linker cannot tell the difference.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pic_violation.ch:242" onclick="checkQuiz('quiz-pic-violation-i4', this)" aria-label="Option: This is the first of the two failure concepts, and it is the one that has a diagnostic.">This is the first of the two failure concepts, and it is the one that has a diagnostic.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The linker is telling you that no relinking option can rescue this, because the information it needs was destroyed at compile time." data-source-ref="content/src/pic_violation.ch:147" onclick="checkQuiz('quiz-pic-violation-i4', this)" aria-label="Option: The linker is telling you that no relinking option can rescue this, because the information it needs was destroyed at compile time.">The linker is telling you that no relinking option can rescue this, because the information it needs was destroyed at compile time.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/pic_violation.ch:27" onclick="checkQuiz('quiz-pic-violation-i4', this)" aria-label="Option: Every relocation in the first module is a request the linker can always satisfy, because the linker chose every address.">Every relocation in the first module is a request the linker can always satisfy, because the linker chose every address.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

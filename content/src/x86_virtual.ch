@@ -244,11 +244,39 @@ public func render_x86_virtual() : string {
                 <span>Previous: <a href="/courses/x86sys/lessons/x86-debug">DR0 to DR7 and the Mask a Debugger Must Program</a></span>
                 <span>Next: <a href="/courses/x86sys/lessons/x86-paging">The Four Entries and Every Flag in One</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: five widths, and the row that is the whole concept"?</p>
+                <div class="quiz" id="quiz-x86-virtual-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: bit 47 chooses the half, and nothing else does&quot;, not &quot;The reality: five widths, and the row that is the whole concept&quot;." data-source-ref="content/src/x86_virtual.ch:53" onclick="checkQuiz('quiz-x86-virtual-i4', this)" aria-label="Option: A linear address is canonical when bit 47 equals bit 63.">A linear address is canonical when bit 47 equals bit 63.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: LA57 and LAM, both reported as zero, and the difference between them&quot;, not &quot;The reality: five widths, and the row that is the whole concept&quot;." data-source-ref="content/src/x86_virtual.ch:188" onclick="checkQuiz('quiz-x86-virtual-i4', this)" aria-label="Option: Three readings, and they are three different kinds of statement about the same machine.">Three readings, and they are three different kinds of statement about the same machine.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: five widths, and the row that is the whole concept&quot;." data-source-ref="content/src/x86_virtual.ch:238" onclick="checkQuiz('quiz-x86-virtual-i4', this)" aria-label="Option: Backwards, this concept extends rather than repeats : the privilege course&#x27;s canonical-addressing concept derived the same rule on three widths and this one adds two.">Backwards, this concept extends rather than repeats : the privilege course&#x27;s canonical-addressing concept derived the same rule on three widths and this one adds two.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="A 16-byte read whose range runs off the end of the address space and wraps comes back as a real address rather than a rejection." data-source-ref="content/src/x86_virtual.ch:169" onclick="checkQuiz('quiz-x86-virtual-i4', this)" aria-label="Option: A 16-byte read whose range runs off the end of the address space and wraps comes back as a real address rather than a rejection.">A 16-byte read whose range runs off the end of the address space and wraps comes back as a real address rather than a rejection.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: five widths, and the row that is the whole concept&quot;." data-source-ref="content/src/x86_virtual.ch:47" onclick="checkQuiz('quiz-x86-virtual-i4', this)" aria-label="Option: Half of the 64-bit address space on this machine is not an address.">Half of the 64-bit address space on this machine is not an address.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

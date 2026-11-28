@@ -232,11 +232,39 @@ public func render_x86_saved() : string {
                 <span>Previous: <a href="/courses/x86abi/lessons/x86-frame">The Stack Frame, the Red Zone, and Two Rules</a></span>
                 <span>Next: <a href="/courses/x86abi/lessons/x86-varargs">The One Place the ABI Describes Itself</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: the same register, two callees"?</p>
+                <div class="quiz" id="quiz-x86-saved-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: the rule, and why a leaf gets an exemption&quot;, not &quot;The reality: the same register, two callees&quot;." data-source-ref="content/src/x86_saved.ch:72" onclick="checkQuiz('quiz-x86-saved-i4', this)" aria-label="Option: Two things in that table are worth stopping on, and neither is usually mentioned.">Two things in that table are worth stopping on, and neither is usually mentioned.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: an ABI linter, and the zero that was hollow&quot;, not &quot;The reality: the same register, two callees&quot;." data-source-ref="content/src/x86_saved.ch:136" onclick="checkQuiz('quiz-x86-saved-i4', this)" aria-label="Option: A convention is a contract between two compilers, so a contract between two compilers is the one kind of thing you can check mechanically.">A convention is a contract between two compilers, so a contract between two compilers is the one kind of thing you can check mechanically.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: the same register, two callees&quot;." data-source-ref="content/src/x86_saved.ch:228" onclick="checkQuiz('quiz-x86-saved-i4', this)" aria-label="Option: Outward, the security course owns a claim that is adjacent and different.">Outward, the security course owns a claim that is adjacent and different.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="A string instruction in the middle of the caller&#x27;s loop will then walk backwards through memory instead of forwards, and nothing will say so." data-source-ref="content/src/x86_saved.ch:110" onclick="checkQuiz('quiz-x86-saved-i4', this)" aria-label="Option: A string instruction in the middle of the caller&#x27;s loop will then walk backwards through memory instead of forwards, and nothing will say so.">A string instruction in the middle of the caller&#x27;s loop will then walk backwards through memory instead of forwards, and nothing will say so.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: the same register, two callees&quot;." data-source-ref="content/src/x86_saved.ch:47" onclick="checkQuiz('quiz-x86-saved-i4', this)" aria-label="Option: Sixteen general registers, and a rule that splits them nine and six with one left over.">Sixteen general registers, and a rule that splits them nine and six with one left over.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

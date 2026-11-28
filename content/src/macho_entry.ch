@@ -111,6 +111,7 @@ $ python3 -c "print(hex(0x100000000 + 1104))"
                 <h2>Connect</h2>
                 <p>Control transfer is the last thing dyld does with load commands before your code runs — but the commands themselves still carry the metadata macOS uses to decide <em>whether</em> this image may run at all: which OS floor it declares, which SDK built it, and the UUID that ties it to its dSYM.</p>
                 <p>Next: <a href="/courses/macho/lessons/macho-build-version">Build Versions and UUID</a> — platform, minos, sdk, the tools that produced the file, and the 16 bytes every crash report is keyed by.</p>
+            <p class="verified-answer-key" data-source-ref="courses/macho/manifest.json#exercise_decls">Verified answer key: LC_MAIN (0x80000028) carries entryoff (file offset of _main) and stacksize. dyld adds the image&#x27;s vmaddr base to convert it to a runtime address. Older binaries used LC_UNIXTHREAD to embed the entry address directly in a thread state struct.</p>
             </div>
 
             <div class="lesson-footer">

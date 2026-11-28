@@ -236,11 +236,39 @@ public func render_rv_calling() : string {
                 <span>Previous: <a href="/courses/rvabi">Course landing page</a></span>
                 <span>Next: <a href="/courses/rvabi/lessons/rv-noflags">No Flags Register, No Condition Codes, No CMOV</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The ninth argument, and the one row no summary gets right"?</p>
+                <div class="quiz" id="quiz-rv-calling-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The contract, quoted before any compiler runs&quot;, not &quot;The ninth argument, and the one row no summary gets right&quot;." data-source-ref="content/src/rv_calling.ch:64" onclick="checkQuiz('quiz-rv-calling-i4', this)" aria-label="Option: Everything in this unit is QUOTED , because nothing in it needs to be measured: it is the document, and the document is the oracle.">Everything in this unit is QUOTED , because nothing in it needs to be measured: it is the document, and the document is the oracle.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The audit: 44 of 44, read out of relocations&quot;, not &quot;The ninth argument, and the one row no summary gets right&quot;." data-source-ref="content/src/rv_calling.ch:118" onclick="checkQuiz('quiz-rv-calling-i4', this)" aria-label="Option: For each of i1 … i9 , find the store whose relocation names G&lt;K&gt; and read the rs2 field of the instruction word.">For each of i1 … i9 , find the store whose relocation names G&lt;K&gt; and read the rs2 field of the instruction word.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The ninth argument, and the one row no summary gets right&quot;." data-source-ref="content/src/rv_calling.ch:230" onclick="checkQuiz('quiz-rv-calling-i4', this)" aria-label="Option: Across architectures, x86-calling is the same contract with two differences that are worth the comparison.">Across architectures, x86-calling is the same contract with two differences that are worth the comparison.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="A row that is empty at one optimisation level and full at every other one is almost always a base-register assumption and not a measurement." data-source-ref="content/src/rv_calling.ch:162" onclick="checkQuiz('quiz-rv-calling-i4', this)" aria-label="Option: A row that is empty at one optimisation level and full at every other one is almost always a base-register assumption and not a measurement.">A row that is empty at one optimisation level and full at every other one is almost always a base-register assumption and not a measurement.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why a calling convention is the right first thing to measure&quot;, not &quot;The ninth argument, and the one row no summary gets right&quot;." data-source-ref="content/src/rv_calling.ch:48" onclick="checkQuiz('quiz-rv-calling-i4', this)" aria-label="Option: A calling convention is not an encoding.">A calling convention is not an encoding.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

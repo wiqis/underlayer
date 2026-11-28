@@ -153,6 +153,7 @@ DllCharacteristics	00008160</code></pre>
                 <h2>Connect</h2>
                 <p>The optional header ends by telling you how many data directories follow — 16 in both samples — and each directory is an address/size pair pointing at a table the loader or the OS needs: imports, exports, relocations, resources, and twelve more. That address book is the next layer of the format.</p>
                 <p>Next: <a href="/courses/pe/lessons/pe-data-directories">The Data Directories</a> — the 16 slots, what each one locates, and how the loader uses them before your first line of code runs.</p>
+            <p class="verified-answer-key" data-source-ref="courses/pe/manifest.json#exercise_decls">Verified answer key: Optional-header Magic 0x10b = PE32, 0x20b = PE32+, 0x107 = ROM image. 0x8664 is a Machine value in the COFF header, not the optional header. BaseOfData (offset 24, 4 bytes) exists only in PE32, right after BaseOfCode. In PE32+ ImageBase follows BaseOfCode directly and is 8 bytes wide.</p>
             </div>
 
             <div class="lesson-footer">

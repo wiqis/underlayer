@@ -232,11 +232,39 @@ public func render_x86_pmu() : string {
                 <span>Previous: <a href="/courses/x86sys/lessons/x86-paging">The Four Entries and Every Flag in One</a></span>
                 <span>Next: <a href="/courses/x86sys/lessons/x86-boundary">What Ring 3 Can See, and What It Cannot</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: three ways in, all three refused, and the metal is present"?</p>
+                <div class="quiz" id="quiz-x86-pmu-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The model: architectural counters, and the vendor event lists on top of them&quot;, not &quot;The reality: three ways in, all three refused, and the metal is present&quot;." data-source-ref="content/src/x86_pmu.ch:88" onclick="checkQuiz('quiz-x86-pmu-i4', this)" aria-label="Option: The vendor event lists are where a profiler&#x27;s portability problems live, and the reason is not that they are long.">The vendor event lists are where a profiler&#x27;s portability problems live, and the reason is not that they are long.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: what the TSC can and cannot stand in for&quot;, not &quot;The reality: three ways in, all three refused, and the metal is present&quot;." data-source-ref="content/src/x86_pmu.ch:177" onclick="checkQuiz('quiz-x86-pmu-i4', this)" aria-label="Option: Three things in that block are load-bearing, and the first is the one nobody checks.">Three things in that block are load-bearing, and the first is the one nobody checks.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: three ways in, all three refused, and the metal is present&quot;." data-source-ref="content/src/x86_pmu.ch:227" onclick="checkQuiz('quiz-x86-pmu-i4', this)" aria-label="Option: Forwards, and this is the hinge of the course&#x27;s last third.">Forwards, and this is the hinge of the course&#x27;s last third.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="Three refusals, three different mechanisms, and they have to be read together with the two CPUID bits that follow." data-source-ref="content/src/x86_pmu.ch:113" onclick="checkQuiz('quiz-x86-pmu-i4', this)" aria-label="Option: Three refusals, three different mechanisms, and they have to be read together with the two CPUID bits that follow.">Three refusals, three different mechanisms, and they have to be read together with the two CPUID bits that follow.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters, and why this concept is mostly reference&quot;, not &quot;The reality: three ways in, all three refused, and the metal is present&quot;." data-source-ref="content/src/x86_pmu.ch:47" onclick="checkQuiz('quiz-x86-pmu-i4', this)" aria-label="Option: A processor that cannot count its own events cannot be understood by measurement, only by reading about it.">A processor that cannot count its own events cannot be understood by measurement, only by reading about it.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

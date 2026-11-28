@@ -191,11 +191,40 @@ $ readelf -x .got.plt lt_lazy
                 <span><a href="/courses/sym/lessons/sym-hash">Previous: Two Hash Tables, One Job</a></span>
                 <span>Next: <a href="/courses/sym/lessons/sym-binding-time">Lazy, Eager, and the Flag That Does Nothing</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "Does It Actually Work?"?</p>
+                <div class="quiz" id="quiz-sym-plt-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Simple Model&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_plt.ch:39" onclick="checkQuiz('quiz-sym-plt-i4', this)" aria-label="Option: Two tables and a stub.">Two tables and a stub.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;A Real Example&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_plt.ch:138" onclick="checkQuiz('quiz-sym-plt-i4', this)" aria-label="Option: A program importing fifty functions has 53 words of .got.plt .">A program importing fifty functions has 53 words of .got.plt .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Try It Yourself&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_plt.ch:179" onclick="checkQuiz('quiz-sym-plt-i4', this)" aria-label="Option: Question 2 is the one that connects this concept back to the file format.">Question 2 is the one that connects this concept back to the file format.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_plt.ch:184" onclick="checkQuiz('quiz-sym-plt-i4', this)" aria-label="Option: This is the centre of the runtime module and both of its neighbours are prerequisites.">This is the centre of the runtime module and both of its neighbours are prerequisites.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="If an attacker can predict where the return address goes and write a value there, they own the instruction stream on the next call." data-source-ref="content/src/sym_plt.ch:118" onclick="checkQuiz('quiz-sym-plt-i4', this)" aria-label="Option: If an attacker can predict where the return address goes and write a value there, they own the instruction stream on the next call.">If an attacker can predict where the return address goes and write a value there, they own the instruction stream on the next call.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why This Matters&quot;, not &quot;Does It Actually Work?&quot;." data-source-ref="content/src/sym_plt.ch:26" onclick="checkQuiz('quiz-sym-plt-i4', this)" aria-label="Option: A call to a function in another shared library cannot be a call instruction, because at link time nobody knows where that function is.">A call to a function in another shared library cannot be a call instruction, because at link time nobody knows where that function is.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

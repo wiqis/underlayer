@@ -201,6 +201,7 @@ readelf -sW ./my_program</pre></div>
             <div class="unit unit-exercises" id="api-exercises" style="display:none">
                 <h2>Practice Exercises</h2>
                 <div id="exercise-list"></div>
+            <p class="verified-answer-key" data-source-ref="courses/elf/manifest.json#exercise_decls">Verified answer key: .dynsym is required by ld.so at runtime; .symtab is optional and usually stripped from release binaries.</p>
             </div>
             <div class="swipe-hint">← Swipe to navigate →</div>
             <link rel="prev" href="">

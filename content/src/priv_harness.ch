@@ -193,11 +193,38 @@ public func render_priv_harness() : string {
                 <span>Previous: <a href="/courses/priv/lessons/priv-three">The Same Idea Under Three Architectures</a></span>
                 <span>End of Exceptions, Privilege and Mode Changes &middot; <a href="/courses/priv">back to the course</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The reality: what the 88 checks are, group by group"?</p>
+                <div class="quiz" id="quiz-priv-harness-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Worked: break it on purpose, twice&quot;, not &quot;The reality: what the 88 checks are, group by group&quot;." data-source-ref="content/src/priv_harness.ch:164" onclick="checkQuiz('quiz-priv-harness-i4', this)" aria-label="Option: The manifest’s completion criterion for this course is not “read it”.">The manifest’s completion criterion for this course is not “read it”.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The reality: what the 88 checks are, group by group&quot;." data-source-ref="content/src/priv_harness.ch:187" onclick="checkQuiz('quiz-priv-harness-i4', this)" aria-label="Option: Backwards, this concept is the ledger for all seven.">Backwards, this concept is the ledger for all seven.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The harness asserts that the artifact prints both the correct field order and the incorrect one, and that the incorrect one is visibly wrong." data-source-ref="content/src/priv_harness.ch:119" onclick="checkQuiz('quiz-priv-harness-i4', this)" aria-label="Option: The harness asserts that the artifact prints both the correct field order and the incorrect one, and that the incorrect one is visibly wrong.">The harness asserts that the artifact prints both the correct field order and the incorrect one, and that the incorrect one is visibly wrong.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this matters&quot;, not &quot;The reality: what the 88 checks are, group by group&quot;." data-source-ref="content/src/priv_harness.ch:47" onclick="checkQuiz('quiz-priv-harness-i4', this)" aria-label="Option: This course made claims that a reader can check, which is the standard every course in this collection holds itself to.">This course made claims that a reader can check, which is the standard every course in this collection holds itself to.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
 
     render_lesson_js(&mut page)
     }
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

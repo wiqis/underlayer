@@ -197,11 +197,39 @@ public func render_rv_verify() : string {
                 <span>Previous: <a href="/courses/rvasm/lessons/rv-immediate">The Immediates That Do Not Fit</a></span>
                 <span><a href="/courses/rvasm">Back to the course</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "The four poisons"?</p>
+                <div class="quiz" id="quiz-rv-verify-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The decoder, and what it uses no tool for&quot;, not &quot;The four poisons&quot;." data-source-ref="content/src/rv_verify.ch:55" onclick="checkQuiz('quiz-rv-verify-i4', this)" aria-label="Option: The artifact is rvdec.py .">The artifact is rvdec.py .</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The cross-check, and the number it started from&quot;, not &quot;The four poisons&quot;." data-source-ref="content/src/rv_verify.ch:87" onclick="checkQuiz('quiz-rv-verify-i4', this)" aria-label="Option: Zero disagreements, and that is exactly what a broken cross-check looks like.">Zero disagreements, and that is exactly what a broken cross-check looks like.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;The four poisons&quot;." data-source-ref="content/src/rv_verify.ch:191" onclick="checkQuiz('quiz-rv-verify-i4', this)" aria-label="Option: Backwards, this concept is the check on all four.">Backwards, this concept is the check on all four.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The length rule is load-bearing, the counts in concepts 1 and 2 are real, and a decoder that guesses lengths gets a plausible smaller number." data-source-ref="content/src/rv_verify.ch:156" onclick="checkQuiz('quiz-rv-verify-i4', this)" aria-label="Option: The length rule is load-bearing, the counts in concepts 1 and 2 are real, and a decoder that guesses lengths gets a plausible smaller number.">The length rule is load-bearing, the counts in concepts 1 and 2 are real, and a decoder that guesses lengths gets a plausible smaller number.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Why this concept is the last one&quot;, not &quot;The four poisons&quot;." data-source-ref="content/src/rv_verify.ch:48" onclick="checkQuiz('quiz-rv-verify-i4', this)" aria-label="Option: The other four concepts make claims.">The other four concepts make claims.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }

@@ -154,6 +154,7 @@ Idx Name          Size      VMA               File off
                 <h2>Connect</h2>
                 <p>Six rows, six names, six Characteristics values — and you have not yet decoded what <code>0x60000020</code> versus <code>0xC0000040</code> actually permits. Those flags are how the loader decides what is executable, what is writable, and what may be thrown away after relocations are applied.</p>
                 <p>Next: <a href="/courses/pe/lessons/pe-common-sections">Common Sections</a> — what .text, .rdata, .data, .pdata, .rsrc and .reloc are for, with every flag bit decoded from real binaries.</p>
+            <p class="verified-answer-key" data-source-ref="courses/pe/manifest.json#exercise_decls">Verified answer key: IMAGE_SECTION_HEADER is 40 bytes: Name(8) + VirtualSize(4) + VirtualAddress(4) + SizeOfRawData(4) + PointerToRawData(4) + 4 more pointer/count fields(10) + Characteristics(4).</p>
             </div>
 
             <div class="lesson-footer">

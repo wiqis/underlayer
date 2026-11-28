@@ -245,11 +245,39 @@ public func render_rv_boundary() : string {
                 <span>Previous: <a href="/courses/rvpriv/lessons/rv-traps">ecall, the Five Registers, and Why the Mode Is Not in the Instruction</a></span>
                 <span>Next: <a href="/courses/rvpriv">Back to the course</a></span>
             </div>
+            <div class="unit unit-retrieve">
+                <h2>Check Your Understanding</h2>
+                <p>Which statement belongs under the lesson section "What this course owes its neighbours"?</p>
+                <div class="quiz" id="quiz-rv-boundary-i4" aria-label="Check your understanding">
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Sixteen limits, and the two that decide the other fourteen&quot;, not &quot;What this course owes its neighbours&quot;." data-source-ref="content/src/rv_boundary.ch:63" onclick="checkQuiz('quiz-rv-boundary-i4', this)" aria-label="Option: Limit 1 is the one that will be tested.">Limit 1 is the one that will be tested.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The two readers, and the four poisons&quot;, not &quot;What this course owes its neighbours&quot;." data-source-ref="content/src/rv_boundary.ch:162" onclick="checkQuiz('quiz-rv-boundary-i4', this)" aria-label="Option: The last mechanical question is whether the decoder that produced these numbers is right.">The last mechanical question is whether the decoder that produced these numbers is right.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;Connect&quot;, not &quot;What this course owes its neighbours&quot;." data-source-ref="content/src/rv_boundary.ch:239" onclick="checkQuiz('quiz-rv-boundary-i4', this)" aria-label="Option: It is a fact about the subject.">It is a fact about the subject.</button>
+                    <button class="quiz-option" data-correct="true" data-explain="The one overlap worth naming is rvasm ’s rv-isa , which measured the Tag_RISCV_arch string across eight -march settings." data-source-ref="content/src/rv_boundary.ch:224" onclick="checkQuiz('quiz-rv-boundary-i4', this)" aria-label="Option: The one overlap worth naming is rvasm ’s rv-isa , which measured the Tag_RISCV_arch string across eight -march settings.">The one overlap worth naming is rvasm ’s rv-isa , which measured the Tag_RISCV_arch string across eight -march settings.</button>
+                    <button class="quiz-option" data-correct="false" data-explain="That line is in this lesson under &quot;The ratio is the finding, so it is a table and not a disclaimer&quot;, not &quot;What this course owes its neighbours&quot;." data-source-ref="content/src/rv_boundary.ch:27" onclick="checkQuiz('quiz-rv-boundary-i4', this)" aria-label="Option: On most pages you would be forgiven for not noticing.">On most pages you would be forgiven for not noticing.</button>
+                    <div class="quiz-feedback"></div>
+                </div>
+            </div>
         </div>
     }
 
     render_lesson_js(&mut page)
 
+    #js {
+        function checkQuiz(quizId, btn) {
+            var quiz = document.getElementById(quizId);
+            if (!quiz) { return; }
+            var options = quiz.querySelectorAll('.quiz-option');
+            var feedback = quiz.querySelector('.quiz-feedback');
+            for (var i = 0; i < options.length; i++) { options[i].disabled = true; }
+            var explain = btn.getAttribute('data-explain') || '';
+            if (btn.getAttribute('data-correct') === 'true') {
+                btn.className = btn.className + ' correct';
+            } else {
+                btn.className = btn.className + ' wrong';
+            }
+            if (feedback) { feedback.textContent = explain; }
+        }
+    }
     return page.toString()
 }
 }
