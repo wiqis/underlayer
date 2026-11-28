@@ -1,0 +1,39 @@
+# Cloud Build configuration for the Underlayer image.
+#
+# The Dockerfile is deliberately legacy-builder compatible: it uses a builder-
+# stage ARG for the GitHub token, not a BuildKit `--mount`, because Cloud Build's
+# default Docker builder does not enable BuildKit. Multi-stage isolation keeps
+# the ARG out of the pushed runtime image (see docs/secrets.md).
+#
+# Submit with a MASKED substitution for the token, e.g.:
+#   gcloud builds submit . --substitutions=_GITHUB_TOKEN="$GITHUB_TOKEN"
+# The value is a substitution, never a literal in this file.
+
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--build-arg'
+      - 'GITHUB_TOKEN=$_GITHUB_TOKEN'
+      - '--build-arg'
+      - 'UL_BUILD_COMMIT=$SHORT_SHA'
+      - '--build-arg'
+      - 'UL_BUILD_COMPILER_VERSION=$_CHEMICAL_VERSION'
+      - '--build-arg'
+      - 'UL_BUILD_AT=$_BUILD_AT'
+      - '--build-arg'
+      - 'UL_BUILD_MODE=release'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/underlayer:$SHORT_SHA'
+      - '.'
+
+images:
+  - 'gcr.io/$PROJECT_ID/underlayer:$SHORT_SHA'
+
+substitutions:
+  _GITHUB_TOKEN: ''
+  _CHEMICAL_VERSION: 'v0.6.2'
+  _BUILD_AT: 'unknown'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

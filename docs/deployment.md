@@ -804,10 +804,13 @@ mechanism. The authoritative decision entry belongs in `Docs/decisions.md` and i
 owned by the founder/coordinator, not by this agent. H10 (web error reporting)
 depends on a W4-1 ruling; do not pre-empt it.
 
-**H8** is inventoried in `docs/secrets.md`: the Dockerfile build token is now a
-BuildKit secret mount, and no secret literal is tracked. Docker's daemon is
-unavailable on this machine, so `docker history` / image-scan verification and
-the staging rotation are founder actions, not claimed checks.
+**H8** is inventoried in `docs/secrets.md`: the Dockerfile build token is a
+builder-stage `ARG` used with a temp gitconfig, which is compatible with Google
+Cloud Build's default (non-BuildKit) Docker builder. A BuildKit `--mount` revision
+failed in the cloud with `--mount option requires BuildKit` on 2026-11-28 and was
+reverted; no secret literal is tracked. Docker's daemon is unavailable on this
+machine, so `docker history` / image-scan verification and the staging rotation
+are founder actions, not claimed checks.
 
 ## 5h. Single-instance enforcement (H1, 2026-11-27)
 
