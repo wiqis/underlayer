@@ -637,3 +637,34 @@ an explicit, dated deferral.
 4. **Exercise-bank counts** were verified against the deployed `/api/exercises/{concept}` endpoint on 2026-11-26, but C1 must re-run the sweep before using them as an authoring baseline.
 5. **Competitor facts are a snapshot dated 2026-11-26** from direct site fetches; re-check before publishing any comparison page (F6).
 6. **This plan is a draft.** Its effort estimates are founder-days for one agent, not a commitment; the founder sets the schedule.
+
+## Appendix D — execution status (A8 sweep, 2026-11-28)
+
+This section is the live status record; §1.1/§1.3/§2 preserve the ORIGINAL 2026-11-26 baseline
+so the measurements remain auditable. Counts below were measured on a fresh build of HEAD.
+
+### Implemented and verified in the local tree
+
+| Area | Result |
+|---|---|
+| Courses / concepts | **35 / 336** — original 33 + E6 `binread` (paid first module) + E1 `front` (mission lexer/parser course with a learner-authored runner) |
+| Practice | **366 graded items**, every concept covered; explained in-page quiz on all 332 served free lessons (1,789 explained options); four new graded types + six specimen labs |
+| Learning journey | 7-step onboarding with skippable placement, Today/daily plan, energy pacing + break panel, hints/retry ladder, compliant aims and clean takeaways |
+| Platform | Per-learner FSRS persistence + Settings controls, PWA with offline lesson/quiz and queued sync replay, guest→account takeover, faceted search, public proof, "Your data" panel, support page |
+| Security/ops | One access log per request, uniform headers on frozen pages, proxy-safe rate-limit keys, 33 specimen bundles with checksums, operator allow-list + audit log, concept alias migration, retention sweep, rollout flags |
+| Android | Today/review screens, disk lesson cache, refreshed 346-item pack, telemetry policy, entitlement read; 130 unit tests, three-target compiles, no-WebView guard green |
+| CI | Compiler provisioning, 138 unit tests with summary-line gate, served-output checkers, static/semantic corpus, nightly live gates + performance budget |
+| Gates | journey 369/369 · theme 56/56 · pager 35/35 · dedupe 12/12 · bridge 3/3 · security 73/73 · SEO 377/377 · banks 366 · quiz 332 · explanation 366 · landing 35/35 · specimen 35/35 · metadata 35/35 · proof 0 failures · enroll 22/22 · perf PASS with one dated font exception |
+
+### Still open — founder/external actions, not agent work
+
+1. **Real Paddle account, webhook secret, checkout URL and payout profile**; the shipped webhook is proven with a documented test-mode stub only. No real purchase has occurred.
+2. **Play Store release** for the Android app: generate a NEW signing key (the committed `keystore.jks` is compromised), wire `signingConfig` from secrets, refresh the listing, file Play Data Safety. Frozen applicationId unchanged.
+3. **Deployed environment**: Cloud Run `max-instances=1`, durable DB volume, deployed build provenance via `tools/release_probe.py`, alerting owner, staging restore drill, staging flag rehearsal. None is verifiable from this machine.
+4. **Real sign-in ceremonies**: passkey/WebAuthn and Google OAuth+MFA on the deployed host, plus a Safari human check. Local stub payload shapes were captured; they are not proof of a real ceremony.
+5. **On-device emulator pass** (visible window, fresh approval) for the Android client.
+6. **Upstream Chemical HTTP server teardown race** (`std::Arc::get` in `release_connection`), founder-owned in the compiler/libs repo; see `Docs/decisions.md` 2026-11-27 and `docs/deployment.md` §5f. Six in-repo mitigations were measured and rejected.
+7. **`WebLibs/brandlib` render-blocking Google Fonts stylesheet** — owner founder/brandlib, exception dated 2026-11-28, review 2026-12-12 (`docs/h15-performance-budget.md`).
+8. **G12 authoring pilot is not swapped into the served course**; it is validated by its own lint/preview only. Six pre-existing byte-harness BLOCKED results (`exe`, `img`, `isa`, `mem`, `rvat`, `sec`) remain.
+9. **Production-DB cleanup** of 152 historical orphan rows needs a founder ruling; the retention tool refuses production paths.
+10. **G13 takeover is web-only** in this execution; the Android outbox still queues until a session token exists (D1 bridge proof is pending a real account token).

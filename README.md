@@ -2,6 +2,23 @@
 
 A learning platform for subjects that are difficult, deep, poorly taught, or require digging through specifications, source code, academic papers, and fragmented documentation.
 
+## Current state (2026-11-28)
+
+Built to the execution plan in [`production-ready-plan.md`](production-ready-plan.md).
+The local tree now has **35 courses / 336 concepts**, 366 verified graded items, an explained
+quiz on every served free lesson, a guided journey with onboarding placement and a daily plan,
+per-learner spaced-repetition settings, an installable PWA with offline progress replay, a web
+support page, server-rendered public proof, a Paddle/entitlement path with one paid first module,
+and a matching Android client with Today/review screens. CI builds, runs 138 unit tests and the
+served-artifact gate corpus; nightly adds the full security corpus and a performance budget.
+
+**Not yet production-live** (founder/external actions, not code): real Paddle account and webhook
+configuration, Play Store release signing and listing, deployed Cloud Run `max-instances=1`,
+deployed build provenance, production DB backup/restore drill, Play Data Safety declaration, a
+real passkey/Google sign-in ceremony on the deployed host, and an on-device emulator pass.
+The upstream Chemical HTTP server has a named teardown race (see `docs/deployment.md` §5f).
+Status and owners are tracked in the plan; nothing is pushed to `origin` by agents.
+
 ## What This Is
 
 Underlayer takes things that normally require enormous amounts of scattered research and turns them into structured, interactive, deeply understood knowledge.
