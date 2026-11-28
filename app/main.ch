@@ -1,4 +1,4 @@
-// Underlayer â€” Server entrypoint
+﻿// Underlayer Ã¢â‚¬â€ Server entrypoint
 // Phase 1: Minimal working platform serving static courses.
 using std::string
 using std::string_view
@@ -6,7 +6,7 @@ using std::string_view
 // ---- Process-wide state ------------------------------------------------
 //
 // The router stores handlers as `Send + Sync + 'static`, so a handler cannot
-// capture the `DbClient` â€” and a `DbClient` holds the live SQLite handle, which
+// capture the `DbClient` Ã¢â‚¬â€ and a `DbClient` holds the live SQLite handle, which
 // is not `Send`. There is one per process, so it lives here and is reached
 // through the accessor below. That single `unsafe` read is the whole of the
 // process-wide database state; every route stays safe and captures nothing.
@@ -301,6 +301,18 @@ public func main() : int {
         var db = request_db()
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_knowledge_health_page(db, &courses_dir, &req))
     })
+    // F3: additive `paid` flag on the course list. Registered BEFORE the
+    // original handler; the original stays untouched and is still used for
+    // every other surface.
+    srv.router.add("GET", "/api/courses", ||(req) => {
+        var courses_dir = underlayer_web::request_courses_dir()
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_list_courses_with_paid(&courses_dir, &req))
+    })
+    // F4: the Android entitlement read. Forwarded to the account service with
+    // the caller's own token; nothing is cached or stored on the device.
+    srv.router.add("GET", "/api/entitlements/me", ||(req) => {
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_entitlements_me(&req))
+    })
     // Course listing
     srv.router.add("GET", "/api/courses", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
@@ -318,11 +330,29 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 3) {
             var course_id = segments.at_ref(2)
+            // Course METADATA stays public even for a paid course: the crawler,
+            // the SEO checker and the purchase page need it. Only lesson CONTENT
+            // is gated (see the literal binread lesson routes).
             return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_course(&courses_dir, course_id, &req))
         } else {
             var body = std::string("{\"error\": \"missing course id\"}")
             return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &body))
         }
+    })
+    // F3: the paid course's lesson endpoints. Literal course segment so only
+    // binread is intercepted; every free course keeps the routes below.
+    srv.router.add("GET", "/api/courses/binread/lessons/:conceptId", ||(req) => {
+        var courses_dir = underlayer_web::request_courses_dir()
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 5) {
+            var concept_id = segments.at_ref(4)
+            var concept_s = std::string(concept_id)
+            var cid = std::string("binread")
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_paid_lesson(request_db(), &courses_dir, &cid, &concept_s, &req))
+        }
+        var err = std::string("{\"error\":\"missing concept id\"}")
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_status(400u, &err))
     })
     // S-1: structured unit index for the Android stepper, derived from the
     // exact HTML render_concept produces.  Registered BEFORE the lesson route
@@ -440,7 +470,7 @@ public func main() : int {
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_search(&courses_dir, &req))
     })
     // Concept search: titles, descriptions, module names and course titles
-    // across all courses. Additive — /api/search's response shape is a
+    // across all courses. Additive â€” /api/search's response shape is a
     // shipped contract and is left alone.
     srv.router.add("GET", "/api/search/concepts", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
@@ -854,25 +884,25 @@ public func main() : int {
         }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_exercise_submit(db, &mut req))
     })
-    // Course index — /courses. Registered BEFORE /courses/:courseId so the
+    // Course index â€” /courses. Registered BEFORE /courses/:courseId so the
     // exact path wins over the parameterised one. This is the page every
     // lesson's "All courses" back-link points at, 42 times across 32 files,
     // and it did not exist until now; tools/link_check.py is what stops that
     // from being true again.
-    // /courses â€” the collection index.
+    // /courses Ã¢â‚¬â€ the collection index.
     srv.router.add("GET", "/courses", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_courses_page(&courses_dir, &req))
     })
-    // Learning path — the three routes through the collection. Distinct from
+    // Learning path â€” the three routes through the collection. Distinct from
     // /courses/:courseId/path, which is the per-course dependency graph.
-    // /learning-path â€” the three routes in full.
+    // /learning-path Ã¢â‚¬â€ the three routes in full.
     srv.router.add("GET", "/learning-path", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_learning_path_index(&courses_dir, &req))
     })
-    // Search — concept search, server-rendered from ?q=
-    // /search â€” server-rendered from ?q=.
+    // Search â€” concept search, server-rendered from ?q=
+    // /search Ã¢â‚¬â€ server-rendered from ?q=.
     srv.router.add("GET", "/search", ||(req) => {
         var db = request_db()
         return underlayer_web::deliver_with_learner(db, &req,
@@ -886,11 +916,27 @@ public func main() : int {
         var segments = underlayer_core::path_segments(&path)
         if(segments.size() >= 2) {
             var course_id = segments.at_ref(1)
+            // The landing page is the public store front for a paid course;
+            // lesson content is gated by the literal route below.
             return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_course_landing(db, &courses_dir, course_id, &req))
         } else {
             var home = std::string("/")
             return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::redirect_to(&home))
         }
+    })
+    // F3: the paid course's browser lesson. Literal course segment; free
+    // courses continue through the generic route below.
+    srv.router.add("GET", "/courses/binread/lessons/:conceptId", ||(req) => {
+        var courses_dir = underlayer_web::request_courses_dir()
+        var path = req.path.to_view()
+        var segments = underlayer_core::path_segments(&path)
+        if(segments.size() >= 4) {
+            var concept_id = segments.at_ref(3)
+            var concept_s = std::string(concept_id)
+            var cid = std::string("binread")
+            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_paid_lesson(request_db(), &courses_dir, &cid, &concept_s, &req))
+        }
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_error(400u, &std::string("missing concept id")))
     })
     // Lesson viewer via URL path
     srv.router.add("GET", "/courses/:courseId/lessons/:conceptId", ||(req) => {
@@ -954,7 +1000,7 @@ public func main() : int {
     srv.router.add("GET", "/favicon.ico", ||(req) => {
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_favicon_ico(&req))
     })
-    // Home page â€” a per-request response (see the note on handle_home).
+    // Home page Ã¢â‚¬â€ a per-request response (see the note on handle_home).
     srv.router.add("GET", "/", ||(req) => {
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_home(&req))
     })
@@ -967,7 +1013,7 @@ public func main() : int {
     srv.router.add("GET", "/register", ||(req) => {
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_register_page(&req))
     })
-    // The no-JavaScript fallbacks.  Their hrefs are LOCAL — a sign-in control
+    // The no-JavaScript fallbacks.  Their hrefs are LOCAL â€” a sign-in control
     // that navigated to the account host would lose the reader's page and is
     // the exact anti-pattern the embedded-sign-in contract forbids.
     srv.router.add("GET", "/sign-in", ||(req) => {
@@ -1053,7 +1099,7 @@ public func main() : int {
         var db = request_db()
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_get_me(db, &req))
     })
-    // POST /api/auth/from-account — exchange a SHARED account credential for a
+    // POST /api/auth/from-account â€” exchange a SHARED account credential for a
     // local session.  Acceptance is checked against account.wiqis.com; only a
     // stable user id crosses back, and all learning data stays in this DB.
     // RATE LIMITED at the auth ceiling, like login and register.
@@ -1906,7 +1952,7 @@ public func main() : int {
     //
     // `set_minify` shrinks the emitted chunks, `set_gzip` precompresses the frozen
     // artifacts (the honest `Accept-Encoding` negotiation lives in the site), and
-    // `finish()` is what actually writes them â€” `build()` only compiles.
+    // `finish()` is what actually writes them Ã¢â‚¬â€ `build()` only compiles.
     var app = web::App.make("build/site", "app", "assets")
     app.set_minify(true)
     app.set_gzip(true)
@@ -1971,3 +2017,5 @@ public func main() : int {
     underlayer_core::log_line(&shutdown_done)
     return 0
 }
+
+

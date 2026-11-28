@@ -1,0 +1,54 @@
+{
+  "course_id": "binread",
+  "bundle": "binread-specimen.zip",
+  "files": [
+    {
+      "path": "SOURCES.md",
+      "bytes": 1147,
+      "sha256": "fe06a049784fdf79c390c2ddf3bda0f9528d87f43d3789499e54644dfd62762e"
+    },
+    {
+      "path": "readelf_h.txt",
+      "bytes": 1002,
+      "sha256": "31d62e7085a4fba9a42e5099cf5a1e7b349df580dbc9b7ba3b82b9883671b527"
+    },
+    {
+      "path": "readelf_l.txt",
+      "bytes": 2227,
+      "sha256": "1aed30f17c82069e9beb879af70b81ec32376e6647fbf097921666f23b66fc2e"
+    },
+    {
+      "path": "readelf_S.txt",
+      "bytes": 3987,
+      "sha256": "66f644b48f86cc41103af724f898f23b11a34f57a41bf84e5cbe2f8a3402e1fc"
+    },
+    {
+      "path": "readelf_s.txt",
+      "bytes": 3987,
+      "sha256": "66f644b48f86cc41103af724f898f23b11a34f57a41bf84e5cbe2f8a3402e1fc"
+    },
+    {
+      "path": "types_O0",
+      "bytes": 18712,
+      "sha256": "f74ab61296e894d50d1265d520db4413adfb41e182b6583854bd24b41a4a50c1"
+    },
+    {
+      "path": "cbbench",
+      "bytes": 37960,
+      "sha256": "cb9546e88e3de8420659607e22aa721f48532583b8b8188d10effa51ad37894b"
+    }
+  ],
+  "toolchain": {
+    "readelf": "2.39",
+    "producer": "inherited: gcc 15.2.0 / clang 21.1.8, binutils 2.46"
+  },
+  "verification_date": "2026-11-28",
+  "not_checked": [
+    "specimen execution",
+    "platform ABI behaviour",
+    "any claim outside the captured readelf output"
+  ],
+  "sha256": "ad907095badbb64faa48c4e88c838798a2fa8681ffe1d646e193fb2c4e5d8e1c",
+  "bytes": 20825,
+  "file_count": 7
+}

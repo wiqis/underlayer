@@ -1,0 +1,162 @@
+{
+  "id": "binread",
+  "title": "Read a Binary by Hand",
+  "version": "1.0.0",
+  "description": "A practical first module in manual ELF inspection: identify the file, map its header, read its segments, and separate runtime symbols from debug symbols — using only the bytes and a hex viewer.",
+  "author": "Underlayer",
+  "license": "MIT",
+  "language": "en",
+  "difficulty": "intermediate",
+  "importance": "core",
+  "completion_criteria": "all_concepts",
+  "min_platform_version": "1.0",
+  "navigation": "linear",
+  "branching": false,
+  "alternative_paths": [],
+  "bundles": [],
+  "assets": [
+    {
+      "id": "binread-specimen",
+      "asset_type": "specimen",
+      "path": "assets/samples/binread-specimen.zip",
+      "description": "Real x86-64 ELF files copied byte-for-byte from the verified ELF corpus, with readelf evidence captured 2026-11-28.",
+      "concept_id": ""
+    }
+  ],
+  "review_item_decls": [],
+  "exercise_decls": [
+    {
+      "type": "multiple_choice",
+      "question": "In the specimen's identification bytes, what does byte 4 equal and what does it tell you?",
+      "answer": "02, ELF64",
+      "options": "01, little-endian|02, ELF64|00, System V",
+      "correct_index": 1,
+      "explanation": "02 at offset 4 is EI_CLASS=ELF64, which is why the specimen uses a 64-byte header.",
+      "hint1": "Re-read the lesson section 'Check Your Understanding'.",
+      "difficulty": 0.5,
+      "source_ref": "courses/binread/src/bin_magic.ch:80",
+      "source_quote": "02, ELF64",
+      "concept_id": "bin-magic"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "In the specimen, how large is the program-header table and where does it start?",
+      "answer": "784 bytes at file offset 64",
+      "options": "64 bytes at offset 56|784 bytes at file offset 64|2368 bytes at file offset 16344",
+      "correct_index": 1,
+      "explanation": "14 program headers times 56 bytes each is 784 bytes, starting at file offset 64.",
+      "hint1": "Re-read the lesson section 'Check Your Understanding'.",
+      "difficulty": 0.5,
+      "source_ref": "courses/binread/src/bin_header.ch:82",
+      "source_quote": "784 bytes at file offset 64",
+      "concept_id": "bin-header"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Which program header names the program that finishes loading a dynamic executable?",
+      "answer": "PT_INTERP",
+      "options": "PT_DYNAMIC|PT_INTERP|PT_PHDR",
+      "correct_index": 1,
+      "explanation": "PT_INTERP holds the path /lib64/ld-linux-x86-64.so.2 in this specimen, which is the interpreter the kernel starts.",
+      "hint1": "Re-read the lesson section 'Check Your Understanding'.",
+      "difficulty": 0.5,
+      "source_ref": "courses/binread/src/bin_segments.ch:80",
+      "source_quote": "PT_INTERP",
+      "concept_id": "bin-segments"
+    },
+    {
+      "type": "multiple_choice",
+      "question": "Which table contains the row for main in this specimen?",
+      "answer": ".symtab",
+      "options": ".dynsym|.symtab|Neither; main is only in a debug file",
+      "correct_index": 1,
+      "explanation": "readelf prints main as entry 35 of .symtab, value 0x11c9, size 105, GLOBAL DEFAULT in section 14.",
+      "hint1": "Re-read the lesson section 'Check Your Understanding'.",
+      "difficulty": 0.5,
+      "source_ref": "courses/binread/src/bin_symbols.ch:79",
+      "source_quote": ".symtab",
+      "concept_id": "bin-symbols"
+    }
+  ],
+  "visualization_decls": [],
+  "certificate": {
+    "template_id": "binread-completion",
+    "badge_url": "/badges/binread-complete.svg",
+    "title": "Manual Binary Inspection",
+    "description": "Completed the first module of Read a Binary by Hand",
+    "criteria": "Complete all four concepts"
+  },
+  "modules": [
+    {
+      "id": "first-look",
+      "title": "First Look",
+      "concepts": [
+        "bin-magic",
+        "bin-header"
+      ],
+      "description": "Establish what the file is and where its tables live."
+    },
+    {
+      "id": "runtime-view",
+      "title": "The Runtime View",
+      "concepts": [
+        "bin-segments",
+        "bin-symbols"
+      ],
+      "description": "Read what the loader maps and what the linker records."
+    }
+  ],
+  "concepts": [
+    {
+      "id": "bin-magic",
+      "title": "The First Sixteen Bytes",
+      "module_id": "first-look",
+      "description": "Identify class, byte order and ABI from e_ident before reading any other field.",
+      "estimated_minutes": 12,
+      "difficulty": "beginner",
+      "importance": "core"
+    },
+    {
+      "id": "bin-header",
+      "title": "The Header Is a Map",
+      "module_id": "first-look",
+      "description": "Use e_phoff, e_phentsize, e_phnum, e_shoff, e_shentsize and e_shnum to locate every table.",
+      "estimated_minutes": 15,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "bin-segments",
+      "title": "What the Loader Actually Maps",
+      "module_id": "runtime-view",
+      "description": "Read PT_PHDR, PT_INTERP and the four PT_LOAD entries of a real PIE.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
+    },
+    {
+      "id": "bin-symbols",
+      "title": "Two Symbol Tables, Two Jobs",
+      "module_id": "runtime-view",
+      "description": "Separate the seven-entry .dynsym from the forty-three-entry .symtab and read binding and visibility.",
+      "estimated_minutes": 18,
+      "difficulty": "intermediate",
+      "importance": "core"
+    }
+  ],
+  "paid": true,
+  "product": "underlayer.binread",
+  "price_usd": 39,
+  "prerequisites": [
+    "elf"
+  ],
+  "toolchain": "readelf 2.39 (GNU Binutils) reading pre-verified specimens produced by gcc 15.2.0 / clang 21.1.8",
+  "spec_source": "courses/binread/assets/samples/readelf_*.txt (captured 2026-11-28 from the copied ELF corpus)",
+  "last_verified": "2026-11-28",
+  "limitations": [
+    "This is a first module, not a full course: four concepts, one architecture (x86-64), one file class (ELF64 little-endian).",
+    "No new byte, offset or format claim was authored: every number is read from the included readelf evidence or copied from the verified ELF corpus.",
+    "Producer toolchain versions are inherited from courses/elf/assets/samples/SOURCES.md; readelf 2.39 is the local reader, not the producer.",
+    "Specimen bundles are copied from the verified elf corpus, not executed on this Windows host."
+  ]
+}
