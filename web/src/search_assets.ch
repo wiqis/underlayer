@@ -25,9 +25,15 @@ public namespace underlayer_web {
             .page-head h1 { font-size: 2rem; margin-bottom: 0.5rem; }
             .lede { color: hsl(var(--muted-foreground)); font-size: 1.05rem; max-width: 70ch; }
             .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-            .search-form { display: flex; gap: 0.75rem; margin: 1.5rem 0 2rem; }
-            .search-form input[type="search"] { flex: 1; padding: 0.8rem 1rem; font-size: 1rem; border: 1px solid hsl(var(--border)); border-radius: 8px; background: hsl(var(--background)); color: hsl(var(--foreground)); box-sizing: border-box; }
-            .search-form input[type="search"]:focus { outline: none; border-color: hsl(217 91% 60%); box-shadow: 0 0 0 3px hsl(217 91% 60% / 15%); }
+            .search-form { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; margin: 1.5rem 0 2rem; }
+            .search-form input[type="search"] { flex: 1 1 20rem; padding: 0.8rem 1rem; font-size: 1rem; border: 1px solid hsl(var(--border)); border-radius: 8px; background: hsl(var(--background)); color: hsl(var(--foreground)); box-sizing: border-box; }
+            .search-form label { font-size: 0.8rem; color: hsl(var(--muted-foreground)); display: block; }
+            .search-form input[type="text"], .search-form select { padding: 0.65rem 0.75rem; font-size: 0.9rem; border: 1px solid hsl(var(--border)); border-radius: 8px; background: hsl(var(--background)); color: hsl(var(--foreground)); box-sizing: border-box; max-width: 100%; }
+            .search-form input[type="search"]:focus, .search-form input[type="text"]:focus, .search-form select:focus { outline: none; border-color: hsl(217 91% 60%); box-shadow: 0 0 0 3px hsl(217 91% 60% / 15%); }
+            .pager { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 2rem 0 0; }
+            .pager-link { display: inline-block; min-width: 2.25rem; text-align: center; padding: 0.4rem 0.6rem; border: 1px solid hsl(var(--border)); border-radius: 8px; font-size: 0.9rem; }
+            .pager-link[data-rel=" page"] { background: hsl(217 91% 60%); color: white; border-color: hsl(217 91% 60%); }
+            .result-note { color: hsl(var(--muted-foreground)); font-size: 0.9rem; }
             .btn { display: inline-block; padding: 0.6rem 1.25rem; border-radius: 8px; font-weight: 500; font-size: 0.9rem; cursor: pointer; border: none; text-decoration: none; }
             .btn-primary { background: hsl(217 91% 60%); color: white; }
             .btn-primary:hover { background: hsl(217 91% 50%); text-decoration: none; }

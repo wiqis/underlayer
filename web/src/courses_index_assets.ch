@@ -22,6 +22,9 @@ public namespace underlayer_web {
             .btn-primary { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
             .btn-primary:hover { filter: brightness(1.06); text-decoration: none; }
             .text-link { margin-left: 0.75rem; font-size: 0.95rem; }
+            .budget-control { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0 0 1.5rem; }
+            .budget-control span { color: hsl(var(--muted-foreground)); font-size: 0.9rem; margin-right: 0.25rem; }
+            .budget-control a { display: inline-block; padding: 0.35rem 0.7rem; border: 1px solid hsl(var(--border)); border-radius: 9999px; font-size: 0.85rem; }
             .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
             /* /courses: one search, one filter row, a compact grid. */

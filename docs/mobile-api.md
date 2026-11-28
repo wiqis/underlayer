@@ -7,6 +7,74 @@ additive: every existing route keeps its shape. All paths are on
 
 **Governing spec:** `docs/learner-first-mandate.md` (ACTIVE, 2026-11-24).
 
+## Search endpoints (I10, 2026-11-28)
+
+Two search endpoints exist. They are deliberately **not** the same query and
+neither payload has been changed by I10.
+
+### `GET /api/search?q=<text>` — FROZEN, course titles only, deprecated without removal
+
+Public JSON. No authentication. This is checklist item 7.1.6. It searches
+**course titles only**, case-sensitively, and returns course ids. It has never
+searched concepts, and adding concept search to it would break shipped
+clients. It is **deprecated without removal**: new concept-search clients must
+use `/api/search/concepts`, but this endpoint keeps its exact payload and is
+not scheduled for deletion.
+
+Measured live example (`http://localhost:9046`, 2026-11-28):
+
+```
+GET /api/search?q=Executable
+{"query":"Executable","results":[{"id":"elf"},{"id":"img"},{"id":"pe"},{"id":"sec"}],"total":4}
+```
+
+Shape: `query` (string, echoed), `results` (array of `{id: string}`), `total`
+(int). A query matching no course title returns `{"query":"…","results":[],"total":0}`.
+
+I10 adds **one response header only**:
+
+```
+Link: </api/search/concepts?q=Executable>; rel="alternate"
+```
+
+The `q` value is percent-encoded with uppercase hex in the header. Bodies,
+status codes and all existing headers are byte-for-byte unchanged. A client
+that ignores headers sees exactly the frozen response.
+
+### `GET /api/search/concepts?q=<text>` — concept search (the one to use)
+
+Public JSON. No authentication. This is the endpoint the browser page
+`/search` uses server-side. It matches concept titles, concept descriptions,
+module names, course titles and course descriptions, scores the match into
+five ordered tiers, and reports the field that matched. Case-insensitive.
+
+Measured live example (same host, 2026-11-28):
+
+```
+GET /api/search/concepts?q=byte
+{"query":"byte","total":110,"shown":60,"searched":329,"results":[
+  {"course_id":"…","course_title":"…","concept_id":"…","title":"…",
+   "module":"…","snippet":"…","matched_field":"description","score":40,
+   "url":"/courses/…/lessons/…"}, …]}
+```
+
+`total` is the number of matching concepts before truncation; `shown` is at
+most 60; `searched` is the whole collection. `shown < total` is the honest
+signal to page the browser UI at `/search?q=…&page=N` (25 results per page),
+not an invitation to call this endpoint with `limit` — there is no `limit`
+parameter. The totals **differ by design**: `q=elf` is 0 on `/api/search`
+(no course title contains "elf") but many concepts on
+`/api/search/concepts`. `q=byte` is 110 concepts and 0 course titles.
+
+The browser page is the faceted, paginated view (`course`, `module`,
+`difficulty`, `minutes`, `status`, `page`). Those facets belong to `/search`
+only; neither JSON endpoint accepts them. `/api/search/concepts` always
+returns its frozen shape.
+
+`tools/search_contract_check.py` asserts the frozen payload, the Link header,
+the differing totals and that no shipped concept-search consumer calls
+`/api/search`.
+
 ## `GET /api/courses/:courseId/lessons/:conceptId/units`
 
 Public JSON. No authentication.

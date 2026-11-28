@@ -67,11 +67,12 @@ public namespace underlayer_web {
     // Every card, in one call.  This is the loop-inside-a-block the language
     // cannot write directly: the `#html` block above emits one balanced card,
     // this function emits the cards inside the grid.
-    public func render_all_cards(cards : &vector<CatalogCard>, page : &mut HtmlPage) {
+    public func render_all_cards(cards : &vector<CatalogCard>, page : &mut HtmlPage, budget : &string) {
         var i : size_t = 0
         var n : size_t = cards.size()
         while(i < n) {
-            render_catalog_card(cards.at_ref(i), page)
+            var card = cards.at_ref(i)
+            if(card_in_budget(card, budget)) { render_catalog_card(card, page) }
             i = i + 1
         }
     }

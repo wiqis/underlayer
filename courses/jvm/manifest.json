@@ -463,5 +463,13 @@
       "source_quote": "String concatenation. The <code>StringBuilder</code> chain's ten instructions and seven pool entries were replaced by two extra <code>invokedynamic</code> instructions, their bootstrap entries and pool entries &mdash; a change that bought uniformity and cost bytes, because the <code>StringBuilder</code> form was never a run-time cost either. The nest attributes are 14 bytes, and they are the obvious red herring",
       "concept_id": "jvm-versions"
     }
+  ],
+  "toolchain": "gcc 15.2.0 / clang 21.1.8 / readelf 2.46",
+  "spec_source": "courses/jvm/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "last_verified": "2026-11-27",
+  "limitations": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
   ]
 }

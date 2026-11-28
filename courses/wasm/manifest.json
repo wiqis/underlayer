@@ -348,5 +348,13 @@
       "source_quote": "Type 0 is <code>(i32, i32) -&gt; i32</code>, type 1 is <code>(i32) -&gt; i32</code>, type 2 is <code>(i32) -&gt; ()</code>. Sharing an index makes structural identity an integer comparison &mdash; but indices are module-local, so two modules can give the same signature different indices and a matcher comparing numbers will fail",
       "concept_id": "wasm-types"
     }
+  ],
+  "toolchain": "gcc 15.2.0 / clang 21.1.8 / readelf 2.46",
+  "spec_source": "courses/wasm/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "last_verified": "2026-11-27",
+  "limitations": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
   ]
 }

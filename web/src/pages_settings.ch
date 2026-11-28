@@ -23,6 +23,7 @@ public namespace underlayer_web {
                     <a href="#account" class="tab" data-tab="account">Account</a>
                     <a href="#learning" class="tab" data-tab="learning">Learning</a>
                     <a href="#fsrs" class="tab" data-tab="fsrs">Spaced repetition</a>
+                    <a href="#data" class="tab" data-tab="data">Your data</a>
                 </nav>
                 <div class="settings-content">
                     <section id="profile-section" class="tab-content active">
@@ -245,6 +246,49 @@ public namespace underlayer_web {
                         <div class="fsrs-result"><strong>After</strong><pre id="fsrsAfter"></pre></div>
                         <div class="fsrs-result"><strong>Export</strong><textarea id="fsrsExportOut" rows="3" readonly></textarea></div>
                     </section>
+                    <section id="data-section" class="tab-content">
+                        <h2>Your data</h2>
+                        <p class="fsrs-note">These controls act on your account through the same endpoints the mobile client uses. Exports are a download; deletions cannot be undone.</p>
+                        <div class="data-actions">
+                            <button type="button" class="btn btn-secondary" id="dataExport">Download my data (JSON)</button>
+                            <span class="data-export-date">Last export on this device: <strong id="dataLastExport">not yet</strong></span>
+                        </div>
+                        <form id="dataDeleteForm" class="data-form">
+                            <h3>Delete a data category</h3>
+                            <label for="dataCategory">Category</label>
+                            <select id="dataCategory">
+                                <option value="reviews">Review history</option>
+                                <option value="progress">Course progress</option>
+                                <option value="sessions">Study sessions</option>
+                                <option value="all">All learning data</option>
+                            </select>
+                            <label for="dataDeleteConfirm">Type DELETE to confirm</label>
+                            <input type="text" id="dataDeleteConfirm" autocomplete="off" />
+                            <button type="submit" class="btn btn-secondary">Delete this category</button>
+                        </form>
+                        <form id="accountDeactivateForm" class="data-form">
+                            <h3>Deactivate account</h3>
+                            <p class="fsrs-note">Signs you out and pauses notifications. Your learning data is kept.</p>
+                            <label for="deactivateConfirm">Type DEACTIVATE to confirm</label>
+                            <input type="text" id="deactivateConfirm" autocomplete="off" />
+                            <button type="submit" class="btn btn-secondary">Deactivate</button>
+                        </form>
+                        <form id="accountReactivateForm" class="data-form">
+                            <h3>Reactivate account</h3>
+                            <label for="reactivateConfirm">Type REACTIVATE to confirm</label>
+                            <input type="text" id="reactivateConfirm" autocomplete="off" />
+                            <button type="submit" class="btn btn-secondary">Reactivate</button>
+                        </form>
+                        <form id="accountDeleteForm" class="data-form">
+                            <h3>Delete account permanently</h3>
+                            <p class="fsrs-note">Deletes progress, reviews, notes, bookmarks and certificates. This cannot be undone.</p>
+                            <label for="accountDeleteConfirm">Type DELETE MY ACCOUNT to confirm</label>
+                            <input type="text" id="accountDeleteConfirm" autocomplete="off" />
+                            <button type="submit" class="btn btn-secondary">Delete my account</button>
+                        </form>
+                        <div id="dataMessage" class="fsrs-message" role="status" hidden></div>
+                        <div id="dataError" class="fsrs-error" role="alert" hidden></div>
+                    </section>
                 </div>
             </div>
             </main>
@@ -284,6 +328,13 @@ public namespace underlayer_web {
             .fsrs-result { margin-bottom: 0.75rem; font-size: 0.85rem; }
             .fsrs-result strong { display: block; margin-bottom: 0.25rem; color: hsl(var(--muted-foreground)); }
             .fsrs-result pre { margin: 0; padding: 0.75rem; background: hsl(var(--muted)); border-radius: 0.5rem; overflow-x: auto; font-size: 0.8rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+            .data-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
+            .data-export-date { font-size: 0.9rem; color: hsl(var(--muted-foreground)); }
+            .data-form { border-top: 1px solid hsl(var(--border)); padding-top: 1rem; margin-bottom: 1.25rem; }
+            .data-form h3 { font-size: 1rem; margin: 0 0 0.5rem; }
+            .data-form label { display: block; margin: 0.6rem 0 0.3rem; font-size: 0.9rem; font-weight: 500; }
+            .data-form select, .data-form input { width: 100%; max-width: 24rem; box-sizing: border-box; padding: 0.6rem; border: 1px solid hsl(var(--border)); border-radius: 0.5rem; background: hsl(var(--background)); color: hsl(var(--foreground)); font-family: inherit; font-size: 0.95rem; }
+            .data-form button { margin-top: 0.75rem; }
             @media (max-width: 600px) { .settings-main { padding: 1rem 0.75rem 2rem; } .settings-nav { gap: 0.25rem; } .settings-nav .tab { padding: 0.5rem 0.75rem; font-size: 0.9rem; } .tab-content { padding: 1.25rem; } }
         }
         #js {
@@ -458,6 +509,110 @@ public namespace underlayer_web {
                         if(d.error) { showError(d.error); return; }
                         showMessage('Parameters imported.'); refresh();
                     }).catch(function() { showError('Network error. Please try again.'); });
+                });
+            })();
+
+            // G10: Your data. Every control calls an endpoint that already
+            // exists (app/main.ch 1136-1177); no new API and no new token.
+            (function() {
+                var msgEl = document.getElementById('dataMessage');
+                var errEl = document.getElementById('dataError');
+                function showMessage(text) { msgEl.textContent = text; msgEl.hidden = false; errEl.hidden = true; }
+                function showError(text) { errEl.textContent = text; errEl.hidden = false; msgEl.hidden = true; }
+                function authHeaders(withJson) {
+                    var h = {};
+                    var t = localStorage.getItem('session_token');
+                    if(t) { h['Authorization'] = 'Bearer ' + t; }
+                    if(withJson) { h['Content-Type'] = 'application/json'; }
+                    return h;
+                }
+                function readJson(r) {
+                    return r.text().then(function(text) {
+                        try { return JSON.parse(text); } catch(e) { return { error: text }; }
+                    });
+                }
+                function lastExport() {
+                    var el = document.getElementById('dataLastExport');
+                    var when = localStorage.getItem('underlayer_last_export');
+                    el.textContent = when ? new Date(when).toLocaleString() : 'not yet';
+                }
+                lastExport();
+                document.getElementById('dataExport').addEventListener('click', function() {
+                    fetch('/api/user/export', { headers: authHeaders(false) })
+                        .then(function(r) {
+                            if(!r.ok) { throw new Error('export failed: ' + r.status); }
+                            return r.blob();
+                        })
+                        .then(function(blob) {
+                            var url = URL.createObjectURL(blob);
+                            var a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'underlayer_export.json';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                            var now = new Date().toISOString();
+                            localStorage.setItem('underlayer_last_export', now);
+                            lastExport();
+                            showMessage('Your export has been downloaded.');
+                        })
+                        .catch(function(e) { showError(e.message || 'Could not export your data.'); });
+                });
+                document.getElementById('dataDeleteForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    if(document.getElementById('dataDeleteConfirm').value !== 'DELETE') {
+                        showError('Type DELETE exactly to confirm this deletion.'); return;
+                    }
+                    var category = document.getElementById('dataCategory').value;
+                    fetch('/api/user/data/' + encodeURIComponent(category), { method: 'DELETE', headers: authHeaders(false) })
+                        .then(readJson)
+                        .then(function(d) {
+                            if(d.error) { showError(d.error); return; }
+                            showMessage('Deleted ' + d.data_type + ' for your account.');
+                            document.getElementById('dataDeleteConfirm').value = '';
+                        }).catch(function() { showError('Network error. Please try again.'); });
+                });
+                document.getElementById('accountDeactivateForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    if(document.getElementById('deactivateConfirm').value !== 'DEACTIVATE') {
+                        showError('Type DEACTIVATE exactly to confirm.'); return;
+                    }
+                    fetch('/api/user/deactivate', { method: 'POST', headers: authHeaders(true) })
+                        .then(readJson)
+                        .then(function(d) {
+                            if(d.error) { showError(d.error); return; }
+                            localStorage.removeItem('session_token');
+                            showMessage('Account deactivated. You have been signed out.');
+                            document.getElementById('deactivateConfirm').value = '';
+                        }).catch(function() { showError('Network error. Please try again.'); });
+                });
+                document.getElementById('accountReactivateForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    if(document.getElementById('reactivateConfirm').value !== 'REACTIVATE') {
+                        showError('Type REACTIVATE exactly to confirm.'); return;
+                    }
+                    fetch('/api/user/reactivate', { method: 'POST', headers: authHeaders(true) })
+                        .then(readJson)
+                        .then(function(d) {
+                            if(d.error) { showError(d.error); return; }
+                            showMessage('Account reactivated. You can sign in again.');
+                            document.getElementById('reactivateConfirm').value = '';
+                        }).catch(function() { showError('Network error. Please try again.'); });
+                });
+                document.getElementById('accountDeleteForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    if(document.getElementById('accountDeleteConfirm').value !== 'DELETE MY ACCOUNT') {
+                        showError('Type DELETE MY ACCOUNT exactly to confirm.'); return;
+                    }
+                    fetch('/api/user/account', { method: 'DELETE', headers: authHeaders(false) })
+                        .then(readJson)
+                        .then(function(d) {
+                            if(d.error) { showError(d.error); return; }
+                            localStorage.removeItem('session_token');
+                            showMessage('Account deleted. Signing you out…');
+                            window.setTimeout(function() { window.location.href = '/'; }, 1200);
+                        }).catch(function() { showError('Network error. Please try again.'); });
                 });
             })();
         }

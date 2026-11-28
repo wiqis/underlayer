@@ -1,7 +1,7 @@
 {
   "id": "pe",
   "title": "Portable Executable Format",
-  "version": 1,
+  "version": "1.0.0",
   "description": "Read any Windows PE image: the DOS and COFF headers, data directories, sections, imports, exports, base relocations, TLS and resources.",
   "author": "Underlayer",
   "license": "MIT",
@@ -679,5 +679,13 @@
       "importance": "core"
     }
   ],
-  "minutes_method": "I14/PE 2026-11-27: ELF-style teaching-order module base minutes (fundamentals 12, headers 15, addressing 18, sections 18, imports-exports 18, relocations-hardening 18, runtime-tables 20, loading-execution 20) plus clamp(round((visible_words - 1318.5)/150), -3, +3). visible_words counted from each concept's own content/src/pe_<concept>.ch with markup stripped; all 24 lessons have eight teaching units, so length is the per-concept differentiator. No timing measurement is claimed."
+  "minutes_method": "I14/PE 2026-11-27: ELF-style teaching-order module base minutes (fundamentals 12, headers 15, addressing 18, sections 18, imports-exports 18, relocations-hardening 18, runtime-tables 20, loading-execution 20) plus clamp(round((visible_words - 1318.5)/150), -3, +3). visible_words counted from each concept's own content/src/pe_<concept>.ch with markup stripped; all 24 lessons have eight teaching units, so length is the per-concept differentiator. No timing measurement is claimed.",
+  "toolchain": "gcc 15.2.0 / clang 21.1.8 / readelf 2.46",
+  "spec_source": "courses/pe/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "last_verified": "2026-11-27",
+  "limitations": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md."
+  ]
 }

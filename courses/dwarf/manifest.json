@@ -1,7 +1,7 @@
 {
   "id": "dwarf",
   "title": "DWARF — The Debugging Data Format",
-  "version": 1,
+  "version": "1.0.0",
   "description": "Take an address in a running program back to the file, line and local variable it came from, by reading the DWARF sections a compiler emits.",
   "author": "Underlayer",
   "license": "CC BY-SA 4.0",
@@ -577,5 +577,14 @@
       "source_quote": "It reads <code>header_length = 3,670,024</code> and starts the line program at 0x380012, far past the end of a 0x73-byte section &mdash; its first wrong byte comes from v5 inserting two extra header bytes",
       "concept_id": "dwarf-versions"
     }
+  ],
+  "toolchain": "gcc 15.2.0 / clang 21.1.8 / readelf 2.46",
+  "spec_source": "courses/dwarf/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "last_verified": "2026-11-27",
+  "limitations": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md.",
+    "Licensed CC BY-SA 4.0; attribution: Underlayer course content."
   ]
 }

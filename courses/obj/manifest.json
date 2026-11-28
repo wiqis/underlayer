@@ -1,9 +1,9 @@
 {
   "id": "obj",
   "title": "Object Files",
-  "version": 1,
+  "version": "1.0.0",
   "description": "Read the object file your compiler emits: its sections, its symbol tables, its fixup records and the holes left for a linker to fill.",
-  "author": "Waqas Tahir",
+  "author": "Underlayer",
   "license": "MIT",
   "language": "en",
   "difficulty": "intermediate",
@@ -464,5 +464,14 @@
       "source_quote": "Because ELF and Mach-O store the property in a <strong>field</strong> and COFF stores it in the <strong>name</strong>. Your browser already has <code>st_info</code> and <code>n_desc</code> in hand to display a symbol at all, so masking out <code>STB_WEAK</code> or <code>0x80</code> is free; in COFF the storage class is the ordinary <code>EXTERNAL</code> and the only signal is the literal prefix <code>.weak.</code>, so the browser must hard-code a string convention. The cost is that the property has become <strong>unavailable as data</strong> &mdash; every secondary tool has to re-derive the same convention independently and get it exactly right, and none of them can ask the file what a name means",
       "concept_id": "obj-weak-undef"
     }
+  ],
+  "toolchain": "gcc 15.2.0 / clang 21.1.8 / readelf 2.46",
+  "spec_source": "courses/obj/assets/samples (existing corpus; ELF/PE copied from verified neighbours)",
+  "last_verified": "2026-11-27",
+  "limitations": [
+    "No new byte, offset or format claim was authored for this bundle.",
+    "SHA-256 proves copy integrity only, not that the lesson prose is correct.",
+    "Generated specimens absent from six blocked courses are documented in docs/verification-coverage.md.",
+    "Authored by Waqas Tahir; published as Underlayer course content under MIT."
   ]
 }

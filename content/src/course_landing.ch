@@ -115,6 +115,12 @@ using underlayer_models::Course
                         <span class="meta-item" id="meta-concepts">{concept_count} concepts</span>
                         <span class="meta-item">{esc_difficulty}</span>
                     </div>
+                    <div class="course-metadata" id="course-metadata">
+                        <span class="meta-item">Licence: <strong id="meta-license">not recorded</strong></span>
+                        <span class="meta-item">Verified: <strong id="meta-verified">not recorded</strong></span>
+                        <span class="meta-item">Author: <strong id="meta-author">not recorded</strong></span>
+                        <span class="meta-item" id="meta-limits-wrap" hidden>Limits: <span id="meta-limits"></span></span>
+                    </div>
                     <div class="course-actions">
                         <a class="btn-start" id="start-btn" href="#module-list">Start learning</a>
                         {render_certificate_claim(&mut page)}
@@ -151,6 +157,9 @@ using underlayer_models::Course
         // one reviewable unit: a checker can assert the section exists without
         // following a second file.
         #css {
+            .course-metadata { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; margin: 0.75rem 0; }
+            .course-metadata .meta-item { font-size: 0.85rem; color: hsl(var(--muted-foreground)); }
+            .course-metadata strong { color: hsl(var(--foreground)); font-weight: 600; }
             .course-prereqs { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 2rem; }
             .course-prereqs h2 { font-size: 1.15rem; margin: 0 0 0.5rem 0; }
             .prereq-lead, .prereq-status, .course-time, .enrol-state { color: hsl(var(--muted-foreground)); font-size: 0.9rem; margin: 0.5rem 0; }
@@ -242,6 +251,23 @@ using underlayer_models::Course
                     if (!r.ok) throw new Error('http ' + r.status);
                     return r.json();
                 }).then(function(course) {
+                    // I7: additive metadata is published by /api/courses/:id.
+                    // textContent only — a manifest value never becomes markup.
+                    var licenseEl = document.getElementById('meta-license');
+                    var verifiedEl = document.getElementById('meta-verified');
+                    var authorEl = document.getElementById('meta-author');
+                    var limitsEl = document.getElementById('meta-limits');
+                    var limitsWrap = document.getElementById('meta-limits-wrap');
+                    if(licenseEl) { licenseEl.textContent = course.license || 'not recorded'; }
+                    if(verifiedEl) { verifiedEl.textContent = course.last_verified || 'not recorded'; }
+                    if(authorEl) { authorEl.textContent = course.author || 'not recorded'; }
+                    if(limitsEl && limitsWrap) {
+                        var limits = course.limitations || [];
+                        if(limits.length > 0) {
+                            limitsEl.textContent = limits.join('; ');
+                            limitsWrap.hidden = false;
+                        }
+                    }
                     // Title/description/meta are server-rendered; modules are not
                     // (they are dynamic per-course data).
                     var modules = course.modules || [];

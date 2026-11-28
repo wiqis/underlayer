@@ -252,6 +252,7 @@
 - [x] P2 2.1.18 Course navigation structure (linear vs tree)
 - [x] P2 2.1.19 Course completion criteria (all concepts, or minimum score)
 - [x] P2 2.1.20 Course certificate template
+- [x] P1 2.1.21 I7 course metadata contract on the wire and on the landing: `/api/courses` and `/api/courses/:id` expose additive `author`, `license`, `metadata_version`, `toolchain`, `spec_source`, `last_verified`, `limitations`; all 33 landings render licence, verification date, author and limits. Manifest migration itself is tracked by `tools/metadata_check.py --emit-patch` and is NOT yet applied.
 - [x] P1 2.1.21 Multi-course platform: landing page rendered data-driven from any course's manifest.json (unknown course ids return 404)
 - [x] P1 2.1.22 Multi-course exercise seeding at startup: loop all course directories (fs::read_dir scan, reference-capture lambda required)
 - [x] P1 2.1.23 Course JSON API includes module descriptions (feeds landing module list)
@@ -854,6 +855,8 @@
 - [x] P1 7.1.5 Breadcrumb navigation (home > course > module > concept)
 - [x] P2 7.1.6 Search functionality (full-text search)
 - [x] P2 7.1.7 Filter/sort courses (by topic, difficulty, rating)
+- [x] P2 7.1.32 G7 faceted, paginated `/search`: server-side `q`, `course`, `module`, `difficulty`, `minutes`, `status`, `page`; 25 results per page; all 110 `byte` hits reachable in five stable GET URLs; signed-in learners can filter completed/review-due once the db-aware route is registered; no JS needed for results or paginator.
+- [x] P2 7.1.33 G7 time-budget control on `/courses` and `/learning-path`: 10 minutes / this week / deep dive are GET links to the existing 33-course route and partition all 33 courses (8/16/9).
 - [x] P2 7.1.9 Recent history (last 10 visited concepts)
 - [x] P2 7.1.10 Quick jump (keyboard shortcuts, command palette)
 - [x] P2 7.1.11 Table of contents (per concept)
@@ -982,7 +985,7 @@
 - [ ] P3 8.1.7 Learning goals (public/private)
 - [ ] P3 8.1.8 Location (optional, public)
 - [ ] P3 8.1.9 Website/social links
-- [ ] P3 8.1.10 Profile visibility settings (public/private/anonymous)
+- [x] P3 8.1.10 Profile visibility settings (public/private/anonymous) — the toggle shipped earlier; G8's server renderer honours it (private profiles publish no data).
 - [ ] P3 8.1.11 Profile permalink (/u/username)
 - [ ] P3 8.1.12 Profile SEO (meta tags)
 - [ ] P3 8.1.13 Profile statistics (courses completed, hours learned)
@@ -1745,6 +1748,7 @@
 - [ ] P3 16.8.11 Delete account cancellation (within 30 days)
 - [x] P3 16.8.12 Account deactivation (temporary, self-serve)
 - [x] P3 16.8.13 Account reactivation (login with old credentials)
+- [x] P3 16.8.16 G10 "Your data" panel in Settings: JSON download with last-export date, typed category deletion, typed deactivate/reactivate/account-delete confirmations; uses only the five shipped endpoints and works with a shadow learner in Chrome.
 - [ ] P3 16.8.14 Data portability (GDPR Article 20)
 - [ ] P3 16.8.15 Data correction (GDPR Article 16)
 

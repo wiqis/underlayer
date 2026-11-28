@@ -874,8 +874,9 @@ public func main() : int {
     // Search — concept search, server-rendered from ?q=
     // /search â€” server-rendered from ?q=.
     srv.router.add("GET", "/search", ||(req) => {
-        var courses_dir = underlayer_web::request_courses_dir()
-        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_search_page(&courses_dir, &req))
+        var db = request_db()
+        return underlayer_web::deliver_with_learner(db, &req,
+            underlayer_web::handle_search_page_db(db, &underlayer_web::request_courses_dir(), &req))
     })
     // Course landing page
     srv.router.add("GET", "/courses/:courseId", ||(req) => {
@@ -1007,14 +1008,9 @@ public func main() : int {
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_components_demo_page(&req))
     })
     srv.router.add("GET", "/u/:username", ||(req) => {
-        var path = req.path.to_view()
-        var segments = underlayer_core::path_segments(&path)
-        if(segments.size() >= 2) {
-            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_profile_page(&req))
-        } else {
-            var body = std::string("Not found")
-            return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_status_text(404u, &body))
-        }
+        var db = request_db()
+        return underlayer_web::deliver_with_learner(db, &req,
+            underlayer_web::handle_public_proof_page(db, &req))
     })
     // Rate-limit bucket names.  Declared here rather than inline as literals
     // at the four call sites so the set of guarded endpoints is readable in

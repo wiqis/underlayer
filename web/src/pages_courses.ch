@@ -35,20 +35,52 @@ public namespace underlayer_web {
         return total
     }
 
-    public func render_courses_page(page : &mut HtmlPage, courses_dir : &string) {
+    // G7: the time-budget control is a GET to this SAME route, not a new page
+    // and not a client-side filter. The three buckets partition all 33 courses.
+    // We filter at render time rather than copy the card structs: CatalogCard
+    // owns nested vectors and this compiler has no struct-wide `.copy()`.
+    public func card_in_budget(card : &CatalogCard, budget : &string) : bool {
+        if(budget.size() == 0) { return true }
+        return budget_bucket(card.minutes).equals(budget)
+    }
+
+    func tally_of(cards : &vector<CatalogCard>, budget : &string, want_concepts : bool) : int {
+        var sum = 0
+        var i : size_t = 0
+        while(i < cards.size()) {
+            var card = cards.at_ref(i)
+            if(card_in_budget(card, budget)) {
+                if(want_concepts) { sum = sum + card.concepts }
+                else { sum = sum + card.minutes }
+            }
+            i = i + 1
+        }
+        return sum
+    }
+
+    public func render_courses_page(page : &mut HtmlPage, courses_dir : &string, budget : &string) {
         var courses = underlayer_repository::list_courses(courses_dir)
         var routes = build_routes()
         var catalog = build_catalog(&courses, &routes)
-        var tally = string("The collection is ")
+        var shown_courses = 0
+        var ci0 : size_t = 0
+        while(ci0 < catalog.size()) {
+            if(card_in_budget(catalog.at_ref(ci0), budget)) { shown_courses = shown_courses + 1 }
+            ci0 = ci0 + 1
+        }
+        var tally = string()
+        var shown = underlayer_core::int_to_string(shown_courses as i64)
+        tally.append_string(&shown)
+        tally.append_view(string_view(" of "))
         var cc = underlayer_core::int_to_string(courses.size() as i64)
         tally.append_string(&cc)
         tally.append_view(string_view(" courses, "))
-        var nc = underlayer_core::int_to_string(total_concepts(&catalog) as i64)
+        var nc = underlayer_core::int_to_string(tally_of(&catalog, budget, true) as i64)
         tally.append_string(&nc)
         tally.append_view(string_view(" lessons, "))
-        var tm = underlayer_core::int_to_string(total_minutes(&catalog) as i64)
+        var tm = underlayer_core::int_to_string(tally_of(&catalog, budget, false) as i64)
         tally.append_string(&tm)
-        tally.append_view(string_view(" minutes of material. Every course is one click from here."))
+        tally.append_view(string_view(" minutes in this view. Every course is one click from here."))
         var start = start_here_href()
         page.defaultPrepare()
         page.injectDefaultComponentsTheme()
@@ -69,6 +101,12 @@ public namespace underlayer_web {
                     <p class="lede">Find the course you need, or follow one ordered route from the first lesson. Every count on this page comes from the manifests.</p>
                     <p class="tally">{tally}</p>
                     <p class="courses-actions"><a class="btn btn-primary" href={start}>Start at step 1</a> <a class="text-link" href="/learning-path">See the ordered path</a></p>
+                    <div class="budget-control" role="group" aria-label="Choose a time budget">
+                        <span>How much time have you got?</span>
+                        <a href="/courses?budget=10">10 minutes</a>
+                        <a href="/courses?budget=week">This week</a>
+                        <a href="/courses?budget=deep">Deep dive</a>
+                    </div>
                 </header>
 
                 <section class="catalogue" aria-labelledby="catalogue-head">
@@ -85,7 +123,7 @@ public namespace underlayer_web {
                         <p class="course-count" id="course-count" aria-live="polite"></p>
                     </div>
                     <div class="course-grid" id="course-grid">
-                        {render_all_cards(&catalog, page)}
+                        {render_all_cards(&catalog, page, budget)}
                     </div>
                 </section>
             </main>

@@ -62,7 +62,18 @@ public namespace underlayer_web {
         var total_out = underlayer_core::int_to_string(results.size() as i64)
         body.append_string(&total_out)
         body.append_view("}")
-        return send_json_str(&body)
+        // I10: additive header only. The body above is byte-for-byte the
+        // frozen /api/search payload; a client that never reads headers sees
+        // exactly what it saw before. The alternate endpoint searches CONCEPTS,
+        // which this course-title-only endpoint has never done.
+        var res = send_json_str(&body)
+        var link = string("</api/search/concepts?q=")
+        var eq = underlayer_web::url_encode(&query)
+        link.append_view(eq.to_view())
+        link.append_view(">; rel=\"alternate\"")
+        var lv = link.to_view()
+        res.set_header_view(std::string_view("Link"), &lv)
+        return res
     }
 
     // 7.1.7: Filter/sort courses (by topic, difficulty, rating)

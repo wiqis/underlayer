@@ -63,7 +63,10 @@ public namespace underlayer_web {
             var fd_sv = first_diff.to_view()
             var fd_str = underlayer_core::json_escape(&fd_sv)
             body.append_view(fd_str.to_view())
-            body.append_view("\"}")
+            body.append_view("\"")
+            var meta = underlayer_web::load_course_metadata(courses_dir, &course.id)
+            underlayer_web::append_metadata_json(&mut body, &meta)
+            body.append('}')
             ci = ci + 1
         }
         body.append(']')
@@ -167,7 +170,10 @@ public namespace underlayer_web {
             body.append_view("\"}")
             ci = ci + 1
         }
-        body.append_view("]}")
+        body.append(']')
+        var meta2 = underlayer_web::load_course_metadata(courses_dir, &course.id)
+        underlayer_web::append_metadata_json(&mut body, &meta2)
+        body.append('}')
         return send_json_str(&body)
     }
 

@@ -111,7 +111,7 @@ public namespace underlayer_web {
 
     // One hit, copied out.  `SearchHit` owns its strings, so a swap cannot move
     // through a borrow; it copies each side out and writes it back.
-    func copy_hit(src : &SearchHit) : SearchHit {
+    public func copy_hit(src : &SearchHit) : SearchHit {
         var out = SearchHit::make()
         out.score = src.score
         out.concept_title = src.concept_title.copy()

@@ -52,6 +52,12 @@ public namespace underlayer_web {
                     <p class="lede">Follow the route in order. Each step says why it sits where it does; open “Why is this here?” when you want the full reasoning.</p>
                     <p class="tally">{tally}</p>
                     <p class="path-start"><a class="btn btn-primary" href={start}>Start at step 1</a></p>
+                    <div class="budget-control" role="group" aria-label="Choose a time budget">
+                        <span>Short on time? These three links open the same 33-course index, filtered:</span>
+                        <a href="/courses?budget=10">10 minutes</a>
+                        <a href="/courses?budget=week">This week</a>
+                        <a href="/courses?budget=deep">Deep dive</a>
+                    </div>
                 </header>
 
                 <section class="routes" aria-label="The three ordered routes">
