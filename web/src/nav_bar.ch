@@ -31,6 +31,11 @@ public namespace underlayer_web {
     public func render_nav_bar(page : &mut HtmlPage) {
         WiqisTheme(page, true)
         underlayer_content::render_site_nav(page)
+        // I11: the one shared support link in the footer. The nav markup itself
+        // lives in content/src/lesson_nav.ch; this web-layer wrapper is the
+        // single insertion point for the pages it renders, so no page can end
+        // up with two copies or a different destination.
+        render_support_footer(page)
 
         // C7 (7.1.14 / 7.1.24): an unread indicator and a due-review badge on
         // the one shared nav, which is what the signed-in home renders. Both

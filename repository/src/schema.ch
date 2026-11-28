@@ -228,6 +228,17 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw sql_sync)
         var idx_sync = string("CREATE INDEX IF NOT EXISTS idx_cup_learner_updated ON concept_unit_progress(learner_id, updated_at)")
         underlayer_db::exec_sql(db, &raw idx_sync)
+        // G3: per-learner FSRS tuning. One row per learner, created only when
+        // the learner actually changes a control (or optimises/imports). Until
+        // then every scheduling consumer keeps the shipped defaults, so older
+        // databases and anonymous "demo" learners behave exactly as before.
+        // params_json is the additive export shape {"w":[...],"target_retention":x,
+        // "daily_review_cap":n}; retention and cap are duplicated as columns so
+        // the due queue can read them without parsing JSON on every request.
+        var sql_fsrs = string("CREATE TABLE IF NOT EXISTS fsrs_params (learner_id TEXT PRIMARY KEY, params_json TEXT NOT NULL DEFAULT '', target_retention REAL DEFAULT 0.90, daily_review_cap INTEGER DEFAULT 20, updated_at INTEGER)")
+        underlayer_db::exec_sql(db, &raw sql_fsrs)
+        var idx_fsrs = string("CREATE INDEX IF NOT EXISTS idx_fsrs_learner ON fsrs_params(learner_id)")
+        underlayer_db::exec_sql(db, &raw idx_fsrs)
         // Every migration runs here, at the END, not next to its CREATE TABLE.
         // The old unconditional ALTERs sat above, and the reason that was wrong
         // is not timing -- it is that they were unconditional at all.  Running

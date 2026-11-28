@@ -22,6 +22,7 @@ public namespace underlayer_web {
                     <a href="#profile" class="tab active" data-tab="profile">Profile</a>
                     <a href="#account" class="tab" data-tab="account">Account</a>
                     <a href="#learning" class="tab" data-tab="learning">Learning</a>
+                    <a href="#fsrs" class="tab" data-tab="fsrs">Spaced repetition</a>
                 </nav>
                 <div class="settings-content">
                     <section id="profile-section" class="tab-content active">
@@ -207,6 +208,43 @@ public namespace underlayer_web {
                             <button type="submit" class="btn btn-primary">Save Preferences</button>
                         </form>
                     </section>
+                    <section id="fsrs-section" class="tab-content">
+                        <h2>Expert · spaced repetition</h2>
+                        <p class="fsrs-note">These controls change when your review cards come due. Changes are saved to your account, not just this browser.</p>
+                        <form id="fsrsForm">
+                            <div class="form-group">
+                                <label for="fsrs_retention">Desired retention</label>
+                                <select id="fsrs_retention">
+                                    <option value="0.80">80 percent</option>
+                                    <option value="0.85">85 percent</option>
+                                    <option value="0.90">90 percent (default)</option>
+                                    <option value="0.95">95 percent</option>
+                                </select>
+                                <small>How likely you want to remember a card when it is due.</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="fsrs_daily_cap">Daily review cap</label>
+                                <input type="number" id="fsrs_daily_cap" min="1" max="200" value="20" />
+                                <small>Maximum review cards shown in one day.</small>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save scheduling</button>
+                        </form>
+                        <div class="fsrs-actions">
+                            <button type="button" class="btn btn-secondary" id="fsrsOptimize">Optimise from my history</button>
+                            <button type="button" class="btn btn-secondary" id="fsrsExport">Export JSON</button>
+                            <button type="button" class="btn btn-secondary" id="fsrsReset">Reset to defaults</button>
+                        </div>
+                        <div id="fsrsError" class="fsrs-error" role="alert" hidden></div>
+                        <div id="fsrsMessage" class="fsrs-message" role="status" hidden></div>
+                        <div class="fsrs-import">
+                            <label for="fsrsImportText">Import Anki parameters</label>
+                            <textarea id="fsrsImportText" rows="3" placeholder="Paste Anki weights JSON"></textarea>
+                            <button type="button" class="btn btn-secondary" id="fsrsImport">Import parameters</button>
+                        </div>
+                        <div class="fsrs-result"><strong>Before</strong><pre id="fsrsBefore"></pre></div>
+                        <div class="fsrs-result"><strong>After</strong><pre id="fsrsAfter"></pre></div>
+                        <div class="fsrs-result"><strong>Export</strong><textarea id="fsrsExportOut" rows="3" readonly></textarea></div>
+                    </section>
                 </div>
             </div>
             </main>
@@ -232,6 +270,20 @@ public namespace underlayer_web {
             .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; font-size: 1rem; font-family: inherit; line-height: 1.6; transition: filter 0.15s; }
             .btn-primary { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
             .btn-primary:hover { filter: brightness(1.06); }
+            .btn-secondary { background: hsl(var(--muted)); color: hsl(var(--foreground)); }
+            .btn-secondary:hover { filter: brightness(1.06); }
+            .fsrs-note { font-size: 0.9rem; line-height: 1.6; color: hsl(var(--muted-foreground)); margin: 0 0 1.25rem; }
+            .fsrs-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.5rem 0 1rem; }
+            .fsrs-actions .btn { padding: 0.6rem 1rem; font-size: 0.9rem; }
+            .fsrs-import { margin-bottom: 1rem; }
+            .fsrs-import label { display: block; font-weight: 500; font-size: 0.9rem; margin-bottom: 0.5rem; }
+            .fsrs-import textarea, .fsrs-result textarea { width: 100%; box-sizing: border-box; font-family: ui-monospace, monospace; font-size: 0.85rem; }
+            .fsrs-error { padding: 0.75rem 1rem; border-radius: 0.5rem; background: hsl(0 70% 95%); color: hsl(0 70% 30%); margin-bottom: 1rem; font-size: 0.9rem; line-height: 1.6; }
+            .fsrs-error[hidden], .fsrs-message[hidden] { display: none; }
+            .fsrs-message { padding: 0.75rem 1rem; border-radius: 0.5rem; background: hsl(142 50% 94%); color: hsl(142 60% 25%); margin-bottom: 1rem; font-size: 0.9rem; line-height: 1.6; }
+            .fsrs-result { margin-bottom: 0.75rem; font-size: 0.85rem; }
+            .fsrs-result strong { display: block; margin-bottom: 0.25rem; color: hsl(var(--muted-foreground)); }
+            .fsrs-result pre { margin: 0; padding: 0.75rem; background: hsl(var(--muted)); border-radius: 0.5rem; overflow-x: auto; font-size: 0.8rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
             @media (max-width: 600px) { .settings-main { padding: 1rem 0.75rem 2rem; } .settings-nav { gap: 0.25rem; } .settings-nav .tab { padding: 0.5rem 0.75rem; font-size: 0.9rem; } .tab-content { padding: 1.25rem; } }
         }
         #js {
@@ -333,6 +385,81 @@ public namespace underlayer_web {
                     .then(function(data) { alert(data.ok ? 'Preferences saved!' : (data.error || 'Failed to save')); })
                     .catch(function() { alert('Network error. Please try again.'); });
             });
+            (function() {
+                var errEl = document.getElementById('fsrsError');
+                var msgEl = document.getElementById('fsrsMessage');
+                function showError(msg) { errEl.textContent = msg; errEl.hidden = false; msgEl.hidden = true; }
+                function showMessage(msg) { msgEl.textContent = msg; msgEl.hidden = false; errEl.hidden = true; }
+                function clear() { errEl.hidden = true; msgEl.hidden = true; }
+                function authHeaders() {
+                    var h = { 'Content-Type': 'application/json' };
+                    var t = localStorage.getItem('session_token');
+                    if(t) { h['Authorization'] = 'Bearer ' + t; }
+                    return h;
+                }
+                function readJson(r) {
+                    return r.text().then(function(t) {
+                        try { return JSON.parse(t); } catch(e) { return { error: t }; }
+                    });
+                }
+                function refresh() {
+                    return fetch('/api/fsrs/export', { headers: authHeaders() }).then(readJson).then(function(d) {
+                        if(d.error) { showError(d.error); return; }
+                        var sel = document.getElementById('fsrs_retention');
+                        var want = parseFloat(d.target_retention);
+                        for(var i = 0; i < sel.options.length; i++) {
+                            if(parseFloat(sel.options[i].value) === want) { sel.selectedIndex = i; }
+                        }
+                        document.getElementById('fsrs_daily_cap').value = String(d.daily_review_cap || 20);
+                        document.getElementById('fsrsExportOut').value = JSON.stringify(d, null, 2);
+                    }).catch(function() { showError('Could not load your FSRS settings.'); });
+                }
+                refresh();
+                document.getElementById('fsrsForm').addEventListener('submit', function(e) {
+                    e.preventDefault(); clear();
+                    var ret = document.getElementById('fsrs_retention').value;
+                    var cap = parseInt(document.getElementById('fsrs_daily_cap').value, 10);
+                    if(isNaN(cap) || cap < 1 || cap > 200) { showError('Daily review cap must be between 1 and 200.'); return; }
+                    var url = '/api/fsrs/params?target_retention=' + encodeURIComponent(ret) + '&daily_review_cap=' + encodeURIComponent(String(cap));
+                    fetch(url, { method: 'POST', headers: authHeaders() }).then(readJson).then(function(d) {
+                        if(d.error) { showError(d.error); return; }
+                        showMessage('Scheduling saved.'); refresh();
+                    }).catch(function() { showError('Network error. Please try again.'); });
+                });
+                document.getElementById('fsrsOptimize').addEventListener('click', function() {
+                    clear();
+                    fetch('/api/fsrs/optimize', { method: 'POST', headers: authHeaders() }).then(readJson).then(function(d) {
+                        if(d.error) { showError(d.error); return; }
+                        document.getElementById('fsrsBefore').textContent = JSON.stringify(d.before, null, 2);
+                        document.getElementById('fsrsAfter').textContent = JSON.stringify(d.after, null, 2);
+                        showMessage('Parameters optimised from your review history.');
+                        refresh();
+                    }).catch(function() { showError('Network error. Please try again.'); });
+                });
+                document.getElementById('fsrsExport').addEventListener('click', function() {
+                    clear(); refresh();
+                    showMessage('Current parameters are shown in the export box.');
+                });
+                document.getElementById('fsrsReset').addEventListener('click', function() {
+                    clear();
+                    fetch('/api/fsrs/reset', { method: 'POST', headers: authHeaders() }).then(readJson).then(function(d) {
+                        if(d.error) { showError(d.error); return; }
+                        document.getElementById('fsrsBefore').textContent = JSON.stringify(d.before, null, 2);
+                        document.getElementById('fsrsAfter').textContent = JSON.stringify(d.after, null, 2);
+                        showMessage('Parameters reset to defaults.'); refresh();
+                    }).catch(function() { showError('Network error. Please try again.'); });
+                });
+                document.getElementById('fsrsImport').addEventListener('click', function() {
+                    clear();
+                    var text = document.getElementById('fsrsImportText').value;
+                    if(!text) { showError('Paste an Anki weights array or exported object first.'); return; }
+                    var url = '/api/fsrs/import?weights=' + encodeURIComponent(text);
+                    fetch(url, { method: 'POST', headers: authHeaders() }).then(readJson).then(function(d) {
+                        if(d.error) { showError(d.error); return; }
+                        showMessage('Parameters imported.'); refresh();
+                    }).catch(function() { showError('Network error. Please try again.'); });
+                });
+            })();
         }
 
         var html_out = page.toString()

@@ -725,6 +725,10 @@ public func main() : int {
         var db = request_db()
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_fsrs_import(db, &mut req))
     })
+    srv.router.add("POST", "/api/fsrs/params", ||(req) => {
+        var db = request_db()
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_fsrs_params(db, &req))
+    })
     // ---- Session History (1.2.21, 1.2.22) ----
     srv.router.add("GET", "/api/sessions", ||(req) => {
         var db = request_db()
@@ -887,6 +891,14 @@ public func main() : int {
             return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_status_text(404u, &body))
         }
     })
+    // I5: the only nested /courses/* assets a learner may download. Registered
+    // BEFORE the catch-all below; the handler validates the raw segments and
+    // rebuilds the filename from an allow-listed course id, so a traversal or
+    // an absolute path can never reach path::Path.
+    srv.router.add("GET", "/courses/:course/assets/samples/:file", ||(req) => {
+        var courses_dir = underlayer_web::request_courses_dir()
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_specimen_download(&courses_dir, &req))
+    })
     // Static file serving for course output (HTML, CSS, JS, images)
     srv.router.add("GET", "/courses/*", ||(req) => {
         var courses_dir = underlayer_web::request_courses_dir()
@@ -961,6 +973,10 @@ public func main() : int {
     // Settings page
     srv.router.add("GET", "/settings", ||(req) => {
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_settings_page(&req))
+    })
+    // I11: public support channel, server-rendered with no JS dependency.
+    srv.router.add("GET", "/support", ||(req) => {
+        return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_support_page(&req))
     })
     srv.router.add("GET", "/components", ||(req) => {
         // I9: the component gallery is a developer showcase (~124 KB), not a

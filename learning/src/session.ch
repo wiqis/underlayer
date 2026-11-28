@@ -26,6 +26,25 @@ public namespace underlayer_learning {
         return session
     }
 
+    // G3: a session created for a learner who saved FSRS settings must use
+    // those weights/retention, not the defaults baked into ReviewSession::make.
+    // The old entry point is kept for callers that have no learner context.
+    public func start_review_session_with_params(items : vector<ReviewItem>, params : &FSRSParams) : ReviewSession {
+        var session = ReviewSession::make()
+        session.items = items
+        session.current_index = 0
+        // FSRSParams has no copy(); rebuild it field by field (same pattern as
+        // optimize_fsrs_params) so the caller's vector is never aliased.
+        session.params = FSRSParams::make()
+        var i : size_t = 0
+        while(i < params.w.size()) {
+            session.params.w.push(params.w.at(i))
+            i = i + 1
+        }
+        session.params.target_retention = params.target_retention
+        return session
+    }
+
     // The item at the session's current position, or a default item (empty id)
     // when the session is complete.  This used to write through an `out :
     // *mut ReviewItem`, which meant every field was a raw-pointer write.

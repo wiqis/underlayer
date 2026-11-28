@@ -849,6 +849,56 @@ founder's behalf, so this section records the work rather than claiming it.
   named owner in `Docs/decisions.md` when done.
 - **Do not claim EC3/EC10 "Data Safety filed" until that log exists.**
 
+## 5j. FSRS persistence, served specimen downloads and /support (2026-11-28)
+
+Measured against a freshly built debug binary on a fresh port (9044) and a
+throwaway SQLite file, not against source alone.
+
+- **G3 — FSRS parameters are persistent.** New table `fsrs_params(learner_id
+  PRIMARY KEY, params_json, target_retention, daily_review_cap, updated_at)` is
+  created in `repository/src/schema.ch`; `repository/src/fsrs_params.ch` owns the
+  load/save. `web/src/handlers_settings.ch::load_effective_fsrs()` is the ONE
+  read path; `handle_fsrs_optimize`, `_reset`, `_import` and the new
+  `POST /api/fsrs/params` all write the row, `handle_fsrs_export` reads it.
+  `web/src/handlers_review.ch` (submit + due) and `learning/src/session.ch`
+  consume it. `/api/review/due` now treats a card as due when its FSRS
+  retrievability is below the learner's target, bounded by the daily cap;
+  measured on a seeded throwaway DB: **21 due at 0.90 → 4 due at 0.85**, and the
+  same count/retention after a fresh login. Export → import round-trips byte-for-byte;
+  a malformed import answers `400 {"error": ...}`; optimise with <10 reviews
+  answers `400 need at least 10 reviews for optimization`. Additive JSON only.
+  **One-line change still needed in the parallel agent's
+  `web/src/handlers_exercises.ch` (line ~214): replace
+  `var params = underlayer_learning::init_fsrs_params()` with
+  `var params = underlayer_web::load_effective_fsrs(db, &learner_id).params`
+  (a local copy may be needed because Chemical rejects a field access on a
+  temporary struct value).** That file was not touched here.
+- **I5 (route half) — specimen downloads are served.** `app/main.ch` registers
+  `GET /courses/:course/assets/samples/:file` BEFORE the `/courses/*` catch-all.
+  The handler validates the raw segments against `[a-z0-9-]+` first, rebuilds
+  the filename as `<id>-specimen.(zip|json)` from the validated id, and never
+  passes a caller-controlled path to `path::Path`. Measured: ELF zip 200 with
+  `application/zip`, `Cache-Control: public, max-age=3600`, SHA-256 equal to disk;
+  `..`, `%2e%2e`, `%2f`, `%5c`, absolute and null-byte attempts all 404. The
+  `specimen_link_check.py` disk + download half is 33/33 bundles and 33/33
+  downloads. **`--require-served` is still NOT green**: 362 served landings and
+  lessons contain no `data-specimen-link` attribute. Those links belong to
+  `content/src/*` (course landings and the shared lesson renderer), which this
+  package does not own; the six landing files that do carry the attribute are
+  not the renderers the served pages use. The route defect is fixed; the link
+  insertion is a separate, content-owned work item.
+- **I11 — `/support` is live.** Server-rendered with supported channels, a named
+  owner placeholder (Waqas Tahir; duty operator from the H9 allow-list when it
+  exists), a published two-business-day response target and
+  `mailto:support@wiqis.com`. One support link is emitted by the shared
+  `render_support_footer()` called from `web/src/nav_bar.ch`, so pages that draw
+  the shared web nav get exactly one. `tools/support_link_check.py` is green
+  (5/5 public pages, 3/3 negative plants, non-local bases refused). Known gap:
+  `/privacy` still says "Privacy questions can be raised through the Help page"
+  rather than naming `support@wiqis.com`; `pages_legal.ch` is F0-owned and was
+  not edited. The checker reports this as a visible warning and fails on it
+  with `--require-privacy-channel`.
+
 ## 6. Still open (do not mistake these for done)
 
 1. **CSP externalisation: step 1 shipped 2026-11-27; the policy is NOT

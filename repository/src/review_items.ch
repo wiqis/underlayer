@@ -35,7 +35,10 @@ public namespace underlayer_repository {
     public func get_due_review_items(db : *DbClient, learner_id : &string, course_id : &string, limit : int) : vector<ReviewItem> {
         var items = vector<ReviewItem>()
         var now = underlayer_core::current_timestamp()
-        var sql = string("SELECT id, concept_id, type, front, back, difficulty, stability, retrievability, next_review, reps, lapses, ease_factor FROM review_items WHERE learner_id = '")
+        // G3: last_review is appended (not inserted) so existing column indices
+        // stay put; /api/review/due needs it to compute current retrievability
+        // against the learner's stored desired retention.
+        var sql = string("SELECT id, concept_id, type, front, back, difficulty, stability, retrievability, next_review, reps, lapses, ease_factor, last_review FROM review_items WHERE learner_id = '")
         sql.append_string(learner_id)
         sql.append_view("' AND course_id = '")
         sql.append_string(course_id)
@@ -67,6 +70,9 @@ public namespace underlayer_repository {
                 // 1.1.15: read ease_factor (column 11, may not exist in old DBs)
                 if(row.vals.size() >= 12) {
                     item.ease_factor = parse_i64(row.vals.at_ref(11).to_view()) as f64
+                }
+                if(row.vals.size() >= 13) {
+                    item.last_review = parse_i64(row.vals.at_ref(12).to_view())
                 }
                 items.push(item)
             }

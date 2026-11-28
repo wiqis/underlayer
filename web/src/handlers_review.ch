@@ -376,7 +376,9 @@ public namespace underlayer_web {
         state.concept_id = concept_id.copy()
         state.course_id = course_id.copy()
 
-        var params = underlayer_learning::init_fsrs_params()
+        // G3: the learner's saved FSRS parameters, not shipped defaults.
+        var fsrs_settings = underlayer_web::load_effective_fsrs(db, &learner_id)
+        var params = fsrs_settings.params
 
         // THE STORED FSRS MEMORY, NOT A FRESH CARD.
         //
@@ -630,17 +632,39 @@ public namespace underlayer_web {
         var learner_id = auth_get_learner_id(db, req)
         if(learner_id.size() == 0) { learner_id = string("demo") }
         var course_id = string("elf")
-        var limit : int = 10
+        // G3: the due queue is the scheduling consumer that makes a saved
+        // desired retention observable. An item is due when its current FSRS
+        // retrievability has fallen below the learner's target; the daily cap
+        // bounds how many are returned. Both come from the stored row, so a
+        // 0.90 -> 0.85 change alters the count after re-login.
+        var fsrs_settings = underlayer_web::load_effective_fsrs(db, &learner_id)
+        var limit = fsrs_settings.daily_review_cap
+        if(limit < 1) { limit = 20 }
+        var fetch_limit = limit * 20
+        if(fetch_limit > 500) { fetch_limit = 500 }
 
         // 2.4.21: lazily seed review items so the queue is never permanently empty
         underlayer_repository::seed_review_items(db, &learner_id, &course_id)
 
-        var due_items = underlayer_repository::get_due_review_items(db, &learner_id, &course_id, limit)
+        var due_items = underlayer_repository::get_due_review_items(db, &learner_id, &course_id, fetch_limit)
+        var now = underlayer_core::current_timestamp()
         var body = std::string("{\"items\":[")
         var i : size_t = 0
-        while(i < due_items.size()) {
-            if(i > 0) { body.append_view(",") }
+        var included : int = 0
+        while(i < due_items.size() && included < limit) {
             var item = due_items.at_ref(i)
+            var rs = underlayer_learning::ReviewState::make()
+            rs.stability = item.stability
+            var elapsed_days : f64 = 0.0
+            if(now > item.last_review) {
+                elapsed_days = ((now - item.last_review) as f64) / 86400.0
+            }
+            var retrievability = underlayer_learning::fsrs_retrievability(&rs, elapsed_days)
+            if(retrievability >= fsrs_settings.params.target_retention) {
+                i = i + 1
+                continue
+            }
+            if(included > 0) { body.append_view(",") }
             body.append_view("{\"id\":\"")
             body.append_string(&item.id)
             body.append_view("\",\"concept\":\"")
@@ -652,11 +676,18 @@ public namespace underlayer_web {
             body.append_view("\",\"back\":\"")
             body.append_string(&item.back)
             body.append_view("\"}")
+            included = included + 1
             i = i + 1
         }
         body.append_view("],\"total\":")
-        var total_str = underlayer_core::int_to_string(due_items.size() as i64)
+        var total_str = underlayer_core::int_to_string(included as i64)
         body.append_string(&total_str)
+        body.append_view(",\"target_retention\":")
+        var retention_str = underlayer_learning::f64_to_string(fsrs_settings.params.target_retention)
+        body.append_string(&retention_str)
+        body.append_view(",\"daily_review_cap\":")
+        var cap_str = underlayer_core::int_to_string(limit as i64)
+        body.append_string(&cap_str)
         body.append_view("}")
         return send_json_str(&body)
     }

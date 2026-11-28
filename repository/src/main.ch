@@ -14,6 +14,7 @@
 //   goals.ch          — get_learning_goal, set_learning_goal, delete_learning_goal
 //   profiles.ch       — get_profile, upsert_profile, is_username_available, get_profile_by_username
 //   settings.ch       — get_settings, upsert_settings, get_learning_preferences, upsert_learning_preferences
+//   fsrs_params.ch    — load_fsrs_params, save_fsrs_params (per-learner FSRS tuning, G3)
 //   enrollments.ch    — enroll_learner, get_enrollment, get_learner_enrollments, update_last_accessed, complete_enrollment
 //   feedback.ch       — submit_feedback, get_feedback_for_concept, get_all_pending_feedback, update_feedback_status, report_exercise, get_exercise_reports, get_all_exercise_reports, get_feedback_stats
 //   prerequisites.ch  — get_prerequisites, add_prerequisite, remove_prerequisite, check_prerequisites, get_missing_prerequisites, save_assessment_result, get_latest_assessment
