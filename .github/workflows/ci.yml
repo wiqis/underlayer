@@ -19,14 +19,22 @@
 #
 # HONEST LIMITS
 #   * Single platform: windows-latest, where the compiler is verified here.
-#   * No browser in CI: theme_check.py runs its full static contract. The
-#     Playwright proof runs locally with `python tools/theme_check.py BASE
-#     --browser`.
+#   * Browser coverage is nightly-only: theme_check.py runs its full static
+#     contract on every push (the Playwright proof remains a local opt-in with
+#     `python tools/theme_check.py BASE --browser`), while the E1 runner's
+#     Chrome/CDP half runs nightly with Playwright installed explicitly.
 #   * helpful_dedupe_check.py WRITES to the disposable ci-underlayer.db. It
 #     registers two throwaway learners; never point it at production.
 #   * bridge_probe.py sends three SAFE POSTs (bad-token bridge, no-token
 #     bridge, unknown route). No registration, no votes, no progress writes.
 #     The live-site probe is opt-in locally (`--deployed`) and is not in CI.
+#   * Gate split (2026-11-28): read-only checkers run on every push; write
+#     gates and the E1 Chrome runner run in the nightly job on their own
+#     disposable DB. Three reported-green tools are deliberately NOT wired
+#     because their own negative/live cases are red locally; the full reason
+#     and exact failure text live in docs/ci-gate-inventory.md.
+#   * PYTHONIOENCODING=utf-8 is set on both jobs so a checker's Unicode output
+#     cannot crash on the Windows runner's cp1252 default console.
 #
 # NEGATIVE CASE for each CI checker (how we know it can fail):
 #   journey_quality_check  remove a journey runtime marker from a served page
@@ -52,6 +60,8 @@
 #                          LENGTH passed to subview() (the shipped truncation
 #                          bug); the checker must name `truncated` and fail.
 # A check that cannot fail is decoration. Prove it before trusting a green run.
+# The complete per-gate inventory (command, owner, negative case, local exit
+# code) is docs/ci-gate-inventory.md.
 
 name: ci
 
@@ -75,6 +85,8 @@ jobs:
   verify:
     runs-on: windows-latest
     env:
+      # Windows runners default to cp1252; several checkers print Unicode.
+      PYTHONIOENCODING: 'utf-8'
       # Set CHEMICAL_ROOT once for a self-hosted runner; workflow_dispatch can
       # override it per run. scripts/_common.sh honours the same variable.
       CHEMICAL_ROOT: ${{ inputs.compiler_root || vars.CHEMICAL_ROOT || '' }}
@@ -165,7 +177,14 @@ jobs:
 
       - name: Build ELF static pages
         shell: bash
-        run: bash scripts/build_static.sh elf --quiet
+        run: |
+          set -euo pipefail
+          # scripts/_common.sh discovers the compiler from CHEMICAL_ROOT. On a
+          # stock runner the source build lives in chemical-src/, which is not
+          # on that search path; point it there without overriding a real
+          # self-hosted CHEMICAL_ROOT.
+          CHEMICAL_ROOT="${CHEMICAL_ROOT:-chemical-src}" \
+            bash scripts/build_static.sh elf --quiet
 
       - name: Build test application (@test suite, no --test)
         shell: bash
@@ -262,12 +281,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # I9 goes FIRST: helpful_dedupe_check below writes a real review row,
+          # after which GET /api/courses/:id/reviews legitimately contains
+          # learner_id and a later anonymous probe would misread it.
+          python tools/anonymous_surface_check.py --base "$BASE"
           python tools/journey_quality_check.py "$BASE" --all --workers 8
           python tools/theme_check.py "$BASE"
           python tools/lesson_pager_check.py "$BASE"
           python tools/helpful_dedupe_check.py "$BASE"
           python tools/bridge_probe.py "$BASE"
           # H3: header parity across frozen pages, assets and the 404.
+          # The selftest serves a headerless page and must FAIL on it.
+          python tools/security_header_coverage.py --selftest
           python tools/security_header_coverage.py "$BASE"
           # I2: a literal route must not be captured by an earlier pattern.
           python tools/literal_route_shadow_check.py --selftest
@@ -275,6 +300,10 @@ jobs:
           # I1: sitemap/robots/canonical/JSON-LD over the generated URL list.
           python tools/seo_surface_check.py --selftest
           python tools/seo_surface_check.py "$BASE"
+          # G7 discovery: baseline is derived from the live search API, not a
+          # hardcoded hit count (adding E1/E6 legitimately grew it to 114).
+          python tools/discovery_check.py --selftest
+          python tools/discovery_check.py --base "$BASE"
           # I14: course landing parity with the API. `--allow-uniform pe` is an
           # explicit, dated exception pending the PE per-concept minute fix (I14).
           python tools/course_landing_contract.py --selftest
@@ -282,14 +311,80 @@ jobs:
             --allow-uniform pe
           # C1: generated graded banks are a hard gate.
           python tools/verify_graded_banks.py
-          # NOTE: I9's anonymous_surface_check and H12's verify_course_bytes are
-          # deliberately NOT wired as green gates yet: the former still finds 13
-          # unmarked endpoints, the latter has six pre-existing specimen-blocked
-          # harnesses. Wire them only when their own acceptance criteria pass.
+          # I4 / I3: served quiz parity and lesson-traceable explanations over
+          # the lesson set derived from /api/courses (never hardcoded).
+          python tools/quiz_parity_check.py "$BASE" --workers 8
+          python tools/explanation_check.py "$BASE"
+          # I7: one metadata contract on disk, on the wire and on the landing.
+          python tools/metadata_check.py --base "$BASE" --require-migrated
+          # G5: the four new graded types and six specimen labs, served.
+          python tools/g5_types_check.py --base "$BASE"
+          # G10: the served "Your data" panel (browser half is nightly-only).
+          python tools/data_panel_check.py --base "$BASE"
+          # I10: the frozen /api/search shape and its alternate concept route.
+          python tools/search_contract_check.py --base "$BASE"
+          # I9's live probe runs first in this step (see above): 94 anonymous
+          # GET routes, 0 unmarked learner payloads on a write-free DB. The old
+          # "13 unmarked endpoints" note was stale.
+          # I11: exactly one shared support link on every public page.
+          python tools/support_link_check.py --base "$BASE"
+          # B5: source/SRI/CSP agreement plus the served asset and CSP header.
+          python tools/theme_boot_hash_check.py "$BASE"
+          # I5: specimen bundles on disk with matching served SHA-256. The
+          # --require-served half stays OUT (served links are content-owned);
+          # see docs/ci-gate-inventory.md for the exact red case.
+          python tools/specimen_link_check.py --base "$BASE" \
+            --download-base "$BASE"
+          # H12's verify_course_bytes still has six pre-existing
+          # specimen-blocked harnesses; do not wire it as green.
           # B7: empty-bucket probe on this job's disposable DB. The
           # deployed two-network half is a founder action, NOT in CI.
           python tools/rate_limit_deployed_probe.py --local --port "$PORT" \
             --reset-db ./ci-underlayer.db
+
+      - name: Nonvacuity and source verifiers (per push)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Every gate above that exposes --selftest gets its own planted
+          # control. A checker that accepts its own plant is decoration.
+          python tools/metadata_check.py --selftest
+          python tools/g5_types_check.py --selftest
+          python tools/data_panel_check.py --selftest
+          python tools/search_contract_check.py --selftest
+          python tools/anonymous_surface_check.py --selftest
+          python tools/support_link_check.py --selftest
+          python tools/theme_boot_hash_check.py --selftest
+          python tools/specimen_link_check.py --selftest
+          # Source-only verifiers: no server, no DB, no secrets.
+          python tools/author_lint.py --selftest
+          python tools/author_lint.py
+          python tools/verify_front.py --poison
+          python tools/verify_binread.py
+          # Inverted plants: each of these tools MUST exit 1 and name the
+          # defect. A green run, a transport error or a silent plant fails CI.
+          set +e
+          python tools/quiz_parity_check.py "$BASE" --plant explain \
+            --workers 8 > build/quiz-plant.log 2>&1
+          qcode=$?
+          python tools/explanation_check.py "$BASE" --plant \
+            > build/explanation-plant.log 2>&1
+          ecode=$?
+          python tools/explanation_check.py "$BASE" --plant-response \
+            > build/explanation-response-plant.log 2>&1
+          ercode=$?
+          python tools/verify_binread.py --self-poison \
+            > build/binread-poison.log 2>&1
+          bcode=$?
+          set -e
+          [ "$qcode" -eq 1 ] || { echo "::error::quiz plant must exit 1 (got $qcode)"; exit 1; }
+          grep -q 'options have data-explain' build/quiz-plant.log
+          [ "$ecode" -eq 1 ] || { echo "::error::explanation plant must exit 1 (got $ecode)"; exit 1; }
+          grep -q 'explanation not traceable' build/explanation-plant.log
+          [ "$ercode" -eq 1 ] || { echo "::error::response plant must exit 1 (got $ercode)"; exit 1; }
+          grep -q 'why_wrong is empty' build/explanation-response-plant.log
+          [ "$bcode" -eq 1 ] || { echo "::error::binread poison must exit 1 (got $bcode)"; exit 1; }
+          grep -q 'POISON (expected failure)' build/binread-poison.log
 
       - name: Stop server
         if: always()
@@ -303,17 +398,21 @@ jobs:
 
   nightly-live-gates:
     # Wave 1 P0 H4: the live corpus runs nightly on a disposable DB. Each job
-    # gets its own checkout and its own ci-underlayer.db, so a write probe can
-    # never touch a developer's local database. Logs remain on the run page.
+    # gets its own checkout and its own ci-underlayer-test.db (the "test" marker
+    # is required by takeover_check.py's throwaway-DB guard), so a write probe
+    # can never touch a developer's local database. Logs remain on the run page.
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     env:
+      PYTHONIOENCODING: 'utf-8'
       CHEMICAL_ROOT: ${{ inputs.compiler_root || vars.CHEMICAL_ROOT || '' }}
       CHEMICAL_REF: ${{ vars.CHEMICAL_REF || '7a2da4173d49678bdf6c32e4a1ff7ddaba32d240' }}
       # H4: the live gate tools read the same disposable DB the server writes.
       # Without this they fall back to underlayer.db and assert against a
       # different file, which looks like a product failure but is a harness bug.
-      DATABASE_URL: ./ci-underlayer.db
+      DATABASE_URL: ./ci-underlayer-test.db
+      # enroll_check.py reads UL_DB (not DATABASE_URL) for its seeded tables.
+      UL_DB: ./ci-underlayer-test.db
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -373,6 +472,17 @@ jobs:
             exit 1
           fi
           echo "UL_COMPILER=$compiler" >> "$GITHUB_ENV"
+      - name: Build front static page (E1 browser runner)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # front_runner_check.py opens courses/front/output/fe-ast.html from
+          # file://. Same CHEMICAL_ROOT fallback as the per-push static build.
+          CHEMICAL_ROOT="${CHEMICAL_ROOT:-chemical-src}" \
+            bash scripts/build_static.sh front --quiet
+      - name: Install Playwright (nightly browser gates)
+        shell: bash
+        run: python -m pip install --disable-pip-version-check playwright
       - name: Build server and start on disposable DB
         shell: bash
         run: |
@@ -381,8 +491,8 @@ jobs:
           PORT="$(python -c "import socket;s=socket.socket();s.bind(('127.0.0.1',0));print(s.getsockname()[1]);s.close()")"
           echo "PORT=$PORT" >> "$GITHUB_ENV"
           echo "BASE=http://localhost:$PORT" >> "$GITHUB_ENV"
-          rm -f ci-underlayer.db ci-underlayer.db-shm ci-underlayer.db-wal
-          PORT="$PORT" DATABASE_URL=./ci-underlayer.db COURSES_DIR=./courses \
+          rm -f ci-underlayer-test.db ci-underlayer-test.db-shm ci-underlayer-test.db-wal
+          PORT="$PORT" DATABASE_URL=./ci-underlayer-test.db COURSES_DIR=./courses \
             ./build/underlayer-nightly.exe > build/nightly-server.log 2>&1 &
           echo $! > build/nightly-server.pid
           for i in $(seq 1 30); do
@@ -403,6 +513,39 @@ jobs:
           python tools/route_check.py --port "$PORT" --quiet
           python tools/integration_check.py --base "$BASE"
           python tools/checker_nonvacuity.py
+      # These run BEFORE the H9/H15 step: H15 is documented KNOWN RED, and a
+      # failing step would otherwise prevent the new gates from ever running.
+      - name: Write gates (nightly, disposable DB)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Nonvacuity controls first, then each live write gate against the
+          # job's own throwaway DB. g_features_check.py runs its four negative
+          # plants internally on every live invocation and fails if a plant is
+          # accepted, so it needs no separate --selftest line.
+          python tools/g_features_check.py "$BASE" --db ./ci-underlayer-test.db
+          # G10 browser half: drives a disposable shadow learner in Chrome.
+          python tools/data_panel_check.py --base "$BASE" --browser --seed
+          python tools/proof_check.py --selftest
+          python tools/proof_check.py --base "$BASE" --seed \
+            --db ./ci-underlayer-test.db
+          python tools/enroll_check.py --selftest
+          python tools/enroll_check.py --port "$PORT"
+          python tools/takeover_check.py --selftest
+          python tools/takeover_check.py --base "$BASE" \
+            --db ./ci-underlayer-test.db
+          python tools/instance_consistency_probe.py --selftest
+          python tools/instance_consistency_probe.py "$BASE" --disposable
+          # The deployed / *.wiqis.com half of instance_consistency_probe is
+          # founder-gated (--founder-approved) and is deliberately NOT in CI.
+      - name: E1 front runner (nightly Chrome)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The tool exits 0 if Playwright/Chrome is missing and the browser
+          # half is skipped, so require the full 13/13 count explicitly.
+          python tools/front_runner_check.py 2>&1 | tee build/front-runner.log
+          grep -q 'runner checks: 13/13 pass' build/front-runner.log
       - name: H9/H11/H13/H15/H16 integrity gates (nightly, disposable DB)
         shell: bash
         run: |
@@ -430,12 +573,39 @@ jobs:
           python tools/perf_budget_check.py --selftest
           python tools/perf_budget_check.py "$BASE" \
             --evidence build/h15-perf-evidence.json
+      - name: H14 anonymous-write gate (release mode, disposable DB)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # This gate is MEANINGLESS against a debug server: debug deliberately
+          # keeps the anonymous write paths that tests.exe still exercises.
+          # Start a second release-mode instance on its own port and DB.
+          RPORT="$(python -c "import socket;s=socket.socket();s.bind(('127.0.0.1',0));print(s.getsockname()[1]);s.close()")"
+          RBASE="http://localhost:$RPORT"
+          rm -f probe-release-ci.db probe-release-ci.db-shm probe-release-ci.db-wal
+          PORT="$RPORT" DATABASE_URL=./probe-release-ci.db COURSES_DIR=./courses \
+            UL_BUILD_MODE=release UL_BUILD_COMMIT=ci-nightly \
+            UL_BUILD_COMPILER_VERSION=ci-pinned UL_BUILD_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            ./build/underlayer-nightly.exe > build/ci-release-server.log 2>&1 &
+          echo $! > build/ci-release-server.pid
+          for i in $(seq 1 30); do
+            if curl -fsS --connect-timeout 2 --max-time 5 "$RBASE/api/health" > /dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          curl -fsS "$RBASE/api/health" > build/ci-release-health.json
+          python tools/anonymous_write_check.py --selftest
+          python tools/anonymous_write_check.py --base "$RBASE" --db ./probe-release-ci.db
       - name: Stop server
         if: always()
         shell: bash
         run: |
           if [ -f build/nightly-server.pid ]; then
             pid="$(cat build/nightly-server.pid)"
+            kill "$pid" 2>/dev/null || true
+            taskkill //F //PID "$pid" 2>/dev/null || true
+          fi
+          if [ -f build/ci-release-server.pid ]; then
+            pid="$(cat build/ci-release-server.pid)"
             kill "$pid" 2>/dev/null || true
             taskkill //F //PID "$pid" 2>/dev/null || true
           fi

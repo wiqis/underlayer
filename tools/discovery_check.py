@@ -134,8 +134,21 @@ def run_live(args):
     for _, urls, _ in pages:
         reachable.update(urls)
     print("byte results reachable: %d unique URLs over %d pages" % (len(reachable), len(pages)))
-    if len(reachable) != 110:
-        failures.append("expected 110 unique byte hits, found %d" % len(reachable))
+    # Derive the baseline from the live search API instead of hardcoding a
+    # count: adding E1/E6 legitimately grew the corpus from 110 to 114 hits.
+    # A zero/one-result corpus still fails as vacuous.
+    expected_hits = 0
+    try:
+        stub = urllib.request.Request(base + "/api/search/concepts?q=byte",
+                                      headers={"User-Agent": "discovery-check/1"})
+        with urllib.request.urlopen(stub, timeout=TIMEOUT) as response:
+            expected_hits = int(json.loads(response.read().decode("utf-8", "replace")).get("total", 0))
+    except Exception as exc:  # noqa: BLE001 - an unreadable baseline must fail, not pass
+        failures.append("cannot read search baseline: %s" % exc)
+    if expected_hits < 2:
+        failures.append("search baseline is vacuous (%d hits)" % expected_hits)
+    elif len(reachable) != expected_hits:
+        failures.append("expected %d unique byte hits, found %d" % (expected_hits, len(reachable)))
     all_links = []
     for _, _, html in pages:
         all_links.extend(pages_of(html))

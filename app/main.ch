@@ -652,10 +652,22 @@ public func main() : int {
     // /api/progress/:courseId route below so "takeover" is never a course id. ----
     srv.router.add("POST", "/api/progress/takeover/token", ||(req) => {
         var db = request_db()
+        // H14/CI: this inserts a one-shot token row. In release only a signed-in
+        // learner may create it; debug keeps the old behaviour for tests.
+        var gate = require_session_in_release(db, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return underlayer_web::deliver_with_learner(db, &req, refusal)
+        }
         return underlayer_web::deliver_with_learner(db, &req, underlayer_web::handle_takeover_token(db, &req))
     })
     srv.router.add("POST", "/api/progress/takeover", ||(req) => {
         var db = request_db()
+        var gate = require_session_in_release(db, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return underlayer_web::deliver_with_learner(db, &req, refusal)
+        }
         return underlayer_web::deliver_with_learner(db, &req, underlayer_web::handle_progress_takeover(db, &mut req))
     })
     // ---- Course Progress API ----
@@ -786,6 +798,13 @@ public func main() : int {
     })
     srv.router.add("POST", "/api/fsrs/reset", ||(req) => {
         var db = request_db()
+        // H14/CI: reset writes a per-learner fsrs_params row; release requires
+        // a real session so an anonymous caller cannot create persistent state.
+        var gate = require_session_in_release(db, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return underlayer_web::deliver_with_learner(db, &req, refusal)
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_fsrs_reset(db, &req))
     })
     srv.router.add("GET", "/api/fsrs/export", ||(req) => {
@@ -798,6 +817,13 @@ public func main() : int {
     })
     srv.router.add("POST", "/api/fsrs/params", ||(req) => {
         var db = request_db()
+        // H14/CI: writes a per-learner fsrs_params row. Release requires a
+        // session; debug keeps the old behaviour for the unit suite.
+        var gate = require_session_in_release(db, &req)
+        if(gate is std::Option.Some) {
+            var Some(refusal) = gate else unsafe { unreachable }
+            return underlayer_web::deliver_with_learner(db, &req, refusal)
+        }
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::handle_fsrs_params(db, &req))
     })
     // ---- Session History (1.2.21, 1.2.22) ----

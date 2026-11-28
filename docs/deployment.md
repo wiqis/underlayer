@@ -39,9 +39,11 @@ live site. Do not describe the CI workflow below as a deployment pipeline.
 
 ## 2. CI — verification only
 
-`.github/workflows/ci.yml` runs on `push`, `pull_request` and
-`workflow_dispatch`. As of **2026-11-26** (commits `e627de0` for the suite and
-`63b33eb` for the workflow) it:
+`.github/workflows/ci.yml` runs on `push`, `pull_request`, `schedule` (03:17 UTC)
+and `workflow_dispatch`. As of **2026-11-28** it has two verification-only jobs.
+The founder deploys manually; there is no CD.
+
+### `verify` — every push
 
 1. checks out the repository with read-only permissions (`contents: read`);
 2. **provisions the compiler** — either a pre-provisioned `CHEMICAL_ROOT`/
@@ -51,7 +53,9 @@ live site. Do not describe the CI workflow below as a deployment pipeline.
    compiler SHA-256 in `build/compiler.sha256` and fails with an actionable
    message if neither path yields `TCCCompiler`;
 3. builds the server with `-bm-modules --no-cache`;
-4. builds the ELF static pages with `bash scripts/build_static.sh elf --quiet`;
+4. builds the ELF static pages with `bash scripts/build_static.sh elf --quiet`.
+   The step passes `CHEMICAL_ROOT="${CHEMICAL_ROOT:-chemical-src}"`, because
+   `scripts/_common.sh` does not search the stock runner's checkout directory;
 5. **builds the `@test` application** with
    `"$UL_COMPILER" tests/chemical.mod -o build/tests-verify.exe --no-cache`
    (deliberately **without** `--test`, which would propagate into dependencies);
@@ -60,15 +64,48 @@ live site. Do not describe the CI workflow below as a deployment pipeline.
 7. runs the endpoint matrix, then the Chemical suite (parsing the `Summary: N
    tests – P passed, F failed` line, because the runner exits 0 even when tests
    fail, and refusing a zero-test run);
-8. runs **five** served-artifact checkers:
-   `tools/journey_quality_check.py`, `tools/theme_check.py`,
-   `tools/lesson_pager_check.py`, `tools/helpful_dedupe_check.py` and
-   `tools/bridge_probe.py` (three read-only POSTs proving the account-bridge
-   route exists; no registration, votes or progress writes);
-9. stops the server in an `always()` step.
+8. runs the served-artifact checkers. The original five
+   (`journey_quality_check.py`, `theme_check.py`, `lesson_pager_check.py`,
+   `helpful_dedupe_check.py`, `bridge_probe.py`) are joined by
+   `security_header_coverage.py`, `literal_route_shadow_check.py`,
+   `seo_surface_check.py`, `course_landing_contract.py`,
+   `verify_graded_banks.py`, `quiz_parity_check.py`, `explanation_check.py`,
+   `metadata_check.py --require-migrated`, `g5_types_check.py`,
+   `data_panel_check.py`, `search_contract_check.py`,
+   `anonymous_surface_check.py`, `support_link_check.py`,
+   `theme_boot_hash_check.py` and `specimen_link_check.py` (disk + downloads).
+   The I9 probe runs **first**: `helpful_dedupe_check.py` writes a review row,
+   after which `/api/courses/:id/reviews` legitimately carries `learner_id`.
+9. runs the nonvacuity / source verifiers: `--selftest` for every checker that
+   supports it, `author_lint.py`, `verify_front.py --poison`, `verify_binread.py`
+   plus `static_gate_negative_cases.py`, and inverted plant commands for quiz
+   parity, explanations and the binread verifier. An inverted plant is a hard
+   gate — it must exit 1 **and** print its named defect.
+10. stops the server in an `always()` step.
 
-Any non-zero exit fails the job. There is **no deploy step, no publish step, no
-`git push`, and no secret of any kind** in the workflow.
+### `nightly-live-gates` — schedule / dispatch only
+
+Same checkout/compiler/build sequence, but the server uses a separate
+**`ci-underlayer-test.db`** (the `test` marker is required by
+`takeover_check.py`); `DATABASE_URL` and `UL_DB` both point at it. It also builds
+the `front` static page and installs Playwright, then runs:
+
+- the existing live corpus (`security_check.py`, `route_check.py`,
+  `integration_check.py`, `checker_nonvacuity.py`) and the H9/H11/H13/H15/H16
+  integrity gates, unchanged;
+- the write gates `g_features_check.py` (with its four internal negative
+  plants), `data_panel_check.py --browser --seed`, `proof_check.py --seed`,
+  `enroll_check.py`, `takeover_check.py` and
+  `instance_consistency_probe.py --disposable`, each with its `--selftest`
+  where available;
+- `front_runner_check.py`, with a hard assertion that the full 13/13 count ran
+  (the tool exits 0 when the browser half is skipped).
+
+Both jobs set `PYTHONIOENCODING=utf-8` so checker output cannot crash on the
+Windows runner's cp1252 console. Any non-zero exit fails the job. There is
+**no deploy step, no publish step, no `git push`, and no secret of any kind** in
+the workflow. The full per-gate command/owner/negative-case table is
+`docs/ci-gate-inventory.md`, including the gates deliberately left out and why.
 
 ### Honest limits of the workflow
 
@@ -76,10 +113,12 @@ Any non-zero exit fails the job. There is **no deploy step, no publish step, no
   platform where TCCCompiler is verified here. The compiler is a native binary
   this repository does not build; a Linux runner would need a Linux compiler
   checkout and its own verification.
-- **No browser in CI.** `theme_check.py` runs all 56 static contract checks. The
-  extra Playwright proof that a stored `dark` choice is applied before the first
-  body paint runs locally with `python tools/theme_check.py BASE --browser`
-  (or `THEME_CHECK_BROWSER=1`).
+- **Browser coverage is nightly-only.** `theme_check.py` runs its full static
+  contract on every push; the Playwright proof that a stored `dark` choice is
+  applied before the first body paint remains a local opt-in with
+  `python tools/theme_check.py BASE --browser` (or `THEME_CHECK_BROWSER=1`).
+  The nightly job installs Playwright and runs the E1 front runner and the G10
+  data-panel drive in real Chrome.
 - **The write probe needs a disposable DB.** `helpful_dedupe_check.py` registers
   two throwaway learners and casts votes. It is safe in CI because the database
   is created fresh for the job. Never point it at production.
@@ -88,7 +127,7 @@ Any non-zero exit fails the job. There is **no deploy step, no publish step, no
   was true until A3 (`e627de0`) unblocked it and A2 (`63b33eb`) wired it in. It
   builds as a separate application without `--test` and runs **138/138 green**
   (`build/a2verify-tests.stripped.log`, 2026-11-26; `Summary: 138 tests - 138
-  passed, 0 failed`). The suite and the five served-artifact checkers are
+  passed, 0 failed`). The suite and the served-artifact checkers are
   complementary, not substitutes: the checkers probe a running server, the
   suite exercises the modules directly. A GitHub-hosted runner execution of
   this workflow has **not** been observed on this machine; the steps above were
