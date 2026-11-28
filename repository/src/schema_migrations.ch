@@ -131,6 +131,15 @@ public namespace underlayer_repository {
         var t_pref = string_view("learning_preferences")
         var c_oc = string_view("onboarding_completed_at")
         add_column_if_missing(db, &t_pref, &c_oc, string_view("INTEGER"))
+
+        // H9: every operator action records the request id it answered under
+        // and the allow-listed identity that authorised it. Both columns are
+        // additive with '' defaults, so historical rows stay readable.
+        var t_audit = string_view("audit_log")
+        var c_rid = string_view("request_id")
+        var c_actor = string_view("actor")
+        add_column_if_missing(db, &t_audit, &c_rid, string_view("TEXT DEFAULT ''"))
+        add_column_if_missing(db, &t_audit, &c_actor, string_view("TEXT DEFAULT ''"))
     }
 
     // Tables that need creating rather than altering.  Separate from

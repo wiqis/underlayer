@@ -273,6 +273,23 @@ public func main() : int {
     // bytes, because clients and the served-behaviour checkers parse them.
     srv.router.add("GET", "/api/health", ||(req) => {
         var body = underlayer_core::health_json_with_build_info()
+        // H17: additive kill-switch state. The two fields are the wire-proof
+        // that a flag flip took effect without a rebuild; status/version and
+        // the H5 provenance fields keep their exact bytes.
+        var body_view = body.to_view()
+        var prefix = body_view.subview(0, body.size() - 1)
+        var flagged = string()
+        flagged.append_view(&prefix)
+        flagged.append_view(",\"paid_gating_enabled\":\"")
+        var paid = underlayer_core::flag_state(underlayer_core::paid_gating_enabled())
+        var paid_view = paid.to_view()
+        flagged.append_view(&paid_view)
+        flagged.append_view("\",\"learner_surface_v2\":\"")
+        var v2 = underlayer_core::flag_state(underlayer_core::learner_surface_v2())
+        var v2_view = v2.to_view()
+        flagged.append_view(&v2_view)
+        flagged.append_view("\"}")
+        body = flagged
         return underlayer_web::deliver_with_learner(request_db(), &req, underlayer_web::send_json_str(&body))
     })
 

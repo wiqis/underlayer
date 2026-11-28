@@ -239,6 +239,14 @@ public namespace underlayer_repository {
         underlayer_db::exec_sql(db, &raw sql_fsrs)
         var idx_fsrs = string("CREATE INDEX IF NOT EXISTS idx_fsrs_learner ON fsrs_params(learner_id)")
         underlayer_db::exec_sql(db, &raw idx_fsrs)
+        // H13: retired concept slug -> stable successor. A content id is a
+        // display slug; learner state must survive a rename. No learner row is
+        // rewritten here -- that happens on manifest load, forward-only, with
+        // FSRS columns left untouched.
+        var sql_alias = string("CREATE TABLE IF NOT EXISTS concept_aliases (old_id TEXT PRIMARY KEY, new_id TEXT NOT NULL, course_id TEXT DEFAULT '', reason TEXT DEFAULT '', created_at INTEGER)")
+        underlayer_db::exec_sql(db, &raw sql_alias)
+        var idx_alias = string("CREATE INDEX IF NOT EXISTS idx_alias_new ON concept_aliases(new_id)")
+        underlayer_db::exec_sql(db, &raw idx_alias)
         // Every migration runs here, at the END, not next to its CREATE TABLE.
         // The old unconditional ALTERs sat above, and the reason that was wrong
         // is not timing -- it is that they were unconditional at all.  Running
@@ -260,6 +268,12 @@ public namespace underlayer_repository {
         // is: this table is written by anonymous requests and nothing else
         // removes rows.
         purge_expired_rate_limits(db)
+        // H16: startup is DRY-RUN. Counts are logged; nothing is deleted until
+        // an explicitly applied (nightly, disposable-DB) sweep runs. The
+        // historical 152 orphan rows are a founder decision, not ours.
+        var retention_counts = run_retention_sweep(db, false)
+        var retention_line = retention_log_line(&retention_counts)
+        underlayer_core::log_line(&retention_line)
     }
 
 }

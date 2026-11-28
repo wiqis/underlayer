@@ -403,6 +403,33 @@ jobs:
           python tools/route_check.py --port "$PORT" --quiet
           python tools/integration_check.py --base "$BASE"
           python tools/checker_nonvacuity.py
+      - name: H9/H11/H13/H15/H16 integrity gates (nightly, disposable DB)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # H9: two throwaway accounts prove a normal learner stays 403 and
+          # cannot read another learner's report. The allow-list client half is
+          # a selftest (it needs a configured operator secret).
+          python tools/feedback_triage.py --selftest
+          python tools/feedback_triage.py --base "$BASE" --two-account-regression
+          # H11: local `/sign-in` opener and zero remote hrefs. The real
+          # passkey/Google ceremonies are a founder exception, not a CI claim.
+          python tools/auth_shape_check.py --selftest
+          python tools/auth_shape_check.py --base "$BASE"
+          # H13/H16: forward-only concept migration and retention sweep, both
+          # on disposable DBs created by the tools themselves.
+          python tools/concept_migration_check.py --selftest
+          python tools/concept_migration_check.py
+          python tools/retention_check.py --selftest
+          python tools/retention_check.py
+          # H15: CWV-aligned budget over six archetypes x two widths.
+          # KNOWN RED as of 2026-11-28: brandlib loads a render-blocking
+          # fonts.googleapis.com stylesheet on four pages and one mobile
+          # lesson measures CLS 0.12 > 0.10. Owner: founder / brandlib.
+          # Do not mark this step green or relax it until those are fixed.
+          python tools/perf_budget_check.py --selftest
+          python tools/perf_budget_check.py "$BASE" \
+            --evidence build/h15-perf-evidence.json
       - name: Stop server
         if: always()
         shell: bash

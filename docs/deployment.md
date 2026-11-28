@@ -899,6 +899,58 @@ throwaway SQLite file, not against source alone.
   not edited. The checker reports this as a visible warning and fails on it
   with `--require-privacy-channel`.
 
+## 5k. Operator identity, retention, flags and the H9–H17 gates (2026-11-28)
+
+Built to `build/h9-h17-underlayer-v2.exe`, served on fresh ports **9060**
+(no allow-list), **9062** (operator allow-list) and **9064** (both rollout flags
+on), each with a throwaway SQLite file. No deploy, push or commit.
+
+- **H9 — operator identity.** `UL_OPERATOR_IDS` is a comma-separated allow-list
+  of stable identities (local learner id, `account_user_id` or email), read
+  from the environment by `core/src/config.ch` and compared with a
+  length-independent, constant-time loop. `session_guard.ch::require_operator`
+  resolves the caller from the session it already trusts — there is no
+  `role` column and no client-supplied operator flag. All five previously
+  refused routes now work for an allow-listed operator and still answer 401
+  anonymous / 403 normal learner: `GET /api/feedback/admin`,
+  `GET /api/feedback/admin/reports`, `PUT /api/feedback/:id/status`,
+  `POST /api/exercises/import`, `POST /api/exercises/seed`. Every successful
+  action writes `audit_log` with `actor`, `request_id`, action and peer ip;
+  two additive columns were installed by a conditional migration. With the
+  operator token, `tools/feedback_triage.py --list --mark-fixed … --db …`
+  listed one pending item, marked it `fixed`, and verified 10 audit rows with
+  actor+request_id and none incomplete. The two-account regression on 9060:
+  normal learner 403 on all three admin routes, anonymous 401, B cannot read
+  A's feedback message or id, A can. No admin UI and no Admin/CMS ticks.
+  Limitation: when a caller omits `X-Request-Id`, the audit id is freshly
+  minted and does not equal the access-line id; the triage tool always sends
+  the header, so the rehearsed rows correlate exactly.
+- **H16 — retention.** Startup is DRY-RUN and logs counts from
+  `repository/src/retention.ch` (measured on 9060: all zero on a fresh DB).
+  Applied sweeps are bounded to 200 rows/table and are only runnable by the
+  explicit tool against a disposable DB. `tools/retention_check.py` verified
+  5 orphan tables + expired tokens/sessions + aged login/audit rows are
+  counted and removed while the valid learner and its FSRS params are intact.
+  **The 152 historical orphan rows were not touched and are a founder
+  decision before any production cleanup.**
+- **H17 — flags.** `UL_PAID_GATING_ENABLED` and `UL_LEARNER_SURFACE_V2`
+  default OFF, are checked at the `/api/health` route entry and emitted as
+  data attributes on the sign-in UI entry point, and were rehearsed with no
+  rebuild (9060 off/off vs 9064 on/on). Full evidence, the H5 rollback target
+  and the founder-only Android track steps are in
+  `docs/h17-rollout-rehearsal.md`.
+- **H11 / H13 / H15** evidence and exceptions are recorded in
+  `docs/h11-embedded-signin-proof.md`, `docs/h13-concept-identity-migration.md`
+  and `docs/h15-performance-budget.md`. H15 is **RED** on two owner-signed
+  defects (render-blocking font stylesheet, one 420 px CLS reading) and is
+  wired into the nightly job only — do not mark it green.
+
+New local-only gates (all refuse production URLs/DBs): `feedback_triage.py`,
+`auth_shape_check.py`, `concept_migration_check.py`, `retention_check.py`,
+`perf_budget_check.py`. Each has a negative plant. The nightly CI job runs
+them against its own disposable DB; no checker, CSP directive, rate limit or
+existing CI step was weakened, and no new `unsafe-*` was added to the CSP.
+
 ## 6. Still open (do not mistake these for done)
 
 1. **CSP externalisation: step 1 shipped 2026-11-27; the policy is NOT

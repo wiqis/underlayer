@@ -32,8 +32,18 @@ public namespace underlayer_content {
     public func render_embedded_auth_runtime(page : &mut HtmlPage) {
         var account = underlayer_core::account_url()
         var account_view = account.to_view()
+        // H17: the sign-in dialog is the UI entry point for the staged-rollout
+        // flags. Both values are read on demand and emitted as data attributes,
+        // so a staging flip is observable in served HTML with no rebuild. No
+        // markup is string-built: these go through the #html macro like the
+        // account url above.
+        var paid = underlayer_core::flag_state(underlayer_core::paid_gating_enabled())
+        var v2 = underlayer_core::flag_state(underlayer_core::learner_surface_v2())
+        var paid_view = paid.to_view()
+        var v2_view = v2.to_view()
         #html {
             <div id="ul-auth-config" data-account-url={account_view} hidden></div>
+            <div id="ul-rollout-flags" data-paid-gating={paid_view} data-surface-v2={v2_view} hidden></div>
             <div id="ul-auth-fallback-template" hidden>
                 <p class="ul-auth-fallback-text">Sign-in is temporarily unavailable — you can keep learning; progress is saved on this device.</p>
                 <button type="button" class="ul-auth-retry">Retry</button>

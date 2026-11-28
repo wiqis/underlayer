@@ -122,6 +122,12 @@ public namespace underlayer_repository {
         if(manifest_json is std::Result.Err) { return 0 }
         var Ok(manifest_val) = manifest_json else unsafe { unreachable }
 
+        // H13: a manifest is the only place a retired concept id is declared.
+        // Register its aliases and move any learner rows forward BEFORE the
+        // exercise bank is seeded, so a slug change never strands FSRS state.
+        // No aliases in today's manifests => a measured no-op on every boot.
+        apply_manifest_concept_aliases(db, &manifest_val, course_id)
+
         var exercise_decls = json_get(&manifest_val, "exercise_decls")
         if(exercise_decls is std::Option.None) { return 0 }
         var Some(decls_node) = exercise_decls else unsafe { unreachable }

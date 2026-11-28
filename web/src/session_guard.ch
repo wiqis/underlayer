@@ -16,6 +16,7 @@
 // returns immediately.  See repository/src/session_ownership.ch for why the
 // gate is ownership rather than authentication.
 using std::string
+using std::string_view
 using underlayer_db::DbClient
 
 public namespace underlayer_web {
@@ -31,6 +32,67 @@ public namespace underlayer_web {
         }
         var err = string("this session belongs to another learner")
         return std::Option.Some<http::Response>(send_error(403u, &err))
+    }
+
+    // ---- H9: operator gate -------------------------------------------------
+    // A SECOND kind of guard, deliberately in the same file so no handler can
+    // invent a third. Ownership above answers "does this row belong to the
+    // caller"; this one answers "is the caller an operator at all". There is no
+    // role column: the identity is resolved from the session by the repository
+    // and checked against the secret-store UL_OPERATOR_IDS allow-list.
+
+    // The request id echoed by the access log. A valid caller-supplied value
+    // is the SAME one delivery uses, so audit rows and [request] lines join.
+    public func operator_request_id(req : &http::Request) : string {
+        var got = req.headers.get(string_view("X-Request-Id"))
+        if(got is std::Option.Some) {
+            var Some(value) = got else unsafe { unreachable }
+            if(value.size() > 0 && value.size() <= 64) {
+                var safe = true
+                var i : size_t = 0
+                while(i < value.size()) {
+                    var c = value.at(i)
+                    var ok = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+                             (c >= '0' && c <= '9') || c == '-' || c == '_' ||
+                             c == '.' || c == ':'
+                    if(!ok) { safe = false }
+                    i = i + 1
+                }
+                if(safe) { return value.to_string() }
+            }
+        }
+        return underlayer_core::random_hex(8)
+    }
+
+    // None = allowed AND audited. Some = the refusal to send.
+    public func require_operator(db : *DbClient, req : &http::Request, action : &string, details : &string) : std::Option<http::Response> {
+        var learner_id = auth_get_learner_id(db, req)
+        var actor = underlayer_repository::operator_identity(db, &learner_id)
+        if(actor.empty()) {
+            if(learner_id.empty()) {
+                var anon = string("unauthorized")
+                return std::Option.Some<http::Response>(send_error(401u, &anon))
+            }
+            var msg = string("operator allow-list does not include this account")
+            return std::Option.Some<http::Response>(send_error(403u, &msg))
+        }
+        var rid = operator_request_id(req)
+        var peer = req.remote.copy()
+        underlayer_repository::write_operator_audit(db, &actor, &rid, &peer, action, details)
+        return std::Option.None<http::Response>()
+    }
+
+    // H17: additive flag snapshot used at route/UI entry points. Both flags are
+    // read from the environment on each call; no rebuild is needed to flip one.
+    public func rollout_flags_json() : string {
+        var body = string("\"paid_gating_enabled\":\"")
+        var paid = underlayer_core::flag_state(underlayer_core::paid_gating_enabled())
+        body.append_view(paid.to_view())
+        body.append_view("\",\"learner_surface_v2\":\"")
+        var v2 = underlayer_core::flag_state(underlayer_core::learner_surface_v2())
+        body.append_view(v2.to_view())
+        body.append('"')
+        return body
     }
 
 }
